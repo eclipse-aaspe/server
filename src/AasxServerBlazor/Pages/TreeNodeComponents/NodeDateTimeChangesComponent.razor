@@ -1,0 +1,34 @@
+﻿@using AasxServerBlazor.TreeVisualisation
+@using Extensions
+@using AasxServer
+@namespace AasxServerBlazor.Pages.TreeNodeComponents
+
+@code {
+    [Parameter] public TreeItem SelectedNode { get; set; }
+
+    private const string TimeFormat = "yy-MM-dd HH:mm:ss.fff";
+}
+
+@{
+    if (SelectedNode != null && SelectedNode.Tag is IReferable r)
+    {
+        <span style="color:lightgray;">UPDATE @r.TimeStamp.ToString(TimeFormat)</span>
+        <br/>
+        <button style="border-width: 1px; border-color: black; background-color: lightgray" @onclick="SetTimeStamp">TIMESTAMP</button>
+        <br/>
+        <span style="color:lightgray;">CREATE @r.TimeStampCreate.ToString(TimeFormat)</span>
+        <br/>
+        <span style="color:lightgray;">TREE @r.TimeStampTree.ToString(TimeFormat)</span>
+
+        <br/>
+                    @code {
+
+                        private void SetTimeStamp()
+                        {
+                            (SelectedNode.Tag as IReferable).SetTimeStamp(DateTime.UtcNow);
+                            Program.env[SelectedNode.EnvironmentIndex].setWrite(true);
+                        }
+
+                    }
+                }
+}

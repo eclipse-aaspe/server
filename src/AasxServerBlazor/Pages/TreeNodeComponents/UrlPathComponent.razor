@@ -1,0 +1,58 @@
+﻿@using AasxServerBlazor.TreeVisualisation
+@using Microsoft.IdentityModel.Tokens
+@using AasxServer
+@namespace AasxServerBlazor.Pages.TreeNodeComponents
+
+@code {
+    [Parameter] public TreeItem SelectedNode { get; set; }
+}
+
+@{
+    if (SelectedNode is {Tag: Submodel submodel})
+    {
+        var idEncoded = Base64UrlEncoder.Encode(submodel.Id);
+        var path = Program.externalBlazor + "/submodels/" + idEncoded;
+        <span style="color:white;background-color:blue;">URL:</span>
+        <a href="@path" target="_blank">@path</a>
+        <br>
+    }
+
+    if (SelectedNode is {Tag: ISubmodelElement submodelElement})
+    {
+        var path = submodelElement.IdShort;
+        var parent = submodelElement.Parent as IReferable;
+        while (parent is not Submodel)
+        {
+            if (parent is ISubmodelElementList parentList)
+            {
+                if (path != null && path.Equals(submodelElement.IdShort))
+                {
+                    var index = parentList.Value?.IndexOf(submodelElement);
+                    path = "[" + index + "]";
+                }
+
+                path = parentList.IdShort + path;
+            }
+            else if (parent?.Parent is ISubmodelElementList prevParentList)
+            {
+                var index = prevParentList.Value?.IndexOf(parent as ISubmodelElement);
+                path = $"[{index}].{path}";
+            }
+            else
+            {
+                if (parent != null)
+                {
+                    path = $"{parent.IdShort}.{path}";
+                }
+            }
+
+            parent = (IReferable) parent?.Parent;
+        }
+
+        var idEncoded = Base64UrlEncoder.Encode((parent as Submodel).Id);
+        path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodel-elements/" + path;
+        <span style="color:white;background-color:blue;">URL:</span>
+        <a href="@path" target="_blank">@path</a>
+        <br>
+    }
+}

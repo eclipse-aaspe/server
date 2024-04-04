@@ -1,0 +1,43 @@
+﻿@using AasxServerBlazor.TreeVisualisation
+@using AasxServer
+@namespace AasxServerBlazor.Pages.TreeNodeComponents
+
+@code {
+    [Parameter] public TreeItem SelectedNode { get; set; }
+}
+
+@{
+    if (SelectedNode != null && SelectedNode.Tag is (AssetAdministrationShell or File) and AssetAdministrationShell)
+        @code {
+
+            private void RunCreateQrCodeImage()
+            {
+                var qrCodeService = new QrCodeService();
+                qrCodeService.CreateQrCodeImage(SelectedNode);
+            }
+
+        }
+        {
+        <button style="border-width: 1px; border-color: black; color: white; background-color: blue" @onclick="RunCreateQrCodeImage">QRCODE</button>
+        <br/>
+        var qrCodeService = new QrCodeService();
+        var qrcodeLink = QrCodeService.GetQrCodeLink(SelectedNode);
+        if (Program.generatedQrCodes.ContainsKey(SelectedNode.Tag))
+        {
+            var qrcodeImage = QrCodeService.GetQrCodeImage(SelectedNode);
+            if (qrcodeImage != "")
+            {
+                <a href="@qrcodeLink" target="_blank">
+                    <div>
+                        <img src=data:image;base64,@qrcodeImage style="max-width: 25%;" alt="Qrcode Image"/>
+                    </div>
+                </a>
+            }
+        }
+        else
+        {
+            <a href="@qrcodeLink" target="_blank">@qrcodeLink</a>
+            @:<br>
+        }
+    }
+}

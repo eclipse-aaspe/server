@@ -1,0 +1,113 @@
+﻿@using AasxServerBlazor.TreeVisualisation
+@using AasxServerBlazor.TreeVisualisation.Builders
+@using AasxServer
+@using AasSecurity
+@inject ISecurityService SecService
+@namespace AasxServerBlazor.Pages.TreeNodeComponents
+
+@code {
+    [Parameter] public TreeItem SelectedNode { get; set; }
+
+}
+
+<style>
+.modal-fullscreen {
+  padding: 0 !important;
+}
+.modal-fullscreen .modal-dialog {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  margin: 0;
+}
+.modal-fullscreen .modal-content {
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+.modal-fullscreen .modal-body {
+  overflow-y: auto;
+}
+
+</style>
+@{
+    if (SelectedNode != null)
+    {
+        if (SelectedNode.Tag is not string)
+        {
+            <span style="color:white;background-color:blue;" id="SelectedNodeInfoType">@SelectedNode.BuildNodeRepresentation()</span>
+            <span id="SelectedNodeInfoId">@SelectedNode.GetIdentifier()</span>
+            <br>
+        }
+        else
+        {
+            if (SelectedNode.Text.Contains("/readme"))
+            {
+                var text = System.IO.File.ReadAllText(SelectedNode.Text);
+                text = text.Replace("%BLAZOR%", Program.externalBlazor);
+                if (text.Contains("%ACCESSRULES%"))
+                {
+                    var accessRules = SecService.GetSecurityRules();
+                    <table class="table table-bordered table-sm">
+                        <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th nowrap>Kind</th>
+                            <th>Permission</th>
+                            <th>Type</th>
+                            <th>API</th>
+                            <th>Path</th>
+                            <th>SemanticID</th>
+                            <th>See</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @{
+                            var lines = accessRules.Split('\n');
+                            foreach (var line in lines)
+                            {
+                                <tr>
+                                    @{
+                                        var columns = line.Split('\t');
+                                        for (var column = 0; column < columns.Count(); column++)
+                                        {
+                                            if (column != 1 && column != 2)
+                                            {
+                                                <td>@columns[column]</td>
+                                            }
+                                            else
+                                            {
+                                                <td nowrap>@columns[column]</td>
+                                            }
+                                        }
+                                    }
+                                </tr>
+                            }
+                        }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <span>@((MarkupString) text)</span>
+                }
+            }
+        }
+    }
+
+    var nodeBuilder = TreeDetailsBuilderFactory.Create(SelectedNode);
+    for (var line = 0; line < 20; line++)
+    {
+        var nodeDetailsFirstColumn = nodeBuilder.Build(SelectedNode, line, 0);
+        var nodeDetailsSecondColumn = nodeBuilder.Build(SelectedNode, line, 1);
+        var nodeDetailsThirdColumn = nodeBuilder.Build(SelectedNode, line, 2);
+        if (nodeDetailsFirstColumn != string.Empty && nodeDetailsSecondColumn != string.Empty)
+        {
+            var detailsId = "SelectedNodeDetailsLeft_" + line;
+            <span style="color:white;background-color:blue;" id="@detailsId">@nodeDetailsFirstColumn</span>
+            detailsId = "SelectedNodeDetailsRight_" + line;
+            <span id="@detailsId">@nodeDetailsSecondColumn @nodeDetailsThirdColumn</span>
+            <br>
+        }
+    }
+}

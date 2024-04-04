@@ -1,0 +1,35 @@
+﻿@using AasxServerBlazor.TreeVisualisation
+@using AasxServer
+@using Extensions
+@namespace AasxServerBlazor.Pages.TreeNodeComponents
+
+@code {
+    [Parameter] public TreeItem SelectedNode { get; set; }
+}
+
+@{
+    if (SelectedNode != null && SelectedNode.Tag is Property && Program.edit)
+    {
+        <input @bind="CurrentValue" style="width:500px; border-width: 1px; border-color: black;"/>
+        <span style="border-width: 1px; border-color: black; background-color: blue;">@CurrentValue</span>
+        <br>
+                    @code { private string CurrentValue { get; set; } }
+                    if (CurrentValue != null && CurrentValue != "")
+        {
+            if (SelectedNode.Tag is Property property)
+            {
+                if (string.IsNullOrEmpty(CurrentValue))
+                {
+                    CurrentValue = string.Empty;
+                }
+
+                property.Value = CurrentValue;
+                property.SetTimeStamp(DateTime.UtcNow);
+                Program.env[SelectedNode.EnvironmentIndex].setWrite(true);
+                Program.signalNewData(0);
+            }
+
+            CurrentValue = string.Empty;
+        }
+    }
+}

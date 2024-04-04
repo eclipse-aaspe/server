@@ -1,0 +1,21 @@
+﻿@using AasxServerBlazor.TreeVisualisation
+
+@namespace AasxServerBlazor.Pages.TreeNodeComponents
+
+<div class="sticky-top" style="word-wrap:break-word;word-break:break-all;">
+    @{
+        <TreeItemRepresentationComponent SelectedNode="@SelectedNode"/>
+        <NodeDateTimeChangesComponent SelectedNode="@SelectedNode"/>
+        <LastEditedComponent SelectedNode="@SelectedNode"/>
+        <QrCodeComponent SelectedNode="@SelectedNode"/>
+        <UrlPathComponent SelectedNode="@SelectedNode"/>
+        <TimeSeriesComponent SelectedNode="@SelectedNode"/>
+        <DetailsImageComponent SelectedNode="@SelectedNode"/>
+        <BasicEventComponent SelectedNode="@SelectedNode"/>
+    }
+
+    @code {
+        [Parameter] public TreeItem SelectedNode { get; set; }
+    }
+
+</div>

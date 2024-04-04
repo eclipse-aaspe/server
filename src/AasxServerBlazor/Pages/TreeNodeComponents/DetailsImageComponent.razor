@@ -1,0 +1,50 @@
+﻿@using AasxServerBlazor.TreeVisualisation.Builders
+@using AasxServerBlazor.TreeVisualisation
+
+@namespace AasxServerBlazor.Pages.TreeNodeComponents
+
+@code
+{
+    [Parameter] public TreeItem SelectedNode { get; set; }
+}
+
+@{
+    var detailsImage = ImageBuilder.CreateDetailsImage(SelectedNode, out var url, out var svg);
+    if (!string.IsNullOrEmpty(detailsImage))
+    {
+        if (!svg)
+        {
+            if (!url)
+            {
+                <br/>
+                <div>
+                    <img src=data:image;base64,@detailsImage style="max-width: 50%" alt="Details Image"/>
+                </div>
+            }
+            else
+            {
+                <br/>
+                <div>
+                    <img src="@detailsImage" style="max-width: 50%" alt="Details Image"/>
+                </div>
+            }
+        }
+        else
+        {
+            if (!url)
+            {
+                <br/>
+                <div>
+                    <img src=data:image/svg+xml;base64,@detailsImage style="max-width: 50%" alt="Details Image"/>
+                </div>
+            }
+            else
+            {
+                <br/>
+                <div>
+                    <img src="detailsImage" style="max-width: 50%" alt="Details Image"/>
+                </div>
+            }
+        }
+    }
+}
