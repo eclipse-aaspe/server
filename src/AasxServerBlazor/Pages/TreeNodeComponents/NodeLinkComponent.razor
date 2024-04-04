@@ -6,71 +6,68 @@
 
 @code {
     [Parameter] public TreeItem SelectedNode { get; set; }
+
+    private static readonly ExternalLinkCreator ExternalLinkCreator = new();
+    private readonly AasxItemLinkService _aasxItemLinkService = new(ExternalLinkCreator);
+
+
+    private string ItemLink => _aasxItemLinkService.Create(SelectedNode, NavigationManager.Uri, out var externalLink);
+
+    private bool IsSubmodelToPublish => SelectedNode != null && SelectedNode.Tag is Submodel && Program.connectServer != string.Empty && Program.submodelsToPublish.Contains(SelectedNode.Tag);
+    private bool IsSubmodelToSubscribe => SelectedNode != null && SelectedNode.Tag is Submodel && Program.connectServer != string.Empty && Program.submodelsToSubscribe.Contains(SelectedNode.Tag);
+
+    private void ResetSubmodelToPublish()
+    {
+        Program.submodelsToPublish.Remove(SelectedNode.Tag);
+    }
+
+    private void SetSubmodelToPublish()
+    {
+        if (!IsSubmodelToSubscribe)
+            Program.submodelsToPublish.Add(SelectedNode.Tag);
+    }
+
+    private void ResetSubmodelToSubscribe()
+    {
+        Program.submodelsToSubscribe.Remove(SelectedNode.Tag);
+    }
+
+    private void SetSubmodelToSubscribe()
+    {
+        if (!IsSubmodelToPublish)
+            Program.submodelsToSubscribe.Add(SelectedNode.Tag);
+    }
+
 }
 
-@{
-    var link = new AasxItemLinkService(new ExternalLinkCreator()).Create(SelectedNode, NavigationManager.Uri, out var externalLink);
-    if (SelectedNode != null && link != string.Empty)
+@if (SelectedNode != null && ItemLink != string.Empty)
+{
+    @if (true)
     {
-        if (true)
-        {
-            <a href="@link" target="_blank">@link</a>
-            <br>
-        }
-        else
-        {
-            <button onclick="window.location.href = '@link'; ">Download</button>
-            <br>
-        }
+        <a href="@ItemLink" target="_blank">@ItemLink</a>
+        <br>
+    }
+    else
+    {
+        <button onclick="window.location.href = '@ItemLink'; ">Download</button>
+        <br>
+    }
 
-        if (SelectedNode != null && SelectedNode.Tag is Submodel && Program.connectServer != string.Empty)
-        {
-            var toPublish = Program.submodelsToPublish.Contains(SelectedNode.Tag);
-            var toSubscribe = Program.submodelsToSubscribe.Contains(SelectedNode.Tag);
-            if (toPublish)
-            {
-                <button style="color:white;background-color:blue" @onclick="ResetSubmodelToPublish">Publish</button>
-            }
-            else
-            {
-                <button @onclick="SetSubmodelToPublish">Publish</button>
-            }
+    @if (IsSubmodelToPublish)
+    {
+        <button style="color:white;background-color:blue" @onclick="ResetSubmodelToPublish">Publish</button>
+    }
+    else
+    {
+        <button @onclick="SetSubmodelToPublish">Publish</button>
+    }
 
-            if (toSubscribe)
-            {
-                <button style="color:white;background-color:blue" @onclick="ResetSubmodelToSubscribe">Subscribe</button>
-            }
-            else
-            {
-                <button @onclick="SetSubmodelToSubscribe">Subscribe</button>
-            }
-                        @code {
-
-                            private void ResetSubmodelToPublish()
-                            {
-                                Program.submodelsToPublish.Remove(SelectedNode.Tag);
-                            }
-
-                            private void SetSubmodelToPublish()
-                            {
-                                var toSubscribe = Program.submodelsToSubscribe.Contains(SelectedNode.Tag);
-                                if (!toSubscribe)
-                                    Program.submodelsToPublish.Add(SelectedNode.Tag);
-                            }
-
-                            private void ResetSubmodelToSubscribe()
-                            {
-                                Program.submodelsToSubscribe.Remove(SelectedNode.Tag);
-                            }
-
-                            private void SetSubmodelToSubscribe()
-                            {
-                                var toPublish = Program.submodelsToPublish.Contains(SelectedNode.Tag);
-                                if (!toPublish)
-                                    Program.submodelsToSubscribe.Add(SelectedNode.Tag);
-                            }
-
-                        }
-                    }
+    @if (IsSubmodelToSubscribe)
+    {
+        <button style="color:white;background-color:blue" @onclick="ResetSubmodelToSubscribe">Subscribe</button>
+    }
+    else
+    {
+        <button @onclick="SetSubmodelToSubscribe">Subscribe</button>
     }
 }

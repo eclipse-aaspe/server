@@ -7,28 +7,30 @@
     [Parameter] public TreeItem SelectedNode { get; set; }
 
     private const string TimeFormat = "yy-MM-dd HH:mm:ss.fff";
+
+    private IReferable ReferableNode => SelectedNode?.Tag as IReferable;
+
+    private bool IsNodeValid => ReferableNode != null;
+
+    private void SetTimeStamp()
+    {
+        if (!IsNodeValid)
+        {
+            return;
+        }
+        ReferableNode.SetTimeStamp(DateTime.UtcNow);
+        Program.env[SelectedNode.EnvironmentIndex].setWrite(true);
+    }
 }
 
-@{
-    if (SelectedNode != null && SelectedNode.Tag is IReferable r)
-    {
-        <span style="color:lightgray;">UPDATE @r.TimeStamp.ToString(TimeFormat)</span>
-        <br/>
-        <button style="border-width: 1px; border-color: black; background-color: lightgray" @onclick="SetTimeStamp">TIMESTAMP</button>
-        <br/>
-        <span style="color:lightgray;">CREATE @r.TimeStampCreate.ToString(TimeFormat)</span>
-        <br/>
-        <span style="color:lightgray;">TREE @r.TimeStampTree.ToString(TimeFormat)</span>
-
-        <br/>
-                    @code {
-
-                        private void SetTimeStamp()
-                        {
-                            (SelectedNode.Tag as IReferable).SetTimeStamp(DateTime.UtcNow);
-                            Program.env[SelectedNode.EnvironmentIndex].setWrite(true);
-                        }
-
-                    }
-                }
+@if (IsNodeValid)
+{
+    <span style="color:lightgray;">UPDATE @ReferableNode.TimeStamp.ToString(TimeFormat)</span>
+    <br/>
+    <button style="border-width: 1px; border-color: black; background-color: lightgray" @onclick="SetTimeStamp">TIMESTAMP</button>
+    <br/>
+    <span style="color:lightgray;">CREATE @ReferableNode.TimeStampCreate.ToString(TimeFormat)</span>
+    <br/>
+    <span style="color:lightgray;">TREE @ReferableNode.TimeStampTree.ToString(TimeFormat)</span>
+    <br/>
 }

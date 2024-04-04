@@ -12,39 +12,11 @@
     var detailsImage = ImageBuilder.CreateDetailsImage(SelectedNode, out var url, out var svg);
     if (!string.IsNullOrEmpty(detailsImage))
     {
-        if (!svg)
-        {
-            if (!url)
-            {
-                <br/>
-                <div>
-                    <img src=data:image;base64,@detailsImage style="max-width: 50%" alt="Details Image"/>
-                </div>
-            }
-            else
-            {
-                <br/>
-                <div>
-                    <img src="@detailsImage" style="max-width: 50%" alt="Details Image"/>
-                </div>
-            }
-        }
-        else
-        {
-            if (!url)
-            {
-                <br/>
-                <div>
-                    <img src=data:image/svg+xml;base64,@detailsImage style="max-width: 50%" alt="Details Image"/>
-                </div>
-            }
-            else
-            {
-                <br/>
-                <div>
-                    <img src="detailsImage" style="max-width: 50%" alt="Details Image"/>
-                </div>
-            }
-        }
+        var imageUrl = url ? detailsImage : $"data:image{(svg ? "/svg+xml" : "")};base64,{detailsImage}";
+
+        <br />
+        <div>
+            <img src="@imageUrl" style="max-width: 50%" alt="Details Image" />
+        </div>
     }
 }

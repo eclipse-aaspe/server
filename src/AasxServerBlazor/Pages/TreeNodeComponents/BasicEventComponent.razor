@@ -1,6 +1,7 @@
 ﻿@using AasxServerBlazor.TreeVisualisation
 @using Extensions
 @using AasxServer
+
 @namespace AasxServerBlazor.Pages.TreeNodeComponents
 
 @code {
@@ -8,25 +9,24 @@
     private const string TimeFormat = "yy-MM-dd HH:mm:ss.fff";
 }
 
-@{
-    if (SelectedNode is {Tag: BasicEventElement {Observed: not null} basicEventElement})
+@if (SelectedNode?.Tag is BasicEventElement {Observed: not null} basicEventElement)
+{
+    var observedEventElementKey = basicEventElement.Observed.GetAsExactlyOneKey().ToStringExtended();
+
+    <span style="color:white;background-color:blue;">Observed @(" " + observedEventElementKey)</span>
+    <br/>
+
+    var referableEventOfAasEnvironment = Program.env[0].AasEnv.FindReferableByReference(basicEventElement.Observed);
+    if (referableEventOfAasEnvironment != null)
     {
-        var observedEventElementKey = basicEventElement.Observed.GetAsExactlyOneKey().ToStringExtended();
-        <span style="color:white;background-color:blue;">Observed</span>
-        <span>@(" " + observedEventElementKey)</span>
+        <span style="color:lightgray;">UPDATE @referableEventOfAasEnvironment.TimeStamp.ToString(TimeFormat)</span>
         <br/>
-        var referableEventOfAasEnvironment = Program.env[0].AasEnv.FindReferableByReference(basicEventElement.Observed);
-        if (referableEventOfAasEnvironment != null)
-        {
-            <span style="color:lightgray;">UPDATE @referableEventOfAasEnvironment.TimeStamp.ToString(TimeFormat)</span>
-            <br/>
-            <span style="color:lightgray;">CREATE @referableEventOfAasEnvironment.TimeStampCreate.ToString(TimeFormat)</span>
-            <br/>
-        }
-        else
-        {
-            <span>Referenced element does not exist!</span>
-            <br/>
-        }
+        <span style="color:lightgray;">CREATE @referableEventOfAasEnvironment.TimeStampCreate.ToString(TimeFormat)</span>
+        <br/>
+    }
+    else
+    {
+        <span>Referenced element does not exist!</span>
+        <br/>
     }
 }

@@ -5,31 +5,32 @@
 
 @code {
     [Parameter] public TreeItem SelectedNode { get; set; }
+
+    private string CurrentValue { get; set; }
+
+    private Property SelectedProperty => SelectedNode?.Tag as Property;
+
+    private bool IsEditEnabled => Program.edit && SelectedNode != null && SelectedNode.Tag is Property;
+
+    private void UpdatePropertyValue()
+    {
+        if (string.IsNullOrEmpty(CurrentValue) || SelectedProperty == null)
+        {
+            return;
+        }
+
+        SelectedProperty.Value = CurrentValue;
+        SelectedProperty.SetTimeStamp(DateTime.UtcNow);
+        Program.env[SelectedNode.EnvironmentIndex].setWrite(true);
+        Program.signalNewData(0);
+        CurrentValue = string.Empty;
+    }
+
 }
 
-@{
-    if (SelectedNode != null && SelectedNode.Tag is Property && Program.edit)
-    {
-        <input @bind="CurrentValue" style="width:500px; border-width: 1px; border-color: black;"/>
-        <span style="border-width: 1px; border-color: black; background-color: blue;">@CurrentValue</span>
-        <br>
-                    @code { private string CurrentValue { get; set; } }
-                    if (CurrentValue != null && CurrentValue != "")
-        {
-            if (SelectedNode.Tag is Property property)
-            {
-                if (string.IsNullOrEmpty(CurrentValue))
-                {
-                    CurrentValue = string.Empty;
-                }
-
-                property.Value = CurrentValue;
-                property.SetTimeStamp(DateTime.UtcNow);
-                Program.env[SelectedNode.EnvironmentIndex].setWrite(true);
-                Program.signalNewData(0);
-            }
-
-            CurrentValue = string.Empty;
-        }
-    }
+@if (IsEditEnabled)
+{
+    <input @bind="CurrentValue" style="width:500px; border-width: 1px; border-color: black;"/>
+    <span style="border-width: 1px; border-color: black; background-color: blue;">@CurrentValue</span>
+    <br>
 }

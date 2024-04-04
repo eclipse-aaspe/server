@@ -1,43 +1,41 @@
 ﻿@using AasxServerBlazor.TreeVisualisation
 @using AasxServer
+@inject QrCodeService QrCodeService
 @namespace AasxServerBlazor.Pages.TreeNodeComponents
 
 @code {
     [Parameter] public TreeItem SelectedNode { get; set; }
 }
 
-@{
-    if (SelectedNode != null && SelectedNode.Tag is (AssetAdministrationShell or File) and AssetAdministrationShell)
-        @code {
+@if (SelectedNode != null && SelectedNode.Tag is AssetAdministrationShell)
+{
+    @{
+        var tag = SelectedNode.Tag;
+        var qrCodeImageBase64 = string.Empty;
+        var qrCodeLink = string.Empty;
 
-            private void RunCreateQrCodeImage()
-            {
-                var qrCodeService = new QrCodeService();
-                qrCodeService.CreateQrCodeImage(SelectedNode);
-            }
-
-        }
+        if (!Program.generatedQrCodes.ContainsKey(tag))
         {
-        <button style="border-width: 1px; border-color: black; color: white; background-color: blue" @onclick="RunCreateQrCodeImage">QRCODE</button>
-        <br/>
-        var qrCodeService = new QrCodeService();
-        var qrcodeLink = QrCodeService.GetQrCodeLink(SelectedNode);
-        if (Program.generatedQrCodes.ContainsKey(SelectedNode.Tag))
-        {
+            qrCodeLink = QrCodeService.GetQrCodeLink(SelectedNode);
             var qrcodeImage = QrCodeService.GetQrCodeImage(SelectedNode);
-            if (qrcodeImage != "")
+            if (!string.IsNullOrEmpty(qrcodeImage))
             {
-                <a href="@qrcodeLink" target="_blank">
-                    <div>
-                        <img src=data:image;base64,@qrcodeImage style="max-width: 25%;" alt="Qrcode Image"/>
-                    </div>
-                </a>
+                qrCodeImageBase64 = qrcodeImage;
             }
         }
-        else
+
+        if (!string.IsNullOrEmpty(qrCodeImageBase64))
         {
-            <a href="@qrcodeLink" target="_blank">@qrcodeLink</a>
-            @:<br>
+            <a href="@qrCodeLink" target="_blank">
+                <div>
+                    <img src="data:image;base64,@qrCodeImageBase64" style="max-width: 25%;" alt="Qrcode Image" />
+                </div>
+            </a>
+        }
+        else if (!string.IsNullOrEmpty(qrCodeLink))
+        {
+            <a href="@qrCodeLink" target="_blank">@qrCodeLink</a>
+            <br />
         }
     }
 }
