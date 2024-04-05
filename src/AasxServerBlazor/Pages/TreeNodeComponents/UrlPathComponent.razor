@@ -7,7 +7,7 @@
     @if (!string.IsNullOrEmpty(SubmodelUrlPath(SelectedNode)))
     {
         <div class="url-section">
-            <span class="url-label">URL:</span>
+            <span class="tree-node-type-info">URL:</span>
             <a href="@SubmodelUrlPath(SelectedNode)" target="_blank">@SubmodelUrlPath(SelectedNode)</a>
         </div>
     }
@@ -15,7 +15,7 @@
     @if (!string.IsNullOrEmpty(SubmodelElementUrlPath(SelectedNode)))
     {
         <div class="url-section">
-            <span class="url-label">URL:</span>
+            <span class="tree-node-type-info">URL:</span>
             <a href="@SubmodelElementUrlPath(SelectedNode)" target="_blank">@SubmodelElementUrlPath(SelectedNode)</a>
         </div>
     }

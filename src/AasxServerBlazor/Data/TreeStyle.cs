@@ -8,7 +8,7 @@ public class TreeStyle
         ExpandNodeIconClass = "far fa-plus-square cursor-pointer",
         CollapseNodeIconClass = "far fa-minus-square cursor-pointer",
         NodeTitleClass = "p-1 cursor-pointer",
-        NodeTitleSelectedClass = "bg-primary text-white"
+        NodeTitleSelectedClass = "bg-primary selected-node"
     };
 
     public string ExpandNodeIconClass { get; private init; }

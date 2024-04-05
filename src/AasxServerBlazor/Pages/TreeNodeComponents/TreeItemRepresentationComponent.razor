@@ -61,13 +61,13 @@
 }
 
 <div class="node-element-container" id="tree-item-representation-component">
+    <h2 class="tree-item-details-header">Selected Tree Node</h2>
     @if (SelectedNode != null)
     {
         @if (!string.IsNullOrWhiteSpace(SelectedNodeInfoType))
         {
-            <span style="color:white;background-color:blue;" id="SelectedNodeInfoType">@SelectedNodeInfoType</span>
+            <span class="tree-node-type-info" id="SelectedNodeInfoType">@SelectedNodeInfoType</span>
             <span id="SelectedNodeInfoId">@SelectedNodeInfoId</span>
-            <br/>
         }
         else if (IsTextContainingReadme)
         {
@@ -85,6 +85,11 @@
             }
         }
     }
+    else
+    {
+        <h3 class="tree-item-details-sub-header">No item selected</h3>
+        <span>If you want to see some detail information, please select a Tree item on the left side.</span>
+    }
 
     @for (var line = 0; line < 20; line++)
     {
@@ -94,11 +99,12 @@
 
         if (!string.IsNullOrWhiteSpace(nodeDetailsFirstColumn) && !string.IsNullOrWhiteSpace(nodeDetailsSecondColumn))
         {
-            var detailsId = $"SelectedNodeDetailsLeft_{line}";
-            <span style="color:white;background-color:blue;" id="@detailsId">@nodeDetailsFirstColumn</span>
-            detailsId = $"SelectedNodeDetailsRight_{line}";
-            <span id="@detailsId">@nodeDetailsSecondColumn @nodeDetailsThirdColumn</span>
-            <br/>
+            var leftClass = $"details-left-{line}";
+            var rightClass = $"details-right-{line}";
+            <div class="tree-item-details-container">
+                <span class="tree-node-type-info @leftClass">@nodeDetailsFirstColumn</span>
+                <span class="@rightClass">@nodeDetailsSecondColumn @nodeDetailsThirdColumn</span>
+            </div>
         }
     }
 </div>

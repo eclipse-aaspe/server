@@ -1,8 +1,18 @@
 ﻿:root {
-    --blue-color: blue;
+    --primary-color: #0161c9;
+    --secondary-color: #4335c9;
+    --secondary-color-shade: #4839d8;
+    --primary-background-color: white;
+    --secondary-background-color: hsl(220, 100%, 95%);
+    --tertiary-color: #576fc3;
+    --highlight-color: #f28246;
+    --highlight-color-shadow: #98522c;
+    --warning-color: #f9efae;
+    --approval-color: #5ce076;
     --lightgray-color: lightgray;
     --green-color: green;
     --red-color: red;
+    --text-light-color: white;
 }
 
 /* Tree */
@@ -26,7 +36,6 @@
 
 /* Tree Node */
 .tree-node {
-    background-color: aliceblue;
     padding: 10px;
 }
 
@@ -37,9 +46,8 @@
 /* Details Container */
 .node-details-container,
 .modal-content {
-    border: 3px solid var(--blue-color);
+    border: 3px solid var(--primary-color);
     border-radius: 8px;
-    background-color: aliceblue;
     word-wrap: break-word;
     word-break: break-all;
 }
@@ -86,11 +94,10 @@
 
 /* Other */
 .loading,
-.node-representation,
 .observed-event,
 .url-section {
     color: white;
-    background-color: var(--blue-color);
+    background-color: var(--primary-color);
 }
 
 .access {
@@ -105,10 +112,14 @@
 
 .policy,
 .symbolic-representation {
-    color: var(--blue-color);
+    color: var(--primary-color);
 }
 
-.timestamp,
+.timestamp {
+    font-size: 14px;
+    font-style: italic;
+}
+
 .create-timestamp,
 .update-timestamp {
     color: var(--lightgray-color);
@@ -124,13 +135,13 @@
 }
 
 .qr-code-link {
-    color: var(--blue-color);
+    color: var(--primary-color);
     text-decoration: underline;
 }
 
 .rendering-time-series,
 .time-series-info {
-    color: var(--blue-color);
+    color: var(--primary-color);
     font-style: italic;
 }
 
@@ -172,25 +183,36 @@
     position: relative;
 }
 
-.tree{
+.tree {
     width: calc(100% - 1rem);
-    margin-left: 0.5rem; 
-    margin-right: 0.5rem; 
+    margin-left: 1.15rem;
+    margin-right: 0.5rem;
+    margin-top: 0.2rem;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    border-bottom: 0.1rem solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0.2rem 0.2rem rgba(0, 0, 0, 0.1);
 }
 
 .tree-container,
 .details-container {
     overflow-y: auto;
     overflow-x: hidden;
+    border: 0.15rem solid var(--primary-color);
+    border-radius: 0.5rem;
+    min-height: 50vh;
+}
+
+.tree-title {
+    padding-left: 1rem;
 }
 
 .tree-container {
     flex: 0 0 auto;
     width: 50%;
     height: 100%;
+    background-color: var(--secondary-background-color);
 }
 
 .details-container {
@@ -200,3 +222,61 @@
     height: 100%;
 }
 
+.url-section,
+.node-representation,
+.tree-node-type-info {
+    color: var(--text-light-color);
+    background-color: var(--primary-color);
+    padding: 0.2rem;
+    margin-right: 0.2rem;
+    margin-left: 0.2rem;
+    min-width: 1rem;
+}
+
+.timestamp-button {
+    background-color: var(--primary-color);
+    color: var(--text-light-color);
+    border-color: var(--primary-color);
+
+    &:hover {
+        color: var(--lightgray-color);
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color-shade);
+    }
+
+    /* Click effect */
+
+    &:active {
+        color: var(--lightgray-color);
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color-shade);
+    }
+}
+
+.tree-node-type-info,
+.tree-item-details-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.tree-item-details-sub-header,
+.tree-item-details-header {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--secondary-color-shade);
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.tree-item-details-sub-header {
+    font-size: 1.2rem;
+    text-decoration: underline;
+}
+
+.selected-node{
+    outline: none;
+    border: 0.1rem solid red;
+    padding: 0.4rem;
+    background-color: lightyellow !important;
+    box-shadow: 0 0.2rem 0.2rem rgba(0, 0, 0, 0.2);
+}
