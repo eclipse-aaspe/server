@@ -5,7 +5,8 @@ using QRCoder;
 
 namespace AasxServerBlazor.TreeVisualisation;
 
-public class QrCodeService
+/// <inheritdoc cref="IQrCodeService"/>
+public class QrCodeService: IQrCodeService
 {
     private readonly QRCodeGenerator _qrCodeGenerator;
 
@@ -14,22 +15,22 @@ public class QrCodeService
         _qrCodeGenerator = new QRCodeGenerator();
     }
 
-    public static string GetQrCodeLink(TreeItem treeItem)
+    public string GetQrCodeLink(TreeItem treeItem)
     {
         if (treeItem == null || !(treeItem.Tag is AssetAdministrationShell aas))
         {
-            return "";
+            return string.Empty;
         }
 
         var asset = aas.AssetInformation;
-        return asset?.GlobalAssetId ?? "";
+        return asset?.GlobalAssetId ?? string.Empty;
     }
 
-    public static string GetQrCodeImage(TreeItem treeItem)
+    public string GetQrCodeImage(TreeItem treeItem)
     {
         if (treeItem == null || !(treeItem.Tag is AssetAdministrationShell))
         {
-            return "";
+            return string.Empty;
         }
 
         return Program.generatedQrCodes.TryGetValue(treeItem.Tag, out var image) ? image : "";
@@ -49,10 +50,6 @@ public class QrCodeService
         }
 
         var asset = aas.AssetInformation;
-        if (asset == null)
-        {
-            return;
-        }
 
         var url = asset.GlobalAssetId;
         var qrCodeData = _qrCodeGenerator.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);

@@ -19,152 +19,95 @@
     PlotFilter _plotFilter = new(new SystemDateTimeProvider());
     int _plotFilterTsdOffset;
     bool _showImageModal;
+
     private const string TimeFormat = "yy-MM-dd HH:mm:ss.fff";
 }
 
-@{
-    if (SelectedNode is {Tag: SubmodelElementCollection submodelElementCollection})
+@if (SelectedNode is {Tag: SubmodelElementCollection submodelElementCollection})
+{
+    var semanticId = string.Empty;
+
+    try
     {
-        var semanticId = string.Empty;
+        semanticId = submodelElementCollection.SemanticId?.GetAsIdentifier();
+    }
+    catch (Exception exception)
+    {
+        Console.WriteLine($"Error for {nameof(SelectedNode)} as {nameof(submodelElementCollection)} in {nameof(TreeNodeDetailsContainer)}: {exception.Message}");
+    }
 
-        try
+    if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeries/1/0" ||
+        semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
+    {
+        var submodelElementTimeDifference = submodelElementCollection.TimeStamp - _timeStampPlot;
+
+        if (submodelElementCollection != _collectionPlot || submodelElementTimeDifference.TotalSeconds < 0 || submodelElementTimeDifference.TotalSeconds >= 5)
         {
-            semanticId = submodelElementCollection.SemanticId?.GetAsIdentifier();
-        }
-        catch (Exception exception)
-        {
-            Console.WriteLine($"Error for {nameof(SelectedNode)} as {nameof(submodelElementCollection)} in {nameof(TreeNodeDetailsContainer)}: {exception.Message}");
-        }
+            _watchTimeToProcessImage = System.Diagnostics.Stopwatch.StartNew();
 
-        if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeries/1/0" ||
-            semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
-        {
-            var submodelElementTimeDifference = submodelElementCollection.TimeStamp - _timeStampPlot;
+            _collectionPlot = submodelElementCollection;
+            _timeStampPlot = submodelElementCollection.TimeStampTree;
 
-            if (submodelElementCollection != _collectionPlot || submodelElementTimeDifference.TotalSeconds < 0 || submodelElementTimeDifference.TotalSeconds >= 5)
+            _timeSeriesData.Clear();
+
+            // make initial data for time series
+            var timeSeriesData = new TimeSeriesPlotting.TimeSeriesData() {SourceTimeSeries = submodelElementCollection};
+            _timeSeriesData.Add(timeSeriesData);
+
+            // plot arguments for time series
+            timeSeriesData.Args = TimeSeriesPlotting.PlotArguments.Parse(submodelElementCollection.FindQualifierOfType("TimeSeries.Args")?.Value);
+
+            // TODO: info - ZveiTimeSeriesDataV10 is currently hardcoded as JSON string in code
+            var timeSeriesDataV10 = TimeSeriesPlotting.ZveiTimeSeriesDataV10.Static;
+
+            var timeSeriesReferenceKey = new Key(KeyTypes.ConceptDescription, "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0");
+
+            // is it a segment
+            if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
             {
-                _watchTimeToProcessImage = System.Diagnostics.Stopwatch.StartNew();
-
-                _collectionPlot = submodelElementCollection;
-                _timeStampPlot = submodelElementCollection.TimeStampTree;
-
-                _timeSeriesData.Clear();
-
-                // make initial data for time series
-                var timeSeriesData = new TimeSeriesPlotting.TimeSeriesData() {SourceTimeSeries = submodelElementCollection};
-                _timeSeriesData.Add(timeSeriesData);
-
-                // plot arguments for time series
-                timeSeriesData.Args = TimeSeriesPlotting.PlotArguments.Parse(submodelElementCollection.FindQualifierOfType("TimeSeries.Args")?.Value);
-
-                // TODO: info - ZveiTimeSeriesDataV10 is currently hardcoded as JSON string in code
-                var timeSeriesDataV10 = TimeSeriesPlotting.ZveiTimeSeriesDataV10.Static;
-
-                var timeSeriesReferenceKey = new Key(KeyTypes.ConceptDescription, "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0");
-
-                // is it a segment
-                if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
-                {
-                    TimeSeriesAddSegmentData(timeSeriesDataV10, timeSeriesData, submodelElementCollection);
-                }
-                else
-                {
-                    // search for segements on current level
-                    var submodelEventValues = submodelElementCollection.Value.FindAllSemanticIdAs<SubmodelElementCollection>(timeSeriesReferenceKey, MatchMode.Relaxed);
-
-                    var submodelElementCollections = submodelEventValues.ToList();
-                    if (submodelElementCollections.Count() != 0)
-                    {
-                        foreach (var submodelCollectionItem in submodelElementCollections)
-                        {
-                            TimeSeriesAddSegmentData(timeSeriesDataV10, timeSeriesData, submodelCollectionItem);
-                        }
-                    }
-                }
-
-                _timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en", BlazorSessionService.sessionNumber, _plotFilter.CombinedStartDateTime, _plotFilter.CombinedEndDateTime);
-                _watchTimeToProcessImage.Stop();
-            }
-
-            var timeSeriesImageBase64 = string.Empty;
-            var scottplotImgPath = "wwwroot/images/scottplot/smc_timeseries_clientid" + BlazorSessionService.sessionNumber + ".png";
-
-            if (System.IO.File.Exists(scottplotImgPath))
-            {
-                var imageArray = System.IO.File.ReadAllBytes(scottplotImgPath);
-                timeSeriesImageBase64 = Convert.ToBase64String(imageArray);
-            }
-
-            var elapsedMsToProcessImage = _watchTimeToProcessImage.ElapsedMilliseconds;
-
-            if (System.IO.File.Exists(scottplotImgPath))
-            {
-                <EditForm Model="@_plotFilter" OnValidSubmit="() => _plotFilter.ApplyFilterToTimeSeriesData(_timeSeriesData, BlazorSessionService.sessionNumber)">
-                    <label for="filterFromDate">Filter from</label>
-                    <InputDate id="filterFromDate" @bind-Value="_plotFilter.StartDate"/>
-                    <input type="time" @bind-value="_plotFilter.StartTime"/>
-                    <label for="filterToDate">Filter to</label>
-                    <InputDate id="filterToDate" @bind-Value="_plotFilter.EndDate"/>
-                    <input type="time" @bind-value="_plotFilter.EndTime"/>
-                    <div>
-                        <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                                type="submit">
-                            Apply
-                        </button>
-                        <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                                @onclick="_plotFilter.SetInitialFilterState">
-                            Reset
-                        </button>
-                        <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                                @onclick="() => { _plotFilterTsdOffset = 0; _plotFilter.SetFilterStateForDay(0); }">
-                            Today
-                        </button>
-                        <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                                @onclick="() => { _plotFilterTsdOffset = -1; _plotFilter.SetFilterStateForDay(-1); }">
-                            Yesterday
-                        </button>
-                        <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                                @onclick="() => _plotFilter.SetFilterStateForDay(--_plotFilterTsdOffset)">
-                            Prev day
-                        </button>
-                        <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                                @onclick="() => _plotFilter.SetFilterStateForDay(++_plotFilterTsdOffset)">
-                            Next day
-                        </button>
-                    </div>
-                </EditForm>
-
-                <div class="d-flex flex-column">
-                    <img @onclick="() => _showImageModal = !_showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:950px;cursor:zoom-in;"/>
-                    <span class="text-muted" style="font-size:14px;">
-                        Image processing took @elapsedMsToProcessImage ms (Last update: @_timeStampPlot.ToString(TimeFormat))
-                    </span>
-                </div>
-
-                <div class="modal modal-fullscreen @(_showImageModal ? " d-block" : "d-none")" style="margin-top:3.5rem;" tabindex="-1">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Visualization of time series</h5>
-                                <button type="button" @onclick="() => _showImageModal = !_showImageModal" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                            <div class="modal-body text-center">
-                                <img @onclick="() => _showImageModal = !_showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:90%;max-height:90%;cursor:zoom-out;" class="mb-2"/>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                TimeSeriesAddSegmentData(timeSeriesDataV10, timeSeriesData, submodelElementCollection);
             }
             else
             {
-                <div class="my-2">Rendering time series...</div>
+                // search for segements on current level
+                var submodelEventValues = submodelElementCollection.Value.FindAllSemanticIdAs<SubmodelElementCollection>(timeSeriesReferenceKey, MatchMode.Relaxed);
+
+                var submodelElementCollections = submodelEventValues.ToList();
+                if (submodelElementCollections.Count() != 0)
+                {
+                    foreach (var submodelCollectionItem in submodelElementCollections)
+                    {
+                        TimeSeriesAddSegmentData(timeSeriesDataV10, timeSeriesData, submodelCollectionItem);
+                    }
+                }
             }
+
+            _timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en", BlazorSessionService.sessionNumber, _plotFilter.CombinedStartDateTime, _plotFilter.CombinedEndDateTime);
+            _watchTimeToProcessImage.Stop();
+        }
+
+        var timeSeriesImageBase64 = string.Empty;
+        var scottplotImgPath = "wwwroot/images/scottplot/smc_timeseries_clientid" + BlazorSessionService.sessionNumber + ".png";
+
+        if (System.IO.File.Exists(scottplotImgPath))
+        {
+            var imageArray = System.IO.File.ReadAllBytes(scottplotImgPath);
+            timeSeriesImageBase64 = Convert.ToBase64String(imageArray);
+        }
+
+        var elapsedMsToProcessImage = _watchTimeToProcessImage.ElapsedMilliseconds;
+
+        if (System.IO.File.Exists(scottplotImgPath))
+        {
+            <AasxServerBlazor.Pages.TreeNodeComponents.TimeSeriesImageComponent ImageBase64="@timeSeriesImageBase64" ShowModal="_showImageModal" TimeStampPlot="_timeStampPlot" ElapsedMsToProcessImage="elapsedMsToProcessImage" />
         }
         else
         {
-            _collectionPlot = null;
+            <div class="my-2">Rendering time series...</div>
         }
+    }
+    else
+    {
+        _collectionPlot = null;
     }
 }

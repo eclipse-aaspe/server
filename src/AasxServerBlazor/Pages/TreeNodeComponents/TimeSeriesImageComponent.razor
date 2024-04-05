@@ -1,0 +1,40 @@
+﻿@namespace AasxServerBlazor.Pages.TreeNodeComponents
+
+@code {
+    [Parameter] public string ImageBase64 { get; set; }
+    [Parameter] public bool ShowModal { get; set; }
+    [Parameter] public DateTime TimeStampPlot { get; set; }
+    [Parameter] public long ElapsedMsToProcessImage { get; set; }
+
+    private const string TimeFormat = "yy-MM-dd HH:mm:ss.fff";
+}
+
+<div class="d-flex flex-column">
+    <img @onclick="ToggleModal" src="data:image;base64,@ImageBase64" alt="Visualization of time series" style="max-width:950px;cursor:zoom-in;"/>
+    <span class="text-muted" style="font-size:14px;">
+        Image processing took @ElapsedMsToProcessImage ms (Last update: @TimeStampPlot.ToString(TimeFormat))
+    </span>
+</div>
+
+<div class="modal modal-fullscreen @(ShowModal ? "d-block" : "d-none")" style="margin-top:3.5rem;" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Visualization of time series</h5>
+                <button type="button" @onclick="ToggleModal" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <img @onclick="ToggleModal" src="data:image;base64,@ImageBase64" alt="Visualization of time series" style="max-width:90%;max-height:90%;cursor:zoom-out;" class="mb-2"/>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private void ToggleModal()
+    {
+        ShowModal = !ShowModal;
+    }
+}

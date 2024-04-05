@@ -33,6 +33,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using AasxServerBlazor.DateTimeServices;
+using AasxServerBlazor.TreeVisualisation;
 using AasxServerBlazor.WebActions.AasxLinkCreation;
 
 namespace AasxServerBlazor
@@ -95,6 +96,7 @@ namespace AasxServerBlazor
             services.AddLazyResolution();
             services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
             services.AddSingleton<IAasxItemLinkService, AasxItemLinkService>();
+            services.AddSingleton<IQrCodeService, QrCodeService>();
             services.AddSingleton<IAuthorizationHandler, AasSecurityAuthorizationHandler>();
             services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
             services.AddSingleton<IExternalLinkCreator, ExternalLinkCreator>();
