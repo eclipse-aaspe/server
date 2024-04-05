@@ -21,6 +21,92 @@
     bool _showImageModal;
 
     private const string TimeFormat = "yy-MM-dd HH:mm:ss.fff";
+    private const string TimeSeriesPath = "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeries/1/0";
+    private const string TimeSeriesSegmentPath = "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0";
+
+    private void UpdateTimeSeriesData(SubmodelElementCollection submodelElementCollection, TimeSpan submodelElementTimeDifference, string semanticId)
+    {
+        if (ShouldSkipUpdate(submodelElementCollection, submodelElementTimeDifference))
+        {
+            return;
+        }
+
+        _watchTimeToProcessImage = System.Diagnostics.Stopwatch.StartNew();
+
+        UpdateTimeSeriesProperties(submodelElementCollection);
+
+        var timeSeriesDataV10 = ZveiTimeSeriesDataV10.Static;
+        var timeSeriesReferenceKey = new Key(KeyTypes.ConceptDescription, TimeSeriesSegmentPath);
+
+        if (IsTimeSeriesData(semanticId))
+        {
+            foreach (var timeSeriesData in _timeSeriesData) TimeSeriesAddSegmentData(timeSeriesDataV10, timeSeriesData, submodelElementCollection);
+        }
+        else
+        {
+            AddSegmentsFromCollection(submodelElementCollection, timeSeriesReferenceKey, timeSeriesDataV10);
+        }
+
+        RenderTimeSeries();
+
+        _watchTimeToProcessImage.Stop();
+    }
+
+    private bool ShouldSkipUpdate(SubmodelElementCollection submodelElementCollection, TimeSpan submodelElementTimeDifference)
+    {
+        return submodelElementCollection == _collectionPlot || submodelElementTimeDifference.TotalSeconds < 0 || submodelElementTimeDifference.TotalSeconds >= 5;
+    }
+
+    private void UpdateTimeSeriesProperties(SubmodelElementCollection submodelElementCollection)
+    {
+        _collectionPlot = submodelElementCollection;
+        _timeStampPlot = submodelElementCollection.TimeStampTree;
+        _timeSeriesData.Clear();
+
+        var timeSeriesData = new TimeSeriesData() {SourceTimeSeries = submodelElementCollection};
+        _timeSeriesData.Add(timeSeriesData);
+        timeSeriesData.Args = PlotArguments.Parse(submodelElementCollection.FindQualifierOfType("TimeSeries.Args")?.Value);
+    }
+
+    private void AddSegmentsFromCollection(SubmodelElementCollection submodelElementCollection, Key timeSeriesReferenceKey, ZveiTimeSeriesDataV10 timeSeriesDataV10)
+    {
+        var submodelEventValues = submodelElementCollection.Value.FindAllSemanticIdAs<SubmodelElementCollection>(timeSeriesReferenceKey, MatchMode.Relaxed);
+        foreach (var submodelCollectionItem in submodelEventValues)
+        {
+            foreach (var timeSeriesData in _timeSeriesData) TimeSeriesAddSegmentData(timeSeriesDataV10, timeSeriesData, submodelCollectionItem);
+        }
+    }
+
+    private void RenderTimeSeries()
+    {
+        _timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en", BlazorSessionService.sessionNumber, _plotFilter.CombinedStartDateTime,
+            _plotFilter.CombinedEndDateTime);
+    }
+
+    private static void AddSegmentsFromCollection(SubmodelElementCollection submodelElementCollection, Key timeSeriesReferenceKey, ZveiTimeSeriesDataV10 timeSeriesDataV10,
+        TimeSeriesData timeSeriesData)
+    {
+        var submodelEventValues = submodelElementCollection.Value.FindAllSemanticIdAs<SubmodelElementCollection>
+        (timeSeriesReferenceKey,
+            MatchMode.Relaxed);
+
+        foreach (var submodelCollectionItem in submodelEventValues)
+        {
+            TimeSeriesAddSegmentData(timeSeriesDataV10, timeSeriesData, submodelCollectionItem);
+        }
+    }
+    
+    private bool IsWhat(SubmodelElementCollection submodelElementCollection, TimeSpan submodelElementTimeDifference)
+    {
+        return submodelElementCollection == _collectionPlot && !(submodelElementTimeDifference.TotalSeconds < 0)
+                                                            && !(submodelElementTimeDifference.TotalSeconds >= 5);
+    }
+
+    private static bool IsTimeSeriesData(string semanticId)
+    {
+        return semanticId is TimeSeriesPath or TimeSeriesSegmentPath;
+    }
+
 }
 
 @if (SelectedNode is {Tag: SubmodelElementCollection submodelElementCollection})
@@ -36,55 +122,11 @@
         Console.WriteLine($"Error for {nameof(SelectedNode)} as {nameof(submodelElementCollection)} in {nameof(TreeNodeDetailsContainer)}: {exception.Message}");
     }
 
-    if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeries/1/0" ||
-        semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
+    if (IsTimeSeriesData(semanticId))
     {
         var submodelElementTimeDifference = submodelElementCollection.TimeStamp - _timeStampPlot;
 
-        if (submodelElementCollection != _collectionPlot || submodelElementTimeDifference.TotalSeconds < 0 || submodelElementTimeDifference.TotalSeconds >= 5)
-        {
-            _watchTimeToProcessImage = System.Diagnostics.Stopwatch.StartNew();
-
-            _collectionPlot = submodelElementCollection;
-            _timeStampPlot = submodelElementCollection.TimeStampTree;
-
-            _timeSeriesData.Clear();
-
-            // make initial data for time series
-            var timeSeriesData = new TimeSeriesPlotting.TimeSeriesData() {SourceTimeSeries = submodelElementCollection};
-            _timeSeriesData.Add(timeSeriesData);
-
-            // plot arguments for time series
-            timeSeriesData.Args = TimeSeriesPlotting.PlotArguments.Parse(submodelElementCollection.FindQualifierOfType("TimeSeries.Args")?.Value);
-
-            // TODO: info - ZveiTimeSeriesDataV10 is currently hardcoded as JSON string in code
-            var timeSeriesDataV10 = TimeSeriesPlotting.ZveiTimeSeriesDataV10.Static;
-
-            var timeSeriesReferenceKey = new Key(KeyTypes.ConceptDescription, "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0");
-
-            // is it a segment
-            if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
-            {
-                TimeSeriesAddSegmentData(timeSeriesDataV10, timeSeriesData, submodelElementCollection);
-            }
-            else
-            {
-                // search for segements on current level
-                var submodelEventValues = submodelElementCollection.Value.FindAllSemanticIdAs<SubmodelElementCollection>(timeSeriesReferenceKey, MatchMode.Relaxed);
-
-                var submodelElementCollections = submodelEventValues.ToList();
-                if (submodelElementCollections.Count() != 0)
-                {
-                    foreach (var submodelCollectionItem in submodelElementCollections)
-                    {
-                        TimeSeriesAddSegmentData(timeSeriesDataV10, timeSeriesData, submodelCollectionItem);
-                    }
-                }
-            }
-
-            _timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en", BlazorSessionService.sessionNumber, _plotFilter.CombinedStartDateTime, _plotFilter.CombinedEndDateTime);
-            _watchTimeToProcessImage.Stop();
-        }
+        UpdateTimeSeriesData(submodelElementCollection, submodelElementTimeDifference, semanticId);
 
         var timeSeriesImageBase64 = string.Empty;
         var scottplotImgPath = "wwwroot/images/scottplot/smc_timeseries_clientid" + BlazorSessionService.sessionNumber + ".png";
@@ -99,7 +141,10 @@
 
         if (System.IO.File.Exists(scottplotImgPath))
         {
-            <AasxServerBlazor.Pages.TreeNodeComponents.TimeSeriesImageComponent ImageBase64="@timeSeriesImageBase64" ShowModal="_showImageModal" TimeStampPlot="_timeStampPlot" ElapsedMsToProcessImage="elapsedMsToProcessImage" />
+            <AasxServerBlazor.Pages.TreeNodeComponents.TimeSeriesImageComponent ImageBase64="@timeSeriesImageBase64"
+                                                                                ShowModal="_showImageModal"
+                                                                                TimeStampPlot="_timeStampPlot"
+                                                                                ElapsedMsToProcessImage="elapsedMsToProcessImage"/>
         }
         else
         {
