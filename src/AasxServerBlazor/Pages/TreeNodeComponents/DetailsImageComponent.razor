@@ -3,7 +3,7 @@
 
 @namespace AasxServerBlazor.Pages.TreeNodeComponents
 
-<div class="tree-node-image">
+<div class="node-element-container" id="details-image-component">
     @{
         var detailsImage = ImageBuilder.CreateDetailsImage(SelectedNode, out var url, out var svg);
         if (!string.IsNullOrEmpty(detailsImage))

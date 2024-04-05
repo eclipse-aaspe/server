@@ -101,16 +101,8 @@ app {
 
 .content {
     padding-top: 1.1rem;
-    /*
-    overflow-y: auto;
-
-    position: absolute;
-    top: 50px;
-    left: 0px;
-    right: 0px;
-    bottom: 0px;
-    overflow-y: scroll;
-    */
+    position: relative;
+    z-index: 999;
 }
 
 .content .sticky-top {

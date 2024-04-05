@@ -1,259 +1,64 @@
-﻿/*
-https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
-*/
-.uic-tree .uic-tree {
+﻿:root {
+    --blue-color: blue;
+    --lightgray-color: lightgray;
+    --green-color: green;
+    --red-color: red;
+}
+
+/* Tree */
+.uic-tree {
     margin-left: 1.25rem;
 }
+
 .uic-tree--hidden {
     display: none;
 }
+
 .uic-tree__icon {
     float: left;
 }
+
 .uic-tree__title {
     margin-left: 1.25rem;
-}
-.uic-tree .cursor-pointer {
     cursor: pointer;
 }
-.tree {
-    float: left;
-    padding: 1px;
-    margin: 1px;
-}
 
-.hidden {
-    display: none;
-}
 
+/* Tree Node */
 .tree-node {
     background-color: aliceblue;
-    padding: 0;
+    padding: 10px;
 }
 
-.aas-margin {
-    margin: 0;
-    margin-bottom: 3px;
+.tree-node img {
+    max-width: 50%;
 }
 
-.normal-margin {
-    margin: 0;
-}
-
-.tree-icon {
-    max-width: 50px;
-    padding: 1px;
-    display: flex;
-    justify-content: center;
-}
-
-.dotted-border {
-    border: dotted;
-    border-color: blue;
-}
-
-.details-image {
-    max-height: 50px;
-    object-fit: contain;
-}
-
-.tree-title {
-    width: 100%;
-    float: left;
-    vertical-align: central;
-}
-
-.tree-title .icon {
-    float: left;
-}
-
-.tree-title .title {
-    margin-left: 1.25rem;
-    cursor: pointer;
-}
-
-.tree-title .title.selected {
-    background-color: #007bff;
-    color: #fff;
-}
-.tree-container {
-    border: 3px solid blue;
+/* Details Container */
+.node-details-container,
+.modal-content {
+    border: 3px solid var(--blue-color);
     border-radius: 8px;
     background-color: aliceblue;
     word-wrap: break-word;
     word-break: break-all;
-    position: sticky;
 }
 
-.loading {
-    color: white;
-    background-color: blue;
-}
-
-.access {
-    color: green;
-    background-color: green;
-}
-
-.not-allowed {
-    color: red;
-    background-color: red;
-}
-
-.node-representation {
-    color: white;
-    background-color: blue;
-}
-
-.policy {
-    color: blue;
-}
-
-.symbolic-representation {
-    color: blue;
-    font-size: 14px;
-}
-
-.timestamp {
-    color: lightgray;
-    font-size: 14px;
-}
-
-.details-container {
-    border-width: 3px;
-    border-style: solid;
-    border-color: blue;
-    border-radius: 8px;
-    position: sticky;
-    background-color: aliceblue;
-}
-.modal-fullscreen {
-    padding: 0 !important;
-}
-
-.modal-fullscreen .modal-dialog {
+.modal-dialog {
     width: 100%;
     max-width: none;
     height: 100%;
     margin: 0;
 }
 
-.modal-fullscreen .modal-content {
+.modal-content {
     height: 100%;
     border: 0;
     border-radius: 0;
 }
 
-.modal-fullscreen .modal-body {
+.modal-body {
     overflow-y: auto;
-}
-
-.node-details-container {
-    padding: 10px;
-    background-color: aliceblue;
-}
-
-.observed-event {
-    color: white;
-    background-color: blue;
-}
-
-.update-timestamp,
-.create-timestamp {
-    color: lightgray;
-}
-
-.error-message {
-    color: red;
-}
-.tree-node-image {
-    padding: 10px;
-}
-
-.tree-node-image img {
-    max-width: 50%;
-}
-.tree-node-property-editor {
-    padding: 10px;
-}
-
-.property-input {
-    width: 500px;
-    border-width: 1px;
-    border-color: black;
-}
-
-.property-value {
-    border-width: 1px;
-    border-color: black;
-    background-color: blue;
-}
-.tree-node-timestamp {
-    padding: 10px;
-}
-
-.timestamp-label {
-    color: lightgray;
-}
-
-.timestamp-button {
-    border-width: 1px;
-    border-color: black;
-    background-color: lightgray;
-}
-.tree-node-actions {
-    padding: 10px;
-}
-
-.download-button,
-.publish-button,
-.subscribe-button {
-    border: 1px solid black;
-    margin-right: 5px;
-    padding: 5px 10px;
-}
-
-.publish-button,
-.subscribe-button {
-    color: white;
-}
-
-.publish-button {
-    background-color: blue;
-}
-
-.subscribe-button {
-    background-color: green;
-}
-
-.download-button {
-    background-color: lightgray;
-}
-.qr-code-image {
-    max-width: 25%;
-}
-.qr-code-link {
-    color: blue;
-    text-decoration: underline;
-}
-.rendering-time-series {
-    margin-top: 10px;
-    color: blue;
-    font-style: italic;
-}
-.time-series-image {
-    display: flex;
-    flex-direction: column;
-}
-
-.time-series-image img {
-    max-width: 950px;
-    cursor: zoom-in;
-}
-
-.time-series-info {
-    font-size: 14px;
-    color: #6c757d;
 }
 
 .modal {
@@ -268,14 +73,9 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
 }
 
 .modal-fullscreen {
-    display: flex!important;
+    display: flex !important;
     align-items: center;
     justify-content: center;
-}
-
-.modal-content {
-    width: 100%;
-    height: 100%;
 }
 
 .modal-image {
@@ -283,29 +83,74 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
     max-height: 90%;
     cursor: zoom-out;
 }
+
+/* Other */
+.loading,
+.node-representation,
+.observed-event,
+.url-section {
+    color: white;
+    background-color: var(--blue-color);
+}
+
+.access {
+    color: var(--green-color);
+    background-color: var(--green-color);
+}
+
+.not-allowed {
+    color: var(--red-color);
+    background-color: var(--red-color);
+}
+
+.policy,
+.symbolic-representation {
+    color: var(--blue-color);
+}
+
+.timestamp,
+.create-timestamp,
+.update-timestamp {
+    color: var(--lightgray-color);
+    font-size: 14px;
+}
+
+.error-message {
+    color: var(--red-color);
+}
+
+.qr-code-image {
+    max-width: 25%;
+}
+
+.qr-code-link {
+    color: var(--blue-color);
+    text-decoration: underline;
+}
+
+.rendering-time-series,
+.time-series-info {
+    color: var(--blue-color);
+    font-style: italic;
+}
+
+.time-series-image img,
 .time-series-filter img {
     max-width: 950px;
     cursor: zoom-in;
 }
 
-.time-series-info {
-    font-size: 14px;
-    color: #6c757d;
-}
-
 .filter-buttons button {
-    border-width: 1px;
-    border-color: black;
-    background-color: lightgray;
+    border: 1px solid black;
+    background-color: var(--lightgray-color);
     margin-right: 5px;
 }
 
 .filter-buttons button:last-child {
     margin-right: 0;
 }
+
 .url-section {
-    color: white;
-    background-color: blue;
     margin-bottom: 5px;
     padding: 5px;
 }
@@ -313,13 +158,45 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
 .url-label {
     font-weight: bold;
 }
-.details-container {
-    word-wrap: break-word;
-    word-break: break-all;
-}
 
 .sticky-top {
     position: sticky;
     top: 0;
     z-index: 1000;
 }
+
+.aas-model {
+    display: flex;
+    align-items: stretch;
+    height: 100%;
+    position: relative;
+}
+
+.tree{
+    width: calc(100% - 1rem);
+    margin-left: 0.5rem; 
+    margin-right: 0.5rem; 
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.tree-container,
+.details-container {
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.tree-container {
+    flex: 0 0 auto;
+    width: 50%;
+    height: 100%;
+}
+
+.details-container {
+    position: sticky;
+    top: 0;
+    flex: 1;
+    height: 100%;
+}
+

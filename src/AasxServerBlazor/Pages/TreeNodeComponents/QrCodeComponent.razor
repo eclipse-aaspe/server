@@ -7,8 +7,9 @@
     [Parameter] public TreeItem SelectedNode { get; set; }
 }
 
-@if (SelectedNode != null && SelectedNode.Tag is AssetAdministrationShell)
-{
+<div class="node-element-container" id="qr-code-component">
+    @if (SelectedNode is {Tag: AssetAdministrationShell})
+    {
         var tag = SelectedNode.Tag;
         var qrCodeImageBase64 = string.Empty;
         var qrCodeLink = string.Empty;
@@ -34,6 +35,7 @@
         else if (!string.IsNullOrEmpty(qrCodeLink))
         {
             <a href="@qrCodeLink" target="_blank" class="qr-code-link">@qrCodeLink</a>
-            <br />
+            <br/>
         }
-}
+    }
+</div>

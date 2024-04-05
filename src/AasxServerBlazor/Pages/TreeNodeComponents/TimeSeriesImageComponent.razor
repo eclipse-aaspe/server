@@ -1,21 +1,23 @@
 ﻿@namespace AasxServerBlazor.Pages.TreeNodeComponents
 
-<div class="time-series-image">
-    <img @onclick="ToggleModal" src="data:image;base64,@ImageBase64" alt="Visualization of time series" />
-    <span class="time-series-info">Image processing took @ElapsedMsToProcessImage ms (Last update: @TimeStampPlot.ToString(TimeFormat))</span>
-</div>
+<div class="node-element-container" id="time-series-image-component">
+    <div class="time-series-image">
+        <img @onclick="ToggleModal" src="data:image;base64,@ImageBase64" alt="Visualization of time series"/>
+        <span class="time-series-info">Image processing took @ElapsedMsToProcessImage ms (Last update: @TimeStampPlot.ToString(TimeFormat))</span>
+    </div>
 
-<div class="modal modal-fullscreen @(ShowModal ? "d-block" : "d-none")">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Visualization of time series</h5>
-                <button type="button" @onclick="ToggleModal" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body text-center">
-                <img @onclick="ToggleModal" src="data:image;base64,@ImageBase64" alt="Visualization of time series" class="modal-image" />
+    <div class="modal modal-fullscreen @(ShowModal ? "d-block" : "d-none")">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Visualization of time series</h5>
+                    <button type="button" @onclick="ToggleModal" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-center">
+                    <img @onclick="ToggleModal" src="data:image;base64,@ImageBase64" alt="Visualization of time series" class="modal-image"/>
+                </div>
             </div>
         </div>
     </div>
@@ -33,4 +35,5 @@
     {
         ShowModal = !ShowModal;
     }
+
 }

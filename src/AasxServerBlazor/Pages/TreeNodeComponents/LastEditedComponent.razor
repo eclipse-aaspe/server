@@ -3,7 +3,7 @@
 @using Extensions
 @namespace AasxServerBlazor.Pages.TreeNodeComponents
 
-<div class="tree-node-property-editor">
+<div class="node-element-container" id="last-edited-component">
     @if (IsEditEnabled)
     {
         <input @bind="CurrentValue" class="property-input" />

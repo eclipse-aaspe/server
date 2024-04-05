@@ -30,8 +30,7 @@
 @using System.Reflection;
 @using static AasxServerStandardBib.TimeSeriesPlotting;
 
-<div class="column-12 row">
-    <br/>
+<div class="column-12 row aas-model">
     <div class="column-5 tree-container">
         @UpdateVisibleTree(_items, SelectedNode)
         @if (Program.isLoading)
@@ -124,7 +123,6 @@
     </div>
 </div>
 
-
 @code {
     List<TreeItem> _items = null;
     IList<TreeItem> _expandedNodes = new List<TreeItem>();
@@ -215,5 +213,4 @@
         BuildNewTreeKeepOpenNodes,
         BuildNewTreeAllNodesClosed
     }
-
 }

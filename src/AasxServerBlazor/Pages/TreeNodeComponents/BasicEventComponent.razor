@@ -4,7 +4,7 @@
 
 @namespace AasxServerBlazor.Pages.TreeNodeComponents
 
-<div class="node-details-container">
+<div class="node-element-container" id="basic-event-component">
     @if (SelectedNode?.Tag is BasicEventElement {Observed: not null} basicEventElement)
     {
         var observedEventElementKey = basicEventElement.Observed.GetAsExactlyOneKey().ToStringExtended();

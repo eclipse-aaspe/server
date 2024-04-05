@@ -95,7 +95,7 @@
             TimeSeriesAddSegmentData(timeSeriesDataV10, timeSeriesData, submodelCollectionItem);
         }
     }
-    
+
     private bool IsWhat(SubmodelElementCollection submodelElementCollection, TimeSpan submodelElementTimeDifference)
     {
         return submodelElementCollection == _collectionPlot && !(submodelElementTimeDifference.TotalSeconds < 0)
@@ -109,51 +109,54 @@
 
 }
 
-@if (SelectedNode is {Tag: SubmodelElementCollection submodelElementCollection})
-{
-    var semanticId = string.Empty;
+<div class="node-element-container" id="time-series-component">
 
-    try
+    @if (SelectedNode is {Tag: SubmodelElementCollection submodelElementCollection})
     {
-        semanticId = submodelElementCollection.SemanticId?.GetAsIdentifier();
-    }
-    catch (Exception exception)
-    {
-        Console.WriteLine($"Error for {nameof(SelectedNode)} as {nameof(submodelElementCollection)} in {nameof(TreeNodeDetailsContainer)}: {exception.Message}");
-    }
+        var semanticId = string.Empty;
 
-    if (IsTimeSeriesData(semanticId))
-    {
-        var submodelElementTimeDifference = submodelElementCollection.TimeStamp - _timeStampPlot;
-
-        UpdateTimeSeriesData(submodelElementCollection, submodelElementTimeDifference, semanticId);
-
-        var timeSeriesImageBase64 = string.Empty;
-        var scottplotImgPath = "wwwroot/images/scottplot/smc_timeseries_clientid" + BlazorSessionService.sessionNumber + ".png";
-
-        if (System.IO.File.Exists(scottplotImgPath))
+        try
         {
-            var imageArray = System.IO.File.ReadAllBytes(scottplotImgPath);
-            timeSeriesImageBase64 = Convert.ToBase64String(imageArray);
+            semanticId = submodelElementCollection.SemanticId?.GetAsIdentifier();
+        }
+        catch (Exception exception)
+        {
+            Console.WriteLine($"Error for {nameof(SelectedNode)} as {nameof(submodelElementCollection)} in {nameof(TreeNodeDetailsContainer)}: {exception.Message}");
         }
 
-        var elapsedMsToProcessImage = _watchTimeToProcessImage.ElapsedMilliseconds;
-
-        if (System.IO.File.Exists(scottplotImgPath))
+        if (IsTimeSeriesData(semanticId))
         {
-            <AasxServerBlazor.Pages.TreeNodeComponents.TimeSeriesImageComponent ImageBase64="@timeSeriesImageBase64"
-                                                                                ShowModal="_showImageModal"
-                                                                                TimeStampPlot="_timeStampPlot"
-                                                                                ElapsedMsToProcessImage="elapsedMsToProcessImage"
-                                                                                class="rendering-time-series"/>
+            var submodelElementTimeDifference = submodelElementCollection.TimeStamp - _timeStampPlot;
+
+            UpdateTimeSeriesData(submodelElementCollection, submodelElementTimeDifference, semanticId);
+
+            var timeSeriesImageBase64 = string.Empty;
+            var scottplotImgPath = "wwwroot/images/scottplot/smc_timeseries_clientid" + BlazorSessionService.sessionNumber + ".png";
+
+            if (System.IO.File.Exists(scottplotImgPath))
+            {
+                var imageArray = System.IO.File.ReadAllBytes(scottplotImgPath);
+                timeSeriesImageBase64 = Convert.ToBase64String(imageArray);
+            }
+
+            var elapsedMsToProcessImage = _watchTimeToProcessImage.ElapsedMilliseconds;
+
+            if (System.IO.File.Exists(scottplotImgPath))
+            {
+                <AasxServerBlazor.Pages.TreeNodeComponents.TimeSeriesImageComponent ImageBase64="@timeSeriesImageBase64"
+                                                                                    ShowModal="_showImageModal"
+                                                                                    TimeStampPlot="_timeStampPlot"
+                                                                                    ElapsedMsToProcessImage="elapsedMsToProcessImage"
+                                                                                    class="rendering-time-series"/>
+            }
+            else
+            {
+                <div class="my-2 rendering-time-series">Rendering time series...</div>
+            }
         }
         else
         {
-            <div class="my-2 rendering-time-series">Rendering time series...</div>
+            _collectionPlot = null;
         }
     }
-    else
-    {
-        _collectionPlot = null;
-    }
-}
+</div>

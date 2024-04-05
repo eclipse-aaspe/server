@@ -3,7 +3,7 @@
 @using AasxServer
 @namespace AasxServerBlazor.Pages.TreeNodeComponents
 
-<div class="tree-node-timestamp">
+<div class="node-element-container" id="date-time-changes-component">
     @if (IsNodeValid)
     {
         <span class="timestamp-label">UPDATE @ReferableNode.TimeStamp.ToString(TimeFormat)</span>
