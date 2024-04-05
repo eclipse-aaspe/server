@@ -109,7 +109,7 @@
 
                     <span style="color:white;background-color:blue;">@context.BuildNodeRepresentation()</span>
                     @context.GetIdentifier()
-                    @if (Program.withPolicy && getPolicy != "")
+                    @if (Program.withPolicy && !string.IsNullOrEmpty(getPolicy))
                     {
                         <span style="color:blue">@getPolicy</span>
                     }

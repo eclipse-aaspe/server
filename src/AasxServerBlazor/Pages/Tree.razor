@@ -3,8 +3,8 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
 *@
 
 @using Microsoft.AspNetCore.Components.Web
-@using MW.Blazor
 @using AasCore.Aas3_0
+@using AasxServerBlazor.Data
 @using AasxServerBlazor.TreeVisualisation
 @using AasxServerBlazor.TreeVisualisation.Builders
 
@@ -14,23 +14,23 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
 <div class="uic-tree @(Visible ? string.Empty : "uic-tree--hidden")" style="float:left; padding: 1px; margin: 1px">
     @foreach (var node in Nodes ?? Enumerable.Empty<TNode>())
     {
-        var it = node as TreeItem;
-        var itIsAas = it?.Tag is AssetAdministrationShell;
-        var itMargin = itIsAas ? "margin: 0px; margin-bottom: 3px" : "margin: 0px";
+        var treeItem = node as TreeItem;
+        var treeItemIsAas = treeItem?.Tag is AssetAdministrationShell;
+        var treeItemMargin = treeItemIsAas ? "margin: 0px; margin-bottom: 3px" : "margin: 0px";
 
-        <div class="row" style="background-color:aliceblue; padding: 0; @itMargin">
-            @if (itIsAas)
+        <div class="row" style="background-color:aliceblue; padding: 0; @treeItemMargin">
+            @if (treeItemIsAas)
             {
                 <div class="column" style="max-width:50px;padding:1px;display:flex;justify-content:center;">
                     @{
                         var border = string.Empty;
-                        var env = AasxServer.Program.env[it.EnvironmentIndex];
+                        var env = AasxServer.Program.env[treeItem.EnvironmentIndex];
                         if (env != null && env.getWrite())
                         {
                             border = "border:dotted;border-color:blue;";
                         }
 
-                        var detailsImage = ImageBuilder.CreateDetailsImage(it, out var url, out var svg);
+                        var detailsImage = ImageBuilder.CreateDetailsImage(treeItem, out var url, out var svg);
                         var src = detailsImage != null ? $"data:image{(svg ? "/svg+xml" : string.Empty)};base64,{detailsImage}" : null;
 
                         if (!string.IsNullOrEmpty(detailsImage) && !url)
@@ -44,7 +44,7 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
             <div class="column" style="width:100%;float:left;vertical-align:central">
                 @if (HasChildNodes(node))
                 {
-                    var iconId = AasxServer.Program.htmlId ? $"{HtmlId(it)}._icon" : string.Empty;
+                    var iconId = AasxServer.Program.htmlId ? $"{HtmlId(treeItem)}._icon" : string.Empty;
                     <span class="uic-tree__icon" @onclick="@(() => OnToggleNode(node, !ExpandedNodes.Contains(node)))" id="@iconId">
                         <i class="@(ExpandedNodes.Contains(node) ? Style.CollapseNodeIconClass : Style.ExpandNodeIconClass)"></i>
                     </span>
@@ -52,7 +52,7 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
 
                 <div class="uic-tree__title" style="width:100%">
                     @{
-                        var titleId = AasxServer.Program.htmlId ? $"{HtmlId(it)}._title" : string.Empty;
+                        var titleId = AasxServer.Program.htmlId ? $"{HtmlId(treeItem)}._title" : string.Empty;
                         <span class="@Style.NodeTitleClass @(SelectedNode?.Equals(node) == true ? Style.NodeTitleSelectedClass : "")" @onclick="@(() => OnSelectNode(node))" id="@titleId">
                             @TitleTemplate(node)
                         </span>

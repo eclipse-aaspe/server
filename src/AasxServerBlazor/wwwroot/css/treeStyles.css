@@ -13,6 +13,6 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
 .uic-tree__title {
     margin-left: 1.25rem;
 }
-.uic-tree .curosr-pointer {
+.uic-tree .cursor-pointer {
     cursor: pointer;
 }
