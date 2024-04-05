@@ -9,7 +9,6 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
 @using AasxServerBlazor.TreeVisualisation.Builders
 
 @typeparam TNode
-@*@using static AdminShellNS.AdminShellV20;*@
 @using static TreePage
 
 <div class="uic-tree @(Visible ? "" : "uic-tree--hidden")" style="float:left; padding: 1px; margin: 1px">
@@ -24,7 +23,7 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
         if (itIsAas)
             itMargin = "margin: 0px; margin-bottom: 3px";
 
-        <div class="row" style="background-columnor:aliceblue; padding: 0px; @itMargin">
+        <div class="row" style="background-color:aliceblue; padding: 0; @itMargin">
             @{
                 if (itIsAas)
                 {
@@ -36,24 +35,23 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
                             {
                                 border = "border:dotted;border-color:blue;";
                             }
-                            var svg = false;
-                            var url = false;
-                            var detailsImage = ImageBuilder.CreateDetailsImage(it, out url, out svg);
+
+                            var detailsImage = ImageBuilder.CreateDetailsImage(it, out var url, out var svg);
                             if (!string.IsNullOrEmpty(detailsImage) && !url)
                             {
                                 if (!svg)
                                 {
                                     <img style="max-height:50px;object-fit:contain;@border" alt="Details Image"
-                                         src=data:image;base64,@detailsImage />
+                                         src=data:image;base64,@detailsImage/>
                                 }
                                 else
                                 {
                                     <img style="max-height:50px;object-fit:contain;@border" alt="Details Image"
-                                        src=data:image/svg+xml;base64,@detailsImage />
+                                         src=data:image/svg+xml;base64,@detailsImage/>
                                 }
                             }
                         }
-                    </div>       
+                    </div>
                 }
             }
             <div class="column" style="width:100%;float:left;vertical-align:central">
@@ -68,14 +66,14 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
                 }
 
                 <div class="uic-tree__title" style="width:100%">
-                @{
-                    var titleId = string.Empty;
-                    if (AasxServer.Program.htmlId)
-                        titleId = HtmlId(node as TreeItem) + "._title";
-                    <span class="@Style.NodeTitleClass @(nodeSelected ? Style.NodeTitleSelectedClass : "")" @onclick="@(() => OnSelectNode(node))" id="@titleId">
-                        @TitleTemplate(node)
-                    </span>
-                }
+                    @{
+                        var titleId = string.Empty;
+                        if (AasxServer.Program.htmlId)
+                            titleId = HtmlId(node as TreeItem) + "._title";
+                        <span class="@Style.NodeTitleClass @(nodeSelected ? Style.NodeTitleSelectedClass : "")" @onclick="@(() => OnSelectNode(node))" id="@titleId">
+                            @TitleTemplate(node)
+                        </span>
+                    }
                 </div>
 
                 @if (hasChilds)
@@ -83,15 +81,15 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
                     if (nodeExpanded)
                     {
                         <Tree Nodes="ChildSelector(node)"
-                          TitleTemplate="TitleTemplate"
-                          ChildSelector="ChildSelector"
-                          ExpandedNodes="ExpandedNodes"
-                          ExpandedNodesChanged="ExpandedNodesChanged"
-                          SelectedNode="SelectedNode"
-                          SelectedNodeChanged="SelectedNodeChanged"
-                          Visible="nodeExpanded"
-                          HasChildNodes="HasChildNodes"
-                          HtmlId="HtmlId" />
+                              TitleTemplate="TitleTemplate"
+                              ChildSelector="ChildSelector"
+                              ExpandedNodes="ExpandedNodes"
+                              ExpandedNodesChanged="ExpandedNodesChanged"
+                              SelectedNode="SelectedNode"
+                              SelectedNodeChanged="SelectedNodeChanged"
+                              Visible="true"
+                              HasChildNodes="HasChildNodes"
+                              HtmlId="HtmlId"/>
                     }
                 }
             </div>
@@ -118,9 +116,9 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
 
     [Parameter] public bool Visible { get; set; } = true;
 
-    [Parameter] public Func<TNode, bool> HasChildNodes { get; set; } = node => true;
+    [Parameter] public Func<TNode, bool> HasChildNodes { get; set; } = _ => true;
 
-    [Parameter] public Func<TreeItem, string> HtmlId { get; set; } = node => string.Empty;
+    [Parameter] public Func<TreeItem, string> HtmlId { get; set; } = _ => string.Empty;
 
     private void OnToggleNode(TNode node, bool expand)
     {
