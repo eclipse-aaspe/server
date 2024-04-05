@@ -9,7 +9,6 @@
 
 @if (SelectedNode != null && SelectedNode.Tag is AssetAdministrationShell)
 {
-    @{
         var tag = SelectedNode.Tag;
         var qrCodeImageBase64 = string.Empty;
         var qrCodeLink = string.Empty;
@@ -37,5 +36,4 @@
             <a href="@qrCodeLink" target="_blank">@qrCodeLink</a>
             <br />
         }
-    }
 }
