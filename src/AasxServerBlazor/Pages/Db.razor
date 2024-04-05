@@ -258,12 +258,12 @@
                             @for (int i = 0; i < data.Count && i < 1000; i++)
                             {
                                 var aasDB = data[i];
-                                string aas64 = Base64UrlEncoder.Encode((aasDB.IdIdentifier));
+                                string aas64 = Base64UrlEncoder.Encode((aasDB.Identifier));
                                 string link = AasxServer.Program.externalBlazor + "/shells/" + aas64;
                                 <tr>
                                     <td style="word-break:keep-all">@aasDB.AASXId</td>
                                     <td style="word-break:keep-all"><b>@aasDB.Id</b></td>
-                                    <td>@aasDB.IdIdentifier</td>
+                                    <td>@aasDB.Identifier</td>
                                     <td>@aasDB.IdShort</td>
                                     <td>@aasDB.AssetKind</td>
                                     <td>@aasDB.GlobalAssetId</td>
@@ -283,14 +283,14 @@
                         @for (int i = 1000; i < data.Count; i++)
                         {
                             var aasDB = data[i];
-                            string aas64 = Base64UrlEncoder.Encode((aasDB.IdIdentifier));
+                            string aas64 = Base64UrlEncoder.Encode((aasDB.Identifier));
                             string link = AasxServer.Program.externalBlazor + "/shells/" + aas64;
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@aasDB.AASXId</span>
                             <span style="background-color:blue;">&nbsp</span>
                             <span><b>@aasDB.Id</b></span>
                             <span smDB="background-color:blue;">&nbsp</span>
-                            <span>@aasDB.IdIdentifier</span>
+                            <span>@aasDB.Identifier</span>
                             <span smDB="background-color:blue;">&nbsp</span>
                             <span>@aasDB.IdShort</span>
                             <span smDB="background-color:blue;">&nbsp</span>
@@ -340,7 +340,7 @@
                             @for (int i = 0; i < data.Count && i < 1000; i++)
                             {
                                 var smDB = data[i];
-                                string submodel64 = Base64UrlEncoder.Encode((smDB.IdIdentifier));
+                                string submodel64 = Base64UrlEncoder.Encode((smDB.Identifier));
                                 string link = AasxServer.Program.externalBlazor + "/submodels/" + submodel64;
                                 int smeCount = db.SMESets.Where(sme => sme.SMId == smDB.Id).Count();
 
@@ -348,7 +348,7 @@
                                     <td style="word-break:keep-all">@smDB.AASXId</td>
                                     <td style="word-break:keep-all">@smDB.AASId</td>
                                     <td style="word-break:keep-all"><b>@smDB.Id</b></td>
-                                    <td>@smDB.IdIdentifier</td>
+                                    <td>@smDB.Identifier</td>
                                     <td>@smDB.IdShort</td>
                                     <td>@smDB.SemanticId</td>
                                     <td style="word-break:keep-all">
@@ -368,7 +368,7 @@
                         @for (int i = 1000; i < data.Count; i++)
                         {
                             var smDB = data[i];
-                            string submodel64 = Base64UrlEncoder.Encode((smDB.IdIdentifier));
+                            string submodel64 = Base64UrlEncoder.Encode((smDB.Identifier));
                             string link = AasxServer.Program.externalBlazor + "/submodels/" + submodel64;
                             int smeCount = db.SMESets.Where(sme => sme.SMId == smDB.Id).Count();
                             <span style="background-color:blue;">&nbsp</span>
@@ -378,7 +378,7 @@
                             <span smDB="background-color:blue;">&nbsp</span>
                             <span><b>@smDB.Id</b></span>
                             <span smDB="background-color:blue;">&nbsp</span>
-                            <span>@smDB.IdIdentifier</span>
+                            <span>@smDB.Identifier</span>
                             <span smDB="background-color:blue;">&nbsp</span>
                             <span>@smDB.IdShort</span>
                             <span smDB="background-color:blue;">&nbsp</span>
@@ -399,7 +399,7 @@
 
                 if (url.EndsWith("/smjson") && smididentifier != "")
                 {
-                    var smDBList = db.SMSets.Where(s => s.IdIdentifier.Equals(smididentifier)).ToList();
+                    var smDBList = db.SMSets.Where(s => s.Identifier.Equals(smididentifier)).ToList();
                     if (smDBList.Any())
                     {
                         var smDB = smDBList.First();
@@ -450,7 +450,7 @@
                                     pnum = smeDBP.ParentSMEId;
                                 }
                                 var smDB = db.SMSets.Where(s => s.Id == smeDB.SMId).First();
-                                string submodel64 = Base64UrlEncoder.Encode((smDB.IdIdentifier));
+                                string submodel64 = Base64UrlEncoder.Encode((smDB.Identifier));
                                 string link = AasxServer.Program.externalBlazor + "/submodels/" + submodel64 + "/submodel-elements/" + path;
                                 <tr>
                                     <td style="word-break:keep-all">@smeDB.SMId</td>
@@ -485,9 +485,17 @@
                                         {
                                             <a href="@(shorturl + "/sme?smid="+ smeDB.SMId + "&smeid=" + smeDB.ParentSMEId)" target="_blank">par </a>
                                         }
-                                        @if (smeDB.SMEType == "MLP")
+                                        @if (smeDB.ValueType == "S")
                                         {
-                                            <a href="@(shorturl + "/svalue?smeid=" + smeDB.Id)" target="_blank">mlp</a>
+                                            <a href="@(shorturl + "/svalue?smeid=" + smeDB.Id)" target="_blank">svalue</a>
+                                        }
+                                        @if (smeDB.ValueType == "I")
+                                        {
+                                            <a href="@(shorturl + "/ivalue?smeid=" + smeDB.Id)" target="_blank">ivalue</a>
+                                        }
+                                        @if (smeDB.ValueType == "F")
+                                        {
+                                            <a href="@(shorturl + "/dvalue?smeid=" + smeDB.Id)" target="_blank">fvalue</a>
                                         }
                                     </td>
                                     <td><a href="@link" target="_blank">@link</a></td>
@@ -511,7 +519,7 @@
                                 pnum = smeDBP.ParentSMEId;
                             }
                             var smDB = db.SMSets.Where(s => s.Id == smeDB.SMId).First();
-                            string submodel64 = Base64UrlEncoder.Encode((smDB.IdIdentifier));
+                            string submodel64 = Base64UrlEncoder.Encode((smDB.Identifier));
                             string link = AasxServer.Program.externalBlazor + "/submodels/" + submodel64 + "/submodel-elements/" + path;
 
                             <span>@smeDB.SMId</span>

@@ -2165,47 +2165,7 @@ namespace AasxServer
                     {
                         lock (Program.changeAasxFile)
                         {
-                            var aasList = Program.env[envi].AasEnv.AssetAdministrationShells;
-                            var aasIds = aasList.Select(x => x.Id).ToList();
-
-                            var submodelList = Program.env[envi].AasEnv.Submodels;
-                            var submodelIds = submodelList.Select(x => x.Id).ToList();
-
-                            Dictionary<string, int> aasToDeleteAASXIdsDic;
-
-                            using (AasContext db = new AasContext())
-                            {
-                                //Deleting all related Aas, Submodel and SME
-                                //Join zwischen Liste und DB Tabelle nicht möglich, deswegen Contains für AAS und Submodelle
-                                aasToDeleteAASXIdsDic = db.AASSets.Where(x => aasIds.Contains(x.IdIdentifier)).ToDictionary(x => x.IdIdentifier, x => x.AASXId);
-                                db.AASSets.Where(x => aasIds.Contains(x.IdIdentifier)).ExecuteDelete();
-
-                                var submodelsToDeleteIds = db.SMSets.Where(x => submodelIds.Contains(x.IdIdentifier)).Select(x => x.Id).ToList();
-                                db.SMSets.Where(x => submodelIds.Contains(x.IdIdentifier)).ExecuteDelete();
-
-                                var smeToDeleteIds = db.SMESets.Where(x => submodelsToDeleteIds.Contains(x.SMId)).Select(x => x.Id).ToList();
-                                db.SMESets.Where(x => submodelsToDeleteIds.Contains(x.SMId)).ExecuteDelete();
-
-                                db.IValueSets.Where(x => smeToDeleteIds.Contains(x.SMEId)).ExecuteDelete();
-                                db.SValueSets.Where(x => smeToDeleteIds.Contains(x.SMEId)).ExecuteDelete();
-                                db.DValueSets.Where(x => smeToDeleteIds.Contains(x.SMEId)).ExecuteDelete();
-
-                                //Load Everything back in
-                                foreach (IAssetAdministrationShell aas in aasList)
-                                {
-                                    int aasxId = 0;
-                                    if (aasToDeleteAASXIdsDic.ContainsKey(aas.Id))
-                                    {
-                                        aasxId = aasToDeleteAASXIdsDic[aas.Id];
-                                    }
-                                    AASXSet aasxDB = db.AASXSets.Where(a => a.Id == aasxId).ToList<AASXSet>().First();
-                                    VisitorAASX.LoadAASInDB(Program.env[envi], aasxDB);
-                                    db.Add(aasxDB.AASSets);
-                                }
-                                db.SaveChanges();
-                            }
-                            //Program.saveEnv(envi);
-                            Program.env[envi].setWrite(false);
+                            EditDB.EditAAS(Program.env[envi]);
                             newData = true;
                         }
                     }

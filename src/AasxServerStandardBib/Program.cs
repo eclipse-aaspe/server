@@ -176,7 +176,7 @@ namespace AasxServer
                                 if (subId != null)
                                 {
                                     SMSet submodelDB = null;
-                                    var submodelDBList = slist.Where(s => s.IdIdentifier == subId);
+                                    var submodelDBList = slist.Where(s => s.Identifier == subId);
                                     if (submodelDBList.Any())
                                     {
                                         submodelDB = submodelDBList.First();
@@ -360,9 +360,9 @@ namespace AasxServer
                     using (AasContext db = new AasContext())
                     {
                         Console.WriteLine("LOAD: " + aasIdentifier);
-                        var aasDBList = db.AASSets.Where(a => a.IdIdentifier == aasIdentifier);
+                        var aasDBList = db.AASSets.Where(a => a.Identifier == aasIdentifier);
                         var aasDB = aasDBList.First();
-                        env[i] = ReadDB.AASToPackageEnv(envFileName[i], aasDB);
+                        env[i] = ReadDB.GetPackageEnv(envFileName[i], aasDB);
                         output = env[i].AasEnv.AssetAdministrationShells[0];
                     }
                 }
@@ -448,13 +448,13 @@ namespace AasxServer
                 {
                     using (AasContext db = new AasContext())
                     {
-                        var submodelDBList = db.SMSets.OrderBy(sm => sm.Id).Where(sm => sm.IdIdentifier == submodelIdentifier).ToList();
+                        var submodelDBList = db.SMSets.OrderBy(sm => sm.Id).Where(sm => sm.Identifier == submodelIdentifier).ToList();
                         var submodelDB = submodelDBList.First();
 
                         Console.WriteLine("LOAD Submodel: " + submodelDB.IdShort);
                         var aasDBList = db.AASSets.Where(a => a.AASXId == submodelDB.AASXId);
                         var aasDB = aasDBList.First();
-                        env[i] = ReadDB.AASToPackageEnv(envFileName[i], aasDB);
+                        env[i] = ReadDB.GetPackageEnv(envFileName[i], aasDB);
                         output = ReadDB.getSubmodel(smDB: submodelDB);
                     }
                 }

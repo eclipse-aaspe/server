@@ -35,7 +35,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                 // ad.Administration.Version = aas.administration.version;
                 // ad.Administration.Revision = aas.administration.revision;
                 ad.IdShort = aasDB.IdShort;
-                ad.Id = aasDB.IdIdentifier;
+                ad.Id = aasDB.Identifier;
                 var e = new Models.Endpoint();
                 e.ProtocolInformation = new ProtocolInformation();
                 e.ProtocolInformation.Href =
@@ -62,7 +62,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                     {
                         SubmodelDescriptor sd = new SubmodelDescriptor();
                         sd.IdShort = submodelDB.IdShort;
-                        sd.Id = submodelDB.IdIdentifier;
+                        sd.Id = submodelDB.Identifier;
                         var esm = new Models.Endpoint();
                         esm.ProtocolInformation = new ProtocolInformation();
                         esm.ProtocolInformation.Href =

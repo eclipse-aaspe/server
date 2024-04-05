@@ -34,7 +34,7 @@ namespace AasxServerDB.Migrations.Sqlite
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("IdIdentifier")
+                    b.Property<string>("Identifier")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -159,7 +159,7 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Property<int>("AASXId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("IdIdentifier")
+                    b.Property<string>("Identifier")
                         .IsRequired()
                         .HasColumnType("TEXT");
 

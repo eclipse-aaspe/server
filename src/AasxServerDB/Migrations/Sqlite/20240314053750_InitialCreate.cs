@@ -30,7 +30,7 @@ namespace AasxServerDB.Migrations.Sqlite
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     AASXId = table.Column<int>(type: "INTEGER", nullable: false),
-                    IdIdentifier = table.Column<string>(type: "TEXT", nullable: false),
+                    Identifier = table.Column<string>(type: "TEXT", nullable: false),
                     IdShort = table.Column<string>(type: "TEXT", nullable: false),
                     AssetKind = table.Column<string>(type: "TEXT", nullable: false),
                     GlobalAssetId = table.Column<string>(type: "TEXT", nullable: false)
@@ -55,7 +55,7 @@ namespace AasxServerDB.Migrations.Sqlite
                     AASXId = table.Column<int>(type: "INTEGER", nullable: false),
                     AASId = table.Column<int>(type: "INTEGER", nullable: false),
                     SemanticId = table.Column<string>(type: "TEXT", nullable: false),
-                    IdIdentifier = table.Column<string>(type: "TEXT", nullable: false),
+                    Identifier = table.Column<string>(type: "TEXT", nullable: false),
                     IdShort = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>

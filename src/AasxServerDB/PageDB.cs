@@ -25,7 +25,7 @@
                 data = db.AASSets
                     .OrderBy(a => a.Id)
                     .Where(a => (aasxid == 0 || a.AASXId == aasxid) && (aasid == 0 || a.Id == aasid) &&
-                        (searchLower == "" || a.IdShort.ToLower().Contains(searchLower) || a.IdIdentifier.ToLower().Contains(searchLower) || a.AssetKind.ToLower().Contains(searchLower) || a.GlobalAssetId.ToLower().Contains(searchLower)))
+                        (searchLower == "" || a.IdShort.ToLower().Contains(searchLower) || (a.Identifier == null || a.Identifier.ToLower().Contains(searchLower)) || a.AssetKind.ToLower().Contains(searchLower) || a.GlobalAssetId.ToLower().Contains(searchLower)))
                     .Take(size)
                     .ToList();
             }
@@ -40,7 +40,7 @@
                 data = db.SMSets
                     .OrderBy(s => s.Id)
                     .Where(s => (aasxid == 0 || s.AASXId == aasxid) && (aasid == 0 || s.AASId == aasid) && (smid == 0 || s.Id == smid) &&
-                        (searchLower == "" || s.IdIdentifier.ToLower().Contains(searchLower) || s.IdShort.ToLower().Contains(searchLower) || s.SemanticId.ToLower().Contains(searchLower)))
+                        (searchLower == "" || s.Identifier.ToLower().Contains(searchLower) || s.IdShort.ToLower().Contains(searchLower) || s.SemanticId.ToLower().Contains(searchLower)))
                     .Take(size)
                     .ToList();
             }

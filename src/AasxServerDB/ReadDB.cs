@@ -12,13 +12,13 @@ namespace AasxServerDB
             int? aasxId = null;
             if (!submodelId.Equals(""))
             {
-                var submodelDBList = db.SMSets.Where(s => s.IdIdentifier == submodelId);
+                var submodelDBList = db.SMSets.Where(s => s.Identifier == submodelId);
                 if (submodelDBList.Count() > 0)
                     aasxId = submodelDBList.First().AASXId;
             }
             if (!aasId.Equals(""))
             {
-                var aasDBList = db.AASSets.Where(a => a.IdIdentifier == aasId);
+                var aasDBList = db.AASSets.Where(a => a.Identifier == aasId);
                 if (aasDBList.Any())
                     aasxId = aasDBList.First().AASXId;
             }
@@ -32,7 +32,7 @@ namespace AasxServerDB
 
         }
 
-        static public AdminShellPackageEnv AASToPackageEnv(string path, AASSet aasDB)
+        static public AdminShellPackageEnv GetPackageEnv(string path, AASSet aasDB) 
         {
             using (AasContext db = new AasContext())
             {
@@ -40,7 +40,7 @@ namespace AasxServerDB
                     return null;
 
                 AssetAdministrationShell aas = new AssetAdministrationShell(
-                    id: aasDB.IdIdentifier,
+                    id: aasDB.Identifier,
                     idShort: aasDB.IdShort,
                     assetInformation: new AssetInformation(AssetKind.Type, aasDB.GlobalAssetId),
                     submodels: new List<AasCore.Aas3_0.IReference>());
@@ -70,7 +70,7 @@ namespace AasxServerDB
             {
                 if (!smIdentifier.Equals(""))
                 {
-                    var smList = db.SMSets.Where(sm => sm.IdIdentifier == smIdentifier).ToList();
+                    var smList = db.SMSets.Where(sm => sm.Identifier == smIdentifier).ToList();
                     if (smList.Count == 0)
                         return null;
                     smDB = smList.First();
@@ -83,7 +83,7 @@ namespace AasxServerDB
                     .Where(sme => sme.SMId == smDB.Id)
                     .ToList();
 
-                Submodel submodel = new Submodel(smDB.IdIdentifier);
+                Submodel submodel = new Submodel(smDB.Identifier);
                 submodel.IdShort = smDB.IdShort;
                 submodel.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
                     new List<IKey>() { new Key(KeyTypes.GlobalReference, smDB.SemanticId) });
@@ -122,7 +122,7 @@ namespace AasxServerDB
                 ISubmodelElement nextSME = null;
                 switch (smel.SMEType)
                 {
-                    case "P":
+                    case "Prop":
                         nextSME = new Property(DataTypeDefXsd.String, idShort: smel.IdShort, value: smel.getValue());
                         break;
                     case "SMC":

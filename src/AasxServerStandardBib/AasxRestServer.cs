@@ -1509,7 +1509,7 @@ namespace AasxRestServerLibrary
 
                                 var aasDB = aasDBList[i];
                                 AssetAdministrationShell aas = new AssetAdministrationShell(
-                                    id: aasDB.IdIdentifier,
+                                    id: aasDB.Identifier,
                                     idShort: aasDB.IdShort,
                                     /*assetInformation: new AssetInformation(AssetKind.Type,
                                         new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, 

@@ -149,7 +149,7 @@ namespace AasxServerDB
         public int AASXId { get; set; }
         public virtual AASXSet AASXSet { get; set; }
 
-        public string IdIdentifier { get; set; }
+        public string Identifier { get; set; }
         public string IdShort { get; set; }
         public string AssetKind { get; set; }
         public string GlobalAssetId { get; set; }
@@ -171,7 +171,7 @@ namespace AasxServerDB
         public virtual AASSet AASSet { get; set; }
 
         public string SemanticId { get; set; }
-        public string IdIdentifier { get; set; }
+        public string Identifier { get; set; }
         public string IdShort { get; set; }
 
         public virtual ICollection<SMESet> SMESets { get; set; }

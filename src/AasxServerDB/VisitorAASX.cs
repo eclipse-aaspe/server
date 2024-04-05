@@ -112,32 +112,32 @@ namespace AasxServerDB
 
         private string shortType(ISubmodelElement sme)
         {
+            if (sme is Capability)
+                return "Cap";
             if (sme is Property)
-                return ("P");
-            if (sme is RelationshipElement)
-                return "RE";
-            if (sme is SubmodelElementList)
-                return "SEL";
-            if (sme is SubmodelElementCollection)
-                return "SMC";
+                return "Prop";
             if (sme is MultiLanguageProperty)
                 return "MLP";
-            if (sme is ReferenceElement)
-                return ("RE");
             if (sme is AasCore.Aas3_0.Range)
-                return "R";
-            if (sme is Blob)
-                return "B";
-            if (sme is AasCore.Aas3_0.File)
-                return "F";
-            if (sme is AnnotatedRelationshipElement)
-                return "ARE";
+                return "Range";
             if (sme is Entity)
-                return "E";
+                return "Ent";
+            if (sme is AasCore.Aas3_0.File)
+                return "File";
+            if (sme is Blob)
+                return "Blob";
             if (sme is Operation)
-                return "O";
-            if (sme is Capability)
-                return "C";
+                return "Opr";
+            if (sme is ReferenceElement)
+                return ("Ref");
+            if (sme is RelationshipElement)
+                return "Rel";
+            if (sme is AnnotatedRelationshipElement)
+                return "RelA";
+            if (sme is SubmodelElementCollection)
+                return "SMC";
+            if (sme is SubmodelElementList)
+                return "SML";
             return null;
         }
 
@@ -328,7 +328,7 @@ namespace AasxServerDB
             var aasDB = new AASSet
             {
                 AASXSet = _aasxDB,
-                IdIdentifier = that.Id,
+                Identifier = that.Id,
                 IdShort = that.IdShort,
                 AssetKind = that.AssetInformation.AssetKind.ToString(),
                 GlobalAssetId = that.AssetInformation.GlobalAssetId,
@@ -355,7 +355,7 @@ namespace AasxServerDB
                 AASXSet = _aasxDB,
                 AASSet = _aasDB,
                 SemanticId = semanticId,
-                IdIdentifier = that.Id,
+                Identifier = that.Id,
                 IdShort = that.IdShort,
                 SMESets = new List<SMESet>()
             };

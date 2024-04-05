@@ -40,7 +40,7 @@ namespace AasxServerDB
                 foreach (var submodel in subList)
                 {
                     var sr = new SmResult();
-                    sr.smId = submodel.IdIdentifier;
+                    sr.smId = submodel.Identifier;
                     string sub64 = Base64UrlEncoder.Encode(sr.smId);
                     sr.url = ExternalBlazor + "/submodels/" + sub64;
                     list.Add(sr);
@@ -234,7 +234,7 @@ namespace AasxServerDB
                         var submodelDB = submodelDBList.First();
                         if (submodelDB == null || (smSemanticId != "" && submodelDB.SemanticId != smSemanticId))
                             continue;
-                        r.smId = submodelDB.IdIdentifier;
+                        r.smId = submodelDB.Identifier;
                         r.value = l.Value;
                         string path = l.IdShort;
                         int? pId = l.ParentSMEId;
@@ -442,7 +442,7 @@ namespace AasxServerDB
                     {
                         r.value = equal;
                         r.url = "";
-                        r.smId = submodelDB.IdIdentifier;
+                        r.smId = submodelDB.Identifier;
                         string path = l.IdShort;
                         int? pId = l.ParentSMEId;
                         while (pId != null)
