@@ -3,6 +3,15 @@
 @using Extensions
 @namespace AasxServerBlazor.Pages.TreeNodeComponents
 
+<div class="tree-node-property-editor">
+    @if (IsEditEnabled)
+    {
+        <input @bind="CurrentValue" class="property-input" />
+        <span class="property-value">@CurrentValue</span>
+        <br>
+    }
+</div>
+
 @code {
     [Parameter] public TreeItem SelectedNode { get; set; }
 
@@ -25,12 +34,4 @@
         Program.signalNewData(0);
         CurrentValue = string.Empty;
     }
-
-}
-
-@if (IsEditEnabled)
-{
-    <input @bind="CurrentValue" style="width:500px; border-width: 1px; border-color: black;"/>
-    <span style="border-width: 1px; border-color: black; background-color: blue;">@CurrentValue</span>
-    <br>
 }

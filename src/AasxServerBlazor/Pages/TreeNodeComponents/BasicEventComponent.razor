@@ -4,29 +4,31 @@
 
 @namespace AasxServerBlazor.Pages.TreeNodeComponents
 
+<div class="node-details-container">
+    @if (SelectedNode?.Tag is BasicEventElement {Observed: not null} basicEventElement)
+    {
+        var observedEventElementKey = basicEventElement.Observed.GetAsExactlyOneKey().ToStringExtended();
+
+        <span class="observed-event">@("Observed " + observedEventElementKey)</span>
+        <br/>
+
+        var referableEventOfAasEnvironment = Program.env[0].AasEnv.FindReferableByReference(basicEventElement.Observed);
+        if (referableEventOfAasEnvironment != null)
+        {
+            <span class="update-timestamp">UPDATE @referableEventOfAasEnvironment.TimeStamp.ToString(TimeFormat)</span>
+            <br/>
+            <span class="create-timestamp">CREATE @referableEventOfAasEnvironment.TimeStampCreate.ToString(TimeFormat)</span>
+            <br/>
+        }
+        else
+        {
+            <span class="error-message">Referenced element does not exist!</span>
+            <br/>
+        }
+    }
+</div>
+
 @code {
     [Parameter] public TreeItem SelectedNode { get; set; }
     private const string TimeFormat = "yy-MM-dd HH:mm:ss.fff";
-}
-
-@if (SelectedNode?.Tag is BasicEventElement {Observed: not null} basicEventElement)
-{
-    var observedEventElementKey = basicEventElement.Observed.GetAsExactlyOneKey().ToStringExtended();
-
-    <span style="color:white;background-color:blue;">Observed @(" " + observedEventElementKey)</span>
-    <br/>
-
-    var referableEventOfAasEnvironment = Program.env[0].AasEnv.FindReferableByReference(basicEventElement.Observed);
-    if (referableEventOfAasEnvironment != null)
-    {
-        <span style="color:lightgray;">UPDATE @referableEventOfAasEnvironment.TimeStamp.ToString(TimeFormat)</span>
-        <br/>
-        <span style="color:lightgray;">CREATE @referableEventOfAasEnvironment.TimeStampCreate.ToString(TimeFormat)</span>
-        <br/>
-    }
-    else
-    {
-        <span>Referenced element does not exist!</span>
-        <br/>
-    }
 }

@@ -3,6 +3,20 @@
 @using AasxServer
 @namespace AasxServerBlazor.Pages.TreeNodeComponents
 
+<div class="tree-node-timestamp">
+    @if (IsNodeValid)
+    {
+        <span class="timestamp-label">UPDATE @ReferableNode.TimeStamp.ToString(TimeFormat)</span>
+        <br/>
+        <button class="timestamp-button" @onclick="SetTimeStamp">TIMESTAMP</button>
+        <br/>
+        <span class="timestamp-label">CREATE @ReferableNode.TimeStampCreate.ToString(TimeFormat)</span>
+        <br/>
+        <span class="timestamp-label">TREE @ReferableNode.TimeStampTree.ToString(TimeFormat)</span>
+        <br/>
+    }
+</div>
+
 @code {
     [Parameter] public TreeItem SelectedNode { get; set; }
 
@@ -21,16 +35,4 @@
         ReferableNode.SetTimeStamp(DateTime.UtcNow);
         Program.env[SelectedNode.EnvironmentIndex].setWrite(true);
     }
-}
-
-@if (IsNodeValid)
-{
-    <span style="color:lightgray;">UPDATE @ReferableNode.TimeStamp.ToString(TimeFormat)</span>
-    <br/>
-    <button style="border-width: 1px; border-color: black; background-color: lightgray" @onclick="SetTimeStamp">TIMESTAMP</button>
-    <br/>
-    <span style="color:lightgray;">CREATE @ReferableNode.TimeStampCreate.ToString(TimeFormat)</span>
-    <br/>
-    <span style="color:lightgray;">TREE @ReferableNode.TimeStampTree.ToString(TimeFormat)</span>
-    <br/>
 }

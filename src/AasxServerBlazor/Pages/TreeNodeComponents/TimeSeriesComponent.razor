@@ -144,11 +144,12 @@
             <AasxServerBlazor.Pages.TreeNodeComponents.TimeSeriesImageComponent ImageBase64="@timeSeriesImageBase64"
                                                                                 ShowModal="_showImageModal"
                                                                                 TimeStampPlot="_timeStampPlot"
-                                                                                ElapsedMsToProcessImage="elapsedMsToProcessImage"/>
+                                                                                ElapsedMsToProcessImage="elapsedMsToProcessImage"
+                                                                                class="rendering-time-series"/>
         }
         else
         {
-            <div class="my-2">Rendering time series...</div>
+            <div class="my-2 rendering-time-series">Rendering time series...</div>
         }
     }
     else

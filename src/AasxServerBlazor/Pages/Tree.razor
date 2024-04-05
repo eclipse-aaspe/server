@@ -9,25 +9,24 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
 @using AasxServerBlazor.TreeVisualisation.Builders
 
 @typeparam TNode
-@using static TreePage
 
-<div class="uic-tree @(Visible ? string.Empty : "uic-tree--hidden")" style="float:left; padding: 1px; margin: 1px">
+<div class="tree @(Visible ? string.Empty : "hidden")">
     @foreach (var node in Nodes ?? Enumerable.Empty<TNode>())
     {
         var treeItem = node as TreeItem;
         var treeItemIsAas = treeItem?.Tag is AssetAdministrationShell;
-        var treeItemMargin = treeItemIsAas ? "margin: 0px; margin-bottom: 3px" : "margin: 0px";
+        var treeItemMargin = treeItemIsAas ? "aas-margin" : "normal-margin";
 
-        <div class="row" style="background-color:aliceblue; padding: 0; @treeItemMargin">
+        <div class="tree-node row @treeItemMargin">
             @if (treeItemIsAas)
             {
-                <div class="column" style="max-width:50px;padding:1px;display:flex;justify-content:center;">
+                <div class="tree-icon column">
                     @{
                         var border = string.Empty;
                         var env = AasxServer.Program.env[treeItem.EnvironmentIndex];
                         if (env != null && env.getWrite())
                         {
-                            border = "border:dotted;border-color:blue;";
+                            border = "dotted-border";
                         }
 
                         var detailsImage = ImageBuilder.CreateDetailsImage(treeItem, out var url, out var svg);
@@ -35,44 +34,33 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
 
                         if (!string.IsNullOrEmpty(detailsImage) && !url)
                         {
-                            <img style="max-height:50px;object-fit:contain;@border" alt="Details Image" src="@src" />
+                            <img class="details-image @border" alt="Details Image" src="@src" />
                         }
                     }
                 </div>
             }
 
-            <div class="column" style="width:100%;float:left;vertical-align:central">
-                @if (HasChildNodes(node))
-                {
-                    var iconId = AasxServer.Program.htmlId ? $"{HtmlId(treeItem)}._icon" : string.Empty;
-                    <span class="uic-tree__icon" @onclick="@(() => OnToggleNode(node, !ExpandedNodes.Contains(node)))" id="@iconId">
-                        <i class="@(ExpandedNodes.Contains(node) ? Style.CollapseNodeIconClass : Style.ExpandNodeIconClass)"></i>
-                    </span>
-                }
-
-                <div class="uic-tree__title" style="width:100%">
-                    @{
-                        var titleId = AasxServer.Program.htmlId ? $"{HtmlId(treeItem)}._title" : string.Empty;
-                        <span class="@Style.NodeTitleClass @(SelectedNode?.Equals(node) == true ? Style.NodeTitleSelectedClass : "")" @onclick="@(() => OnSelectNode(node))" id="@titleId">
-                            @TitleTemplate(node)
-                        </span>
-                    }
-                </div>
-
-                @if (HasChildNodes(node) && ExpandedNodes.Contains(node))
-                {
-                    <Tree Nodes="ChildSelector(node)"
-                          TitleTemplate="TitleTemplate"
-                          ChildSelector="ChildSelector"
-                          ExpandedNodes="ExpandedNodes"
-                          ExpandedNodesChanged="ExpandedNodesChanged"
-                          SelectedNode="SelectedNode"
-                          SelectedNodeChanged="SelectedNodeChanged"
-                          Visible="true"
-                          HasChildNodes="HasChildNodes"
-                          HtmlId="HtmlId" />
-                }
+            <div class="tree-title column" @onclick="@(() => OnToggleNode(node, !ExpandedNodes.Contains(node)))">
+                <span class="icon @(ExpandedNodes.Contains(node) ? Style.CollapseNodeIconClass : Style.ExpandNodeIconClass)"></span>
+                <span class="title @(SelectedNode?.Equals(node) == true ? Style.NodeTitleSelectedClass : "")" @onclick="@(() => OnSelectNode(node))">
+                    @TitleTemplate(node)
+                </span>
             </div>
+
+            @if (HasChildNodes(node) && ExpandedNodes.Contains(node))
+            {
+                <Tree Nodes="ChildSelector(node)"
+                      TitleTemplate="TitleTemplate"
+                      ChildSelector="ChildSelector"
+                      ExpandedNodes="ExpandedNodes"
+                      ExpandedNodesChanged="ExpandedNodesChanged"
+                      SelectedNode="SelectedNode"
+                      SelectedNodeChanged="SelectedNodeChanged"
+                      Visible="true"
+                      HasChildNodes="HasChildNodes"
+                      HtmlId="HtmlId"
+                      Style="@Style" />
+            }
         </div>
     }
 </div>

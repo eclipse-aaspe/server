@@ -4,12 +4,45 @@
 @inject NavigationManager NavigationManager
 @namespace AasxServerBlazor.Pages.TreeNodeComponents
 
+<div class="tree-node-actions">
+    @if (SelectedNode != null && ItemLink != string.Empty)
+    {
+        @if (true)
+        {
+            <a href="@ItemLink" target="_blank">@ItemLink</a>
+            <br>
+        }
+        else
+        {
+            <button class="download-button" @onclick="()=> NavigationManager.NavigateTo(ItemLink)">Download</button>
+            <br>
+        }
+
+        @if (IsSubmodelToPublish)
+        {
+            <button class="publish-button" @onclick="ResetSubmodelToPublish">Publish</button>
+        }
+        else
+        {
+            <button class="publish-button" @onclick="SetSubmodelToPublish">Publish</button>
+        }
+
+        @if (IsSubmodelToSubscribe)
+        {
+            <button class="subscribe-button" @onclick="ResetSubmodelToSubscribe">Subscribe</button>
+        }
+        else
+        {
+            <button class="subscribe-button" @onclick="SetSubmodelToSubscribe">Subscribe</button>
+        }
+    }
+</div>
+
 @code {
     [Parameter] public TreeItem SelectedNode { get; set; }
 
     private static readonly ExternalLinkCreator ExternalLinkCreator = new();
     private readonly AasxItemLinkService _aasxItemLinkService = new(ExternalLinkCreator);
-
 
     private string ItemLink => _aasxItemLinkService.Create(SelectedNode, NavigationManager.Uri, out var externalLink);
 
@@ -36,38 +69,5 @@
     {
         if (!IsSubmodelToPublish)
             Program.submodelsToSubscribe.Add(SelectedNode.Tag);
-    }
-
-}
-
-@if (SelectedNode != null && ItemLink != string.Empty)
-{
-    @if (true)
-    {
-        <a href="@ItemLink" target="_blank">@ItemLink</a>
-        <br>
-    }
-    else
-    {
-        <button onclick="window.location.href = '@ItemLink'; ">Download</button>
-        <br>
-    }
-
-    @if (IsSubmodelToPublish)
-    {
-        <button style="color:white;background-color:blue" @onclick="ResetSubmodelToPublish">Publish</button>
-    }
-    else
-    {
-        <button @onclick="SetSubmodelToPublish">Publish</button>
-    }
-
-    @if (IsSubmodelToSubscribe)
-    {
-        <button style="color:white;background-color:blue" @onclick="ResetSubmodelToSubscribe">Subscribe</button>
-    }
-    else
-    {
-        <button @onclick="SetSubmodelToSubscribe">Subscribe</button>
     }
 }

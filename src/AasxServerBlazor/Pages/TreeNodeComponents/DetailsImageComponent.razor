@@ -3,20 +3,21 @@
 
 @namespace AasxServerBlazor.Pages.TreeNodeComponents
 
-@code
-{
-    [Parameter] public TreeItem SelectedNode { get; set; }
-}
+<div class="tree-node-image">
+    @{
+        var detailsImage = ImageBuilder.CreateDetailsImage(SelectedNode, out var url, out var svg);
+        if (!string.IsNullOrEmpty(detailsImage))
+        {
+            var imageUrl = url ? detailsImage : $"data:image{(svg ? "/svg+xml" : "")};base64,{detailsImage}";
 
-@{
-    var detailsImage = ImageBuilder.CreateDetailsImage(SelectedNode, out var url, out var svg);
-    if (!string.IsNullOrEmpty(detailsImage))
-    {
-        var imageUrl = url ? detailsImage : $"data:image{(svg ? "/svg+xml" : "")};base64,{detailsImage}";
-
-        <br />
-        <div>
-            <img src="@imageUrl" style="max-width: 50%" alt="Details Image" />
-        </div>
+            <br />
+            <div>
+                <img src="@imageUrl" alt="Details Image" />
+            </div>
+        }
     }
+</div>
+
+@code {
+    [Parameter] public TreeItem SelectedNode { get; set; }
 }

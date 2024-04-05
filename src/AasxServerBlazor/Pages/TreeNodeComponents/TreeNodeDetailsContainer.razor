@@ -2,7 +2,7 @@
 
 @namespace AasxServerBlazor.Pages.TreeNodeComponents
 
-<div class="sticky-top" style="word-wrap:break-word;word-break:break-all;">
+<div class="sticky-top details-container">
     @{
         <TreeItemRepresentationComponent SelectedNode="@SelectedNode"/>
         <NodeDateTimeChangesComponent SelectedNode="@SelectedNode"/>
@@ -17,5 +17,4 @@
     @code {
         [Parameter] public TreeItem SelectedNode { get; set; }
     }
-
 </div>

@@ -32,12 +32,11 @@
 
 <div class="column-12 row">
     <br/>
-    <div class="column-5" style="border: 3px solid blue; border-radius: 8px; background-color: aliceblue; 
-    word-wrap: break-word; word-break: break-all; position: sticky;">
+    <div class="column-5 tree-container">
         @UpdateVisibleTree(_items, SelectedNode)
         @if (Program.isLoading)
         {
-            <span style="color: white; background-color: blue;">Loading...</span>
+            <span class="loading">Loading...</span>
         }
         else
         {
@@ -76,7 +75,7 @@
                                     submodelElementParent = (submodelElementParent as ISubmodelElement)?.Parent;
                                 }
 
-                                path = (submodelElementParent as Submodel).IdShort + "." + path;
+                                path = $"{(submodelElementParent as Submodel).IdShort}.{path}";
                                 var error = string.Empty;
                                 access = SecService.AuthorizeRequest(null, "/submodel-elements", AccessRights.READ,
                                     out error, out withAllow, out getPolicy, path, string.Empty, submodelElementParent);
@@ -91,36 +90,36 @@
                                 withAllow = false;
                             if (access)
                             {
-                                <span style="color:green;background-color:green;">Access</span>
+                                <span class="access">Access</span>
                             }
                             else
                             {
                                 if (!withAllow)
                                 {
-                                    <span style="color:red;background-color:red;">Not Allowed</span>
+                                    <span class="not-allowed">Not Allowed</span>
                                 }
                                 else
                                 {
-                                    <span style="color:red;background-color:red;">Allowed</span>
+                                    <span class="not-allowed">Allowed</span>
                                 }
                             }
                         }
                     }
 
-                    <span style="color:white;background-color:blue;">@context.BuildNodeRepresentation()</span>
+                    <span class="node-representation">@context.BuildNodeRepresentation()</span>
                     @context.GetIdentifier()
                     @if (Program.withPolicy && !string.IsNullOrEmpty(getPolicy))
                     {
-                        <span style="color:blue">@getPolicy</span>
+                        <span class="policy">@getPolicy</span>
                     }
 
-                    <span style="color:blue;font-size:14px">@context.GetSymbolicRepresentation()</span>
-                    <span style="color:lightgray;font-size:14px">@context.GetTimeStamp()</span>
+                    <span class="symbolic-representation">@context.GetSymbolicRepresentation()</span>
+                    <span class="timestamp">@context.GetTimeStamp()</span>
                 }
             </TitleTemplate>
         </Tree>
     </div>
-    <div class="column-7" style="border-width: 3px; border-style: solid; border-color: blue; border-radius: 8px; position: sticky; background-color:aliceblue;">
+    <div class="column-7 details-container">
         <AasxServerBlazor.Pages.TreeNodeComponents.TreeNodeDetailsContainer SelectedNode="@SelectedNode"/>
     </div>
 </div>

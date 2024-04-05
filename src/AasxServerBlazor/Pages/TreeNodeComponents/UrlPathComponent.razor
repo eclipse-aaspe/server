@@ -5,16 +5,18 @@
 
 @if (!string.IsNullOrEmpty(SubmodelUrlPath(SelectedNode)))
 {
-    <span style="color:white;background-color:blue;">URL:</span>
-    <a href="@SubmodelUrlPath(SelectedNode)" target="_blank">@SubmodelUrlPath(SelectedNode)</a>
-    <br>
+    <div class="url-section">
+        <span class="url-label">URL:</span>
+        <a href="@SubmodelUrlPath(SelectedNode)" target="_blank">@SubmodelUrlPath(SelectedNode)</a>
+    </div>
 }
 
 @if (!string.IsNullOrEmpty(SubmodelElementUrlPath(SelectedNode)))
 {
-    <span style="color:white;background-color:blue;">URL:</span>
-    <a href="@SubmodelElementUrlPath(SelectedNode)" target="_blank">@SubmodelElementUrlPath(SelectedNode)</a>
-    <br>
+    <div class="url-section">
+        <span class="url-label">URL:</span>
+        <a href="@SubmodelElementUrlPath(SelectedNode)" target="_blank">@SubmodelElementUrlPath(SelectedNode)</a>
+    </div>
 }
 
 @code {

@@ -15,46 +15,54 @@
     [Parameter] public Action OnFilterApplied { get; set; }
 
     private const string TimeFormat = "yy-MM-dd HH:mm:ss.fff";
+
+    private void ResetFilter()
+    {
+        PlotFilter.SetInitialFilterState();
+        PlotFilterTsdOffset = 0;
+    }
+
+    private void SetFilterForToday()
+    {
+        PlotFilterTsdOffset = 0;
+        PlotFilter.SetFilterStateForDay(0);
+    }
+
+    private void SetFilterForYesterday()
+    {
+        PlotFilterTsdOffset = -1;
+        PlotFilter.SetFilterStateForDay(-1);
+    }
+
+    private void SetFilterForPreviousDay()
+    {
+        PlotFilter.SetFilterStateForDay(--PlotFilterTsdOffset);
+    }
+
+    private void SetFilterForNextDay()
+    {
+        PlotFilter.SetFilterStateForDay(++PlotFilterTsdOffset);
+    }
 }
 
-<div class="d-flex flex-column">
-    <img @onclick="OnFilterApplied" src="data:image;base64,@TimeSeriesImageBase64" alt="Visualization of time series" style="max-width:950px;cursor:zoom-in;"/>
-    <span class="text-muted" style="font-size:14px;">
-        Image processing took @ElapsedMsToProcessImage ms (Last update: @TimeStampPlot.ToString(TimeFormat))
-    </span>
+<div class="time-series-filter">
+    <img @onclick="OnFilterApplied" src="data:image;base64,@TimeSeriesImageBase64" alt="Visualization of time series" />
+    <span class="time-series-info">Image processing took @ElapsedMsToProcessImage ms (Last update: @TimeStampPlot.ToString(TimeFormat))</span>
 </div>
 
 <EditForm Model="@PlotFilter" OnValidSubmit="OnFilterApplied">
     <label for="filterFromDate">Filter from</label>
-    <InputDate id="filterFromDate" @bind-Value="PlotFilter.StartDate"/>
-    <input type="time" @bind-value="PlotFilter.StartTime"/>
+    <InputDate id="filterFromDate" @bind-Value="PlotFilter.StartDate" />
+    <input type="time" @bind-value="PlotFilter.StartTime" />
     <label for="filterToDate">Filter to</label>
-    <InputDate id="filterToDate" @bind-Value="PlotFilter.EndDate"/>
-    <input type="time" @bind-value="PlotFilter.EndTime"/>
-    <div>
-        <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                type="submit">
-            Apply
-        </button>
-        <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                @onclick="PlotFilter.SetInitialFilterState">
-            Reset
-        </button>
-        <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                @onclick="() => { PlotFilterTsdOffset = 0; PlotFilter.SetFilterStateForDay(0); }">
-            Today
-        </button>
-        <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                @onclick="() => { PlotFilterTsdOffset = -1; PlotFilter.SetFilterStateForDay(-1); }">
-            Yesterday
-        </button>
-        <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                @onclick="() => PlotFilter.SetFilterStateForDay(--PlotFilterTsdOffset)">
-            Prev day
-        </button>
-        <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                @onclick="() => PlotFilter.SetFilterStateForDay(++PlotFilterTsdOffset)">
-            Next day
-        </button>
+    <InputDate id="filterToDate" @bind-Value="PlotFilter.EndDate" />
+    <input type="time" @bind-value="PlotFilter.EndTime" />
+    <div class="filter-buttons">
+        <button type="submit">Apply</button>
+        <button @onclick="ResetFilter">Reset</button>
+        <button @onclick="SetFilterForToday">Today</button>
+        <button @onclick="SetFilterForYesterday">Yesterday</button>
+        <button @onclick="SetFilterForPreviousDay">Prev day</button>
+        <button @onclick="SetFilterForNextDay">Next day</button>
     </div>
 </EditForm>
