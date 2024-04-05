@@ -4,6 +4,7 @@
 @using AasxServerBlazor.DateTimeServices
 @using AasxServerStandardBib
 @using static AasxServerStandardBib.TimeSeriesPlotting
+@using AasCore.Aas3_0
 @namespace AasxServerBlazor.Pages.TreeNodeComponents
 
 @inject BlazorSessionService BlazorSessionService;
@@ -23,7 +24,7 @@
     private const string HttpsAdminShellIoSandboxZveiTimeseriesdataTimeseriessegment = "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0";
 }
 
-@if (SelectedNode != null && SelectedNode.Tag is SubmodelElementCollection submodelElementCollection)
+@if (SelectedNode is {Tag: SubmodelElementCollection submodelElementCollection})
 {
     var semanticId = submodelElementCollection.SemanticId?.GetAsIdentifier();
 
