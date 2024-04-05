@@ -43,31 +43,35 @@
                         var display = false;
                         var access = false;
                         var withAllow = false;
-                        if (context.Tag is Submodel submodel)
+                        switch (context.Tag)
                         {
-                            // check, if access to submodel is allowed
-                            var error = string.Empty;
-                            withAllow = false;
-                            access = SecService.AuthorizeRequest(null, "/submodels", AccessRights.READ,
-                                out error, out withAllow, out getPolicy, submodel.IdShort!, "submodel", submodel);
-                            display = true;
-                        }
-
-                        if (context.Tag is ISubmodelElement submodelElement)
-                        {
-                            var path = submodelElement.IdShort;
-                            var p = submodelElement.Parent;
-                            while (!(p is Submodel))
+                            case Submodel submodel:
                             {
-                                path = (p as ISubmodelElement).IdShort + "." + path;
-                                p = (p as ISubmodelElement).Parent;
+                                // check, if access to submodel is allowed
+                                var error = string.Empty;
+                                withAllow = false;
+                                access = SecService.AuthorizeRequest(null, "/submodels", AccessRights.READ,
+                                    out error, out withAllow, out getPolicy, submodel.IdShort!, "submodel", submodel);
+                                display = true;
+                                break;
                             }
+                            case ISubmodelElement submodelElement:
+                            {
+                                var path = submodelElement.IdShort;
+                                var submodelElementParent = submodelElement.Parent;
+                                while (submodelElementParent is not Submodel)
+                                {
+                                    path = ((ISubmodelElement) submodelElementParent)?.IdShort + "." + path;
+                                    submodelElementParent = (submodelElementParent as ISubmodelElement)?.Parent;
+                                }
 
-                            path = (p as Submodel).IdShort + "." + path;
-                            var error = string.Empty;
-                            access = SecService.AuthorizeRequest(null, "/submodel-elements", AccessRights.READ,
-                                out error, out withAllow, out getPolicy, path, string.Empty, p);
-                            display = true;
+                                path = (submodelElementParent as Submodel).IdShort + "." + path;
+                                var error = string.Empty;
+                                access = SecService.AuthorizeRequest(null, "/submodel-elements", AccessRights.READ,
+                                    out error, out withAllow, out getPolicy, path, string.Empty, submodelElementParent);
+                                display = true;
+                                break;
+                            }
                         }
 
                         if (display)
@@ -159,7 +163,7 @@
         }
 
         _newDataMode = newArgs.signalNewDataMode;
-        InvokeAsync(() => StateHasChanged());
+        InvokeAsync(StateHasChanged);
     }
 
     string UpdateVisibleTree(List<TreeItem> viewItems, TreeItem selectedNode)
@@ -200,10 +204,6 @@
     void UpdateNodes(TreeItem selectedNode)
     {
         _expandedNodes.Clear();
-        if (selectedNode != null)
-        {
-            selectedNode = TreePath.Find(selectedNode.GetPath(), _items);
-        }
 
         foreach (var path in _expandedNodes.Select(expandedNode => TreePath.Find(expandedNode.GetPath(), _items)).Where(p => p != null))
         {

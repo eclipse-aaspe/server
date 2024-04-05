@@ -19,11 +19,10 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
         var nodeSelected = node.Equals(SelectedNode);
         var hasChilds = HasChildNodes(node);
         var it = node as TreeItem;
-        bool itIsAas = it.Tag is AssetAdministrationShell;
-        string itMargin = "margin: 0px";
+        var itIsAas = it.Tag is AssetAdministrationShell;
+        var itMargin = "margin: 0px";
         if (itIsAas)
             itMargin = "margin: 0px; margin-bottom: 3px";
-        // @("nodeExpanded " + nodeExpanded + " nodeSelected " + nodeSelected + " hasChilds " + hasChilds)
 
         <div class="row" style="background-columnor:aliceblue; padding: 0px; @itMargin">
             @{
@@ -31,16 +30,16 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
                 {
                     <div class="column" style="max-width:50px;padding:1px;display:flex;justify-content:center;">
                         @{
-                            string border = "";
+                            var border = string.Empty;
                             var env = AasxServer.Program.env[it.EnvironmentIndex];
                             if (env != null && env.getWrite())
                             {
                                 border = "border:dotted;border-color:blue;";
                             }
-                            bool svg = false;
-                            bool url = false;
-                            string detailsImage = ImageBuilder.CreateDetailsImage(it, out url, out svg);
-                            if (detailsImage != "" && !url)
+                            var svg = false;
+                            var url = false;
+                            var detailsImage = ImageBuilder.CreateDetailsImage(it, out url, out svg);
+                            if (!string.IsNullOrEmpty(detailsImage) && !url)
                             {
                                 if (!svg)
                                 {
@@ -60,7 +59,7 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
             <div class="column" style="width:100%;float:left;vertical-align:central">
                 @if (hasChilds)
                 {
-                    string iconId = "";
+                    var iconId = string.Empty;
                     if (AasxServer.Program.htmlId)
                         iconId = HtmlId(it) + "._icon";
                     <span class="uic-tree__icon" @onclick="@(() => OnToggleNode(node, !nodeExpanded))" id="@iconId">
@@ -70,13 +69,11 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
 
                 <div class="uic-tree__title" style="width:100%">
                 @{
-                    string titleId = "";
+                    var titleId = string.Empty;
                     if (AasxServer.Program.htmlId)
                         titleId = HtmlId(node as TreeItem) + "._title";
                     <span class="@Style.NodeTitleClass @(nodeSelected ? Style.NodeTitleSelectedClass : "")" @onclick="@(() => OnSelectNode(node))" id="@titleId">
-                        @TitleTemplate(node) @{
-                            /* @(" " + node.GetHashCode() + " ") */
-                        }
+                        @TitleTemplate(node)
                     </span>
                 }
                 </div>
@@ -123,21 +120,22 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
 
     [Parameter] public Func<TNode, bool> HasChildNodes { get; set; } = node => true;
 
-    [Parameter] public Func<TreeItem, string> HtmlId { get; set; } = node => "";
+    [Parameter] public Func<TreeItem, string> HtmlId { get; set; } = node => string.Empty;
 
     private void OnToggleNode(TNode node, bool expand)
     {
         var expanded = ExpandedNodes.Contains(node);
 
-        if (expanded && !expand)
+        switch (expanded)
         {
-            ExpandedNodes.Remove(node);
-            ExpandedNodesChanged.InvokeAsync(ExpandedNodes);
-        }
-        else if (!expanded && expand)
-        {
-            ExpandedNodes.Add(node);
-            ExpandedNodesChanged.InvokeAsync(ExpandedNodes);
+            case true when !expand:
+                ExpandedNodes.Remove(node);
+                ExpandedNodesChanged.InvokeAsync(ExpandedNodes);
+                break;
+            case false when expand:
+                ExpandedNodes.Add(node);
+                ExpandedNodesChanged.InvokeAsync(ExpandedNodes);
+                break;
         }
     }
 
