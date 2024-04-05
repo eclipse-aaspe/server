@@ -11,130 +11,97 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
 @typeparam TNode
 @using static TreePage
 
-<div class="uic-tree @(Visible ? "" : "uic-tree--hidden")" style="float:left; padding: 1px; margin: 1px">
+<div class="uic-tree @(Visible ? string.Empty : "uic-tree--hidden")" style="float:left; padding: 1px; margin: 1px">
     @foreach (var node in Nodes ?? Enumerable.Empty<TNode>())
     {
-        var nodeExpanded = ExpandedNodes.Contains(node);
-        var nodeSelected = node.Equals(SelectedNode);
-        var hasChilds = HasChildNodes(node);
         var it = node as TreeItem;
-        var itIsAas = it.Tag is AssetAdministrationShell;
-        var itMargin = "margin: 0px";
-        if (itIsAas)
-            itMargin = "margin: 0px; margin-bottom: 3px";
+        var itIsAas = it?.Tag is AssetAdministrationShell;
+        var itMargin = itIsAas ? "margin: 0px; margin-bottom: 3px" : "margin: 0px";
 
         <div class="row" style="background-color:aliceblue; padding: 0; @itMargin">
-            @{
-                if (itIsAas)
-                {
-                    <div class="column" style="max-width:50px;padding:1px;display:flex;justify-content:center;">
-                        @{
-                            var border = string.Empty;
-                            var env = AasxServer.Program.env[it.EnvironmentIndex];
-                            if (env != null && env.getWrite())
-                            {
-                                border = "border:dotted;border-color:blue;";
-                            }
-
-                            var detailsImage = ImageBuilder.CreateDetailsImage(it, out var url, out var svg);
-                            if (!string.IsNullOrEmpty(detailsImage) && !url)
-                            {
-                                if (!svg)
-                                {
-                                    <img style="max-height:50px;object-fit:contain;@border" alt="Details Image"
-                                         src=data:image;base64,@detailsImage/>
-                                }
-                                else
-                                {
-                                    <img style="max-height:50px;object-fit:contain;@border" alt="Details Image"
-                                         src=data:image/svg+xml;base64,@detailsImage/>
-                                }
-                            }
+            @if (itIsAas)
+            {
+                <div class="column" style="max-width:50px;padding:1px;display:flex;justify-content:center;">
+                    @{
+                        var border = string.Empty;
+                        var env = AasxServer.Program.env[it.EnvironmentIndex];
+                        if (env != null && env.getWrite())
+                        {
+                            border = "border:dotted;border-color:blue;";
                         }
-                    </div>
-                }
+
+                        var detailsImage = ImageBuilder.CreateDetailsImage(it, out var url, out var svg);
+                        var src = detailsImage != null ? $"data:image{(svg ? "/svg+xml" : string.Empty)};base64,{detailsImage}" : null;
+
+                        if (!string.IsNullOrEmpty(detailsImage) && !url)
+                        {
+                            <img style="max-height:50px;object-fit:contain;@border" alt="Details Image" src="@src" />
+                        }
+                    }
+                </div>
             }
+
             <div class="column" style="width:100%;float:left;vertical-align:central">
-                @if (hasChilds)
+                @if (HasChildNodes(node))
                 {
-                    var iconId = string.Empty;
-                    if (AasxServer.Program.htmlId)
-                        iconId = HtmlId(it) + "._icon";
-                    <span class="uic-tree__icon" @onclick="@(() => OnToggleNode(node, !nodeExpanded))" id="@iconId">
-                        <i class="@(nodeExpanded ? Style.CollapseNodeIconClass : Style.ExpandNodeIconClass)"></i>
+                    var iconId = AasxServer.Program.htmlId ? $"{HtmlId(it)}._icon" : string.Empty;
+                    <span class="uic-tree__icon" @onclick="@(() => OnToggleNode(node, !ExpandedNodes.Contains(node)))" id="@iconId">
+                        <i class="@(ExpandedNodes.Contains(node) ? Style.CollapseNodeIconClass : Style.ExpandNodeIconClass)"></i>
                     </span>
                 }
 
                 <div class="uic-tree__title" style="width:100%">
                     @{
-                        var titleId = string.Empty;
-                        if (AasxServer.Program.htmlId)
-                            titleId = HtmlId(node as TreeItem) + "._title";
-                        <span class="@Style.NodeTitleClass @(nodeSelected ? Style.NodeTitleSelectedClass : "")" @onclick="@(() => OnSelectNode(node))" id="@titleId">
+                        var titleId = AasxServer.Program.htmlId ? $"{HtmlId(it)}._title" : string.Empty;
+                        <span class="@Style.NodeTitleClass @(SelectedNode?.Equals(node) == true ? Style.NodeTitleSelectedClass : "")" @onclick="@(() => OnSelectNode(node))" id="@titleId">
                             @TitleTemplate(node)
                         </span>
                     }
                 </div>
 
-                @if (hasChilds)
+                @if (HasChildNodes(node) && ExpandedNodes.Contains(node))
                 {
-                    if (nodeExpanded)
-                    {
-                        <Tree Nodes="ChildSelector(node)"
-                              TitleTemplate="TitleTemplate"
-                              ChildSelector="ChildSelector"
-                              ExpandedNodes="ExpandedNodes"
-                              ExpandedNodesChanged="ExpandedNodesChanged"
-                              SelectedNode="SelectedNode"
-                              SelectedNodeChanged="SelectedNodeChanged"
-                              Visible="true"
-                              HasChildNodes="HasChildNodes"
-                              HtmlId="HtmlId"/>
-                    }
+                    <Tree Nodes="ChildSelector(node)"
+                          TitleTemplate="TitleTemplate"
+                          ChildSelector="ChildSelector"
+                          ExpandedNodes="ExpandedNodes"
+                          ExpandedNodesChanged="ExpandedNodesChanged"
+                          SelectedNode="SelectedNode"
+                          SelectedNodeChanged="SelectedNodeChanged"
+                          Visible="true"
+                          HasChildNodes="HasChildNodes"
+                          HtmlId="HtmlId" />
                 }
             </div>
         </div>
     }
-
 </div>
 
 @code {
 
     [Parameter] public IEnumerable<TNode> Nodes { get; set; }
-
     [Parameter] public RenderFragment<TNode> TitleTemplate { get; set; }
-
     [Parameter] public TNode SelectedNode { get; set; }
     [Parameter] public EventCallback<TNode> SelectedNodeChanged { get; set; }
-
     [Parameter] public Func<TNode, IEnumerable<TNode>> ChildSelector { get; set; }
-
     [Parameter] public IList<TNode> ExpandedNodes { get; set; } = new List<TNode>();
     [Parameter] public EventCallback<IList<TNode>> ExpandedNodesChanged { get; set; }
-
     [Parameter] public TreeStyle Style { get; set; } = TreeStyle.Bootstrap;
-
     [Parameter] public bool Visible { get; set; } = true;
-
     [Parameter] public Func<TNode, bool> HasChildNodes { get; set; } = _ => true;
-
     [Parameter] public Func<TreeItem, string> HtmlId { get; set; } = _ => string.Empty;
 
     private void OnToggleNode(TNode node, bool expand)
     {
-        var expanded = ExpandedNodes.Contains(node);
-
-        switch (expanded)
+        if (expand)
         {
-            case true when !expand:
-                ExpandedNodes.Remove(node);
-                ExpandedNodesChanged.InvokeAsync(ExpandedNodes);
-                break;
-            case false when expand:
-                ExpandedNodes.Add(node);
-                ExpandedNodesChanged.InvokeAsync(ExpandedNodes);
-                break;
+            ExpandedNodes.Add(node);
         }
+        else
+        {
+            ExpandedNodes.Remove(node);
+        }
+        ExpandedNodesChanged.InvokeAsync(ExpandedNodes);
     }
 
     private void OnSelectNode(TNode node)
@@ -142,5 +109,4 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
         SelectedNode = node;
         SelectedNodeChanged.InvokeAsync(node);
     }
-
 }

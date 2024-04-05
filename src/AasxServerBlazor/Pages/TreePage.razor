@@ -48,10 +48,8 @@
                             case Submodel submodel:
                             {
                                 // check, if access to submodel is allowed
-                                var error = string.Empty;
-                                withAllow = false;
                                 access = SecService.AuthorizeRequest(null, "/submodels", AccessRights.READ,
-                                    out error, out withAllow, out getPolicy, submodel.IdShort!, "submodel", submodel);
+                                    out _, out withAllow, out getPolicy, submodel.IdShort!, "submodel", submodel);
                                 display = true;
                                 break;
                             }
