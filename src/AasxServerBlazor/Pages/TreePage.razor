@@ -1,21 +1,34 @@
 ﻿@page "/"
+@implements IDisposable
 @inject AASService SubmodelService
-@inject NavigationManager NavigationManager
+@inject BlazorSessionService BlazorSessionService;
+@inject IJSRuntime JsRuntime
 @inject ISecurityService SecService
+@inject NavigationManager NavigationManager
 @using AasCore.Aas3_0
-@using AasSecurity;
 @using AasSecurity.Models;
+@using AasSecurity;
+@using AasxServer;
+@using AasxServerBlazor.Data
+@using AasxServerBlazor.DateTimeServices
+@using AasxServerBlazor.TreeVisualisation
+@using AasxServerBlazor.TreeVisualisation.Builders
+@using AasxServerBlazor.WebActions
+@using AasxServerBlazor.WebActions.AasxLinkCreation
+@using AdminShellNS;
 @using Extensions
 @using Microsoft.IdentityModel.Tokens;
-@using System
-@using System.Net;
+@using Newtonsoft.Json.Linq;
+@using Newtonsoft.Json;
 @using QRCoder;
+@using ScottPlot;
+@using System
 @using System.Drawing;
+@using System.Globalization;
 @using System.IO;
-@using AasxServerBlazor.Data
+@using System.Net;
+@using System.Reflection;
 @using static AasxServerStandardBib.TimeSeriesPlotting;
-
-@implements IDisposable
 
 <div class="column-12 row">
     <br/>
@@ -112,21 +125,6 @@
     </div>
 </div>
 
-
-@inject IJSRuntime JsRuntime
-@inject BlazorSessionService BlazorSessionService;
-@using AasxServer;
-@using AdminShellNS;
-@using System.Globalization;
-@using System.Reflection;
-@using AasxServerBlazor.DateTimeServices
-@using AasxServerBlazor.TreeVisualisation
-@using AasxServerBlazor.TreeVisualisation.Builders
-@using AasxServerBlazor.WebActions
-@using AasxServerBlazor.WebActions.AasxLinkCreation
-@using Newtonsoft.Json;
-@using Newtonsoft.Json.Linq;
-@using ScottPlot;
 
 @code {
     List<TreeItem> _items = null;

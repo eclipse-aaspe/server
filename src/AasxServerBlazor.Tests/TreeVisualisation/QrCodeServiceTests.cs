@@ -29,7 +29,7 @@ public class QrCodeServiceTests
         var qrCodeService = new QrCodeService();
 
         // Act
-        var result = QrCodeService.GetQrCodeLink(null);
+        var result = qrCodeService.GetQrCodeLink(null);
 
         // Assert
         result.Should().BeEmpty();
@@ -48,7 +48,7 @@ public class QrCodeServiceTests
         treeItem.Tag = assetAdministrationShell;
 
         // Act
-        var result = QrCodeService.GetQrCodeLink(treeItem);
+        var result = qrCodeService.GetQrCodeLink(treeItem);
 
         // Assert
         result.Should().NotBeEmpty();
@@ -62,7 +62,7 @@ public class QrCodeServiceTests
         var qrCodeService = new QrCodeService();
 
         // Act
-        var result = QrCodeService.GetQrCodeImage(null);
+        var result = qrCodeService.GetQrCodeImage(null);
 
         // Assert
         result.Should().BeEmpty();
@@ -79,7 +79,7 @@ public class QrCodeServiceTests
         Program.generatedQrCodes.Add(treeItem.Tag, expectedImage);
 
         // Act
-        var result = QrCodeService.GetQrCodeImage(treeItem);
+        var result = qrCodeService.GetQrCodeImage(treeItem);
 
         // Assert
         result.Should().NotBeEmpty();
