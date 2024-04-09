@@ -123,7 +123,9 @@ namespace AasxServer
                             if (sm != null && sm.IdShort != null && sm.IdShort.ToLower().Contains("tasks"))
                             {
                                 sm.SetTimeStamp(timeStamp);
-                                int countSme = sm.SubmodelElements.Count;
+                                int countSme = 0;
+                                if (sm.SubmodelElements != null)
+                                    countSme = sm.SubmodelElements.Count;
                                 for (int iSme = 0; iSme < countSme; iSme++)
                                 {
                                     var sme = sm.SubmodelElements[iSme];
