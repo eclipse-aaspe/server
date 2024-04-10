@@ -10,14 +10,12 @@ namespace AasxServerDB
     public class VisitorAASX : VisitorThrough
     {
         AASXSet _aasxDB;
-        //AASSet _aasDB;
         SMSet _smDB;
         List<SMESet> _parentSME;
 
-        public VisitorAASX(AASXSet? aasxDB = null, AASSet? aasDB = null)
+        public VisitorAASX(AASXSet? aasxDB = null)
         {
             _aasxDB = aasxDB;
-            //_aasDB = aasDB;
             _parentSME = new List<SMESet>();
         }
 
@@ -106,7 +104,7 @@ namespace AasxServerDB
                 if (asp.AasEnv.Submodels == null || asp.AasEnv.Submodels.Count <= 0)
                     continue;
                 foreach (var sm in asp.AasEnv.Submodels)
-                    new VisitorAASX(aasxDB: aasxDB, aasDB: aasxDB.AASSets.Last()).Visit(sm);
+                    new VisitorAASX(aasxDB: aasxDB).Visit(sm);
             }
         }
 
@@ -205,9 +203,7 @@ namespace AasxServerDB
             {
                 v = sme.ValueAsText();
                 if (v != "")
-                {
                     vt = getValueAndType(v, out sValue, out iValue, out fValue);
-                }
             }
 
             if (sme is AasCore.Aas3_0.File f)
@@ -242,14 +238,13 @@ namespace AasxServerDB
             string st = shortType(sme);
             SMESet pn = null;
             if (_parentSME.Count > 0)
-                pn = _parentSME[_parentSME.Count - 1];
+                pn = _parentSME.Last<SMESet>();
             var semanticId = sme.SemanticId.GetAsIdentifier();
             if (semanticId == null)
                 semanticId = "";
             getValue(sme, out string vt, out string sValue, out long iValue, out double fValue);
             var smeDB = new SMESet
             {
-                SMSet = _smDB,
                 ParentSMESet = pn,
                 SMEType = st,
                 ValueType = vt,
@@ -272,7 +267,6 @@ namespace AasxServerDB
                         {
                             var mlpval = new SValueSet()
                             {
-                                SMESet = smeDB,
                                 Annotation = ls[i].Language,
                                 Value = ls[i].Text
                             };
@@ -285,7 +279,6 @@ namespace AasxServerDB
             {
                 var ValueDB = new SValueSet
                 {
-                    SMESet = smeDB,
                     Value = sValue,
                     Annotation = ""
                 };
@@ -295,7 +288,6 @@ namespace AasxServerDB
             {
                 var ValueDB = new IValueSet
                 {
-                    SMESet = smeDB,
                     Value = iValue,
                     Annotation = ""
                 };
@@ -305,7 +297,6 @@ namespace AasxServerDB
             {
                 var ValueDB = new DValueSet
                 {
-                    SMESet = smeDB,
                     Value = fValue,
                     Annotation = ""
                 };
@@ -327,7 +318,6 @@ namespace AasxServerDB
         {
             var aasDB = new AASSet
             {
-                AASXSet = _aasxDB,
                 Identifier = that.Id,
                 IdShort = that.IdShort,
                 AssetKind = that.AssetInformation.AssetKind.ToString(),
@@ -352,16 +342,14 @@ namespace AasxServerDB
                 semanticId = "";
             _smDB = new SMSet
             {
-                AASXSet = _aasxDB,
-                AASSet = _aasxDB.AASSets.First(),//_aasDB,
+                AASSet = _aasxDB.AASSets.First(),
                 SemanticId = semanticId,
                 Identifier = that.Id,
                 IdShort = that.IdShort,
                 SMESets = new List<SMESet>()
             };
-            _aasxDB.SMSets.Add(_smDB);
-            //_aasDB.SMSets.Add(_smDB);
             base.VisitSubmodel(that);
+            _aasxDB.SMSets.Add(_smDB);
         }
         public override void VisitRelationshipElement(IRelationshipElement that)
         {
