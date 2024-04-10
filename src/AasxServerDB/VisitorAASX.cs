@@ -10,14 +10,14 @@ namespace AasxServerDB
     public class VisitorAASX : VisitorThrough
     {
         AASXSet _aasxDB;
-        AASSet _aasDB;
+        //AASSet _aasDB;
         SMSet _smDB;
         List<SMESet> _parentSME;
 
         public VisitorAASX(AASXSet? aasxDB = null, AASSet? aasDB = null)
         {
             _aasxDB = aasxDB;
-            _aasDB = aasDB;
+            //_aasDB = aasDB;
             _parentSME = new List<SMESet>();
         }
 
@@ -353,14 +353,14 @@ namespace AasxServerDB
             _smDB = new SMSet
             {
                 AASXSet = _aasxDB,
-                AASSet = _aasDB,
+                AASSet = _aasxDB.AASSets.First(),//_aasDB,
                 SemanticId = semanticId,
                 Identifier = that.Id,
                 IdShort = that.IdShort,
                 SMESets = new List<SMESet>()
             };
             _aasxDB.SMSets.Add(_smDB);
-            _aasDB.SMSets.Add(_smDB);
+            //_aasDB.SMSets.Add(_smDB);
             base.VisitSubmodel(that);
         }
         public override void VisitRelationshipElement(IRelationshipElement that)
