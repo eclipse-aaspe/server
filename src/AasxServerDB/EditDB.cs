@@ -32,9 +32,7 @@ namespace AasxServerDB
                     AASXSet aasxDBOld = db.AASXSets.Where(a => a.Id == aasxId).ToList<AASXSet>().First();
                     var aasxDB = new AASXSet
                     {
-                        AASX = aasxDBOld.AASX,
-                        AASSets = new List<AASSet>(),
-                        SMSets = new List<SMSet>()
+                        AASX = aasxDBOld.AASX
                     };
                     db.AASXSets.Where(a => a.Id == aasxId).ExecuteDelete();
 

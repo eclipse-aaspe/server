@@ -137,8 +137,8 @@ namespace AasxServerDB
         public int Id { get; set; }
         public string AASX { get; set; }
 
-        public virtual ICollection<AASSet> AASSets { get; set; }
-        public virtual ICollection<SMSet> SMSets { get; set; }
+        public virtual ICollection<AASSet> AASSets { get; } = new List<AASSet>();
+        public virtual ICollection<SMSet> SMSets { get; } = new List<SMSet>();
     }
 
     public class AASSet
@@ -154,7 +154,7 @@ namespace AasxServerDB
         public string AssetKind { get; set; }
         public string GlobalAssetId { get; set; }
 
-        public virtual ICollection<SMSet> SMSets { get; set; }
+        public virtual ICollection<SMSet> SMSets { get; } = new List<SMSet>();
     }
 
     public class SMSet
@@ -165,7 +165,6 @@ namespace AasxServerDB
         public int AASXId { get; set; }
         public virtual AASXSet AASXSet { get; set; }
 
-
         [ForeignKey("AASSet")]
         public int AASId { get; set; }
         public virtual AASSet AASSet { get; set; }
@@ -174,7 +173,7 @@ namespace AasxServerDB
         public string Identifier { get; set; }
         public string IdShort { get; set; }
 
-        public virtual ICollection<SMESet> SMESets { get; set; }
+        public virtual ICollection<SMESet> SMESets { get; } = new List<SMESet>();
     }
 
     public class SMESet
@@ -193,9 +192,9 @@ namespace AasxServerDB
         public string SemanticId { get; set; }
         public string IdShort { get; set; }
 
-        public virtual ICollection<IValueSet> IValueSets { get; set; }
-        public virtual ICollection<DValueSet> DValueSets { get; set; }
-        public virtual ICollection<SValueSet> SValueSets { get; set; }
+        public virtual ICollection<IValueSet> IValueSets { get; } = new List<IValueSet>();
+        public virtual ICollection<DValueSet> DValueSets { get; } = new List<DValueSet>();
+        public virtual ICollection<SValueSet> SValueSets { get; } = new List<SValueSet>();
 
         public string getValue()
         {

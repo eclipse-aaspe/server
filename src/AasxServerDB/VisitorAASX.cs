@@ -26,9 +26,7 @@ namespace AasxServerDB
                 {
                     var aasxDB = new AASXSet
                     {
-                        AASX = filePath,
-                        AASSets = new List<AASSet>(),
-                        SMSets = new List<SMSet>()
+                        AASX = filePath
                     };
                     LoadAASInDB(asp, aasxDB);
 
@@ -245,10 +243,7 @@ namespace AasxServerDB
                 SMEType = st,
                 ValueType = vt,
                 SemanticId = semanticId,
-                IdShort = sme.IdShort,
-                IValueSets = new List<IValueSet>(),
-                DValueSets = new List<DValueSet>(),
-                SValueSets = new List<SValueSet>()
+                IdShort = sme.IdShort
             };
             _smDB.SMESets.Add(smeDB);
 
@@ -340,8 +335,7 @@ namespace AasxServerDB
                 AASSet = _aasxDB.AASSets.First(),
                 SemanticId = semanticId,
                 Identifier = that.Id,
-                IdShort = that.IdShort,
-                SMESets = new List<SMESet>()
+                IdShort = that.IdShort
             };
             _aasxDB.SMSets.Add(_smDB);
             base.VisitSubmodel(that);
