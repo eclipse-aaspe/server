@@ -321,7 +321,6 @@ namespace AasxServer
 
             lock (Program.changeAasxFile)
             {
-                
                 envFileName[i] = ReadDB.GetAASXPath(aasId: aasIdentifier);
                 if (envFileName[i].Equals(""))
                     return false;
@@ -455,12 +454,12 @@ namespace AasxServer
                         var aasDBList = db.AASSets.Where(a => a.AASXId == submodelDB.AASXId);
                         var aasDB = aasDBList.First();
                         env[i] = ReadDB.GetPackageEnv(envFileName[i], aasDB);
-                        output = ReadDB.getSubmodel(smDB: submodelDB);
+                        output = ReadDB.GetSubmodel(smDB: submodelDB);
                     }
                 }
 
                 packageIndex = i;
-                AasxServer.Program.signalNewData(2);
+                Program.signalNewData(2);
                 return true;
             }
         }
@@ -867,7 +866,7 @@ namespace AasxServer
             }
             else
             {
-                externalBlazor = blazorHostPort;
+                externalBlazor = "http://" + blazorHostPort;
             }
             Query.ExternalBlazor = externalBlazor;
 

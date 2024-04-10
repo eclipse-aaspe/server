@@ -1607,7 +1607,7 @@ namespace AasxRestServerLibrary
 
                                     foreach (var submodelDB in submodelDBList)
                                     {
-                                        var sm = ReadDB.getSubmodel(smDB: submodelDB);
+                                        var sm = ReadDB.GetSubmodel(smDB: submodelDB);
 
                                         if (from == "submodel")
                                         {

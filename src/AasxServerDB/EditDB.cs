@@ -1,12 +1,6 @@
 ﻿using AasCore.Aas3_0;
 using AdminShellNS;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AasxServerDB
 {
@@ -49,7 +43,6 @@ namespace AasxServerDB
                 }
                 db.SaveChanges();
             }
-
             env.setWrite(false);
         }
     }    

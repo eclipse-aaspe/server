@@ -55,7 +55,7 @@ namespace AasxServerDB
                     .ToList();
                 foreach (var submodelDB in submodelDBList)
                 {
-                    Submodel sm = ReadDB.getSubmodel(smDB:submodelDB);
+                    Submodel sm = ReadDB.GetSubmodel(smDB:submodelDB);
                     aas.Submodels.Add(sm.GetReference());
                     aasEnv.AasEnv.Submodels.Add(sm);
                 }
@@ -64,7 +64,7 @@ namespace AasxServerDB
             }
         }
 
-        static public Submodel getSubmodel(SMSet? smDB = null, string? smIdentifier = "")
+        static public Submodel GetSubmodel(SMSet? smDB = null, string? smIdentifier = "")
         {
             using (AasContext db = new AasContext())
             {
@@ -88,7 +88,7 @@ namespace AasxServerDB
                 submodel.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
                     new List<IKey>() { new Key(KeyTypes.GlobalReference, smDB.SemanticId) });
 
-                loadSME(submodel, null, null, SMEList, null);
+                LoadSME(submodel, null, null, SMEList, null);
 
                 DateTime timeStamp = DateTime.Now;
                 submodel.TimeStampCreate = timeStamp;
@@ -99,9 +99,9 @@ namespace AasxServerDB
             }           
         }
 
-        static public string getSubmodelJson(SMSet smSet)
+        static public string GetSubmodelJson(SMSet smSet)
         {
-            var submodel = getSubmodel(smDB: smSet);
+            var submodel = GetSubmodel(smDB: smSet);
 
             if (submodel != null)
             {
@@ -113,7 +113,7 @@ namespace AasxServerDB
             return "";
         }
 
-        static private void loadSME(Submodel submodel, ISubmodelElement sme, string SMEType, List<SMESet> SMEList, int? smeId)
+        static private void LoadSME(Submodel submodel, ISubmodelElement sme, string SMEType, List<SMESet> SMEList, int? smeId)
         {
             var smeLevel = SMEList.Where(s => s.ParentSMEId == smeId).OrderBy(s => s.IdShort).ToList();
 
@@ -175,7 +175,7 @@ namespace AasxServerDB
 
                 if (smel.SMEType == "SMC")
                 {
-                    loadSME(submodel, nextSME, smel.SMEType, SMEList, smel.Id);
+                    LoadSME(submodel, nextSME, smel.SMEType, SMEList, smel.Id);
                 }
             }
         }
