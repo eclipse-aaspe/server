@@ -185,9 +185,8 @@ namespace AasxServerDB
         public int SMId { get; set; }
         public virtual SMSet SMSet { get; set; }
 
-        [ForeignKey("ParentSMESet")]
         public int? ParentSMEId { get; set; }
-        public virtual SMESet ParentSMESet { get; set; }
+        public virtual SMESet? ParentSME { get; set; }
 
         public string SMEType { get; set; }
         public string ValueType { get; set; }

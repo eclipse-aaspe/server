@@ -11,12 +11,11 @@ namespace AasxServerDB
     {
         AASXSet _aasxDB;
         SMSet _smDB;
-        List<SMESet> _parentSME;
+        SMESet _parSME = null;
 
         public VisitorAASX(AASXSet? aasxDB = null)
         {
             _aasxDB = aasxDB;
-            _parentSME = new List<SMESet>();
         }
 
         static public void LoadAASXInDB(string filePath, bool createFilesOnly, bool withDbFiles)
@@ -236,16 +235,13 @@ namespace AasxServerDB
         private SMESet collectSMEData(ISubmodelElement sme)
         {
             string st = shortType(sme);
-            SMESet pn = null;
-            if (_parentSME.Count > 0)
-                pn = _parentSME.Last<SMESet>();
             var semanticId = sme.SemanticId.GetAsIdentifier();
             if (semanticId == null)
                 semanticId = "";
             getValue(sme, out string vt, out string sValue, out long iValue, out double fValue);
             var smeDB = new SMESet
             {
-                ParentSMESet = pn,
+                ParentSME = _parSME,
                 SMEType = st,
                 ValueType = vt,
                 SemanticId = semanticId,
@@ -322,7 +318,6 @@ namespace AasxServerDB
                 IdShort = that.IdShort,
                 AssetKind = that.AssetInformation.AssetKind.ToString(),
                 GlobalAssetId = that.AssetInformation.GlobalAssetId,
-                SMSets = new List<SMSet>()
             };
             _aasxDB.AASSets.Add(aasDB);
         }
@@ -348,85 +343,69 @@ namespace AasxServerDB
                 IdShort = that.IdShort,
                 SMESets = new List<SMESet>()
             };
-            base.VisitSubmodel(that);
             _aasxDB.SMSets.Add(_smDB);
+            base.VisitSubmodel(that);
         }
         public override void VisitRelationshipElement(IRelationshipElement that)
         {
             SMESet smeSet = collectSMEData(that);
-            _parentSME.Add(smeSet);
             base.VisitRelationshipElement(that);
-            _parentSME.RemoveAt(_parentSME.Count - 1);
         }
         public override void VisitSubmodelElementList(ISubmodelElementList that)
         {
             SMESet smeSet = collectSMEData(that);
-            _parentSME.Add(smeSet);
+            smeSet.ParentSME = _parSME;
+            _parSME = smeSet;
             base.VisitSubmodelElementList(that);
-            _parentSME.RemoveAt(_parentSME.Count - 1);
+            _parSME = smeSet.ParentSME;
         }
         public override void VisitSubmodelElementCollection(ISubmodelElementCollection that)
         {
             SMESet smeSet = collectSMEData(that);
-            _parentSME.Add(smeSet);
+            smeSet.ParentSME = _parSME;
+            _parSME = smeSet;
             base.VisitSubmodelElementCollection(that);
-            _parentSME.RemoveAt(_parentSME.Count - 1);
+            _parSME = smeSet.ParentSME;
         }
         public override void VisitProperty(IProperty that)
         {
             SMESet smeSet = collectSMEData(that);
-            _parentSME.Add(smeSet);
             base.VisitProperty(that);
-            _parentSME.RemoveAt(_parentSME.Count - 1);
         }
         public override void VisitMultiLanguageProperty(IMultiLanguageProperty that)
         {
             SMESet smeSet = collectSMEData(that);
-            _parentSME.Add(smeSet);
             base.VisitMultiLanguageProperty(that);
-            _parentSME.RemoveAt(_parentSME.Count - 1);
         }
         public override void VisitRange(AasCore.Aas3_0.IRange that)
         {
             SMESet smeSet = collectSMEData(that);
-            _parentSME.Add(smeSet);
             base.VisitRange(that);
-            _parentSME.RemoveAt(_parentSME.Count - 1);
         }
         public override void VisitReferenceElement(IReferenceElement that)
         {
             SMESet smeSet = collectSMEData(that);
-            _parentSME.Add(smeSet);
             base.VisitReferenceElement(that);
-            _parentSME.RemoveAt(_parentSME.Count - 1);
         }
         public override void VisitBlob(IBlob that)
         {
             SMESet smeSet = collectSMEData(that);
-            _parentSME.Add(smeSet);
             base.VisitBlob(that);
-            _parentSME.RemoveAt(_parentSME.Count - 1);
         }
         public override void VisitFile(AasCore.Aas3_0.IFile that)
         {
             SMESet smeSet = collectSMEData(that);
-            _parentSME.Add(smeSet);
             base.VisitFile(that);
-            _parentSME.RemoveAt(_parentSME.Count - 1);
         }
         public override void VisitAnnotatedRelationshipElement(IAnnotatedRelationshipElement that)
         {
             SMESet smeSet = collectSMEData(that);
-            _parentSME.Add(smeSet);
             base.VisitAnnotatedRelationshipElement(that);
-            _parentSME.RemoveAt(_parentSME.Count - 1);
         }
         public override void VisitEntity(IEntity that)
         {
             SMESet smeSet = collectSMEData(that);
-            _parentSME.Add(smeSet);
             base.VisitEntity(that);
-            _parentSME.RemoveAt(_parentSME.Count - 1);
         }
         public override void VisitEventPayload(IEventPayload that)
         {
@@ -437,9 +416,7 @@ namespace AasxServerDB
         public override void VisitOperation(IOperation that)
         {
             SMESet smeSet = collectSMEData(that);
-            _parentSME.Add(smeSet);
             base.VisitOperation(that);
-            _parentSME.RemoveAt(_parentSME.Count - 1);
         }
         public override void VisitOperationVariable(IOperationVariable that)
         {
@@ -447,9 +424,7 @@ namespace AasxServerDB
         public override void VisitCapability(ICapability that)
         {
             SMESet smeSet = collectSMEData(that);
-            _parentSME.Add(smeSet);
             base.VisitCapability(that);
-            _parentSME.RemoveAt(_parentSME.Count - 1);
         }
         public override void VisitConceptDescription(IConceptDescription that)
         {

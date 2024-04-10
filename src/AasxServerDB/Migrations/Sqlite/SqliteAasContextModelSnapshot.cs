@@ -34,11 +34,11 @@ namespace AasxServerDB.Migrations.Sqlite
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Identifier")
+                    b.Property<string>("IdShort")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("IdShort")
+                    b.Property<string>("Identifier")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -159,11 +159,11 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Property<int>("AASXId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Identifier")
+                    b.Property<string>("IdShort")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("IdShort")
+                    b.Property<string>("Identifier")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -239,7 +239,7 @@ namespace AasxServerDB.Migrations.Sqlite
 
             modelBuilder.Entity("AasxServerDB.SMESet", b =>
                 {
-                    b.HasOne("AasxServerDB.SMESet", "ParentSMESet")
+                    b.HasOne("AasxServerDB.SMESet", "ParentSME")
                         .WithMany()
                         .HasForeignKey("ParentSMEId");
 
@@ -249,7 +249,7 @@ namespace AasxServerDB.Migrations.Sqlite
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("ParentSMESet");
+                    b.Navigation("ParentSME");
 
                     b.Navigation("SMSet");
                 });

@@ -20,5 +20,9 @@
   <ItemGroup>
     <ProjectReference Include="..\AasxCsharpLibrary\AasxCsharpLibrary.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Migrations\Sqlite\" />
+  </ItemGroup>
   
 </Project>
