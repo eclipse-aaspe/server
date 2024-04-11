@@ -30,10 +30,10 @@ namespace AasxServerDB.Migrations.Sqlite
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     AASXId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Identifier = table.Column<string>(type: "TEXT", nullable: false),
-                    IdShort = table.Column<string>(type: "TEXT", nullable: false),
-                    AssetKind = table.Column<string>(type: "TEXT", nullable: false),
-                    GlobalAssetId = table.Column<string>(type: "TEXT", nullable: false)
+                    Identifier = table.Column<string>(type: "TEXT", nullable: true),
+                    IdShort = table.Column<string>(type: "TEXT", nullable: true),
+                    AssetKind = table.Column<string>(type: "TEXT", nullable: true),
+                    GlobalAssetId = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -54,9 +54,9 @@ namespace AasxServerDB.Migrations.Sqlite
                         .Annotation("Sqlite:Autoincrement", true),
                     AASXId = table.Column<int>(type: "INTEGER", nullable: false),
                     AASId = table.Column<int>(type: "INTEGER", nullable: false),
-                    SemanticId = table.Column<string>(type: "TEXT", nullable: false),
-                    Identifier = table.Column<string>(type: "TEXT", nullable: false),
-                    IdShort = table.Column<string>(type: "TEXT", nullable: false)
+                    SemanticId = table.Column<string>(type: "TEXT", nullable: true),
+                    Identifier = table.Column<string>(type: "TEXT", nullable: true),
+                    IdShort = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -83,10 +83,10 @@ namespace AasxServerDB.Migrations.Sqlite
                         .Annotation("Sqlite:Autoincrement", true),
                     SMId = table.Column<int>(type: "INTEGER", nullable: false),
                     ParentSMEId = table.Column<int>(type: "INTEGER", nullable: true),
-                    SMEType = table.Column<string>(type: "TEXT", nullable: false),
-                    ValueType = table.Column<string>(type: "TEXT", nullable: false),
-                    SemanticId = table.Column<string>(type: "TEXT", nullable: false),
-                    IdShort = table.Column<string>(type: "TEXT", nullable: false)
+                    SMEType = table.Column<string>(type: "TEXT", nullable: true),
+                    ValueType = table.Column<string>(type: "TEXT", nullable: true),
+                    SemanticId = table.Column<string>(type: "TEXT", nullable: true),
+                    IdShort = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -111,8 +111,8 @@ namespace AasxServerDB.Migrations.Sqlite
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     SMEId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Value = table.Column<double>(type: "REAL", nullable: false),
-                    Annotation = table.Column<string>(type: "TEXT", nullable: false)
+                    Value = table.Column<double>(type: "REAL", nullable: true),
+                    Annotation = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -132,8 +132,8 @@ namespace AasxServerDB.Migrations.Sqlite
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     SMEId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Value = table.Column<long>(type: "INTEGER", nullable: false),
-                    Annotation = table.Column<string>(type: "TEXT", nullable: false)
+                    Value = table.Column<long>(type: "INTEGER", nullable: true),
+                    Annotation = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -153,8 +153,8 @@ namespace AasxServerDB.Migrations.Sqlite
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     SMEId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Value = table.Column<string>(type: "TEXT", nullable: false),
-                    Annotation = table.Column<string>(type: "TEXT", nullable: false)
+                    Value = table.Column<string>(type: "TEXT", nullable: true),
+                    Annotation = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {

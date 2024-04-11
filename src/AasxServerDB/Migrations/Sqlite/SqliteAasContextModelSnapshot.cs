@@ -27,19 +27,15 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("AssetKind")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("GlobalAssetId")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("IdShort")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Identifier")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -71,13 +67,12 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Annotation")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("SMEId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<double>("Value")
+                    b.Property<double?>("Value")
                         .HasColumnType("REAL");
 
                     b.HasKey("Id");
@@ -94,13 +89,12 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Annotation")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("SMEId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<long>("Value")
+                    b.Property<long?>("Value")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
@@ -117,25 +111,21 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("IdShort")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("ParentSMEId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("SMEType")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("SMId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("SemanticId")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ValueType")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -160,15 +150,12 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("IdShort")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Identifier")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SemanticId")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -187,14 +174,12 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Annotation")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("SMEId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Value")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

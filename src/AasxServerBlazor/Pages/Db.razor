@@ -49,9 +49,9 @@
                 list = query.Get("smeid");
                 if (list != null)
                     smeid = Convert.ToInt32(list);
-                list = query.Get("smididentifier"); 
+                list = query.Get("smidentifier"); 
                 if (list != null)
-                    smididentifier = list;
+                    smidentifier = list;
             }
 
             // change parameters to input window
@@ -397,9 +397,9 @@
                     <br />
                 }
 
-                if (url.EndsWith("/smjson") && smididentifier != "")
+                if (url.EndsWith("/smjson") && smidentifier != "")
                 {
-                    var smDBList = db.SMSets.Where(s => s.Identifier.Equals(smididentifier)).ToList();
+                    var smDBList = db.SMSets.Where(s => s.Identifier.Equals(smidentifier)).ToList();
                     if (smDBList.Any())
                     {
                         var smDB = smDBList.First();
@@ -791,5 +791,5 @@
     long aasid = 0;
     long smid = 0;
     long smeid = 0;
-    string smididentifier = "";
+    string smidentifier = "";
 }

@@ -149,10 +149,10 @@ namespace AasxServerDB
         public int AASXId { get; set; }
         public virtual AASXSet AASXSet { get; set; }
 
-        public string Identifier { get; set; }
-        public string IdShort { get; set; }
-        public string AssetKind { get; set; }
-        public string GlobalAssetId { get; set; }
+        public string? Identifier { get; set; }
+        public string? IdShort { get; set; }
+        public string? AssetKind { get; set; }
+        public string? GlobalAssetId { get; set; }
 
         public virtual ICollection<SMSet> SMSets { get; } = new List<SMSet>();
     }
@@ -169,9 +169,9 @@ namespace AasxServerDB
         public int AASId { get; set; }
         public virtual AASSet AASSet { get; set; }
 
-        public string SemanticId { get; set; }
-        public string Identifier { get; set; }
-        public string IdShort { get; set; }
+        public string? SemanticId { get; set; }
+        public string? Identifier { get; set; }
+        public string? IdShort { get; set; }
 
         public virtual ICollection<SMESet> SMESets { get; } = new List<SMESet>();
     }
@@ -187,10 +187,10 @@ namespace AasxServerDB
         public int? ParentSMEId { get; set; }
         public virtual SMESet? ParentSME { get; set; }
 
-        public string SMEType { get; set; }
-        public string ValueType { get; set; }
-        public string SemanticId { get; set; }
-        public string IdShort { get; set; }
+        public string? SMEType { get; set; }
+        public string? ValueType { get; set; }
+        public string? SemanticId { get; set; }
+        public string? IdShort { get; set; }
 
         public virtual ICollection<IValueSet> IValueSets { get; } = new List<IValueSet>();
         public virtual ICollection<DValueSet> DValueSets { get; } = new List<DValueSet>();
@@ -271,8 +271,9 @@ namespace AasxServerDB
         public int SMEId { get; set; }
         public virtual SMESet SMESet { get; set; }
 
-        public long Value { get; set; }
-        public string Annotation { get; set; }
+        public long? Value { get; set; }
+        public string? Annotation { get; set; }
+
         public SValueSet asStringValue()
         {
             return new SValueSet
@@ -293,8 +294,8 @@ namespace AasxServerDB
         public int SMEId { get; set; }
         public virtual SMESet SMESet { get; set; }
 
-        public string Value { get; set; }
-        public string Annotation { get; set; }
+        public string? Value { get; set; }
+        public string? Annotation { get; set; }
     }
 
     public class DValueSet
@@ -305,8 +306,8 @@ namespace AasxServerDB
         public int SMEId { get; set; }
         public virtual SMESet SMESet { get; set; }
 
-        public double Value { get; set; }
-        public string Annotation { get; set; }
+        public double? Value { get; set; }
+        public string? Annotation { get; set; }
 
         public SValueSet asStringValue()
         {
