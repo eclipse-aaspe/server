@@ -2,6 +2,7 @@
 using DataTransferObjects.ValueDTOs;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 {
@@ -10,66 +11,23 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
         public static IClass Map(IValueDTO source)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
-            switch (source)
+            return source switch
             {
-                case PropertyValue propertyValue:
-                    {
-                        return Transform(propertyValue);
-                    }
-                case MultiLanguagePropertyValue multiLanguagePropertyValue:
-                    {
-                        return Transform(multiLanguagePropertyValue);
-                    }
-                case RangeValue rangeValue:
-                    {
-                        return Transform(rangeValue);
-                    }
-                case BlobValue blobValue:
-                    {
-                        return Transform(blobValue);
-                    }
-                case FileValue fileValue:
-                    {
-                        return Transform(fileValue);
-                    }
-                case AnnotatedRelationshipElementValue annotationElementValue:
-                    {
-                        return Transform(annotationElementValue);
-                    }
-                case RelationshipElementValue relationshipElementValue:
-                    {
-                        return Transform(relationshipElementValue);
-                    }
-                case ReferenceElementValue referenceElementValue:
-                    {
-                        return Transform(referenceElementValue);
-                    }
-                case BasicEventElementValue basicEventElementValue:
-                    {
-                        return Transform(basicEventElementValue);
-                    }
-                case EntityValue entityValue:
-                    {
-                        return Transform(entityValue);
-                    }
-                case SubmodelElementCollectionValue submodelElementCollectionValue:
-                    {
-                        return Transform(submodelElementCollectionValue);
-                    }
-                case SubmodelElementListValue submodelElementListValue:
-                    {
-                        return Transform(submodelElementListValue);
-                    }
-                case SubmodelValue submodelValue:
-                    {
-                        return Transform(submodelValue);
-                    }
-                default:
-                    {
-                        throw new NotImplementedException();
-                    }
-            }
-
+                PropertyValue propertyValue => Transform(propertyValue),
+                MultiLanguagePropertyValue multiLanguagePropertyValue => Transform(multiLanguagePropertyValue),
+                RangeValue rangeValue => Transform(rangeValue),
+                BlobValue blobValue => Transform(blobValue),
+                FileValue fileValue => Transform(fileValue),
+                AnnotatedRelationshipElementValue annotationElementValue => Transform(annotationElementValue),
+                RelationshipElementValue relationshipElementValue => Transform(relationshipElementValue),
+                ReferenceElementValue referenceElementValue => Transform(referenceElementValue),
+                BasicEventElementValue basicEventElementValue => Transform(basicEventElementValue),
+                EntityValue entityValue => Transform(entityValue),
+                SubmodelElementCollectionValue submodelElementCollectionValue => Transform(submodelElementCollectionValue),
+                SubmodelElementListValue submodelElementListValue => Transform(submodelElementListValue),
+                SubmodelValue submodelValue => Transform(submodelValue),
+                _ => throw new NotImplementedException()
+            };
         }
 
         private static IClass Transform(BasicEventElementValue valueDTO)
@@ -82,11 +40,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             List<ISubmodelElement> submodelElements = null;
             if (valueDTO.submodelElements != null)
             {
-                submodelElements = new List<ISubmodelElement>();
-                foreach (var element in valueDTO.submodelElements)
-                {
-                    submodelElements.Add((ISubmodelElement)Map(element));
-                }
+                submodelElements = valueDTO.submodelElements.Select(element => (ISubmodelElement) Map(element)).ToList();
             }
 
             return new Submodel(null, submodelElements: submodelElements);
@@ -102,11 +56,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             List<ISubmodelElement> value = null;
             if (valueDTO.value != null)
             {
-                value = new List<ISubmodelElement>();
-                foreach (var element in valueDTO.value)
-                {
-                    value.Add((ISubmodelElement)Map(element));
-                }
+                value = valueDTO.value.Select(element => (ISubmodelElement) Map(element)).ToList();
             }
 
             return new SubmodelElementList(AasSubmodelElements.SubmodelElement, idShort: valueDTO.idShort, value: value);
@@ -114,11 +64,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 
         private static IClass Transform(MultiLanguagePropertyValue valueDTO)
         {
-            var value = new List<ILangStringTextType>();
-            foreach (var langString in valueDTO.langStrings)
-            {
-                value.Add(new LangStringTextType(langString.Key, langString.Value));
-            }
+            var value = valueDTO.langStrings.Select(langString => new LangStringTextType(langString.Key, langString.Value)).Cast<ILangStringTextType>().ToList();
             return new MultiLanguageProperty(idShort: valueDTO.idShort, value: value);
         }
 
@@ -127,11 +73,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             List<ISubmodelElement> value = null;
             if (valueDTO.value != null)
             {
-                value = new List<ISubmodelElement>();
-                foreach (var element in valueDTO.value)
-                {
-                    value.Add((ISubmodelElement)Map(element));
-                }
+                value = valueDTO.value.Select(element => (ISubmodelElement) Map(element)).ToList();
             }
 
             return new SubmodelElementCollection(idShort: valueDTO.idShort, value: value);
@@ -142,12 +84,9 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             List<ISubmodelElement> statements = null;
             if (valueDTO.statements != null)
             {
-                statements = new List<ISubmodelElement>();
-                foreach (var element in valueDTO.statements)
-                {
-                    statements.Add((ISubmodelElement)Map(element));
-                }
+                statements = valueDTO.statements.Select(element => (ISubmodelElement) Map(element)).ToList();
             }
+
             return new Entity(valueDTO.entityType, idShort: valueDTO.idShort, statements: statements, globalAssetId: valueDTO.globalAssetId);
         }
 
@@ -166,12 +105,9 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             List<IDataElement> annotations = null;
             if (valueDTO.annotations != null)
             {
-                annotations = new List<IDataElement>();
-                foreach (var element in valueDTO.annotations)
-                {
-                    annotations.Add((IDataElement)Map(element));
-                }
+                annotations = valueDTO.annotations.Select(element => (IDataElement) Map(element)).ToList();
             }
+
             return new AnnotatedRelationshipElement(TransformReference(valueDTO.first), TransformReference(valueDTO.second), idShort: valueDTO.idShort, annotations: annotations);
         }
 
@@ -192,22 +128,12 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 
         private static IReference TransformReference(ReferenceDTO referenceDTO)
         {
-            if (referenceDTO == null)
-                return null;
-            return new Reference(referenceDTO.type, TransformKeys(referenceDTO.keys), TransformReference(referenceDTO.referredSemanticId));
+            return referenceDTO == null ? null : new Reference(referenceDTO.type, TransformKeys(referenceDTO.keys), TransformReference(referenceDTO.referredSemanticId));
         }
 
-        private static List<IKey> TransformKeys(List<KeyDTO> keys)
+        private static List<IKey> TransformKeys(IEnumerable<KeyDTO> keys)
         {
-            if (keys == null) return null;
-
-            var result = new List<IKey>();
-            foreach (var key in keys)
-            {
-                result.Add(new Key(key.type, key.value));
-            }
-
-            return result;
+            return keys?.Select(key => new Key(key.type, key.value)).Cast<IKey>().ToList();
         }
     }
 }
