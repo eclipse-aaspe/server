@@ -32,6 +32,7 @@ using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers.JsonObjectParser;
 
 namespace AasxServerBlazor
 {
@@ -109,6 +110,7 @@ namespace AasxServerBlazor
             services.AddTransient<IMappingService, MappingService>();
             services.AddTransient<IPathModifierService, PathModifierService>();
             services.AddTransient<IValueOnlyJsonDeserializer, ValueOnlyJsonDeserializer>();
+            services.AddTransient<IValueObjectParser, ValueObjectParser>();
             services.AddTransient<ILevelExtentModifierService, LevelExtentModifierService>();
             services.AddTransient<IAasxFileServerInterfaceService, AasxFileServerInterfaceService>();
             services.AddTransient<IGenerateSerializationService, GenerateSerializationService>();
