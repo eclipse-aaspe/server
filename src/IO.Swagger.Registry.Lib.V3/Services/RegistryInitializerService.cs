@@ -447,6 +447,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                         case "CarbonFootprint":
                                         case "TechnicalData":
                                         case "Nameplate":
+                                        case "WeightInformation":
                                             // copy specific submodels locally
                                             try
                                             {

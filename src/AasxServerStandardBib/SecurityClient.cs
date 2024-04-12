@@ -123,7 +123,9 @@ namespace AasxServer
                             if (sm != null && sm.IdShort != null && sm.IdShort.ToLower().Contains("tasks"))
                             {
                                 sm.SetTimeStamp(timeStamp);
-                                int countSme = sm.SubmodelElements.Count;
+                                int countSme = 0;
+                                if (sm.SubmodelElements != null)
+                                    countSme = sm.SubmodelElements.Count;
                                 for (int iSme = 0; iSme < countSme; iSme++)
                                 {
                                     var sme = sm.SubmodelElements[iSme];
@@ -1480,6 +1482,8 @@ namespace AasxServer
             public Property cradleToGateCombination = null;
             public Property productionCombination = null;
             public Property distributionCombination = null;
+            public Property weightModule = null;
+            public Property weightCombination = null;
             public AasCore.Aas3_0.File manufacturerLogo = null;
             public AasCore.Aas3_0.File productImage = null;
             public string productDesignation = "";
@@ -1925,6 +1929,46 @@ namespace AasxServer
                                         }
                                     }
                                 }
+                                // Weight
+                                if (sm.IdShort.Contains("WeightInformation"))
+                                {
+                                    if (sm.IdShort.Contains(" - NO ACCESS"))
+                                    {
+                                        Console.WriteLine("NO ACCESS: aas " + aas.IdShort + " sm " + sm.IdShort);
+                                        cfpValid = false;
+                                    }
+                                    if (sm.SubmodelElements != null)
+                                    {
+                                        foreach (var v in sm.SubmodelElements)
+                                        {
+                                            if (v is SubmodelElementCollection c)
+                                            {
+                                                if (c.IdShort.Contains("WeightInformationModule")
+                                                        || c.IdShort.Contains("WeightInformationCombination"))
+                                                {
+                                                    foreach (var v2 in c.Value)
+                                                    {
+                                                        switch (v2.IdShort)
+                                                        {
+                                                            case "ProductWeight":
+                                                                if (c.IdShort.Contains("WeightInformationModule"))
+                                                                {
+                                                                    cfp.weightModule = v2 as Property;
+                                                                    cfp.weightModule.Value = cfp.weightModule.Value.Replace(",", ".");
+                                                                }
+                                                                if (c.IdShort.Contains("WeightInformationCombination"))
+                                                                {
+                                                                    cfp.weightCombination = v2 as Property;
+                                                                    cfp.weightCombination.Value = cfp.weightCombination.Value.Replace(",", ".");
+                                                                }
+                                                                break;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -1941,9 +1985,15 @@ namespace AasxServer
                     if (aas.IdShort == "ZveiControlCabinetAas - EXTERNAL")
                     {
                         root = cfp;
-                        if(asbuilt_total == null && root.cradleToGateCombination!=null) {
+                        if(!Program.showWeight && root.cradleToGateCombination != null)
+                        {
                             //TODO: elements need proper deep clone method implemented within AAS metamodel classes
                             asbuilt_total = new String(root.cradleToGateCombination.Value);
+                        }
+                        if (Program.showWeight && root.weightCombination != null)
+                        {
+                            //TODO: elements need proper deep clone method implemented within AAS metamodel classes
+                            asbuilt_total = new String(root.weightCombination.Value);
                         }
                     }
                 }
@@ -2030,6 +2080,15 @@ namespace AasxServer
                         }
                         node.distributionCombination.SetTimeStamp(timeStamp);
                     }
+                    if (node.weightCombination != null)
+                    {
+                        node.weightCombination.Value = "0.0";
+                        if (node.weightModule != null)
+                        {
+                            node.weightCombination.Value = node.weightModule.Value;
+                        }
+                        node.weightCombination.SetTimeStamp(timeStamp);
+                    }
                 }
                 // move up, if all children iterated
                 if (node.iChild == node.children.Count)
@@ -2098,6 +2157,26 @@ namespace AasxServer
                                     value1 = Math.Round(value1 + value2, 8);
                                     parent.distributionCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
                                     parent.distributionCombination.SetTimeStamp(timeStamp);
+                                }
+                                catch { }
+                            }
+                        }
+                        if (parent.weightCombination != null)
+                        {
+                            Property p = node.weightModule;
+                            if (node.weightCombination != null)
+                                p = node.weightCombination;
+                            if (p != null)
+                            {
+                                double value1 = 0.0;
+                                double value2 = 0.0;
+                                try
+                                {
+                                    value1 = Convert.ToDouble(parent.weightCombination.Value, CultureInfo.InvariantCulture);
+                                    value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                    value1 = Math.Round(value1 + value2, 8);
+                                    parent.weightCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
+                                    parent.weightCombination.SetTimeStamp(timeStamp);
                                 }
                                 catch { }
                             }

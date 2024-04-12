@@ -686,6 +686,8 @@ namespace AasxServer
         public static int startIndex = 0;
 
         public static bool withPolicy = false;
+
+        public static bool showWeight = false;
         private class CommandLineArguments
         {
             // ReSharper disable UnusedAutoPropertyAccessor.Local
@@ -732,7 +734,7 @@ namespace AasxServer
             }
 
             // Read environment variables
-            string[] evlist = { "PLCNEXTTARGET", "WITHPOLICY" };
+            string[] evlist = { "PLCNEXTTARGET", "WITHPOLICY", "SHOWWEIGHT" };
             foreach (var ev in evlist)
             {
                 string v = System.Environment.GetEnvironmentVariable(ev);
@@ -747,7 +749,7 @@ namespace AasxServer
             string w;
             if (envVariables.TryGetValue("WITHPOLICY", out w))
             {
-                if (w.ToLower() == "true" || w.ToLower() =="on")
+                if (w.ToLower() == "true" || w.ToLower() == "on")
                 {
                     withPolicy = true;
                 }
@@ -756,6 +758,18 @@ namespace AasxServer
                     withPolicy = false;
                 }
                 Console.WriteLine("withPolicy: " + withPolicy);
+            }
+            if (envVariables.TryGetValue("SHOWWEIGHT", out w))
+            {
+                if (w.ToLower() == "true" || w.ToLower() == "on")
+                {
+                    showWeight = true;
+                }
+                if (w.ToLower() == "false" || w.ToLower() == "off")
+                {
+                    showWeight = false;
+                }
+                Console.WriteLine("showWeight: " + showWeight);
             }
 
             if (a.Connect != null)
