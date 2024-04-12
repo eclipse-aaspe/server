@@ -3,6 +3,7 @@ using DataTransferObjects.CommonDTOs;
 using DataTransferObjects.ValueDTOs;
 using IO.Swagger.Lib.V3.Exceptions;
 using System.Collections.Generic;
+using System.Linq;
 using static AasCore.Aas3_0.Visitation;
 
 namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
@@ -11,8 +12,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
     {
         public IDTO Transform(IClass that)
         {
-            if (that == null) return null;
-            return that.Transform(this);
+            return that?.Transform(this);
         }
 
         public IDTO TransformAdministrativeInformation(IAdministrativeInformation that)
@@ -25,14 +25,14 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             List<ISubmodelElementValue> annotations = null;
             if (that.Annotations != null)
             {
-                annotations = new List<ISubmodelElementValue>();
-                foreach (var element in that.Annotations)
-                {
-                    annotations.Add((ISubmodelElementValue)Transform(element));
-                }
+                annotations = that.Annotations.Select(element => (ISubmodelElementValue) Transform(element)).ToList();
+            }
+            else
+            {
+                return null;
             }
 
-            return new AnnotatedRelationshipElementValue(that.IdShort, (ReferenceDTO)Transform(that.First), (ReferenceDTO)Transform(that.Second), annotations);
+            return new AnnotatedRelationshipElementValue(that.IdShort ?? string.Empty, (ReferenceDTO) Transform(that.First), (ReferenceDTO) Transform(that.Second), annotations);
         }
 
         public IDTO TransformAssetAdministrationShell(IAssetAdministrationShell that)
@@ -47,12 +47,12 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 
         public IDTO TransformBasicEventElement(IBasicEventElement that)
         {
-            return new BasicEventElementValue(that.IdShort, (ReferenceDTO)Transform(that.Observed));
+            return new BasicEventElementValue(that.IdShort ?? string.Empty, (ReferenceDTO) Transform(that.Observed));
         }
 
         public IDTO TransformBlob(IBlob that)
         {
-            return new BlobValue(that.IdShort, that.ContentType, that.Value);
+            return new BlobValue(that.IdShort ?? string.Empty, that.ContentType, that.Value);
         }
 
         public IDTO TransformCapability(ICapability that)
@@ -80,14 +80,10 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             List<ISubmodelElementValue> statements = null;
             if (that.Statements != null)
             {
-                statements = new List<ISubmodelElementValue>();
-                foreach (var element in that.Statements)
-                {
-                    statements.Add((ISubmodelElementValue)Transform(element));
-                }
+                statements = that.Statements.Select(element => (ISubmodelElementValue) Transform(element)).ToList();
             }
 
-            return new EntityValue(that.IdShort,  that.EntityType, statements, that.GlobalAssetId);
+            return new EntityValue(that.IdShort ?? string.Empty, that.EntityType, statements, that.GlobalAssetId);
         }
 
         public IDTO TransformEnvironment(IEnvironment that)
@@ -107,23 +103,12 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 
         public IDTO TransformFile(IFile that)
         {
-            return new FileValue(that.IdShort, that.ContentType, that.Value);
+            return new FileValue(that.IdShort ?? string.Empty, that.ContentType, that.Value);
         }
 
-        internal List<KeyDTO> TransformKeyList(List<IKey> keyList)
+        private List<KeyDTO> TransformKeyList(IEnumerable<IKey> keyList)
         {
-            List<KeyDTO> output = null;
-
-            if (keyList != null)
-            {
-                output = new List<KeyDTO>();
-                foreach (var key in keyList)
-                {
-                    output.Add((KeyDTO)Transform(key));
-                }
-            }
-
-            return output;
+            return keyList?.Select(key => (KeyDTO) Transform(key)).ToList();
         }
 
         public IDTO TransformKey(IKey that)
@@ -164,11 +149,12 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
         public IDTO TransformMultiLanguageProperty(IMultiLanguageProperty that)
         {
             var langStrings = new List<KeyValuePair<string, string>>();
-            foreach (var langString in that.Value)
+            if (that.Value != null)
             {
-                langStrings.Add(new KeyValuePair<string, string>(langString.Language, langString.Text));
+                langStrings.AddRange(that.Value.Select(langString => new KeyValuePair<string, string>(langString.Language, langString.Text)));
             }
-            return new MultiLanguagePropertyValue(that.IdShort, langStrings);
+
+            return new MultiLanguagePropertyValue(that.IdShort ?? string.Empty, langStrings);
         }
 
         public IDTO TransformOperation(IOperation that)
@@ -178,32 +164,20 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             List<ISubmodelElementValue> inoutputVariables = null;
             if (that.InputVariables != null)
             {
-                inputVariables = new List<ISubmodelElementValue>();
-                foreach (var inputVariable in that.InputVariables)
-                {
-                    inputVariables.Add((ISubmodelElementValue)Transform(inputVariable));
-                }
+                inputVariables = that.InputVariables.Select(inputVariable => (ISubmodelElementValue) Transform(inputVariable)).ToList();
             }
 
             if (that.OutputVariables != null)
             {
-                outputVariables = new List<ISubmodelElementValue>();
-                foreach (var outputVariable in that.OutputVariables)
-                {
-                    outputVariables.Add((ISubmodelElementValue)Transform(outputVariable));
-                }
+                outputVariables = that.OutputVariables.Select(outputVariable => (ISubmodelElementValue) Transform(outputVariable)).ToList();
             }
 
             if (that.InoutputVariables != null)
             {
-                inoutputVariables = new List<ISubmodelElementValue>();
-                foreach (var inoutputVariable in that.InoutputVariables)
-                {
-                    inoutputVariables.Add((ISubmodelElementValue)Transform(inoutputVariable));
-                }
+                inoutputVariables = that.InoutputVariables.Select(inoutputVariable => (ISubmodelElementValue) Transform(inoutputVariable)).ToList();
             }
 
-            return new OperationValue(that.IdShort, inputVariables, outputVariables, inoutputVariables);
+            return new OperationValue(that.IdShort ?? string.Empty, inputVariables, outputVariables, inoutputVariables);
         }
 
         public IDTO TransformOperationVariable(IOperationVariable that)
@@ -213,7 +187,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 
         public IDTO TransformProperty(IProperty that)
         {
-            return new PropertyValue(that.IdShort, that.Value);
+            return new PropertyValue(that.IdShort ?? string.Empty, that.Value);
         }
 
         public IDTO TransformQualifier(IQualifier that)
@@ -223,22 +197,28 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 
         public IDTO TransformRange(IRange that)
         {
-            return new RangeValue(that.IdShort, that.Min, that.Max);
+            return new RangeValue(that.IdShort ?? string.Empty, that.Min, that.Max);
         }
 
         public IDTO TransformReference(IReference that)
         {
-            return new ReferenceDTO(that.Type, TransformKeyList(that.Keys), (ReferenceDTO)Transform(that.ReferredSemanticId));
+            if (that.ReferredSemanticId != null)
+            {
+                return new ReferenceDTO(that.Type, TransformKeyList(that.Keys), (ReferenceDTO) Transform(
+                    that.ReferredSemanticId));
+            }
+
+            return null;
         }
 
         public IDTO TransformReferenceElement(IReferenceElement that)
         {
-            return new ReferenceElementValue(that.IdShort, (ReferenceDTO)Transform(that.Value));
+            return that.Value != null ? new ReferenceElementValue(that.IdShort ?? string.Empty, (ReferenceDTO) Transform(that.Value)) : null;
         }
 
         public IDTO TransformRelationshipElement(IRelationshipElement that)
         {
-            return new RelationshipElementValue(that.IdShort, (ReferenceDTO)Transform(that.First), (ReferenceDTO)Transform(that.Second));
+            return new RelationshipElementValue(that.IdShort ?? string.Empty, (ReferenceDTO) Transform(that.First), (ReferenceDTO) Transform(that.Second));
         }
 
         public IDTO TransformResource(IResource that)
@@ -256,11 +236,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             List<ISubmodelElementValue> submodelElements = null;
             if (that.SubmodelElements != null)
             {
-                submodelElements = new List<ISubmodelElementValue>();
-                foreach (var element in that.SubmodelElements)
-                {
-                    submodelElements.Add((ISubmodelElementValue)Transform(element));
-                }
+                submodelElements = that.SubmodelElements.Select(element => (ISubmodelElementValue) Transform(element)).ToList();
             }
 
             return new SubmodelValue(submodelElements);
@@ -271,14 +247,10 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             List<ISubmodelElementValue> value = null;
             if (that.Value != null)
             {
-                value = new List<ISubmodelElementValue>();
-                foreach (var element in that.Value)
-                {
-                    value.Add((ISubmodelElementValue)Transform(element));
-                }
+                value = that.Value.Select(element => (ISubmodelElementValue) Transform(element)).ToList();
             }
 
-            return new SubmodelElementCollectionValue(that.IdShort, value);
+            return new SubmodelElementCollectionValue(that.IdShort ?? string.Empty, value);
         }
 
         public IDTO TransformSubmodelElementList(ISubmodelElementList that)
@@ -286,14 +258,10 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             List<ISubmodelElementValue> value = null;
             if (that.Value != null)
             {
-                value = new List<ISubmodelElementValue>();
-                foreach (var element in that.Value)
-                {
-                    value.Add((ISubmodelElementValue)Transform(element));
-                }
+                value = that.Value.Select(element => (ISubmodelElementValue) Transform(element)).ToList();
             }
 
-            return new SubmodelElementListValue(that.IdShort, value);
+            return new SubmodelElementListValue(that.IdShort ?? string.Empty, value);
         }
 
         public IDTO TransformValueList(IValueList that)
