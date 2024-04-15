@@ -160,8 +160,7 @@ namespace AasxServerDB
 
                 var list = db.SValueSets.Where(v =>
                     (withContains && v.Value.Contains(contains)) ||
-                    (withEqual && v.Value == equal) ||
-                    semanticId != ""
+                    (withEqual && v.Value == equal)
                     )
                     .Join(db.SMESets,
                         v => v.SMEId,
@@ -181,8 +180,7 @@ namespace AasxServerDB
 
                 list.AddRange(db.IValueSets.Where(v =>
                     (withEqual && withI && v.Value == iEqual) ||
-                    (withCompare && withI && v.Value >= iLower && v.Value <= iUpper) ||
-                    semanticId != ""
+                    (withCompare && withI && v.Value >= iLower && v.Value <= iUpper)
                     )
                     .Join(db.SMESets,
                         v => v.SMEId,
@@ -202,8 +200,7 @@ namespace AasxServerDB
 
                 list.AddRange(db.DValueSets.Where(v =>
                     (withEqual && withF && v.Value == fEqual) ||
-                    (withCompare && withF && v.Value >= fLower && v.Value <= fUpper) ||
-                    semanticId != ""
+                    (withCompare && withF && v.Value >= fLower && v.Value <= fUpper)
                     )
                     .Join(db.SMESets,
                         v => v.SMEId,
@@ -476,10 +473,12 @@ namespace AasxServerDB
         }
 
         public int CountSMEs(
-            string smSemanticId = "", string semanticId = "",
+            string semanticId = "",
             string equal = "", string lower = "", string upper = "", string contains = "")
 
         {
+            int c = 0;
+
             bool withI = false;
             long iEqual = 0;
             long iLower = 0;
@@ -510,9 +509,7 @@ namespace AasxServerDB
             catch { }
 
             if (semanticId == "" && equal == "" && lower == "" && upper == "" && contains == "")
-                return 0;
-
-            int c = 0;
+                return c;
             
             using (AasContext db = new AasContext())
             {
@@ -528,18 +525,14 @@ namespace AasxServerDB
 
                 c = db.SValueSets.Where(v =>
                     (withContains && v.Value.Contains(contains)) ||
-                    (withEqual && v.Value == equal) 
+                    (withEqual && v.Value == equal)
                     )
                     .Join(db.SMESets,
                         v => v.SMEId,
                         sme => sme.Id,
                         (v, sme) => new
                         {
-                            SemanticId = sme.SemanticId,
-                            IdShort = sme.IdShort,
-                            Id = sme.Id,
-                            Value = v.Value.ToString(),
-                            ParentSMEId = sme.ParentSMEId
+                            SemanticId = sme.SemanticId
                         }
                     )
                     .Where(s => semanticId == "" || s.SemanticId == semanticId)
@@ -554,11 +547,7 @@ namespace AasxServerDB
                         sme => sme.Id,
                         (v, sme) => new
                         {
-                            SemanticId = sme.SemanticId,
-                            IdShort = sme.IdShort,
-                            Id = sme.Id,
-                            Value = v.Value.ToString(),
-                            ParentSMEId = sme.ParentSMEId
+                            SemanticId = sme.SemanticId
                         }
                     )
                     .Where(s => semanticId == "" || s.SemanticId == semanticId)
@@ -573,11 +562,7 @@ namespace AasxServerDB
                         sme => sme.Id,
                         (v, sme) => new
                         {
-                            SemanticId = sme.SemanticId,
-                            IdShort = sme.IdShort,
-                            Id = sme.Id,
-                            Value = v.Value.ToString(),
-                            ParentSMEId = sme.ParentSMEId
+                            SemanticId = sme.SemanticId
                         }
                     )
                     .Where(s => semanticId == "" || s.SemanticId == semanticId)
