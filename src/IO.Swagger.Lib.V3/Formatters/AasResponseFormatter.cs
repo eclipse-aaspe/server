@@ -7,8 +7,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Net.Http.Headers;
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -29,8 +29,8 @@ namespace IO.Swagger.Lib.V3.Formatters
         {
             var oType = o.GetType();
             return oType.IsGenericType &&
-                (oType.GetGenericTypeDefinition() == typeof(List<>) &&
-                (typeof(IClass).IsAssignableFrom(oType.GetGenericArguments()[0])));
+                   (oType.GetGenericTypeDefinition() == typeof(List<>) &&
+                    (typeof(IClass).IsAssignableFrom(oType.GetGenericArguments()[0])));
         }
 
         private static bool IsGenericListOfIValueDTO(object o)
@@ -43,6 +43,7 @@ namespace IO.Swagger.Lib.V3.Formatters
             {
                 IsValueDTO = true;
             }
+
             return oType.IsGenericType &&
                    (oType.GetGenericTypeDefinition() == typeof(List<>) &&
                     IsValueDTO);
@@ -50,144 +51,171 @@ namespace IO.Swagger.Lib.V3.Formatters
 
         public override bool CanWriteResult(OutputFormatterCanWriteContext context)
         {
-            if (typeof(IClass).IsAssignableFrom(context.ObjectType))
-            {
-                return base.CanWriteResult(context);
-            }
-            if (typeof(ValueOnlyPagedResult).IsAssignableFrom(context.ObjectType))
-            {
-                return base.CanWriteResult(context);
-            }
-            if (typeof(IValueDTO).IsAssignableFrom(context.ObjectType))
-            {
-                return base.CanWriteResult(context);
-            }
-            if (IsGenericListOfIClass(context.Object))
-            {
-                return base.CanWriteResult(context);
-            }
-            if (IsGenericListOfIValueDTO(context.Object))
-            {
-                return base.CanWriteResult(context);
-            }
-            if (typeof(PagedResult).IsAssignableFrom(context.ObjectType))
-            {
-                return base.CanWriteResult(context);
-            }
+            var objectType = context.ObjectType;
+            var obj = context.Object;
 
-            return false;
+            return typeof(IClass).IsAssignableFrom(objectType) ||
+                   typeof(ValueOnlyPagedResult).IsAssignableFrom(objectType) ||
+                   typeof(IValueDTO).IsAssignableFrom(objectType) ||
+                   IsGenericListOfIClass(obj) ||
+                   IsGenericListOfIValueDTO(obj) ||
+                   typeof(PagedResult).IsAssignableFrom(objectType);
         }
-        public override Task WriteResponseBodyAsync(OutputFormatterWriteContext context)
+
+
+        public override async Task WriteResponseBodyAsync(OutputFormatterWriteContext context)
         {
             var response = context.HttpContext.Response;
 
-            //SerializationModifier
             GetSerializationModifiersFromRequest(context.HttpContext.Request, out var level, out var extent);
 
-
-            if (typeof(IClass).IsAssignableFrom(context.ObjectType))
+            if (TryWriteJsonObject(response.Body, context.Object, level, extent))
             {
-                //Validate modifiers
-                SerializationModifiersValidator.Validate((IClass)context.Object, level, extent);
-
-                var json = Jsonization.Serialize.ToJsonObject((IClass)context.Object);
-                var writer = new Utf8JsonWriter(response.Body);
-                json.WriteTo(writer);
-                writer.FlushAsync().GetAwaiter().GetResult();
+                await response.Body.FlushAsync();
             }
-            else if (IsGenericListOfIClass(context.Object))
-            {
-
-                var jsonArray = new JsonArray();
-                var genericList = (IList)context.Object;
-                var contextObjectType = genericList.Cast<IClass>().ToList();
-
-                foreach (var json in contextObjectType.Select(Jsonization.Serialize.ToJsonObject))
-                {
-                    jsonArray.Add(json);
-                }
-                var writer = new Utf8JsonWriter(response.Body);
-                jsonArray.WriteTo(writer);
-                writer.FlushAsync().GetAwaiter().GetResult();
-            }
-            else if (typeof(ValueOnlyPagedResult).IsAssignableFrom(context.ObjectType))
-            {
-                var jsonArray = new JsonArray();
-                string cursor = null;
-                if (context.Object is ValueOnlyPagedResult pagedResult)
-                {
-                    cursor = pagedResult.paging_metadata.cursor;
-                    foreach (var json in pagedResult.result.Select(item => new ValueOnlyJsonSerializer().ToJsonObject(item)))
-                    {
-                        jsonArray.Add(json);
-                    }
-                }
-                var jsonNode = new JsonObject
-                {
-                    ["result"] = jsonArray
-                };
-                var pagingMetadata = new JsonObject();
-                if (cursor != null)
-                {
-                    pagingMetadata["cursor"] = cursor;
-                }
-                jsonNode["paging_metadata"] = pagingMetadata;
-                var writer = new Utf8JsonWriter(response.Body);
-                jsonNode.WriteTo(writer);
-                writer.FlushAsync().GetAwaiter().GetResult();
-            }
-            else if (typeof(IValueDTO).IsAssignableFrom(context.ObjectType))
-            {
-                var json = new ValueOnlyJsonSerializer().ToJsonObject((IValueDTO)context.Object);
-                var writer = new Utf8JsonWriter(response.Body);
-                json.WriteTo(writer);
-                writer.FlushAsync().GetAwaiter().GetResult();
-            }
-            else if (IsGenericListOfIValueDTO(context.Object))
-            {
-                var jsonArray = new JsonArray();
-                var genericList = (IList)context.Object;
-                var contextObjectType = genericList.Cast<IValueDTO>().ToList();
-
-                foreach (var json in contextObjectType.Select(item => new ValueOnlyJsonSerializer().ToJsonObject(item)))
-                {
-                    jsonArray.Add(json);
-                }
-                var writer = new Utf8JsonWriter(response.Body);
-                jsonArray.WriteTo(writer);
-                writer.FlushAsync().GetAwaiter().GetResult();
-            }
-            else if (typeof(PagedResult).IsAssignableFrom(context.ObjectType))
-            {
-                var jsonArray = new JsonArray();
-                string cursor = null;
-                if (context.Object is PagedResult pagedResult)
-                {
-                    cursor = pagedResult.paging_metadata.cursor;
-                    foreach (var json in pagedResult.result.Select(Jsonization.Serialize.ToJsonObject))
-                    {
-                        jsonArray.Add(json);
-                    }
-                }
-                var jsonNode = new JsonObject
-                {
-                    ["result"] = jsonArray
-                };
-                var pagingMetadata = new JsonObject();
-                if (cursor != null)
-                {
-                    pagingMetadata["cursor"] = cursor;
-                }
-                jsonNode["paging_metadata"] = pagingMetadata;
-                var writer = new Utf8JsonWriter(response.Body);
-                jsonNode.WriteTo(writer);
-                writer.FlushAsync().GetAwaiter().GetResult();
-            }
-
-            return Task.FromResult(response);
         }
 
-        private void GetSerializationModifiersFromRequest(HttpRequest request, out LevelEnum level, out ExtentEnum extent)
+
+        private bool TryWriteJsonObject(Stream responseBody, object obj, LevelEnum level, ExtentEnum extent)
+        {
+            var writer = new Utf8JsonWriter(responseBody);
+
+            switch (obj)
+            {
+                case IClass classObj:
+                    SerializationModifiersValidator.Validate(classObj, level, extent);
+                    Jsonization.Serialize.ToJsonObject(classObj).WriteTo(writer);
+                    break;
+                case IList<IClass> genericListOfClass:
+                    WriteJsonArray(writer, genericListOfClass.Select(Jsonization.Serialize.ToJsonObject));
+                    break;
+                case ValueOnlyPagedResult valuePagedResult:
+                    WriteValueOnlyPagedResult2(writer, valuePagedResult);
+                    break;
+                case IValueDTO valueDto:
+                    new ValueOnlyJsonSerializer().ToJsonObject(valueDto).WriteTo(writer);
+                    break;
+                case IList<IValueDTO> genericListOfValueDto:
+                    WriteJsonArray(writer, genericListOfValueDto.Select(item => new ValueOnlyJsonSerializer().ToJsonObject(item)));
+                    break;
+                case PagedResult pagedResult:
+                    WritePagedResult2(writer, pagedResult);
+                    break;
+                default:
+                    return false;
+            }
+
+            writer.Flush();
+            return true;
+        }
+
+        private void WriteJsonArray(Utf8JsonWriter writer, IEnumerable<JsonNode> nodes)
+        {
+            var jsonArray = new JsonArray();
+            foreach (var node in nodes)
+            {
+                jsonArray.Add(node);
+            }
+
+            jsonArray.WriteTo(writer);
+        }
+
+
+        private void WriteValueOnlyPagedResult2(Utf8JsonWriter writer, ValueOnlyPagedResult valuePagedResult)
+        {
+            var jsonArray = new JsonArray();
+            string cursor = valuePagedResult.paging_metadata?.cursor;
+
+            foreach (var json in valuePagedResult.result.Select(item => new ValueOnlyJsonSerializer().ToJsonObject(item)))
+            {
+                jsonArray.Add(json);
+            }
+
+            var jsonNode = new JsonObject
+            {
+                ["result"] = jsonArray
+            };
+
+            if (cursor != null)
+            {
+                jsonNode["paging_metadata"] = new JsonObject {["cursor"] = cursor};
+            }
+
+            jsonNode.WriteTo(writer);
+        }
+
+        private void WritePagedResult2(Utf8JsonWriter writer, PagedResult pagedResult)
+        {
+            var jsonArray = new JsonArray();
+            string cursor = pagedResult.paging_metadata?.cursor;
+
+            foreach (var json in pagedResult.result.Select(Jsonization.Serialize.ToJsonObject))
+            {
+                jsonArray.Add(json);
+            }
+
+            var jsonNode = new JsonObject
+            {
+                ["result"] = jsonArray
+            };
+
+            if (cursor != null)
+            {
+                jsonNode["paging_metadata"] = new JsonObject {["cursor"] = cursor};
+            }
+
+            jsonNode.WriteTo(writer);
+        }
+
+
+        private void WriteValueOnlyPagedResult(Utf8JsonWriter writer, ValueOnlyPagedResult valuePagedResult)
+        {
+            var jsonArray = new JsonArray();
+            var cursor = valuePagedResult.paging_metadata?.cursor;
+
+            foreach (var json in valuePagedResult.result.Select(item => new ValueOnlyJsonSerializer().ToJsonObject(item)))
+            {
+                jsonArray.Add(json);
+            }
+
+            var jsonNode = new JsonObject
+            {
+                ["result"] = jsonArray
+            };
+
+            if (cursor != null)
+            {
+                jsonNode["paging_metadata"] = new JsonObject {["cursor"] = cursor};
+            }
+
+            jsonNode.WriteTo(writer);
+        }
+
+        private static void WritePagedResult(Utf8JsonWriter writer, PagedResult pagedResult)
+        {
+            var jsonArray = new JsonArray();
+            var cursor = pagedResult.paging_metadata?.cursor;
+
+            foreach (var json in pagedResult.result.Select(Jsonization.Serialize.ToJsonObject))
+            {
+                jsonArray.Add(json);
+            }
+
+            var jsonNode = new JsonObject
+            {
+                ["result"] = jsonArray
+            };
+
+            if (cursor != null)
+            {
+                jsonNode["paging_metadata"] = new JsonObject {["cursor"] = cursor};
+            }
+
+            jsonNode.WriteTo(writer);
+        }
+
+
+        private static void GetSerializationModifiersFromRequest(HttpRequest request, out LevelEnum level, out ExtentEnum extent)
         {
             request.Query.TryGetValue("level", out var levelValues);
             if (levelValues.Any())
