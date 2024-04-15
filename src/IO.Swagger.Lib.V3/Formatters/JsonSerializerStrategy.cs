@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using AdminShellNS.Lib.V3.Models;
-using DataTransferObjects;
 using DataTransferObjects.ValueDTOs;
 using IO.Swagger.Lib.V3.SerializationModifiers;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers;
@@ -15,6 +14,20 @@ namespace IO.Swagger.Lib.V3.Formatters;
 /// <inheritdoc cref="IJsonSerializerStrategy"/>
 public class JsonSerializerStrategy : IJsonSerializerStrategy
 {
+    private readonly IValueOnlyJsonSerializer _valueOnlyJsonSerializer;
+    private readonly ISerializationModifiersValidator _serializationModifiersValidator;
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="valueOnlyJsonSerializer"></param>
+    /// <param name="serializationModifiersValidator"></param>
+    public JsonSerializerStrategy(IValueOnlyJsonSerializer valueOnlyJsonSerializer, ISerializationModifiersValidator serializationModifiersValidator)
+    {
+        _valueOnlyJsonSerializer = valueOnlyJsonSerializer;
+        _serializationModifiersValidator = serializationModifiersValidator;
+    }
+
     /// <inheritdoc/>
     public bool CanSerialize(Type objectType, object obj)
     {
@@ -29,10 +42,11 @@ public class JsonSerializerStrategy : IJsonSerializerStrategy
     /// <inheritdoc/>
     public void Serialize(Utf8JsonWriter writer, object obj, LevelEnum level, ExtentEnum extent)
     {
+        //TODO: Create Facade for Utf8JsonWriter for better testing
         switch (obj)
         {
             case IClass classObj:
-                SerializationModifiersValidator.Validate(classObj, level, extent);
+                _serializationModifiersValidator.Validate(classObj, level, extent); //TODO: need to make this mockable
                 Jsonization.Serialize.ToJsonObject(classObj).WriteTo(writer);
                 break;
             case IList<IClass> genericListOfClass:
@@ -42,10 +56,10 @@ public class JsonSerializerStrategy : IJsonSerializerStrategy
                 WriteValueOnlyPagedResult(writer, valuePagedResult);
                 break;
             case IValueDTO valueDto:
-                new ValueOnlyJsonSerializer().ToJsonObject(valueDto).WriteTo(writer);
+                _valueOnlyJsonSerializer.ToJsonObject(valueDto).WriteTo(writer);
                 break;
             case IList<IValueDTO> genericListOfValueDto:
-                WriteJsonArray(writer, genericListOfValueDto.Select(item => new ValueOnlyJsonSerializer().ToJsonObject(item)));
+                WriteJsonArray(writer, genericListOfValueDto.Select(item => _valueOnlyJsonSerializer.ToJsonObject(item)));
                 break;
             case PagedResult pagedResult:
                 WritePagedResult(writer, pagedResult);
@@ -83,12 +97,12 @@ public class JsonSerializerStrategy : IJsonSerializerStrategy
         jsonArray.WriteTo(writer);
     }
 
-    private static void WriteValueOnlyPagedResult(Utf8JsonWriter writer, ValueOnlyPagedResult valuePagedResult)
+    private void WriteValueOnlyPagedResult(Utf8JsonWriter writer, ValueOnlyPagedResult valuePagedResult)
     {
         var jsonArray = new JsonArray();
         var cursor = valuePagedResult.paging_metadata?.cursor;
 
-        foreach (var json in valuePagedResult.result.Select(item => new ValueOnlyJsonSerializer().ToJsonObject(item)))
+        foreach (var json in valuePagedResult.result.Select(item => _valueOnlyJsonSerializer.ToJsonObject(item)))
         {
             jsonArray.Add(json);
         }

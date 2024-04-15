@@ -6,19 +6,11 @@ using System;
 
 namespace IO.Swagger.Lib.V3.SerializationModifiers;
 
-/// <summary>
-/// Provides methods for validating serialization modifiers of resources.
-/// </summary>
-public class SerializationModifiersValidator
+/// <inheritdoc cref="ISerializationModifiersValidator"/>
+public class SerializationModifiersValidator : ISerializationModifiersValidator
 {
-    /// <summary>
-    /// Validates the serialization modifiers of the specified resource.
-    /// </summary>
-    /// <param name="resource">The resource to validate.</param>
-    /// <param name="level">The level of the resource.</param>
-    /// <param name="extent">The extent of the resource.</param>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="resource"/> is null.</exception>
-    public static void Validate(object resource, LevelEnum level, ExtentEnum extent)
+    /// <inheritdoc />
+    public void Validate(object resource, LevelEnum level, ExtentEnum extent)
     {
         if (resource == null)
         {

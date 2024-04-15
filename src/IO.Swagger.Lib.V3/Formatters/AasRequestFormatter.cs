@@ -20,10 +20,13 @@ namespace IO.Swagger.Lib.V3.Formatters
 {
     public class AasRequestFormatter : InputFormatter
     {
-        public AasRequestFormatter()
+        private ISerializationModifiersValidator _serializationModifiersValidator;
+
+        public AasRequestFormatter(ISerializationModifiersValidator serializationModifiersValidator)
         {
-            this.SupportedMediaTypes.Clear();
-            this.SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse("application/json"));
+            _serializationModifiersValidator = serializationModifiersValidator;
+            SupportedMediaTypes.Clear();
+            SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse("application/json"));
         }
 
         public override bool CanRead(InputFormatterContext context)
@@ -110,7 +113,7 @@ namespace IO.Swagger.Lib.V3.Formatters
             //Validate modifiers
             //SerializationModifier
             GetSerializationMidifiersFromRequest(context.HttpContext.Request, out LevelEnum level, out ExtentEnum extent);
-            SerializationModifiersValidator.Validate(result, level, extent);
+            _serializationModifiersValidator.Validate(result, level, extent);
 
             return InputFormatterResult.SuccessAsync(result);
 

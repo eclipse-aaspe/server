@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Security.AccessControl;
+using System.Text.Json;
 using AasCore.Aas3_0;
 using AdminShellNS.Lib.V3.Models;
 using AutoFixture;
@@ -6,6 +7,8 @@ using AutoFixture.AutoMoq;
 using DataTransferObjects;
 using DataTransferObjects.ValueDTOs;
 using IO.Swagger.Lib.V3.Formatters;
+using IO.Swagger.Lib.V3.SerializationModifiers;
+using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers;
 using IO.Swagger.Models;
 using Moq;
 
@@ -17,10 +20,14 @@ public class JsonSerializerStrategyTests
     private readonly Fixture _fixture;
     private readonly Mock<IValueDTO> _mockValueDto;
     private readonly Mock<PagedResult> _mockPagedResult;
+    private readonly Mock<IValueOnlyJsonSerializer> _mockValueOnlyJsonSerializer;
+    private readonly Mock<ISerializationModifiersValidator> _mockSerializationModifiersValidator;
 
     public JsonSerializerStrategyTests()
     {
-        _sut = new JsonSerializerStrategy();
+        _mockValueOnlyJsonSerializer = new Mock<IValueOnlyJsonSerializer>();
+        _mockSerializationModifiersValidator = new Mock<ISerializationModifiersValidator>();
+        _sut = new JsonSerializerStrategy(_mockValueOnlyJsonSerializer.Object, _mockSerializationModifiersValidator.Object);
         _fixture = new Fixture();
         _fixture.Behaviors.Remove(new ThrowingRecursionBehavior());
         _fixture.Behaviors.Add(new OmitOnRecursionBehavior());
@@ -28,6 +35,8 @@ public class JsonSerializerStrategyTests
         _mockValueDto = new Mock<IValueDTO>();
         _mockPagedResult = new Mock<PagedResult>();
     }
+
+    #region CanSerialize
 
     [Fact]
     public void CanSerialize_WhenObjectIsIClass_ShouldReturnTrue()
@@ -93,11 +102,10 @@ public class JsonSerializerStrategyTests
     [Fact]
     public void CanSerialize_WhenObjectIsGenericListOfIValueDto_ShouldReturnTrue()
     {
-        
         // Arrange
         var genericList = _fixture.Create<List<IValueDTO>>();
-        genericList.Add(new EntityValue(_fixture.Create<string>(),EntityType.CoManagedEntity)); 
-        genericList.Add(new EntityValue(_fixture.Create<string>(),EntityType.CoManagedEntity)); 
+        genericList.Add(new EntityValue(_fixture.Create<string>(), EntityType.CoManagedEntity));
+        genericList.Add(new EntityValue(_fixture.Create<string>(), EntityType.CoManagedEntity));
 
         // Act
         var result = _sut.CanSerialize(genericList.GetType(), genericList);
@@ -105,4 +113,22 @@ public class JsonSerializerStrategyTests
         // Assert
         result.Should().BeTrue();
     }
+
+    #endregion
+
+    #region Serialize
+
+    [Fact]
+    public void Serialize_ShouldThrowArgumentException_WhenUnsupportedTypeIsProvided()
+    {
+        // Arrange
+        var unsupportedType = _fixture.Create<string>(); // Providing an unsupported type
+        var mockWriter = new Mock<Utf8JsonWriter>(new MemoryStream(), new JsonWriterOptions());
+
+        // Act & Assert
+        _sut.Invoking(x => x.Serialize(mockWriter.Object, unsupportedType, LevelEnum.Core, ExtentEnum.WithoutBlobValue))
+            .Should().Throw<ArgumentException>();
+    }
+
+    #endregion
 }
