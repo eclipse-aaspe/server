@@ -1,12 +1,10 @@
 ﻿using AdminShellNS.Lib.V3.Models;
 using DataTransferObjects;
-using DataTransferObjects.ValueDTOs;
 using IO.Swagger.Lib.V3.SerializationModifiers;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers;
 using IO.Swagger.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Formatters;
-using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 using System;
 using System.Collections;
@@ -15,6 +13,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using IValueDTO = DataTransferObjects.ValueDTOs.IValueDTO;
 
 namespace IO.Swagger.Lib.V3.Formatters
 {
@@ -25,7 +24,8 @@ namespace IO.Swagger.Lib.V3.Formatters
             this.SupportedMediaTypes.Clear();
             this.SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse("application/json"));
         }
-        public static bool IsGenericListOfIClass(object o)
+
+        private static bool IsGenericListOfIClass(object o)
         {
             var oType = o.GetType();
             return oType.IsGenericType &&
@@ -33,20 +33,19 @@ namespace IO.Swagger.Lib.V3.Formatters
                 (typeof(IClass).IsAssignableFrom(oType.GetGenericArguments()[0])));
         }
 
-        public static bool IsGenericListOfIValueDTO(object o)
+        private static bool IsGenericListOfIValueDTO(object o)
         {
             var oType = o.GetType();
-            bool IsValueDTO = false;
-            if (o is List<IDTO> list)
+            var IsValueDTO = false;
+            if (o is not List<IDTO> list)
+                return false;
+            if (list[0] is IValueDTO)
             {
-                if (list[0] is IValueDTO)
-                {
-                    IsValueDTO = true;
-                }
+                IsValueDTO = true;
             }
             return oType.IsGenericType &&
-                (oType.GetGenericTypeDefinition() == typeof(List<>) &&
-                IsValueDTO);
+                   (oType.GetGenericTypeDefinition() == typeof(List<>) &&
+                    IsValueDTO);
         }
 
         public override bool CanWriteResult(OutputFormatterCanWriteContext context)
@@ -75,16 +74,15 @@ namespace IO.Swagger.Lib.V3.Formatters
             {
                 return base.CanWriteResult(context);
             }
-            else
-                return false;
+
+            return false;
         }
         public override Task WriteResponseBodyAsync(OutputFormatterWriteContext context)
         {
-            var httpContext = context.HttpContext;
             var response = context.HttpContext.Response;
 
             //SerializationModifier
-            GetSerializationMidifiersFromRequest(context.HttpContext.Request, out LevelEnum level, out ExtentEnum extent);
+            GetSerializationModifiersFromRequest(context.HttpContext.Request, out var level, out var extent);
 
 
             if (typeof(IClass).IsAssignableFrom(context.ObjectType))
@@ -92,7 +90,7 @@ namespace IO.Swagger.Lib.V3.Formatters
                 //Validate modifiers
                 SerializationModifiersValidator.Validate((IClass)context.Object, level, extent);
 
-                JsonObject json = Jsonization.Serialize.ToJsonObject((IClass)context.Object);
+                var json = Jsonization.Serialize.ToJsonObject((IClass)context.Object);
                 var writer = new Utf8JsonWriter(response.Body);
                 json.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();
@@ -101,16 +99,11 @@ namespace IO.Swagger.Lib.V3.Formatters
             {
 
                 var jsonArray = new JsonArray();
-                IList genericList = (IList)context.Object;
-                List<IClass> contextObjectType = new List<IClass>();
-                foreach (var generic in genericList)
-                {
-                    contextObjectType.Add((IClass)generic);
-                }
+                var genericList = (IList)context.Object;
+                var contextObjectType = genericList.Cast<IClass>().ToList();
 
-                foreach (var item in contextObjectType)
+                foreach (var json in contextObjectType.Select(Jsonization.Serialize.ToJsonObject))
                 {
-                    var json = Jsonization.Serialize.ToJsonObject(item);
                     jsonArray.Add(json);
                 }
                 var writer = new Utf8JsonWriter(response.Body);
@@ -124,14 +117,15 @@ namespace IO.Swagger.Lib.V3.Formatters
                 if (context.Object is ValueOnlyPagedResult pagedResult)
                 {
                     cursor = pagedResult.paging_metadata.cursor;
-                    foreach (var item in pagedResult.result)
+                    foreach (var json in pagedResult.result.Select(item => new ValueOnlyJsonSerializer().ToJsonObject(item)))
                     {
-                        var json = new ValueOnlyJsonSerializer().ToJsonObject(item);
                         jsonArray.Add(json);
                     }
                 }
-                JsonObject jsonNode = new JsonObject();
-                jsonNode["result"] = jsonArray;
+                var jsonNode = new JsonObject
+                {
+                    ["result"] = jsonArray
+                };
                 var pagingMetadata = new JsonObject();
                 if (cursor != null)
                 {
@@ -144,7 +138,7 @@ namespace IO.Swagger.Lib.V3.Formatters
             }
             else if (typeof(IValueDTO).IsAssignableFrom(context.ObjectType))
             {
-                JsonNode json = new ValueOnlyJsonSerializer().ToJsonObject((IValueDTO)context.Object);
+                var json = new ValueOnlyJsonSerializer().ToJsonObject((IValueDTO)context.Object);
                 var writer = new Utf8JsonWriter(response.Body);
                 json.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();
@@ -152,16 +146,11 @@ namespace IO.Swagger.Lib.V3.Formatters
             else if (IsGenericListOfIValueDTO(context.Object))
             {
                 var jsonArray = new JsonArray();
-                IList genericList = (IList)context.Object;
-                List<IValueDTO> contextObjectType = new List<IValueDTO>();
-                foreach (var generic in genericList)
-                {
-                    contextObjectType.Add((IValueDTO)generic);
-                }
+                var genericList = (IList)context.Object;
+                var contextObjectType = genericList.Cast<IValueDTO>().ToList();
 
-                foreach (var item in contextObjectType)
+                foreach (var json in contextObjectType.Select(item => new ValueOnlyJsonSerializer().ToJsonObject(item)))
                 {
-                    var json = new ValueOnlyJsonSerializer().ToJsonObject(item);
                     jsonArray.Add(json);
                 }
                 var writer = new Utf8JsonWriter(response.Body);
@@ -175,14 +164,15 @@ namespace IO.Swagger.Lib.V3.Formatters
                 if (context.Object is PagedResult pagedResult)
                 {
                     cursor = pagedResult.paging_metadata.cursor;
-                    foreach (var item in pagedResult.result)
+                    foreach (var json in pagedResult.result.Select(Jsonization.Serialize.ToJsonObject))
                     {
-                        var json = Jsonization.Serialize.ToJsonObject(item);
                         jsonArray.Add(json);
                     }
                 }
-                JsonObject jsonNode = new JsonObject();
-                jsonNode["result"] = jsonArray;
+                var jsonNode = new JsonObject
+                {
+                    ["result"] = jsonArray
+                };
                 var pagingMetadata = new JsonObject();
                 if (cursor != null)
                 {
@@ -197,9 +187,9 @@ namespace IO.Swagger.Lib.V3.Formatters
             return Task.FromResult(response);
         }
 
-        private void GetSerializationMidifiersFromRequest(HttpRequest request, out LevelEnum level, out ExtentEnum extent)
+        private void GetSerializationModifiersFromRequest(HttpRequest request, out LevelEnum level, out ExtentEnum extent)
         {
-            request.Query.TryGetValue("level", out StringValues levelValues);
+            request.Query.TryGetValue("level", out var levelValues);
             if (levelValues.Any())
             {
                 Enum.TryParse(levelValues.First(), out level);
@@ -209,10 +199,10 @@ namespace IO.Swagger.Lib.V3.Formatters
                 level = LevelEnum.Deep;
             }
 
-            request.Query.TryGetValue("extent", out StringValues extenValues);
-            if (extenValues.Any())
+            request.Query.TryGetValue("extent", out var extendValues);
+            if (extendValues.Any())
             {
-                Enum.TryParse(extenValues.First(), out extent);
+                Enum.TryParse(extendValues.First(), out extent);
             }
             else
             {

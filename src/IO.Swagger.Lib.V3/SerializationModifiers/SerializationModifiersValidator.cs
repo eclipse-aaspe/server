@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace IO.Swagger.Lib.V3.SerializationModifiers
 {
-    public static class SerializationModifiersValidator
+    public class SerializationModifiersValidator
     {
         //As per new APIs, content is not handled here
         public static void Validate(object resource, LevelEnum level, ExtentEnum extent)

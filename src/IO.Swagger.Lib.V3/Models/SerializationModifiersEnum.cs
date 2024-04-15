@@ -6,7 +6,8 @@ namespace IO.Swagger.Models
     public enum LevelEnum
     {
         Deep,
-        Core
+        Core,
+        None
     }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
@@ -23,7 +24,8 @@ namespace IO.Swagger.Models
     public enum ExtentEnum
     {
         WithoutBlobValue,
-        WithBlobValue
+        WithBlobValue,
+        None
     }
 
 
