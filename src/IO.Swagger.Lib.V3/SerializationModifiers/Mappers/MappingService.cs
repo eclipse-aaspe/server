@@ -5,88 +5,88 @@ using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
-namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers
+namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers;
+
+/// <inheritdoc />
+public class MappingService : IMappingService
 {
-    public class MappingService : IMappingService
+    private readonly IResponseMetadataMapper _responseMetadataMapper;
+    private readonly IResponseValueMapper _responseValueMapper;
+    private readonly IRequestMetadataMapper _requestMetadataMapper;
+    private readonly IRequestValueMapper _requestValueMapper;
+
+    public MappingService(IResponseMetadataMapper responseMetadataMapper, IResponseValueMapper responseValueMapper, IRequestMetadataMapper requestMetadataMapper,
+        IRequestValueMapper requestValueMapper)
     {
-        public IDTO Map(IClass source, string mappingResolverKey)
-        {
-            if (mappingResolverKey == null)
-            {
-                throw new Exception($"Could not resolve serializer modifier mapper.");
-            }
+        _responseMetadataMapper = responseMetadataMapper;
+        _responseValueMapper = responseValueMapper;
+        _requestMetadataMapper = requestMetadataMapper;
+        _requestValueMapper = requestValueMapper;
+    }
 
-            if (mappingResolverKey.Equals("metadata", StringComparison.OrdinalIgnoreCase))
-            {
-                return ResponseMetadataMapper.Map(source);
-            }
-            else if (mappingResolverKey.Equals("value", StringComparison.OrdinalIgnoreCase))
-            {
-                return ResponseValueMapper.Map(source);
-            }
-            else
-            {
-                throw new Exception($"Invalid modifier mapping resolved key");
-            }
+    /// <inheritdoc />
+    public IDTO Map(IClass source, string mappingResolverKey)
+    {
+        if (mappingResolverKey == null)
+        {
+            throw new Exception($"Could not resolve serializer modifier mapper.");
         }
 
-        public List<IDTO> Map(List<IClass> sourceList, string mappingResolverKey)
+        if (mappingResolverKey.Equals("metadata", StringComparison.OrdinalIgnoreCase))
         {
-            if (mappingResolverKey == null)
-            {
-                throw new Exception($"Could not resolve serializer modifier mapper.");
-            }
-
-            if (mappingResolverKey.Equals("metadata", StringComparison.OrdinalIgnoreCase))
-            {
-                var output = new List<IDTO>();
-
-                foreach (var source in sourceList)
-                {
-                    var dto = ResponseMetadataMapper.Map(source);
-                    output.Add(dto);
-                }
-
-                return output;
-            }
-            else if (mappingResolverKey.Equals("value", StringComparison.OrdinalIgnoreCase))
-            {
-                var output = new List<IDTO>();
-
-                foreach (var source in sourceList)
-                {
-                    var dto = ResponseValueMapper.Map(source);
-                    output.Add(dto);
-                }
-
-                return output;
-            }
-            else
-            {
-                throw new Exception($"Invalid modifier mapping resolved key");
-            }
+            return _responseMetadataMapper.Map(source);
         }
 
-        public IClass Map(IDTO dto, string mappingResolverKey)
+        if (mappingResolverKey.Equals("value", StringComparison.OrdinalIgnoreCase))
         {
-            if (mappingResolverKey == null)
-            {
-                throw new Exception($"Could not resolve serializer modifier mapper.");
-            }
-
-            if (mappingResolverKey.Equals("metadata", StringComparison.OrdinalIgnoreCase) && dto is IMetadataDTO metadataDTO)
-            {
-                return RequestMetadataMapper.Map(metadataDTO);
-            }
-            else if (mappingResolverKey.Equals("value", StringComparison.OrdinalIgnoreCase) && dto is IValueDTO valueDTO)
-            {
-                return RequestValueMapper.Map(valueDTO);
-            }
-            else
-            {
-                throw new Exception($"Invalid modifier mapping resolved key");
-            }
+            //TODO: somehow it was never seen that this is an issue....
+            return _requestValueMapper.Map(source);
         }
+
+        throw new Exception("Invalid modifier mapping resolved key");
+    }
+
+    /// <inheritdoc />
+    public List<IDTO> Map(List<IClass> sourceList, string mappingResolverKey)
+    {
+        if (mappingResolverKey == null)
+        {
+            throw new Exception($"Could not resolve serializer modifier mapper.");
+        }
+
+        if (mappingResolverKey.Equals("metadata", StringComparison.OrdinalIgnoreCase))
+        {
+            return sourceList.Select(_responseMetadataMapper.Map).ToList();
+        }
+
+        if (mappingResolverKey.Equals("value", StringComparison.OrdinalIgnoreCase))
+        {
+            return sourceList.Select(_responseValueMapper.Map).Cast<IDTO>().ToList();
+        }
+
+        throw new Exception($"Invalid modifier mapping resolved key");
+    }
+
+    /// <inheritdoc />
+    public IClass Map(IDTO dto, string mappingResolverKey)
+    {
+        if (mappingResolverKey == null)
+        {
+            throw new Exception($"Could not resolve serializer modifier mapper.");
+        }
+
+        if (mappingResolverKey.Equals("metadata", StringComparison.OrdinalIgnoreCase) && dto is IMetadataDTO metadataDTO)
+        {
+            return _requestMetadataMapper.Map(metadataDTO);
+        }
+
+        if (mappingResolverKey.Equals("value", StringComparison.OrdinalIgnoreCase) && dto is IValueDTO valueDTO)
+        {
+            return _requestValueMapper.Map(valueDTO);
+        }
+
+        throw new Exception($"Invalid modifier mapping resolved key");
     }
 }

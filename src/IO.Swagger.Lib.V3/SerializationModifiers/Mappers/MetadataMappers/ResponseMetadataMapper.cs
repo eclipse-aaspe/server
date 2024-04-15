@@ -2,13 +2,14 @@
 
 namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
 {
-    public class ResponseMetadataMapper
+    /// <inheritdoc cref="IResponseMetadataMapper"/>
+    public class ResponseMetadataMapper : IResponseMetadataMapper
     {
-        private static ResponseMetadataTransformer Transformer = new ResponseMetadataTransformer();
+        private static ResponseMetadataTransformer _transformer = new();
 
-        public static IDTO Map(IClass source)
+        public IDTO Map(IClass source)
         {
-            return Transformer.Transform(source);
+            return _transformer.Transform(source);
         }
     }
 }

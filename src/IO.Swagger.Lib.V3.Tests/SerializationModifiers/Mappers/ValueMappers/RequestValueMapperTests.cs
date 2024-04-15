@@ -24,7 +24,7 @@ public class RequestValueMapperTests
         var valueDTO = _fixture.Create<BasicEventElementValue>();
 
         // Act
-        var result = RequestValueMapper.Map(valueDTO);
+        var result = new RequestValueMapper().Map(valueDTO);
 
         // Assert
         result.Should().BeOfType<BasicEventElement>();
@@ -38,7 +38,7 @@ public class RequestValueMapperTests
         var valueDTO = _fixture.Create<IDTO>(); // Create a DTO of unimplemented type
 
         // Act
-        Action action = () => RequestValueMapper.Map((IValueDTO) valueDTO);
+        Action action = () => new RequestValueMapper().Map((IValueDTO) valueDTO);
 
         // Assert
         action.Should().Throw<System.InvalidCastException>();

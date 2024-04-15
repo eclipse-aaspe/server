@@ -3,12 +3,15 @@ using DataTransferObjects.ValueDTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using DataTransferObjects;
 
 namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 {
-    public static class RequestValueMapper
+    /// <inheritdoc />
+    public class RequestValueMapper : IRequestValueMapper
     {
-        public static IClass Map(IValueDTO source)
+        /// <inheritdoc />
+        public IClass Map(IValueDTO source)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             return source switch
@@ -30,12 +33,17 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             };
         }
 
+        public IDTO Map(IClass source)
+        {
+            throw new NotImplementedException();
+        }
+
         private static IClass Transform(BasicEventElementValue valueDTO)
         {
             return new BasicEventElement(TransformReference(valueDTO.observed), Direction.Output, StateOfEvent.On, idShort: valueDTO.idShort);
         }
 
-        private static IClass Transform(SubmodelValue valueDTO)
+        private IClass Transform(SubmodelValue valueDTO)
         {
             List<ISubmodelElement> submodelElements = null;
             if (valueDTO.submodelElements != null)
@@ -51,7 +59,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new AasCore.Aas3_0.Range(DataTypeDefXsd.String, idShort: valueDTO.idShort, min: valueDTO.min, max: valueDTO.max);
         }
 
-        private static IClass Transform(SubmodelElementListValue valueDTO)
+        private IClass Transform(SubmodelElementListValue valueDTO)
         {
             List<ISubmodelElement> value = null;
             if (valueDTO.value != null)
@@ -68,7 +76,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new MultiLanguageProperty(idShort: valueDTO.idShort, value: value);
         }
 
-        private static IClass Transform(SubmodelElementCollectionValue valueDTO)
+        private IClass Transform(SubmodelElementCollectionValue valueDTO)
         {
             List<ISubmodelElement> value = null;
             if (valueDTO.value != null)
@@ -79,7 +87,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new SubmodelElementCollection(idShort: valueDTO.idShort, value: value);
         }
 
-        private static IClass Transform(EntityValue valueDTO)
+        private IClass Transform(EntityValue valueDTO)
         {
             List<ISubmodelElement> statements = null;
             if (valueDTO.statements != null)
@@ -100,7 +108,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new RelationshipElement(TransformReference(valueDTO.first), TransformReference(valueDTO.second), idShort: valueDTO.idShort);
         }
 
-        private static IClass Transform(AnnotatedRelationshipElementValue valueDTO)
+        private IClass Transform(AnnotatedRelationshipElementValue valueDTO)
         {
             List<IDataElement> annotations = null;
             if (valueDTO.annotations != null)

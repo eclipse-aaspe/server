@@ -29,7 +29,7 @@ public class ResponseValueMapperTests
         _transformerMock.Setup(t => t.Transform(source)).Returns(expectedDto);
 
         // Act
-        var result = ResponseValueMapper.Map(source);
+        var result = new ResponseValueMapper().Map(source);
 
         // Assert
         _transformerMock.Verify(t => t.Transform(source), Times.Once);
@@ -45,7 +45,7 @@ public class ResponseValueMapperTests
         _transformerMock.Setup(t => t.Transform(source)).Returns(dto);
 
         // Act
-        var result = ResponseValueMapper.Map(source);
+        var result = new ResponseValueMapper().Map(source);
 
         // Assert
         result.Should().NotBeNull();
@@ -58,7 +58,7 @@ public class ResponseValueMapperTests
         IClass source = null;
 
         // Act
-        var result = ResponseValueMapper.Map(source);
+        var result = new ResponseValueMapper().Map(source);
 
         // Assert
         result.Should().BeNull();
