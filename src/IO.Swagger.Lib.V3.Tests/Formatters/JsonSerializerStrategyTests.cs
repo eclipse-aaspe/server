@@ -76,4 +76,33 @@ public class JsonSerializerStrategyTests
 
         result.Should().BeTrue();
     }
+
+    [Fact]
+    public void CanSerialize_WhenObjectIsGenericListOfIClass_ShouldReturnTrue()
+    {
+        // Arrange
+        var genericList = new List<IClass>();
+
+        // Act
+        var result = _sut.CanSerialize(typeof(List<IClass>), genericList);
+
+        // Assert
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public void CanSerialize_WhenObjectIsGenericListOfIValueDto_ShouldReturnTrue()
+    {
+        
+        // Arrange
+        var genericList = _fixture.Create<List<IValueDTO>>();
+        genericList.Add(new EntityValue(_fixture.Create<string>(),EntityType.CoManagedEntity)); 
+        genericList.Add(new EntityValue(_fixture.Create<string>(),EntityType.CoManagedEntity)); 
+
+        // Act
+        var result = _sut.CanSerialize(genericList.GetType(), genericList);
+
+        // Assert
+        result.Should().BeTrue();
+    }
 }

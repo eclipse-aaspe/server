@@ -65,11 +65,12 @@ public class JsonSerializerStrategy : IJsonSerializerStrategy
 
     private static bool IsGenericListOfIValueDto(object @object)
     {
-        var oType = @object?.GetType();
-        return oType?.IsGenericType == true &&
-               oType.GetGenericTypeDefinition() == typeof(List<>) &&
-               @object is List<IDTO> { Count: > 0 } list && list[0] is IValueDTO;
+        if (@object is not List<IValueDTO> list)
+            return false;
+
+        return list.Count > 0 && list[0] != null;
     }
+
 
     private static void WriteJsonArray(Utf8JsonWriter writer, IEnumerable<JsonNode> nodes)
     {
@@ -99,7 +100,7 @@ public class JsonSerializerStrategy : IJsonSerializerStrategy
 
         if (cursor != null)
         {
-            jsonNode["paging_metadata"] = new JsonObject { ["cursor"] = cursor };
+            jsonNode["paging_metadata"] = new JsonObject {["cursor"] = cursor};
         }
 
         jsonNode.WriteTo(writer);
@@ -122,7 +123,7 @@ public class JsonSerializerStrategy : IJsonSerializerStrategy
 
         if (cursor != null)
         {
-            jsonNode["paging_metadata"] = new JsonObject { ["cursor"] = cursor };
+            jsonNode["paging_metadata"] = new JsonObject {["cursor"] = cursor};
         }
 
         jsonNode.WriteTo(writer);
