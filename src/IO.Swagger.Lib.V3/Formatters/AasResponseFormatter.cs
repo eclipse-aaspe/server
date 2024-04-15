@@ -126,7 +126,7 @@ namespace IO.Swagger.Lib.V3.Formatters
                     cursor = pagedResult.paging_metadata.cursor;
                     foreach (var item in pagedResult.result)
                     {
-                        var json = ValueOnlyJsonSerializer.ToJsonObject(item);
+                        var json = new ValueOnlyJsonSerializer().ToJsonObject(item);
                         jsonArray.Add(json);
                     }
                 }
@@ -144,7 +144,7 @@ namespace IO.Swagger.Lib.V3.Formatters
             }
             else if (typeof(IValueDTO).IsAssignableFrom(context.ObjectType))
             {
-                JsonNode json = ValueOnlyJsonSerializer.ToJsonObject((IValueDTO)context.Object);
+                JsonNode json = new ValueOnlyJsonSerializer().ToJsonObject((IValueDTO)context.Object);
                 var writer = new Utf8JsonWriter(response.Body);
                 json.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();
@@ -161,7 +161,7 @@ namespace IO.Swagger.Lib.V3.Formatters
 
                 foreach (var item in contextObjectType)
                 {
-                    var json = ValueOnlyJsonSerializer.ToJsonObject(item);
+                    var json = new ValueOnlyJsonSerializer().ToJsonObject(item);
                     jsonArray.Add(json);
                 }
                 var writer = new Utf8JsonWriter(response.Body);

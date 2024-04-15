@@ -7,13 +7,14 @@ using System.Text.Json.Nodes;
 
 namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers;
 
-public static class ValueOnlyJsonSerializer
+/// <inheritdoc cref="IValueOnlyJsonSerializer"/>
+public class ValueOnlyJsonSerializer : IValueOnlyJsonSerializer
 {
-    internal static JsonNode ToJsonObject(IValueDTO that)
+    public JsonNode ToJsonObject(IValueDTO valueDto)
     {
-        return that switch
+        return valueDto switch
         {
-            null => throw new ArgumentNullException(nameof(that)),
+            null => throw new ArgumentNullException(nameof(valueDto)),
             PropertyValue propertyValue => Transform(propertyValue),
             MultiLanguagePropertyValue multiLanguagePropertyValue => Transform(multiLanguagePropertyValue),
             BasicEventElementValue basicEventElementValue => Transform(basicEventElementValue),
@@ -31,7 +32,7 @@ public static class ValueOnlyJsonSerializer
         };
     }
 
-    private static JsonNode Transform(EntityValue entityValue)
+    private JsonNode Transform(EntityValue entityValue)
     {
         var result = new JsonObject();
 
@@ -60,7 +61,7 @@ public static class ValueOnlyJsonSerializer
         return result;
     }
 
-    private static JsonNode Transform(AnnotatedRelationshipElementValue annotatedRelEleValue)
+    private JsonNode Transform(AnnotatedRelationshipElementValue annotatedRelEleValue)
     {
         var result = new JsonObject();
 
@@ -85,7 +86,7 @@ public static class ValueOnlyJsonSerializer
         return result;
     }
 
-    private static JsonNode Transform(SubmodelValue submodelValue)
+    private JsonNode Transform(SubmodelValue submodelValue)
     {
         var result = new JsonObject();
         if (submodelValue.submodelElements == null)
@@ -107,7 +108,7 @@ public static class ValueOnlyJsonSerializer
         return result;
     }
 
-    private static JsonObject Transform(SubmodelElementListValue submodelElementListValue)
+    private JsonObject Transform(SubmodelElementListValue submodelElementListValue)
     {
         var result = new JsonObject();
 
@@ -131,7 +132,7 @@ public static class ValueOnlyJsonSerializer
         return result;
     }
 
-    private static JsonObject Transform(SubmodelElementCollectionValue submodelElementCollectionValue)
+    private JsonObject Transform(SubmodelElementCollectionValue submodelElementCollectionValue)
     {
         var result = new JsonObject();
 

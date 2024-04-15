@@ -27,7 +27,7 @@ namespace IO.Swagger.Lib.V3.Tests.SerializationModifiers.Mappers.ValueMappers
             var entityValue = _fixture.Create<EntityValue>();
             
             // Act
-            var result = ValueOnlyJsonSerializer.ToJsonObject(entityValue);
+            var result = new ValueOnlyJsonSerializer().ToJsonObject(entityValue);
             
             // Assert
             result.Should().NotBeNull();
@@ -40,7 +40,7 @@ namespace IO.Swagger.Lib.V3.Tests.SerializationModifiers.Mappers.ValueMappers
             var submodelValue = _fixture.Create<SubmodelValue>();
             
             // Act
-            var result = ValueOnlyJsonSerializer.ToJsonObject(submodelValue);
+            var result = new ValueOnlyJsonSerializer().ToJsonObject(submodelValue);
             
             // Assert
             result.Should().NotBeNull();

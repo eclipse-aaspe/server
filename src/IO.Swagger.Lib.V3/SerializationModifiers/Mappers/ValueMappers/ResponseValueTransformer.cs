@@ -8,6 +8,7 @@ using static AasCore.Aas3_0.Visitation;
 
 namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers;
 
+///<inheritdoc cref="IResponseValueTransformer"/>
 internal class ResponseValueTransformer : ITransformer<IDTO>, IResponseValueTransformer
 {
     public IDTO Transform(IClass that)
