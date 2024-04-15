@@ -1995,7 +1995,7 @@ namespace IO.Swagger.Controllers
             _logger.LogInformation($"Received request to update the submodel element at {idShortPath} in the submodel with id {decodedSubmodelIdentifier} and the AAS with id {decodedAasIdentifier} by value.");
 
             //Reverse mapping from Metadata to submodel element
-            ISubmodelElement submodelElement = _mappingService.Map(body, "value") as ISubmodelElement;
+            var submodelElement = _mappingService.Map(body, "value") as ISubmodelElement; //TODO: this is where the 'fun' begins
 
             //Update
             _aasService.UpdateSubmodelElementByPath(decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath, submodelElement);

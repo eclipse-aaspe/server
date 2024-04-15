@@ -17,6 +17,13 @@ public class MappingService : IMappingService
     private readonly IRequestMetadataMapper _requestMetadataMapper;
     private readonly IRequestValueMapper _requestValueMapper;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MappingService"/> class.
+    /// </summary>
+    /// <param name="responseMetadataMapper">The mapper for response metadata DTOs.</param>
+    /// <param name="responseValueMapper">The mapper for response value DTOs.</param>
+    /// <param name="requestMetadataMapper">The mapper for request metadata DTOs.</param>
+    /// <param name="requestValueMapper">The mapper for request value DTOs.</param>
     public MappingService(IResponseMetadataMapper responseMetadataMapper, IResponseValueMapper responseValueMapper, IRequestMetadataMapper requestMetadataMapper,
         IRequestValueMapper requestValueMapper)
     {
@@ -49,7 +56,7 @@ public class MappingService : IMappingService
     }
 
     /// <inheritdoc />
-    public List<IDTO> Map(List<IClass> sourceList, string mappingResolverKey)
+    public List<IDTO> Map(IEnumerable<IClass> sourceList, string mappingResolverKey)
     {
         if (mappingResolverKey == null)
         {
