@@ -6,32 +6,6 @@ namespace AasxServerDB
 {
     public class ReadDB
     {
-        static public string GetAASXPath(string aasId = "", string submodelId = "")
-        {
-            using AasContext db = new AasContext();
-            int? aasxId = null;
-            if (!submodelId.Equals(""))
-            {
-                var submodelDBList = db.SMSets.Where(s => s.Identifier == submodelId);
-                if (submodelDBList.Count() > 0)
-                    aasxId = submodelDBList.First().AASXId;
-            }
-            if (!aasId.Equals(""))
-            {
-                var aasDBList = db.AASSets.Where(a => a.Identifier == aasId);
-                if (aasDBList.Any())
-                    aasxId = aasDBList.First().AASXId;
-            }
-            if (aasxId == null)
-                return "";
-            var aasxDBList = db.AASXSets.Where(a => a.Id == aasxId);
-            if (!aasxDBList.Any())
-                return "";
-            var aasxDB = aasxDBList.First();
-            return aasxDB.AASX;
-
-        }
-
         static public AdminShellPackageEnv GetPackageEnv(string path, AASSet aasDB) 
         {
             using (AasContext db = new AasContext())
@@ -99,20 +73,6 @@ namespace AasxServerDB
             }           
         }
 
-        static public string GetSubmodelJson(SMSet smSet)
-        {
-            var submodel = GetSubmodel(smDB: smSet);
-
-            if (submodel != null)
-            {
-                var j = Jsonization.Serialize.ToJsonObject(submodel);
-                string json = j.ToJsonString();
-                return json;
-            }
-
-            return "";
-        }
-
         static private void LoadSME(Submodel submodel, ISubmodelElement sme, string SMEType, List<SMESet> SMEList, int? smeId)
         {
             var smeLevel = SMEList.Where(s => s.ParentSMEId == smeId).OrderBy(s => s.IdShort).ToList();
@@ -178,6 +138,32 @@ namespace AasxServerDB
                     LoadSME(submodel, nextSME, smel.SMEType, SMEList, smel.Id);
                 }
             }
+        }
+
+        static public string GetAASXPath(string aasId = "", string submodelId = "")
+        {
+            using AasContext db = new AasContext();
+            int? aasxId = null;
+            if (!submodelId.Equals(""))
+            {
+                var submodelDBList = db.SMSets.Where(s => s.Identifier == submodelId);
+                if (submodelDBList.Count() > 0)
+                    aasxId = submodelDBList.First().AASXId;
+            }
+            if (!aasId.Equals(""))
+            {
+                var aasDBList = db.AASSets.Where(a => a.Identifier == aasId);
+                if (aasDBList.Any())
+                    aasxId = aasDBList.First().AASXId;
+            }
+            if (aasxId == null)
+                return "";
+            var aasxDBList = db.AASXSets.Where(a => a.Id == aasxId);
+            if (!aasxDBList.Any())
+                return "";
+            var aasxDB = aasxDBList.First();
+            return aasxDB.AASX;
+
         }
     }
 }

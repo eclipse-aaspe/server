@@ -403,7 +403,15 @@
                     if (smDBList.Any())
                     {
                         var smDB = smDBList.First();
-                        string json = ReadDB.GetSubmodelJson(smDB);
+                        var submodel = ReadDB.GetSubmodel(smDB: smDB);
+
+                        string json =  "";
+                        if (submodel != null)
+                        {
+                            var j = Jsonization.Serialize.ToJsonObject(submodel);
+                            json = j.ToJsonString();
+                        }
+
                         <span>@json</span>
                         <br />
                     }
