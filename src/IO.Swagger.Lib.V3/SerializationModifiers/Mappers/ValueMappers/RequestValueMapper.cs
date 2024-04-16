@@ -33,11 +33,6 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             };
         }
 
-        public IDTO Map(IClass source)
-        {
-            throw new NotImplementedException(); //TODO: this seems to be the main problem
-        }
-
         private static IClass Transform(BasicEventElementValue valueDTO)
         {
             return new BasicEventElement(TransformReference(valueDTO.observed), Direction.Output, StateOfEvent.On, idShort: valueDTO.idShort);

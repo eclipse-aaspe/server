@@ -49,7 +49,8 @@ public class MappingService : IMappingService
         if (mappingResolverKey.Equals("value", StringComparison.OrdinalIgnoreCase))
         {
             //TODO: somehow it was never seen that this is an issue....
-            return _requestValueMapper.Map(source);
+           //return _requestValueMapper.Map(source);
+            return null;
         }
 
         throw new Exception("Invalid modifier mapping resolved key");

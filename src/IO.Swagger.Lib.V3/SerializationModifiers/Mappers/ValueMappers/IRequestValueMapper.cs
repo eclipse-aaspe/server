@@ -15,5 +15,4 @@ public interface IRequestValueMapper
     /// <returns>The mapped class.</returns>
     IClass Map(IValueDTO source);
 
-    IDTO Map(IClass source);
 }

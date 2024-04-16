@@ -32,6 +32,7 @@ using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using IO.Swagger.Lib.V3.SerializationModifiers;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers.JsonObjectParser;
 
@@ -87,7 +88,6 @@ namespace AasxServerBlazor
             });
 
             services.AddScoped<BlazorSessionService>();
-            // services.AddScoped<CredentialService>();
             services.AddSingleton<CredentialService>();
 
             services.AddControllers();
@@ -95,6 +95,8 @@ namespace AasxServerBlazor
             services.AddLazyResolution();
             services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
             services.AddSingleton<IAuthorizationHandler, AasSecurityAuthorizationHandler>();
+            services.AddSingleton<ISerializationModifiersValidator, SerializationModifiersValidator>();
+            services.AddSingleton<IJsonSerializerStrategy, JsonSerializerStrategy>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<IRegistryInitializerService, RegistryInitializerService>();
             services.AddTransient<IAasDescriptorPaginationService, AasDescriptorPaginationService>();
@@ -140,8 +142,13 @@ namespace AasxServerBlazor
                 {
                     options.InputFormatters.RemoveType<Microsoft.AspNetCore.Mvc.Formatters.SystemTextJsonInputFormatter>();
                     options.OutputFormatters.RemoveType<Microsoft.AspNetCore.Mvc.Formatters.SystemTextJsonOutputFormatter>();
-                    options.InputFormatters.Add(new AasRequestFormatter());
-                    options.OutputFormatters.Add(new AasResponseFormatter());
+
+                    var serviceProvider = services.BuildServiceProvider();
+                    var serializationModifiersValidator = serviceProvider.GetService<ISerializationModifiersValidator>();
+                    var jsonSerializerStrategy = serviceProvider.GetService<IJsonSerializerStrategy>();
+
+                    options.InputFormatters.Add(new AasRequestFormatter(serializationModifiersValidator));
+                    options.OutputFormatters.Add(new AasResponseFormatter(jsonSerializerStrategy));
                     options.InputFormatters.Add(new AasDescriptorRequestFormatter());
                     options.OutputFormatters.Add(new AasDescriptorResponseFormatter());
 
@@ -159,7 +166,7 @@ namespace AasxServerBlazor
                     opts.SerializerSettings.Converters.Add(new StringEnumConverter(new CamelCaseNamingStrategy()));
                     opts.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
                 });
-            //.AddXmlSerializerFormatters();
+
 
             services
                 .AddSwaggerGen(c =>

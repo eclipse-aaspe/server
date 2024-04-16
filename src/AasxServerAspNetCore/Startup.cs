@@ -11,6 +11,7 @@ using IO.Swagger.Controllers;
 using IO.Swagger.Lib.V3.Formatters;
 using IO.Swagger.Lib.V3.Interfaces;
 using IO.Swagger.Lib.V3.Middleware;
+using IO.Swagger.Lib.V3.SerializationModifiers;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers;
 using IO.Swagger.Lib.V3.Services;
@@ -68,6 +69,8 @@ internal class Startup
         services.AddControllers();
         services.AddLazyResolution();
         services.AddSingleton<IAuthorizationHandler, AasSecurityAuthorizationHandler>();
+        services.AddSingleton<ISerializationModifiersValidator, SerializationModifiersValidator>();;
+        services.AddSingleton<IJsonSerializerStrategy, JsonSerializerStrategy>();
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddSingleton<IRegistryInitializerService, RegistryInitializerService>();
         services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
@@ -107,8 +110,13 @@ internal class Startup
             {
                 options.InputFormatters.RemoveType<Microsoft.AspNetCore.Mvc.Formatters.SystemTextJsonInputFormatter>();
                 options.OutputFormatters.RemoveType<Microsoft.AspNetCore.Mvc.Formatters.SystemTextJsonOutputFormatter>();
-                options.InputFormatters.Add(new AasRequestFormatter());
-                options.OutputFormatters.Add(new AasResponseFormatter());
+                
+                var serviceProvider = services.BuildServiceProvider();
+                var serializationModifiersValidator = serviceProvider.GetService<ISerializationModifiersValidator>();
+                var jsonSerializerStrategy = serviceProvider.GetService<IJsonSerializerStrategy>();
+                    
+                options.InputFormatters.Add(new AasRequestFormatter(serializationModifiersValidator));
+                options.OutputFormatters.Add(new AasResponseFormatter(jsonSerializerStrategy));
                 options.InputFormatters.Add(new AasDescriptorRequestFormatter());
                 options.OutputFormatters.Add(new AasDescriptorResponseFormatter());
 
