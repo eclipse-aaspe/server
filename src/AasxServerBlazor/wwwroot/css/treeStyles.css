@@ -1,12 +1,12 @@
 ﻿:root {
-    --primary-color: #0161c9;
-    --secondary-color: #4335c9;
-    --secondary-color-shade: #4839d8;
+    --primary-color: #0026CC;
+    --secondary-color: #9BA2FF;
+    --secondary-color-shade: #9097ee;
     --primary-background-color: white;
     --secondary-background-color: hsl(220, 100%, 95%);
-    --tertiary-color: #576fc3;
-    --highlight-color: #f28246;
-    --highlight-color-shadow: #98522c;
+    --tertiary-color: #A499BE;
+    --highlight-color: #9E8576;
+    --highlight-color-shadow: #7A542E;
     --warning-color: #f9efae;
     --approval-color: #5ce076;
     --lightgray-color: lightgray;
@@ -191,8 +191,9 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    border-bottom: 0.1rem solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 0.2rem 0.2rem rgba(0, 0, 0, 0.1);
+    border: 0.1rem solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0.1rem 0.1rem rgba(0, 0, 0, 0.2);
+    padding: 0.5rem;
 }
 
 .tree-container,
@@ -275,8 +276,8 @@
 
 .selected-node{
     outline: none;
-    border: 0.1rem solid red;
+    border: 0.1rem solid var(--highlight-color);
     padding: 0.4rem;
-    background-color: lightyellow !important;
+    background-color: var(--tertiary-color) !important;
     box-shadow: 0 0.2rem 0.2rem rgba(0, 0, 0, 0.2);
 }
