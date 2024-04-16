@@ -42,11 +42,10 @@ public class JsonSerializerStrategy : IJsonSerializerStrategy
     /// <inheritdoc/>
     public void Serialize(Utf8JsonWriter writer, object obj, LevelEnum level, ExtentEnum extent)
     {
-        //TODO: Create Facade for Utf8JsonWriter for better testing
         switch (obj)
         {
             case IClass classObj:
-                _serializationModifiersValidator.Validate(classObj, level, extent); //TODO: need to make this mockable
+                _serializationModifiersValidator.Validate(classObj, level, extent);
                 Jsonization.Serialize.ToJsonObject(classObj).WriteTo(writer);
                 break;
             case IList<IClass> genericListOfClass:
