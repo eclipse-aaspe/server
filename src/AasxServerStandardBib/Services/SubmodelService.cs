@@ -517,7 +517,7 @@ namespace AasxServerStandardBib.Services
             var submodelElement = GetSubmodelElementByPath(submodelIdentifier, idShortPath);
 
             //Verify the body first
-            _verificationService.VerifyRequestBody(newSme);
+             _verificationService.VerifyRequestBody(newSme);
 
             Update.ToUpdateObject(submodelElement, newSme);
 

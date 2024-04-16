@@ -328,7 +328,7 @@ namespace Extensions
         }
         public static void SetTimeStamp(this IReferable referable, DateTime timeStamp)
         {
-            IReferable newReferable = referable;
+            var newReferable = referable;
             newReferable.TimeStamp = timeStamp;
             do
             {
@@ -341,12 +341,6 @@ namespace Extensions
                     newReferable = null;
             }
             while (newReferable != null);
-        }
-
-        public static bool EnumeratesChildren(this ISubmodelElement elem)
-        {
-            var num = elem.EnumerateChildren().Count();
-            return (num > 0);
         }
 
         public static IEnumerable<ISubmodelElement> EnumerateChildren(this IReferable referable)
