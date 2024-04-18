@@ -29,7 +29,7 @@ namespace AasxServerBlazor
 
             host.RunAsync();
 
-            Program.con = config;
+            Program.Configuration = config;
             AasxServer.Program.Main(args);
             SecurityHelper.SecurityInit();
 

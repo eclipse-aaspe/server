@@ -63,19 +63,19 @@ namespace AasxServer
 
     public static class Program
     {
-        public static IConfiguration con { get; set; }
-        public static string getBetween(AdminShellPackageEnv env, string strStart, string strEnd)
+        public static IConfiguration Configuration { get; set; }
+        public static string GetBetween(AdminShellPackageEnv adminShellPackageEnvironment, string strStart, string strEnd)
         {
-            string strSource = env.getEnvXml();
-            if (strSource != null && strSource.Contains(strStart) && strSource.Contains(strEnd))
+            var strSource = adminShellPackageEnvironment.getEnvXml();
+            if (strSource == null || !strSource.Contains(strStart) || !strSource.Contains(strEnd))
             {
-                int Start, End;
-                Start = strSource.IndexOf(strStart, 0) + strStart.Length;
-                End = strSource.IndexOf(strEnd, Start);
-                return strSource.Substring(Start, End - Start);
+                return string.Empty;
             }
+            int Start, End;
+            Start = strSource.IndexOf(strStart, 0) + strStart.Length;
+            End = strSource.IndexOf(strEnd, Start);
+            return strSource.Substring(Start, End - Start);
 
-            return "";
         }
         public static void createDbFiles(List<SubmodelSet> slist, AdminShellPackageEnv env, string dataPath, string fileName)
         {
@@ -1202,12 +1202,12 @@ namespace AasxServer
             }
             Console.WriteLine();
 
-            AasContext._con = con;
-            if (con != null)
+            AasContext._con = Configuration;
+            if (Configuration != null)
             {
-                if (con["DatabaseConnection:ConnectionString"] != null)
+                if (Configuration["DatabaseConnection:ConnectionString"] != null)
                 {
-                    isPostgres = con["DatabaseConnection:ConnectionString"].ToLower().Contains("host");
+                    isPostgres = Configuration["DatabaseConnection:ConnectionString"].ToLower().Contains("host");
                 }
             }
 
@@ -2513,7 +2513,7 @@ namespace AasxServer
                                 {
                                     var sme = sm.SubmodelElements[j];
                                     // some preparations for multiple AAS below
-                                    int serverNamespaceIdx = 3; //could be gotten directly from the nodeMgr in OPCWrite instead, only pass the string part of the Id
+                                    int serverNamespaceIdx = 3; //could be gotten directly from the nodeMgr in OPCWrite instead, only pass the string part of the ID
 
                                     string AASSubmodel = env[i].AasEnv.AssetAdministrationShells[0].IdShort + "." + sm.IdShort; 
                                     // for multiple AAS, use something like env.AasEnv.AssetAdministrationShells[i].IdShort;
@@ -2854,9 +2854,9 @@ namespace AasxServer
                     split = split[1].Split(';');
                     ushort ns = Convert.ToUInt16(split[0]);
                     clientNodeId = new NodeId(i, ns);
-                    Console.WriteLine("New node id: ", clientNodeId.ToString());
+                    Console.WriteLine($"New node id: {clientNodeId}");
                 }
-                Console.WriteLine(string.Format("{0} <= {1}", serverNodeId, value));
+                Console.WriteLine($"{serverNodeId} <= {value}");
                 if (write)
                 {
                     short i = Convert.ToInt16(value);
@@ -2867,7 +2867,7 @@ namespace AasxServer
             }
             catch (ServiceResultException ex)
             {
-                Console.WriteLine(string.Format("OPC ServiceResultException ({0}) trying to read {1}", ex.Message, clientNodeId.ToString()));
+                Console.WriteLine($"OPC ServiceResultException ({ex.Message}) trying to read {clientNodeId.ToString()}");
                 return;
             }
 
@@ -3084,9 +3084,8 @@ namespace AasxServer
                 if (DateTime.UtcNow - lastEventTime > TimeSpan.FromMilliseconds(6000))
                 {
                     IList<Opc.Ua.Server.Session> sessions = server.CurrentInstance.SessionManager.GetSessions();
-                    for (int ii = 0; ii < sessions.Count; ii++)
+                    foreach (var session in sessions)
                     {
-                        Opc.Ua.Server.Session session = sessions[ii];
                         PrintSessionStatus(session, "-Status-", true);
                     }
                     lastEventTime = DateTime.UtcNow;
