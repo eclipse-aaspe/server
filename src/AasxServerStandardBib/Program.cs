@@ -1,6 +1,33 @@
-﻿using AasOpcUaServer;
+﻿using System;
+using System.Collections.Generic;
+using System.CommandLine;
+using System.CommandLine.Help;
+using System.CommandLine.Invocation;
+using System.CommandLine.IO;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Dynamic;
+using System.Globalization;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Timers;
+using System.Xml;
+using System.Xml.Serialization;
+using AasOpcUaServer;
+using AasxMqttClient;
 using AasxMqttServer;
 using AasxRestServerLibrary;
+using AasxTimeSeries;
 using AdminShellNS;
 using Extensions;
 using Jose;
@@ -12,28 +39,14 @@ using Newtonsoft.Json.Linq;
 using Opc.Ua;
 using Opc.Ua.Configuration;
 using Opc.Ua.Server;
-using System;
-using System.Collections.Generic;
-using System.CommandLine;
-using System.CommandLine.Help;
-using System.CommandLine.IO;
-using System.ComponentModel;
-using System.Globalization;
-using System.IO;
-using System.IO.Compression;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Timers;
-using System.Xml;
-using System.Xml.Serialization;
+using SampleClient;
+using Environment = System.Environment;
+using File = System.IO.File;
 using Formatting = Newtonsoft.Json.Formatting;
+using IReference = AasCore.Aas3_0.IReference;
+using ReferenceTypes = AasCore.Aas3_0.ReferenceTypes;
+using Timer = System.Timers.Timer;
+
 /*
 Copyright (c) 2019-2020 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski
 Copyright (c) 2018-2020 Festo SE & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
@@ -64,6 +77,7 @@ namespace AasxServer
     public static class Program
     {
         public static IConfiguration Configuration { get; set; }
+
         public static string GetBetween(AdminShellPackageEnv adminShellPackageEnvironment, string strStart, string strEnd)
         {
             var strSource = adminShellPackageEnvironment.getEnvXml();
@@ -71,166 +85,182 @@ namespace AasxServer
             {
                 return string.Empty;
             }
+
             int Start, End;
             Start = strSource.IndexOf(strStart, 0) + strStart.Length;
             End = strSource.IndexOf(strEnd, Start);
             return strSource.Substring(Start, End - Start);
-
         }
-        public static void createDbFiles(List<SubmodelSet> slist, AdminShellPackageEnv env, string dataPath, string fileName)
+
+        public static void createDbFiles(IEnumerable<SubmodelSet> slist, AdminShellPackageEnv env, string dataPath, string fileName)
         {
-            string envXml = env.getEnvXml();
+            var envXml = env.getEnvXml();
 
             Console.WriteLine("Length XML env: " + envXml.Length);
-            string fnXml = dataPath + "/xml/" + fileName + ".xml";
-            System.IO.File.WriteAllText(fnXml, envXml);
+            var fnXml = dataPath + "/xml/" + fileName + ".xml";
+            File.WriteAllText(fnXml, envXml);
 
             // extract semanticIds
-            int pos = 0;
-            int found1 = -1;
-            int found2 = -1;
-            string semanticId = "";
-            int countSemanticId = 0;
-            int countIdShort = 0;
+            var pos = 0;
+            var found1 = -1;
+            var found2 = -1;
+            var semanticId = "";
+            var countSemanticId = 0;
+            var countIdShort = 0;
             HashSet<string> hsSubSemanticId = null;
             HashSet<string> hsSubIdShort = null;
             string subId = null;
 
-            string search = "";
-            string text = "";
-            XmlReader reader = XmlReader.Create(new StringReader(envXml));
+            var search = "";
+            var text = "";
+            var reader = XmlReader.Create(new StringReader(envXml));
             while (!reader.EOF)
             {
                 reader.Read();
                 if (!reader.EOF)
                 {
-                    if (reader.NodeType == XmlNodeType.Element)
+                    switch (reader.NodeType)
                     {
-                        if (reader.Name == "submodel" || reader.Name == "aas:submodel")
-                        {
+                        case XmlNodeType.Element when reader.Name is "submodel" or "aas:submodel":
                             search = "id aas:identification";
                             hsSubSemanticId = new HashSet<string>();
                             hsSubIdShort = new HashSet<string>();
                             subId = null;
                             countSemanticId = 0;
                             countIdShort = 0;
-                        }
-                        else if (search.Contains(reader.Name))
+                            break;
+                        case XmlNodeType.Element:
                         {
+                            if (search.Contains(reader.Name))
+                            {
+                                search = reader.Name switch
+                                {
+                                    "aas:semanticId" or "semanticId" => "aas:key key",
+                                    "key" => "value",
+                                    _ => search
+                                };
+                            }
+
+                            break;
+                        }
+                        case XmlNodeType.Text:
+                            text = reader.Value;
+                            break;
+                        case XmlNodeType.EndElement:
                             switch (reader.Name)
                             {
+                                case "id":
+                                case "aas:identification":
+                                    if (search.Contains(reader.Name))
+                                    {
+                                        subId = text;
+                                        search = "aas:semanticId semanticId";
+                                    }
+
+                                    break;
                                 case "aas:semanticId":
                                 case "semanticId":
-                                    search = "aas:key key";
-                                    break;
                                 case "key":
-                                    search = "value";
+                                    search = "aas:semanticId semanticId";
+                                    break;
+                                case "aas:key":
+                                case "value":
+                                    if (subId != null && search.Contains(reader.Name))
+                                    {
+                                        hsSubSemanticId.Add(text);
+                                        countSemanticId++;
+                                        search = "aas:semanticId semanticId";
+                                    }
+
+                                    break;
+                                case "idShort":
+                                case "aas:idShort":
+                                    if (subId != null)
+                                    {
+                                        hsSubIdShort.Add(text);
+                                        countIdShort++;
+                                    }
+
+                                    break;
+                                case "submodel":
+                                case "aas:submodel":
+                                    // Submodel complete
+                                    search = "";
+                                    if (subId != null)
+                                    {
+                                        SubmodelSet submodelDB = null;
+                                        var submodelDBList = slist.Where(s => s.SubmodelId == subId);
+                                        if (submodelDBList.Any())
+                                        {
+                                            submodelDB = submodelDBList.First();
+                                        }
+
+                                        Console.WriteLine("Found " + hsSubSemanticId.Count + " different semanticIds in total of " + countSemanticId + " in submodel " + subId);
+                                        var subId64 = Base64UrlEncoder.Encode(subId);
+                                        var fnSemanticId = dataPath + "/xml/semanticid--" + subId64 + ".txt";
+
+                                        var lines = hsSubSemanticId.Aggregate("", (current, h) => current + (h + "\r\n"));
+                                        File.WriteAllText(fnSemanticId, lines);
+
+                                        Console.WriteLine("Found " + hsSubIdShort.Count + " different idShorts in total of " + countIdShort + " in submodel " + subId);
+                                        subId64 = Base64UrlEncoder.Encode(subId);
+                                        var fnIdShort = dataPath + "/xml/idshort--" + subId64 + ".txt";
+
+                                        lines = hsSubIdShort.Aggregate("", (current, h) => current + (h + "\r\n"));
+                                        File.WriteAllText(fnIdShort, lines);
+
+                                        subId = null;
+                                    }
+
                                     break;
                             }
-                        }
-                    }
-                    if (reader.NodeType == XmlNodeType.Text)
-                    {
-                        text = reader.Value;
-                    }
-                    if (reader.NodeType == XmlNodeType.EndElement)
-                    {
-                        switch (reader.Name)
-                        {
-                            case "id":
-                            case "aas:identification":
-                                if (search.Contains(reader.Name))
-                                {
-                                    subId = text;
-                                    search = "aas:semanticId semanticId";
-                                }
-                                break;
-                            case "aas:semanticId":
-                            case "semanticId":
-                            case "key":
-                                search = "aas:semanticId semanticId";
-                                break;
-                            case "aas:key":
-                            case "value":
-                                if (subId != null && search.Contains(reader.Name))
-                                {
-                                    hsSubSemanticId.Add(text);
-                                    countSemanticId++;
-                                    search = "aas:semanticId semanticId";
-                                }
-                                break;
-                            case "idShort":
-                            case "aas:idShort":
-                                if (subId != null)
-                                {
-                                    hsSubIdShort.Add(text);
-                                    countIdShort++;
-                                }
-                                break;
-                            case "submodel":
-                            case "aas:submodel":
-                                // Submodel complete
-                                search = "";
-                                if (subId != null)
-                                {
-                                    SubmodelSet submodelDB = null;
-                                    var submodelDBList = slist.Where(s => s.SubmodelId == subId);
-                                    if (submodelDBList.Any())
-                                    {
-                                        submodelDB = submodelDBList.First();
-                                    }
 
-                                    Console.WriteLine("Found " + hsSubSemanticId.Count + " different semanticIds in total of " + countSemanticId + " in submodel " + subId);
-                                    string subId64 = Base64UrlEncoder.Encode(subId);
-                                    string fnSemanticId = dataPath + "/xml/semanticid--" + subId64 + ".txt";
-
-                                    string lines = "";
-                                    foreach (var h in hsSubSemanticId)
-                                    {
-                                        lines += h + "\r\n";
-                                    }
-                                    System.IO.File.WriteAllText(fnSemanticId, lines);
-
-                                    Console.WriteLine("Found " + hsSubIdShort.Count + " different idShorts in total of " + countIdShort + " in submodel " + subId);
-                                    subId64 = Base64UrlEncoder.Encode(subId);
-                                    string fnIdShort = dataPath + "/xml/idshort--" + subId64 + ".txt";
-
-                                    lines = "";
-                                    foreach (var h in hsSubIdShort)
-                                    {
-                                        lines += h + "\r\n";
-                                    }
-                                    System.IO.File.WriteAllText(fnIdShort, lines);
-
-                                    subId = null;
-                                }
-                                break;
-                        }
+                            break;
+                        case XmlNodeType.None:
+                        case XmlNodeType.Attribute:
+                        case XmlNodeType.CDATA:
+                        case XmlNodeType.EntityReference:
+                        case XmlNodeType.Entity:
+                        case XmlNodeType.ProcessingInstruction:
+                        case XmlNodeType.Comment:
+                        case XmlNodeType.Document:
+                        case XmlNodeType.DocumentType:
+                        case XmlNodeType.DocumentFragment:
+                        case XmlNodeType.Notation:
+                        case XmlNodeType.Whitespace:
+                        case XmlNodeType.SignificantWhitespace:
+                        case XmlNodeType.EndEntity:
+                        case XmlNodeType.XmlDeclaration:
+                        default:
+                            throw new ArgumentOutOfRangeException(nameof(reader.NodeType));
                     }
                 }
             }
         }
+
         public static void saveEnv(int envIndex)
         {
             Console.WriteLine("SAVE: " + envFileName[envIndex]);
-            string requestedFileName = envFileName[envIndex];
-            string copyFileName = Path.GetTempFileName().Replace(".tmp", ".aasx");
-            System.IO.File.Copy(requestedFileName, copyFileName, true);
-            AasxServer.Program.env[envIndex].SaveAs(copyFileName);
-            System.IO.File.Copy(copyFileName, requestedFileName, true);
-            System.IO.File.Delete(copyFileName);
+            var requestedFileName = envFileName[envIndex];
+            var copyFileName = Path.GetTempFileName().Replace(".tmp", ".aasx");
+            File.Copy(requestedFileName, copyFileName, true);
+            env[envIndex].SaveAs(copyFileName);
+            File.Copy(copyFileName, requestedFileName, true);
+            File.Delete(copyFileName);
         }
 
-        static int oldest = 0;
+        static int oldest;
+
         public static bool loadPackageForAas(string aasIdentifier, out IAssetAdministrationShell output, out int packageIndex)
         {
-            output = null; packageIndex = -1;
+            output = null;
+            packageIndex = -1;
             if (!withDb)
                 return false;
-            if (Program.isLoading)
+            if (isLoading)
                 return false;
 
-            int i = envimin;
+            var i = envimin;
             while (i < env.Length)
             {
                 if (env[i] == null)
@@ -243,6 +273,7 @@ namespace AasxServer
                     packageIndex = i;
                     return true;
                 }
+
                 i++;
             }
 
@@ -254,95 +285,96 @@ namespace AasxServer
                     oldest = envimin;
             }
 
-            using (AasContext db = new AasContext())
+            using var db = new AasContext();
+            var aasDBList = db.AasSets.Where(a => a.AasId == aasIdentifier);
+            if (!aasDBList.Any())
             {
-                var aasDBList = db.AasSets.Where(a => a.AasId == aasIdentifier);
-                if (aasDBList.Any())
-                {
-                    lock (Program.changeAasxFile)
-                    {
-                        if (env[i] != null)
-                        {
-                            Console.WriteLine("UNLOAD: " + envFileName[i]);
-                            if (env[i].getWrite())
-                            {
-                                saveEnv(i);
-                                env[i].setWrite(false);
-                            }
-                            env[i].Close();
-                        }
-
-                        var aasDB = aasDBList.First();
-                        long aasxNum = aasDB.AASXNum;
-                        var aasxDBList = db.AASXSets.Where(a => a.AASXNum == aasxNum);
-                        var aasxDB = aasxDBList.First();
-                        string fn = aasxDB.AASX;
-                        envFileName[i] = fn;
-
-                        if (!withDbFiles)
-                        {
-                            Console.WriteLine("LOAD: " + fn);
-                            env[i] = new AdminShellPackageEnv(fn);
-
-                            DateTime timeStamp = DateTime.Now;
-                            var a = env[i].AasEnv.AssetAdministrationShells[0];
-                            a.TimeStampCreate = timeStamp;
-                            a.SetTimeStamp(timeStamp);
-                            foreach (var submodel in env[i].AasEnv.Submodels)
-                            {
-                                submodel.TimeStampCreate = timeStamp;
-                                submodel.SetTimeStamp(timeStamp);
-                                submodel.SetAllParents(timeStamp);
-                            }
-                            output = a;
-                        }
-                        else
-                        {
-                            Console.WriteLine("LOAD: " + aasDB.Idshort);
-                            env[i] = new AdminShellPackageEnv();
-                            env[i].SetFilename(fn);
-
-                            AssetAdministrationShell aas = new AssetAdministrationShell(
-                                id: aasDB.AasId,
-                                idShort: aasDB.Idshort,
-                                assetInformation: new AssetInformation(AssetKind.Type, aasDB.AssetId)
-                                );
-                            env[i].AasEnv.AssetAdministrationShells.Add(aas);
-
-                            var submodelDBList = db.SubmodelSets
-                                .OrderBy(sm => sm.SubmodelNum)
-                                .Where(sm => sm.AasNum == aasDB.AasNum)
-                                .ToList();
-
-                            aas.Submodels = new List<AasCore.Aas3_0.IReference>();
-                            foreach (var submodelDB in submodelDBList)
-                            {
-                                var sm = DBRead.getSubmodel(submodelDB.SubmodelId);
-                                aas.Submodels.Add(sm.GetReference());
-                                env[i].AasEnv.Submodels.Add(sm);
-                            }
-                            output = aas;
-                        }
-
-                        packageIndex = i;
-                        AasxServer.Program.signalNewData(2);
-                        return true;
-                    }
-                }
+                return false;
             }
 
-            return false;
+            lock (changeAasxFile)
+            {
+                if (env[i] != null)
+                {
+                    Console.WriteLine("UNLOAD: " + envFileName[i]);
+                    if (env[i].getWrite())
+                    {
+                        saveEnv(i);
+                        env[i].setWrite(false);
+                    }
+
+                    env[i].Close();
+                }
+
+                var aasDB = aasDBList.First();
+                var aasxNum = aasDB.AASXNum;
+                var aasxDBList = db.AASXSets.Where(a => a.AASXNum == aasxNum);
+                var aasxDB = aasxDBList.First();
+                var fn = aasxDB.AASX;
+                envFileName[i] = fn;
+
+                if (!withDbFiles)
+                {
+                    Console.WriteLine("LOAD: " + fn);
+                    env[i] = new AdminShellPackageEnv(fn);
+
+                    var timeStamp = DateTime.Now;
+                    var a = env[i].AasEnv.AssetAdministrationShells[0];
+                    a.TimeStampCreate = timeStamp;
+                    a.SetTimeStamp(timeStamp);
+                    foreach (var submodel in env[i].AasEnv.Submodels)
+                    {
+                        submodel.TimeStampCreate = timeStamp;
+                        submodel.SetTimeStamp(timeStamp);
+                        submodel.SetAllParents(timeStamp);
+                    }
+
+                    output = a;
+                }
+                else
+                {
+                    Console.WriteLine("LOAD: " + aasDB.Idshort);
+                    env[i] = new AdminShellPackageEnv();
+                    env[i].SetFilename(fn);
+
+                    var aas = new AssetAdministrationShell(
+                        id: aasDB.AasId,
+                        idShort: aasDB.Idshort,
+                        assetInformation: new AssetInformation(AssetKind.Type, aasDB.AssetId)
+                    );
+                    env[i].AasEnv.AssetAdministrationShells.Add(aas);
+
+                    var submodelDBList = db.SubmodelSets
+                        .OrderBy(sm => sm.SubmodelNum)
+                        .Where(sm => sm.AasNum == aasDB.AasNum)
+                        .ToList();
+
+                    aas.Submodels = new List<IReference>();
+                    foreach (var sm in submodelDBList.Select(submodelDB => DBRead.getSubmodel(submodelDB.SubmodelId)))
+                    {
+                        aas.Submodels.Add(sm.GetReference());
+                        env[i].AasEnv.Submodels.Add(sm);
+                    }
+
+                    output = aas;
+                }
+
+                packageIndex = i;
+                signalNewData(2);
+                return true;
+            }
         }
 
         public static bool loadPackageForSubmodel(string submodelIdentifier, out ISubmodel output, out int packageIndex)
         {
-            output = null; packageIndex = -1;
+            output = null;
+            packageIndex = -1;
             if (!withDb)
                 return false;
-            if (Program.isLoading)
+            if (isLoading)
                 return false;
 
-            int i = envimin;
+            var i = envimin;
             while (i < env.Length)
             {
                 if (env[i] == null)
@@ -355,6 +387,7 @@ namespace AasxServer
                     packageIndex = i;
                     return true;
                 }
+
                 i++;
             }
 
@@ -366,135 +399,141 @@ namespace AasxServer
                     oldest = envimin;
             }
 
-            using (AasContext db = new AasContext())
+            using var db = new AasContext();
+            var submodelDBList = db.SubmodelSets.Where(s => s.SubmodelId == submodelIdentifier);
+            if (!submodelDBList.Any())
             {
-                var submodelDBList = db.SubmodelSets.Where(s => s.SubmodelId == submodelIdentifier);
-                if (submodelDBList.Any())
-                {
-                    lock (Program.changeAasxFile)
-                    {
-                        if (env[i] != null)
-                        {
-                            Console.WriteLine("UNLOAD: " + envFileName[i]);
-                            if (env[i].getWrite())
-                            {
-                                saveEnv(i);
-                                env[i].setWrite(false);
-                            }
-                            env[i].Close();
-                        }
-
-                        var submodelDB = submodelDBList.First();
-                        long aasxNum = submodelDB.AASXNum;
-                        var aasxDBList = db.AASXSets.Where(a => a.AASXNum == aasxNum);
-                        var aasxDB = aasxDBList.First();
-                        string fn = aasxDB.AASX;
-                        envFileName[i] = fn;
-
-                        if (!withDbFiles)
-                        {
-                            Console.WriteLine("LOAD: " + fn);
-                            env[i] = new AdminShellPackageEnv(fn);
-
-                            DateTime timeStamp = DateTime.Now;
-                            var a = env[i].AasEnv.AssetAdministrationShells[0];
-                            a.TimeStampCreate = timeStamp;
-                            a.SetTimeStamp(timeStamp);
-                            foreach (var submodel in env[i].AasEnv.Submodels)
-                            {
-                                submodel.TimeStampCreate = timeStamp;
-                                submodel.SetTimeStamp(timeStamp);
-                                submodel.SetAllParents(timeStamp);
-                            }
-
-                            var submodels = env[i].AasEnv.Submodels.Where(s => s.Id.Equals(submodelIdentifier));
-                            if (submodels.Any())
-                            {
-                                output = submodels.First();
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("LOAD Submodel: " + submodelDB.Idshort);
-                            env[i] = new AdminShellPackageEnv();
-                            env[i].SetFilename(fn);
-
-                            var aasDBList = db.AasSets.Where(a => a.AASXNum == submodelDB.AASXNum);
-                            var aasDB = aasDBList.First();
-
-                            AssetAdministrationShell aas = new AssetAdministrationShell(
-                                id: aasDB.AasId,
-                                idShort: aasDB.Idshort,
-                                assetInformation: new AssetInformation(AssetKind.Type, aasDB.AssetId)
-                                );
-                            env[i].AasEnv.AssetAdministrationShells.Add(aas);
-
-                            var submodelDBList2 = db.SubmodelSets
-                                .OrderBy(sm => sm.SubmodelNum)
-                                .Where(sm => sm.AasNum == aasDB.AasNum)
-                                .ToList();
-
-                            aas.Submodels = new List<AasCore.Aas3_0.IReference>();
-                            foreach (var sDB in submodelDBList2)
-                            {
-                                var sm = DBRead.getSubmodel(sDB.SubmodelId);
-                                aas.Submodels.Add(sm.GetReference());
-                                env[i].AasEnv.Submodels.Add(sm);
-                                if (sDB.SubmodelId == submodelIdentifier)
-                                    output = sm;
-                            }
-                        }
-
-                        packageIndex = i;
-                        AasxServer.Program.signalNewData(2);
-                        return true;
-                    }
-                }
+                return false;
             }
 
-            return false;
+            lock (changeAasxFile)
+            {
+                if (env[i] != null)
+                {
+                    Console.WriteLine("UNLOAD: " + envFileName[i]);
+                    if (env[i].getWrite())
+                    {
+                        saveEnv(i);
+                        env[i].setWrite(false);
+                    }
+
+                    env[i].Close();
+                }
+
+                var submodelDB = submodelDBList.First();
+                var aasxNum = submodelDB.AASXNum;
+                var aasxDBList = db.AASXSets.Where(a => a.AASXNum == aasxNum);
+                var aasxDB = aasxDBList.First();
+                var fn = aasxDB.AASX;
+                envFileName[i] = fn;
+
+                if (!withDbFiles)
+                {
+                    Console.WriteLine("LOAD: " + fn);
+                    env[i] = new AdminShellPackageEnv(fn);
+
+                    var timeStamp = DateTime.Now;
+                    var a = env[i].AasEnv.AssetAdministrationShells[0];
+                    a.TimeStampCreate = timeStamp;
+                    a.SetTimeStamp(timeStamp);
+                    foreach (var submodel in env[i].AasEnv.Submodels)
+                    {
+                        submodel.TimeStampCreate = timeStamp;
+                        submodel.SetTimeStamp(timeStamp);
+                        submodel.SetAllParents(timeStamp);
+                    }
+
+                    var submodels = env[i].AasEnv.Submodels.Where(s => s.Id.Equals(submodelIdentifier));
+                    if (submodels.Any())
+                    {
+                        output = submodels.First();
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("LOAD Submodel: " + submodelDB.Idshort);
+                    env[i] = new AdminShellPackageEnv();
+                    env[i].SetFilename(fn);
+
+                    var aasDBList = db.AasSets.Where(a => a.AASXNum == submodelDB.AASXNum);
+                    var aasDB = aasDBList.First();
+
+                    var aas = new AssetAdministrationShell(
+                        id: aasDB.AasId,
+                        idShort: aasDB.Idshort,
+                        assetInformation: new AssetInformation(AssetKind.Type, aasDB.AssetId)
+                    );
+                    env[i].AasEnv.AssetAdministrationShells.Add(aas);
+
+                    var submodelDBList2 = db.SubmodelSets
+                        .OrderBy(sm => sm.SubmodelNum)
+                        .Where(sm => sm.AasNum == aasDB.AasNum)
+                        .ToList();
+
+                    aas.Submodels = new List<IReference>();
+                    foreach (var sDB in submodelDBList2)
+                    {
+                        var sm = DBRead.getSubmodel(sDB.SubmodelId);
+                        aas.Submodels.Add(sm.GetReference());
+                        env[i].AasEnv.Submodels.Add(sm);
+                        if (sDB.SubmodelId == submodelIdentifier)
+                            output = sm;
+                    }
+                }
+
+                packageIndex = i;
+                signalNewData(2);
+                return true;
+            }
         }
 
-        public static int envimin = 0;
+        public static int envimin;
         public static int envimax = 200;
-        public static AdminShellPackageEnv[] env = null;
-        public static string[] envFileName = null;
-        public static string[] envSymbols = null;
-        public static string[] envSubjectIssuer = null;
+        public static AdminShellPackageEnv[] env;
+        public static string[] envFileName;
+        public static string[] envSymbols;
+        public static string[] envSubjectIssuer;
 
         public static string hostPort = "";
         public static string blazorPort = "";
         public static string blazorHostPort = "";
-        public static ulong dataVersion = 0;
+        public static ulong dataVersion;
 
-        public static void changeDataVersion() { dataVersion++; }
-        public static ulong getDataVersion() { return (dataVersion); }
+        public static void changeDataVersion()
+        {
+            dataVersion++;
+        }
 
-        static Dictionary<string, SampleClient.UASampleClient> OPCClients = new Dictionary<string, SampleClient.UASampleClient>();
+        public static ulong getDataVersion()
+        {
+            return (dataVersion);
+        }
+
+        static Dictionary<string, UASampleClient> OPCClients = new Dictionary<string, UASampleClient>();
         static readonly object opcclientAddLock = new object(); // object for lock around connecting to an external opc server
 
         static MqttServer AASMqttServer = new MqttServer();
 
-        static bool runOPC = false;
+        static bool runOPC;
 
         public static string connectServer = "";
         public static string connectNodeName = "";
         static int connectUpdateRate = 1000;
         static Thread connectThread;
-        static bool connectLoop = false;
+        static bool connectLoop;
 
-        public static WebProxy proxy = null;
-        public static HttpClientHandler clientHandler = null;
+        public static WebProxy proxy;
+        public static HttpClientHandler clientHandler;
 
-        public static bool noSecurity = false;
-        public static bool edit = false;
+        public static bool noSecurity;
+        public static bool edit;
         public static string externalRest = "";
         public static string externalBlazor = "";
-        public static bool readTemp = false;
-        public static int saveTemp = 0;
+        public static bool readTemp;
+        public static int saveTemp;
         public static DateTime saveTempDt = new DateTime();
-        public static string secretStringAPI = null;
-        public static bool htmlId = false;
+        public static string secretStringAPI;
+        public static bool htmlId;
         public static long submodelAPIcount = 0;
 
         public static HashSet<object> submodelsToPublish = new HashSet<object>();
@@ -516,18 +555,17 @@ namespace AasxServer
 
         public static Dictionary<string, string> envVariables = new Dictionary<string, string>();
 
-        public static bool withDb = false;
-        public static bool isPostgres = false;
-        public static bool withDbFiles = false;
-        public static int startIndex = 0;
+        public static bool withDb;
+        public static bool isPostgres;
+        public static bool withDbFiles;
+        public static int startIndex;
 
-        public static bool withPolicy = false;
+        public static bool withPolicy;
 
         public static bool showWeight = false;
+
         private class CommandLineArguments
         {
-            // ReSharper disable UnusedAutoPropertyAccessor.Local
-#pragma warning disable 8618
             public string Host { get; set; }
             public string Port { get; set; }
             public bool Https { get; set; }
@@ -553,105 +591,109 @@ namespace AasxServer
             public bool WithDb { get; set; }
             public bool NoDbFiles { get; set; }
             public int StartIndex { get; set; }
-#pragma warning restore 8618
-            // ReSharper enable UnusedAutoPropertyAccessor.Local
         }
 
         private static async Task<int> Run(CommandLineArguments a)
         {
-
             // Wait for Debugger
             if (a.DebugWait)
             {
                 Console.WriteLine("Please attach debugger now to {0}!", a.Host);
-                while (!System.Diagnostics.Debugger.IsAttached)
-                    System.Threading.Thread.Sleep(100);
+                while (!Debugger.IsAttached)
+                    Thread.Sleep(100);
                 Console.WriteLine("Debugger attached");
             }
 
             // Read environment variables
-            string[] evlist = { "PLCNEXTTARGET", "WITHPOLICY" };
+            string[] evlist = {"PLCNEXTTARGET", "WITHPOLICY"};
             foreach (var ev in evlist)
             {
-                string v = System.Environment.GetEnvironmentVariable(ev);
-                if (v != null)
+                var v = Environment.GetEnvironmentVariable(ev);
+                if (v == null)
                 {
-                    v = v.Replace("\r", "");
-                    v = v.Replace("\n", "");
-                    Console.WriteLine("Variable: " + ev + " = " + v);
-                    envVariables.Add(ev, v);
+                    continue;
                 }
+
+                v = v.Replace("\r", "");
+                v = v.Replace("\n", "");
+                Console.WriteLine("Variable: " + ev + " = " + v);
+                envVariables.Add(ev, v);
             }
-            string w;
-            if (envVariables.TryGetValue("WITHPOLICY", out w))
+
+            if (envVariables.TryGetValue("WITHPOLICY", out var w))
             {
-                if (w.ToLower() == "true" || w.ToLower() =="on")
+                withPolicy = w.ToLower() switch
                 {
-                    withPolicy = true;
-                }
-                if (w.ToLower() == "false" || w.ToLower() == "off")
-                {
-                    withPolicy = false;
-                }
+                    "true" or "on" => true,
+                    "false" or "off" => false,
+                    _ => withPolicy
+                };
+
                 Console.WriteLine("withPolicy: " + withPolicy);
             }
 
             if (a.Connect != null)
             {
-                if (a.Connect.Length == 0)
+                switch (a.Connect.Length)
                 {
-                    Program.connectServer = "http://admin-shell-io.com:52000";
-                    Byte[] barray = new byte[10];
-                    RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
-                    rngCsp.GetBytes(barray);
-                    Program.connectNodeName = "AasxServer_" + Convert.ToBase64String(barray);
-                    Program.connectUpdateRate = 2000;
-                    if (a.Name != null && a.Name != "")
-                        Program.connectNodeName = a.Name;
-                }
-                else if (a.Connect.Length == 1)
-                {
-                    bool parsable = true;
-
-                    string[] c = a.Connect[0].Split(',');
-                    if (c.Length == 3)
+                    case 0:
                     {
-                        int rate = 0;
-                        try
+                        connectServer = "http://admin-shell-io.com:52000";
+                        var barray = new byte[10];
+                        RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
+                        rngCsp.GetBytes(barray);
+                        connectNodeName = "AasxServer_" + Convert.ToBase64String(barray);
+                        connectUpdateRate = 2000;
+                        if (a.Name != null && a.Name != "")
+                            connectNodeName = a.Name;
+                        break;
+                    }
+                    case 1:
+                    {
+                        var parsable = true;
+
+                        var c = a.Connect[0].Split(',');
+                        if (c.Length == 3)
                         {
-                            rate = Convert.ToInt32(c[2]);
+                            var rate = 0;
+                            try
+                            {
+                                rate = Convert.ToInt32(c[2]);
+                            }
+                            catch (FormatException)
+                            {
+                                parsable = false;
+                            }
+
+                            if (parsable)
+                            {
+                                if (c[0].Length == 0 || c[1].Length == 0 || c[2].Length == 0 || rate <= 0)
+                                {
+                                    parsable = false;
+                                }
+                                else
+                                {
+                                    connectServer = c[0];
+                                    connectNodeName = c[1];
+                                    connectUpdateRate = Convert.ToInt32(c[2]);
+                                }
+                            }
                         }
-                        catch (FormatException)
+                        else
                         {
                             parsable = false;
                         }
 
-                        if (parsable)
+                        if (!parsable)
                         {
-                            if (c[0].Length == 0 || c[1].Length == 0 || c[2].Length == 0 || rate <= 0)
-                            {
-                                parsable = false;
-                            }
-                            else
-                            {
-                                Program.connectServer = c[0];
-                                Program.connectNodeName = c[1];
-                                Program.connectUpdateRate = Convert.ToInt32(c[2]);
-                            }
+                            await Console.Error.WriteLineAsync(
+                                "Invalid --connect. " +
+                                "Expected a comma-separated values (server, node name, period in milliseconds), " +
+                                $"but got: {a.Connect[0]}");
+                            return 1;
                         }
-                    }
-                    else
-                    {
-                        parsable = false;
-                    }
 
-                    if (!parsable)
-                    {
-                        Console.Error.WriteLine(
-                            "Invalid --connect. " +
-                            "Expected a comma-separated values (server, node name, period in milliseconds), " +
-                            $"but got: {a.Connect[0]}");
-                        return 1;
+                        break;
                     }
                 }
 
@@ -667,27 +709,28 @@ namespace AasxServer
                 Console.WriteLine($"Serving the AASXs from: {a.DataPath}");
                 AasxHttpContextHelper.DataPath = a.DataPath;
             }
-            Program.runOPC = a.Opc;
-            Program.noSecurity = a.NoSecurity;
-            Program.edit = a.Edit;
-            Program.readTemp = a.ReadTemp;
+
+            runOPC = a.Opc;
+            noSecurity = a.NoSecurity;
+            edit = a.Edit;
+            readTemp = a.ReadTemp;
             saveTemp = a.SaveTemp;
-            Program.htmlId = a.HtmlId;
-            Program.withDb = a.WithDb;
-            Program.withDbFiles = a.WithDb;
+            htmlId = a.HtmlId;
+            withDb = a.WithDb;
+            withDbFiles = a.WithDb;
             if (a.NoDbFiles)
-                Program.withDbFiles = false;
+                withDbFiles = false;
             if (a.StartIndex > 0)
                 startIndex = a.StartIndex;
             if (a.AasxInMemory > 0)
                 envimax = a.AasxInMemory;
-            if (a.SecretStringAPI != null && a.SecretStringAPI != "")
+            if (!string.IsNullOrEmpty(a.SecretStringAPI))
             {
                 secretStringAPI = a.SecretStringAPI;
                 Console.WriteLine("secretStringAPI = " + secretStringAPI);
             }
 
-            if (a.OpcClientRate != null && a.OpcClientRate < 200)
+            if (a.OpcClientRate is < 200)
             {
                 Console.WriteLine("Recommend an OPC client update rate > 200 ms.");
             }
@@ -699,26 +742,24 @@ namespace AasxServer
             envSubjectIssuer = new string[envimax];
 
             // Proxy
-            string proxyAddress = "";
-            string username = "";
-            string password = "";
+            var proxyAddress = "";
+            var username = "";
+            var password = "";
 
             if (a.ProxyFile != null)
             {
-                if (!System.IO.File.Exists(a.ProxyFile))
+                if (!File.Exists(a.ProxyFile))
                 {
-                    Console.Error.WriteLine($"Proxy file not found: {a.ProxyFile}");
+                    await Console.Error.WriteLineAsync($"Proxy file not found: {a.ProxyFile}");
                     return 1;
                 }
 
                 try
                 {
-                    using (StreamReader sr = new StreamReader(a.ProxyFile))
-                    {
-                        proxyAddress = sr.ReadLine();
-                        username = sr.ReadLine();
-                        password = sr.ReadLine();
-                    }
+                    using var sr = new StreamReader(a.ProxyFile);
+                    proxyAddress = sr.ReadLine();
+                    username = sr.ReadLine();
+                    password = sr.ReadLine();
                 }
                 catch (Exception e)
                 {
@@ -729,7 +770,7 @@ namespace AasxServer
                 if (proxyAddress != "")
                 {
                     proxy = new WebProxy();
-                    Uri newUri = new Uri(proxyAddress);
+                    var newUri = new Uri(proxyAddress);
                     proxy.Address = newUri;
                     proxy.Credentials = new NetworkCredential(username, password);
                     Console.WriteLine("Using proxy: " + proxyAddress);
@@ -753,32 +794,26 @@ namespace AasxServer
             {
                 externalRest = "http://" + hostPort;
             }
-            if (a.ExternalBlazor != null)
-            {
-                externalBlazor = a.ExternalBlazor;
-            }
-            else
-            {
-                externalBlazor = blazorHostPort;
-            }
+
+            externalBlazor = a.ExternalBlazor ?? blazorHostPort;
 
             // Pass global options to subprojects
-            AdminShellNS.AdminShellPackageEnv.setGlobalOptions(withDb, withDbFiles, a.DataPath);
+            AdminShellPackageEnv.setGlobalOptions(withDb, withDbFiles, a.DataPath);
 
             // Read root cert from root subdirectory
             Console.WriteLine("Security 1 Startup - Server");
             Console.WriteLine("Security 1.1 Load X509 Root Certificates into X509 Store Root");
 
-            X509Store root = new X509Store("Root", StoreLocation.CurrentUser);
+            var root = new X509Store("Root", StoreLocation.CurrentUser);
             root.Open(OpenFlags.ReadWrite);
 
-            System.IO.DirectoryInfo ParentDirectory = new System.IO.DirectoryInfo(".");
+            var ParentDirectory = new DirectoryInfo(".");
 
             if (Directory.Exists("./root"))
             {
-                foreach (System.IO.FileInfo f in ParentDirectory.GetFiles("./root/*.cer"))
+                foreach (var f in ParentDirectory.GetFiles("./root/*.cer"))
                 {
-                    X509Certificate2 cert = new X509Certificate2("./root/" + f.Name);
+                    var cert = new X509Certificate2("./root/" + f.Name);
 
                     root.Add(cert);
                     Console.WriteLine("Security 1.1 Add " + f.Name);
@@ -788,22 +823,26 @@ namespace AasxServer
             if (!Directory.Exists("./temp"))
                 Directory.CreateDirectory("./temp");
 
-            string fn = null;
-
             if (a.Opc)
             {
-                Boolean is_BaseAddresses = false;
-                Boolean is_uaString = false;
-                XmlTextReader reader = new XmlTextReader("Opc.Ua.SampleServer.Config.xml");
+                var is_BaseAddresses = false;
+                var is_uaString = false;
+                var reader = new XmlTextReader("Opc.Ua.SampleServer.Config.xml");
                 while (reader.Read())
                 {
                     switch (reader.NodeType)
                     {
                         case XmlNodeType.Element: // The node is an element.
-                            if (reader.Name == "BaseAddresses")
-                                is_BaseAddresses = true;
-                            if (reader.Name == "ua:String")
-                                is_uaString = true;
+                            switch (reader.Name)
+                            {
+                                case "BaseAddresses":
+                                    is_BaseAddresses = true;
+                                    break;
+                                case "ua:String":
+                                    is_uaString = true;
+                                    break;
+                            }
+
                             break;
                         case XmlNodeType.Text: //Display the text in each element.
                             if (is_BaseAddresses && is_uaString)
@@ -812,19 +851,35 @@ namespace AasxServer
                                 is_BaseAddresses = false;
                                 is_uaString = false;
                             }
+
                             break;
                         case XmlNodeType.EndElement: //Display the end of the element.
                             break;
+                        case XmlNodeType.None:
+                        case XmlNodeType.Attribute:
+                        case XmlNodeType.CDATA:
+                        case XmlNodeType.EntityReference:
+                        case XmlNodeType.Entity:
+                        case XmlNodeType.ProcessingInstruction:
+                        case XmlNodeType.Comment:
+                        case XmlNodeType.Document:
+                        case XmlNodeType.DocumentType:
+                        case XmlNodeType.DocumentFragment:
+                        case XmlNodeType.Notation:
+                        case XmlNodeType.Whitespace:
+                        case XmlNodeType.SignificantWhitespace:
+                        case XmlNodeType.EndEntity:
+                        case XmlNodeType.XmlDeclaration:
+                        default:
+                            throw new ArgumentOutOfRangeException(nameof(reader.NodeType));
                     }
                 }
             }
 
-            bool createFilesOnly = false;
-            if (System.IO.File.Exists(AasxHttpContextHelper.DataPath + "/FILES.ONLY"))
-                createFilesOnly = true;
+            var createFilesOnly = File.Exists(AasxHttpContextHelper.DataPath + "/FILES.ONLY");
 
-            int envi = 0;
-            int count = 0;
+            var envi = 0;
+            var count = 0;
 
             // Migrate always
             if (withDb)
@@ -832,58 +887,51 @@ namespace AasxServer
                 if (isPostgres)
                 {
                     Console.WriteLine("Use POSTGRES");
-                    using (PostgreAasContext db = new PostgreAasContext())
-                    {
-                        db.Database.Migrate();
-                    }
+                    await using var db = new PostgreAasContext();
+                    await db.Database.MigrateAsync();
                 }
                 else
                 {
                     Console.WriteLine("Use SQLITE");
-                    using (SqliteAasContext db = new SqliteAasContext())
-                    {
-                        db.Database.Migrate();
-                    }
+                    await using var db = new SqliteAasContext();
+                    await db.Database.MigrateAsync();
                 }
             }
 
             // Clear DB
             if (withDb && startIndex == 0 && !createFilesOnly)
             {
-                using (AasContext db = new AasContext())
-                {
-                    var task = Task.Run(async () => count = await db.DbConfigSets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.AASXSets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.AasSets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.SubmodelSets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.SMESets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.IValueSets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.SValueSets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.DValueSets.ExecuteDeleteAsync());
-                    task.Wait();
+                await using var db = new AasContext();
+                var task = Task.Run(async () => count = await db.DbConfigSets.ExecuteDeleteAsync());
+                task.Wait();
+                task = Task.Run(async () => count = await db.AASXSets.ExecuteDeleteAsync());
+                task.Wait();
+                task = Task.Run(async () => count = await db.AasSets.ExecuteDeleteAsync());
+                task.Wait();
+                task = Task.Run(async () => count = await db.SubmodelSets.ExecuteDeleteAsync());
+                task.Wait();
+                task = Task.Run(async () => count = await db.SMESets.ExecuteDeleteAsync());
+                task.Wait();
+                task = Task.Run(async () => count = await db.IValueSets.ExecuteDeleteAsync());
+                task.Wait();
+                task = Task.Run(async () => count = await db.SValueSets.ExecuteDeleteAsync());
+                task.Wait();
+                task = Task.Run(async () => count = await db.DValueSets.ExecuteDeleteAsync());
+                task.Wait();
 
-                    DbConfigSet dbConfig = null;
-                    dbConfig = new DbConfigSet
-                    {
-                        Id = 1,
-                        AasCount = 0,
-                        SubmodelCount = 0,
-                        AASXCount = 0,
-                        SMECount = 0
-                    };
-                    db.Add(dbConfig);
-                    db.SaveChanges();
-                }
+                DbConfigSet dbConfig;
+                dbConfig = new DbConfigSet
+                {
+                    Id = 1,
+                    AasCount = 0,
+                    SubmodelCount = 0,
+                    AASXCount = 0,
+                    SMECount = 0
+                };
+                db.Add(dbConfig);
+                db.SaveChanges();
             }
 
-            string[] fileNames = null;
             if (Directory.Exists(AasxHttpContextHelper.DataPath))
             {
                 if (!Directory.Exists(AasxHttpContextHelper.DataPath + "/xml"))
@@ -891,202 +939,194 @@ namespace AasxServer
                 if (!Directory.Exists(AasxHttpContextHelper.DataPath + "/files"))
                     Directory.CreateDirectory(AasxHttpContextHelper.DataPath + "/files");
 
-                var watch = System.Diagnostics.Stopwatch.StartNew();
-                fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx");
+                var watch = Stopwatch.StartNew();
+                var fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx");
                 Array.Sort(fileNames);
 
-                List<Task> saveTasks = new List<Task>();
-                int maxTasks = 1;
-                int taskIndex = 0;
+                var maxTasks = 1;
+                var taskIndex = 0;
 
-                int fi = 0;
+                var fi = 0;
+                string fn;
                 while (fi < fileNames.Length)
                 {
-                    // try
+                    fn = fileNames[fi];
+                    if (fn.ToLower().Contains("globalsecurity"))
                     {
-                        fn = fileNames[fi];
-                        if (fn.ToLower().Contains("globalsecurity"))
-                        {
-                            envFileName[envi] = fn;
-                            env[envi] = new AdminShellPackageEnv(fn, true, false);
-                            envi++;
-                            envimin = envi;
-                            oldest = envi;
-                            fi++;
-                            continue;
-                        }
-
-                        if (fi < startIndex)
-                        {
-                            fi++;
-                            continue;
-                        }
-
-
-                        if (fn != "" && envi < envimax)
-                        {
-                            string name = Path.GetFileName(fn);
-                            string tempName = "./temp/" + Path.GetFileName(fn);
-
-                            // Convert to the newest version only
-                            if (saveTemp == -1)
-                            {
-                                env[envi] = new AdminShellPackageEnv(fn, true, false);
-                                if (env[envi] == null)
-                                {
-                                    Console.Error.WriteLine($"Cannot open {fn}. Aborting..");
-                                    return 1;
-                                }
-                                Console.WriteLine((fi + 1) + "/" + fileNames.Length + " " + watch.ElapsedMilliseconds / 1000 + "s " + "SAVE TO TEMP: " + fn);
-                                Program.env[envi].SaveAs(tempName);
-                                fi++;
-                                continue;
-                            }
-
-                            if (readTemp && System.IO.File.Exists(tempName))
-                            {
-                                fn = tempName;
-                            }
-
-                            Console.WriteLine((fi + 1) + "/" + fileNames.Length + " " + watch.ElapsedMilliseconds / 1000 + "s" + " Loading {0}...", fn);
-                            envFileName[envi] = fn;
-                            if (!withDb)
-                            {
-                                env[envi] = new AdminShellPackageEnv(fn, true, false);
-                                if (env[envi] == null)
-                                {
-                                    Console.Error.WriteLine($"Cannot open {fn}. Aborting..");
-                                    return 1;
-                                }
-                            }
-                            else
-                            {
-                                envFileName[envi] = null;
-                                env[envi] = null;
-
-                                using (var asp = new AdminShellPackageEnv(fn, false, true))
-                                {
-                                    if (!createFilesOnly)
-                                    {
-                                        using (AasContext db = new AasContext())
-                                        {
-                                            var configDBList = db.DbConfigSets.Where(d => true);
-                                            var dbConfig = configDBList.FirstOrDefault();
-
-                                            long aasxNum = ++dbConfig.AASXCount;
-                                            var aasxDB = new AASXSet
-                                            {
-                                                AASXNum = aasxNum,
-                                                AASX = fn
-                                            };
-                                            db.Add(aasxDB);
-
-                                            var aas = asp.AasEnv.AssetAdministrationShells[0];
-                                            var aasId = aas.Id;
-                                            var assetId = aas.AssetInformation.GlobalAssetId;
-
-                                            // Check security
-                                                if (aasId != null && aasId != "" && assetId != null && assetId != "")
-                                                {
-                                                    VisitorAASX.LoadAASInDB(db, aas, aasxNum, asp, dbConfig);
-                                                }
-                                            db.SaveChanges();
-                                        }
-                                    }
-
-                                    if (withDbFiles)
-                                    {
-                                        try
-                                        {
-                                            string fcopyt = name + "__thumbnail";
-                                            fcopyt = fcopyt.Replace("/", "_");
-                                            fcopyt = fcopyt.Replace(".", "_");
-                                            Uri dummy = null;
-                                            using (var st = asp.GetLocalThumbnailStream(ref dummy, init: true))
-                                            {
-                                                Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/files/" + fcopyt + ".dat");
-                                                var fst = System.IO.File.Create(AasxHttpContextHelper.DataPath + "/files/" + fcopyt + ".dat");
-                                                if (st != null)
-                                                {
-                                                    st.CopyTo(fst);
-                                                }
-                                            }
-                                        }
-                                        catch { }
-
-                                        using (var fileStream = new FileStream(AasxHttpContextHelper.DataPath + "/files/" + name + ".zip", FileMode.Create))
-                                        using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
-                                        {
-                                            var files = asp.GetListOfSupplementaryFiles();
-                                            foreach (var f in files)
-                                            {
-                                                try
-                                                {
-                                                    using (var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true))
-                                                    {
-                                                        var archiveFile = archive.CreateEntry(f.Uri.OriginalString);
-                                                        Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/" + name + "/" + f.Uri.OriginalString);
-
-                                                        using (var archiveStream = archiveFile.Open())
-                                                        {
-                                                            s.CopyTo(archiveStream);
-                                                        }
-                                                    }
-                                                }
-                                                catch { }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            // check if signed
-                            string fileCert = "./user/" + name + ".cer";
-                            if (System.IO.File.Exists(fileCert))
-                            {
-                                X509Certificate2 x509 = new X509Certificate2(fileCert);
-                                envSymbols[envi] = "S";
-                                envSubjectIssuer[envi] = x509.Subject;
-
-                                X509Chain chain = new X509Chain();
-                                chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-                                bool isValid = chain.Build(x509);
-                                if (isValid)
-                                {
-                                    envSymbols[envi] += ";V";
-                                    envSubjectIssuer[envi] += ";" + x509.Issuer;
-                                }
-                            }
-                        }
-                        fi++;
+                        envFileName[envi] = fn;
+                        env[envi] = new AdminShellPackageEnv(fn, true);
                         envi++;
-                        
+                        envimin = envi;
+                        oldest = envi;
+                        fi++;
+                        continue;
                     }
+
+                    if (fi < startIndex)
+                    {
+                        fi++;
+                        continue;
+                    }
+
+
+                    if (!string.IsNullOrEmpty(fn) && envi < envimax)
+                    {
+                        var name = Path.GetFileName(fn);
+                        var tempName = $"./temp/{Path.GetFileName(fn)}";
+
+                        // Convert to the newest version only
+                        if (saveTemp == -1)
+                        {
+                            env[envi] = new AdminShellPackageEnv(fn, true);
+                            if (env[envi] == null)
+                            {
+                                Console.Error.WriteLine($"Cannot open {fn}. Aborting..");
+                                return 1;
+                            }
+
+                            Console.WriteLine($"{(fi + 1)}/{fileNames.Length} {watch.ElapsedMilliseconds / 1000}s SAVE TO TEMP: {fn}");
+                            env[envi].SaveAs(tempName);
+                            fi++;
+                            continue;
+                        }
+
+                        if (readTemp && File.Exists(tempName))
+                        {
+                            fn = tempName;
+                        }
+
+                        Console.WriteLine("{1}/{2} {3}s" + " Loading {0}...", fn, (fi + 1), fileNames.Length, watch.ElapsedMilliseconds / 1000);
+                        envFileName[envi] = fn;
+                        if (!withDb)
+                        {
+                            env[envi] = new AdminShellPackageEnv(fn, true);
+                            if (env[envi] == null)
+                            {
+                                await Console.Error.WriteLineAsync($"Cannot open {fn}. Aborting..");
+                                return 1;
+                            }
+                        }
+                        else
+                        {
+                            envFileName[envi] = null;
+                            env[envi] = null;
+
+                            using var asp = new AdminShellPackageEnv(fn, false, true);
+                            if (!createFilesOnly)
+                            {
+                                await using (var db = new AasContext())
+                                {
+                                    var configDBList = db.DbConfigSets.Where(d => true);
+                                    var dbConfig = configDBList.FirstOrDefault();
+
+                                    var aasxNum = ++dbConfig.AASXCount;
+                                    var aasxDB = new AASXSet
+                                    {
+                                        AASXNum = aasxNum,
+                                        AASX = fn
+                                    };
+                                    db.Add(aasxDB);
+
+                                    var aas = asp.AasEnv.AssetAdministrationShells[0];
+                                    var aasId = aas.Id;
+                                    var assetId = aas.AssetInformation.GlobalAssetId;
+
+                                    // Check security
+                                    if (!string.IsNullOrEmpty(aasId) && !string.IsNullOrEmpty(assetId))
+                                    {
+                                        VisitorAASX.LoadAASInDB(db, aas, aasxNum, asp, dbConfig);
+                                    }
+
+                                    await db.SaveChangesAsync();
+                                }
+                            }
+
+                            if (withDbFiles)
+                            {
+                                try
+                                {
+                                    var fcopyt = name + "__thumbnail";
+                                    fcopyt = fcopyt.Replace("/", "_");
+                                    fcopyt = fcopyt.Replace(".", "_");
+                                    Uri dummy = null;
+                                    await using var st = asp.GetLocalThumbnailStream(ref dummy, init: true);
+                                    Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/files/" + fcopyt + ".dat");
+                                    var fst = File.Create(AasxHttpContextHelper.DataPath + "/files/" + fcopyt + ".dat");
+                                    await st?.CopyToAsync(fst);
+                                }
+                                catch (Exception exception)
+                                {
+                                    Console.WriteLine(exception.Message);
+                                }
+
+                                await using var fileStream = new FileStream($"{AasxHttpContextHelper.DataPath}/files/{name}.zip", FileMode.Create);
+                                using var archive = new ZipArchive(fileStream, ZipArchiveMode.Create);
+                                var files = asp.GetListOfSupplementaryFiles();
+                                foreach (var f in files)
+                                {
+                                    try
+                                    {
+                                        await using var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true);
+                                        var archiveFile = archive.CreateEntry(f.Uri.OriginalString);
+                                        Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/" + name + "/" + f.Uri.OriginalString);
+
+                                        await using var archiveStream = archiveFile.Open();
+                                        await s.CopyToAsync(archiveStream);
+                                    }
+                                    catch (Exception exception)
+                                    {
+                                        Console.WriteLine(exception.Message);
+                                    }
+                                }
+                            }
+                        }
+
+                        // check if signed
+                        var fileCert = $"./user/{name}.cer";
+                        if (File.Exists(fileCert))
+                        {
+                            var x509 = new X509Certificate2(fileCert);
+                            envSymbols[envi] = "S";
+                            envSubjectIssuer[envi] = x509.Subject;
+
+                            var chain = new X509Chain();
+                            chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                            var isValid = chain.Build(x509);
+                            if (isValid)
+                            {
+                                envSymbols[envi] += ";V";
+                                envSubjectIssuer[envi] += ";" + x509.Issuer;
+                            }
+                        }
+                    }
+
+                    fi++;
+                    envi++;
                 }
 
                 if (saveTemp == -1)
                     return (0);
 
                 watch.Stop();
-                Console.WriteLine(fi + " AASX loaded in " + watch.ElapsedMilliseconds / 1000 + "s");
+                Console.WriteLine($"{fi} AASX loaded in {watch.ElapsedMilliseconds / 1000}s");
 
                 fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx2");
                 Array.Sort(fileNames);
 
-                for (int j = 0; j < fileNames.Length; j++)
+                foreach (var t in fileNames)
                 {
-                    fn = fileNames[j];
+                    fn = t;
 
                     if (fn != "" && envi < envimax)
                     {
                         envFileName[envi] = fn;
                         envSymbols[envi] = "L"; // Show lock
                     }
+
                     envi++;
                 }
             }
 
-            Console.WriteLine();
             Console.WriteLine("Please wait for the servers to start...");
 
             if (a.Rest)
@@ -1094,7 +1134,7 @@ namespace AasxServer
                 Console.WriteLine("--rest argument is not supported anymore, as the old V2 related REST APIs are deprecated. Please find the new REST APIs on the port 5001.");
             }
 
-            AasxTimeSeries.TimeSeries.timeSeriesInit();
+            TimeSeries.timeSeriesInit();
 
             AasxTask.taskInit();
 
@@ -1120,34 +1160,34 @@ namespace AasxServer
                 // Initial read of OPC values, will quit the program if it returns false
                 if (!ReadOPCClient(true))
                 {
-                    Console.Error.WriteLine("Failed to read from the OPC client.");
+                    await Console.Error.WriteLineAsync("Failed to read from the OPC client.");
                     return 1;
                 }
 
                 Console.WriteLine($"OPC client will be updating every: {a.OpcClientRate} milliseconds");
-                SetOPCClientTimer((double)a.OpcClientRate); // read again everytime timer expires
+                SetOPCClientTimer((double) a.OpcClientRate); // read again everytime timer expires
             }
 
             SetScriptTimer(1000); // also updates blazor view
 
-            if (connectServer != "")
+            if (!string.IsNullOrEmpty(connectServer))
             {
                 HttpClient httpClient;
                 if (clientHandler == null)
                 {
                     clientHandler = new HttpClientHandler();
                     clientHandler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
-                    httpClient = new HttpClient(clientHandler);
                 }
+
                 httpClient = new HttpClient(clientHandler);
 
-                string payload = "{ \"source\" : \"" + connectNodeName + "\" }";
+                var payload = $"{{ \"source\" : \"{connectNodeName}\" }}";
 
-                string content = "";
+                var content = string.Empty;
                 try
                 {
-                    var contentJson = new StringContent(payload, System.Text.Encoding.UTF8, "application/json");
-                    var result = httpClient.PostAsync(connectServer + "/connect", contentJson).Result;
+                    var contentJson = new StringContent(payload, Encoding.UTF8, "application/json");
+                    var result = httpClient.PostAsync($"{connectServer}/connect", contentJson).Result;
                     content = ContentToString(result.Content);
                 }
                 catch (Exception exception)
@@ -1157,15 +1197,16 @@ namespace AasxServer
 
                 if (content == "OK")
                 {
-                    connectThread = new Thread(new ThreadStart(connectThreadLoop));
+                    connectThread = new Thread(connectThreadLoop);
                     connectLoop = true;
                 }
                 else
                 {
-                    Console.WriteLine("********** Can not connect to: " + connectServer);
+                    Console.WriteLine($"********** Can not connect to: {connectServer}");
                 }
             }
-            Program.signalNewData(3);
+
+            signalNewData(3);
 
             if (a.Opc && server != null)
             {
@@ -1178,7 +1219,7 @@ namespace AasxServer
             }
 
             // wait for RETURN
-            if (connectServer != "" && connectLoop)
+            if (!string.IsNullOrEmpty(connectServer) && connectLoop)
             {
                 connectLoop = false;
             }
@@ -1200,18 +1241,16 @@ namespace AasxServer
             {
                 Console.WriteLine(a);
             }
+
             Console.WriteLine();
 
             AasContext._con = Configuration;
-            if (Configuration != null)
+            if (Configuration?["DatabaseConnection:ConnectionString"] != null)
             {
-                if (Configuration["DatabaseConnection:ConnectionString"] != null)
-                {
-                    isPostgres = Configuration["DatabaseConnection:ConnectionString"].ToLower().Contains("host");
-                }
+                isPostgres = Configuration["DatabaseConnection:ConnectionString"].ToLower().Contains("host");
             }
 
-            string nl = System.Environment.NewLine;
+            var nl = Environment.NewLine;
 
             var rootCommand = new RootCommand("serve AASX packages over different interfaces")
             {
@@ -1223,7 +1262,6 @@ namespace AasxServer
                 new Option<string>(
                     new[] {"--data-path"},
                     "Path to where the AASXs reside"),
-
 
                 new Option<bool>(
                     new[] {"--opc"},
@@ -1303,27 +1341,28 @@ namespace AasxServer
             {
                 new HelpBuilder(new SystemConsole()).Write(rootCommand);
 
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) &&
-                    WindowsConsoleWillBeDestroyedAtTheEnd.Check())
+                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ||
+                    !WindowsConsoleWillBeDestroyedAtTheEnd.Check())
                 {
-                    Console.WriteLine("Press any key to continue...");
-                    Console.ReadKey();
+                    return;
                 }
+
+                Console.WriteLine("Press any key to continue...");
+                Console.ReadKey();
 
                 return;
             }
 
-            rootCommand.Handler = System.CommandLine.Invocation.CommandHandler.Create(
-                async (CommandLineArguments a) =>
-                {
-                    var task = Run(a);
-                    task.Wait();
-                    var op = task.Result;
-                    return op;
-                });
+            rootCommand.Handler = CommandHandler.Create((CommandLineArguments a) =>
+            {
+                var task = Run(a);
+                task.Wait();
+                var op = task.Result;
+                return Task.FromResult(op);
+            });
 
-            int exitCode = rootCommand.InvokeAsync(args).Result;
-            System.Environment.ExitCode = exitCode;
+            var exitCode = rootCommand.InvokeAsync(args).Result;
+            Environment.ExitCode = exitCode;
         }
 
 
@@ -1343,13 +1382,15 @@ namespace AasxServer
             public string humanEndPoint;
             public string restEndPoint;
         }
+
         public class aasDirectoryParameters
         {
             public string source;
             public List<aasListParameters> aasList;
+
             public aasDirectoryParameters()
             {
-                aasList = new List<aasListParameters> { };
+                aasList = new List<aasListParameters>();
             }
         }
 
@@ -1357,58 +1398,47 @@ namespace AasxServer
         /* End Point Definition */
         public class AASxEndpoint
         {
-            [XmlElement(ElementName = "address")]
-            public string address = "";
-            [XmlElement(ElementName = "type")]
-            public string type = "";
+            [XmlElement(ElementName = "address")] public string address = string.Empty;
+            [XmlElement(ElementName = "type")] public string type = string.Empty;
         }
 
         /* Submodel Descriptor Definition */
         public class SubmodelDescriptors
         {
-            [XmlElement(ElementName = "administration")]
-            [JsonIgnore]
-            public AdministrativeInformation administration = null;
+            [XmlElement(ElementName = "administration")] [JsonIgnore]
+            public AdministrativeInformation administration;
 
-            [XmlElement(ElementName = "description")]
-            [JsonIgnore]
-            public List<ILangStringTextType> description = null;
+            [XmlElement(ElementName = "description")] [JsonIgnore]
+            public List<ILangStringTextType> description;
 
-            [XmlElement(ElementName = "idShort")]
-            [JsonIgnore]
-            public string idShort = "";
+            [XmlElement(ElementName = "idShort")] [JsonIgnore]
+            public string idShort = string.Empty;
 
-            [XmlElement(ElementName = "identification")]
-            [JsonIgnore]
-            public string identification = null;
+            [XmlElement(ElementName = "identification")] [JsonIgnore]
+            public string identification;
 
             [XmlElement(ElementName = "semanticId")]
-            public Reference semanticId = null;
+            public Reference semanticId;
 
             [XmlElement(ElementName = "endpoints")]
             public List<AASxEndpoint> endpoints = new List<AASxEndpoint>();
         }
+
         /* AAS Descriptor Definiton */
         public class aasDescriptor
         {
+            [XmlElement(ElementName = "administration")] [JsonIgnore]
+            public AdministrativeInformation administration;
 
-            [XmlElement(ElementName = "administration")]
-            [JsonIgnore]
-            public AdministrativeInformation administration = null;
-
-            [XmlElement(ElementName = "description")]
-            [JsonIgnore]
+            [XmlElement(ElementName = "description")] [JsonIgnore]
             public List<ILangStringTextType> description = new(new List<ILangStringTextType>());
 
-            [XmlElement(ElementName = "idShort")]
-            public string idShort = "";
+            [XmlElement(ElementName = "idShort")] public string idShort = string.Empty;
 
-            [XmlElement(ElementName = "identification")]
-            [JsonIgnore]
-            public string identification = null;
+            [XmlElement(ElementName = "identification")] [JsonIgnore]
+            public string identification;
 
-            [XmlElement(ElementName = "assets")]
-            public List<AssetInformation> assets = new List<AssetInformation>();
+            [XmlElement(ElementName = "assets")] public List<AssetInformation> assets = new List<AssetInformation>();
 
             [XmlElement(ElementName = "endpoints")]
             public List<AASxEndpoint> endpoints = new List<AASxEndpoint>();
@@ -1418,37 +1448,40 @@ namespace AasxServer
         }
 
         /* AAS Detail Part 2 Descriptor Definitions END*/
-
         /* Creation of AAS Descriptor */
         // TODO (jtikekar, 2023-09-04): Remove for now
         public static aasDescriptor creatAASDescriptor(AdminShellPackageEnv adminShell)
         {
-            aasDescriptor aasD = new aasDescriptor();
-            string endpointAddress = "http://" + hostPort;
+            var aasD = new aasDescriptor();
+            var endpointAddress = $"http://{hostPort}";
 
             aasD.idShort = adminShell.AasEnv.AssetAdministrationShells[0].IdShort;
             aasD.identification = adminShell.AasEnv.AssetAdministrationShells[0].Id;
             aasD.description = adminShell.AasEnv.AssetAdministrationShells[0].Description;
 
-            AASxEndpoint endp = new AASxEndpoint();
-            endp.address = endpointAddress + "/aas/" + adminShell.AasEnv.AssetAdministrationShells[0].IdShort;
+            var endp = new AASxEndpoint
+            {
+                address = $"{endpointAddress}/aas/{adminShell.AasEnv.AssetAdministrationShells[0].IdShort}"
+            };
             aasD.endpoints.Add(endp);
 
-            int submodelCount = adminShell.AasEnv.Submodels.Count;
-            for (int i = 0; i < submodelCount; i++)
+            var submodelCount = adminShell.AasEnv.Submodels.Count;
+            for (var i = 0; i < submodelCount; i++)
             {
-                SubmodelDescriptors sdc = new SubmodelDescriptors();
+                var sdc = new SubmodelDescriptors
+                {
+                    administration = adminShell.AasEnv.Submodels[i].Administration as AdministrativeInformation,
+                    description = adminShell.AasEnv.Submodels[i].Description,
+                    identification = adminShell.AasEnv.Submodels[i].Id,
+                    idShort = adminShell.AasEnv.Submodels[i].IdShort,
+                    semanticId = adminShell.AasEnv.Submodels[i].SemanticId as Reference
+                };
 
-                sdc.administration = adminShell.AasEnv.Submodels[i].Administration as AdministrativeInformation;
-                sdc.description = adminShell.AasEnv.Submodels[i].Description;
-                sdc.identification = adminShell.AasEnv.Submodels[i].Id;
-                sdc.idShort = adminShell.AasEnv.Submodels[i].IdShort;
-                sdc.semanticId = adminShell.AasEnv.Submodels[i].SemanticId as Reference;
-
-                AASxEndpoint endpSub = new AASxEndpoint();
-                endpSub.address = endpointAddress + "/aas/" + adminShell.AasEnv.AssetAdministrationShells[0].IdShort +
-                                   "/submodels/" + adminShell.AasEnv.Submodels[i].IdShort;
-                endpSub.type = "http";
+                var endpSub = new AASxEndpoint
+                {
+                    address = $"{endpointAddress}/aas/{adminShell.AasEnv.AssetAdministrationShells[0].IdShort}/submodels/{adminShell.AasEnv.Submodels[i].IdShort}",
+                    type = "http"
+                };
                 sdc.endpoints.Add(endpSub);
 
                 aasD.submodelDescriptors.Add(sdc);
@@ -1461,18 +1494,12 @@ namespace AasxServer
         public static void publishDescriptorData(string descriptorData)
         {
             HttpClient httpClient;
-            if (clientHandler != null)
-            {
-                httpClient = new HttpClient(clientHandler);
-            }
-            else
-            {
-                httpClient = new HttpClient();
-            }
-            var descriptorJson = new StringContent(descriptorData, System.Text.Encoding.UTF8, "application/json");
+            httpClient = clientHandler != null ? new HttpClient(clientHandler) : new HttpClient();
+
+            var descriptorJson = new StringContent(descriptorData, Encoding.UTF8, "application/json");
             try
             {
-                var result = httpClient.PostAsync(connectServer + "/publish", descriptorJson).Result;
+                _ = httpClient.PostAsync(connectServer + "/publish", descriptorJson).Result;
             }
             catch (Exception e)
             {
@@ -1487,21 +1514,13 @@ namespace AasxServer
             public string type;
             public string encrypt;
             public string extensions;
-            public List<string> publish;
-            public TransmitData()
-            {
-                publish = new List<string> { };
-            }
+            public List<string> publish = new();
         }
 
         public class TransmitFrame
         {
             public string source;
-            public List<TransmitData> data;
-            public TransmitFrame()
-            {
-                data = new List<TransmitData> { };
-            }
+            public List<TransmitData> data = new();
         }
 
         static bool getDirectory = true;
@@ -1511,101 +1530,106 @@ namespace AasxServer
         static string getaasxFile_fileName = "";
         static string getaasxFile_fileData = "";
         static string getaasxFile_fileType = "";
-        static int getaasxFile_fileLenBase64 = 0;
-        static int getaasxFile_fileLenBinary = 0;
-        static int getaasxFile_fileTransmitted = 0;
+        static int getaasxFile_fileLenBase64;
+        static int getaasxFile_fileLenBinary;
+        static int getaasxFile_fileTransmitted;
         static int blockSize = 1500000;
 
-        static List<TransmitData> tdPending = new List<TransmitData> { };
+        static List<TransmitData> tdPending = new();
 
         public static void connectPublish(string type, string json)
         {
             if (connectServer == "")
                 return;
 
-            TransmitData tdp = new TransmitData();
+            var tdp = new TransmitData
+            {
+                source = connectNodeName,
+                type = type
+            };
 
-            tdp.source = connectNodeName;
-            tdp.type = type;
             tdp.publish.Add(json);
             tdPending.Add(tdp);
         }
 
         public static void connectThreadLoop()
         {
-            bool newConnectData = false;
+            bool newConnectData;
 
             while (connectLoop)
             {
-                TransmitFrame tf = new TransmitFrame
+                var tf = new TransmitFrame
                 {
                     source = connectNodeName
                 };
-                TransmitData td = null;
+                TransmitData td;
 
                 if (getDirectory)
                 {
                     Console.WriteLine("if getDirectory");
 
                     // AAAS Detail part 2 Descriptor
-                    TransmitFrame descriptortf = new TransmitFrame
+                    var descriptortf = new TransmitFrame
                     {
                         source = connectNodeName
                     };
 
-                    aasDirectoryParameters adp = new aasDirectoryParameters();
-
-                    adp.source = connectNodeName;
-
-                    int aascount = Program.env.Length;
-
-                    for (int j = 0; j < aascount; j++)
+                    var adp = new aasDirectoryParameters
                     {
-                        aasListParameters alp = new aasListParameters();
+                        source = connectNodeName
+                    };
 
-                        if (Program.env[j] != null)
+                    var aascount = env.Length;
+
+                    for (var j = 0; j < aascount; j++)
+                    {
+                        var alp = new aasListParameters();
+
+                        if (env[j] == null)
                         {
-                            alp.index = j;
-
-                            /* Create Detail part 2 Descriptor Start */
-                            aasDescriptor aasDsecritpor = Program.creatAASDescriptor(Program.env[j]);
-                            TransmitData aasDsecritporTData = new TransmitData
-                            {
-                                source = connectNodeName
-                            };
-                            aasDsecritporTData.type = "register";
-                            aasDsecritporTData.destination = "VWS_AAS_Registry";
-                            var aasDescriptorJsonData = JsonConvert.SerializeObject(aasDsecritpor, Newtonsoft.Json.Formatting.Indented,
-                                                                        new JsonSerializerSettings
-                                                                        {
-                                                                            NullValueHandling = NullValueHandling.Ignore
-                                                                        });
-                            aasDsecritporTData.publish.Add(aasDescriptorJsonData);
-                            descriptortf.data.Add(aasDsecritporTData);
-                            /* Create Detail part 2 Descriptor END */
-
-                            alp.idShort = Program.env[j].AasEnv.AssetAdministrationShells[0].IdShort;
-                            alp.identification = Program.env[j].AasEnv.AssetAdministrationShells[0].Id;
-                            alp.fileName = Program.envFileName[j];
-                            alp.assetId = "";
-                            var asset = Program.env[j].AasEnv.AssetAdministrationShells[0].AssetInformation;
-                            if (asset != null)
-                                alp.humanEndPoint = blazorHostPort;
-                            alp.restEndPoint = hostPort;
-
-                            adp.aasList.Add(alp);
+                            continue;
                         }
+
+                        alp.index = j;
+
+                        /* Create Detail part 2 Descriptor Start */
+                        var aasDsecritpor = creatAASDescriptor(env[j]);
+                        var aasDsecritporTData = new TransmitData
+                        {
+                            source = connectNodeName,
+                            type = "register",
+                            destination = "VWS_AAS_Registry"
+                        };
+                        var aasDescriptorJsonData = JsonConvert.SerializeObject(aasDsecritpor, Formatting.Indented,
+                            new JsonSerializerSettings
+                            {
+                                NullValueHandling = NullValueHandling.Ignore
+                            });
+                        aasDsecritporTData.publish.Add(aasDescriptorJsonData);
+                        descriptortf.data.Add(aasDsecritporTData);
+                        /* Create Detail part 2 Descriptor END */
+
+                        alp.idShort = env[j].AasEnv.AssetAdministrationShells[0].IdShort;
+                        alp.identification = env[j].AasEnv.AssetAdministrationShells[0].Id;
+                        alp.fileName = envFileName[j];
+                        alp.assetId = string.Empty;
+                        var asset = env[j].AasEnv.AssetAdministrationShells[0].AssetInformation;
+                        if (asset != null)
+                            alp.humanEndPoint = blazorHostPort;
+                        alp.restEndPoint = hostPort;
+
+                        adp.aasList.Add(alp);
                     }
 
-                    string decriptorData = JsonConvert.SerializeObject(descriptortf, Formatting.Indented);
-                    Program.publishDescriptorData(decriptorData);
+                    var decriptorData = JsonConvert.SerializeObject(descriptortf, Formatting.Indented);
+                    publishDescriptorData(decriptorData);
 
                     td = new TransmitData
                     {
                         source = connectNodeName
                     };
 
-                    var json = JsonConvert.SerializeObject(adp, Newtonsoft.Json.Formatting.Indented);
+                    var json = JsonConvert.SerializeObject(adp, Formatting.Indented);
                     td.type = "directory";
                     td.destination = getDirectoryDestination;
                     td.publish.Add(json);
@@ -1613,19 +1637,19 @@ namespace AasxServer
                     Console.WriteLine("Send directory");
 
                     getDirectory = false;
-                    getDirectoryDestination = "";
+                    getDirectoryDestination = string.Empty;
                 }
 
-                if (getaasxFile_destination != "") // block transfer
+                if (!string.IsNullOrEmpty(getaasxFile_destination)) // block transfer
                 {
-                    dynamic res = new System.Dynamic.ExpandoObject();
+                    dynamic res = new ExpandoObject();
 
                     td = new TransmitData
                     {
                         source = connectNodeName
                     };
 
-                    int len = 0;
+                    int len;
                     if ((getaasxFile_fileLenBase64 - getaasxFile_fileTransmitted) > blockSize)
                     {
                         len = blockSize;
@@ -1653,10 +1677,10 @@ namespace AasxServer
 
                     if (getaasxFile_fileTransmitted == getaasxFile_fileLenBase64)
                     {
-                        getaasxFile_destination = "";
-                        getaasxFile_fileName = "";
-                        getaasxFile_fileData = "";
-                        getaasxFile_fileType = "";
+                        getaasxFile_destination = string.Empty;
+                        getaasxFile_fileName = string.Empty;
+                        getaasxFile_fileData = string.Empty;
+                        getaasxFile_fileType = string.Empty;
                         res.fileLenBase64 = 0;
                         res.fileLenBinary = 0;
                         getaasxFile_fileTransmitted = 0;
@@ -1665,75 +1689,85 @@ namespace AasxServer
 
                 if (tdPending.Count != 0)
                 {
-                    foreach (TransmitData tdp in tdPending)
+                    foreach (var tdp in tdPending)
                     {
                         tf.data.Add(tdp);
                     }
+
                     tdPending.Clear();
                 }
 
-                int envi = 0;
+                var envi = 0;
                 while (env[envi] != null)
                 {
                     foreach (var sm in env[envi].AasEnv.Submodels)
                     {
-                        if (sm != null && sm.IdShort != null)
+                        if (sm is not {IdShort: not null})
                         {
-                            bool toPublish = Program.submodelsToPublish.Contains(sm);
-                            if (!toPublish)
+                            continue;
+                        }
+
+                        var toPublish = submodelsToPublish.Contains(sm);
+                        if (!toPublish)
+                        {
+                            var count = sm.Qualifiers.Count;
+                            if (count != 0)
                             {
-                                int count = sm.Qualifiers.Count;
-                                if (count != 0)
+                                var j = 0;
+
+                                while (j < count) // Scan qualifiers
                                 {
-                                    int j = 0;
+                                    var p = sm.Qualifiers[j] as Qualifier;
 
-                                    while (j < count) // Scan qualifiers
+                                    if (p.Type == "PUBLISH")
                                     {
-                                        var p = sm.Qualifiers[j] as Qualifier;
-
-                                        if (p.Type == "PUBLISH")
-                                        {
-                                            toPublish = true;
-                                        }
-                                        j++;
+                                        toPublish = true;
                                     }
+
+                                    j++;
                                 }
                             }
-                            if (toPublish)
-                            {
-                                td = new TransmitData
-                                {
-                                    source = connectNodeName
-                                };
-
-                                var json = JsonConvert.SerializeObject(sm, Newtonsoft.Json.Formatting.Indented);
-                                td.type = "submodel";
-                                td.publish.Add(json);
-                                tf.data.Add(td);
-                                Console.WriteLine("Publish Submodel " + sm.IdShort);
-                            }
                         }
+
+                        if (!toPublish)
+                        {
+                            continue;
+                        }
+
+                        td = new TransmitData
+                        {
+                            source = connectNodeName
+                        };
+
+                        var json = JsonConvert.SerializeObject(sm, Formatting.Indented);
+                        td.type = "submodel";
+                        td.publish.Add(json);
+                        tf.data.Add(td);
+                        Console.WriteLine($"Publish Submodel {sm.IdShort}");
                     }
+
                     envi++;
                 }
 
                 // i40language
                 if (i40LanguageRuntime.isRequester && i40LanguageRuntime.sendFrameJSONRequester.Count != 0)
                 {
-                    foreach (string s in i40LanguageRuntime.sendFrameJSONRequester)
+                    foreach (var s in i40LanguageRuntime.sendFrameJSONRequester)
                     {
                         td = new TransmitData
                         {
-                            source = connectNodeName
+                            source = connectNodeName,
+                            type = "i40LanguageRuntime.sendFrameJSONRequester"
                         };
 
-                        td.type = "i40LanguageRuntime.sendFrameJSONRequester";
-                        var json = JsonConvert.SerializeObject(s, Newtonsoft.Json.Formatting.Indented);
+                        var json = JsonConvert.SerializeObject(s, Formatting.Indented);
                         td.publish.Add(json);
                         tf.data.Add(td);
                     }
+
                     i40LanguageRuntime.sendFrameJSONRequester.Clear();
                 }
+
                 if (i40LanguageRuntime.isProvider && i40LanguageRuntime.sendFrameJSONProvider.Count != 0)
                 {
                     td = new TransmitData
@@ -1741,205 +1775,210 @@ namespace AasxServer
                         source = connectNodeName
                     };
 
-                    foreach (string s in i40LanguageRuntime.sendFrameJSONProvider)
+                    foreach (var s in i40LanguageRuntime.sendFrameJSONProvider)
                     {
                         td.type = "i40LanguageRuntime.sendFrameJSONProvider";
-                        var json = JsonConvert.SerializeObject(s, Newtonsoft.Json.Formatting.Indented);
+                        var json = JsonConvert.SerializeObject(s, Formatting.Indented);
                         td.publish.Add(json);
                         tf.data.Add(td);
                     }
+
                     i40LanguageRuntime.sendFrameJSONProvider.Clear();
                 }
 
-                string publish = JsonConvert.SerializeObject(tf, Formatting.Indented);
+                var publish = JsonConvert.SerializeObject(tf, Formatting.Indented);
 
                 HttpClient httpClient;
-                if (clientHandler != null)
-                {
-                    httpClient = new HttpClient(clientHandler);
-                }
-                else
-                {
-                    httpClient = new HttpClient();
-                }
-                var contentJson = new StringContent(publish, System.Text.Encoding.UTF8, "application/json");
+                httpClient = clientHandler != null ? new HttpClient(clientHandler) : new HttpClient();
 
-                string content = "";
+                var contentJson = new StringContent(publish, Encoding.UTF8, "application/json");
+
+                var content = string.Empty;
                 try
                 {
-                    var result = httpClient.PostAsync(connectServer + "/publish", contentJson).Result;
+                    var result = httpClient.PostAsync($"{connectServer}/publish", contentJson).Result;
                     content = ContentToString(result.Content);
                 }
                 catch (Exception exception)
                 {
                     Console.WriteLine(exception);
                 }
-                if (content != "")
+
+                if (!string.IsNullOrEmpty(content))
                 {
                     newConnectData = false;
-                    string node = "";
+                    var node = string.Empty;
 
                     try
                     {
-                        TransmitFrame tf2 = new TransmitFrame();
-                        tf2 = Newtonsoft.Json.JsonConvert.DeserializeObject<TransmitFrame>(content);
+                        var tf2 = new TransmitFrame();
+                        tf2 = JsonConvert.DeserializeObject<TransmitFrame>(content);
 
-                        node = tf2.source;
-                        foreach (TransmitData td2 in tf2.data)
+                        foreach (var td2 in tf2.data)
                         {
-                            if (td2.type == "getDirectory")
+                            switch (td2.type)
                             {
-                                Console.WriteLine("received getDirectory");
-                                getDirectory = true;
-                                getDirectoryDestination = td2.source;
-                            }
-
-                            if (td2.type == "getaasx" && td2.destination == connectNodeName)
-                            {
-                                int aasIndex = Convert.ToInt32(td2.extensions);
-
-                                dynamic res = new System.Dynamic.ExpandoObject();
-
-                                Byte[] binaryFile = System.IO.File.ReadAllBytes(Program.envFileName[aasIndex]);
-                                string binaryBase64 = Convert.ToBase64String(binaryFile);
-
-                                string payload = "{ \"file\" : \" " + binaryBase64 + " \" }";
-
-                                System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
-                                string fileToken = Jose.JWT.Encode(payload, enc.GetBytes(AasxRestServerLibrary.AasxHttpContextHelper.secretString), JwsAlgorithm.HS256);
-
-                                if (fileToken.Length <= blockSize)
+                                case "getDirectory":
+                                    Console.WriteLine("received getDirectory");
+                                    getDirectory = true;
+                                    getDirectoryDestination = td2.source;
+                                    break;
+                                case "getaasx" when td2.destination == connectNodeName:
                                 {
-                                    res.fileName = Path.GetFileName(Program.envFileName[aasIndex]);
-                                    res.fileData = fileToken;
+                                    var aasIndex = Convert.ToInt32(td2.extensions);
 
-                                    string responseJson = JsonConvert.SerializeObject(res, Formatting.Indented);
+                                    dynamic res = new ExpandoObject();
 
-                                    TransmitData tdp = new TransmitData();
+                                    var binaryFile = File.ReadAllBytes(envFileName[aasIndex]);
+                                    var binaryBase64 = Convert.ToBase64String(binaryFile);
 
-                                    tdp.source = connectNodeName;
-                                    tdp.destination = td2.source;
-                                    tdp.type = "getaasxFile";
-                                    tdp.publish.Add(responseJson);
-                                    tdPending.Add(tdp);
+                                    var payload = $"{{ \"file\" : \" " + binaryBase64 + " \" }";
+
+                                    var enc = new ASCIIEncoding();
+                                    var fileToken = JWT.Encode(payload, enc.GetBytes(AasxHttpContextHelper.secretString), JwsAlgorithm.HS256);
+
+                                    if (fileToken.Length <= blockSize)
+                                    {
+                                        res.fileName = Path.GetFileName(envFileName[aasIndex]);
+                                        res.fileData = fileToken;
+
+                                        string responseJson = JsonConvert.SerializeObject(res, Formatting.Indented);
+
+                                        var tdp = new TransmitData
+                                        {
+                                            source = connectNodeName,
+                                            destination = td2.source,
+                                            type = "getaasxFile"
+                                        };
+
+                                        tdp.publish.Add(responseJson);
+                                        tdPending.Add(tdp);
+                                    }
+                                    else
+                                    {
+                                        getaasxFile_destination = td2.source;
+                                        getaasxFile_fileName = Path.GetFileName(envFileName[aasIndex]);
+                                        getaasxFile_fileData = fileToken;
+                                        getaasxFile_fileType = "getaasxFileStream";
+                                        getaasxFile_fileLenBase64 = getaasxFile_fileData.Length;
+                                        getaasxFile_fileLenBinary = binaryFile.Length;
+                                        getaasxFile_fileTransmitted = 0;
+                                    }
+
+                                    break;
                                 }
-                                else
+                                case "getaasxstream" when td2.destination == connectNodeName:
                                 {
-                                    getaasxFile_destination = td2.source;
-                                    getaasxFile_fileName = Path.GetFileName(Program.envFileName[aasIndex]);
-                                    getaasxFile_fileData = fileToken;
-                                    getaasxFile_fileType = "getaasxFileStream";
-                                    getaasxFile_fileLenBase64 = getaasxFile_fileData.Length;
-                                    getaasxFile_fileLenBinary = binaryFile.Length;
-                                    getaasxFile_fileTransmitted = 0;
-                                }
-                            }
+                                    var aasIndex = Convert.ToInt32(td2.extensions);
 
-                            if (td2.type == "getaasxstream" && td2.destination == connectNodeName)
-                            {
-                                int aasIndex = Convert.ToInt32(td2.extensions);
+                                    dynamic res = new ExpandoObject();
 
-                                dynamic res = new System.Dynamic.ExpandoObject();
+                                    var binaryFile = File.ReadAllBytes(envFileName[aasIndex]);
+                                    var binaryBase64 = Convert.ToBase64String(binaryFile);
 
-                                Byte[] binaryFile = System.IO.File.ReadAllBytes(Program.envFileName[aasIndex]);
-                                string binaryBase64 = Convert.ToBase64String(binaryFile);
+                                    if (binaryBase64.Length <= blockSize)
+                                    {
+                                        res.fileName = Path.GetFileName(envFileName[aasIndex]);
+                                        res.fileData = binaryBase64;
 
-                                if (binaryBase64.Length <= blockSize)
-                                {
-                                    res.fileName = Path.GetFileName(Program.envFileName[aasIndex]);
-                                    res.fileData = binaryBase64;
-                                    Byte[] fileBytes = Convert.FromBase64String(binaryBase64);
+                                        string responseJson = JsonConvert.SerializeObject(res, Formatting.Indented);
 
-                                    string responseJson = JsonConvert.SerializeObject(res, Formatting.Indented);
+                                        var tdp = new TransmitData
+                                        {
+                                            source = connectNodeName,
+                                            destination = td2.source,
+                                            type = "getaasxFile"
+                                        };
 
-                                    TransmitData tdp = new TransmitData();
+                                        tdp.publish.Add(responseJson);
+                                        tdPending.Add(tdp);
+                                    }
+                                    else
+                                    {
+                                        getaasxFile_destination = td2.source;
+                                        getaasxFile_fileName = Path.GetFileName(envFileName[aasIndex]);
+                                        getaasxFile_fileData = binaryBase64;
+                                        getaasxFile_fileType = "getaasxFile";
+                                        getaasxFile_fileLenBase64 = getaasxFile_fileData.Length;
+                                        getaasxFile_fileLenBinary = binaryFile.Length;
+                                        getaasxFile_fileTransmitted = 0;
+                                    }
 
-                                    tdp.source = connectNodeName;
-                                    tdp.destination = td2.source;
-                                    tdp.type = "getaasxFile";
-                                    tdp.publish.Add(responseJson);
-                                    tdPending.Add(tdp);
-                                }
-                                else
-                                {
-                                    getaasxFile_destination = td2.source;
-                                    getaasxFile_fileName = Path.GetFileName(Program.envFileName[aasIndex]);
-                                    getaasxFile_fileData = binaryBase64;
-                                    getaasxFile_fileType = "getaasxFile";
-                                    getaasxFile_fileLenBase64 = getaasxFile_fileData.Length;
-                                    getaasxFile_fileLenBinary = binaryFile.Length;
-                                    getaasxFile_fileTransmitted = 0;
+                                    break;
                                 }
                             }
 
                             if (td2.type.ToLower().Contains("timeseries"))
                             {
-                                string[] split = td2.type.Split('.');
-                                foreach (var smc in AasxTimeSeries.TimeSeries.timeSeriesSubscribe)
+                                var split = td2.type.Split('.');
+                                foreach (var smc in TimeSeries.timeSeriesSubscribe)
                                 {
-                                    if (smc.IdShort == split[0])
+                                    if (smc.IdShort != split[0])
                                     {
-                                        foreach (var tsb in AasxTimeSeries.TimeSeries.timeSeriesBlockList)
-                                        {
-                                            if (tsb.sampleStatus.Value == "stop")
-                                            {
-                                                tsb.sampleStatus.Value = "stopped";
-                                            }
-                                            if (tsb.sampleStatus.Value != "start")
-                                                continue;
+                                        continue;
+                                    }
 
-                                            if (tsb.block == smc)
+                                    foreach (var tsb in TimeSeries.timeSeriesBlockList)
+                                    {
+                                        if (tsb.sampleStatus.Value == "stop")
+                                        {
+                                            tsb.sampleStatus.Value = "stopped";
+                                        }
+
+                                        if (tsb.sampleStatus.Value != "start")
+                                            continue;
+
+                                        if (tsb.block != smc) continue;
+                                        foreach (var data in td2.publish)
+                                        {
+                                            using TextReader reader = new StringReader(data);
+                                            var serializer = new JsonSerializer();
+                                            serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                                            var smcData = (SubmodelElementCollection) serializer.Deserialize(reader,
+                                                typeof(SubmodelElementCollection));
+                                            if (smcData == null || smc.Value.Count >= 100)
                                             {
-                                                foreach (string data in td2.publish)
-                                                {
-                                                    using (TextReader reader = new StringReader(data))
-                                                    {
-                                                        JsonSerializer serializer = new JsonSerializer();
-                                                        serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                                                        var smcData = (SubmodelElementCollection)serializer.Deserialize(reader,
-                                                            typeof(SubmodelElementCollection));
-                                                        if (smcData != null && smc.Value.Count < 100)
-                                                        {
-                                                            if (tsb.data != null)
-                                                            {
-                                                                int maxCollections = Convert.ToInt32(tsb.maxCollections.Value);
-                                                                int actualCollections = tsb.data.Value.Count;
-                                                                if (actualCollections < maxCollections ||
-                                                                    (tsb.sampleMode.Value == "continuous" && actualCollections == maxCollections))
-                                                                {
-                                                                    tsb.data.Value.Add(smcData);
-                                                                    actualCollections++;
-                                                                }
-                                                                if (actualCollections > maxCollections)
-                                                                {
-                                                                    tsb.data.Value.RemoveAt(0);
-                                                                    actualCollections--;
-                                                                }
-                                                                tsb.actualCollections.Value = actualCollections.ToString();
-                                                                signalNewData(1);
-                                                            }
-                                                        }
-                                                    }
-                                                }
+                                                continue;
                                             }
+
+                                            if (tsb.data == null)
+                                            {
+                                                continue;
+                                            }
+
+                                            var maxCollections = Convert.ToInt32(tsb.maxCollections.Value);
+                                            var actualCollections = tsb.data.Value.Count;
+                                            if (actualCollections < maxCollections ||
+                                                (tsb.sampleMode.Value == "continuous" && actualCollections == maxCollections))
+                                            {
+                                                tsb.data.Value.Add(smcData);
+                                                actualCollections++;
+                                            }
+
+                                            if (actualCollections > maxCollections)
+                                            {
+                                                tsb.data.Value.RemoveAt(0);
+                                                actualCollections--;
+                                            }
+
+                                            tsb.actualCollections.Value = actualCollections.ToString();
+                                            signalNewData(1);
                                         }
                                     }
                                 }
                             }
 
-                            if (td2.type == "submodel")
+                            if (td2.type.Equals("submodel"))
                             {
-                                foreach (string sm in td2.publish)
+                                foreach (var sm in td2.publish)
                                 {
-                                    Submodel submodel = null;
+                                    Submodel submodel;
                                     try
                                     {
-                                        using (TextReader reader = new StringReader(sm))
-                                        {
-                                            JsonSerializer serializer = new JsonSerializer();
-                                            serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                                            submodel = (Submodel)serializer.Deserialize(reader, typeof(Submodel));
-                                        }
+                                        using TextReader reader = new StringReader(sm);
+                                        var serializer = new JsonSerializer();
+                                        serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                                        submodel = (Submodel) serializer.Deserialize(reader, typeof(Submodel));
                                     }
                                     catch (Exception)
                                     {
@@ -1965,124 +2004,133 @@ namespace AasxServer
                                     }
 
 
-                                    if (aas != null)
+                                    if (aas == null)
                                     {
-                                        // datastructure update
-                                        if (env == null || env[envi].AasEnv == null)
+                                        continue;
+                                    }
+
+                                    // datastructure update
+                                    if (env?[envi].AasEnv == null)
+                                    {
+                                        Console.WriteLine("Error accessing internal data structures.");
+                                        return;
+                                    }
+
+                                    var existingSm = env[envi].AasEnv.FindSubmodelById(submodel.Id);
+                                    if (existingSm == null)
+                                    {
+                                        continue;
+                                    }
+
+                                    var toSubscribe = submodelsToSubscribe.Contains(existingSm);
+                                    if (!toSubscribe)
+                                    {
+                                        var eqcount = existingSm.Qualifiers.Count;
+                                        if (eqcount != 0)
                                         {
-                                            Console.WriteLine("Error accessing internal data structures.");
-                                            return;
-                                        }
+                                            var j = 0;
 
-                                        var existingSm = env[envi].AasEnv.FindSubmodelById(submodel.Id);
-                                        if (existingSm != null)
-                                        {
-                                            bool toSubscribe = Program.submodelsToSubscribe.Contains(existingSm);
-                                            if (!toSubscribe)
+                                            while (j < eqcount) // Scan qualifiers
                                             {
-                                                int eqcount = existingSm.Qualifiers.Count;
-                                                if (eqcount != 0)
+                                                var p = existingSm.Qualifiers[j] as Qualifier;
+
+                                                if (p.Type == "SUBSCRIBE")
                                                 {
-                                                    int j = 0;
-
-                                                    while (j < eqcount) // Scan qualifiers
-                                                    {
-                                                        var p = existingSm.Qualifiers[j] as Qualifier;
-
-                                                        if (p.Type == "SUBSCRIBE")
-                                                        {
-                                                            toSubscribe = true;
-                                                            break;
-                                                        }
-                                                        j++;
-                                                    }
-                                                }
-                                            }
-
-                                            if (toSubscribe)
-                                            {
-                                                Console.WriteLine("Subscribe Submodel " + submodel.IdShort);
-
-                                                int c2 = submodel.Qualifiers.Count;
-                                                if (c2 != 0)
-                                                {
-                                                    int k = 0;
-
-                                                    while (k < c2) // Scan qualifiers
-                                                    {
-                                                        var q = submodel.Qualifiers[k] as Qualifier;
-
-                                                        if (q.Type == "PUBLISH")
-                                                        {
-                                                            q.Type = "SUBSCRIBE";
-                                                        }
-
-                                                        k++;
-                                                    }
+                                                    toSubscribe = true;
+                                                    break;
                                                 }
 
-                                                bool overwrite = true;
-                                                int escount = existingSm.SubmodelElements.Count;
-                                                int count2 = submodel.SubmodelElements.Count;
-                                                if (escount == count2)
-                                                {
-                                                    int smi = 0;
-                                                    while (smi < escount)
-                                                    {
-                                                        var sme1 = submodel.SubmodelElements[smi];
-                                                        var sme2 = existingSm.SubmodelElements[smi];
-
-                                                        if (sme1 is Property)
-                                                        {
-                                                            if (sme2 is Property)
-                                                            {
-                                                                (sme2 as Property).Value = (sme1 as Property).Value;
-                                                            }
-                                                            else
-                                                            {
-                                                                overwrite = false;
-                                                                break;
-                                                            }
-                                                        }
-
-                                                        smi++;
-                                                    }
-                                                }
-
-                                                if (!overwrite)
-                                                {
-                                                    env[envi].AasEnv.Submodels.Remove(existingSm);
-                                                    env[envi].AasEnv.Submodels.Add(submodel);
-
-                                                    // add SubmodelRef to AAS            
-                                                    // access the AAS
-                                                    var key = new Key(KeyTypes.Submodel, submodel.Id);
-                                                    var keyList = new List<IKey>() { key };
-                                                    var newsmr = new Reference(AasCore.Aas3_0.ReferenceTypes.ModelReference, keyList);
-                                                    var existsmr = aas.HasSubmodelReference(newsmr);
-                                                    if (!existsmr)
-                                                    {
-                                                        aas.Submodels.Add(newsmr);
-                                                    }
-                                                }
-                                                newConnectData = true;
+                                                j++;
                                             }
                                         }
                                     }
+
+                                    if (!toSubscribe)
+                                    {
+                                        continue;
+                                    }
+
+                                    Console.WriteLine($"Subscribe Submodel {submodel.IdShort}");
+
+                                    var c2 = submodel.Qualifiers.Count;
+                                    if (c2 != 0)
+                                    {
+                                        var k = 0;
+
+                                        while (k < c2) // Scan qualifiers
+                                        {
+                                            var q = submodel.Qualifiers[k] as Qualifier;
+
+                                            if (q.Type == "PUBLISH")
+                                            {
+                                                q.Type = "SUBSCRIBE";
+                                            }
+
+                                            k++;
+                                        }
+                                    }
+
+                                    var overwrite = true;
+                                    var escount = existingSm.SubmodelElements.Count;
+                                    var count2 = submodel.SubmodelElements.Count;
+                                    if (escount == count2)
+                                    {
+                                        var smi = 0;
+                                        while (smi < escount)
+                                        {
+                                            var sme1 = submodel.SubmodelElements[smi];
+                                            var sme2 = existingSm.SubmodelElements[smi];
+
+                                            if (sme1 is Property property1)
+                                            {
+                                                if (sme2 is Property property2)
+                                                {
+                                                    property2.Value = property1.Value;
+                                                }
+                                                else
+                                                {
+                                                    overwrite = false;
+                                                    break;
+                                                }
+                                            }
+
+                                            smi++;
+                                        }
+                                    }
+
+                                    if (!overwrite)
+                                    {
+                                        env[envi].AasEnv.Submodels.Remove(existingSm);
+                                        env[envi].AasEnv.Submodels.Add(submodel);
+
+                                        // add SubmodelRef to AAS            
+                                        // access the AAS
+                                        var key = new Key(KeyTypes.Submodel, submodel.Id);
+                                        var keyList = new List<IKey> {key};
+                                        var newsmr = new Reference(ReferenceTypes.ModelReference, keyList);
+                                        var existsmr = aas.HasSubmodelReference(newsmr);
+                                        if (!existsmr)
+                                        {
+                                            aas.Submodels.Add(newsmr);
+                                        }
+                                    }
+
+                                    newConnectData = true;
                                 }
                             }
 
                             // i40language
                             if (i40LanguageRuntime.isRequester && td2.type == "i40LanguageRuntime.sendFrameJSONProvider")
                             {
-                                foreach (string s in td2.publish)
+                                foreach (var s in td2.publish)
                                 {
                                     i40LanguageRuntime.receivedFrameJSONRequester.Add(JsonConvert.DeserializeObject<string>(s));
                                 }
                             }
+
                             if (i40LanguageRuntime.isProvider && td2.type == "i40LanguageRuntime.sendFrameJSONRequester")
                             {
-                                foreach (string s in td2.publish)
+                                foreach (var s in td2.publish)
                                 {
                                     i40LanguageRuntime.receivedFrameJSONProvider.Add(JsonConvert.DeserializeObject<string>(s));
                                 }
@@ -2093,31 +2141,31 @@ namespace AasxServer
                     {
                         Console.WriteLine(exception);
                     }
+
                     if (newConnectData)
                     {
                         NewDataAvailable?.Invoke(null, EventArgs.Empty);
                     }
                 }
 
-                if (getaasxFile_destination != "") // block transfer
-                {
-                    Thread.Sleep(500);
-                }
-                else
-                    Thread.Sleep(connectUpdateRate);
+                Thread.Sleep(!string.IsNullOrEmpty(getaasxFile_destination)
+                    ? 500
+                    : connectUpdateRate); // block transfer
             }
         }
 
-        private static System.Timers.Timer OPCClientTimer;
-        static bool timerSet = false;
+        private static Timer OPCClientTimer;
+        static bool timerSet;
+
         private static void SetOPCClientTimer(double value)
         {
-            if (!timerSet)
+            if (timerSet)
             {
-                timerSet = true;
-
-                AasxTimeSeries.TimeSeries.SetOPCClientThread(value);
+                return;
             }
+
+            timerSet = true;
+            TimeSeries.SetOPCClientThread(value);
         }
 
         public static event EventHandler NewDataAvailable;
@@ -2146,97 +2194,86 @@ namespace AasxServer
             ReadOPCClient(false);
             NewDataAvailable?.Invoke(null, EventArgs.Empty);
         }
-        private static void OnOPCClientNextTimedEvent(Object source, ElapsedEventArgs e)
-        {
-            ReadOPCClient(false);
-            NewDataAvailable?.Invoke(null, EventArgs.Empty);
-        }
 
-        private static System.Timers.Timer scriptTimer;
+        private static Timer scriptTimer;
+
         private static void SetScriptTimer(double value)
         {
             // Create a timer with a two-second interval.
-            scriptTimer = new System.Timers.Timer(value);
+            scriptTimer = new Timer(value);
             // Hook up the Elapsed event for the timer. 
             scriptTimer.Elapsed += OnScriptTimedEvent;
             scriptTimer.AutoReset = true;
             scriptTimer.Enabled = true;
         }
 
-        private static void OnScriptTimedEvent(Object source, ElapsedEventArgs e)
+        private static void OnScriptTimedEvent(object source, ElapsedEventArgs e)
         {
             RunScript(false);
         }
 
-        private static System.Timers.Timer restTimer;
-        private static void SetRestTimer(double value)
-        {
-            // Create a timer with a two-second interval.
-            restTimer = new System.Timers.Timer(value);
-            // Hook up the Elapsed event for the timer. 
-            restTimer.Elapsed += OnRestTimedEvent;
-            restTimer.AutoReset = true;
-            restTimer.Enabled = true;
-        }
+        private static Timer restTimer;
 
-        static bool RESTalreadyRunning = false;
-        static long countGetPut = 0;
+        static bool RESTalreadyRunning;
+        static long countGetPut;
 
         private static void OnRestTimedEvent(Object source, ElapsedEventArgs e)
         {
-
             RESTalreadyRunning = true;
 
-            string GETSUBMODEL = "";
-            string GETURL = "";
-            string PUTSUBMODEL = "";
-            string PUTURL = "";
+            var GETSUBMODEL = string.Empty;
+            var GETURL = string.Empty;
+            var PUTSUBMODEL = string.Empty;
+            var PUTURL = string.Empty;
 
             // Search for submodel REST and scan qualifiers for GET and PUT commands
             foreach (var sm in env[0].AasEnv.Submodels)
             {
-                if (sm != null && sm.IdShort != null && sm.IdShort == "REST")
+                if (sm is not {IdShort: "REST"})
                 {
-                    int count = sm.Qualifiers.Count;
-                    if (count != 0)
+                    continue;
+                }
+
+                var count = sm.Qualifiers.Count;
+                if (count == 0)
+                {
+                    continue;
+                }
+
+                var j = 0;
+
+                while (j < count) // Scan qualifiers
+                {
+                    var p = sm.Qualifiers[j] as Qualifier;
+
+                    switch (p.Type)
                     {
-                        int j = 0;
-
-                        while (j < count) // Scan qualifiers
-                        {
-                            var p = sm.Qualifiers[j] as Qualifier;
-
-                            if (p.Type == "GETSUBMODEL")
-                            {
-                                GETSUBMODEL = p.Value;
-                            }
-                            if (p.Type == "GETURL")
-                            {
-                                GETURL = p.Value;
-                            }
-                            if (p.Type == "PUTSUBMODEL")
-                            {
-                                PUTSUBMODEL = p.Value;
-                            }
-                            if (p.Type == "PUTURL")
-                            {
-                                PUTURL = p.Value;
-                            }
-
-                            j++;
-                        }
+                        case "GETSUBMODEL":
+                            GETSUBMODEL = p.Value;
+                            break;
+                        case "GETURL":
+                            GETURL = p.Value;
+                            break;
+                        case "PUTSUBMODEL":
+                            PUTSUBMODEL = p.Value;
+                            break;
+                        case "PUTURL":
+                            PUTURL = p.Value;
+                            break;
                     }
+
+                    j++;
                 }
             }
 
-            if (GETSUBMODEL != "" && GETURL != "") // GET
+            if (!string.IsNullOrEmpty(GETSUBMODEL) && !string.IsNullOrEmpty(GETURL)) // GET
             {
                 Console.WriteLine("{0} GET Submodel {1} from URL {2}.", countGetPut++, GETSUBMODEL, GETURL);
 
-                var sm = "";
+                var sm = string.Empty;
                 try
                 {
-                    var client = new AasxRestServerLibrary.AasxRestClient(GETURL);
+                    var client = new AasxRestClient(GETURL);
                     sm = client.GetSubmodel(GETSUBMODEL);
                 }
                 catch (Exception)
@@ -2244,15 +2281,13 @@ namespace AasxServer
                     Console.WriteLine("Can not connect to REST server {0}.", GETURL);
                 }
 
-                Submodel submodel = null;
+                Submodel submodel;
                 try
                 {
-                    using (TextReader reader = new StringReader(sm))
-                    {
-                        JsonSerializer serializer = new JsonSerializer();
-                        serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                        submodel = (Submodel)serializer.Deserialize(reader, typeof(Submodel));
-                    }
+                    using TextReader reader = new StringReader(sm);
+                    var serializer = new JsonSerializer();
+                    serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                    submodel = (Submodel) serializer.Deserialize(reader, typeof(Submodel));
                 }
                 catch (Exception)
                 {
@@ -2263,7 +2298,7 @@ namespace AasxServer
                 var aas = env[0].AasEnv.FindAasWithSubmodelId(submodel.Id);
 
                 // datastructure update
-                if (env == null || env[0].AasEnv == null)
+                if (env?[0].AasEnv == null)
                 {
                     Console.WriteLine("Error accessing internal data structures.");
                     return;
@@ -2277,8 +2312,8 @@ namespace AasxServer
 
                 // add SubmodelRef to AAS            
                 // access the AAS
-                var keyList = new List<IKey>() { new Key(KeyTypes.Submodel, submodel.Id) };
-                var newsmr = new Reference(AasCore.Aas3_0.ReferenceTypes.ModelReference, keyList);
+                var keyList = new List<IKey> {new Key(KeyTypes.Submodel, submodel.Id)};
+                var newsmr = new Reference(ReferenceTypes.ModelReference, keyList);
                 var existsmr = aas.HasSubmodelReference(newsmr);
                 if (!existsmr)
                 {
@@ -2286,27 +2321,22 @@ namespace AasxServer
                 }
             }
 
-            if (PUTSUBMODEL != "" && PUTURL != "") // PUT
+            if (!string.IsNullOrEmpty(PUTSUBMODEL) && !string.IsNullOrEmpty(PUTURL)) // PUT
             {
                 Console.WriteLine("{0} PUT Submodel {1} from URL {2}.", countGetPut++, PUTSUBMODEL, PUTURL);
 
+                foreach (var json in from sm in env[0].AasEnv.Submodels
+                         where sm is {IdShort: not null} && sm.IdShort == PUTSUBMODEL
+                         select JsonConvert.SerializeObject(sm, Formatting.Indented))
                 {
-                    foreach (var sm in env[0].AasEnv.Submodels)
+                    try
                     {
-                        if (sm != null && sm.IdShort != null && sm.IdShort == PUTSUBMODEL)
-                        {
-                            var json = JsonConvert.SerializeObject(sm, Newtonsoft.Json.Formatting.Indented);
-
-                            try
-                            {
-                                var client = new AasxRestServerLibrary.AasxRestClient(PUTURL);
-                                string result = client.PutSubmodel(json);
-                            }
-                            catch
-                            {
-                                Console.WriteLine("Can not connect to REST server {0}", PUTURL);
-                            }
-                        }
+                        var client = new AasxRestClient(PUTURL);
+                        client.PutSubmodel(json);
+                    }
+                    catch
+                    {
+                        Console.WriteLine("Can not connect to REST server {0}", PUTURL);
                     }
                 }
             }
@@ -2317,33 +2347,30 @@ namespace AasxServer
             var worker = new BackgroundWorker();
             worker.DoWork += async (s1, e1) =>
             {
-
                 try
                 {
-                    await AasxMqttClient.MqttClient.StartAsync(env);
+                    await MqttClient.StartAsync(env);
                 }
-                catch (Exception)
+                catch (Exception exception)
                 {
+                    Console.WriteLine(exception.Message);
                 }
             };
-            worker.RunWorkerCompleted += (s1, e1) =>
-            {
-
-            };
+            worker.RunWorkerCompleted += (_, _) => { };
             worker.RunWorkerAsync();
         }
 
         /// <summary>
         /// Writes to (i.e. updates values of) Nodes in the AAS OPC Server
         /// </summary>
-        private static Boolean OPCWrite(string nodeId, object value)
+        private static bool OPCWrite(string nodeId, object value)
         {
             if (!runOPC)
             {
                 return true;
             }
 
-            AasOpcUaServer.AasModeManager nodeMgr = AasOpcUaServer.AasEntityBuilder.nodeMgr;
+            var nodeMgr = AasEntityBuilder.nodeMgr;
 
             if (nodeMgr == null)
             {
@@ -2353,21 +2380,24 @@ namespace AasxServer
             }
 
             // Find node in Core3OPC Server to update it
-            BaseVariableState bvs = nodeMgr.Find(nodeId) as BaseVariableState;
 
-            if (bvs == null)
+            if (nodeMgr.Find(nodeId) is not BaseVariableState bvs)
             {
                 Console.WriteLine("node {0} does not exist in server!", nodeId);
                 return false;
             }
+
             var convertedValue = Convert.ChangeType(value, bvs.Value.GetType());
-            if (!object.Equals(bvs.Value, convertedValue))
+            if (Equals(bvs.Value, convertedValue))
             {
-                bvs.Value = convertedValue;
-                // TODO: timestamp UtcNow okay or get this internally from the Server?
-                bvs.Timestamp = DateTime.UtcNow;
-                bvs.ClearChangeMasks(null, false);
+                return true;
             }
+
+            bvs.Value = convertedValue;
+            // TODO: timestamp UtcNow okay or get this internally from the Server?
+            bvs.Timestamp = DateTime.UtcNow;
+            bvs.ClearChangeMasks(null, false);
+
             return true;
         }
 
@@ -2377,325 +2407,331 @@ namespace AasxServer
         /// However, this will attempt to get values for all properties of the submodel.
         /// TODO: Possilby add a qualifier to specifiy which values to get? Or NodeIds per alue?
         /// </summary>
-        static Boolean ReadOPCClient(bool initial)
+        static bool ReadOPCClient(bool initial)
         {
             if (env == null)
                 return false;
 
-            lock (Program.changeAasxFile)
+            lock (changeAasxFile)
             {
-                int i = 0;
+                var i = 0;
                 while (env[i] != null)
                 {
                     foreach (var sm in env[i].AasEnv.Submodels)
                     {
-                        if (sm != null && sm.IdShort != null)
+                        var count = sm.Qualifiers.Count;
+                        if (sm is not {IdShort: not null} || count == 0)
                         {
-                            int count = sm.Qualifiers.Count;
-                            if (count != 0)
+                            continue;
+                        }
+
+                        const int stopTimeout = Timeout.Infinite;
+                        const bool autoAccept = true;
+                        // Variablen aus AAS Qualifiern
+                        var Username = string.Empty;
+                        var Password = string.Empty;
+                        var URL = string.Empty;
+                        var Namespace = 0;
+                        var Path = string.Empty;
+
+                        var j = 0;
+
+                        while (j < count) // URL, Username, Password, Namespace, Path
+                        {
+                            var p = sm.Qualifiers[j] as Qualifier;
+
+                            switch (p.Type)
                             {
-                                int stopTimeout = Timeout.Infinite;
-                                bool autoAccept = true;
-                                // Variablen aus AAS Qualifiern
-                                string Username = "";
-                                string Password = "";
-                                string URL = "";
-                                int Namespace = 0;
-                                string Path = "";
-
-                                int j = 0;
-
-                                while (j < count) // URL, Username, Password, Namespace, Path
-                                {
-                                    var p = sm.Qualifiers[j] as Qualifier;
-
-                                    switch (p.Type)
+                                case "OPCURL": // URL
+                                    URL = p.Value;
+                                    break;
+                                case "OPCUsername": // Username
+                                    Username = p.Value;
+                                    break;
+                                case "OPCPassword": // Password
+                                    Password = p.Value;
+                                    break;
+                                case "OPCNamespace": // Namespace
+                                    // TODO: if not int, currently throws nondescriptive error
+                                    if (int.TryParse(p.Value, out var tmpI))
+                                        Namespace = tmpI;
+                                    break;
+                                case "OPCPath": // Path
+                                    Path = p.Value;
+                                    break;
+                                case "OPCEnvVar": // Only if environment variable ist set
+                                    // VARIABLE=VALUE
+                                    var split = p.Value.Split('=');
+                                    if (split.Length == 2 && envVariables.TryGetValue(split[0], out var value))
                                     {
-                                        case "OPCURL": // URL
-                                            URL = p.Value;
-                                            break;
-                                        case "OPCUsername": // Username
-                                            Username = p.Value;
-                                            break;
-                                        case "OPCPassword": // Password
-                                            Password = p.Value;
-                                            break;
-                                        case "OPCNamespace": // Namespace
-                                            // TODO: if not int, currently throws nondescriptive error
-                                            if (int.TryParse(p.Value, out int tmpI))
-                                                Namespace = tmpI;
-                                            break;
-                                        case "OPCPath": // Path
-                                            Path = p.Value;
-                                            break;
-                                        case "OPCEnvVar": // Only if environment variable ist set
-                                            // VARIABLE=VALUE
-                                            string[] split = p.Value.Split('=');
-                                            if (split.Length == 2)
-                                            {
-                                                string value = "";
-                                                if (envVariables.TryGetValue(split[0], out value))
-                                                {
-                                                    if (split[1] != value)
-                                                        URL = ""; // continue
-                                                }
-                                            }
-                                            break;
-                                    }
-                                    j++;
-                                }
-
-                                if (URL == "")
-                                {
-                                    continue;
-                                }
-
-                                if (URL == "" || Namespace == 0 || Path == "" || (Username == "" && Password != "") || (Username != "" && Password == ""))
-                                {
-                                    Console.WriteLine("Incorrent or missing qualifier. Aborting ...");
-                                    return false;
-                                }
-                                if (Username == "" && Password == "")
-                                {
-                                    Console.WriteLine("Using Anonymous to login ...");
-                                }
-
-                                // try to get the client from dictionary, else create and add it
-                                SampleClient.UASampleClient client;
-                                lock (Program.opcclientAddLock)
-                                {
-                                    if (!OPCClients.TryGetValue(URL, out client))
-                                    {
-                                        try
+                                        if (split[1] != value)
                                         {
-                                            // make OPC UA client
-                                            client = new SampleClient.UASampleClient(URL, autoAccept, stopTimeout, Username, Password);
-                                            Console.WriteLine("Connecting to external OPC UA Server at {0} with {1} ...", URL, sm.IdShort);
-                                            client.ConsoleSampleClient().Wait();
-                                            // add it to the dictionary under these submodels idShort
-                                            OPCClients.Add(URL, client);
+                                            URL = string.Empty;
                                         }
-                                        catch (AggregateException ae)
+                                    }
+
+                                    break;
+                            }
+
+                            j++;
+                        }
+
+                        if (URL == "")
+                        {
+                            continue;
+                        }
+
+                        if (string.IsNullOrEmpty(URL) ||
+                            Namespace == 0 ||
+                            string.IsNullOrEmpty(Path) ||
+                            (string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Password)) ||
+                            (!string.IsNullOrEmpty(Username) && string.IsNullOrEmpty(Password)))
+                        {
+                            Console.WriteLine("Incorrect or missing qualifier. Aborting ...");
+                            return false;
+                        }
+
+
+                        if (string.IsNullOrEmpty(Username) && string.IsNullOrEmpty(Password))
+                        {
+                            Console.WriteLine("Using Anonymous to login ...");
+                        }
+
+                        // try to get the client from dictionary, else create and add it
+                        UASampleClient client;
+                        lock (opcclientAddLock)
+                        {
+                            if (!OPCClients.TryGetValue(URL, out client))
+                            {
+                                bool cantconnect = false;
+                                try
+                                {
+                                    // make OPC UA client
+                                    client = new UASampleClient(URL, autoAccept, stopTimeout, Username, Password);
+                                    Console.WriteLine("Connecting to external OPC UA Server at {0} with {1} ...", URL, sm.IdShort);
+                                    client.ConsoleSampleClient().Wait();
+                                    // add it to the dictionary under these submodels idShort
+                                    OPCClients.Add(URL, client);
+                                }
+                                catch (AggregateException ae)
+                                {
+                                    ae.Handle(x =>
                                         {
-                                            bool cantconnect = false;
-                                            ae.Handle((x) =>
+                                            if (x is not ServiceResultException)
                                             {
-                                                if (x is ServiceResultException)
-                                                {
-                                                    cantconnect = true;
-                                                    return true; // this exception handled
-                                                }
                                                 return false; // others not handled, will cause unhandled exception
                                             }
-                                            );
-                                            if (cantconnect)
-                                            {
-                                                // stop processing OPC read because we couldn't connect
-                                                // but return true as this shouldn't stop the main loop
-                                                Console.WriteLine(ae.Message);
-                                                Console.WriteLine("Could not connect to {0} with {1} ...", URL, sm.IdShort);
-                                                return true;
-                                            }
+
+                                            cantconnect = true;
+                                            return true; // this exception handled
                                         }
-                                    }
-                                    else
+                                    );
+                                    if (cantconnect)
                                     {
-                                        Console.WriteLine("Already connected to OPC UA Server at {0} with {1} ...", URL, sm.IdShort);
+                                        // stop processing OPC read because we couldn't connect
+                                        // but return true as this shouldn't stop the main loop
+                                        Console.WriteLine(ae.Message);
+                                        Console.WriteLine("Could not connect to {0} with {1} ...", URL, sm.IdShort);
+                                        return true;
                                     }
-                                }
-                                Console.WriteLine("==================================================");
-                                Console.WriteLine("Read values for {0} from {1} ...", sm.IdShort, URL);
-                                Console.WriteLine("==================================================");
-
-                                // over all SMEs
-                                count = sm.SubmodelElements.Count;
-                                for (j = 0; j < count; j++)
-                                {
-                                    var sme = sm.SubmodelElements[j];
-                                    // some preparations for multiple AAS below
-                                    int serverNamespaceIdx = 3; //could be gotten directly from the nodeMgr in OPCWrite instead, only pass the string part of the ID
-
-                                    string AASSubmodel = env[i].AasEnv.AssetAdministrationShells[0].IdShort + "." + sm.IdShort; 
-                                    // for multiple AAS, use something like env.AasEnv.AssetAdministrationShells[i].IdShort;
-                                    string serverNodePrefix = string.Format("ns={0};s=AASROOT.{1}", serverNamespaceIdx, AASSubmodel);
-                                    string nodePath = Path; // generally starts with Submodel idShort
-                                    WalkSubmodelElement(sme, nodePath, serverNodePrefix, client, Namespace);
                                 }
                             }
+                            else
+                            {
+                                Console.WriteLine("Already connected to OPC UA Server at {0} with {1} ...", URL, sm.IdShort);
+                            }
+                        }
+
+                        Console.WriteLine("==================================================");
+                        Console.WriteLine("Read values for {0} from {1} ...", sm.IdShort, URL);
+                        Console.WriteLine("==================================================");
+
+                        // over all SMEs
+                        count = sm.SubmodelElements.Count;
+                        for (j = 0; j < count; j++)
+                        {
+                            var sme = sm.SubmodelElements[j];
+                            // some preparations for multiple AAS below
+                            const int serverNamespaceIdx = 3; //could be gotten directly from the nodeMgr in OPCWrite instead, only pass the string part of the ID
+
+                            var AASSubmodel = $"{env[i].AasEnv.AssetAdministrationShells[0].IdShort}.{sm.IdShort}";
+                            // for multiple AAS, use something like env.AasEnv.AssetAdministrationShells[i].IdShort;
+                            var serverNodePrefix = string.Format("ns={0};s=AASROOT.{1}", serverNamespaceIdx, AASSubmodel);
+                            WalkSubmodelElement(sme, Path, serverNodePrefix, client, Namespace);
                         }
                     }
+
                     i++;
                 }
             }
+
             if (!initial)
             {
                 changeDataVersion();
             }
+
             return true;
         }
-
-        static int countRunScript = 0;
 
         static void RunScript(bool init)
         {
             if (env == null)
                 return;
 
-            lock (Program.changeAasxFile)
+            lock (changeAasxFile)
             {
-                int i = 0;
+                var i = 0;
                 while (i < env.Length && env[i] != null)
                 {
                     if (env[i].AasEnv.Submodels != null)
                     {
                         foreach (var sm in env[i].AasEnv.Submodels)
                         {
-                            if (sm != null && sm.IdShort != null)
+                            if (sm is not {IdShort: not null})
                             {
-                                int count = sm.Qualifiers != null ? sm.Qualifiers.Count : 0;
-                                if (count != 0)
+                                continue;
+                            }
+                            var count = sm.Qualifiers?.Count ?? 0;
+                            if (count == 0)
+                            {
+                                continue;
+                            }
+                            var q = sm.Qualifiers[0] as Qualifier;
+                            if (q.Type != "SCRIPT")
+                            {
+                                continue;
+                            }
+                            // Triple
+                            // Reference to property with Number
+                            // Reference to submodel with numbers/strings
+                            // Reference to property to store found text
+                            count = sm.SubmodelElements.Count;
+                            var smi = 0;
+                            while (smi < count)
+                            {
+                                var sme1 = sm.SubmodelElements[smi++];
+                                if (sme1.Qualifiers == null || sme1.Qualifiers.Count == 0)
                                 {
-                                    var q = sm.Qualifiers[0] as Qualifier;
-                                    if (q.Type == "SCRIPT")
+                                    continue;
+                                }
+
+                                var qq = sme1.Qualifiers[0] as Qualifier;
+
+                                switch (qq.Type)
+                                {
+                                    case "Add":
                                     {
-                                        // Triple
-                                        // Reference to property with Number
-                                        // Reference to submodel with numbers/strings
-                                        // Reference to property to store found text
-                                        count = sm.SubmodelElements.Count;
-                                        int smi = 0;
-                                        while (smi < count)
+                                        var v = Convert.ToInt32((sme1 as Property).Value);
+                                        v += Convert.ToInt32(qq.Value);
+                                        (sme1 as Property).Value = v.ToString();
+                                        continue;
+                                    }
+                                    case "GetJSON" when init:
+                                    case "GetJSON" when isLoading:
+                                        return;
+                                    case "GetJSON" when !(sme1 is ReferenceElement):
+                                        continue;
+                                    case "GetJSON":
+                                    {
+                                        var url = qq.Value;
+                                        var username = string.Empty;
+                                        var password = string.Empty;
+
+                                        if (sme1.Qualifiers.Count == 3)
                                         {
-                                            var sme1 = sm.SubmodelElements[smi++];
-                                            if (sme1.Qualifiers == null || sme1.Qualifiers.Count == 0)
-                                            {
+                                            qq = sme1.Qualifiers[1] as Qualifier;
+                                            if (qq.Type != "Username")
                                                 continue;
-                                            }
-                                            var qq = sme1.Qualifiers[0] as Qualifier;
-
-                                            if (qq.Type == "Add")
-                                            {
-                                                int v = Convert.ToInt32((sme1 as Property).Value);
-                                                v += Convert.ToInt32(qq.Value);
-                                                (sme1 as Property).Value = v.ToString();
+                                            username = qq.Value;
+                                            qq = sme1.Qualifiers[2] as Qualifier;
+                                            if (qq.Type != "Password")
                                                 continue;
-                                            }
+                                            password = qq.Value;
+                                        }
 
-                                            if (qq.Type == "GetJSON")
+                                        var handler = new HttpClientHandler();
+                                        handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                                        var client = new HttpClient(handler);
+
+                                        if (username != "" && password != "")
+                                        {
+                                            var authToken = Encoding.ASCII.GetBytes(username + ":" + password);
+                                            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
+                                                Convert.ToBase64String(authToken));
+                                        }
+
+                                        Console.WriteLine($"GetJSON: {url}");
+                                        var response = client.GetStringAsync(url).Result;
+                                        Console.WriteLine(response);
+
+                                        if (!string.IsNullOrEmpty(response))
+                                        {
+                                            var r12 = sme1 as ReferenceElement;
+                                            var ref12 = env[i].AasEnv.FindReferableByReference(r12.GetModelReference());
+                                            if (ref12 is SubmodelElementCollection collection)
                                             {
-                                                if (init)
-                                                    return;
-
-                                                if (Program.isLoading)
-                                                    return;
-
-                                                if (!(sme1 is ReferenceElement))
-                                                {
-                                                    continue;
-                                                }
-
-                                                string url = qq.Value;
-                                                string username = "";
-                                                string password = "";
-
-                                                if (sme1.Qualifiers.Count == 3)
-                                                {
-                                                    qq = sme1.Qualifiers[1] as Qualifier;
-                                                    if (qq.Type != "Username")
-                                                        continue;
-                                                    username = qq.Value;
-                                                    qq = sme1.Qualifiers[2] as Qualifier;
-                                                    if (qq.Type != "Password")
-                                                        continue;
-                                                    password = qq.Value;
-                                                }
-
-                                                var handler = new HttpClientHandler();
-                                                handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
-                                                var client = new HttpClient(handler);
-
-                                                if (username != "" && password != "")
-                                                {
-                                                    var authToken = System.Text.Encoding.ASCII.GetBytes(username + ":" + password);
-                                                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
-                                                            Convert.ToBase64String(authToken));
-                                                }
-
-                                                Console.WriteLine("GetJSON: " + url);
-                                                string response = client.GetStringAsync(url).Result;
-                                                Console.WriteLine(response);
-
-                                                if (response != "")
-                                                {
-                                                    var r12 = sme1 as ReferenceElement;
-                                                    var ref12 = env[i].AasEnv.FindReferableByReference(r12.GetModelReference());
-                                                    if (ref12 is SubmodelElementCollection)
-                                                    {
-                                                        var c1 = ref12 as SubmodelElementCollection;
-                                                        JObject parsed = JObject.Parse(response);
-                                                        parseJson(c1, parsed, null);
-                                                    }
-                                                }
-                                                continue;
-                                            }
-
-                                            if (qq.Type != "SearchNumber" || smi >= count)
-                                            {
-                                                continue;
-                                            }
-                                            var sme2 = sm.SubmodelElements[smi++];
-                                            if (sme2.Qualifiers.Count == 0)
-                                            {
-                                                continue;
-                                            }
-                                            qq = sme2.Qualifiers[0] as Qualifier;
-                                            if (qq.Type != "SearchList" || smi >= count)
-                                            {
-                                                continue;
-                                            }
-                                            var sme3 = sm.SubmodelElements[smi++];
-                                            if (sme3.Qualifiers.Count == 0)
-                                            {
-                                                continue;
-                                            }
-                                            qq = sme3.Qualifiers[0] as Qualifier;
-                                            if (qq.Type != "SearchResult")
-                                            {
-                                                break;
-                                            }
-                                            if (sme1 is ReferenceElement &&
-                                                sme2 is ReferenceElement &&
-                                                sme3 is ReferenceElement)
-                                            {
-                                                var r1 = sme1 as ReferenceElement;
-                                                var r2 = sme2 as ReferenceElement;
-                                                var r3 = sme3 as ReferenceElement;
-                                                var ref1 = env[i].AasEnv.FindReferableByReference(r1.GetModelReference());
-                                                var ref2 = env[i].AasEnv.FindReferableByReference(r2.GetModelReference());
-                                                var ref3 = env[i].AasEnv.FindReferableByReference(r3.GetModelReference());
-                                                if (ref1 is Property && ref2 is Submodel && ref3 is Property)
-                                                {
-                                                    var p1 = ref1 as Property;
-                                                    // Simulate changes
-                                                    var sm2 = ref2 as Submodel;
-                                                    var p3 = ref3 as Property;
-                                                    int count2 = sm2.SubmodelElements.Count;
-                                                    for (int j = 0; j < count2; j++)
-                                                    {
-                                                        var sme = sm2.SubmodelElements[j];
-                                                        if (sme.IdShort == p1.Value)
-                                                        {
-                                                            p3.Value = (sme as Property).Value;
-                                                        }
-                                                    }
-                                                }
+                                                var parsed = JObject.Parse(response);
+                                                parseJson(collection, parsed, null);
                                             }
                                         }
+
+                                        continue;
+                                    }
+                                }
+
+                                if (qq.Type != "SearchNumber" || smi >= count)
+                                {
+                                    continue;
+                                }
+
+                                var sme2 = sm.SubmodelElements[smi++];
+                                if (sme2.Qualifiers.Count == 0)
+                                {
+                                    continue;
+                                }
+
+                                qq = sme2.Qualifiers[0] as Qualifier;
+                                if (qq.Type != "SearchList" || smi >= count)
+                                {
+                                    continue;
+                                }
+
+                                var sme3 = sm.SubmodelElements[smi++];
+                                if (sme3.Qualifiers.Count == 0)
+                                {
+                                    continue;
+                                }
+
+                                qq = sme3.Qualifiers[0] as Qualifier;
+                                if (qq.Type != "SearchResult")
+                                {
+                                    break;
+                                }
+
+                                if (sme1 is not ReferenceElement referenceElement1 ||
+                                    sme2 is not ReferenceElement referenceElement2 ||
+                                    sme3 is not ReferenceElement referenceElement3)
+                                {
+                                    continue;
+                                }
+                                var ref1 = env[i].AasEnv.FindReferableByReference(referenceElement1.GetModelReference());
+                                var ref2 = env[i].AasEnv.FindReferableByReference(referenceElement2.GetModelReference());
+                                var ref3 = env[i].AasEnv.FindReferableByReference(referenceElement3.GetModelReference());
+                                if (ref1 is not Property p1 || ref2 is not Submodel sm2 || ref3 is not Property p3) {continue;}
+                                // Simulate changes
+                                var count2 = sm2.SubmodelElements.Count;
+                                for (var j = 0; j < count2; j++)
+                                {
+                                    var sme = sm2.SubmodelElements[j];
+                                    if (sme.IdShort == p1.Value)
+                                    {
+                                        p3.Value = (sme as Property).Value;
                                     }
                                 }
                             }
                         }
                     }
+
                     i++;
                 }
             }
@@ -2715,7 +2751,7 @@ namespace AasxServer
             if (minDiffPercent != null)
                 iMinDiffPercent = Convert.ToInt32(minDiffPercent.Value);
 
-            foreach (JProperty jp1 in (JToken)o)
+            foreach (JProperty jp1 in (JToken) o)
             {
                 if (filter != null && filter.Count != 0)
                 {
@@ -2736,6 +2772,7 @@ namespace AasxServer
                             c2.SetTimeStamp(timeStamp);
                             newMode = 1;
                         }
+
                         int count = 1;
                         foreach (JObject el in jp1.Value)
                         {
@@ -2750,8 +2787,10 @@ namespace AasxServer
                                 c3.SetTimeStamp(timeStamp);
                                 newMode = 1;
                             }
+
                             ok |= parseJson(c3, el, filter);
                         }
+
                         break;
                     case JTokenType.Object:
                         c2 = c.FindFirstIdShortAs<SubmodelElementCollection>(jp1.Name);
@@ -2763,10 +2802,12 @@ namespace AasxServer
                             c2.SetTimeStamp(timeStamp);
                             newMode = 1;
                         }
+
                         foreach (JObject el in jp1.Value)
                         {
                             ok |= parseJson(c2, el, filter);
                         }
+
                         break;
                     default:
                         Property p = c.FindFirstIdShortAs<Property>(jp1.Name);
@@ -2778,6 +2819,7 @@ namespace AasxServer
                             p.SetTimeStamp(timeStamp);
                             newMode = 1;
                         }
+
                         // see https://github.com/JamesNK/Newtonsoft.Json/issues/874    
                         try
                         {
@@ -2806,22 +2848,23 @@ namespace AasxServer
                         catch
                         {
                         }
+
                         break;
                 }
             }
 
-            Program.signalNewData(newMode);
+            signalNewData(newMode);
             return ok;
         }
 
-        private static void WalkSubmodelElement(ISubmodelElement sme, string nodePath, string serverNodePrefix, SampleClient.UASampleClient client, int clientNamespace)
+        private static void WalkSubmodelElement(ISubmodelElement sme, string nodePath, string serverNodePrefix, UASampleClient client, int clientNamespace)
         {
             if (sme is Property)
             {
                 var p = sme as Property;
                 string clientNodeName = nodePath + p.IdShort;
                 string serverNodeId = string.Format("{0}.{1}.Value", serverNodePrefix, p.IdShort);
-                NodeId clientNode = new NodeId(clientNodeName, (ushort)clientNamespace);
+                NodeId clientNode = new NodeId(clientNodeName, (ushort) clientNamespace);
                 UpdatePropertyFromOPCClient(p, serverNodeId, client, clientNode);
             }
             else if (sme is SubmodelElementCollection)
@@ -2835,7 +2878,7 @@ namespace AasxServer
             }
         }
 
-        private static void UpdatePropertyFromOPCClient(Property p, string serverNodeId, SampleClient.UASampleClient client, NodeId clientNodeId)
+        private static void UpdatePropertyFromOPCClient(Property p, string serverNodeId, UASampleClient client, NodeId clientNodeId)
         {
             string value = "";
 
@@ -2856,6 +2899,7 @@ namespace AasxServer
                     clientNodeId = new NodeId(i, ns);
                     Console.WriteLine($"New node id: {clientNodeId}");
                 }
+
                 Console.WriteLine($"{serverNodeId} <= {value}");
                 if (write)
                 {
@@ -2887,11 +2931,11 @@ namespace AasxServer
     public class ApplicationMessageDlg : IApplicationMessageDlg
     {
         private string message = string.Empty;
-        private bool ask = false;
+        private bool ask;
 
         public override void Message(string text, bool ask)
         {
-            this.message = text;
+            message = text;
             this.ask = ask;
         }
 
@@ -2906,6 +2950,7 @@ namespace AasxServer
             {
                 Console.WriteLine(message);
             }
+
             if (ask)
             {
                 try
@@ -2919,6 +2964,7 @@ namespace AasxServer
                     // intentionally fall through
                 }
             }
+
             return await Task.FromResult(true);
         }
     }
@@ -2930,7 +2976,7 @@ namespace AasxServer
         ErrorServerRunning = 0x81,
         ErrorServerException = 0x82,
         ErrorInvalidCommandLine = 0x100
-    };
+    }
 
     public class MySampleServer
     {
@@ -2938,9 +2984,11 @@ namespace AasxServer
         Task status;
         DateTime lastEventTime;
         int serverRunTime = Timeout.Infinite;
-        static bool autoAccept = false;
+        static bool autoAccept;
         static ExitCode exitCode;
-        static AdminShellPackageEnv[] aasxEnv = null;
+
+        static AdminShellPackageEnv[] aasxEnv;
+
         // OZ
         public static ManualResetEvent quitEvent;
 
@@ -2953,7 +3001,6 @@ namespace AasxServer
 
         public void Run()
         {
-
             try
             {
                 exitCode = ExitCode.ErrorServerNotStarted;
@@ -3002,7 +3049,10 @@ namespace AasxServer
             exitCode = ExitCode.Ok;
         }
 
-        public static ExitCode ExitCode { get => exitCode; }
+        public static ExitCode ExitCode
+        {
+            get => exitCode;
+        }
 
         private static void CertificateValidator_CertificateValidation(CertificateValidator validator, CertificateValidationEventArgs e)
         {
@@ -3034,7 +3084,7 @@ namespace AasxServer
 
             if (!config.SecurityConfiguration.AutoAcceptUntrustedCertificates)
             {
-                config.CertificateValidator.CertificateValidation += new CertificateValidationEventHandler(CertificateValidator_CertificateValidation);
+                config.CertificateValidator.CertificateValidation += CertificateValidator_CertificateValidation;
             }
 
             // start the server.
@@ -3042,22 +3092,21 @@ namespace AasxServer
             await application.Start(server);
 
             // start the status thread
-            status = Task.Run(new Action(StatusThread));
+            status = Task.Run(StatusThread);
 
             // print notification on session events
             server.CurrentInstance.SessionManager.SessionActivated += EventStatus;
             server.CurrentInstance.SessionManager.SessionClosing += EventStatus;
             server.CurrentInstance.SessionManager.SessionCreated += EventStatus;
-
         }
 
-        private void EventStatus(Opc.Ua.Server.Session session, SessionEventReason reason)
+        private void EventStatus(Session session, SessionEventReason reason)
         {
             lastEventTime = DateTime.UtcNow;
             PrintSessionStatus(session, reason.ToString());
         }
 
-        void PrintSessionStatus(Opc.Ua.Server.Session session, string reason, bool lastContact = false)
+        void PrintSessionStatus(Session session, string reason, bool lastContact = false)
         {
             lock (session.DiagnosticsLock)
             {
@@ -3072,6 +3121,7 @@ namespace AasxServer
                     {
                         item += String.Format(":{0,20}", session.Identity.DisplayName);
                     }
+
                     item += String.Format(":{0}", session.Id);
                 }
             }
@@ -3083,13 +3133,15 @@ namespace AasxServer
             {
                 if (DateTime.UtcNow - lastEventTime > TimeSpan.FromMilliseconds(6000))
                 {
-                    IList<Opc.Ua.Server.Session> sessions = server.CurrentInstance.SessionManager.GetSessions();
+                    IList<Session> sessions = server.CurrentInstance.SessionManager.GetSessions();
                     foreach (var session in sessions)
                     {
                         PrintSessionStatus(session, "-Status-", true);
                     }
+
                     lastEventTime = DateTime.UtcNow;
                 }
+
                 await Task.Delay(1000);
             }
         }
