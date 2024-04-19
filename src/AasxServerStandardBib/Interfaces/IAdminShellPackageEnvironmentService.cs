@@ -6,6 +6,9 @@ namespace AasxServerStandardBib.Interfaces
 {
     public interface IAdminShellPackageEnvironmentService
     {
+        #region Other
+        public void setWrite(int packageIndex, bool status);
+        #endregion
         #region AssetAdministrationShell
         IAssetAdministrationShell CreateAssetAdministrationShell(IAssetAdministrationShell body);
         void DeleteAssetAdministrationShell(int packageIndex, IAssetAdministrationShell aas);
@@ -29,6 +32,7 @@ namespace AasxServerStandardBib.Interfaces
         void ReplaceSubmodelById(string submodelIdentifier, ISubmodel newSubmodel);
         List<ISubmodel> GetAllSubmodels(IReference reqSemanticId = null, string idShort = null);
         bool IsSubmodelPresent(string submodelIdentifier);
+        bool IsSubmodelPresent(string submodelIdentifier, out ISubmodel output, out int packageIndex);
         ISubmodel CreateSubmodel(ISubmodel newSubmodel, string aasIdentifier = null);
 
         #endregion
