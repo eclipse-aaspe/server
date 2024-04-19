@@ -165,7 +165,7 @@ namespace AasxServerStandardBib.Services
                     if (deleted)
                     {
                         _logger.LogDebug($"Deleted submodel reference with id {submodelIdentifier} from the AAS with id {aasIdentifier}.");
-                        Program.signalNewData(1);
+                        Program.SignalNewData(1);
                     }
                     else
                     {
@@ -334,7 +334,7 @@ namespace AasxServerStandardBib.Services
             if (aas != null)
             {
                 aas.AssetInformation = body;
-                Program.signalNewData(0);
+                Program.SignalNewData(0);
 
                 _logger.LogDebug($"AssetInformation from AAS with id {aasIdentifier} updated successfully.");
             }
@@ -478,7 +478,7 @@ namespace AasxServerStandardBib.Services
             {
                 _verificationService.VerifyRequestBody(newAssetInformation);
                 aas.AssetInformation = newAssetInformation;
-                Program.signalNewData(0);
+                Program.SignalNewData(0);
             }
         }
 

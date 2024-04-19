@@ -57,7 +57,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
         {
             if (!initAgain && init)
             {
-                AasxServer.Program.signalNewData(2);
+                AasxServer.Program.SignalNewData(2);
                 return;
             }
 
@@ -611,7 +611,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                     }
                 }
             }
-            AasxServer.Program.signalNewData(2);
+            AasxServer.Program.SignalNewData(2);
 
             AasxServer.Program.initializingRegistry = false;
 
@@ -875,7 +875,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
         public void CreateAssetAdministrationShellDescriptor(AssetAdministrationShellDescriptor newAasDesc, DateTime timestamp, bool initial = false)
         {
             AddAasDescriptorToRegistry(newAasDesc, timestamp, initial);
-            Program.signalNewData(2);
+            Program.SignalNewData(2);
         }
 
         static void AddAasDescriptorToRegistry(AssetAdministrationShellDescriptor ad, DateTime timestamp, bool initial = false)
@@ -1104,7 +1104,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                 }
             }
 
-            Program.signalNewData(2);
+            Program.SignalNewData(2);
         }
 
         #endregion

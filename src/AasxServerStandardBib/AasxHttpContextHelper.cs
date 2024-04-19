@@ -1375,7 +1375,7 @@ namespace AasxRestServerLibrary
                 }
             }
 
-            Program.signalNewData(2);
+            Program.SignalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK (saved)");
         }
@@ -1525,7 +1525,7 @@ namespace AasxRestServerLibrary
             }
 
             // simple OK
-            Program.signalNewData(2);
+            Program.SignalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK");
         }
@@ -1648,7 +1648,7 @@ namespace AasxRestServerLibrary
             //this.Packages[0].AasEnv.Assets.Add(asset);
 
             // simple OK
-            Program.signalNewData(2);
+            Program.SignalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             object existingAsset = null;
             SendTextResponse(context, "OK" + ((existingAsset != null) ? " (updated)" : " (new)"));
@@ -1729,7 +1729,7 @@ namespace AasxRestServerLibrary
             //Console.WriteLine("{0} Received PUT Asset {1}", countPut++, asset.IdShort);
 
             // simple OK
-            Program.signalNewData(2);
+            Program.SignalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             object existingAsset = null;
             SendTextResponse(context, "OK" + ((existingAsset != null) ? " (updated)" : " (new)"));
@@ -1904,7 +1904,7 @@ namespace AasxRestServerLibrary
             Console.WriteLine("{0} Received PUT Submodel {1}", countPut++, submodel.IdShort);
 
             // simple OK
-            Program.signalNewData(2);
+            Program.SignalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + ((existingSm != null) ? " (updated)" : " (new)"));
         }
@@ -1959,7 +1959,7 @@ namespace AasxRestServerLibrary
             }
 
             // simple OK
-            Program.signalNewData(2);
+            Program.SignalNewData(2);
             var cmt = "";
             if (smref == null && sm == null)
                 cmt += " (nothing deleted)";
@@ -2552,7 +2552,7 @@ namespace AasxRestServerLibrary
             }
 
             // simple OK
-            Program.signalNewData(2);
+            Program.SignalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + (updated ? " (with updates)" : ""));
         }
@@ -2613,7 +2613,7 @@ namespace AasxRestServerLibrary
             }
 
             // simple OK
-            Program.signalNewData(2);
+            Program.SignalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + (!deleted ? " (but nothing deleted)" : ""));
         }
@@ -2835,7 +2835,7 @@ namespace AasxRestServerLibrary
             }
 
             // return as JSON
-            Program.signalNewData(2);
+            Program.SignalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + (!deleted ? " (but nothing deleted)" : ""));
         }
@@ -2925,7 +2925,7 @@ namespace AasxRestServerLibrary
             }
 
             // return this list
-            Program.signalNewData(2);
+            Program.SignalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendJsonResponse(context, res);
         }
@@ -3625,7 +3625,7 @@ namespace AasxRestServerLibrary
                                     dt = DateTime.Parse(actualTime.Value);
                                     if (dt.AddSeconds(d) < DateTime.UtcNow)
                                     {
-                                        Program.signalNewData(0);
+                                        Program.SignalNewData(0);
                                         actualTime.Value = null;
                                     }
                                 }
@@ -3643,20 +3643,20 @@ namespace AasxRestServerLibrary
                             int ac = 0;
                             if (!int.TryParse(actualCount.Value, out ac))
                             {
-                                Program.signalNewData(0);
+                                Program.SignalNewData(0);
                                 return false;
                             }
                             int mc = 0;
                             if (!int.TryParse(maxCount.Value, out mc))
                             {
-                                Program.signalNewData(0);
+                                Program.SignalNewData(0);
                                 return false;
                             }
                             ac++;
                             actualCount.Value = ac.ToString();
                             if (ac <= mc)
                             {
-                                Program.signalNewData(0);
+                                Program.SignalNewData(0);
                                 return true;
                             }
                         }
@@ -4909,7 +4909,7 @@ namespace AasxRestServerLibrary
             this.Packages[findAasReturn.iPackage].AasEnv.ConceptDescriptions.Add(cd);
 
             // simple OK
-            Program.signalNewData(2);
+            Program.SignalNewData(2);
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendTextResponse(context, "OK" + ((existingCd != null) ? " (updated)" : " (new)"));
         }

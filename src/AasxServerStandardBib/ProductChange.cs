@@ -402,7 +402,7 @@ namespace ProductChange
                     // if (!error)
                     // client.Inbox.Expunge();
                     client.Disconnect(true);
-                    AasxServer.Program.signalNewData(2);
+                    AasxServer.Program.SignalNewData(2);
                 }
             }
             Thread.Sleep(5 * 60 * 1000);

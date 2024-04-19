@@ -304,7 +304,7 @@
                             (selectedNode.Tag as Property).Value = CurrentValue;
                             (selectedNode.Tag as Property).SetTimeStamp(DateTime.UtcNow);
                             Program.env[selectedNode.envIndex].setWrite(true);
-                            Program.signalNewData(0);
+                            Program.SignalNewData(0);
                             // this.StateHasChanged();
                         }
                         CurrentValue = "";
@@ -746,9 +746,9 @@
 
     public static void checkDataVersion()
     {
-        if (Program.getDataVersion() != dataVersion)
+        if (Program.GetDataVersion() != dataVersion)
         {
-            dataVersion = Program.getDataVersion();
+            dataVersion = Program.GetDataVersion();
             // TreePage.StateHasChanged();
         }
     }
@@ -773,7 +773,7 @@
         //ExpandedNodes.Add(Items.Skip(1).Take(1).First().Childs.Skip(1).First());
 
         SubmodelService.NewDataAvailable += NewData;
-        Program.signalNewData(1);
+        Program.SignalNewData(1);
 
         /*
         refresh = new System.Threading.Timer(new System.Threading.TimerCallback(_ =>
@@ -800,7 +800,7 @@
         // update = true;
         if (newDataMode == 0)
         {
-            if (args is Program.NewDataAvailableArgs newArgs)
+            if (args is Program.NewDataAvailableEventArgs newArgs)
             {
                 newDataMode = newArgs.signalNewDataMode;
                 // Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);

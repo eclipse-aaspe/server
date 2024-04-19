@@ -184,7 +184,7 @@ namespace AasxServerStandardBib.Services
             var timeStamp = DateTime.UtcNow;
             newSubmodelElement.SetAllParentsAndTimestamps(smeParent, timeStamp, timeStamp);
             newSubmodelElement.SetTimeStamp(timeStamp);
-            Program.signalNewData(1);
+            Program.SignalNewData(1);
             return newSubmodelElement;
         }
 
@@ -236,7 +236,7 @@ namespace AasxServerStandardBib.Services
                 throw new NotFoundException($"Requested SubmodelElement NOT found in submodel with Id {submodelIdentifier}");
             }
 
-            Program.signalNewData(1);
+            Program.SignalNewData(1);
             _logger.LogDebug($"Deleted SubmodelElement at {idShortPath} from submodel with Id {submodelIdentifier}");
         }
 
@@ -292,7 +292,7 @@ namespace AasxServerStandardBib.Services
                 throw new NotFoundException($"Requested SubmodelElement NOT found in submodel with Id {submodelIdentifier}");
             }
 
-            Program.signalNewData(1);
+            Program.SignalNewData(1);
             _logger.LogDebug($"Deleted the file at {idShortPath} from submodel with Id {submodelIdentifier}");
         }
 
@@ -395,7 +395,7 @@ namespace AasxServerStandardBib.Services
             newSubmodelElement.SetAllParentsAndTimestamps(submodel, timeStamp, timeStamp);
             newSubmodelElement.SetTimeStamp(timeStamp);
 
-            Program.signalNewData(1);
+            Program.SignalNewData(1);
             return newSubmodelElement;
         }
 
@@ -472,7 +472,7 @@ namespace AasxServerStandardBib.Services
                 var timeStamp = DateTime.UtcNow;
                 newSme.SetAllParentsAndTimestamps(smeParent, timeStamp, timeStamp);
                 newSme.SetTimeStamp(timeStamp);
-                Program.signalNewData(1);
+                Program.SignalNewData(1);
             }
         }
 
@@ -509,7 +509,7 @@ namespace AasxServerStandardBib.Services
 
             submodel.SetTimeStamp(DateTime.UtcNow);
 
-            Program.signalNewData(0);
+            Program.SignalNewData(0);
         }
 
         public void UpdateSubmodelElementByPath(string submodelIdentifier, string idShortPath, ISubmodelElement newSme)
@@ -523,7 +523,7 @@ namespace AasxServerStandardBib.Services
 
             newSme.SetTimeStamp(DateTime.UtcNow);
 
-            Program.signalNewData(0);
+            Program.SignalNewData(0);
         }
 
         public void ReplaceFileByPath(string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream fileContent)
@@ -562,7 +562,7 @@ namespace AasxServerStandardBib.Services
                             targetFile = targetFile.Replace('/', Path.DirectorySeparatorChar); //TODO:jtikekar: better way to handle
                             Task task = _packageEnvService.ReplaceSupplementaryFileInPackage(submodelIdentifier, file.Value, targetFile, contentType, fileContent);
                             file.Value = FormatFileName(targetFile);
-                            AasxServer.Program.signalNewData(2);
+                            AasxServer.Program.SignalNewData(2);
                         }
                         // incorrect value
                         else
@@ -579,7 +579,7 @@ namespace AasxServerStandardBib.Services
                         targetFile = targetFile.Replace('/', Path.DirectorySeparatorChar);
                         Task task = _packageEnvService.ReplaceSupplementaryFileInPackage(submodelIdentifier, file.Value, targetFile, contentType, fileContent);
                         file.Value = FormatFileName(targetFile);
-                        AasxServer.Program.signalNewData(2);
+                        AasxServer.Program.SignalNewData(2);
                     }
 
                 }

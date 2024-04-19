@@ -60,7 +60,7 @@ namespace AasxServerStandardBib.Services
                 var timeStamp = DateTime.UtcNow;
                 body.TimeStampCreate = timeStamp;
                 body.SetTimeStamp(timeStamp);
-                Program.signalNewData(2);
+                Program.SignalNewData(2);
                 return _packages[emptyPackageIndex].AasEnv.AssetAdministrationShells[0]; //Considering it is the first AAS being added to empty package.
             }
             else
@@ -84,7 +84,7 @@ namespace AasxServerStandardBib.Services
                         _packages[packageIndex] = null;
                     }
 
-                    Program.signalNewData(2);
+                    Program.SignalNewData(2);
                 }
                 else
                 {
@@ -135,7 +135,7 @@ namespace AasxServerStandardBib.Services
         {
             output = null; packageIndex = -1;
 
-            Program.loadPackageForAas(aasIdentifier, out output, out packageIndex);
+            Program.LoadPackageForAas(aasIdentifier, out output, out packageIndex);
 
             foreach (var package in _packages)
             {
@@ -169,7 +169,7 @@ namespace AasxServerStandardBib.Services
                 var timeStamp = DateTime.UtcNow;
                 body.TimeStampCreate = timeStamp;
                 body.SetTimeStamp(timeStamp);
-                Program.signalNewData(1); //0 not working, hence 1 = same tree, structure may change
+                Program.SignalNewData(1); //0 not working, hence 1 = same tree, structure may change
 
                 _logger.LogDebug($"Successfully updated the AAS with requested AAS");
             }
@@ -178,7 +178,7 @@ namespace AasxServerStandardBib.Services
         public void DeleteAssetInformationThumbnail(int packageIndex, IResource defaultThumbnail)
         {
             _packages[packageIndex].DeleteAssetInformationThumbnail(defaultThumbnail);
-            Program.signalNewData(0);
+            Program.SignalNewData(0);
         }
 
         public Stream GetAssetInformationThumbnail(int packageIndex)
@@ -189,7 +189,7 @@ namespace AasxServerStandardBib.Services
         public void UpdateAssetInformationThumbnail(IResource defaultThumbnail, Stream fileContent, int packageIndex)
         {
             _packages[packageIndex].EmbeddAssetInformationThumbnail(defaultThumbnail, fileContent);
-            Program.signalNewData(0);
+            Program.SignalNewData(0);
         }
         #endregion
 
@@ -206,7 +206,7 @@ namespace AasxServerStandardBib.Services
                 }
                 _packages[packageIndex].AasEnv.Submodels.Remove(submodel);
                 _logger.LogDebug($"Deleted submodel with id {submodelIdentifier}.");
-                AasxServer.Program.signalNewData(1);
+                AasxServer.Program.SignalNewData(1);
             }
         }
 
@@ -243,7 +243,7 @@ namespace AasxServerStandardBib.Services
             output = null;
             packageIndex = -1;
 
-            Program.loadPackageForSubmodel(submodelIdentifier, out output, out packageIndex);
+            Program.LoadPackageForSubmodel(submodelIdentifier, out output, out packageIndex);
 
             foreach (var package in _packages)
             {
@@ -285,7 +285,7 @@ namespace AasxServerStandardBib.Services
             {
                 _packages[packageIndex].AasEnv.ConceptDescriptions.Remove(conceptDescription);
                 _logger.LogDebug($"Delete ConceptDescription with id {cdIdentifier}");
-                AasxServer.Program.signalNewData(1);
+                AasxServer.Program.SignalNewData(1);
             }
         }
 
@@ -362,7 +362,7 @@ namespace AasxServerStandardBib.Services
                 var timeStamp = DateTime.UtcNow; 
                 body.TimeStampCreate = timeStamp;
                 body.SetTimeStamp(timeStamp);
-                Program.signalNewData(2);
+                Program.SignalNewData(2);
                 return _packages[emptyPackageIndex].AasEnv.ConceptDescriptions[0]; //Considering it is the first AAS being added to empty package.
             }
             else
@@ -382,7 +382,7 @@ namespace AasxServerStandardBib.Services
                 var timeStamp = DateTime.UtcNow;
                 body.TimeStampCreate = timeStamp;
                 body.SetTimeStamp(timeStamp);
-                Program.signalNewData(1); //0 not working, hence 1 = same tree, structure may change
+                Program.SignalNewData(1); //0 not working, hence 1 = same tree, structure may change
 
                 _logger.LogDebug($"Successfully updated the ConceptDescription.");
             }
@@ -413,7 +413,7 @@ namespace AasxServerStandardBib.Services
                 var timeStamp = DateTime.UtcNow;
                 newAas.TimeStampCreate = timeStamp;
                 newAas.SetTimeStamp(timeStamp);
-                Program.signalNewData(1);
+                Program.SignalNewData(1);
             }
         }
 
@@ -428,7 +428,7 @@ namespace AasxServerStandardBib.Services
                 var timeStamp = DateTime.UtcNow;
                 newSubmodel.TimeStampCreate = timeStamp;
                 newSubmodel.SetParentAndTimestamp(timeStamp);
-                Program.signalNewData(1);
+                Program.SignalNewData(1);
             }
         }
 
@@ -512,7 +512,7 @@ namespace AasxServerStandardBib.Services
                     aas.SetTimeStamp(timeStamp);
                     newSubmodel.TimeStampCreate = timeStamp;
                     newSubmodel.SetTimeStamp(timeStamp);
-                    AasxServer.Program.signalNewData(2);
+                    AasxServer.Program.SignalNewData(2);
                     return newSubmodel; // TODO: jtikekar find proper solution
                 }
             }
@@ -523,7 +523,7 @@ namespace AasxServerStandardBib.Services
                 var timeStamp = DateTime.UtcNow;
                 newSubmodel.TimeStampCreate = timeStamp;
                 newSubmodel.SetTimeStamp(timeStamp);
-                Program.signalNewData(2);
+                Program.SignalNewData(2);
                 return _packages[emptyPackageIndex].AasEnv.Submodels[0]; //Considering it is the first AAS being added to empty package.
             }
             else

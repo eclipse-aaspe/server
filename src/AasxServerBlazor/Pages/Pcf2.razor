@@ -768,7 +768,7 @@
         if (Program.isLoading)
             return;
 
-        if (args is Program.NewDataAvailableArgs newArgs)
+        if (args is Program.NewDataAvailableEventArgs newArgs)
         {
             int newDataMode = newArgs.signalNewDataMode;
             if (newDataMode != 0)

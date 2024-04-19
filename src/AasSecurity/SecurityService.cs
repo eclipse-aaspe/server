@@ -545,7 +545,7 @@ namespace AasSecurity
                                     dt = DateTime.Parse(actualTime.Value);
                                     if (dt.AddSeconds(d) < DateTime.UtcNow)
                                     {
-                                        Program.signalNewData(0);
+                                        Program.SignalNewData(0);
                                         actualTime.Value = null;
                                     }
                                 }
@@ -563,20 +563,20 @@ namespace AasSecurity
                             int ac = 0;
                             if (!int.TryParse(actualCount.Value, out ac))
                             {
-                                Program.signalNewData(0);
+                                Program.SignalNewData(0);
                                 return false;
                             }
                             int mc = 0;
                             if (!int.TryParse(maxCount.Value, out mc))
                             {
-                                Program.signalNewData(0);
+                                Program.SignalNewData(0);
                                 return false;
                             }
                             ac++;
                             actualCount.Value = ac.ToString();
                             if (ac <= mc)
                             {
-                                Program.signalNewData(0);
+                                Program.SignalNewData(0);
                                 return true;
                             }
                         }
@@ -851,7 +851,7 @@ namespace AasSecurity
                                     dt = DateTime.Parse(actualTime.Value);
                                     if (dt.AddSeconds(d) < DateTime.UtcNow)
                                     {
-                                        Program.signalNewData(0);
+                                        Program.SignalNewData(0);
                                         actualTime.Value = null;
                                     }
                                 }
@@ -869,20 +869,20 @@ namespace AasSecurity
                             int ac = 0;
                             if (!int.TryParse(actualCount.Value, out ac))
                             {
-                                Program.signalNewData(0);
+                                Program.SignalNewData(0);
                                 return false;
                             }
                             int mc = 0;
                             if (!int.TryParse(maxCount.Value, out mc))
                             {
-                                Program.signalNewData(0);
+                                Program.SignalNewData(0);
                                 return false;
                             }
                             ac++;
                             actualCount.Value = ac.ToString();
                             if (ac <= mc)
                             {
-                                Program.signalNewData(0);
+                                Program.SignalNewData(0);
                                 return true;
                             }
                         }
@@ -890,7 +890,7 @@ namespace AasSecurity
                 }
             }
 
-            Program.signalNewData(0);
+            Program.SignalNewData(0);
             return false;
         }
 

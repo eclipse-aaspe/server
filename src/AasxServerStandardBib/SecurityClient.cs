@@ -784,7 +784,7 @@ namespace AasxServer
                     duration.Value = watch.ElapsedMilliseconds + " ms";
                     duration.TimeStamp = timeStamp;
                 }
-                Program.signalNewData(0);
+                Program.SignalNewData(0);
 
                 string requestPath = endPoint.Value;
                 if (path.Value != "")
@@ -896,7 +896,7 @@ namespace AasxServer
                                             response.Content.ReadAsStringAsync().Result + " ; " +
                                             "HEAD " + requestPath;
                                         status.TimeStamp= timeStamp;
-                                        Program.signalNewData(0);
+                                        Program.SignalNewData(0);
                                     }
                                     continue;
                                 }
@@ -954,7 +954,7 @@ namespace AasxServer
                                             response.Content.ReadAsStringAsync().Result + " ; " +
                                             "GET " + requestPath;
                                         status.TimeStamp = timeStamp;
-                                        Program.signalNewData(0);
+                                        Program.SignalNewData(0);
                                     }
                                     continue;
                                 }
@@ -1066,7 +1066,7 @@ namespace AasxServer
                                                                 status.Value = response.StatusCode.ToString() + " ; " +
                                                                     response.Content.ReadAsStringAsync().Result + " ; " +
                                                                     "GET " + requestPath;
-                                                                Program.signalNewData(0);
+                                                                Program.SignalNewData(0);
                                                             }
                                                             continue;
                                                         }
@@ -1129,7 +1129,7 @@ namespace AasxServer
 
                     if (lastDiff != null)
                         lastDiff.Value = "" + timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-                    Program.signalNewData(0);
+                    Program.SignalNewData(0);
                 }
 
                 handler = new HttpClientHandler();
@@ -1360,7 +1360,7 @@ namespace AasxServer
                             if (status != null)
                             {
                                 status.Value = statusValue;
-                                Program.signalNewData(0);
+                                Program.SignalNewData(0);
                             }
                             continue;
                         }
@@ -1381,7 +1381,7 @@ namespace AasxServer
                 duration.Value = watch.ElapsedMilliseconds + " ms";
                 duration.TimeStamp = timeStamp;
             }
-            Program.signalNewData(2); // new tree, nodes opened
+            Program.SignalNewData(2); // new tree, nodes opened
         }
         static void operation_limitCount(Operation op, int envIndex, DateTime timeStamp)
         {
@@ -1466,7 +1466,7 @@ namespace AasxServer
             catch
             {
             }
-            Program.signalNewData(1);
+            Program.SignalNewData(1);
         }
 
         public class cfpNode
@@ -2198,7 +2198,7 @@ namespace AasxServer
             // if (root != null && root.bomTimestamp > lastCreateTimestamp)
             if (changed || credentialsChanged)
             {
-                Program.signalNewData(1);
+                Program.SignalNewData(1);
                 lastCreateTimestamp = timeStamp;
                 credentialsChanged = false;
             }
@@ -2278,7 +2278,7 @@ namespace AasxServer
                                 }
                                 db.SaveChanges();
                             }
-                            //Program.saveEnv(envi);
+                            //Program.SaveEnvironment(envi);
                             Program.env[envi].setWrite(false);
                             newData = true;
                         }
@@ -2287,7 +2287,7 @@ namespace AasxServer
                 envi++;
             }
             if (newData)
-                Program.signalNewData(0);
+                Program.SignalNewData(0);
         }
 
         static Thread tasksThread;
@@ -2339,7 +2339,7 @@ namespace AasxServer
                         t.nextCycle.Value = t.nextExecution.ToString();
                         t.nextCycle.SetTimeStamp(timeStamp);
                     }
-                    Program.signalNewData(0);
+                    Program.SignalNewData(0);
 
                     runOperations(t.def, t.envIndex, timeStamp);
                     taskRun = true;

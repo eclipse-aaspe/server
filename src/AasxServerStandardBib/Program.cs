@@ -4,7 +4,6 @@ using System.CommandLine;
 using System.CommandLine.Help;
 using System.CommandLine.Invocation;
 using System.CommandLine.IO;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Dynamic;
 using System.Globalization;
@@ -15,6 +14,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Runtime.InteropServices;
+using System.Security.Authentication;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -24,7 +24,6 @@ using System.Timers;
 using System.Xml;
 using System.Xml.Serialization;
 using AasOpcUaServer;
-using AasxMqttClient;
 using AasxMqttServer;
 using AasxRestServerLibrary;
 using AasxTimeSeries;
@@ -33,7 +32,6 @@ using Extensions;
 using Jose;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Opc.Ua;
@@ -78,167 +76,7 @@ namespace AasxServer
     {
         public static IConfiguration Configuration { get; set; }
 
-        public static string GetBetween(AdminShellPackageEnv adminShellPackageEnvironment, string strStart, string strEnd)
-        {
-            var strSource = adminShellPackageEnvironment.getEnvXml();
-            if (strSource == null || !strSource.Contains(strStart) || !strSource.Contains(strEnd))
-            {
-                return string.Empty;
-            }
-
-            int Start, End;
-            Start = strSource.IndexOf(strStart, 0) + strStart.Length;
-            End = strSource.IndexOf(strEnd, Start);
-            return strSource.Substring(Start, End - Start);
-        }
-
-        public static void createDbFiles(IEnumerable<SubmodelSet> slist, AdminShellPackageEnv env, string dataPath, string fileName)
-        {
-            var envXml = env.getEnvXml();
-
-            Console.WriteLine("Length XML env: " + envXml.Length);
-            var fnXml = dataPath + "/xml/" + fileName + ".xml";
-            File.WriteAllText(fnXml, envXml);
-
-            // extract semanticIds
-            var pos = 0;
-            var found1 = -1;
-            var found2 = -1;
-            var semanticId = "";
-            var countSemanticId = 0;
-            var countIdShort = 0;
-            HashSet<string> hsSubSemanticId = null;
-            HashSet<string> hsSubIdShort = null;
-            string subId = null;
-
-            var search = "";
-            var text = "";
-            var reader = XmlReader.Create(new StringReader(envXml));
-            while (!reader.EOF)
-            {
-                reader.Read();
-                if (!reader.EOF)
-                {
-                    switch (reader.NodeType)
-                    {
-                        case XmlNodeType.Element when reader.Name is "submodel" or "aas:submodel":
-                            search = "id aas:identification";
-                            hsSubSemanticId = new HashSet<string>();
-                            hsSubIdShort = new HashSet<string>();
-                            subId = null;
-                            countSemanticId = 0;
-                            countIdShort = 0;
-                            break;
-                        case XmlNodeType.Element:
-                        {
-                            if (search.Contains(reader.Name))
-                            {
-                                search = reader.Name switch
-                                {
-                                    "aas:semanticId" or "semanticId" => "aas:key key",
-                                    "key" => "value",
-                                    _ => search
-                                };
-                            }
-
-                            break;
-                        }
-                        case XmlNodeType.Text:
-                            text = reader.Value;
-                            break;
-                        case XmlNodeType.EndElement:
-                            switch (reader.Name)
-                            {
-                                case "id":
-                                case "aas:identification":
-                                    if (search.Contains(reader.Name))
-                                    {
-                                        subId = text;
-                                        search = "aas:semanticId semanticId";
-                                    }
-
-                                    break;
-                                case "aas:semanticId":
-                                case "semanticId":
-                                case "key":
-                                    search = "aas:semanticId semanticId";
-                                    break;
-                                case "aas:key":
-                                case "value":
-                                    if (subId != null && search.Contains(reader.Name))
-                                    {
-                                        hsSubSemanticId.Add(text);
-                                        countSemanticId++;
-                                        search = "aas:semanticId semanticId";
-                                    }
-
-                                    break;
-                                case "idShort":
-                                case "aas:idShort":
-                                    if (subId != null)
-                                    {
-                                        hsSubIdShort.Add(text);
-                                        countIdShort++;
-                                    }
-
-                                    break;
-                                case "submodel":
-                                case "aas:submodel":
-                                    // Submodel complete
-                                    search = "";
-                                    if (subId != null)
-                                    {
-                                        SubmodelSet submodelDB = null;
-                                        var submodelDBList = slist.Where(s => s.SubmodelId == subId);
-                                        if (submodelDBList.Any())
-                                        {
-                                            submodelDB = submodelDBList.First();
-                                        }
-
-                                        Console.WriteLine("Found " + hsSubSemanticId.Count + " different semanticIds in total of " + countSemanticId + " in submodel " + subId);
-                                        var subId64 = Base64UrlEncoder.Encode(subId);
-                                        var fnSemanticId = dataPath + "/xml/semanticid--" + subId64 + ".txt";
-
-                                        var lines = hsSubSemanticId.Aggregate("", (current, h) => current + (h + "\r\n"));
-                                        File.WriteAllText(fnSemanticId, lines);
-
-                                        Console.WriteLine("Found " + hsSubIdShort.Count + " different idShorts in total of " + countIdShort + " in submodel " + subId);
-                                        subId64 = Base64UrlEncoder.Encode(subId);
-                                        var fnIdShort = dataPath + "/xml/idshort--" + subId64 + ".txt";
-
-                                        lines = hsSubIdShort.Aggregate("", (current, h) => current + (h + "\r\n"));
-                                        File.WriteAllText(fnIdShort, lines);
-
-                                        subId = null;
-                                    }
-
-                                    break;
-                            }
-
-                            break;
-                        case XmlNodeType.None:
-                        case XmlNodeType.Attribute:
-                        case XmlNodeType.CDATA:
-                        case XmlNodeType.EntityReference:
-                        case XmlNodeType.Entity:
-                        case XmlNodeType.ProcessingInstruction:
-                        case XmlNodeType.Comment:
-                        case XmlNodeType.Document:
-                        case XmlNodeType.DocumentType:
-                        case XmlNodeType.DocumentFragment:
-                        case XmlNodeType.Notation:
-                        case XmlNodeType.Whitespace:
-                        case XmlNodeType.SignificantWhitespace:
-                        case XmlNodeType.EndEntity:
-                        case XmlNodeType.XmlDeclaration:
-                        default:
-                            throw new ArgumentOutOfRangeException(nameof(reader.NodeType));
-                    }
-                }
-            }
-        }
-
-        public static void saveEnv(int envIndex)
+        private static void SaveEnvironment(int envIndex)
         {
             Console.WriteLine("SAVE: " + envFileName[envIndex]);
             var requestedFileName = envFileName[envIndex];
@@ -251,14 +89,12 @@ namespace AasxServer
 
         static int oldest;
 
-        public static bool loadPackageForAas(string aasIdentifier, out IAssetAdministrationShell output, out int packageIndex)
+        public static void LoadPackageForAas(string aasIdentifier, out IAssetAdministrationShell output, out int packageIndex)
         {
             output = null;
             packageIndex = -1;
-            if (!withDb)
-                return false;
-            if (isLoading)
-                return false;
+            if (!withDb) return;
+            if (isLoading) return;
 
             var i = envimin;
             while (i < env.Length)
@@ -271,7 +107,7 @@ namespace AasxServer
                 {
                     output = aas.First();
                     packageIndex = i;
-                    return true;
+                    return;
                 }
 
                 i++;
@@ -289,7 +125,7 @@ namespace AasxServer
             var aasDBList = db.AasSets.Where(a => a.AasId == aasIdentifier);
             if (!aasDBList.Any())
             {
-                return false;
+                return;
             }
 
             lock (changeAasxFile)
@@ -299,7 +135,7 @@ namespace AasxServer
                     Console.WriteLine("UNLOAD: " + envFileName[i]);
                     if (env[i].getWrite())
                     {
-                        saveEnv(i);
+                        SaveEnvironment(i);
                         env[i].setWrite(false);
                     }
 
@@ -360,19 +196,16 @@ namespace AasxServer
                 }
 
                 packageIndex = i;
-                signalNewData(2);
-                return true;
+                SignalNewData(2);
             }
         }
 
-        public static bool loadPackageForSubmodel(string submodelIdentifier, out ISubmodel output, out int packageIndex)
+        public static void LoadPackageForSubmodel(string submodelIdentifier, out ISubmodel output, out int packageIndex)
         {
             output = null;
             packageIndex = -1;
-            if (!withDb)
-                return false;
-            if (isLoading)
-                return false;
+            if (!withDb) return;
+            if (isLoading) return;
 
             var i = envimin;
             while (i < env.Length)
@@ -385,7 +218,7 @@ namespace AasxServer
                 {
                     output = submodels.First();
                     packageIndex = i;
-                    return true;
+                    return;
                 }
 
                 i++;
@@ -403,7 +236,7 @@ namespace AasxServer
             var submodelDBList = db.SubmodelSets.Where(s => s.SubmodelId == submodelIdentifier);
             if (!submodelDBList.Any())
             {
-                return false;
+                return;
             }
 
             lock (changeAasxFile)
@@ -413,7 +246,7 @@ namespace AasxServer
                     Console.WriteLine("UNLOAD: " + envFileName[i]);
                     if (env[i].getWrite())
                     {
-                        saveEnv(i);
+                        SaveEnvironment(i);
                         env[i].setWrite(false);
                     }
 
@@ -482,8 +315,7 @@ namespace AasxServer
                 }
 
                 packageIndex = i;
-                signalNewData(2);
-                return true;
+                SignalNewData(2);
             }
         }
 
@@ -499,12 +331,12 @@ namespace AasxServer
         public static string blazorHostPort = "";
         public static ulong dataVersion;
 
-        public static void changeDataVersion()
+        public static void ChangeDataVersion()
         {
             dataVersion++;
         }
 
-        public static ulong getDataVersion()
+        public static ulong GetDataVersion()
         {
             return (dataVersion);
         }
@@ -687,9 +519,7 @@ namespace AasxServer
                         if (!parsable)
                         {
                             await Console.Error.WriteLineAsync(
-                                "Invalid --connect. " +
-                                "Expected a comma-separated values (server, node name, period in milliseconds), " +
-                                $"but got: {a.Connect[0]}");
+                                $"Invalid --connect. Expected a comma-separated values (server, node name, period in milliseconds), but got: {a.Connect[0]}");
                             return 1;
                         }
 
@@ -697,11 +527,7 @@ namespace AasxServer
                     }
                 }
 
-                Console.WriteLine(
-                    $"--connect: " +
-                    $"ConnectServer {connectServer}, " +
-                    $"NodeName {connectNodeName}, " +
-                    $"UpdateRate {connectUpdateRate}");
+                Console.WriteLine($"--connect: ConnectServer {connectServer}, NodeName {connectNodeName}, UpdateRate {connectUpdateRate}");
             }
 
             if (a.DataPath != null)
@@ -727,7 +553,7 @@ namespace AasxServer
             if (!string.IsNullOrEmpty(a.SecretStringAPI))
             {
                 secretStringAPI = a.SecretStringAPI;
-                Console.WriteLine("secretStringAPI = " + secretStringAPI);
+                Console.WriteLine($"secretStringAPI = {secretStringAPI}");
             }
 
             if (a.OpcClientRate is < 200)
@@ -736,15 +562,19 @@ namespace AasxServer
             }
 
             // allocate memory
-            env = new AdminShellPackageEnv[envimax];
+            lock (changeAasxFile)
+            {
+                env = new AdminShellPackageEnv[envimax];
+            }
+
             envFileName = new string[envimax];
             envSymbols = new string[envimax];
             envSubjectIssuer = new string[envimax];
 
             // Proxy
-            var proxyAddress = "";
-            var username = "";
-            var password = "";
+            var proxyAddress = string.Empty;
+            var username = string.Empty;
+            var password = string.Empty;
 
             if (a.ProxyFile != null)
             {
@@ -756,18 +586,18 @@ namespace AasxServer
 
                 try
                 {
-                    using var sr = new StreamReader(a.ProxyFile);
-                    proxyAddress = sr.ReadLine();
-                    username = sr.ReadLine();
-                    password = sr.ReadLine();
+                    using var streamReader = new StreamReader(a.ProxyFile);
+                    proxyAddress = await streamReader.ReadLineAsync();
+                    username = await streamReader.ReadLineAsync();
+                    password = await streamReader.ReadLineAsync();
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine(e.Message);
-                    Console.WriteLine(a.ProxyFile + " not found!");
+                    Console.WriteLine($"{a.ProxyFile} not found!");
                 }
 
-                if (proxyAddress != "")
+                if (!string.IsNullOrEmpty(proxyAddress))
                 {
                     proxy = new WebProxy();
                     var newUri = new Uri(proxyAddress);
@@ -783,8 +613,8 @@ namespace AasxServer
                 }
             }
 
-            hostPort = a.Host + ":" + a.Port;
-            blazorHostPort = a.Host + ":" + blazorPort;
+            hostPort = $"{a.Host}:{a.Port}";
+            blazorHostPort = $"{a.Host}:{blazorPort}";
 
             if (a.ExternalRest != null)
             {
@@ -792,7 +622,7 @@ namespace AasxServer
             }
             else
             {
-                externalRest = "http://" + hostPort;
+                externalRest = $"http://{hostPort}";
             }
 
             externalBlazor = a.ExternalBlazor ?? blazorHostPort;
@@ -813,7 +643,7 @@ namespace AasxServer
             {
                 foreach (var f in ParentDirectory.GetFiles("./root/*.cer"))
                 {
-                    var cert = new X509Certificate2("./root/" + f.Name);
+                    var cert = new X509Certificate2($"./root/{f.Name}");
 
                     root.Add(cert);
                     Console.WriteLine("Security 1.1 Add " + f.Name);
@@ -825,8 +655,8 @@ namespace AasxServer
 
             if (a.Opc)
             {
-                var is_BaseAddresses = false;
-                var is_uaString = false;
+                var isBaseAddresses = false;
+                var isUaString = false;
                 var reader = new XmlTextReader("Opc.Ua.SampleServer.Config.xml");
                 while (reader.Read())
                 {
@@ -836,20 +666,20 @@ namespace AasxServer
                             switch (reader.Name)
                             {
                                 case "BaseAddresses":
-                                    is_BaseAddresses = true;
+                                    isBaseAddresses = true;
                                     break;
                                 case "ua:String":
-                                    is_uaString = true;
+                                    isUaString = true;
                                     break;
                             }
 
                             break;
                         case XmlNodeType.Text: //Display the text in each element.
-                            if (is_BaseAddresses && is_uaString)
+                            if (isBaseAddresses && isUaString)
                             {
                                 Console.WriteLine("Connect to OPC UA by: {0}", reader.Value);
-                                is_BaseAddresses = false;
-                                is_uaString = false;
+                                isBaseAddresses = false;
+                                isUaString = false;
                             }
 
                             break;
@@ -919,8 +749,7 @@ namespace AasxServer
                 task = Task.Run(async () => count = await db.DValueSets.ExecuteDeleteAsync());
                 task.Wait();
 
-                DbConfigSet dbConfig;
-                dbConfig = new DbConfigSet
+                var dbConfig = new DbConfigSet
                 {
                     Id = 1,
                     AasCount = 0,
@@ -929,15 +758,15 @@ namespace AasxServer
                     SMECount = 0
                 };
                 db.Add(dbConfig);
-                db.SaveChanges();
+                await db.SaveChangesAsync();
             }
 
             if (Directory.Exists(AasxHttpContextHelper.DataPath))
             {
-                if (!Directory.Exists(AasxHttpContextHelper.DataPath + "/xml"))
-                    Directory.CreateDirectory(AasxHttpContextHelper.DataPath + "/xml");
-                if (!Directory.Exists(AasxHttpContextHelper.DataPath + "/files"))
-                    Directory.CreateDirectory(AasxHttpContextHelper.DataPath + "/files");
+                if (!Directory.Exists($"{AasxHttpContextHelper.DataPath}/xml"))
+                    Directory.CreateDirectory($"{AasxHttpContextHelper.DataPath}/xml");
+                if (!Directory.Exists($"{AasxHttpContextHelper.DataPath}/files"))
+                    Directory.CreateDirectory($"{AasxHttpContextHelper.DataPath}/files");
 
                 var watch = Stopwatch.StartNew();
                 var fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx");
@@ -980,7 +809,7 @@ namespace AasxServer
                             env[envi] = new AdminShellPackageEnv(fn, true);
                             if (env[envi] == null)
                             {
-                                Console.Error.WriteLine($"Cannot open {fn}. Aborting..");
+                                await Console.Error.WriteLineAsync($"Cannot open {fn}. Aborting..");
                                 return 1;
                             }
 
@@ -1045,13 +874,13 @@ namespace AasxServer
                             {
                                 try
                                 {
-                                    var fcopyt = name + "__thumbnail";
+                                    var fcopyt = $"{name}__thumbnail";
                                     fcopyt = fcopyt.Replace("/", "_");
                                     fcopyt = fcopyt.Replace(".", "_");
                                     Uri dummy = null;
                                     await using var st = asp.GetLocalThumbnailStream(ref dummy, init: true);
-                                    Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/files/" + fcopyt + ".dat");
-                                    var fst = File.Create(AasxHttpContextHelper.DataPath + "/files/" + fcopyt + ".dat");
+                                    Console.WriteLine($"Copy {AasxHttpContextHelper.DataPath}/files/{fcopyt}.dat");
+                                    var fst = File.Create($"{AasxHttpContextHelper.DataPath}/files/{fcopyt}.dat");
                                     await st?.CopyToAsync(fst);
                                 }
                                 catch (Exception exception)
@@ -1068,7 +897,7 @@ namespace AasxServer
                                     {
                                         await using var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true);
                                         var archiveFile = archive.CreateEntry(f.Uri.OriginalString);
-                                        Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/" + name + "/" + f.Uri.OriginalString);
+                                        Console.WriteLine($"Copy {AasxHttpContextHelper.DataPath}/{name}/{f.Uri.OriginalString}");
 
                                         await using var archiveStream = archiveFile.Open();
                                         await s.CopyToAsync(archiveStream);
@@ -1172,14 +1001,13 @@ namespace AasxServer
 
             if (!string.IsNullOrEmpty(connectServer))
             {
-                HttpClient httpClient;
                 if (clientHandler == null)
                 {
                     clientHandler = new HttpClientHandler();
                     clientHandler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
                 }
 
-                httpClient = new HttpClient(clientHandler);
+                var httpClient = new HttpClient(clientHandler);
 
                 var payload = $"{{ \"source\" : \"{connectNodeName}\" }}";
 
@@ -1197,7 +1025,7 @@ namespace AasxServer
 
                 if (content == "OK")
                 {
-                    connectThread = new Thread(connectThreadLoop);
+                    connectThread = new Thread(ConnectThreadLoop);
                     connectLoop = true;
                 }
                 else
@@ -1206,7 +1034,7 @@ namespace AasxServer
                 }
             }
 
-            signalNewData(3);
+            SignalNewData(3);
 
             if (a.Opc && server != null)
             {
@@ -1249,8 +1077,6 @@ namespace AasxServer
             {
                 isPostgres = Configuration["DatabaseConnection:ConnectionString"].ToLower().Contains("host");
             }
-
-            var nl = Environment.NewLine;
 
             var rootCommand = new RootCommand("serve AASX packages over different interfaces")
             {
@@ -1372,7 +1198,7 @@ namespace AasxServer
             return readAsStringAsync.Result;
         }
 
-        public class aasListParameters
+        public class AasListParameters
         {
             public int index;
             public string idShort;
@@ -1383,14 +1209,14 @@ namespace AasxServer
             public string restEndPoint;
         }
 
-        public class aasDirectoryParameters
+        public class AasDirectoryParameters
         {
             public string source;
-            public List<aasListParameters> aasList;
+            public List<AasListParameters> aasList;
 
-            public aasDirectoryParameters()
+            public AasDirectoryParameters()
             {
-                aasList = new List<aasListParameters>();
+                aasList = new List<AasListParameters>();
             }
         }
 
@@ -1421,11 +1247,11 @@ namespace AasxServer
             public Reference semanticId;
 
             [XmlElement(ElementName = "endpoints")]
-            public List<AASxEndpoint> endpoints = new List<AASxEndpoint>();
+            public List<AASxEndpoint> endpoints = new();
         }
 
         /* AAS Descriptor Definiton */
-        public class aasDescriptor
+        public class AasDescriptor
         {
             [XmlElement(ElementName = "administration")] [JsonIgnore]
             public AdministrativeInformation administration;
@@ -1438,21 +1264,21 @@ namespace AasxServer
             [XmlElement(ElementName = "identification")] [JsonIgnore]
             public string identification;
 
-            [XmlElement(ElementName = "assets")] public List<AssetInformation> assets = new List<AssetInformation>();
+            [XmlElement(ElementName = "assets")] public List<AssetInformation> assets = new();
 
             [XmlElement(ElementName = "endpoints")]
-            public List<AASxEndpoint> endpoints = new List<AASxEndpoint>();
+            public List<AASxEndpoint> endpoints = new();
 
             [XmlElement(ElementName = "submodelDescriptors")]
-            public List<SubmodelDescriptors> submodelDescriptors = new List<SubmodelDescriptors>();
+            public List<SubmodelDescriptors> submodelDescriptors = new();
         }
 
         /* AAS Detail Part 2 Descriptor Definitions END*/
         /* Creation of AAS Descriptor */
         // TODO (jtikekar, 2023-09-04): Remove for now
-        public static aasDescriptor creatAASDescriptor(AdminShellPackageEnv adminShell)
+        public static AasDescriptor CreateAASDescriptor(AdminShellPackageEnv adminShell)
         {
-            var aasD = new aasDescriptor();
+            var aasD = new AasDescriptor();
             var endpointAddress = $"http://{hostPort}";
 
             aasD.idShort = adminShell.AasEnv.AssetAdministrationShells[0].IdShort;
@@ -1491,15 +1317,14 @@ namespace AasxServer
         }
 
         /*Publishing the AAS Descriptor*/
-        public static void publishDescriptorData(string descriptorData)
+        public static void PublishDescriptorData(string descriptorData)
         {
-            HttpClient httpClient;
-            httpClient = clientHandler != null ? new HttpClient(clientHandler) : new HttpClient();
+            var httpClient = clientHandler != null ? new HttpClient(clientHandler) : new HttpClient();
 
             var descriptorJson = new StringContent(descriptorData, Encoding.UTF8, "application/json");
             try
             {
-                _ = httpClient.PostAsync(connectServer + "/publish", descriptorJson).Result;
+                _ = httpClient.PostAsync($"{connectServer}/publish", descriptorJson).Result;
             }
             catch (Exception e)
             {
@@ -1524,12 +1349,12 @@ namespace AasxServer
         }
 
         static bool getDirectory = true;
-        static string getDirectoryDestination = "";
+        static string getDirectoryDestination = string.Empty;
 
-        static string getaasxFile_destination = "";
-        static string getaasxFile_fileName = "";
-        static string getaasxFile_fileData = "";
-        static string getaasxFile_fileType = "";
+        static string getaasxFile_destination = string.Empty;
+        static string getaasxFile_fileName = string.Empty;
+        static string getaasxFile_fileData = string.Empty;
+        static string getaasxFile_fileType = string.Empty;
         static int getaasxFile_fileLenBase64;
         static int getaasxFile_fileLenBinary;
         static int getaasxFile_fileTransmitted;
@@ -1539,7 +1364,7 @@ namespace AasxServer
 
         public static void connectPublish(string type, string json)
         {
-            if (connectServer == "")
+            if (string.IsNullOrEmpty(connectServer))
                 return;
 
             var tdp = new TransmitData
@@ -1552,10 +1377,8 @@ namespace AasxServer
             tdPending.Add(tdp);
         }
 
-        public static void connectThreadLoop()
+        public static void ConnectThreadLoop()
         {
-            bool newConnectData;
-
             while (connectLoop)
             {
                 var tf = new TransmitFrame
@@ -1574,7 +1397,7 @@ namespace AasxServer
                         source = connectNodeName
                     };
 
-                    var adp = new aasDirectoryParameters
+                    var adp = new AasDirectoryParameters
                     {
                         source = connectNodeName
                     };
@@ -1583,7 +1406,7 @@ namespace AasxServer
 
                     for (var j = 0; j < aascount; j++)
                     {
-                        var alp = new aasListParameters();
+                        var alp = new AasListParameters();
 
                         if (env[j] == null)
                         {
@@ -1593,7 +1416,7 @@ namespace AasxServer
                         alp.index = j;
 
                         /* Create Detail part 2 Descriptor Start */
-                        var aasDsecritpor = creatAASDescriptor(env[j]);
+                        var aasDsecritpor = CreateAASDescriptor(env[j]);
                         var aasDsecritporTData = new TransmitData
                         {
                             source = connectNodeName,
@@ -1622,7 +1445,7 @@ namespace AasxServer
                     }
 
                     var decriptorData = JsonConvert.SerializeObject(descriptortf, Formatting.Indented);
-                    publishDescriptorData(decriptorData);
+                    PublishDescriptorData(decriptorData);
 
                     td = new TransmitData
                     {
@@ -1806,13 +1629,11 @@ namespace AasxServer
 
                 if (!string.IsNullOrEmpty(content))
                 {
-                    newConnectData = false;
-                    var node = string.Empty;
+                    var newConnectData = false;
 
                     try
                     {
-                        var tf2 = new TransmitFrame();
-                        tf2 = JsonConvert.DeserializeObject<TransmitFrame>(content);
+                        var tf2 = JsonConvert.DeserializeObject<TransmitFrame>(content);
 
                         foreach (var td2 in tf2.data)
                         {
@@ -1832,7 +1653,7 @@ namespace AasxServer
                                     var binaryFile = File.ReadAllBytes(envFileName[aasIndex]);
                                     var binaryBase64 = Convert.ToBase64String(binaryFile);
 
-                                    var payload = $"{{ \"file\" : \" " + binaryBase64 + " \" }";
+                                    var payload = $"{{ \"file\" : \" {binaryBase64} \" }}";
 
                                     var enc = new ASCIIEncoding();
                                     var fileToken = JWT.Encode(payload, enc.GetBytes(AasxHttpContextHelper.secretString), JwsAlgorithm.HS256);
@@ -1962,7 +1783,7 @@ namespace AasxServer
                                             }
 
                                             tsb.actualCollections.Value = actualCollections.ToString();
-                                            signalNewData(1);
+                                            SignalNewData(1);
                                         }
                                     }
                                 }
@@ -2120,7 +1941,7 @@ namespace AasxServer
                             }
 
                             // i40language
-                            if (i40LanguageRuntime.isRequester && td2.type == "i40LanguageRuntime.sendFrameJSONProvider")
+                            if (i40LanguageRuntime.isRequester && td2.type.Equals("i40LanguageRuntime.sendFrameJSONProvider"))
                             {
                                 foreach (var s in td2.publish)
                                 {
@@ -2128,12 +1949,14 @@ namespace AasxServer
                                 }
                             }
 
-                            if (i40LanguageRuntime.isProvider && td2.type == "i40LanguageRuntime.sendFrameJSONRequester")
+                            if (!i40LanguageRuntime.isProvider || td2.type != "i40LanguageRuntime.sendFrameJSONRequester")
                             {
-                                foreach (var s in td2.publish)
-                                {
-                                    i40LanguageRuntime.receivedFrameJSONProvider.Add(JsonConvert.DeserializeObject<string>(s));
-                                }
+                                continue;
+                            }
+
+                            foreach (var s in td2.publish)
+                            {
+                                i40LanguageRuntime.receivedFrameJSONProvider.Add(JsonConvert.DeserializeObject<string>(s));
                             }
                         }
                     }
@@ -2170,11 +1993,11 @@ namespace AasxServer
 
         public static event EventHandler NewDataAvailable;
 
-        public class NewDataAvailableArgs : EventArgs
+        public class NewDataAvailableEventArgs : EventArgs
         {
             public int signalNewDataMode;
 
-            public NewDataAvailableArgs(int mode = 2)
+            public NewDataAvailableEventArgs(int mode = 2)
             {
                 signalNewDataMode = mode;
             }
@@ -2184,9 +2007,9 @@ namespace AasxServer
         // 1 == same tree, structure may change
         // 2 == build new tree, keep open nodes
         // 3 == build new tree, all nodes closed
-        public static void signalNewData(int mode)
+        public static void SignalNewData(int mode)
         {
-            NewDataAvailable?.Invoke(null, new NewDataAvailableArgs(mode));
+            NewDataAvailable?.Invoke(null, new NewDataAvailableEventArgs(mode));
         }
 
         public static void OnOPCClientNextTimedEvent()
@@ -2195,16 +2018,16 @@ namespace AasxServer
             NewDataAvailable?.Invoke(null, EventArgs.Empty);
         }
 
-        private static Timer scriptTimer;
+        private static Timer _scriptTimer;
 
         private static void SetScriptTimer(double value)
         {
             // Create a timer with a two-second interval.
-            scriptTimer = new Timer(value);
+            _scriptTimer = new Timer(value);
             // Hook up the Elapsed event for the timer. 
-            scriptTimer.Elapsed += OnScriptTimedEvent;
-            scriptTimer.AutoReset = true;
-            scriptTimer.Enabled = true;
+            _scriptTimer.Elapsed += OnScriptTimedEvent;
+            _scriptTimer.AutoReset = true;
+            _scriptTimer.Enabled = true;
         }
 
         private static void OnScriptTimedEvent(object source, ElapsedEventArgs e)
@@ -2216,149 +2039,6 @@ namespace AasxServer
 
         static bool RESTalreadyRunning;
         static long countGetPut;
-
-        private static void OnRestTimedEvent(Object source, ElapsedEventArgs e)
-        {
-            RESTalreadyRunning = true;
-
-            var GETSUBMODEL = string.Empty;
-            var GETURL = string.Empty;
-            var PUTSUBMODEL = string.Empty;
-            var PUTURL = string.Empty;
-
-            // Search for submodel REST and scan qualifiers for GET and PUT commands
-            foreach (var sm in env[0].AasEnv.Submodels)
-            {
-                if (sm is not {IdShort: "REST"})
-                {
-                    continue;
-                }
-
-                var count = sm.Qualifiers.Count;
-                if (count == 0)
-                {
-                    continue;
-                }
-
-                var j = 0;
-
-                while (j < count) // Scan qualifiers
-                {
-                    var p = sm.Qualifiers[j] as Qualifier;
-
-                    switch (p.Type)
-                    {
-                        case "GETSUBMODEL":
-                            GETSUBMODEL = p.Value;
-                            break;
-                        case "GETURL":
-                            GETURL = p.Value;
-                            break;
-                        case "PUTSUBMODEL":
-                            PUTSUBMODEL = p.Value;
-                            break;
-                        case "PUTURL":
-                            PUTURL = p.Value;
-                            break;
-                    }
-
-                    j++;
-                }
-            }
-
-            if (!string.IsNullOrEmpty(GETSUBMODEL) && !string.IsNullOrEmpty(GETURL)) // GET
-            {
-                Console.WriteLine("{0} GET Submodel {1} from URL {2}.", countGetPut++, GETSUBMODEL, GETURL);
-
-                var sm = string.Empty;
-                try
-                {
-                    var client = new AasxRestClient(GETURL);
-                    sm = client.GetSubmodel(GETSUBMODEL);
-                }
-                catch (Exception)
-                {
-                    Console.WriteLine("Can not connect to REST server {0}.", GETURL);
-                }
-
-                Submodel submodel;
-                try
-                {
-                    using TextReader reader = new StringReader(sm);
-                    var serializer = new JsonSerializer();
-                    serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                    submodel = (Submodel) serializer.Deserialize(reader, typeof(Submodel));
-                }
-                catch (Exception)
-                {
-                    Console.WriteLine("Can not read SubModel {0}.", GETSUBMODEL);
-                    return;
-                }
-
-                var aas = env[0].AasEnv.FindAasWithSubmodelId(submodel.Id);
-
-                // datastructure update
-                if (env?[0].AasEnv == null)
-                {
-                    Console.WriteLine("Error accessing internal data structures.");
-                    return;
-                }
-
-                // add Submodel
-                var existingSm = env[0].AasEnv.FindSubmodelById(submodel.Id);
-                if (existingSm != null)
-                    env[0].AasEnv.Submodels.Remove(existingSm);
-                env[0].AasEnv.Submodels.Add(submodel);
-
-                // add SubmodelRef to AAS            
-                // access the AAS
-                var keyList = new List<IKey> {new Key(KeyTypes.Submodel, submodel.Id)};
-                var newsmr = new Reference(ReferenceTypes.ModelReference, keyList);
-                var existsmr = aas.HasSubmodelReference(newsmr);
-                if (!existsmr)
-                {
-                    aas.AddSubmodelReference(newsmr);
-                }
-            }
-
-            if (!string.IsNullOrEmpty(PUTSUBMODEL) && !string.IsNullOrEmpty(PUTURL)) // PUT
-            {
-                Console.WriteLine("{0} PUT Submodel {1} from URL {2}.", countGetPut++, PUTSUBMODEL, PUTURL);
-
-                foreach (var json in from sm in env[0].AasEnv.Submodels
-                         where sm is {IdShort: not null} && sm.IdShort == PUTSUBMODEL
-                         select JsonConvert.SerializeObject(sm, Formatting.Indented))
-                {
-                    try
-                    {
-                        var client = new AasxRestClient(PUTURL);
-                        client.PutSubmodel(json);
-                    }
-                    catch
-                    {
-                        Console.WriteLine("Can not connect to REST server {0}", PUTURL);
-                    }
-                }
-            }
-
-            RESTalreadyRunning = false;
-
-            // start MQTT Client as a worker (will start in the background)
-            var worker = new BackgroundWorker();
-            worker.DoWork += async (s1, e1) =>
-            {
-                try
-                {
-                    await MqttClient.StartAsync(env);
-                }
-                catch (Exception exception)
-                {
-                    Console.WriteLine(exception.Message);
-                }
-            };
-            worker.RunWorkerCompleted += (_, _) => { };
-            worker.RunWorkerAsync();
-        }
 
         /// <summary>
         /// Writes to (i.e. updates values of) Nodes in the AAS OPC Server
@@ -2476,7 +2156,7 @@ namespace AasxServer
                             j++;
                         }
 
-                        if (URL == "")
+                        if (string.IsNullOrEmpty(URL))
                         {
                             continue;
                         }
@@ -2503,7 +2183,7 @@ namespace AasxServer
                         {
                             if (!OPCClients.TryGetValue(URL, out client))
                             {
-                                bool cantconnect = false;
+                                var cantconnect = false;
                                 try
                                 {
                                     // make OPC UA client
@@ -2554,9 +2234,8 @@ namespace AasxServer
                             // some preparations for multiple AAS below
                             const int serverNamespaceIdx = 3; //could be gotten directly from the nodeMgr in OPCWrite instead, only pass the string part of the ID
 
-                            var AASSubmodel = $"{env[i].AasEnv.AssetAdministrationShells[0].IdShort}.{sm.IdShort}";
-                            // for multiple AAS, use something like env.AasEnv.AssetAdministrationShells[i].IdShort;
-                            var serverNodePrefix = string.Format("ns={0};s=AASROOT.{1}", serverNamespaceIdx, AASSubmodel);
+                            var aasSubmodel = $"{env[i].AasEnv.AssetAdministrationShells[0].IdShort}.{sm.IdShort}";
+                            var serverNodePrefix = $"ns={serverNamespaceIdx};s=AASROOT.{aasSubmodel}";
                             WalkSubmodelElement(sme, Path, serverNodePrefix, client, Namespace);
                         }
                     }
@@ -2567,7 +2246,7 @@ namespace AasxServer
 
             if (!initial)
             {
-                changeDataVersion();
+                ChangeDataVersion();
             }
 
             return true;
@@ -2591,16 +2270,19 @@ namespace AasxServer
                             {
                                 continue;
                             }
+
                             var count = sm.Qualifiers?.Count ?? 0;
                             if (count == 0)
                             {
                                 continue;
                             }
+
                             var q = sm.Qualifiers[0] as Qualifier;
                             if (q.Type != "SCRIPT")
                             {
                                 continue;
                             }
+
                             // Triple
                             // Reference to property with Number
                             // Reference to submodel with numbers/strings
@@ -2629,7 +2311,7 @@ namespace AasxServer
                                     case "GetJSON" when init:
                                     case "GetJSON" when isLoading:
                                         return;
-                                    case "GetJSON" when !(sme1 is ReferenceElement):
+                                    case "GetJSON" when sme1 is not ReferenceElement:
                                         continue;
                                     case "GetJSON":
                                     {
@@ -2653,9 +2335,9 @@ namespace AasxServer
                                         handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
                                         var client = new HttpClient(handler);
 
-                                        if (username != "" && password != "")
+                                        if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
                                         {
-                                            var authToken = Encoding.ASCII.GetBytes(username + ":" + password);
+                                            var authToken = Encoding.ASCII.GetBytes($"{username}:{password}");
                                             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
                                                 Convert.ToBase64String(authToken));
                                         }
@@ -2671,7 +2353,7 @@ namespace AasxServer
                                             if (ref12 is SubmodelElementCollection collection)
                                             {
                                                 var parsed = JObject.Parse(response);
-                                                parseJson(collection, parsed, null);
+                                                ParseJson(collection, parsed, null);
                                             }
                                         }
 
@@ -2714,10 +2396,15 @@ namespace AasxServer
                                 {
                                     continue;
                                 }
+
                                 var ref1 = env[i].AasEnv.FindReferableByReference(referenceElement1.GetModelReference());
                                 var ref2 = env[i].AasEnv.FindReferableByReference(referenceElement2.GetModelReference());
                                 var ref3 = env[i].AasEnv.FindReferableByReference(referenceElement3.GetModelReference());
-                                if (ref1 is not Property p1 || ref2 is not Submodel sm2 || ref3 is not Property p3) {continue;}
+                                if (ref1 is not Property p1 || ref2 is not Submodel sm2 || ref3 is not Property p3)
+                                {
+                                    continue;
+                                }
+
                                 // Simulate changes
                                 var count2 = sm2.SubmodelElements.Count;
                                 for (var j = 0; j < count2; j++)
@@ -2737,15 +2424,15 @@ namespace AasxServer
             }
         }
 
-        public static bool parseJson(SubmodelElementCollection c, JObject o, List<string> filter,
+        public static bool ParseJson(SubmodelElementCollection c, JObject o, List<string> filter,
             Property minDiffAbsolute = null, Property minDiffPercent = null)
         {
-            int newMode = 0;
-            DateTime timeStamp = DateTime.UtcNow;
-            bool ok = false;
+            var newMode = 0;
+            var timeStamp = DateTime.UtcNow;
+            var ok = false;
 
-            int iMinDiffAbsolute = 1;
-            int iMinDiffPercent = 0;
+            var iMinDiffAbsolute = 1;
+            var iMinDiffPercent = 0;
             if (minDiffAbsolute != null)
                 iMinDiffAbsolute = Convert.ToInt32(minDiffAbsolute.Value);
             if (minDiffPercent != null)
@@ -2753,10 +2440,9 @@ namespace AasxServer
 
             foreach (JProperty jp1 in (JToken) o)
             {
-                if (filter != null && filter.Count != 0)
+                if (filter != null && filter.Count != 0 && !filter.Contains(jp1.Name))
                 {
-                    if (!filter.Contains(jp1.Name))
-                        continue;
+                    continue;
                 }
 
                 SubmodelElementCollection c2;
@@ -2773,11 +2459,11 @@ namespace AasxServer
                             newMode = 1;
                         }
 
-                        int count = 1;
+                        var count = 1;
                         foreach (JObject el in jp1.Value)
                         {
-                            string n = jp1.Name + "_array_" + count++;
-                            SubmodelElementCollection c3 =
+                            var n = $"{jp1.Name}_array_{count++}";
+                            var c3 =
                                 c2.FindFirstIdShortAs<SubmodelElementCollection>(n);
                             if (c3 == null)
                             {
@@ -2788,7 +2474,7 @@ namespace AasxServer
                                 newMode = 1;
                             }
 
-                            ok |= parseJson(c3, el, filter);
+                            ok |= ParseJson(c3, el, filter);
                         }
 
                         break;
@@ -2803,14 +2489,11 @@ namespace AasxServer
                             newMode = 1;
                         }
 
-                        foreach (JObject el in jp1.Value)
-                        {
-                            ok |= parseJson(c2, el, filter);
-                        }
+                        ok = jp1.Value.Cast<JObject>().Aggregate(ok, (current, el) => current | ParseJson(c2, el, filter));
 
                         break;
                     default:
-                        Property p = c.FindFirstIdShortAs<Property>(jp1.Name);
+                        var p = c.FindFirstIdShortAs<Property>(jp1.Name);
                         if (p == null)
                         {
                             p = new Property(DataTypeDefXsd.String, idShort: jp1.Name);
@@ -2823,14 +2506,14 @@ namespace AasxServer
                         // see https://github.com/JamesNK/Newtonsoft.Json/issues/874    
                         try
                         {
-                            if (p.Value == "")
+                            if (string.IsNullOrEmpty(p.Value))
                                 p.Value = "0";
-                            string value = (jp1.Value as JValue).ToString(CultureInfo.InvariantCulture);
-                            if (!value.Contains("."))
+                            var value = (jp1.Value as JValue).ToString(CultureInfo.InvariantCulture);
+                            if (!value.Contains('.'))
                             {
-                                int v = Convert.ToInt32(value);
-                                int lastv = Convert.ToInt32(p.Value);
-                                int delta = Math.Abs(v - lastv);
+                                var v = Convert.ToInt32(value);
+                                var lastv = Convert.ToInt32(p.Value);
+                                var delta = Math.Abs(v - lastv);
                                 if (delta >= iMinDiffAbsolute && delta >= lastv * iMinDiffPercent / 100)
                                 {
                                     p.Value = value;
@@ -2845,57 +2528,61 @@ namespace AasxServer
                                 ok = true;
                             }
                         }
-                        catch
+                        catch (Exception exception)
                         {
+                            Console.WriteLine(exception.Message);
                         }
 
                         break;
                 }
             }
 
-            signalNewData(newMode);
+            SignalNewData(newMode);
             return ok;
         }
 
-        private static void WalkSubmodelElement(ISubmodelElement sme, string nodePath, string serverNodePrefix, UASampleClient client, int clientNamespace)
+        private static void WalkSubmodelElement(IClass sme, string nodePath, string serverNodePrefix, UASampleClient client, int clientNamespace)
         {
-            if (sme is Property)
+            switch (sme)
             {
-                var p = sme as Property;
-                string clientNodeName = nodePath + p.IdShort;
-                string serverNodeId = string.Format("{0}.{1}.Value", serverNodePrefix, p.IdShort);
-                NodeId clientNode = new NodeId(clientNodeName, (ushort) clientNamespace);
-                UpdatePropertyFromOPCClient(p, serverNodeId, client, clientNode);
-            }
-            else if (sme is SubmodelElementCollection)
-            {
-                var collection = sme as SubmodelElementCollection;
-                for (int i = 0; i < collection.Value.Count; i++)
+                case Property property:
                 {
-                    string newNodeIdBase = nodePath + "." + collection.IdShort;
-                    WalkSubmodelElement(collection.Value[i], newNodeIdBase, serverNodePrefix, client, clientNamespace);
+                    var clientNodeName = nodePath + property.IdShort;
+                    var serverNodeId = $"{serverNodePrefix}.{property.IdShort}.Value";
+                    var clientNode = new NodeId(clientNodeName, (ushort) clientNamespace);
+                    UpdatePropertyFromOPCClient(property, serverNodeId, client, clientNode);
+                    break;
+                }
+                case SubmodelElementCollection elementCollection:
+                {
+                    foreach (var t in elementCollection.Value)
+                    {
+                        var newNodeIdBase = $"{nodePath}.{elementCollection.IdShort}";
+                        WalkSubmodelElement(t, newNodeIdBase, serverNodePrefix, client, clientNamespace);
+                    }
+
+                    break;
                 }
             }
         }
 
-        private static void UpdatePropertyFromOPCClient(Property p, string serverNodeId, UASampleClient client, NodeId clientNodeId)
+        private static void UpdatePropertyFromOPCClient(IProperty p, string serverNodeId, UASampleClient client, NodeId clientNodeId)
         {
-            string value = "";
+            var value = string.Empty;
 
-            bool write = (p.FindQualifierOfType("OPCWRITE") != null);
+            var write = (p.FindQualifierOfType("OPCWRITE") != null);
             if (write)
                 value = p.Value;
 
             try
             {
-                // ns=#;i=#
-                string[] split = (clientNodeId.ToString()).Split('#');
+                var split = (clientNodeId.ToString()).Split('#');
                 if (split.Length == 2)
                 {
                     uint i = Convert.ToUInt16(split[1]);
                     split = clientNodeId.ToString().Split('=');
                     split = split[1].Split(';');
-                    ushort ns = Convert.ToUInt16(split[0]);
+                    var ns = Convert.ToUInt16(split[0]);
                     clientNodeId = new NodeId(i, ns);
                     Console.WriteLine($"New node id: {clientNodeId}");
                 }
@@ -2903,7 +2590,7 @@ namespace AasxServer
                 Console.WriteLine($"{serverNodeId} <= {value}");
                 if (write)
                 {
-                    short i = Convert.ToInt16(value);
+                    var i = Convert.ToInt16(value);
                     client.WriteSubmodelElementValue(clientNodeId, i);
                 }
                 else
@@ -2916,14 +2603,18 @@ namespace AasxServer
             }
 
             // update in AAS env
-            if (!write)
+            if (write)
             {
-                p.Value = value;
-                signalNewData(0);
+                return;
+            }
 
-                // update in OPC
-                if (!OPCWrite(serverNodeId, value))
-                    Console.WriteLine("OPC write not successful.");
+            p.Value = value;
+            SignalNewData(0);
+
+            // update in OPC
+            if (!OPCWrite(serverNodeId, value))
+            {
+                Console.WriteLine("OPC write not successful.");
             }
         }
     }
@@ -2951,18 +2642,20 @@ namespace AasxServer
                 Console.WriteLine(message);
             }
 
-            if (ask)
+            if (!ask)
             {
-                try
-                {
-                    ConsoleKeyInfo result = Console.ReadKey();
-                    Console.WriteLine();
-                    return await Task.FromResult((result.KeyChar == 'y') || (result.KeyChar == 'Y') || (result.KeyChar == '\r'));
-                }
-                catch
-                {
-                    // intentionally fall through
-                }
+                return await Task.FromResult(true);
+            }
+
+            try
+            {
+                var result = Console.ReadKey();
+                Console.WriteLine();
+                return await Task.FromResult(result.KeyChar is 'y' or 'Y' or '\r');
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine(exception.Message);
             }
 
             return await Task.FromResult(true);
@@ -2974,8 +2667,7 @@ namespace AasxServer
         Ok = 0,
         ErrorServerNotStarted = 0x80,
         ErrorServerRunning = 0x81,
-        ErrorServerException = 0x82,
-        ErrorInvalidCommandLine = 0x100
+        ErrorServerException = 0x82
     }
 
     public class MySampleServer
@@ -3005,7 +2697,7 @@ namespace AasxServer
             {
                 exitCode = ExitCode.ErrorServerNotStarted;
                 ConsoleSampleServer().Wait();
-                Console.WriteLine("Servers succesfully started. Press Ctrl-C to exit...");
+                Console.WriteLine("Servers successfully started. Press Ctrl-C to exit...");
                 exitCode = ExitCode.ErrorServerRunning;
             }
             catch (Exception ex)
@@ -3019,14 +2711,15 @@ namespace AasxServer
             quitEvent = new ManualResetEvent(false);
             try
             {
-                Console.CancelKeyPress += (sender, eArgs) =>
+                Console.CancelKeyPress += (_, eArgs) =>
                 {
                     quitEvent.Set();
                     eArgs.Cancel = true;
                 };
             }
-            catch
+            catch (Exception exception)
             {
+                Console.WriteLine(exception.Message);
             }
 
             // wait for timeout or Ctrl-C
@@ -3036,22 +2729,15 @@ namespace AasxServer
             {
                 Console.WriteLine("Server stopped. Waiting for exit...");
 
-                using (SampleServer _server = server)
-                {
-                    // Stop status thread
-                    server = null;
-                    status.Wait();
-                    // Stop server and dispose
-                    _server.Stop();
-                }
+                using var sampleServer = server;
+                // Stop status thread
+                server = null;
+                status.Wait();
+                // Stop server and dispose
+                sampleServer.Stop();
             }
 
             exitCode = ExitCode.Ok;
-        }
-
-        public static ExitCode ExitCode
-        {
-            get => exitCode;
         }
 
         private static void CertificateValidator_CertificateValidation(CertificateValidator validator, CertificateValidationEventArgs e)
@@ -3065,21 +2751,22 @@ namespace AasxServer
         private async Task ConsoleSampleServer()
         {
             ApplicationInstance.MessageDlg = new ApplicationMessageDlg();
-            ApplicationInstance application = new ApplicationInstance();
-
-            application.ApplicationName = "UA Core Sample Server";
-            application.ApplicationType = ApplicationType.Server;
-            application.ConfigSectionName = Utils.IsRunningOnMono() ? "Opc.Ua.MonoSampleServer" : "Opc.Ua.SampleServer";
+            var application = new ApplicationInstance
+            {
+                ApplicationName = "UA Core Sample Server",
+                ApplicationType = ApplicationType.Server,
+                ConfigSectionName = Utils.IsRunningOnMono() ? "Opc.Ua.MonoSampleServer" : "Opc.Ua.SampleServer"
+            };
 
             // load the application configuration.
-            ApplicationConfiguration config = await application.LoadApplicationConfiguration(true);
+            var config = await application.LoadApplicationConfiguration(true);
 
             // check the application certificate.
-            bool haveAppCertificate = await application.CheckApplicationInstanceCertificate(true, 0);
+            var haveAppCertificate = await application.CheckApplicationInstanceCertificate(true, 0);
 
             if (!haveAppCertificate)
             {
-                throw new Exception("Application instance certificate invalid!");
+                throw new AuthenticationException("Application instance certificate invalid!");
             }
 
             if (!config.SecurityConfiguration.AutoAcceptUntrustedCertificates)
@@ -3106,24 +2793,26 @@ namespace AasxServer
             PrintSessionStatus(session, reason.ToString());
         }
 
-        void PrintSessionStatus(Session session, string reason, bool lastContact = false)
+        private static void PrintSessionStatus(Session session, string reason, bool lastContact = false)
         {
             lock (session.DiagnosticsLock)
             {
-                string item = String.Format("{0,9}:{1,20}:", reason, session.SessionDiagnostics.SessionName);
+                var item = $"{reason,9}:{session.SessionDiagnostics.SessionName,20}:";
                 if (lastContact)
                 {
-                    item += String.Format("Last Event:{0:HH:mm:ss}", session.SessionDiagnostics.ClientLastContactTime.ToLocalTime());
+                    item += $"Last Event:{session.SessionDiagnostics.ClientLastContactTime.ToLocalTime():HH:mm:ss}";
                 }
                 else
                 {
                     if (session.Identity != null)
                     {
-                        item += String.Format(":{0,20}", session.Identity.DisplayName);
+                        item += $":{session.Identity.DisplayName,20}";
                     }
 
-                    item += String.Format(":{0}", session.Id);
+                    item += $":{session.Id}";
                 }
+
+                Console.WriteLine(item);
             }
         }
 
@@ -3133,7 +2822,7 @@ namespace AasxServer
             {
                 if (DateTime.UtcNow - lastEventTime > TimeSpan.FromMilliseconds(6000))
                 {
-                    IList<Session> sessions = server.CurrentInstance.SessionManager.GetSessions();
+                    var sessions = server.CurrentInstance.SessionManager.GetSessions();
                     foreach (var session in sessions)
                     {
                         PrintSessionStatus(session, "-Status-", true);

@@ -657,7 +657,7 @@ namespace AasxServer
                 int mode = 0;
                 if (treeChanged)
                     mode = 2;
-                Program.signalNewData(mode);
+                Program.SignalNewData(mode);
                 Thread.Sleep(1000);
             }
         }

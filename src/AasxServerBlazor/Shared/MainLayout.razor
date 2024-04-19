@@ -150,12 +150,12 @@
                                             if (CurrentValue == "edit")
                                             {
                                                 edit = !edit;
-                                                AasxServer.Program.signalNewData(2);
+                                                AasxServer.Program.SignalNewData(2);
                                             }
                                             else if (CurrentValue == "weight")
                                             {
                                                 AasxServer.Program.showWeight = !AasxServer.Program.showWeight;
-                                                AasxServer.Program.signalNewData(2);
+                                                AasxServer.Program.SignalNewData(2);
                                             }
                                             else if (CurrentValue == "count=0")
                                             {
@@ -169,13 +169,13 @@
                                             {
                                                 CurrentValue = CurrentValue.Replace("get=", "");
                                                 AasxServer.Program.getUrl = CurrentValue;
-                                                AasxServer.Program.signalNewData(2);
+                                                AasxServer.Program.SignalNewData(2);
                                             }
                                             else if (CurrentValue.Contains("secret="))
                                             {
                                                 CurrentValue = CurrentValue.Replace("secret=", "");
                                                 AasxServer.Program.getUrl = CurrentValue;
-                                                AasxServer.Program.signalNewData(2);
+                                                AasxServer.Program.SignalNewData(2);
                                             }
                                             else
                                             {
@@ -354,7 +354,7 @@
         if (Program.isLoading)
             return;
 
-        if (args is Program.NewDataAvailableArgs newArgs)
+        if (args is Program.NewDataAvailableEventArgs newArgs)
         {
             int newDataMode = newArgs.signalNewDataMode;
             if (newDataMode != 0)

@@ -1264,7 +1264,7 @@ namespace AasxTimeSeries
                         }
                     }
                     //// if (updateMode != 0)
-                    Program.signalNewData(updateMode);
+                    Program.SignalNewData(updateMode);
                 }
             }
 
@@ -1286,7 +1286,7 @@ namespace AasxTimeSeries
                     try
                     {
                         JObject parsed = JObject.Parse(payload);
-                        if (Program.parseJson(c, parsed, filter, minDiffAbsolute, minDiffPercent))
+                        if (Program.ParseJson(c, parsed, filter, minDiffAbsolute, minDiffPercent))
                             return true;
                     }
                     catch (Exception ex)
@@ -1318,7 +1318,7 @@ namespace AasxTimeSeries
                 if (response != "")
                 {
                     JObject parsed = JObject.Parse(response);
-                    if (Program.parseJson(c, parsed, filter, minDiffAbsolute, minDiffPercent))
+                    if (Program.ParseJson(c, parsed, filter, minDiffAbsolute, minDiffPercent))
                         return true;
                 }
             }

@@ -47,7 +47,7 @@ namespace AasxServerStandardBib.Services
 
                 _packages[packageIndex] = null;
                 _envFileNames[packageIndex] = null;
-                Program.signalNewData(2);
+                Program.SignalNewData(2);
             }
             else
             {
@@ -196,7 +196,7 @@ namespace AasxServerStandardBib.Services
                         submodel.TimeStampCreate = timeStamp;
                         submodel.SetParentAndTimestamp(timeStamp);
                     }
-                    Program.signalNewData(2);
+                    Program.SignalNewData(2);
                     return emptyPackageIndex.ToString();
                 }
                 else
@@ -268,7 +268,7 @@ namespace AasxServerStandardBib.Services
                     }
                 }
 
-                Program.signalNewData(2);
+                Program.SignalNewData(2);
             }
             else
             {
