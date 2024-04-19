@@ -87,7 +87,7 @@ namespace AasxServer
             File.Delete(copyFileName);
         }
 
-        static int oldest;
+        private static int _oldest;
 
         public static void LoadPackageForAas(string aasIdentifier, out IAssetAdministrationShell output, out int packageIndex)
         {
@@ -116,9 +116,9 @@ namespace AasxServer
             // not found in memory
             if (i == env.Length)
             {
-                i = oldest++;
-                if (oldest == env.Length)
-                    oldest = envimin;
+                i = _oldest++;
+                if (_oldest == env.Length)
+                    _oldest = envimin;
             }
 
             using var db = new AasContext();
@@ -227,9 +227,9 @@ namespace AasxServer
             // not found in memory
             if (i == env.Length)
             {
-                i = oldest++;
-                if (oldest == env.Length)
-                    oldest = envimin;
+                i = _oldest++;
+                if (_oldest == env.Length)
+                    _oldest = envimin;
             }
 
             using var db = new AasContext();
@@ -798,7 +798,7 @@ namespace AasxServer
                         env[envi] = new AdminShellPackageEnv(fn, true);
                         envi++;
                         envimin = envi;
-                        oldest = envi;
+                        _oldest = envi;
                         fi++;
                         continue;
                     }
