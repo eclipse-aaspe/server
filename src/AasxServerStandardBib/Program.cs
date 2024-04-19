@@ -58,7 +58,7 @@ namespace AasxServer
     ///
     /// The code has been adapted from: https://stackoverflow.com/a/63135555/1600678
     /// </summary>
-    static class WindowsConsoleWillBeDestroyedAtTheEnd
+    public static class WindowsConsoleWillBeDestroyedAtTheEnd
     {
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern uint GetConsoleProcessList(uint[] processList, uint processCount);
@@ -437,7 +437,7 @@ namespace AasxServer
             }
 
             // Read environment variables
-            string[] evlist = {"PLCNEXTTARGET", "WITHPOLICY"};
+            string[] evlist = {"PLCNEXTTARGET", "WITHPOLICY", "SHOWWEIGHT"};
             foreach (var ev in evlist)
             {
                 var v = Environment.GetEnvironmentVariable(ev);
@@ -462,6 +462,18 @@ namespace AasxServer
                 };
 
                 Console.WriteLine("withPolicy: " + withPolicy);
+            }
+            if (envVariables.TryGetValue("SHOWWEIGHT", out w))
+            {
+                if (w.ToLower() == "true" || w.ToLower() == "on")
+                {
+                    showWeight = true;
+                }
+                if (w.ToLower() == "false" || w.ToLower() == "off")
+                {
+                    showWeight = false;
+                }
+                Console.WriteLine("showWeight: " + showWeight);
             }
 
             if (a.Connect != null)

@@ -451,10 +451,11 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                             // copy specific submodels locally
                                             try
                                             {
+                                                requestPath += queryPara;
                                                 // HEAD to get policy for submodel
                                                 if (Program.withPolicy)
                                                 {
-                                                    requestPath += queryPara;
+                                                    // requestPath += queryPara;
                                                     Console.WriteLine("HEAD Submodel " + requestPath);
                                                     var task = Task.Run(async () => { response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Head, requestPath)); });
                                                     task.Wait();

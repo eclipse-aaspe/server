@@ -76,6 +76,11 @@
             }
             else
             {
+                string modelText = "PCF";
+                if (Program.showWeight)
+                {
+                    modelText = "weight";
+                }
                 <style>
                     input:checked ~ .dot {
                         transform: translateX(100%);
@@ -103,7 +108,10 @@
                             <div class="flex items-stretch">
                                 <img src="zvei_2021_RZ_RGB.png" style="max-width: 100px; display: inline; object-fit: contain;" />
                                 <img src="Logo_IDTA.jpg" style="padding-left:10px; max-width: 100px; display: inline; object-fit: contain;" />
-                                <span hspace=20 style="padding-left:20px; padding-right:10px; font:xx-large;" class="self-center"><strong>Product Carbon Footprint Showcase</strong></span>
+                                @if (!Program.showWeight)
+                                {
+                                    <span hspace=20 style="padding-left:20px; padding-right:10px; font:xx-large;" class="self-center"><strong>Product Carbon Footprint Showcase</strong></span>
+                                }
                             </div>
                         </div>
                         <div>
@@ -227,7 +235,7 @@
                         </div>
                         <div class="self-center text-right p-2" style="margin-top:8px;">
                             <label for="toggle" class="flex items-center cursor-pointer justify-end">
-                                Disclaimer: displayed PCF values are for demo purposes only
+                                Disclaimer: displayed @modelText values are for demo purposes only
                                 <div class="relative ml-2">
                                     <!-- input -->
                                     <input type="checkbox" id="toggle" class="sr-only"

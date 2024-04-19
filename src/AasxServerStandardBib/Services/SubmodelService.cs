@@ -500,30 +500,41 @@ namespace AasxServerStandardBib.Services
 
         public void UpdateSubmodelById(string submodelIdentifier, ISubmodel newSubmodel)
         {
-            var submodel = _packageEnvService.GetSubmodelById(submodelIdentifier, out _);
+            var packageIndex = -1;
+            ISubmodel submodel = null;
+            if (_packageEnvService.IsSubmodelPresent(submodelIdentifier, out submodel, out packageIndex))
+            {
+                submodel = _packageEnvService.GetSubmodelById(submodelIdentifier, out _);
 
-            //Verify the body first
-            _verificationService.VerifyRequestBody(newSubmodel);
+                //Verify the body first
+                _verificationService.VerifyRequestBody(newSubmodel);
 
-            Update.ToUpdateObject(submodel, newSubmodel);
+                Update.ToUpdateObject(submodel, newSubmodel);
 
-            submodel.SetTimeStamp(DateTime.UtcNow);
+                submodel.SetTimeStamp(DateTime.UtcNow);
 
-            Program.SignalNewData(0);
+                _packageEnvService.setWrite(packageIndex, true);
+                Program.SignalNewData(0);
+            }
         }
 
         public void UpdateSubmodelElementByPath(string submodelIdentifier, string idShortPath, ISubmodelElement newSme)
         {
-            var submodelElement = GetSubmodelElementByPath(submodelIdentifier, idShortPath);
+            int packageIndex = -1;
+            if (_packageEnvService.IsSubmodelPresent(submodelIdentifier, out ISubmodel _, out packageIndex))
+            {
+                var submodelElement = GetSubmodelElementByPath(submodelIdentifier, idShortPath);
 
-            //Verify the body first
-            _verificationService.VerifyRequestBody(newSme);
+                //Verify the body first
+                _verificationService.VerifyRequestBody(newSme);
 
-            Update.ToUpdateObject(submodelElement, newSme);
+                Update.ToUpdateObject(submodelElement, newSme);
 
-            newSme.SetTimeStamp(DateTime.UtcNow);
+                newSme.SetTimeStamp(DateTime.UtcNow);
 
-            Program.SignalNewData(0);
+                _packageEnvService.setWrite(packageIndex, true);
+                Program.SignalNewData(0);
+            }
         }
 
         public void ReplaceFileByPath(string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream fileContent)
@@ -562,7 +573,7 @@ namespace AasxServerStandardBib.Services
                             targetFile = targetFile.Replace('/', Path.DirectorySeparatorChar); //TODO:jtikekar: better way to handle
                             Task task = _packageEnvService.ReplaceSupplementaryFileInPackage(submodelIdentifier, file.Value, targetFile, contentType, fileContent);
                             file.Value = FormatFileName(targetFile);
-                            AasxServer.Program.SignalNewData(2);
+                            Program.SignalNewData(2);
                         }
                         // incorrect value
                         else
@@ -579,7 +590,7 @@ namespace AasxServerStandardBib.Services
                         targetFile = targetFile.Replace('/', Path.DirectorySeparatorChar);
                         Task task = _packageEnvService.ReplaceSupplementaryFileInPackage(submodelIdentifier, file.Value, targetFile, contentType, fileContent);
                         file.Value = FormatFileName(targetFile);
-                        AasxServer.Program.SignalNewData(2);
+                        Program.SignalNewData(2);
                     }
 
                 }
