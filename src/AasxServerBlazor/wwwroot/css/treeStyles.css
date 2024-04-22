@@ -315,7 +315,7 @@ a:hover {
     border: 0.1rem solid var(--border-color);
     padding: 0.4rem;
     margin-left: 0.2rem;
-    background-color: var(--tertiary-color) !important;
+    background: var(--secondary-background-color) !important;
     box-shadow: 0 0.2rem 0.2rem rgba(0, 0, 0, 0.2);
 }
 
@@ -334,4 +334,8 @@ a:hover {
     height: auto;
     display: block;
     margin: 0 auto;
+}
+
+.splitter-gutter{
+    border-radius: 10px;
 }
