@@ -7,11 +7,12 @@
     --tertiary-color: #A499BE;
     --highlight-color: #9E8576;
     --highlight-color-shadow: #7A542E;
-    --warning-color: #f9efae;
-    --approval-color: #5ce076;
+    --warning-color: #F5F749;
+    --approval-color: var(--green-color);
     --lightgray-color: lightgray;
-    --green-color: green;
-    --red-color: red;
+    --green-color: #5ce076;
+    --red-color: #F24236;
+    --border-color: var(--red-color);
     --text-light-color: white;
 }
 
@@ -37,10 +38,25 @@
 /* Tree Node */
 .tree-node {
     padding: 10px;
+    display: flex;
+    align-items: flex-start;
 }
 
 .tree-node img {
     max-width: 50%;
+}
+
+.tree-title {
+    display: flex;
+    align-items: center;
+    padding-left: 1rem;
+}
+
+.tree-icon {
+    max-width: 50px;
+    max-height: 50px;
+    margin-right: -1rem;
+    margin-left: 1.25rem;
 }
 
 /* Details Container */
@@ -205,9 +221,6 @@
     min-height: 50vh;
 }
 
-.tree-title {
-    padding-left: 1rem;
-}
 
 .tree-container {
     flex: 0 0 auto;
@@ -276,7 +289,7 @@
 
 .selected-node{
     outline: none;
-    border: 0.1rem solid var(--highlight-color);
+    border: 0.1rem solid var(--border-color);
     padding: 0.4rem;
     background-color: var(--tertiary-color) !important;
     box-shadow: 0 0.2rem 0.2rem rgba(0, 0, 0, 0.2);
