@@ -287,10 +287,27 @@
     text-decoration: underline;
 }
 
-.selected-node{
+.selected-node {
     outline: none;
     border: 0.1rem solid var(--border-color);
     padding: 0.4rem;
     background-color: var(--tertiary-color) !important;
     box-shadow: 0 0.2rem 0.2rem rgba(0, 0, 0, 0.2);
+}
+
+.tree-details-image {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-height: 15rem;
+    padding-bottom: 1rem;
+}
+
+.tree-details-image img {
+    max-width: 15rem !important;
+    max-height: 15rem !important;
+    width: auto;
+    height: auto;
+    display: block;
+    margin: 0 auto;
 }
