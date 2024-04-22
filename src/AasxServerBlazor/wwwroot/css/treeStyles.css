@@ -110,8 +110,7 @@
 
 /* Other */
 .loading,
-.observed-event,
-.url-section {
+.observed-event {
     color: white;
     background-color: var(--primary-color);
 }
@@ -180,6 +179,7 @@
 .url-section {
     margin-bottom: 5px;
     padding: 5px;
+    word-wrap: break-word;
 }
 
 .url-label {
@@ -221,6 +221,9 @@
     min-height: 50vh;
 }
 
+a:hover {
+    color: var(--primary-color);
+}
 
 .tree-container {
     flex: 0 0 auto;
@@ -236,6 +239,13 @@
 }
 
 .url-section,
+.tree-node-type-content {
+    padding: 0.2rem;
+    margin-right: 0.2rem;
+    margin-left: 0.2rem;
+    min-width: 1rem;
+}
+
 .node-representation,
 .tree-node-type-info {
     color: var(--text-light-color);
@@ -266,17 +276,19 @@
     }
 }
 
+.tree-node-type-content,
 .tree-node-type-info,
 .tree-item-details-container {
     display: flex;
     flex-direction: column;
+    word-wrap: break-word;
 }
 
 .tree-item-details-sub-header,
 .tree-item-details-header {
     font-size: 1.5rem;
     font-weight: bold;
-    color: var(--secondary-color-shade);
+    color: var(--primary-color);
     margin-top: 0.5rem;
     margin-bottom: 1rem;
 }
@@ -290,6 +302,7 @@
     outline: none;
     border: 0.1rem solid var(--border-color);
     padding: 0.4rem;
+    margin-left: 0.2rem;
     background-color: var(--tertiary-color) !important;
     box-shadow: 0 0.2rem 0.2rem rgba(0, 0, 0, 0.2);
 }

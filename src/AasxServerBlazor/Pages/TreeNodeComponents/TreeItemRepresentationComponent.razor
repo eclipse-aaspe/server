@@ -102,8 +102,8 @@
             var leftClass = $"details-left-{line}";
             var rightClass = $"details-right-{line}";
             <div class="tree-item-details-container">
-                <span class="tree-node-type-info @leftClass">@nodeDetailsFirstColumn</span>
-                <span class="@rightClass">@nodeDetailsSecondColumn @nodeDetailsThirdColumn</span>
+                <span class="tree-node-type-info" id="@leftClass">@nodeDetailsFirstColumn</span>
+                <span class="tree-node-type-content" id="@rightClass">@nodeDetailsSecondColumn @nodeDetailsThirdColumn</span>
             </div>
         }
     }
