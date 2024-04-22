@@ -146,7 +146,19 @@
 }
 
 .qr-code-image {
-    max-width: 25%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.qr-code-image a {
+    display: flex;
+    justify-content: center; /* Horizontally center the content */
+    align-items: center; /* Vertically center the content */
+}
+
+.qr-code-image img {
+    max-width: 30%;
 }
 
 .qr-code-link {

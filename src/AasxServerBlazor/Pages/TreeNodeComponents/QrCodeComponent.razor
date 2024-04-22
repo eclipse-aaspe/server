@@ -31,9 +31,9 @@
 
         if (!string.IsNullOrEmpty(qrCodeImageBase64))
         {
-            <a href="@qrCodeLink" target="_blank">
-                <div>
-                    <img src="data:image;base64,@qrCodeImageBase64" class="qr-code-image" alt="Qrcode Image"/>
+            <a href="@qrCodeLink" class="qr-code-image" target="_blank">
+                <div class="qr-code-image">
+                    <img src="data:image;base64,@qrCodeImageBase64"  alt="Qrcode Image"/>
                 </div>
             </a>
         }
