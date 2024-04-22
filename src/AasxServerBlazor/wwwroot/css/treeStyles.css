@@ -224,7 +224,6 @@
 
 .tree-container {
     flex: 0 0 auto;
-    width: 50%;
     height: 100%;
     background-color: var(--secondary-background-color);
 }

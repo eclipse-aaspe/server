@@ -11,98 +11,105 @@
 @using AasxServer;
 @using AasxServerBlazor.Data
 @using AasxServerBlazor.TreeVisualisation
+@using Blazorise.Splitter
 
 <div class="column-12 row aas-model">
-    <div class="column-5 tree-container">
-        @UpdateVisibleTree(_items, SelectedNode)
-        @if (Program.isLoading)
-        {
-            <span class="loading">Loading...</span>
-        }
-        else
-        {
-            AasxRestServerLibrary.AasxRestServer.TestResource.initListOfRepositories();
-        }
-        <Tree Nodes="_items" ChildSelector="@(item => item.Childs)"
-              @bind-SelectedNode="SelectedNode"
-              @bind-ExpandedNodes="_expandedNodes"
-              HasChildNodes="@(item => item.Childs?.Any() == true)"
-              HtmlId="@(item => item.GetHtmlId())">
-            <TitleTemplate>
-                @{
-                    var getPolicy = string.Empty;
-                    @if (GlobalSecurityVariables.WithAuthentication)
-                    {
-                        var display = false;
-                        var access = false;
-                        var withAllow = false;
-                        switch (context.Tag)
-                        {
-                            case Submodel submodel:
-                            {
-                                // check, if access to submodel is allowed
-                                access = SecService.AuthorizeRequest(null, "/submodels", AccessRights.READ,
-                                    out _, out withAllow, out getPolicy, submodel.IdShort!, "submodel", submodel);
-                                display = true;
-                                break;
-                            }
-                            case ISubmodelElement submodelElement:
-                            {
-                                var path = submodelElement.IdShort;
-                                var submodelElementParent = submodelElement.Parent;
-                                while (submodelElementParent is not Submodel)
-                                {
-                                    path = ((ISubmodelElement) submodelElementParent)?.IdShort + "." + path;
-                                    submodelElementParent = (submodelElementParent as ISubmodelElement)?.Parent;
-                                }
-
-                                path = $"{(submodelElementParent as Submodel).IdShort}.{path}";
-                                var error = string.Empty;
-                                access = SecService.AuthorizeRequest(null, "/submodel-elements", AccessRights.READ,
-                                    out error, out withAllow, out getPolicy, path, string.Empty, submodelElementParent);
-                                display = true;
-                                break;
-                            }
-                        }
-
-                        if (display)
-                        {
-                            if (context.Childs == null || context.Childs.Count() == 0)
-                                withAllow = false;
-                            if (access)
-                            {
-                                <span class="access">Access</span>
-                            }
-                            else
-                            {
-                                if (!withAllow)
-                                {
-                                    <span class="not-allowed">Not Allowed</span>
-                                }
-                                else
-                                {
-                                    <span class="not-allowed">Allowed</span>
-                                }
-                            }
-                        }
-                    }
-
-                    <span class="node-representation">@context.BuildNodeRepresentation()</span>
-                    @context.GetIdentifier()
-                    @if (Program.withPolicy && !string.IsNullOrEmpty(getPolicy))
-                    {
-                        <span class="policy">@getPolicy</span>
-                    }
-
-                    <span class="symbolic-representation">@context.GetSymbolicRepresentation()</span>
-                    <span class="timestamp">@context.GetTimeStamp()</span>
+    <Splitter Style="width: 100%">
+        <SplitterSection MinSize="450">
+            <div class="column-5 tree-container">
+                @UpdateVisibleTree(_items, SelectedNode)
+                @if (Program.isLoading)
+                {
+                    <span class="loading">Loading...</span>
                 }
-            </TitleTemplate>
-        </Tree>
-    </div>
-    <div class="column-7 details-container">
-        <AasxServerBlazor.Pages.TreeNodeComponents.TreeNodeDetailsContainer SelectedNode="@SelectedNode"/>
-    </div>
+                else
+                {
+                    AasxRestServerLibrary.AasxRestServer.TestResource.initListOfRepositories();
+                }
+                <Tree Nodes="_items" ChildSelector="@(item => item.Childs)"
+                      @bind-SelectedNode="SelectedNode"
+                      @bind-ExpandedNodes="_expandedNodes"
+                      HasChildNodes="@(item => item.Childs?.Any() == true)"
+                      HtmlId="@(item => item.GetHtmlId())">
+                    <TitleTemplate>
+                        @{
+                            var getPolicy = string.Empty;
+                            @if (GlobalSecurityVariables.WithAuthentication)
+                            {
+                                var display = false;
+                                var access = false;
+                                var withAllow = false;
+                                switch (context.Tag)
+                                {
+                                    case Submodel submodel:
+                                    {
+                                        // check, if access to submodel is allowed
+                                        access = SecService.AuthorizeRequest(null, "/submodels", AccessRights.READ,
+                                            out _, out withAllow, out getPolicy, submodel.IdShort!, "submodel", submodel);
+                                        display = true;
+                                        break;
+                                    }
+                                    case ISubmodelElement submodelElement:
+                                    {
+                                        var path = submodelElement.IdShort;
+                                        var submodelElementParent = submodelElement.Parent;
+                                        while (submodelElementParent is not Submodel)
+                                        {
+                                            path = ((ISubmodelElement) submodelElementParent)?.IdShort + "." + path;
+                                            submodelElementParent = (submodelElementParent as ISubmodelElement)?.Parent;
+                                        }
+
+                                        path = $"{(submodelElementParent as Submodel).IdShort}.{path}";
+                                        var error = string.Empty;
+                                        access = SecService.AuthorizeRequest(null, "/submodel-elements", AccessRights.READ,
+                                            out error, out withAllow, out getPolicy, path, string.Empty, submodelElementParent);
+                                        display = true;
+                                        break;
+                                    }
+                                }
+
+                                if (display)
+                                {
+                                    if (context.Childs == null || context.Childs.Count() == 0)
+                                        withAllow = false;
+                                    if (access)
+                                    {
+                                        <span class="access">Access</span>
+                                    }
+                                    else
+                                    {
+                                        if (!withAllow)
+                                        {
+                                            <span class="not-allowed">Not Allowed</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="not-allowed">Allowed</span>
+                                        }
+                                    }
+                                }
+                            }
+
+                            <span class="node-representation">@context.BuildNodeRepresentation()</span>
+                            @context.GetIdentifier()
+                            @if (Program.withPolicy && !string.IsNullOrEmpty(getPolicy))
+                            {
+                                <span class="policy">@getPolicy</span>
+                            }
+
+                            <span class="symbolic-representation">@context.GetSymbolicRepresentation()</span>
+                            <span class="timestamp">@context.GetTimeStamp()</span>
+                        }
+                    </TitleTemplate>
+                </Tree>
+            </div>
+        </SplitterSection>
+        <SplitterSection MinSize="300">
+            <div class="column-7 details-container">
+                <AasxServerBlazor.Pages.TreeNodeComponents.TreeNodeDetailsContainer SelectedNode="@SelectedNode"/>
+            </div>
+        </SplitterSection>
+    </Splitter>
 </div>
 
 @code {
@@ -195,4 +202,5 @@
         BuildNewTreeKeepOpenNodes,
         BuildNewTreeAllNodesClosed
     }
+
 }

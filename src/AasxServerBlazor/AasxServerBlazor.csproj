@@ -21,14 +21,16 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="HotChocolate.AspNetCore" Version="13.2.1"/>
-        <PackageReference Include="Microsoft.AspNetCore.Components" Version="3.1.2"/>
+        <PackageReference Include="HotChocolate.AspNetCore" Version="13.5.1"/>
+        <PackageReference Include="Blazorise.Splitter" Version="1.5.2"/>
+        <PackageReference Include="Blazorise.Bootstrap" Version="1.5.2"/>
+        <PackageReference Include="Microsoft.AspNetCore.Components" Version="6.0.29"/>
         <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.2.0"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.5">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="ScottPlot" Version="4.1.68"/>
+        <PackageReference Include="ScottPlot" Version="5.0.26"/>
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0"/>
         <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="6.5.0"/>
     </ItemGroup>

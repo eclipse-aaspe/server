@@ -35,6 +35,8 @@ using System.IO;
 using AasxServerBlazor.DateTimeServices;
 using AasxServerBlazor.TreeVisualisation;
 using AasxServerBlazor.WebActions.AasxLinkCreation;
+using Blazorise;
+using Blazorise.Bootstrap;
 
 namespace AasxServerBlazor
 {
@@ -73,6 +75,11 @@ namespace AasxServerBlazor
                 x.MultipartHeadersLengthLimit = int.MaxValue;
             });
             services.AddRazorPages();
+            services.AddBootstrapProviders();
+            services.AddBlazorise(options =>
+            {
+                options.Immediate = true;
+            });
             services.AddServerSideBlazor();
             services.AddSingleton<AASService>();
             services.AddCors(options =>
@@ -221,6 +228,7 @@ namespace AasxServerBlazor
             //app.UseAuthentication();
             app.UseAuthorization();
 
+            
             app.UseCors(_corsPolicyName);
 
             app.UseSwagger();
