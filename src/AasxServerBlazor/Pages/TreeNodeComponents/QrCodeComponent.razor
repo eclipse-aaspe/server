@@ -14,13 +14,18 @@
         var qrCodeImageBase64 = string.Empty;
         var qrCodeLink = string.Empty;
 
-        if (!Program.generatedQrCodes.ContainsKey(tag))
+        if (!Program.generatedQrCodes.ContainsKey(tag) || string.IsNullOrEmpty(QrCodeService.GetQrCodeImage(SelectedNode)) || string.IsNullOrEmpty(qrCodeImageBase64))
         {
             qrCodeLink = QrCodeService.GetQrCodeLink(SelectedNode);
             var qrcodeImage = QrCodeService.GetQrCodeImage(SelectedNode);
             if (!string.IsNullOrEmpty(qrcodeImage))
             {
                 qrCodeImageBase64 = qrcodeImage;
+            }
+            else
+            {
+                QrCodeService.CreateQrCodeImage(SelectedNode);
+                qrCodeImageBase64 = QrCodeService.GetQrCodeImage(SelectedNode);
             }
         }
 

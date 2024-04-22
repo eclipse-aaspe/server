@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing.Imaging;
 using System.IO;
 using AasxServer;
 using QRCoder;
@@ -17,7 +18,7 @@ public class QrCodeService: IQrCodeService
 
     public string GetQrCodeLink(TreeItem treeItem)
     {
-        if (treeItem == null || !(treeItem.Tag is AssetAdministrationShell aas))
+        if (treeItem is not {Tag: AssetAdministrationShell aas})
         {
             return string.Empty;
         }
@@ -28,7 +29,7 @@ public class QrCodeService: IQrCodeService
 
     public string GetQrCodeImage(TreeItem treeItem)
     {
-        if (treeItem == null || !(treeItem.Tag is AssetAdministrationShell))
+        if (treeItem is not {Tag: AssetAdministrationShell})
         {
             return string.Empty;
         }
@@ -38,7 +39,7 @@ public class QrCodeService: IQrCodeService
 
     public void CreateQrCodeImage(TreeItem treeItem)
     {
-        if (treeItem == null || !(treeItem.Tag is AssetAdministrationShell aas))
+        if (treeItem is not {Tag: AssetAdministrationShell aas})
         {
             return;
         }
@@ -56,10 +57,18 @@ public class QrCodeService: IQrCodeService
         var qrCode = new QRCode(qrCodeData);
         var qrCodeImage = qrCode.GetGraphic(20);
 
-        using var memory = new MemoryStream();
-        qrCodeImage.Save(memory, System.Drawing.Imaging.ImageFormat.Bmp);
-        var base64 = Convert.ToBase64String(memory.ToArray());
+        try
+        {
+            using var memory = new MemoryStream();
+            qrCodeImage.Save(memory, ImageFormat.Bmp);
+            var base64 = Convert.ToBase64String(memory.ToArray());
 
-        Program.generatedQrCodes.Add(treeItem.Tag, base64);
+            Program.generatedQrCodes.Add(treeItem.Tag, base64);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
 }
