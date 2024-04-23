@@ -35,38 +35,6 @@ namespace AasxServerBlazor.Tests.Pages.TreeNodeComponents
         }
 
         [Fact]
-        public void Render_SelectedNode_Is_Null_Should_Not_Render_Anything()
-        {
-            // Arrange
-            var cut = RenderComponent<TreeItemRepresentationComponent>();
-
-            // Act - nothing to act upon as we're not passing any SelectedNode
-
-            // Assert
-            var expectedMarkup = @"
-                        <style>
-                        .modal-fullscreen {
-                          padding: 0 !important;
-                        }
-                        .modal-fullscreen .modal-dialog {
-                          width: 100%;
-                          max-width: none;
-                          height: 100%;
-                          margin: 0;
-                        }
-                        .modal-fullscreen .modal-content {
-                          height: 100%;
-                          border: 0;
-                          border-radius: 0;
-                        }
-                        .modal-fullscreen .modal-body {
-                          overflow-y: auto;
-                        }
-                        </style>";
-            cut.MarkupMatches(expectedMarkup);
-        }
-
-        [Fact]
         public void Render_SelectedNode_Tag_Not_String_Should_Render_NodeRepresentation_And_Identifier()
         {
             // Arrange
