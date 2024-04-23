@@ -38,7 +38,7 @@
 
     string CreateTableCell(string col, int index)
     {
-        var nowrapAttribute = (index == 1 || index == 2)
+        var nowrapAttribute = index is 1 or 2
             ? " nowrap"
             : string.Empty;
         return $"<td{nowrapAttribute}>{col}</td>";

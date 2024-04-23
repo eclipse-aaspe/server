@@ -50,7 +50,7 @@
         var path = element.IdShort;
         var parent = element.Parent as IReferable;
 
-        while (parent != null && !(parent is Submodel))
+        while (parent != null && parent is not Submodel)
         {
             if (parent is ISubmodelElementList parentList)
             {
@@ -91,7 +91,7 @@
     private string GetSubmodelIdEncoded(ISubmodelElement element)
     {
         var parent = element.Parent as IReferable;
-        while (parent != null && !(parent is Submodel))
+        while (parent != null && parent is not Submodel)
         {
             parent = (IReferable) parent.Parent;
         }

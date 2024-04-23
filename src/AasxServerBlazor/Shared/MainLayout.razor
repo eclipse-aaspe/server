@@ -146,7 +146,7 @@
 </div>
 
 @code {
-    static string _input = "";
+    static string _input = string.Empty;
 
     protected override void OnInitialized()
     {
@@ -179,7 +179,7 @@
 
     void InitializeCredentialsAndRegistry()
     {
-        if (_input != "")
+        if (!string.IsNullOrEmpty(_input))
         {
             return;
         }

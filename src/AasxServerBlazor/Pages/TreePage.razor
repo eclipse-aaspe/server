@@ -55,7 +55,7 @@
                                         var submodelElementParent = submodelElement.Parent;
                                         while (submodelElementParent is not Submodel)
                                         {
-                                            path = ((ISubmodelElement) submodelElementParent)?.IdShort + "." + path;
+                                            path = $"{((ISubmodelElement) submodelElementParent)?.IdShort}.{path}";
                                             submodelElementParent = (submodelElementParent as ISubmodelElement)?.Parent;
                                         }
 
@@ -70,7 +70,7 @@
 
                                 if (display)
                                 {
-                                    if (context.Childs == null || context.Childs.Count() == 0)
+                                    if (context.Childs == null || !context.Childs.Any())
                                         withAllow = false;
                                     if (access)
                                     {

@@ -131,7 +131,7 @@
             UpdateTimeSeriesData(submodelElementCollection, submodelElementTimeDifference, semanticId);
 
             var timeSeriesImageBase64 = string.Empty;
-            var scottplotImgPath = "wwwroot/images/scottplot/smc_timeseries_clientid" + BlazorSessionService.sessionNumber + ".png";
+            var scottplotImgPath = $"wwwroot/images/scottplot/smc_timeseries_clientid{BlazorSessionService.sessionNumber}.png";
 
             if (System.IO.File.Exists(scottplotImgPath))
             {

@@ -44,10 +44,10 @@
     private static readonly ExternalLinkCreator ExternalLinkCreator = new();
     private readonly AasxItemLinkService _aasxItemLinkService = new(ExternalLinkCreator);
 
-    private string ItemLink => _aasxItemLinkService.Create(SelectedNode, NavigationManager.Uri, out var externalLink);
+    private string ItemLink => _aasxItemLinkService.Create(SelectedNode, NavigationManager.Uri, out _);
 
-    private bool IsSubmodelToPublish => SelectedNode != null && SelectedNode.Tag is Submodel && Program.connectServer != string.Empty && Program.submodelsToPublish.Contains(SelectedNode.Tag);
-    private bool IsSubmodelToSubscribe => SelectedNode != null && SelectedNode.Tag is Submodel && Program.connectServer != string.Empty && Program.submodelsToSubscribe.Contains(SelectedNode.Tag);
+    private bool IsSubmodelToPublish => SelectedNode is {Tag: Submodel} && Program.connectServer != string.Empty && Program.submodelsToPublish.Contains(SelectedNode.Tag);
+    private bool IsSubmodelToSubscribe => SelectedNode is {Tag: Submodel} && Program.connectServer != string.Empty && Program.submodelsToSubscribe.Contains(SelectedNode.Tag);
 
     private void ResetSubmodelToPublish()
     {
