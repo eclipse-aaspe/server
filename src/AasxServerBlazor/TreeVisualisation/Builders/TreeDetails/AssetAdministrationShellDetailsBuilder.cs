@@ -64,7 +64,7 @@ namespace AasxServerBlazor.TreeVisualisation.Builders.TreeDetails
             return column switch
             {
                 0 => AssetIdUrlEncodedHeader,
-                1 => WebUtility.UrlEncode(aas.AssetInformation.GlobalAssetId),
+                1 => aas.AssetInformation.GlobalAssetId,
                 _ => string.Empty
             };
         }
