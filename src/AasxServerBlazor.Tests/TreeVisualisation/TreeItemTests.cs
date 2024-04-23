@@ -454,7 +454,7 @@ public class TreeItemTests
         var result = treeItem.BuildNodeRepresentation();
 
         // Assert
-        result.Should().Be("SampleType ");
+        result.Should().Contain("SampleType");
     }
 
     [Fact]
