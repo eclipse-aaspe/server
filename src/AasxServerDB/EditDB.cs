@@ -13,9 +13,6 @@ namespace AasxServerDB
             var aasList = env.AasEnv.AssetAdministrationShells;
             var aasIds = aasList.Select(x => x.Id).ToList();
 
-            var submodelList = env.AasEnv.Submodels;
-            var submodelIds = submodelList.Select(x => x.Id).ToList();
-
             using (AasContext db = new AasContext())
             {
                 // Delets automtically from DB
