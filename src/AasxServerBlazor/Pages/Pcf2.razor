@@ -20,11 +20,21 @@
     // AasxTask.cfpNode node = AasxTask.createCfpTree(0, timeStamp);
     // AasxTask.cfpNode node = AasxTask.root;
     float total = 0.0f;
-    if (AasxTask.root != null && AasxTask.root.cradleToGateCombination != null)
+    if (!Program.showWeight && AasxTask.root != null && AasxTask.root.cradleToGateCombination != null)
     {
         try
         {
             total = (float)Convert.ToDouble(AasxTask.root.cradleToGateCombination.Value, CultureInfo.InvariantCulture);
+            total = (float)Math.Round(total, 1);
+
+        }
+        catch { }
+    }
+    if (Program.showWeight && AasxTask.root != null && AasxTask.root.weightCombination != null)
+    {
+        try
+        {
+            total = (float)Convert.ToDouble(AasxTask.root.weightCombination.Value, CultureInfo.InvariantCulture);
             total = (float)Math.Round(total, 1);
 
         }
@@ -51,10 +61,20 @@
                 <div class="font-bold text-slate-700 dark:text-slate-500 text-center">
                     <font>
                         <span style="color: white; font-size:250%;">@total</span>
-                        <span style="color: #EFEFEF; font-size:130%">
-                            kg CO<sub>2</sub>e as-is
-                        </span>
-                        <span style="color: white; font-size:100%;" class="absolute left-2 top-2">@h_total kg CO<sub>2</sub>e as-built</span>
+                        @if (!Program.showWeight)
+                        {
+                            <span style="color: #EFEFEF; font-size:130%">
+                                kg CO<sub>2</sub>e as-is
+                            </span>
+                            <span style="color: white; font-size:100%;" class="absolute left-2 top-2">@h_total kg CO<sub>2</sub>e as-built</span>
+                        }
+                        else
+                        {
+                            <span style="color: #EFEFEF; font-size:130%">
+                                kg as-is
+                            </span>
+                            <span style="color: white; font-size:100%;" class="absolute left-2 top-2">@h_total kg as-built</span>
+                        }
 
                         @{
                             if (false && !AasxTask.cfpValid)
@@ -89,9 +109,14 @@
                         string value = "";
                         if (moduleOnly)
                         {
-                            if (node.cradleToGateModule != null)
+                            if (!Program.showWeight && node.cradleToGateModule != null)
                             {
                                 value = node.cradleToGateModule.Value;
+                                view = true;
+                            }
+                            if (Program.showWeight && node.weightModule != null)
+                            {
+                                value = node.weightModule.Value;
                                 view = true;
                             }
                         }
@@ -99,9 +124,16 @@
                         {
                             if (node.children.Count != 0)
                             {
-                                if (node.cradleToGateCombination != null)
+                                if (!Program.showWeight && node.cradleToGateCombination != null)
                                 {
                                     value = node.cradleToGateCombination.Value;
+                                    //if (node != AasxTask.root)
+                                    viewCombination = true;
+                                    view = true;
+                                }
+                                if (Program.showWeight && node.weightCombination != null)
+                                {
+                                    value = node.weightCombination.Value;
                                     //if (node != AasxTask.root)
                                     viewCombination = true;
                                     view = true;
@@ -109,9 +141,14 @@
                             }
                             else
                             {
-                                if (node.cradleToGateModule != null)
+                                if (!Program.showWeight && node.cradleToGateModule != null)
                                 {
                                     value = node.cradleToGateModule.Value;
+                                    view = true;
+                                }
+                                if (Program.showWeight && node.weightModule != null)
+                                {
+                                    value = node.weightModule.Value;
                                     view = true;
                                 }
                             }

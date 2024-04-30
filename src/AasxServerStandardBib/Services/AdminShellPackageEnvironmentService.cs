@@ -13,6 +13,7 @@ using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Packaging;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -49,6 +50,12 @@ namespace AasxServerStandardBib.Services
 
             return false;
         }
+
+        public void setWrite(int packageIndex, bool status)
+        {
+            _packages[packageIndex].setWrite(status);
+        }
+
         #endregion
 
         #region AssetAdministrationShell
@@ -239,7 +246,7 @@ namespace AasxServerStandardBib.Services
             return IsSubmodelPresent(submodelIdentifier, out _, out _);
         }
 
-        private bool IsSubmodelPresent(string submodelIdentifier, out ISubmodel output, out int packageIndex)
+        public bool IsSubmodelPresent(string submodelIdentifier, out ISubmodel output, out int packageIndex)
         {
             output = null;
             packageIndex = -1;
@@ -256,6 +263,7 @@ namespace AasxServerStandardBib.Services
                         var submodels = env.Submodels.Where(a => a.Id.Equals(submodelIdentifier));
                         if (submodels.Any())
                         {
+                            /*
                             if (!Program.withDb)
                             {
                                 output = submodels.First();
@@ -264,6 +272,8 @@ namespace AasxServerStandardBib.Services
                             {
                                 output = ReadDB.GetSubmodel(smIdentifier:submodelIdentifier);
                             }
+                            */
+                            output = submodels.First();
                             packageIndex = Array.IndexOf(_packages, package);
                             return true;
                         }
