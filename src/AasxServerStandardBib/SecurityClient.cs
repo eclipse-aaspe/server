@@ -1988,12 +1988,14 @@ namespace AasxServer
                         if(!Program.showWeight && root.cradleToGateCombination != null)
                         {
                             //TODO: elements need proper deep clone method implemented within AAS metamodel classes
-                            asbuilt_total = new String(root.cradleToGateCombination.Value);
+                            if (asbuilt_total == null)
+                                asbuilt_total = new String(root.cradleToGateCombination.Value);
                         }
                         if (Program.showWeight && root.weightCombination != null)
                         {
                             //TODO: elements need proper deep clone method implemented within AAS metamodel classes
-                            asbuilt_total = new String(root.weightCombination.Value);
+                            if (asbuilt_total == null)
+                                asbuilt_total = new String(root.weightCombination.Value);
                         }
                     }
                 }
