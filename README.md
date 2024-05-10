@@ -4,7 +4,7 @@
 > All links to the previous repository location are automatically redirected to the new location, e.g. when using `git clone`, `git push` etc.
 > It is, however, recommended to update the `origin` of any clones to avoid confusion.
 
-# AASX Server 
+# Eclipse AASX Server 
 ![Check-release-workflow](
 https://github.com/admin-shell-io/aasx-server/workflows/Check-release-workflow/badge.svg
 ) ![Check-style-workflow](
