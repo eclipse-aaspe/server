@@ -1,0 +1,1540 @@
+﻿@page "/atex2";
+@using AasxServer
+@using Microsoft.AspNetCore.Html;
+@using Microsoft.IdentityModel.Tokens;
+@using Extensions;
+@using System.Globalization;
+@inject Data.AASService SubmodelService
+@inject NavigationManager NavMan
+
+<style>
+    .atex-border {
+        border: 1px solid darkgrey;
+    }
+
+    .atex-white {
+        word-break: keep-all;
+        text-align: center;
+        align-content: center;
+        margin-left: auto;
+        margin-right: auto;
+        background-color: white;
+    }
+
+    .atex-gray {
+        word-break: keep-all;
+        text-align: center;
+        align-content: center;
+        margin-left: auto;
+        margin-right: auto;
+        background-color: lightgray;
+    }
+
+    .atex-blue {
+        word-break: keep-all;
+        text-align: center;
+        align-content: center;
+        margin-left: auto;
+        margin-right: auto;
+        background-color: lightblue;
+    }
+
+    .atex-green {
+        word-break: keep-all;
+        text-align: center;
+        align-content: center;
+        margin-left: auto;
+        margin-right: auto;
+        background-color: lightgreen;
+    }
+</style>
+
+<div>
+    @{
+        collectData();
+
+        for (int p = 0; p < countProject; p++)
+        {
+            int iOut = -1;
+            int iIn = -1;
+            for (int i = 0; i < count; i++)
+            {
+                if (eigensicheresbetriebsmittel[p] == ManufacturerProductType[i])
+                    iIn = i;
+                if (zugehoerigesbetriebsmittel[p] == ManufacturerProductType[i])
+                    iOut = i;
+            }
+            if (iOut == -1 || iIn == -1)
+                continue;
+
+            double Lo = L[iOut];
+            double Co = C[iOut];
+            bool LCgreater = false;
+            if (L[iIn] >= L[iOut] / 100 && C[iIn] >= C[iOut] / 100)
+            {
+                LCgreater = true;
+                Lo = 2 * Lo;
+                Co = 2 * Co;
+            }
+
+            double cl = cableLength[p];
+            if (inputLength[iOut] == Double.MinValue)
+                inputLength[iOut] = cl;
+            else
+                cl = inputLength[iOut];
+            double Lc = cl / 1000.0 * 1;
+            double Cc = cl / 1000.0 * 110;
+            // 0,5 * Lo >= Li + Lc => 0,5 * Lo >= Li + cl / 1000 => clMax = (0,5 * Lo - Li) * 1000;
+            // double clMax1 = (0.5 * L[iOut] - L[iIn]) * 1000;
+            double clMax1 = (Lo - L[iIn]) * 1000;
+            // 0,5 * Co >= Ci + Cc => 0,5 * Co >= Ci + cl * 0.11 => clMax = (0,5 * Co - Ci) / 0.11;
+            // double clMax2 = (0.5 * C[iOut] - C[iIn]) / 0.11;
+            double clMax2 = (Co - C[iIn]) / 0.11;
+            if (clMax2 < clMax1)
+                clMax1 = clMax2;
+            if (clMax1 < 0)
+                clMax1 = 0;
+            else
+                clMax1 = Math.Round(clMax1, 0, MidpointRounding.AwayFromZero);
+            double sumLiLc = L[iIn] + Lc;
+            sumLiLc = Math.Round(sumLiLc, 2, MidpointRounding.AwayFromZero);
+            double sumCiCc = C[iIn] + Cc;
+            sumCiCc = Math.Round(sumCiCc, 2, MidpointRounding.AwayFromZero);
+            Lc = Math.Round(Lc, 2, MidpointRounding.AwayFromZero);
+            Cc = Math.Round(Cc, 2, MidpointRounding.AwayFromZero);
+            string color = "red";
+            string ok = "NO";
+
+            <table class="atex-border" style="min-width:100%">
+                <tr>
+                    <td>
+                        <table class="atex-border" style="min-width:100%">
+                            <tr>
+                                <td style="width:65%">
+                                    <br />
+                                    <b><span style="color:black;font-size:40px">&nbsp;Proof of intrinsic safety</span></b>
+                                    <br />
+                                    <br />
+                                </td>
+                                <td style="width:14%" height="80">
+                                    <img src="NOA.jpg" height="80" />
+                                </td>
+                                <td style="width:13%" height="80">
+                                    <img src="Ex_IECEx.jpg" height="60" />
+                                </td>
+                                <td style="width:6%" height="60">
+                                    <img src="2022-02-15_IDTA_AAS-Logo_Final_RGB.png" height="60" />
+                                </td>
+                            </tr>
+                        </table>
+                        <table class="atex-border" style="min-width:100%">
+                            <tr>
+                                <td class="atex-border atex-gray" style="width:30%">
+                                    <b><span style="color:black">Project name:</span></b>
+                                </td>
+                                <td class="atex-border atex-gray" style="width:70%">
+                                    <b><span style="color:black">@projectName[p]</span></b>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="atex-border atex-green" style="width:30%">
+                                    <b><span style="color:black">Certified by:</span></b>
+                                </td>
+                                <td class="atex-border atex-green" style="width:70%">
+                                    <b><span style="color:black">Name</span></b>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="atex-border atex-green" style="width:30%">
+                                    <b><span style="color:black">Certified at:</span></b>
+                                </td>
+                                <td class="atex-border atex-green" style="width:70%">
+                                    <b><span style="color:black">Date</span></b>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="atex-border">
+                        <table class="atex-border" style="min-width:100%">
+                            <tr>
+                                <td class="atex-border" style="width:70%">
+                                    <table style="min-width:100%">
+                                        <tbody>
+                                            <tr>
+                                                <td class="atex-white" style="width:35%">
+                                                    <b>Non-Ex Zone</b><br />
+                                                </td>
+                                                <td class="atex-white" style="width:5%">
+                                                    &nbsp
+                                                </td>
+                                                <td class="atex-blue" style="width:15%">
+                                                </td>
+                                                <td class="atex-blue" style="width:5%">
+                                                    &nbsp
+                                                </td>
+                                                <td class="atex-blue" style="width:40%">
+                                                    <b>Ex Zone</b><br />
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="atex-white">
+                                                    Associated Apparatus<br />
+                                                </td>
+                                                <td class="atex-white">
+                                                </td>
+                                                <td class="atex-blue">
+                                                </td>
+                                                <td class="atex-blue">
+                                                </td>
+                                                <td class="atex-blue">
+                                                    Intrinsically safe apparatus / field device<br />
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="atex-white">
+                                                    @{
+                                                        bool svg = false;
+                                                        string detailsImage = createDetailsImage(envIndex[iOut], ProductImage[iOut], out svg);
+
+                                                        @if (detailsImage != "")
+                                                        {
+                                                            if (!svg)
+                                                            {
+                                                                <img width="200" style="max-width:100%;margin-left:auto;margin-right:auto" alt="Details Image"
+                                                                src=data:image;base64,@detailsImage />
+                                                            }
+                                                            else
+                                                            {
+                                                                <img width="200" style="max-width:100%;margin-left:auto;margin-right:auto" alt="Details Image"
+                                                                src=data:image/svg+xml;base64,@detailsImage />
+                                                            }
+                                                        }
+                                                    }
+                                                </td>
+                                                <td>
+                                                </td>
+                                                <td class="atex-blue">
+                                                    <br />
+                                                    <img width="100" src="Cable2.jpg" style="margin-left:auto;margin-right:auto;max-width:100%" />
+                                                </td>
+                                                <td class="atex-blue">
+                                                </td>
+                                                <td class="atex-blue">
+                                                    @{
+                                                        svg = false;
+                                                        detailsImage = createDetailsImage(envIndex[iIn], ProductImage[iIn], out svg);
+
+                                                        @if (detailsImage != "")
+                                                        {
+                                                            if (!svg)
+                                                            {
+                                                                <img width="200" style="max-width:100%;margin-left:auto;margin-right:auto" alt="Details Image"
+                                                                 src=data:image;base64,@detailsImage />
+                                                            }
+                                                            else
+                                                            {
+                                                                <img width="200" style="max-width:100%;margin-left:auto;margin-right:auto" alt="Details Image"
+                                                                 src=data:image/svg+xml;base64,@detailsImage />
+                                                            }
+                                                        }
+                                                    }
+                                                </td>
+                                            </tr>
+                                            <tr class="atex-border atex-blue">
+                                                <td>
+                                                    <img src="ex.png" height="30" width="30" style="margin-left:auto;margin-right:auto" />
+                                                    <span style="color:blue">II (1) GD Ex ia Ga IIC</span>
+                                                </td>
+                                                <td>
+                                                </td>
+                                                <td>
+                                                    <b>Ex i Cable</b>
+                                                </td>
+                                                <td>
+                                                </td>
+                                                <td>
+                                                    <img src="ex.png" height="30" width="30" style="margin-left:auto;margin-right:auto" />
+                                                    <span style="color:blue">II 1 G Ex ia Ga IIC T6</span>
+                                                </td>
+                                            </tr>
+                                            <tr class="atex-blue">
+                                                <td class="atex-border">U<sub>o</sub></td>
+                                                <td class="atex-border">
+                                                    &le;
+                                                </td>
+                                                <td class="atex-border">
+                                                </td>
+                                                <td class="atex-border">
+                                                </td>
+                                                <td class="atex-border">U<sub>i</sub></td>
+                                            </tr>
+                                            <tr class="atex-blue">
+                                                <td class="atex-border">I<sub>o</sub></td>
+                                                <td class="atex-border">
+                                                    &le;
+                                                </td>
+                                                <td class="atex-border">
+                                                </td>
+                                                <td class="atex-border">
+                                                </td>
+                                                <td class="atex-border">I<sub>i</sub></td>
+                                            </tr>
+                                            <tr class="atex-blue">
+                                                <td class="atex-border">P<sub>o</sub></td>
+                                                <td class="atex-border">
+                                                    &le;
+                                                </td>
+                                                <td class="atex-border">
+                                                </td>
+                                                <td class="atex-border">
+                                                </td>
+                                                <td class="atex-border">P<sub>i</sub></td>
+                                            </tr>
+                                            <tr class="atex-blue">
+                                                <td class="atex-border">L<sub>o</sub></td>
+                                                <td class="atex-border">
+                                                    &ge;
+                                                </td>
+                                                <td class="atex-border">
+                                                    L<sub>i</sub>
+                                                </td>
+                                                <td class="atex-border">
+                                                    +
+                                                </td>
+                                                <td class="atex-border">L<sub>c</sub></td>
+                                            </tr>
+                                            <tr class="atex-blue">
+                                                <td class="atex-border">C<sub>o</sub></td>
+                                                <td class="atex-border">
+                                                    &ge;
+                                                </td>
+                                                <td class="atex-border">
+                                                    C<sub>i</sub>
+                                                </td>
+                                                <td class="atex-border">
+                                                    +
+                                                </td>
+                                                <td class="atex-border">C<sub>c</sub></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </td>
+                                <td class="atex-border" style="width:30%">
+                                    <b>Comparison of the safety data</b><br />
+                                    <br />
+                                    <b>Proof of intrinsic safety (simple intrinsically safe circuit)</b><br />
+                                    In a simple intrinsically safe circuit without external concentrated capacitances (C<sub>i</sub>) and without external concentrated inductances (L<sub>i</sub>), the full values of C<sub>o</sub> and L<sub>o</sub> can be exploited.<br />
+                                    <br />
+                                    <b>Proof of intrinsic safety (mixed intrinsically safe circuit)</b><br />
+                                    Condition for the mixed intrinsically safe circuit with external concentrated capacitances (C<sub>i</sub>) and/or external concentrated inductances (L<sub>i</sub>).<br />
+                                    <b>L<sub>i</sub> &lt; 1% of L<sub>o</sub>  or  C<sub>i</sub> &lt; 1% of C<sub>o</sub></b><br />
+                                    Here, the full values of C<sub>o</sub> and L<sub>o</sub> can also be exploited.<br />
+                                    <b>L<sub>i</sub>  ≥ 1% of L<sub>o</sub>  and  C<sub>i</sub> ≥ 1% of C<sub>o</sub></b><br />
+                                    Values of 50% of Co and Lo are to be used here:<br />
+                                    C<sub>i</sub>  + C<sub>c</sub> ≤ 0.5 C<sub>o</sub><br />
+                                    L<sub>i</sub> + L<sub>c</sub>  ≤ 0.5 L<sub>o</sub><br />
+                                    <br />
+                                    @{
+                                        if (LCgreater)
+                                        {
+                                            <b><span style="color:red">L<sub>i</sub> ≥ 1% of L<sub>o</sub></span></b><br />
+                                            <b><span style="color:red">C<sub>i</sub> ≥ 1% of C<sub>o</sub></span></b><br />
+                                        }
+                                    }
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr class="atex-border atex-gray">
+                    <td>
+                        <table>
+                            <tr>
+                                <td>
+                                    <b>Associated Apparatus</b>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="atex-border" style="width:100%">
+                        <table style="min-width:100%">
+                            <tr>
+                                <td class="atex-border atex-gray" style="width:12%">
+                                    Name
+                                </td>
+                                <td class="atex-border atex-gray" style="width:12%">
+                                    Type
+                                </td>
+                                <td class="atex-border atex-gray" style="width:12%">
+                                    Manufacturer
+                                </td>
+                                <td class="atex-border atex-gray" style="width:12%">
+                                    Certificate
+                                </td>
+                                <td class="atex-border atex-gray" style="width:12%">
+                                    Identification
+                                </td>
+                                <td class="atex-border atex-gray" style="width:6%">
+                                    U<sub>o</sub> [V]
+                                </td>
+                                <td class="atex-border atex-gray" style="width:6%">
+                                    I<sub>o</sub> [mA]
+                                </td>
+                                <td class="atex-border atex-gray" style="width:6%">
+                                    P<sub>o</sub> [mW]
+                                </td>
+                                <td class="atex-border atex-gray" style="width:6%">
+                                    L<sub>o</sub> [mH]
+                                </td>
+                                <td class="atex-border atex-gray" style="width:6%">
+                                    C<sub>o</sub> [nF]
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="atex-border atex-blue" style="width:12%">
+                                    <b>@ManufacturerProductDesignation[iOut]</b>
+                                </td>
+                                <td class="atex-border atex-blue" style="width:12%">
+                                    <b>@ManufacturerProductType[iOut]</b>
+                                </td>
+                                <td class="atex-border atex-blue" style="width:12%">
+                                    <b>@ManufacturerName[iOut]</b>
+                                </td>
+                                <td class="atex-border atex-blue" style="width:12%">
+                                    <b>@TypeOfApproval[iOut]</b>
+                                </td>
+                                <td class="atex-border atex-blue" style="width:12%">
+                                    <b>xxx II (1) G [Ex ia Ga] IIC</b>
+                                </td>
+                                <td class="atex-border atex-blue" style="width:6%">
+                                    <b>@U[iOut].ToString(CultureInfo.InvariantCulture)</b>
+                                </td>
+                                <td class="atex-border atex-blue" style="width:6%">
+                                    <b>@I[iOut].ToString(CultureInfo.InvariantCulture)</b>
+                                </td>
+                                <td class="atex-border atex-blue" style="width:6%">
+                                    <b>@P[iOut].ToString(CultureInfo.InvariantCulture)</b>
+                                </td>
+                                <td class="atex-border atex-blue" style="width:6%">
+                                    <b>@L[iOut].ToString(CultureInfo.InvariantCulture)</b>
+                                </td>
+                                <td class="atex-border atex-blue" style="width:6%">
+                                    <b>@C[iOut].ToString(CultureInfo.InvariantCulture)</b>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr class="atex-border atex-gray">
+                    <td>
+                        <table>
+                            <tr>
+                                <td>
+                                    <b>Intrinsically safe apparatus / field device</b>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="atex-border" style="width:100%">
+                        <table style="min-width:100%">
+                            <tr>
+                                <td class="atex-border atex-gray" style="width:12%">
+                                    Name
+                                </td>
+                                <td class="atex-border atex-gray" style="width:12%">
+                                    Type
+                                </td>
+                                <td class="atex-border atex-gray" style="width:12%">
+                                    Manufacturer
+                                </td>
+                                <td class="atex-border atex-gray"  style="width:12%">
+                                    Certificate
+                                </td>
+                                <td class="atex-border atex-gray" style="width:12%">
+                                    Identification
+                                </td>
+                                <td class="atex-border atex-gray" style="width:6%">
+                                    U<sub>i</sub> [V]
+                                </td>
+                                <td class="atex-border atex-gray" style="width:6%">
+                                    I<sub>i</sub> [mA]
+                                </td>
+                                <td class="atex-border atex-gray" style="width:6%">
+                                    P<sub>i</sub> [mW]
+                                </td>
+                                <td class="atex-border atex-gray" style="width:6%">
+                                    L<sub>i</sub> [mH]
+                                </td>
+                                <td class="atex-border atex-gray" style="width:6%">
+                                    C<sub>i</sub> [nF]
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="atex-border atex-blue" style="width:12%">
+                                    <b>@ManufacturerProductDesignation[iIn]</b>
+                                </td>
+                                <td class="atex-border atex-blue" style="width:12%">
+                                    <b>@ManufacturerProductType[iIn]</b>
+                                </td>
+                                <td class="atex-border atex-blue" style="width:12%">
+                                    <b>@ManufacturerName[iIn]</b>
+                                </td>
+                                <td class="atex-border atex-blue" style="width:12%">
+                                    <b>@TypeOfApproval[iIn]</b>
+                                </td>
+                                <td class="atex-border atex-blue" style="width:12%">
+                                    <b>xxx II (1) G [Ex ia Ga] IIC</b>
+                                </td>
+                                <td class="atex-border atex-blue" style="width:6%">
+                                    <b>@U[iIn].ToString(CultureInfo.InvariantCulture)</b>
+                                </td>
+                                <td class="atex-border atex-blue" style="width:6%">
+                                    <b>@I[iIn].ToString(CultureInfo.InvariantCulture)</b>
+                                </td>
+                                <td class="atex-border atex-blue" style="width:6%">
+                                    <b>@P[iIn].ToString(CultureInfo.InvariantCulture)</b>
+                                </td>
+                                <td class="atex-border atex-blue" style="width:6%">
+                                    <b>@L[iIn].ToString(CultureInfo.InvariantCulture)</b>
+                                </td>
+                                <td class="atex-border atex-blue" style="width:6%">
+                                    <b>@C[iIn].ToString(CultureInfo.InvariantCulture)</b>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="atex-border" style="width:100%">
+                        <table style="min-width:100%">
+                            <tr>
+                                <td class="atex-border atex-gray" style="width:24%">
+                                    <b>Cable capacities and inductance</b>
+                                </td>
+                                <td class="atex-border atex-gray" style="width:12%">
+                                    Manufacturer
+                                </td>
+                                <td class="atex-border atex-gray" style="width:12%">
+                                    Cable length
+                                </td>
+                                <td class="atex-border atex-gray" style="width:6%">
+                                    Cable L<sub>c</sub>
+                                </td>
+                                <td class="atex-border atex-gray" style="width:6%">
+                                    Cable C<sub>c</sub>
+                                </td>
+                                <td class="atex-border atex-gray" style="width:18%">
+                                    <span style="color:red">Maximum cable length</span>
+                                </td>
+                                <td class="atex-border atex-gray" style="width:6%">
+                                    L<sub>c</sub>
+                                </td>
+                                <td class="atex-border atex-gray" style="width:6%">
+                                    C<sub>c</sub>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="atex-border atex-gray" style="width:24%">
+                                </td>
+                                <td class="atex-border atex-blue" style="width:12%">
+                                    <b>STANDARD</b>
+                                </td>
+                                <td class="atex-border atex-gray" style="width:12%">
+                                    [m]
+                                </td>
+                                <td class="atex-border atex-gray" style="width:6%">
+                                    [mH/km]
+                                </td>
+                                <td class="atex-border atex-gray" style="width:6%">
+                                    [nF/km]
+                                </td>
+                                <td class="atex-border atex-gray" style="width:18%">
+                                    <span style="color:red">[m]</span>
+                                </td>
+                                <td class="atex-border atex-gray" style="width:6%;">
+                                    [mH]
+                                </td>
+                                <td class="atex-border atex-gray" style="width:6%;">
+                                    [nF]
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="atex-border atex-gray" style="width:24%">
+                                    (Manufacturer specification (Datasheet) or L<sub>c</sub> = 1 mH/km, C<sub>c</sub> = 110 nF/km)
+                                </td>
+                                <td class="atex-border atex-gray" style="width:12%">
+                                </td>
+                                <td class="atex-border atex-white" style="width:12%">
+                                    <b>
+                                        <input @bind="inputLength[iOut]" style="min-width:100%" />
+                                    </b>
+                                </td>
+                                <td class="atex-border atex-gray" style="width:6%">
+                                    <b>1</b>
+                                </td>
+                                <td class="atex-border atex-gray" style="width:6%">
+                                    <b>110</b>
+                                </td>
+                                <td class="atex-border atex-green" style="width:18%">
+                                    <b><span style="color:red">@clMax1</span></b>
+                                </td>
+                                <td class="atex-border atex-green" style="width:6%">
+                                    @Lc.ToString(CultureInfo.InvariantCulture)
+                                </td>
+                                <td class="atex-border atex-green" style="width:6%">
+                                    @Cc.ToString(CultureInfo.InvariantCulture)
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="atex-border" style="width:100%">
+                        <table style="min-width:100%">
+                            <tr>
+                                <td class="atex-border atex-gray" style="width:78%">
+                                </td>
+                                <td class="atex-border atex-gray" style="width:6%">
+                                    L<sub>i</sub> + L<sub>c</sub>
+                                </td>
+                                <td class="atex-border atex-gray" style="width:6%">
+                                    C<sub>i</sub> + C<sub>c</sub>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="atex-border atex-gray" style="width:78%">
+                                </td>
+                                <td class="atex-border atex-gray" style="width:6%">
+                                    [mH]
+                                </td>
+                                <td class="atex-border atex-gray" style="width:6%">
+                                    [nF]
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="atex-border atex-gray" style="width:78%">
+                                    <b>Inductance (L<sub>i</sub> + L<sub>c</sub>) and capacities (C<sub>i</sub> + C<sub>c</sub>)</b>
+                                </td>
+                                <td class="atex-border atex-green" style="width:6%">
+                                    <b>@sumLiLc.ToString(CultureInfo.InvariantCulture)</b>
+                                </td>
+                                <td class="atex-border atex-green" style="width:6%">
+                                    <b>@sumCiCc.ToString(CultureInfo.InvariantCulture)</b>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="atex-border atex-gray" style="width:100%">
+                        <br />
+                    </td>
+                </tr>
+                <tr>
+                    <td class="atex-border atex-gray" style="width:100%">
+                        <table style="min-width:100%">
+                            <tr>
+                                <td class="atex-border atex-gray" style="width:48%">
+                                    <b>Condition / Verification for intrinsic safety</b>
+                                </td>
+                                <td class="atex-border atex-gray" style="width:12%">
+                                    <b>Intrinsic safety ok</b>
+                                </td>
+                                <td class="atex-border atex-gray" style="width:40%">
+                                    <b>Additional condition</b>
+                                </td>
+                            </tr>
+                            @{
+                                color = "red";
+                                ok = "NO";
+                                if(U[iOut] <= U[iIn])
+                                {
+                                    color = "green";
+                                    ok = "YES";
+                                }
+                            }
+                            <tr>
+                                <td class="atex-border atex-gray" style="width:48%">
+                                    <table style="min-width:100%">
+                                        <tr>
+                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                <b>U<sub>o</sub> ≤ U<sub>i</sub></b>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                <b>@U[iOut].ToString(CultureInfo.InvariantCulture)</b>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                <b>≤</b>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                <b>@U[iIn].ToString(CultureInfo.InvariantCulture)</b>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                                <td class="atex-border atex-gray" style="width:12%;color:@color">
+                                    <b>@ok</b>
+                                </td>
+                                <td class="atex-border atex-gray" style="width:40%">
+                                    Zone at the installation: Zone 0/1
+                                </td>
+                            </tr>
+                            @{
+                                color = "red";
+                                ok = "NO";
+                                if (I[iOut] <= I[iIn])
+                                {
+                                    color = "green";
+                                    ok = "YES";
+                                }
+                            }
+                            <tr>
+                                <td class="atex-border atex-gray" style="width:48%">
+                                    <table style="min-width:100%">
+                                        <tr>
+                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                <b>I<sub>o</sub> ≤ I<sub>i</sub></b>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                <b>@I[iOut].ToString(CultureInfo.InvariantCulture)</b>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                <b>≤</b>
+                                            </td>
+                                        <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                <b>@I[iIn].ToString(CultureInfo.InvariantCulture)</b>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                                <td class="atex-border atex-gray" style="width:12%;color:@color">
+                                    <b>@ok</b>
+                                </td>
+                                <td class="atex-border atex-gray" style="width:40%">
+                                    Ex Group: IIC
+                                </td>
+                            </tr>
+                            @{
+                                color = "red";
+                                ok = "NO";
+                                if (P[iOut] <= P[iIn])
+                                {
+                                    color = "green";
+                                    ok = "YES";
+                                }
+                            }
+                            <tr>
+                                <td class="atex-border atex-gray" style="width:48%">
+                                    <table style="min-width:100%">
+                                        <tr>
+                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                <b>P<sub>o</sub> ≤ P<sub>i</sub></b>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                <b>@P[iOut].ToString(CultureInfo.InvariantCulture)</b>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                <b>≤</b>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                <b>@P[iIn].ToString(CultureInfo.InvariantCulture)</b>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                                <td class="atex-border atex-gray" style="width:12%;color:@color">
+                                    <b>@ok</b>
+                                </td>
+                                <td class="atex-border atex-gray" style="width:40%">
+                                    max. ambient temperature:
+                                </td>
+                            </tr>
+                            @{
+                                color = "red";
+                                ok = "NO";
+                                if (Lo >= sumLiLc)
+                                {
+                                    color = "green";
+                                    ok = "YES";
+                                }
+                            }
+                            <tr>
+                                <td class="atex-border atex-gray" style="width:48%">
+                                    <table style="min-width:100%">
+                                        <tr class="atex-border atex-gray">
+                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                <b>
+                                                    @{
+                                                        if (LCgreater)
+                                                        {
+                                                            <span style="color:red">2 * </span>
+                                                        }
+                                                    }
+                                                    L<sub>o</sub> ≥ L<sub>i</sub> + L<sub>c</sub>
+                                                </b>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                <b>@Lo.ToString(CultureInfo.InvariantCulture)</b>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                <b>≥</b>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                <b>@sumLiLc.ToString(CultureInfo.InvariantCulture)</b>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                                <td class="atex-border atex-gray" style="width:12%;color:@color">
+                                    <b>@ok</b>
+                                </td>
+                                <td class="atex-border atex-gray" style="width:40%">
+                                    Mixed IS circuit:
+                                </td>
+                            </tr>
+                            @{
+                                color = "red";
+                                ok = "NO";
+                                if (Co >= sumCiCc)
+                                {
+                                    color = "green";
+                                    ok = "YES";
+                                }
+                            }
+                            <tr>
+                                <td class="atex-border atex-gray" style="width:48%">
+                                    <table style="min-width:100%">
+                                        <tr>
+                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                <b>
+                                                    @{
+                                                        if (LCgreater)
+                                                        {
+                                                            <span style="color:red">2 * </span>
+                                                        }
+                                                    }
+                                                    C<sub>o</sub> ≥ C<sub>i</sub> + C<sub>c</sub>
+                                                </b>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                <b>@Co.ToString(CultureInfo.InvariantCulture)</b>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                <b>≥</b>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                <b>@sumCiCc.ToString(CultureInfo.InvariantCulture)</b>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                                <td class="atex-border atex-gray" style="width:12%;color:@color">
+                                    <b>@ok</b>
+                                </td>
+                                <td class="atex-border atex-gray" style="width:40%">
+                                    (with concentrated Li (≥ 1% Lo) and concentrated Ci (≥ 1% Co): YES
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+
+            if (inputLength[iOut] != Double.MinValue && inputLength[iOut] != cableLength[p])
+            {
+                cableLength[p] = inputLength[iOut];
+            }
+
+            <br />
+            <br />
+        }
+    }
+
+
+
+</div>
+
+@code
+{
+    int countProject = 0;
+    List<SubmodelElementCollection> project = null;
+    List<string> projectName = null;
+    List<double> cableLength = null;
+    List<Property> pCableLength = null;
+    List<string> eigensicheresbetriebsmittel = null;
+    List<string> zugehoerigesbetriebsmittel = null;
+
+    int count = 0;
+    List<bool> isOutput = null;
+    List<int> envIndex = null;
+    List<Submodel> Nameplate = null;
+    List<Submodel> TechnicalData = null;
+    List<string> ManufacturerProductDesignation = null;
+    List<string> ManufacturerProductType = null;
+    List<string> ManufacturerName = null;
+    List<string> ManufacturerLogo = null;
+    List<string> ProductImage = null;
+    List<string> DesignationOfCertificateOrApproval = null;
+    List<string> PreviewFile = null;
+    List<string> PreviewFileUrl = null;
+    List<string> TypeOfApproval = null;
+    List<SubmodelElementCollection> SafetyRelatedPropertiesForActiveBehaviour = null;
+    List<SubmodelElementCollection> SafetyRelatedPropertiesForPassiveBehaviour = null;
+    List<Double> U = null;
+    List<Double> I = null;
+    List<Double> P = null;
+    List<Double> L = null;
+    List<Double> C = null;
+    List<string> Alternatives = null;
+    List<Double> inputLength = null;
+
+    void collectData()
+    {
+        countProject = 0;
+        project = new List<SubmodelElementCollection>();
+        projectName = new List<string>();
+        cableLength = new List<double>();
+        pCableLength = new List<Property>();
+        eigensicheresbetriebsmittel = new List<string>();
+        zugehoerigesbetriebsmittel = new List<string>();
+
+        count = 0;
+        isOutput = new List<bool>();
+        envIndex = new List<int>();
+        Nameplate = new List<Submodel>();
+        TechnicalData = new List<Submodel>();
+        ManufacturerProductDesignation = new List<string>();
+        ManufacturerProductType = new List<string>();
+        ManufacturerName = new List<string>();
+        ManufacturerLogo = new List<string>();
+        ProductImage = new List<string>();
+        DesignationOfCertificateOrApproval = new List<string>();
+        PreviewFile = new List<string>();
+        PreviewFileUrl = new List<string>();
+        TypeOfApproval = new List<string>();
+        SafetyRelatedPropertiesForActiveBehaviour = new List<SubmodelElementCollection>();
+        SafetyRelatedPropertiesForPassiveBehaviour = new List<SubmodelElementCollection>();
+        U = new List<double>();
+        I = new List<double>();
+        P = new List<double>();
+        L = new List<double>();
+        C = new List<double>();
+        if (Alternatives == null)
+            Alternatives = new List<string>();
+        if (inputLength == null)
+            inputLength = new List<Double>();
+
+        int aascount = AasxServer.Program.env.Length;
+
+        for (int i = 0; i < aascount; i++)
+        {
+            var env = AasxServer.Program.env[i];
+            if (env != null)
+            {
+                var aas = env.AasEnv.AssetAdministrationShells[0];
+
+                if (aas.Submodels != null && aas.Submodels.Count > 0)
+                {
+                    foreach (var smr in aas.Submodels)
+                    {
+                        var sm = env.AasEnv.FindSubmodel(smr);
+                        {
+                            if (sm != null && sm.IdShort != null)
+                            {
+                                if ((sm.IdShort.ToLower() == "nachweiseigensicherheit" || sm.IdShort.ToLower() == "proofofintrinsicsafety") && sm.SubmodelElements != null)
+                                {
+                                    foreach (var s in sm.SubmodelElements)
+                                    {
+                                        if (s.IdShort.ToLower().Contains("projekt") || s.IdShort.ToLower().Contains("loop"))
+                                        {
+                                            if (s != null && s is SubmodelElementCollection smc)
+                                            {
+                                                project.Add(s as SubmodelElementCollection);
+                                                projectName.Add("");
+                                                cableLength.Add(0);
+                                                pCableLength.Add(null);
+                                                eigensicheresbetriebsmittel.Add("");
+                                                zugehoerigesbetriebsmittel.Add("");
+
+                                                var sme = findeSME(smc: project[countProject], idShortPath: "projektbezeichnung", ignore: true);
+                                                if (sme != null)
+                                                    projectName[countProject] = sme.ValueAsText();
+                                                sme = findeSME(smc: project[countProject], idShortPath: "projectname", ignore: true);
+                                                if (sme != null)
+                                                    projectName[countProject] = sme.ValueAsText();
+                                                sme = findeSME(smc: project[countProject], idShortPath: "eigensicheresbetriebsmittel", ignore: true);
+                                                if (sme != null)
+                                                    eigensicheresbetriebsmittel[countProject] = sme.ValueAsText();
+                                                sme = findeSME(smc: project[countProject], idShortPath: "intrinsicallysafeapparatus", ignore: true);
+                                                if (sme != null)
+                                                    eigensicheresbetriebsmittel[countProject] = sme.ValueAsText();
+                                                sme = findeSME(smc: project[countProject], idShortPath: "zugehoerigesbetriebsmittel", ignore: true);
+                                                if (sme != null)
+                                                    zugehoerigesbetriebsmittel[countProject] = sme.ValueAsText();
+                                                sme = findeSME(smc: project[countProject], idShortPath: "associatedapparatus", ignore: true);
+                                                if (sme != null)
+                                                    zugehoerigesbetriebsmittel[countProject] = sme.ValueAsText();
+                                                sme = findeSME(smc: project[countProject], idShortPath: "leitungslaenge", ignore: true);
+                                                if (sme != null)
+                                                {
+                                                    try
+                                                    {
+                                                        cableLength[countProject] = Convert.ToDouble(sme.ValueAsText(), CultureInfo.InvariantCulture);
+                                                        pCableLength[countProject] = sme as Property;
+                                                    }
+                                                    catch { }
+                                                }
+                                                sme = findeSME(smc: project[countProject], idShortPath: "cablelength", ignore: true);
+                                                if (sme != null)
+                                                {
+                                                    try
+                                                    {
+                                                        cableLength[countProject] = Convert.ToDouble(sme.ValueAsText(), CultureInfo.InvariantCulture);
+                                                        pCableLength[countProject] = sme as Property;
+                                                    }
+                                                    catch { }
+                                                }
+                                                countProject++;
+                                            }
+                                        }
+                                    }
+                                }
+                                if (sm.IdShort.ToLower() == "nameplate")
+                                {
+                                    isOutput.Add(false);
+                                    envIndex.Add(i);
+                                    Nameplate.Add(sm as Submodel);
+                                    ManufacturerProductDesignation.Add("");
+                                    ManufacturerProductType.Add("");
+                                    ManufacturerName.Add("");
+                                    DesignationOfCertificateOrApproval.Add("");
+                                    PreviewFile.Add("");
+                                    PreviewFileUrl.Add("");
+                                    TypeOfApproval.Add("");
+                                    SafetyRelatedPropertiesForActiveBehaviour.Add(null);
+                                    SafetyRelatedPropertiesForPassiveBehaviour.Add(null);
+                                    U.Add(0);
+                                    I.Add(0);
+                                    P.Add(0);
+                                    L.Add(0);
+                                    C.Add(0);
+                                    if (C.Count > Alternatives.Count)
+                                        Alternatives.Add("");
+                                    if (C.Count > inputLength.Count)
+                                        inputLength.Add(Double.MinValue);
+
+                                    var sme = findeSME(sm: sm, idShortPath: "ManufacturerProductDesignation", ignore: true);
+                                    if (sme != null)
+                                    {
+                                        if (sme is Property p)
+                                            ManufacturerProductDesignation[count] = p.Value;
+                                        if (sme is MultiLanguageProperty mlp && mlp.Value != null && mlp.Value.Count > 0)
+                                        {
+                                            ManufacturerProductDesignation[count] = mlp.Value[0].Text;
+                                        }
+                                    }
+
+                                    sme = findeSME(sm: sm, idShortPath: "ManufacturerProductType", ignore: true);
+                                    if (sme != null)
+                                    {
+                                        if (sme is Property p)
+                                            ManufacturerProductType[count] = p.Value;
+                                        if (sme is MultiLanguageProperty mlp && mlp.Value != null && mlp.Value.Count > 0)
+                                        {
+                                            ManufacturerProductType[count] = mlp.Value[0].Text;
+                                        }
+                                    }
+
+                                    sme = findeSME(sm: sm, idShortPath: "ManufacturerName", ignore: true);
+                                    if (sme != null)
+                                    {
+                                        if (sme is Property p)
+                                            ManufacturerName[count] = p.Value;
+                                        if (sme is MultiLanguageProperty mlp && mlp.Value != null && mlp.Value.Count > 0)
+                                        {
+                                            ManufacturerName[count] = mlp.Value[0].Text;
+                                        }
+                                    }
+
+                                    sme = findeSME(sm: sm,
+                                        idShortPath: "Markings.Marking.ExplosionSafeties.ExplosionSafety",
+                                        ignore: true, contains: true);
+                                    if (sme != null)
+                                    {
+                                        var s = sme as SubmodelElementCollection;
+
+                                        sme = findeSME(smc: s, idShortPath: "DesignationOfCertificateOrApproval", ignore: true);
+                                        if (sme != null)
+                                        {
+                                            if (sme is Property p)
+                                                DesignationOfCertificateOrApproval[count] = p.Value;
+                                            if (sme is MultiLanguageProperty mlp && mlp.Value != null && mlp.Value.Count > 0)
+                                            {
+                                                DesignationOfCertificateOrApproval[count] = mlp.Value[0].Text;
+                                            }
+                                        }
+
+                                        sme = findeSME(smc: s, idShortPath: "PreviewFile", ignore: true);
+                                        if (sme != null)
+                                        {
+                                            if (sme is File f)
+                                            {
+                                                PreviewFile[count] = f.Value;
+                                            }
+                                        }
+
+                                        sme = findeSME(smc: s, idShortPath: "TypeOfApproval", ignore: true);
+                                        if (sme != null)
+                                        {
+                                            if (sme is Property p)
+                                                TypeOfApproval[count] = p.Value;
+                                            if (sme is MultiLanguageProperty mlp && mlp.Value != null && mlp.Value.Count > 0)
+                                            {
+                                                TypeOfApproval[count] = mlp.Value[0].Text;
+                                            }
+                                        }
+                                    }
+
+                                    sme = findeSME(sm: sm,
+                                        idShortPath: "Markings.Marking.ExplosionSafeties.ExplosionSafety.ExternalElectricalCircuit.SafetyRelatedPropertiesForActiveBehaviour",
+                                        ignore: true, contains: true);
+                                    if (sme != null)
+                                    {
+                                        var s = sme as SubmodelElementCollection;
+                                        isOutput[count] = true;
+                                        SafetyRelatedPropertiesForActiveBehaviour[count] = s;
+
+                                        sme = findeSME(smc: s, idShortPath: "MaxOutputPower", ignore: true);
+                                        if (sme != null)
+                                        {
+                                            if (sme is Property p)
+                                            {
+                                                try
+                                                {
+                                                    P[count] = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                                }
+                                                catch { }
+                                            }
+                                        }
+
+                                        sme = findeSME(smc: s, idShortPath: "MaxOutputVoltage", ignore: true);
+                                        if (sme != null)
+                                        {
+                                            if (sme is Property p)
+                                            {
+                                                try
+                                                {
+                                                    U[count] = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                                }
+                                                catch { }
+                                            }
+                                        }
+
+                                        sme = findeSME(smc: s, idShortPath: "MaxOutputCurrent", ignore: true);
+                                        if (sme != null)
+                                        {
+                                            if (sme is Property p)
+                                            {
+                                                try
+                                                {
+                                                    I[count] = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                                }
+                                                catch { }
+                                            }
+                                        }
+
+                                        sme = findeSME(smc: s, idShortPath: "MaxExternalCapacitance", ignore: true);
+                                        if (sme != null)
+                                        {
+                                            if (sme is Property p)
+                                            {
+                                                try
+                                                {
+                                                    string v = p.Value;
+                                                    // fix generator bug
+                                                    if (v.Contains(" nF"))
+                                                        v = v.Replace(" nF", "");
+                                                    C[count] = Convert.ToDouble(v, CultureInfo.InvariantCulture);
+                                                }
+                                                catch { }
+                                            }
+                                        }
+
+                                        sme = findeSME(smc: s, idShortPath: "MaxExternalInductance", ignore: true);
+                                        if (sme != null)
+                                        {
+                                            if (sme is Property p)
+                                            {
+                                                try
+                                                {
+                                                    L[count] = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                                }
+                                                catch { }
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        sme = findeSME(sm: sm,
+                                            idShortPath: "Markings.Marking.ExplosionSafeties.ExplosionSafety.ExternalElectricalCircuit.SafetyRelatedPropertiesForPassiveBehaviour",
+                                            ignore: true, contains: true);
+                                        if (sme != null)
+                                        {
+                                            var s = sme as SubmodelElementCollection;
+                                            SafetyRelatedPropertiesForPassiveBehaviour[count] = s as SubmodelElementCollection;
+
+                                            sme = findeSME(smc: s, idShortPath: "MaxInputPower", ignore: true);
+                                            if (sme != null)
+                                            {
+                                                if (sme is Property p)
+                                                {
+                                                    try
+                                                    {
+                                                        P[count] = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                                    }
+                                                    catch { }
+                                                }
+                                            }
+
+                                            sme = findeSME(smc: s, idShortPath: "MaxInputVoltage", ignore: true);
+                                            if (sme != null)
+                                            {
+                                                if (sme is Property p)
+                                                {
+                                                    try
+                                                    {
+                                                        U[count] = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                                    }
+                                                    catch { }
+                                                }
+                                            }
+
+                                            sme = findeSME(smc: s, idShortPath: "MaxInputCurrent", ignore: true);
+                                            if (sme != null)
+                                            {
+                                                if (sme is Property p)
+                                                {
+                                                    try
+                                                    {
+                                                        I[count] = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                                    }
+                                                    catch { }
+                                                }
+                                            }
+
+                                            sme = findeSME(smc: s, idShortPath: "MaxInternalCapacitance", ignore: true);
+                                            if (sme != null)
+                                            {
+                                                if (sme is Property p)
+                                                {
+                                                    try
+                                                    {
+                                                        C[count] = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                                    }
+                                                    catch { }
+                                                }
+                                            }
+
+                                            sme = findeSME(smc: s, idShortPath: "MaxInternalInductance", ignore: true);
+                                            if (sme != null)
+                                            {
+                                                if (sme is Property p)
+                                                {
+                                                    try
+                                                    {
+                                                        L[count] = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                                    }
+                                                    catch { }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                if (sm.IdShort.ToLower() == "handoverdocumentation")
+                                {
+                                    if (PreviewFile[count] != "")
+                                    {
+                                        var sme = findeSMEValue(sm: sm, value: PreviewFile[count]);
+                                        if (sme != null)
+                                        {
+                                            var path = getPath(sme);
+                                            if (path != null)
+                                            {
+                                                PreviewFileUrl[count] = path.Replace("PreviewFile", "DigitalFile");
+                                            }
+                                        }
+                                    }
+                                    foreach (var se in sm.SubmodelElements)
+                                    {
+                                        if (se is SubmodelElementCollection smc)
+                                        {
+                                            var sme = findeSME(smc: smc,
+                                                        idShortPath: "DocumentVersion.PreviewFile",
+                                                        ignore: true, contains: true);
+                                            if (sme != null)
+                                            {
+                                                if (sme is File f)
+                                                {
+                                                    if (f.Value.ToLower().Contains("atex"))
+                                                    {
+                                                        PreviewFile[count] = f.Value;
+                                                        var path = getPath(f);
+                                                        if (path != null)
+                                                        {
+                                                            PreviewFileUrl[count] = path.Replace("PreviewFile", "DigitalFile");
+                                                        }
+                                                        TypeOfApproval[count] = "ATEX";
+                                                    }
+                                                    if (f.Value.ToLower().Contains("iecex") && TypeOfApproval[count] != "ATEX")
+                                                    {
+                                                        PreviewFile[count] = f.Value;
+                                                        var path = getPath(f);
+                                                        if (path != null)
+                                                        {
+                                                            PreviewFileUrl[count] = path.Replace("PreviewFile", "DigitalFile");
+                                                        }
+                                                        TypeOfApproval[count] = "IECEX";
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                if (sm.IdShort.ToLower() == "technicaldata")
+                                {
+                                    TechnicalData.Add(sm as Submodel);
+                                    ManufacturerLogo.Add("");
+                                    ProductImage.Add("");
+
+                                    var sme = findeSME(sm: sm, idShortPath: "GeneralInformation", ignore: true);
+                                    if (sme != null)
+                                    {
+                                        var g = sme as SubmodelElementCollection;
+                                        sme = findeSME(smc: g, idShortPath: "ManufacturerLogo", ignore: true);
+                                        if (sme != null)
+                                        {
+                                            if (sme is File f)
+                                                ManufacturerLogo[count] = f.Value;
+                                        }
+                                        sme = findeSME(smc: g, idShortPath: "ProductImage", ignore: true);
+                                        if (sme != null)
+                                        {
+                                            if (sme is File f)
+                                                ProductImage[count] = f.Value;
+                                        }
+                                    }
+
+                                    count++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    string getPath(ISubmodelElement sme)
+    {
+        string path = sme.IdShort;
+        var p = sme.Parent;
+        while (p != null && !(p is Submodel))
+        {
+            path = (p as ISubmodelElement).IdShort + "." + path;
+            p = (p as ISubmodelElement).Parent;
+        }
+        if (p == null)
+            return null;
+
+        var idEncoded = Base64UrlEncoder.Encode((p as Submodel).Id);
+        path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodel-elements/" + path + "/attachment";
+        return path;
+    }
+
+    ISubmodelElement findeSME(ISubmodel sm = null, ISubmodelElementCollection smc = null, string idShortPath = null,
+        bool ignore = false, bool contains = false)
+    {
+        if (idShortPath == null)
+            return null;
+        var path = idShortPath.Split(".");
+
+        int level = 0;
+        List<ISubmodelElement>[] levelSMEs = new List<ISubmodelElement>[path.Length];
+        int[] iLevel = new int[path.Length];
+        iLevel[0] = 0;
+
+        if (sm != null)
+        {
+            levelSMEs[0] = sm.SubmodelElements;
+        }
+        else if (smc != null)
+        {
+            levelSMEs[0] = smc.Value;
+        }
+        else
+            return null;
+
+        while (level >= 0 && level < path.Length && levelSMEs[level] != null && levelSMEs[level].Count != 0)
+        {
+            while (level >= 0 && iLevel[level] < levelSMEs[level].Count)
+            {
+                ISubmodelElement sme = levelSMEs[level][iLevel[level]];
+                string id1 = sme.IdShort;
+                string id2 = path[level];
+                if (ignore)
+                {
+                    id1 = id1.ToLower();
+                    id2 = id2.ToLower();
+                }
+                if (id1 == id2 || (contains && id1.Contains(id2)))
+                {
+                    if (level == path.Count() - 1)
+                        return sme;
+                    if (sme is SubmodelElementCollection smc2)
+                    {
+                        iLevel[level]++;
+                        levelSMEs[level + 1] = smc2.Value;
+                        iLevel[level + 1] = 0;
+                        level++;
+                        continue;
+                    }
+                }
+                iLevel[level]++;
+                while (level >= 0 && iLevel[level] == levelSMEs[level].Count)
+                {
+                    level--;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    ISubmodelElement findeSMEValue(ISubmodel sm = null, ISubmodelElementCollection smc = null, string value = null)
+    {
+        if (value == null)
+            return null;
+
+        int level = 0;
+        List<List<ISubmodelElement>> levelSMEs = new List<List<ISubmodelElement>>();
+        List<int> iLevel = new List<int>();
+        iLevel.Add(0);
+
+        if (sm != null)
+        {
+            levelSMEs.Add(sm.SubmodelElements);
+        }
+        else if (smc != null)
+        {
+            levelSMEs.Add(smc.Value);
+        }
+        else
+            return null;
+
+        while (level >= 0 && levelSMEs[level] != null && levelSMEs[level].Count != 0)
+        {
+            while (level >= 0 && iLevel[level] < levelSMEs[level].Count)
+            {
+                ISubmodelElement sme = levelSMEs[level][iLevel[level]];
+
+                if (sme.ValueAsText() == value)
+                    return sme;
+                if (sme is SubmodelElementCollection smc2)
+                {
+                    iLevel[level]++;
+                    levelSMEs.Add(smc2.Value);
+                    iLevel.Add(0);
+                    level++;
+                    continue;
+                }
+                iLevel[level]++;
+                while (level >= 0 && iLevel[level] == levelSMEs[level].Count)
+                {
+                    levelSMEs.RemoveAt(level);
+                    iLevel.RemoveAt(level);
+                    level--;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public static string createDetailsImage(int envIndex, string filePath, out bool svg)
+    {
+        svg = false;
+
+        if (!string.IsNullOrEmpty(filePath))
+        {
+            string[] split = filePath.Split(new Char[] { '/' });
+            if (split.Length == 2 || split.Length > 1 && split[1].ToLower() == "aasx")
+            {
+                split = filePath.Split(new Char[] { '.' });
+                switch (split.Last().ToLower())
+                {
+                    case "jpg":
+                    case "bmp":
+                    case "png":
+                    case "svg":
+                        try
+                        {
+                            using (System.IO.Stream s = Program.env[envIndex].GetLocalStreamFromPackage(filePath))
+                            {
+                                if (s != null)
+                                {
+                                    using (var m = new System.IO.MemoryStream())
+                                    {
+                                        if (split.Last().ToLower() == "svg")
+                                        {
+                                            svg = true;
+                                        }
+                                        s.CopyTo(m);
+                                        return System.Convert.ToBase64String(m.ToArray());
+                                    }
+                                }
+                            }
+                        }
+                        catch { }
+                        break;
+                }
+            }
+        }
+
+        return "";
+    }
+
+    protected override void OnInitialized()
+    {
+        SubmodelService.NewDataAvailable += NewData;
+    }
+
+    public void Dispose()
+    {
+        SubmodelService.NewDataAvailable -= NewData;
+    }
+
+    void NewData(object source, EventArgs args)
+    {
+        if (Program.isLoading)
+            return;
+
+        if (args is Program.NewDataAvailableArgs newArgs)
+        {
+            int newDataMode = newArgs.signalNewDataMode;
+            InvokeAsync(() => this.StateHasChanged());
+            // InvokeAsync(() => NavMan.NavigateTo(NavMan.Uri, true));
+            /*
+            if (newDataMode != 0)
+            {
+                InvokeAsync(() => this.StateHasChanged());
+            }
+            */
+        }
+    }
+}
