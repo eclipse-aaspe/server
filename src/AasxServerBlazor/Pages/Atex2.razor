@@ -60,10 +60,21 @@
 
 <div>
     @{
+        string url = NavMan.Uri;
+        string filter = "";
+        var s = url.Split("?");
+        if (s.Length == 2)
+        {
+            filter = s[1];
+        }
+
         collectData();
 
         for (int p = 0; p < countProject; p++)
         {
+            if (filter != "" && filter != projectName[p])
+                continue;
+
             int iOut = -1;
             int iIn = -1;
             for (int i = 0; i < count; i++)
@@ -75,6 +86,11 @@
             }
             if (iOut == -1 || iIn == -1)
                 continue;
+
+            if (certifiedBy[iOut] == "" && pCertifiedBy[p] != null)
+                certifiedBy[iOut] = pCertifiedBy[p].Value;
+            if (certifiedAt[iOut] == "" && pCertifiedAt[p] != null)
+                certifiedAt[iOut] = pCertifiedAt[p].Value;
 
             double Lo = L[iOut];
             double Co = C[iOut];
@@ -150,7 +166,9 @@
                                     <b><span style="color:black">Certified by:</span></b>
                                 </td>
                                 <td class="atex-border atex-green" style="width:70%">
-                                    <b><span style="color:black">Name</span></b>
+                                    <b>
+                                        <input @bind="@certifiedBy[iOut]" class="atex-green" style="min-width:100%;min-height:100%" />
+                                    </b>
                                 </td>
                             </tr>
                             <tr>
@@ -158,7 +176,9 @@
                                     <b><span style="color:black">Certified at:</span></b>
                                 </td>
                                 <td class="atex-border atex-green" style="width:70%">
-                                    <b><span style="color:black">Date</span></b>
+                                    <b>
+                                        <input @bind="@certifiedAt[iOut]" class="atex-green" style="min-width:100%;min-height:100%" />
+                                    </b>
                                 </td>
                             </tr>
                         </table>
@@ -331,27 +351,39 @@
                                     </table>
                                 </td>
                                 <td class="atex-border" style="width:30%;background-color:lightgray">
-                                    <b>Comparison of the safety data</b><br />
-                                    <br />
-                                    <b>Proof of intrinsic safety (simple intrinsically safe circuit)</b><br />
-                                    In a simple intrinsically safe circuit without external concentrated capacitances (C<sub>i</sub>) and without external concentrated inductances (L<sub>i</sub>), the full values of C<sub>o</sub> and L<sub>o</sub> can be exploited.<br />
-                                    <br />
-                                    <b>Proof of intrinsic safety (mixed intrinsically safe circuit)</b><br />
-                                    Condition for the mixed intrinsically safe circuit with external concentrated capacitances (C<sub>i</sub>) and/or external concentrated inductances (L<sub>i</sub>).<br />
-                                    <b>L<sub>i</sub> &lt; 1% of L<sub>o</sub>  or  C<sub>i</sub> &lt; 1% of C<sub>o</sub></b><br />
-                                    Here, the full values of C<sub>o</sub> and L<sub>o</sub> can also be exploited.<br />
-                                    <b>L<sub>i</sub>  ≥ 1% of L<sub>o</sub>  and  C<sub>i</sub> ≥ 1% of C<sub>o</sub></b><br />
-                                    Values of 50% of Co and Lo are to be used here:<br />
-                                    C<sub>i</sub>  + C<sub>c</sub> ≤ 0.5 C<sub>o</sub><br />
-                                    L<sub>i</sub> + L<sub>c</sub>  ≤ 0.5 L<sub>o</sub><br />
-                                    <br />
-                                    @{
-                                        if (LCgreater)
-                                        {
-                                            <b><span style="color:red">L<sub>i</sub> ≥ 1% of L<sub>o</sub></span></b><br />
-                                            <b><span style="color:red">C<sub>i</sub> ≥ 1% of C<sub>o</sub></span></b><br />
-                                        }
-                                    }
+                                    <table style="min-width:100%">
+                                        <tr>
+                                            <td style="width:5%">
+                                            </td>
+                                            <td style="width:95%">
+                                                <b>Comparison of the safety data</b><br />
+                                                <br />
+                                                <b>Proof of intrinsic safety (simple intrinsically safe circuit)</b><br />
+                                                In a simple intrinsically safe circuit without external concentrated capacitances (C<sub>i</sub>) and without external concentrated inductances (L<sub>i</sub>), the full values of C<sub>o</sub> and L<sub>o</sub> can be exploited.<br />
+                                                <br />
+                                                <b>Proof of intrinsic safety (mixed intrinsically safe circuit)</b><br />
+                                                Condition for the mixed intrinsically safe circuit with external concentrated capacitances (C<sub>i</sub>) and/or external concentrated inductances (L<sub>i</sub>).<br />
+                                                <b>L<sub>i</sub> &lt; 1% of L<sub>o</sub>  or  C<sub>i</sub> &lt; 1% of C<sub>o</sub></b><br />
+                                                Here, the full values of C<sub>o</sub> and L<sub>o</sub> can also be exploited.<br />
+                                                <b>L<sub>i</sub>  ≥ 1% of L<sub>o</sub>  and  C<sub>i</sub> ≥ 1% of C<sub>o</sub></b><br />
+                                                Values of 50% of Co and Lo are to be used here:<br />
+                                                C<sub>i</sub>  + C<sub>c</sub> ≤ 0.5 C<sub>o</sub><br />
+                                                L<sub>i</sub> + L<sub>c</sub>  ≤ 0.5 L<sub>o</sub><br />
+                                                <br />
+                                                @{
+                                                    if (LCgreater)
+                                                    {
+                                                        <b><span style="color:red">L<sub>i</sub> ≥ 1% of L<sub>o</sub></span></b>
+
+                                                        <br />
+                                                        <b><span style="color:red">C<sub>i</sub> ≥ 1% of C<sub>o</sub></span></b>
+
+                                                        <br />
+                                                    }
+                                                }
+                                            </td>
+                                        </tr>
+                                    </table>
                                 </td>
                             </tr>
                         </table>
@@ -419,7 +451,7 @@
                                         {
                                             <span>&nbsp</span>
 
-                                            <a href="@PreviewFileUrl[iOut]" target="_blank">@TypeOfApproval[iOut]</a>
+                                            <a style="border:none;color:blue" href="@PreviewFileUrl[iOut]" target="_blank"><u>@TypeOfApproval[iOut]</u></a>
                                         }
                                         else
                                         {
@@ -596,13 +628,14 @@
                             </tr>
                             <tr>
                                 <td class="atex-border atex-gray" style="width:24%">
-                                    (Manufacturer specification (Datasheet) or L<sub>c</sub> = 1 mH/km, C<sub>c</sub> = 110 nF/km)
+                                    (Manufacturer specification (Datasheet) or <br>
+                                    L<sub>c</sub> = 1 mH/km, C<sub>c</sub> = 110 nF/km)
                                 </td>
                                 <td class="atex-border atex-gray" style="width:12%">
                                 </td>
                                 <td class="atex-border atex-white" style="width:12%">
                                     <b>
-                                        <input @bind="inputLength[iOut]" style="min-width:100%" />
+                                        <input @bind="inputLength[iOut]" class="atex-white" style="min-width:100%;min-height:100%" />
                                     </b>
                                 </td>
                                 <td class="atex-border atex-gray" style="width:6%">
@@ -880,6 +913,12 @@
             {
                 cableLength[p] = inputLength[iOut];
             }
+            /*
+            if (pCertifiedBy[p] != null)
+                pCertifiedBy[p].Value = certifiedBy[p];
+            if (pCertifiedAt[p] != null)
+                certifiedAt[p] = pCertifiedAt[p].Value;
+            */
 
             <br />
             <br />
@@ -897,6 +936,10 @@
     List<string> projectName = null;
     List<double> cableLength = null;
     List<Property> pCableLength = null;
+    List<string> certifiedBy = null;
+    List<Property> pCertifiedBy = null;
+    List<string> certifiedAt = null;
+    List<Property> pCertifiedAt = null;
     List<string> eigensicheresbetriebsmittel = null;
     List<string> zugehoerigesbetriebsmittel = null;
 
@@ -932,6 +975,14 @@
         projectName = new List<string>();
         cableLength = new List<double>();
         pCableLength = new List<Property>();
+        if (certifiedBy == null)
+            certifiedBy = new List<string>();
+        if (pCertifiedBy == null)
+            pCertifiedBy = new List<Property>();
+        if (certifiedAt == null)
+            certifiedAt = new List<string>();
+        if (pCertifiedAt == null)
+            pCertifiedAt = new List<Property>();
         eigensicheresbetriebsmittel = new List<string>();
         zugehoerigesbetriebsmittel = new List<string>();
 
@@ -991,6 +1042,11 @@
                                                 projectName.Add("");
                                                 cableLength.Add(0);
                                                 pCableLength.Add(null);
+                                                if (pCertifiedBy.Count <= countProject)
+                                                {
+                                                    pCertifiedBy.Add(null);
+                                                    pCertifiedAt.Add(null);
+                                                }
                                                 eigensicheresbetriebsmittel.Add("");
                                                 zugehoerigesbetriebsmittel.Add("");
 
@@ -1032,6 +1088,22 @@
                                                     }
                                                     catch { }
                                                 }
+                                                sme = findeSME(smc: project[countProject], idShortPath: "CertifiedBy", ignore: true);
+                                                if (sme != null)
+                                                {
+                                                    if (pCertifiedBy[countProject] == null)
+                                                    {
+                                                        pCertifiedBy[countProject] = sme as Property;
+                                                    }
+                                                }
+                                                sme = findeSME(smc: project[countProject], idShortPath: "CertifiedAt", ignore: true);
+                                                if (sme != null)
+                                                {
+                                                    if (pCertifiedAt[countProject] == null)
+                                                    {
+                                                        pCertifiedAt[countProject] = sme as Property;
+                                                    }
+                                                }
                                                 countProject++;
                                             }
                                         }
@@ -1061,6 +1133,10 @@
                                         Alternatives.Add("");
                                     if (C.Count > inputLength.Count)
                                         inputLength.Add(Double.MinValue);
+                                    if (C.Count > certifiedBy.Count)
+                                        certifiedBy.Add("");
+                                    if (C.Count > certifiedAt.Count)
+                                        certifiedAt.Add("");
 
                                     var sme = findeSME(sm: sm, idShortPath: "ManufacturerProductDesignation", ignore: true);
                                     if (sme != null)
