@@ -47,7 +47,16 @@
         margin-right: auto;
         background-color: lightgreen;
     }
-</style>
+
+    .atex-pink {
+        word-break: keep-all;
+        text-align: center;
+        align-content: center;
+        margin-left: auto;
+        margin-right: auto;
+        background-color:lightpink;
+        @*background-color: #B55E87;*@
+    }</style>
 
 <div>
     @{
@@ -321,7 +330,7 @@
                                         </tbody>
                                     </table>
                                 </td>
-                                <td class="atex-border" style="width:30%">
+                                <td class="atex-border" style="width:30%;background-color:lightgray">
                                     <b>Comparison of the safety data</b><br />
                                     <br />
                                     <b>Proof of intrinsic safety (simple intrinsically safe circuit)</b><br />
@@ -409,6 +418,7 @@
                                         if (PreviewFileUrl[iOut] != "")
                                         {
                                             <span>&nbsp</span>
+
                                             <a href="@PreviewFileUrl[iOut]" target="_blank">@TypeOfApproval[iOut]</a>
                                         }
                                         else
@@ -486,13 +496,13 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td class="atex-border atex-blue" style="width:12%">
+                                <td class="atex-border atex-pink" style="width:12%">
                                     <b>@ManufacturerProductDesignation[iIn]</b>
                                 </td>
-                                <td class="atex-border atex-blue" style="width:12%">
+                                <td class="atex-border atex-pink" style="width:12%">
                                     <b>@ManufacturerProductType[iIn]</b>
                                 </td>
-                                <td class="atex-border atex-blue" style="width:12%">
+                                <td class="atex-border atex-pink" style="width:12%">
                                     <b>@ManufacturerName[iIn]</b>
                                 </td>
                                 <td class="atex-border atex-blue" style="width:12%">
