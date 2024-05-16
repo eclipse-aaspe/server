@@ -95,7 +95,7 @@
             if (clMax1 < 0)
                 clMax1 = 0;
             else
-                clMax1 = Math.Round(clMax1, 0, MidpointRounding.AwayFromZero);
+                clMax1 = Math.Round(clMax1, 2, MidpointRounding.AwayFromZero);
             double sumLiLc = L[iIn] + Lc;
             sumLiLc = Math.Round(sumLiLc, 2, MidpointRounding.AwayFromZero);
             double sumCiCc = C[iIn] + Cc;
@@ -245,7 +245,7 @@
                                             <tr class="atex-border atex-blue">
                                                 <td>
                                                     <img src="ex.png" height="30" width="30" style="margin-left:auto;margin-right:auto" />
-                                                    <span style="color:blue">II (1) GD Ex ia Ga IIC</span>
+                                                    <span style="color:blue">@Identification[iOut]</span>
                                                 </td>
                                                 <td>
                                                 </td>
@@ -256,7 +256,7 @@
                                                 </td>
                                                 <td>
                                                     <img src="ex.png" height="30" width="30" style="margin-left:auto;margin-right:auto" />
-                                                    <span style="color:blue">II 1 G Ex ia Ga IIC T6</span>
+                                                    <span style="color:blue">@Identification[iIn]</span>
                                                 </td>
                                             </tr>
                                             <tr class="atex-blue">
@@ -418,7 +418,7 @@
                                     }
                                 </td>
                                 <td class="atex-border atex-blue" style="width:12%">
-                                    <b>xxx II (1) G [Ex ia Ga] IIC</b>
+                                    <b>@Identification[iOut]</b>
                                 </td>
                                 <td class="atex-border atex-blue" style="width:6%">
                                     <b>@U[iOut].ToString(CultureInfo.InvariantCulture)</b>
@@ -509,7 +509,7 @@
                                     }
                                 </td>
                                 <td class="atex-border atex-blue" style="width:12%">
-                                    <b>xxx II (1) G [Ex ia Ga] IIC</b>
+                                    <b>@Identification[iIn]</b>
                                 </td>
                                 <td class="atex-border atex-blue" style="width:6%">
                                     <b>@U[iIn].ToString(CultureInfo.InvariantCulture)</b>
@@ -550,7 +550,7 @@
                                     Cable C<sub>c</sub>
                                 </td>
                                 <td class="atex-border atex-gray" style="width:18%">
-                                    <span style="color:red">Maximum cable length</span>
+                                    Maximum cable length
                                 </td>
                                 <td class="atex-border atex-gray" style="width:6%">
                                     L<sub>c</sub>
@@ -575,7 +575,7 @@
                                     [nF/km]
                                 </td>
                                 <td class="atex-border atex-gray" style="width:18%">
-                                    <span style="color:red">[m]</span>
+                                    [m]
                                 </td>
                                 <td class="atex-border atex-gray" style="width:6%;">
                                     [mH]
@@ -602,7 +602,7 @@
                                     <b>110</b>
                                 </td>
                                 <td class="atex-border atex-green" style="width:18%">
-                                    <b><span style="color:red">@clMax1</span></b>
+                                    <b>@clMax1.ToString(CultureInfo.InvariantCulture)</b>
                                 </td>
                                 <td class="atex-border atex-green" style="width:6%">
                                     @Lc.ToString(CultureInfo.InvariantCulture)
@@ -904,6 +904,7 @@
     List<string> PreviewFile = null;
     List<string> PreviewFileUrl = null;
     List<string> TypeOfApproval = null;
+    List<string> Identification = null;
     List<SubmodelElementCollection> SafetyRelatedPropertiesForActiveBehaviour = null;
     List<SubmodelElementCollection> SafetyRelatedPropertiesForPassiveBehaviour = null;
     List<Double> U = null;
@@ -938,6 +939,7 @@
         PreviewFile = new List<string>();
         PreviewFileUrl = new List<string>();
         TypeOfApproval = new List<string>();
+        Identification = new List<string>();
         SafetyRelatedPropertiesForActiveBehaviour = new List<SubmodelElementCollection>();
         SafetyRelatedPropertiesForPassiveBehaviour = new List<SubmodelElementCollection>();
         U = new List<double>();
@@ -1037,6 +1039,7 @@
                                     PreviewFile.Add("");
                                     PreviewFileUrl.Add("");
                                     TypeOfApproval.Add("");
+                                    Identification.Add("");
                                     SafetyRelatedPropertiesForActiveBehaviour.Add(null);
                                     SafetyRelatedPropertiesForPassiveBehaviour.Add(null);
                                     U.Add(0);
@@ -1117,6 +1120,17 @@
                                             if (sme is MultiLanguageProperty mlp && mlp.Value != null && mlp.Value.Count > 0)
                                             {
                                                 TypeOfApproval[count] = mlp.Value[0].Text;
+                                            }
+                                        }
+
+                                        sme = findeSME(smc: s, idShortPath: "Identification", ignore: true);
+                                        if (sme != null)
+                                        {
+                                            if (sme is Property p)
+                                                Identification[count] = p.Value;
+                                            if (sme is MultiLanguageProperty mlp && mlp.Value != null && mlp.Value.Count > 0)
+                                            {
+                                                Identification[count] = mlp.Value[0].Text;
                                             }
                                         }
                                     }
