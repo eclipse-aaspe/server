@@ -70,11 +70,11 @@
             double Lo = L[iOut];
             double Co = C[iOut];
             bool LCgreater = false;
-            if (L[iIn] >= L[iOut] / 100 && C[iIn] >= C[iOut] / 100)
+            if (L[iIn] >= L[iOut] / 100 && C[iIn] >= C[iOut] / 1000)
             {
                 LCgreater = true;
-                Lo = 2 * Lo;
-                Co = 2 * Co;
+                Lo = 0.5 * Lo;
+                Co = 0.5 * Co;
             }
 
             double cl = cableLength[p];
@@ -218,6 +218,7 @@
                                                 <td class="atex-blue">
                                                     <br />
                                                     <img width="100" src="Cable2.jpg" style="margin-left:auto;margin-right:auto;max-width:100%" />
+                                                    <b>Ex i Cable</b>
                                                 </td>
                                                 <td class="atex-blue">
                                                 </td>
@@ -250,7 +251,6 @@
                                                 <td>
                                                 </td>
                                                 <td>
-                                                    <b>Ex i Cable</b>
                                                 </td>
                                                 <td>
                                                 </td>
@@ -793,7 +793,7 @@
                                                     @{
                                                         if (LCgreater)
                                                         {
-                                                            <span style="color:red">2 * </span>
+                                                            <span style="color:red">0.5 * </span>
                                                         }
                                                     }
                                                     L<sub>o</sub> ≥ L<sub>i</sub> + L<sub>c</sub>
@@ -836,7 +836,7 @@
                                                     @{
                                                         if (LCgreater)
                                                         {
-                                                            <span style="color:red">2 * </span>
+                                                            <span style="color:red">0.5 * </span>
                                                         }
                                                     }
                                                     C<sub>o</sub> ≥ C<sub>i</sub> + C<sub>c</sub>
