@@ -405,7 +405,17 @@
                                     <b>@ManufacturerName[iOut]</b>
                                 </td>
                                 <td class="atex-border atex-blue" style="width:12%">
-                                    <b>@TypeOfApproval[iOut]</b>
+                                    @{
+                                        if (PreviewFileUrl[iOut] != "")
+                                        {
+                                            <span>&nbsp</span>
+                                            <a href="@PreviewFileUrl[iOut]" target="_blank">@TypeOfApproval[iOut]</a>
+                                        }
+                                        else
+                                        {
+                                            <b>@TypeOfApproval[iOut]</b>
+                                        }
+                                    }
                                 </td>
                                 <td class="atex-border atex-blue" style="width:12%">
                                     <b>xxx II (1) G [Ex ia Ga] IIC</b>
@@ -486,7 +496,17 @@
                                     <b>@ManufacturerName[iIn]</b>
                                 </td>
                                 <td class="atex-border atex-blue" style="width:12%">
-                                    <b>@TypeOfApproval[iIn]</b>
+                                    @{
+                                        if (PreviewFileUrl[iIn] != "")
+                                        {
+                                            <span>&nbsp</span>
+                                            <a href="@PreviewFileUrl[iIn]" target="_blank"> TypeOfApproval[iIn] </a>
+                                        }
+                                        else
+                                        {
+                                            <b>@TypeOfApproval[iIn]</b>
+                                        }
+                                    }
                                 </td>
                                 <td class="atex-border atex-blue" style="width:12%">
                                     <b>xxx II (1) G [Ex ia Ga] IIC</b>
