@@ -1,4 +1,5 @@
 ﻿@page "/atex2";
+@using AasxRestServerLibrary;
 @using AasxServer
 @using Microsoft.AspNetCore.Html;
 @using Microsoft.IdentityModel.Tokens;
@@ -150,6 +151,24 @@
                                 <td style="width:3%">
                                     <img src="2022-02-15_IDTA_AAS-Logo_Final_RGB.png" />
                                 </td>
+                                @{
+                                    if (init == 0)
+                                    {
+                                        string logo = AasxHttpContextHelper.DataPath + "/logo.png";
+                                        if (System.IO.File.Exists(logo))
+                                        {
+                                            if (!System.IO.File.Exists("wwwroot/logo.png"))
+                                                System.IO.File.Copy(logo, "wwwroot/logo.png");
+                                            init = 1;
+                                        }
+                                    }
+                                    if (init == 1)
+                                    {
+                                        <td style="width:8%">
+                                            <img src="logo.png" />
+                                        </td>
+                                    }
+                                }
                             </tr>
                         </table>
                         <table class="atex-border" style="min-width:100%">
@@ -931,6 +950,7 @@
 
 @code
 {
+    static int init = 0;
     int countProject = 0;
     List<SubmodelElementCollection> project = null;
     List<string> projectName = null;
