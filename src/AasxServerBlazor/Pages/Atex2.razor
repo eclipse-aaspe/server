@@ -131,8 +131,8 @@
             string color = "red";
             string ok = "NO";
 
-            <table class="atex-border" style="min-width:100%">
-                <tr>
+            <table style="min-width:100%">
+                <tr style="border: 4px solid black">
                     <td>
                         <table class="atex-border" style="min-width:100%">
                             <tr>
@@ -203,7 +203,7 @@
                         </table>
                     </td>
                 </tr>
-                <tr>
+                <tr style="border: 4px solid black">
                     <td class="atex-border">
                         <table class="atex-border" style="min-width:100%">
                             <tr>
@@ -408,518 +408,565 @@
                         </table>
                     </td>
                 </tr>
-                <tr class="atex-border atex-gray">
+                <tr style="border: 4px solid black">
                     <td>
-                        <table>
-                            <tr>
+                        <table style="min-width:100%">
+                            <tr class="atex-border atex-gray">
                                 <td>
-                                    <b>Associated Apparatus</b>
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="atex-border" style="width:100%">
-                        <table style="min-width:100%">
-                            <tr>
-                                <td class="atex-border atex-gray" style="width:12%">
-                                    Name
-                                </td>
-                                <td class="atex-border atex-gray" style="width:12%">
-                                    Type
-                                </td>
-                                <td class="atex-border atex-gray" style="width:12%">
-                                    Manufacturer
-                                </td>
-                                <td class="atex-border atex-gray" style="width:12%">
-                                    Certificate
-                                </td>
-                                <td class="atex-border atex-gray" style="width:12%">
-                                    Identification
-                                </td>
-                                <td class="atex-border atex-gray" style="width:6%">
-                                    U<sub>o</sub> [V]
-                                </td>
-                                <td class="atex-border atex-gray" style="width:6%">
-                                    I<sub>o</sub> [mA]
-                                </td>
-                                <td class="atex-border atex-gray" style="width:6%">
-                                    P<sub>o</sub> [mW]
-                                </td>
-                                <td class="atex-border atex-gray" style="width:6%">
-                                    L<sub>o</sub> [mH]
-                                </td>
-                                <td class="atex-border atex-gray" style="width:6%">
-                                    C<sub>o</sub> [nF]
+                                    <table>
+                                        <tr>
+                                            <td>
+                                                <b>Associated Apparatus</b>
+                                            </td>
+                                        </tr>
+                                    </table>
                                 </td>
                             </tr>
                             <tr>
-                                <td class="atex-border atex-blue" style="width:12%">
-                                    <b>@ManufacturerProductDesignation[iOut]</b>
-                                </td>
-                                <td class="atex-border atex-blue" style="width:12%">
-                                    <b>@ManufacturerProductType[iOut]</b>
-                                </td>
-                                <td class="atex-border atex-blue" style="width:12%">
-                                    <b>@ManufacturerName[iOut]</b>
-                                </td>
-                                <td class="atex-border atex-blue" style="width:12%">
-                                    @{
-                                        if (PreviewFileUrl[iOut] != "")
-                                        {
-                                            <span>&nbsp</span>
-                                            <a style="border:none;color:blue" href="@PreviewFileUrl[iOut]" target="_blank"><u>@TypeOfApproval[iOut]</u></a>
-                                        }
-                                        else
-                                        {
-                                            <b>@TypeOfApproval[iOut]</b>
-                                        }
-                                    }
-                                </td>
-                                <td class="atex-border atex-blue" style="width:12%">
-                                    <b>@Identification[iOut]</b>
-                                </td>
-                                <td class="atex-border atex-blue" style="width:6%">
-                                    <b>@U[iOut].ToString(CultureInfo.InvariantCulture)</b>
-                                </td>
-                                <td class="atex-border atex-blue" style="width:6%">
-                                    <b>@I[iOut].ToString(CultureInfo.InvariantCulture)</b>
-                                </td>
-                                <td class="atex-border atex-blue" style="width:6%">
-                                    <b>@P[iOut].ToString(CultureInfo.InvariantCulture)</b>
-                                </td>
-                                <td class="atex-border atex-blue" style="width:6%">
-                                    <b>@L[iOut].ToString(CultureInfo.InvariantCulture)</b>
-                                </td>
-                                <td class="atex-border atex-blue" style="width:6%">
-                                    <b>@C[iOut].ToString(CultureInfo.InvariantCulture)</b>
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-                <tr class="atex-border atex-gray">
-                    <td>
-                        <table>
-                            <tr>
-                                <td>
-                                    <b>Intrinsically safe apparatus / field device</b>
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="atex-border" style="width:100%">
-                        <table style="min-width:100%">
-                            <tr>
-                                <td class="atex-border atex-gray" style="width:12%">
-                                    Name
-                                </td>
-                                <td class="atex-border atex-gray" style="width:12%">
-                                    Type
-                                </td>
-                                <td class="atex-border atex-gray" style="width:12%">
-                                    Manufacturer
-                                </td>
-                                <td class="atex-border atex-gray"  style="width:12%">
-                                    Certificate
-                                </td>
-                                <td class="atex-border atex-gray" style="width:12%">
-                                    Identification
-                                </td>
-                                <td class="atex-border atex-gray" style="width:6%">
-                                    U<sub>i</sub> [V]
-                                </td>
-                                <td class="atex-border atex-gray" style="width:6%">
-                                    I<sub>i</sub> [mA]
-                                </td>
-                                <td class="atex-border atex-gray" style="width:6%">
-                                    P<sub>i</sub> [mW]
-                                </td>
-                                <td class="atex-border atex-gray" style="width:6%">
-                                    L<sub>i</sub> [mH]
-                                </td>
-                                <td class="atex-border atex-gray" style="width:6%">
-                                    C<sub>i</sub> [nF]
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="atex-border atex-pink" style="width:12%">
-                                    <b>@ManufacturerProductDesignation[iIn]</b>
-                                </td>
-                                <td class="atex-border atex-pink" style="width:12%">
-                                    <b>@ManufacturerProductType[iIn]</b>
-                                </td>
-                                <td class="atex-border atex-pink" style="width:12%">
-                                    <b>@ManufacturerName[iIn]</b>
-                                </td>
-                                <td class="atex-border atex-blue" style="width:12%">
-                                    @{
-                                        if (PreviewFileUrl[iIn] != "")
-                                        {
-                                            <span>&nbsp</span>
-                                            <a style="border:none;color:blue" href="@PreviewFileUrl[iIn]" target="_blank"><u>@TypeOfApproval[iIn]</u></a>
-                                        }
-                                        else
-                                        {
-                                            <b>@TypeOfApproval[iIn]</b>
-                                        }
-                                    }
-                                </td>
-                                <td class="atex-border atex-blue" style="width:12%">
-                                    <b>@Identification[iIn]</b>
-                                </td>
-                                <td class="atex-border atex-blue" style="width:6%">
-                                    <b>@U[iIn].ToString(CultureInfo.InvariantCulture)</b>
-                                </td>
-                                <td class="atex-border atex-blue" style="width:6%">
-                                    <b>@I[iIn].ToString(CultureInfo.InvariantCulture)</b>
-                                </td>
-                                <td class="atex-border atex-blue" style="width:6%">
-                                    <b>@P[iIn].ToString(CultureInfo.InvariantCulture)</b>
-                                </td>
-                                <td class="atex-border atex-blue" style="width:6%">
-                                    <b>@L[iIn].ToString(CultureInfo.InvariantCulture)</b>
-                                </td>
-                                <td class="atex-border atex-blue" style="width:6%">
-                                    <b>@C[iIn].ToString(CultureInfo.InvariantCulture)</b>
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="atex-border" style="width:100%">
-                        <table style="min-width:100%">
-                            <tr>
-                                <td class="atex-border atex-gray" style="width:24%">
-                                    <b>Cable capacities and inductance</b>
-                                </td>
-                                <td class="atex-border atex-gray" style="width:12%">
-                                    Manufacturer
-                                </td>
-                                <td class="atex-border atex-gray" style="width:12%">
-                                    Cable length
-                                </td>
-                                <td class="atex-border atex-gray" style="width:6%">
-                                    Cable L<sub>c</sub>
-                                </td>
-                                <td class="atex-border atex-gray" style="width:6%">
-                                    Cable C<sub>c</sub>
-                                </td>
-                                <td class="atex-border atex-gray" style="width:18%">
-                                    Maximum cable length
-                                </td>
-                                <td class="atex-border atex-gray" style="width:6%">
-                                    L<sub>c</sub>
-                                </td>
-                                <td class="atex-border atex-gray" style="width:6%">
-                                    C<sub>c</sub>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="atex-border atex-gray" style="width:24%">
-                                </td>
-                                <td class="atex-border atex-blue" style="width:12%">
-                                    <b>STANDARD</b>
-                                </td>
-                                <td class="atex-border atex-gray" style="width:12%">
-                                    [m]
-                                </td>
-                                <td class="atex-border atex-gray" style="width:6%">
-                                    [mH/km]
-                                </td>
-                                <td class="atex-border atex-gray" style="width:6%">
-                                    [nF/km]
-                                </td>
-                                <td class="atex-border atex-gray" style="width:18%">
-                                    [m]
-                                </td>
-                                <td class="atex-border atex-gray" style="width:6%;">
-                                    [mH]
-                                </td>
-                                <td class="atex-border atex-gray" style="width:6%;">
-                                    [nF]
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="atex-border atex-gray" style="width:24%">
-                                    (Manufacturer specification (Datasheet) or <br>
-                                    L<sub>c</sub> = 1 mH/km, C<sub>c</sub> = 110 nF/km)
-                                </td>
-                                <td class="atex-border atex-gray" style="width:12%">
-                                </td>
-                                <td class="atex-border atex-white" style="width:12%">
-                                    <b>
-                                        <input @bind="inputLength[iOut]" class="atex-white" style="min-width:100%;min-height:100%" />
-                                    </b>
-                                </td>
-                                <td class="atex-border atex-gray" style="width:6%">
-                                    <b>1</b>
-                                </td>
-                                <td class="atex-border atex-gray" style="width:6%">
-                                    <b>110</b>
-                                </td>
-                                <td class="atex-border atex-green" style="width:18%">
-                                    <b>@clMax1.ToString(CultureInfo.InvariantCulture)</b>
-                                </td>
-                                <td class="atex-border atex-green" style="width:6%">
-                                    @Lc.ToString(CultureInfo.InvariantCulture)
-                                </td>
-                                <td class="atex-border atex-green" style="width:6%">
-                                    @Cc.ToString(CultureInfo.InvariantCulture)
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="atex-border" style="width:100%">
-                        <table style="min-width:100%">
-                            <tr>
-                                <td class="atex-border atex-gray" style="width:78%">
-                                </td>
-                                <td class="atex-border atex-gray" style="width:6%">
-                                    L<sub>i</sub> + L<sub>c</sub>
-                                </td>
-                                <td class="atex-border atex-gray" style="width:6%">
-                                    C<sub>i</sub> + C<sub>c</sub>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="atex-border atex-gray" style="width:78%">
-                                </td>
-                                <td class="atex-border atex-gray" style="width:6%">
-                                    [mH]
-                                </td>
-                                <td class="atex-border atex-gray" style="width:6%">
-                                    [nF]
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="atex-border atex-gray" style="width:78%">
-                                    <b>Inductance (L<sub>i</sub> + L<sub>c</sub>) and capacities (C<sub>i</sub> + C<sub>c</sub>)</b>
-                                </td>
-                                <td class="atex-border atex-green" style="width:6%">
-                                    <b>@sumLiLc.ToString(CultureInfo.InvariantCulture)</b>
-                                </td>
-                                <td class="atex-border atex-green" style="width:6%">
-                                    <b>@sumCiCc.ToString(CultureInfo.InvariantCulture)</b>
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="atex-border atex-gray" style="width:100%">
-                        <br />
-                    </td>
-                </tr>
-                <tr>
-                    <td class="atex-border atex-gray" style="width:100%">
-                        <table style="min-width:100%">
-                            <tr>
-                                <td class="atex-border atex-gray" style="width:48%">
-                                    <b>Condition / Verification for intrinsic safety</b>
-                                </td>
-                                <td class="atex-border atex-gray" style="width:12%">
-                                    <b>Intrinsic safety ok</b>
-                                </td>
-                                <td class="atex-border atex-gray" style="width:40%">
-                                    <b>Additional condition</b>
-                                </td>
-                            </tr>
-                            @{
-                                color = "red";
-                                ok = "NO";
-                                if(U[iOut] <= U[iIn])
-                                {
-                                    color = "green";
-                                    ok = "YES";
-                                }
-                            }
-                            <tr>
-                                <td class="atex-border atex-gray" style="width:48%">
+                                <td class="atex-border" style="width:100%">
                                     <table style="min-width:100%">
                                         <tr>
-                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
-                                                <b>U<sub>o</sub> ≤ U<sub>i</sub></b>
+                                            <td class="atex-border atex-gray" style="width:12%">
+                                                Name
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                            <td class="atex-border atex-gray" style="width:12%">
+                                                Type
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:12%">
+                                                Manufacturer
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:12%">
+                                                Certificate
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:12%">
+                                                Identification
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:6%">
+                                                U<sub>o</sub> [V]
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:6%">
+                                                I<sub>o</sub> [mA]
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:6%">
+                                                P<sub>o</sub> [mW]
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:6%">
+                                                L<sub>o</sub> [mH]
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:6%">
+                                                C<sub>o</sub> [nF]
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="atex-border atex-blue" style="width:12%">
+                                                <b>@ManufacturerProductDesignation[iOut]</b>
+                                            </td>
+                                            <td class="atex-border atex-blue" style="width:12%">
+                                                @{
+                                                    int ii = iOut;
+                                                    <b>
+                                                        <select style="width:100%;height:100%;background-color:lightblue"
+                                                            value="@ManufacturerProductType[ii]" @onchange="@((ChangeEventArgs args) => OnChangeProductOut(args, ii))">
+                                                            @foreach (var t in ManufacturerProductType)
+                                                            {
+                                                                if (t != "")
+                                                                {
+                                                                    <option value="@t">@t</option>
+                                                                }
+                                                            }
+                                                        </select>
+                                                    </b>
+                                                }
+                                            </td>
+                                            <td class="atex-border atex-blue" style="width:12%">
+                                                <b>@ManufacturerName[iOut]</b>
+                                            </td>
+                                            <td class="atex-border atex-blue" style="width:12%">
+                                                @{
+                                                    if (PreviewFileUrl[iOut] != "")
+                                                    {
+                                                        <span>&nbsp</span>
+                                                        <a style="border:none;color:blue" href="@PreviewFileUrl[iOut]" target="_blank"><u>@TypeOfApproval[iOut]</u></a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <b>@TypeOfApproval[iOut]</b>
+                                                    }
+                                                }
+                                            </td>
+                                            <td class="atex-border atex-blue" style="width:12%">
+                                                <b>@Identification[iOut]</b>
+                                            </td>
+                                            <td class="atex-border atex-blue" style="width:6%">
                                                 <b>@U[iOut].ToString(CultureInfo.InvariantCulture)</b>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
-                                                <b>≤</b>
-                                            </td>
-                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
-                                                <b>@U[iIn].ToString(CultureInfo.InvariantCulture)</b>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                                <td class="atex-border atex-gray" style="width:12%;color:@color">
-                                    <b>@ok</b>
-                                </td>
-                                <td class="atex-border atex-gray" style="width:40%">
-                                    Zone at the installation: Zone 0/1
-                                </td>
-                            </tr>
-                            @{
-                                color = "red";
-                                ok = "NO";
-                                if (I[iOut] <= I[iIn])
-                                {
-                                    color = "green";
-                                    ok = "YES";
-                                }
-                            }
-                            <tr>
-                                <td class="atex-border atex-gray" style="width:48%">
-                                    <table style="min-width:100%">
-                                        <tr>
-                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
-                                                <b>I<sub>o</sub> ≤ I<sub>i</sub></b>
-                                            </td>
-                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                            <td class="atex-border atex-blue" style="width:6%">
                                                 <b>@I[iOut].ToString(CultureInfo.InvariantCulture)</b>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
-                                                <b>≤</b>
-                                            </td>
-                                        <td class="atex-border atex-gray" style="width:25%;color:@color">
-                                                <b>@I[iIn].ToString(CultureInfo.InvariantCulture)</b>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                                <td class="atex-border atex-gray" style="width:12%;color:@color">
-                                    <b>@ok</b>
-                                </td>
-                                <td class="atex-border atex-gray" style="width:40%">
-                                    Ex Group: IIC
-                                </td>
-                            </tr>
-                            @{
-                                color = "red";
-                                ok = "NO";
-                                if (P[iOut] <= P[iIn])
-                                {
-                                    color = "green";
-                                    ok = "YES";
-                                }
-                            }
-                            <tr>
-                                <td class="atex-border atex-gray" style="width:48%">
-                                    <table style="min-width:100%">
-                                        <tr>
-                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
-                                                <b>P<sub>o</sub> ≤ P<sub>i</sub></b>
-                                            </td>
-                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                            <td class="atex-border atex-blue" style="width:6%">
                                                 <b>@P[iOut].ToString(CultureInfo.InvariantCulture)</b>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
-                                                <b>≤</b>
+                                            <td class="atex-border atex-blue" style="width:6%">
+                                                <b>@L[iOut].ToString(CultureInfo.InvariantCulture)</b>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
-                                                <b>@P[iIn].ToString(CultureInfo.InvariantCulture)</b>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                                <td class="atex-border atex-gray" style="width:12%;color:@color">
-                                    <b>@ok</b>
-                                </td>
-                                <td class="atex-border atex-gray" style="width:40%">
-                                    max. ambient temperature:
-                                </td>
-                            </tr>
-                            @{
-                                color = "red";
-                                ok = "NO";
-                                if (Lo >= sumLiLc)
-                                {
-                                    color = "green";
-                                    ok = "YES";
-                                }
-                            }
-                            <tr>
-                                <td class="atex-border atex-gray" style="width:48%">
-                                    <table style="min-width:100%">
-                                        <tr class="atex-border atex-gray">
-                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
-                                                <b>
-                                                    @{
-                                                        if (LCgreater)
-                                                        {
-                                                            <span style="color:red">0.5 * </span>
-                                                        }
-                                                    }
-                                                    L<sub>o</sub> ≥ L<sub>i</sub> + L<sub>c</sub>
-                                                </b>
-                                            </td>
-                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
-                                                <b>@Lo.ToString(CultureInfo.InvariantCulture)</b>
-                                            </td>
-                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
-                                                <b>≥</b>
-                                            </td>
-                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
-                                                <b>@sumLiLc.ToString(CultureInfo.InvariantCulture)</b>
+                                            <td class="atex-border atex-blue" style="width:6%">
+                                                <b>@C[iOut].ToString(CultureInfo.InvariantCulture)</b>
                                             </td>
                                         </tr>
                                     </table>
                                 </td>
-                                <td class="atex-border atex-gray" style="width:12%;color:@color">
-                                    <b>@ok</b>
-                                </td>
-                                <td class="atex-border atex-gray" style="width:40%">
-                                    Mixed IS circuit:
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr style="border: 4px solid black">
+                    <td>
+                        <table style="min-width:100%">
+                            <tr class="atex-border atex-gray">
+                                <td>
+                                    <table>
+                                        <tr>
+                                            <td>
+                                                <b>Intrinsically safe apparatus / field device</b>
+                                            </td>
+                                        </tr>
+                                    </table>
                                 </td>
                             </tr>
-                            @{
-                                color = "red";
-                                ok = "NO";
-                                if (Co >= sumCiCc)
-                                {
-                                    color = "green";
-                                    ok = "YES";
-                                }
-                            }
                             <tr>
-                                <td class="atex-border atex-gray" style="width:48%">
+                                <td class="atex-border" style="width:100%">
                                     <table style="min-width:100%">
                                         <tr>
-                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
-                                                <b>
-                                                    @{
-                                                        if (LCgreater)
-                                                        {
-                                                            <span style="color:red">0.5 * </span>
-                                                        }
+                                            <td class="atex-border atex-gray" style="width:12%">
+                                                Name
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:12%">
+                                                Type
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:12%">
+                                                Manufacturer
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:12%">
+                                                Certificate
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:12%">
+                                                Identification
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:6%">
+                                                U<sub>i</sub> [V]
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:6%">
+                                                I<sub>i</sub> [mA]
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:6%">
+                                                P<sub>i</sub> [mW]
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:6%">
+                                                L<sub>i</sub> [mH]
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:6%">
+                                                C<sub>i</sub> [nF]
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="atex-border atex-pink" style="width:12%">
+                                                <b>@ManufacturerProductDesignation[iIn]</b>
+                                            </td>
+                                            <td class="atex-border atex-pink" style="width:12%">
+                                                @{
+                                                    var ii2 = iIn;
+                                                    <b>
+                                                        <select style="width:100%;height:100%;background-color:lightpink"
+                                                            value="@ManufacturerProductType[ii2]" @onchange="@((ChangeEventArgs args) => OnChangeProductIn(args, ii2))">
+                                                            @foreach (var t in ManufacturerProductType)
+                                                            {
+                                                                if (t != "")
+                                                                {
+                                                                    <option value="@t">@t</option>
+                                                                }
+                                                            }
+                                                        </select>
+                                                    </b>
+                                                }
+                                            </td>
+                                            <td class="atex-border atex-pink" style="width:12%">
+                                                <b>@ManufacturerName[iIn]</b>
+                                            </td>
+                                            <td class="atex-border atex-blue" style="width:12%">
+                                                @{
+                                                    if (PreviewFileUrl[iIn] != "")
+                                                    {
+                                                        <span>&nbsp</span>
+                                                        <a style="border:none;color:blue" href="@PreviewFileUrl[iIn]" target="_blank"><u>@TypeOfApproval[iIn]</u></a>
                                                     }
-                                                    C<sub>o</sub> ≥ C<sub>i</sub> + C<sub>c</sub>
+                                                    else
+                                                    {
+                                                        <b>@TypeOfApproval[iIn]</b>
+                                                    }
+                                                }
+                                            </td>
+                                            <td class="atex-border atex-blue" style="width:12%">
+                                                <b>@Identification[iIn]</b>
+                                            </td>
+                                            <td class="atex-border atex-blue" style="width:6%">
+                                                <b>@U[iIn].ToString(CultureInfo.InvariantCulture)</b>
+                                            </td>
+                                            <td class="atex-border atex-blue" style="width:6%">
+                                                <b>@I[iIn].ToString(CultureInfo.InvariantCulture)</b>
+                                            </td>
+                                            <td class="atex-border atex-blue" style="width:6%">
+                                                <b>@P[iIn].ToString(CultureInfo.InvariantCulture)</b>
+                                            </td>
+                                            <td class="atex-border atex-blue" style="width:6%">
+                                                <b>@L[iIn].ToString(CultureInfo.InvariantCulture)</b>
+                                            </td>
+                                            <td class="atex-border atex-blue" style="width:6%">
+                                                <b>@C[iIn].ToString(CultureInfo.InvariantCulture)</b>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr style="border: 4px solid black">
+                    <td>
+                        <table style="min-width:100%">
+                            <tr>
+                                <td class="atex-border" style="width:100%">
+                                    <table style="min-width:100%">
+                                        <tr>
+                                            <td class="atex-border atex-gray" style="width:24%">
+                                                <b>Cable capacities and inductance</b>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:12%">
+                                                Manufacturer
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:12%">
+                                                Cable length
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:6%">
+                                                Cable L<sub>c</sub>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:6%">
+                                                Cable C<sub>c</sub>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:18%">
+                                                Maximum cable length
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:6%">
+                                                L<sub>c</sub>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:6%">
+                                                C<sub>c</sub>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="atex-border atex-gray" style="width:24%">
+                                            </td>
+                                            <td class="atex-border atex-blue" style="width:12%">
+                                                <b>STANDARD</b>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:12%">
+                                                [m]
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:6%">
+                                                [mH/km]
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:6%">
+                                                [nF/km]
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:18%">
+                                                [m]
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:6%;">
+                                                [mH]
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:6%;">
+                                                [nF]
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="atex-border atex-gray" style="width:24%">
+                                                (Manufacturer specification (Datasheet) or <br>
+                                                L<sub>c</sub> = 1 mH/km, C<sub>c</sub> = 110 nF/km)
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:12%">
+                                            </td>
+                                            <td class="atex-border atex-white" style="width:12%">
+                                                <b>
+                                                    <input @bind="inputLength[iOut]" class="atex-white" style="min-width:100%;min-height:100%" />
                                                 </b>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
-                                                <b>@Co.ToString(CultureInfo.InvariantCulture)</b>
+                                            <td class="atex-border atex-gray" style="width:6%">
+                                                <b>1</b>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
-                                                <b>≥</b>
+                                            <td class="atex-border atex-gray" style="width:6%">
+                                                <b>110</b>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                            <td class="atex-border atex-green" style="width:18%">
+                                                <b>@clMax1.ToString(CultureInfo.InvariantCulture)</b>
+                                            </td>
+                                            <td class="atex-border atex-green" style="width:6%">
+                                                @Lc.ToString(CultureInfo.InvariantCulture)
+                                            </td>
+                                            <td class="atex-border atex-green" style="width:6%">
+                                                @Cc.ToString(CultureInfo.InvariantCulture)
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="atex-border" style="width:100%">
+                                    <table style="min-width:100%">
+                                        <tr>
+                                            <td class="atex-border atex-gray" style="width:78%">
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:6%">
+                                                L<sub>i</sub> + L<sub>c</sub>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:6%">
+                                                C<sub>i</sub> + C<sub>c</sub>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="atex-border atex-gray" style="width:78%">
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:6%">
+                                                [mH]
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:6%">
+                                                [nF]
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="atex-border atex-gray" style="width:78%">
+                                                <b>Inductance (L<sub>i</sub> + L<sub>c</sub>) and capacities (C<sub>i</sub> + C<sub>c</sub>)</b>
+                                            </td>
+                                            <td class="atex-border atex-green" style="width:6%">
+                                                <b>@sumLiLc.ToString(CultureInfo.InvariantCulture)</b>
+                                            </td>
+                                            <td class="atex-border atex-green" style="width:6%">
                                                 <b>@sumCiCc.ToString(CultureInfo.InvariantCulture)</b>
                                             </td>
                                         </tr>
                                     </table>
                                 </td>
-                                <td class="atex-border atex-gray" style="width:12%;color:@color">
-                                    <b>@ok</b>
-                                </td>
-                                <td class="atex-border atex-gray" style="width:40%">
-                                    (with concentrated Li (≥ 1% Lo) and concentrated Ci (≥ 1% Co): YES
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr style="border: 4px solid black">
+                    <td>
+                        <table style="min-width:100%">
+                            <tr>
+                                <td class="atex-border atex-gray" style="width:100%">
+                                    <table style="min-width:100%">
+                                        <tr>
+                                            <td class="atex-border atex-gray" style="width:48%">
+                                                <b>Condition / Verification for intrinsic safety</b>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:12%">
+                                                <b>Intrinsic safety ok</b>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:40%">
+                                                <b>Additional condition</b>
+                                            </td>
+                                        </tr>
+                                        @{
+                                            color = "red";
+                                            ok = "NO";
+                                            if (U[iOut] <= U[iIn])
+                                            {
+                                                color = "green";
+                                                ok = "YES";
+                                            }
+                                        }
+                                        <tr>
+                                            <td class="atex-border atex-gray" style="width:48%">
+                                                <table style="min-width:100%">
+                                                    <tr>
+                                                        <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                            <b>U<sub>o</sub> ≤ U<sub>i</sub></b>
+                                                        </td>
+                                                        <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                            <b>@U[iOut].ToString(CultureInfo.InvariantCulture)</b>
+                                                        </td>
+                                                        <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                            <b>≤</b>
+                                                        </td>
+                                                        <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                            <b>@U[iIn].ToString(CultureInfo.InvariantCulture)</b>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:12%;color:@color">
+                                                <b>@ok</b>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:40%">
+                                                Zone at the installation: Zone 0/1
+                                            </td>
+                                        </tr>
+                                        @{
+                                            color = "red";
+                                            ok = "NO";
+                                            if (I[iOut] <= I[iIn])
+                                            {
+                                                color = "green";
+                                                ok = "YES";
+                                            }
+                                        }
+                                        <tr>
+                                            <td class="atex-border atex-gray" style="width:48%">
+                                                <table style="min-width:100%">
+                                                    <tr>
+                                                        <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                            <b>I<sub>o</sub> ≤ I<sub>i</sub></b>
+                                                        </td>
+                                                        <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                            <b>@I[iOut].ToString(CultureInfo.InvariantCulture)</b>
+                                                        </td>
+                                                        <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                            <b>≤</b>
+                                                        </td>
+                                                        <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                            <b>@I[iIn].ToString(CultureInfo.InvariantCulture)</b>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:12%;color:@color">
+                                                <b>@ok</b>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:40%">
+                                                Ex Group: IIC
+                                            </td>
+                                        </tr>
+                                        @{
+                                            color = "red";
+                                            ok = "NO";
+                                            if (P[iOut] <= P[iIn])
+                                            {
+                                                color = "green";
+                                                ok = "YES";
+                                            }
+                                        }
+                                        <tr>
+                                            <td class="atex-border atex-gray" style="width:48%">
+                                                <table style="min-width:100%">
+                                                    <tr>
+                                                        <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                            <b>P<sub>o</sub> ≤ P<sub>i</sub></b>
+                                                        </td>
+                                                        <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                            <b>@P[iOut].ToString(CultureInfo.InvariantCulture)</b>
+                                                        </td>
+                                                        <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                            <b>≤</b>
+                                                        </td>
+                                                        <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                            <b>@P[iIn].ToString(CultureInfo.InvariantCulture)</b>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:12%;color:@color">
+                                                <b>@ok</b>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:40%">
+                                                max. ambient temperature:
+                                            </td>
+                                        </tr>
+                                        @{
+                                            color = "red";
+                                            ok = "NO";
+                                            if (Lo >= sumLiLc)
+                                            {
+                                                color = "green";
+                                                ok = "YES";
+                                            }
+                                        }
+                                        <tr>
+                                            <td class="atex-border atex-gray" style="width:48%">
+                                                <table style="min-width:100%">
+                                                    <tr class="atex-border atex-gray">
+                                                        <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                            <b>
+                                                                @{
+                                                                    if (LCgreater)
+                                                                    {
+                                                                        <span style="color:red">0.5 * </span>
+                                                                    }
+                                                                }
+                                                                L<sub>o</sub> ≥ L<sub>i</sub> + L<sub>c</sub>
+                                                            </b>
+                                                        </td>
+                                                        <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                            <b>@Lo.ToString(CultureInfo.InvariantCulture)</b>
+                                                        </td>
+                                                        <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                            <b>≥</b>
+                                                        </td>
+                                                        <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                            <b>@sumLiLc.ToString(CultureInfo.InvariantCulture)</b>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:12%;color:@color">
+                                                <b>@ok</b>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:40%">
+                                                Mixed IS circuit:
+                                            </td>
+                                        </tr>
+                                        @{
+                                            color = "red";
+                                            ok = "NO";
+                                            if (Co >= sumCiCc)
+                                            {
+                                                color = "green";
+                                                ok = "YES";
+                                            }
+                                        }
+                                        <tr>
+                                            <td class="atex-border atex-gray" style="width:48%">
+                                                <table style="min-width:100%">
+                                                    <tr>
+                                                        <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                            <b>
+                                                                @{
+                                                                    if (LCgreater)
+                                                                    {
+                                                                        <span style="color:red">0.5 * </span>
+                                                                    }
+                                                                }
+                                                                C<sub>o</sub> ≥ C<sub>i</sub> + C<sub>c</sub>
+                                                            </b>
+                                                        </td>
+                                                        <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                            <b>@Co.ToString(CultureInfo.InvariantCulture)</b>
+                                                        </td>
+                                                        <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                            <b>≥</b>
+                                                        </td>
+                                                        <td class="atex-border atex-gray" style="width:25%;color:@color">
+                                                            <b>@sumCiCc.ToString(CultureInfo.InvariantCulture)</b>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:12%;color:@color">
+                                                <b>@ok</b>
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:40%">
+                                                (with concentrated Li (≥ 1% Lo) and concentrated Ci (≥ 1% Co): YES
+                                            </td>
+                                        </tr>
+                                    </table>
                                 </td>
                             </tr>
                         </table>
@@ -949,6 +996,34 @@
 
 @code
 {
+    void OnChangeProductOut(ChangeEventArgs args, int iOut)
+    {
+        if (args.Value != null)
+        {
+            var a = args.Value.ToString();
+            for (int i = 0; i < zugehoerigesbetriebsmittel.Count; i++)
+            {
+                if (zugehoerigesbetriebsmittel[i] == ManufacturerProductType[iOut])
+                    zugehoerigesbetriebsmittel[i] = a;
+            }
+            this.StateHasChanged();
+        }
+    }
+
+    void OnChangeProductIn(ChangeEventArgs args, int iIn)
+    {
+        if (args.Value != null)
+        {
+            var a = args.Value.ToString();
+            for (int i = 0; i < eigensicheresbetriebsmittel.Count; i++)
+            {
+                if (eigensicheresbetriebsmittel[i] == ManufacturerProductType[iIn])
+                    eigensicheresbetriebsmittel[i] = a;
+            }
+            this.StateHasChanged();
+        }
+    }
+
     static int init = 0;
     int countProject = 0;
     List<SubmodelElementCollection> project = null;
@@ -1002,8 +1077,10 @@
             certifiedAt = new List<string>();
         if (pCertifiedAt == null)
             pCertifiedAt = new List<Property>();
-        eigensicheresbetriebsmittel = new List<string>();
-        zugehoerigesbetriebsmittel = new List<string>();
+        if (eigensicheresbetriebsmittel == null)
+            eigensicheresbetriebsmittel = new List<string>();
+        if (zugehoerigesbetriebsmittel == null)
+            zugehoerigesbetriebsmittel = new List<string>();
 
         count = 0;
         isOutput = new List<bool>();
@@ -1011,7 +1088,8 @@
         Nameplate = new List<Submodel>();
         TechnicalData = new List<Submodel>();
         ManufacturerProductDesignation = new List<string>();
-        ManufacturerProductType = new List<string>();
+        if (ManufacturerProductType == null)
+            ManufacturerProductType = new List<string>();
         ManufacturerName = new List<string>();
         ManufacturerLogo = new List<string>();
         ProductImage = new List<string>();
@@ -1066,8 +1144,10 @@
                                                     pCertifiedBy.Add(null);
                                                     pCertifiedAt.Add(null);
                                                 }
-                                                eigensicheresbetriebsmittel.Add("");
-                                                zugehoerigesbetriebsmittel.Add("");
+                                                if (eigensicheresbetriebsmittel.Count <= countProject)
+                                                    eigensicheresbetriebsmittel.Add("");
+                                                if (zugehoerigesbetriebsmittel.Count <= countProject)
+                                                    zugehoerigesbetriebsmittel.Add("");
 
                                                 var sme = findeSME(smc: project[countProject], idShortPath: "projektbezeichnung", ignore: true);
                                                 if (sme != null)
@@ -1077,16 +1157,28 @@
                                                     projectName[countProject] = sme.ValueAsText();
                                                 sme = findeSME(smc: project[countProject], idShortPath: "eigensicheresbetriebsmittel", ignore: true);
                                                 if (sme != null)
-                                                    eigensicheresbetriebsmittel[countProject] = sme.ValueAsText();
+                                                {
+                                                    if (eigensicheresbetriebsmittel[countProject] == "")
+                                                        eigensicheresbetriebsmittel[countProject] = sme.ValueAsText();
+                                                }
                                                 sme = findeSME(smc: project[countProject], idShortPath: "intrinsicallysafeapparatus", ignore: true);
                                                 if (sme != null)
-                                                    eigensicheresbetriebsmittel[countProject] = sme.ValueAsText();
+                                                {
+                                                    if (eigensicheresbetriebsmittel[countProject] == "")
+                                                        eigensicheresbetriebsmittel[countProject] = sme.ValueAsText();
+                                                }
                                                 sme = findeSME(smc: project[countProject], idShortPath: "zugehoerigesbetriebsmittel", ignore: true);
                                                 if (sme != null)
-                                                    zugehoerigesbetriebsmittel[countProject] = sme.ValueAsText();
+                                                {
+                                                    if (zugehoerigesbetriebsmittel[countProject] == "")
+                                                        zugehoerigesbetriebsmittel[countProject] = sme.ValueAsText();
+                                                }
                                                 sme = findeSME(smc: project[countProject], idShortPath: "associatedapparatus", ignore: true);
                                                 if (sme != null)
-                                                    zugehoerigesbetriebsmittel[countProject] = sme.ValueAsText();
+                                                {
+                                                    if (zugehoerigesbetriebsmittel[countProject] == "")
+                                                        zugehoerigesbetriebsmittel[countProject] = sme.ValueAsText();
+                                                }
                                                 sme = findeSME(smc: project[countProject], idShortPath: "leitungslaenge", ignore: true);
                                                 if (sme != null)
                                                 {
@@ -1134,7 +1226,6 @@
                                     envIndex.Add(i);
                                     Nameplate.Add(sm as Submodel);
                                     ManufacturerProductDesignation.Add("");
-                                    ManufacturerProductType.Add("");
                                     ManufacturerName.Add("");
                                     DesignationOfCertificateOrApproval.Add("");
                                     PreviewFile.Add("");
@@ -1148,6 +1239,8 @@
                                     P.Add(0);
                                     L.Add(0);
                                     C.Add(0);
+                                    if (C.Count > ManufacturerProductType.Count)
+                                        ManufacturerProductType.Add("");
                                     if (C.Count > Alternatives.Count)
                                         Alternatives.Add("");
                                     if (C.Count > inputLength.Count)
@@ -1168,14 +1261,17 @@
                                         }
                                     }
 
-                                    sme = findeSME(sm: sm, idShortPath: "ManufacturerProductType", ignore: true);
-                                    if (sme != null)
+                                    if (ManufacturerProductType[count] == "")
                                     {
-                                        if (sme is Property p)
-                                            ManufacturerProductType[count] = p.Value;
-                                        if (sme is MultiLanguageProperty mlp && mlp.Value != null && mlp.Value.Count > 0)
+                                        sme = findeSME(sm: sm, idShortPath: "ManufacturerProductType", ignore: true);
+                                        if (sme != null)
                                         {
-                                            ManufacturerProductType[count] = mlp.Value[0].Text;
+                                            if (sme is Property p)
+                                                ManufacturerProductType[count] = p.Value;
+                                            if (sme is MultiLanguageProperty mlp && mlp.Value != null && mlp.Value.Count > 0)
+                                            {
+                                                ManufacturerProductType[count] = mlp.Value[0].Text;
+                                            }
                                         }
                                     }
 
