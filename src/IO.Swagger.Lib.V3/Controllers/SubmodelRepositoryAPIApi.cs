@@ -23,6 +23,7 @@ using IO.Swagger.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing.Template;
 using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Annotations;
 using System;
@@ -853,13 +854,16 @@ namespace IO.Swagger.Controllers
             //content-disposition so that the aasx file can be doenloaded from the web browser.
             ContentDisposition contentDisposition = new()
             {
-                FileName = fileName ?? throw new ArgumentNullException(nameof(fileName))
+                FileName = fileName ?? throw new ArgumentNullException(nameof(fileName)),
+                Inline = fileName.ToLower().EndsWith(".pdf") ? true : false
             };
 
             HttpContext.Response.Headers.Add("Content-Disposition", contentDisposition.ToString());
             HttpContext.Response.ContentLength = fileSize;
             if (fileName.ToLower().EndsWith(".svg"))
                 HttpContext.Response.ContentType = "image/svg+xml";
+            if (fileName.ToLower().EndsWith(".pdf"))
+                HttpContext.Response.ContentType = "application/pdf";
             HttpContext.Response.Body.WriteAsync(content);
             return new EmptyResult();
         }
