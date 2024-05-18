@@ -1004,9 +1004,12 @@
             for (int i = 0; i < zugehoerigesbetriebsmittel.Count; i++)
             {
                 if (zugehoerigesbetriebsmittel[i] == ManufacturerProductType[iOut])
-                    zugehoerigesbetriebsmittel[i] = a;
+                {
+                   zugehoerigesbetriebsmittel[i] = a;
+                   pZugehoerigesbetriebsmittel[i].Value = a;
+                }
             }
-            this.StateHasChanged();
+            Program.signalNewData(0);
         }
     }
 
@@ -1018,13 +1021,18 @@
             for (int i = 0; i < eigensicheresbetriebsmittel.Count; i++)
             {
                 if (eigensicheresbetriebsmittel[i] == ManufacturerProductType[iIn])
+                {
                     eigensicheresbetriebsmittel[i] = a;
+                    pEigensicheresbetriebsmittel[i].Value = a;
+                }
             }
-            this.StateHasChanged();
+            Program.signalNewData(0);
         }
     }
 
-    static int init = 0;
+    int newDataMode = 1;
+    object lockNewDataMode = new object();
+    static int init = 0;    
     int countProject = 0;
     List<SubmodelElementCollection> project = null;
     List<string> projectName = null;
@@ -1035,7 +1043,9 @@
     List<string> certifiedAt = null;
     List<Property> pCertifiedAt = null;
     List<string> eigensicheresbetriebsmittel = null;
+    List<Property> pEigensicheresbetriebsmittel = null;
     List<string> zugehoerigesbetriebsmittel = null;
+    List<Property> pZugehoerigesbetriebsmittel = null;
 
     int count = 0;
     List<bool> isOutput = null;
@@ -1064,23 +1074,37 @@
 
     void collectData()
     {
+        int dataMode = 0;
+        lock (lockNewDataMode)
+        {
+            if (newDataMode != 0)
+            {
+                dataMode = newDataMode;
+                newDataMode = 0;
+            }
+        }
+
         countProject = 0;
         project = new List<SubmodelElementCollection>();
         projectName = new List<string>();
         cableLength = new List<double>();
         pCableLength = new List<Property>();
-        if (certifiedBy == null)
+        if (dataMode != 0)
             certifiedBy = new List<string>();
-        if (pCertifiedBy == null)
+        if (dataMode != 0)
             pCertifiedBy = new List<Property>();
-        if (certifiedAt == null)
+        if (dataMode != 0)
             certifiedAt = new List<string>();
-        if (pCertifiedAt == null)
+        if (dataMode != 0)
             pCertifiedAt = new List<Property>();
-        if (eigensicheresbetriebsmittel == null)
+        if (dataMode != 0)
             eigensicheresbetriebsmittel = new List<string>();
-        if (zugehoerigesbetriebsmittel == null)
+        if (dataMode != 0)
+            pEigensicheresbetriebsmittel = new List<Property>();
+        if (dataMode != 0)
             zugehoerigesbetriebsmittel = new List<string>();
+        if (dataMode != 0)
+            pZugehoerigesbetriebsmittel = new List<Property>();
 
         count = 0;
         isOutput = new List<bool>();
@@ -1088,7 +1112,7 @@
         Nameplate = new List<Submodel>();
         TechnicalData = new List<Submodel>();
         ManufacturerProductDesignation = new List<string>();
-        if (ManufacturerProductType == null)
+        if (dataMode != 0)
             ManufacturerProductType = new List<string>();
         ManufacturerName = new List<string>();
         ManufacturerLogo = new List<string>();
@@ -1105,9 +1129,9 @@
         P = new List<double>();
         L = new List<double>();
         C = new List<double>();
-        if (Alternatives == null)
+        if (dataMode != 0)
             Alternatives = new List<string>();
-        if (inputLength == null)
+        if (dataMode != 0)
             inputLength = new List<Double>();
 
         int aascount = AasxServer.Program.env.Length;
@@ -1146,8 +1170,12 @@
                                                 }
                                                 if (eigensicheresbetriebsmittel.Count <= countProject)
                                                     eigensicheresbetriebsmittel.Add("");
+                                                if (pEigensicheresbetriebsmittel.Count <= countProject)
+                                                    pEigensicheresbetriebsmittel.Add(null);
                                                 if (zugehoerigesbetriebsmittel.Count <= countProject)
                                                     zugehoerigesbetriebsmittel.Add("");
+                                                if (pZugehoerigesbetriebsmittel.Count <= countProject)
+                                                    pZugehoerigesbetriebsmittel.Add(null);
 
                                                 var sme = findeSME(smc: project[countProject], idShortPath: "projektbezeichnung", ignore: true);
                                                 if (sme != null)
@@ -1160,24 +1188,32 @@
                                                 {
                                                     if (eigensicheresbetriebsmittel[countProject] == "")
                                                         eigensicheresbetriebsmittel[countProject] = sme.ValueAsText();
+                                                    if (pEigensicheresbetriebsmittel[countProject] == null)
+                                                        pEigensicheresbetriebsmittel[countProject] = sme as Property;
                                                 }
                                                 sme = findeSME(smc: project[countProject], idShortPath: "intrinsicallysafeapparatus", ignore: true);
                                                 if (sme != null)
                                                 {
                                                     if (eigensicheresbetriebsmittel[countProject] == "")
                                                         eigensicheresbetriebsmittel[countProject] = sme.ValueAsText();
+                                                    if (pEigensicheresbetriebsmittel[countProject] == null)
+                                                        pEigensicheresbetriebsmittel[countProject] = sme as Property;
                                                 }
                                                 sme = findeSME(smc: project[countProject], idShortPath: "zugehoerigesbetriebsmittel", ignore: true);
                                                 if (sme != null)
                                                 {
                                                     if (zugehoerigesbetriebsmittel[countProject] == "")
                                                         zugehoerigesbetriebsmittel[countProject] = sme.ValueAsText();
+                                                    if (pZugehoerigesbetriebsmittel[countProject] == null)
+                                                        pZugehoerigesbetriebsmittel[countProject] = sme as Property;
                                                 }
                                                 sme = findeSME(smc: project[countProject], idShortPath: "associatedapparatus", ignore: true);
                                                 if (sme != null)
                                                 {
                                                     if (zugehoerigesbetriebsmittel[countProject] == "")
                                                         zugehoerigesbetriebsmittel[countProject] = sme.ValueAsText();
+                                                    if (pZugehoerigesbetriebsmittel[countProject] == null)
+                                                        pZugehoerigesbetriebsmittel[countProject] = sme as Property;
                                                 }
                                                 sme = findeSME(smc: project[countProject], idShortPath: "leitungslaenge", ignore: true);
                                                 if (sme != null)
@@ -1761,15 +1797,12 @@
 
         if (args is Program.NewDataAvailableArgs newArgs)
         {
-            int newDataMode = newArgs.signalNewDataMode;
-            InvokeAsync(() => this.StateHasChanged());
-            // InvokeAsync(() => NavMan.NavigateTo(NavMan.Uri, true));
-            /*
-            if (newDataMode != 0)
+            lock (lockNewDataMode)
             {
-                InvokeAsync(() => this.StateHasChanged());
+                if (newDataMode == 0)
+                    newDataMode = newArgs.signalNewDataMode;
             }
-            */
+            InvokeAsync(() => this.StateHasChanged());
         }
     }
 }
