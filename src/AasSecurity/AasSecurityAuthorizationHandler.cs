@@ -6,173 +6,181 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 
-namespace AasSecurity
+namespace AasSecurity;
+
+public class AasSecurityAuthorizationHandler : AuthorizationHandler<SecurityRequirement, object>
 {
-    public class AasSecurityAuthorizationHandler : AuthorizationHandler<SecurityRequirement, object>
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ISecurityService _securityService;
+    private static readonly ILogger _logger = ApplicationLogging.CreateLogger("SecurityHandler");
+
+    public AasSecurityAuthorizationHandler(IHttpContextAccessor httpContextAccessor, ISecurityService securityService)
     {
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly ISecurityService _securityService;
-        private static ILogger _logger = ApplicationLogging.CreateLogger("SecurityHandler");
+        _httpContextAccessor = httpContextAccessor;
+        _securityService = securityService;
+    }
 
-        public AasSecurityAuthorizationHandler(IHttpContextAccessor httpContextAccessor, ISecurityService securityService)
+    protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, SecurityRequirement requirement, object resource)
+    {
+        _logger.LogDebug("Authorizing the request");
+
+        if (!GlobalSecurityVariables.WithAuthentication)
         {
-            _httpContextAccessor = httpContextAccessor;
-            _securityService = securityService;
-        }
-
-        protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, SecurityRequirement requirement, object resource)
-        {
-            _logger.LogDebug("Authorizing the request");
-            if (!GlobalSecurityVariables.WithAuthentication)
-            {
-                _logger.LogDebug("Server is configured without security. Therefore, skipping authorization.");
-                context.Succeed(requirement);
-                return Task.CompletedTask;
-            }
-            //Get User Claims
-            var httpRequest = _httpContextAccessor.HttpContext!.Request;
-            string httpRoute = httpRequest.Path.Value!;
-            bool isAuthorized = false;
-            string getPolicy = "";
-            string policy = "";
-            string accessRole = ""; string idShortPath = null; string error = null;
-            AccessRights neededRights = AccessRights.READ;
-            var claims = context.User;
-            if (claims != null)
-            {
-                accessRole = claims.FindFirst(ClaimTypes.Role)!.Value;
-                string right = claims.FindFirst("NeededRights")!.Value;
-                if (claims.HasClaim(c => c.Type.Equals("IdShortPath")))
-                {
-                    idShortPath = claims.FindFirst("IdShortPath")!.Value;
-                }
-                Enum.TryParse(right, out neededRights);
-                var policyclaim = claims.FindFirst("Policy");
-                if (policyclaim != null)
-                {
-                    policy = policyclaim.Value;
-                }
-            }
-            if (!string.IsNullOrEmpty(idShortPath))
-            {
-                var parentSubmodel = resource as ISubmodel;
-                isAuthorized = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy, idShortPath, null, parentSubmodel);
-            }
-            else if (resource is ISubmodel submodel)
-            {
-                var httpOperation = httpRequest.Method;
-                if (httpOperation.ToLower().Equals("head"))
-                {
-                    policy = null;
-                }
-                isAuthorized = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy, submodel.IdShort!, "submodel", submodel, policy);
-            }
-            else if (resource is IAssetAdministrationShell aas)
-            {
-                var header = _httpContextAccessor.HttpContext.Request.Headers["IsGetAllPackagesApi"];
-                if (!header.IsNullOrEmpty() && header.Any())
-                {
-                    bool isGetAllPackagesApi = bool.Parse(header.First());
-                    if (isGetAllPackagesApi)
-                    {
-                        httpRoute = "/packages";
-                        isAuthorized = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy);
-                    }
-                }
-                else if (httpRoute.Contains("/packages/"))
-                {
-                    //This if AASX File Server IF call, hence check the security for API Operation
-                    bool isAuthorisedApi = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy);
-                    //Check the security for the resource aas
-                    bool isAuthorisedAas = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy, "", "aas", aas);
-                    isAuthorized = isAuthorisedApi && isAuthorisedAas;
-                }
-                else
-                {
-                    //The request is solely for AAS
-                    isAuthorized = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy, "", "aas", aas);
-                }
-
-            }
-            else if (resource is List<IConceptDescription> || resource is IConceptDescription)
-            {
-                isAuthorized = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy);
-            }
-            else if (resource is List<PackageDescription> packages)
-            {
-                isAuthorized = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy);
-            }
-            else if (resource is string resourceString && resourceString.IsNullOrEmpty())
-            {
-                isAuthorized = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy);
-            }
-
-            if (isAuthorized)
-            {
-                _logger.LogInformation("Request authorized successfully.");
-
-                if (getPolicy != "")
-                {
-                    _httpContextAccessor.HttpContext.Response.Headers.Append("policy", getPolicy);
-                    _httpContextAccessor.HttpContext.Response.Headers.Append("policyRequestedResource", httpRequest.Path.Value);
-                }
-
-                context.Succeed(requirement);
-            }
-            else
-            {
-                _logger.LogInformation("Request could not be authorized successfully.");
-
-                //Checking the redirect configuration
-                if (httpRoute.Contains("/packages/"))
-                {
-                    if (!string.IsNullOrEmpty(Program.redirectServer) && (accessRole == "isNotAuthenticated" || accessRole == null))
-                    {
-                        _logger.LogDebug("Request can be redirected.");
-                        System.Collections.Specialized.NameValueCollection queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
-                        string originalRequest = _httpContextAccessor.HttpContext.Request.GetDisplayUrl();
-                        queryString.Add("OriginalRequest", originalRequest);
-                        _logger.LogDebug("Redirect OriginalRequset: " + originalRequest);
-                        string response = Program.redirectServer + "?" + "authType=" + Program.authType + "&" + queryString;
-                        _logger.LogDebug("Redirect Response: " + response + "\n");
-
-                        CreateRedirectResponse(response);
-                        context.Fail();
-
-                    }
-                    else
-                        context.Fail(new AuthorizationFailureReason(this, error));
-                }
-                else
-                    context.Fail(new AuthorizationFailureReason(this, error));
-            }
-
+            _logger.LogDebug("Server is configured without security. Therefore, skipping authorization.");
+            context.Succeed(requirement);
             return Task.CompletedTask;
         }
 
-        private void CreateRedirectResponse(string responseUrl)
-        {
-            AllowCORS();
+        var httpRequest = _httpContextAccessor.HttpContext?.Request;
+        var httpRoute = httpRequest?.Path.Value;
+        var claims = context.User;
+        var accessRole = claims.FindFirst(ClaimTypes.Role)?.Value;
+        var neededRights = Enum.TryParse(claims.FindFirst("NeededRights")?.Value, out AccessRights rights) ? rights : AccessRights.READ;
+        var idShortPath = claims.FindFirst("IdShortPath")?.Value;
+        var policy = claims.FindFirst("Policy")?.Value;
 
-            var context = _httpContextAccessor.HttpContext;
-            if (context != null)
+        bool isAuthorized;
+        string getPolicy;
+        string error;
+
+        if (idShortPath != null)
+        {
+            isAuthorized = AuthorizeWithIdShortPath(resource, accessRole, httpRoute, neededRights, idShortPath, out getPolicy, out error);
+        }
+        else
+        {
+            isAuthorized = AuthorizeWithoutIdShortPath(resource, accessRole, httpRoute, neededRights, policy, out getPolicy, out error);
+        }
+
+        if (isAuthorized)
+        {
+            HandleSuccess(context, requirement, getPolicy, httpRequest.Path.Value);
+        }
+        else
+        {
+            HandleFailure(context, httpRoute, accessRole, error);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private bool AuthorizeWithIdShortPath(object resource, string accessRole, string httpRoute, AccessRights neededRights, string idShortPath, out string getPolicy,
+        out string error)
+    {
+        var parentSubmodel = resource as ISubmodel;
+        return _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy, idShortPath, null, parentSubmodel);
+    }
+
+    private bool AuthorizeWithoutIdShortPath(object resource, string accessRole, string httpRoute, AccessRights neededRights, string? policy, out string getPolicy,
+        out string error)
+    {
+        var httpRequest = _httpContextAccessor.HttpContext?.Request;
+
+        switch (resource)
+        {
+            case ISubmodel submodel:
+                if (httpRequest != null && httpRequest.Method.Equals("head", StringComparison.OrdinalIgnoreCase))
+                {
+                    policy = null;
+                }
+
+                return _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy, submodel.IdShort, "submodel", submodel, policy);
+
+            case IAssetAdministrationShell aas:
+                if (httpRequest != null && httpRequest.Headers.TryGetValue("IsGetAllPackagesApi", out var header) &&
+                    bool.TryParse(header.FirstOrDefault(), out var isGetAllPackagesApi) && isGetAllPackagesApi)
+                {
+                    return _securityService.AuthorizeRequest(accessRole, "/packages", neededRights, out error, out _, out getPolicy);
+                }
+
+                if (httpRoute.Contains("/packages/"))
+                {
+                    return _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy) &&
+                           _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy, string.Empty, "aas", aas);
+                }
+
+                return _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy, string.Empty, "aas", aas);
+
+            case List<IConceptDescription>:
+            case IConceptDescription:
+            case List<PackageDescription>:
+            case string resourceString when string.IsNullOrEmpty(resourceString):
+                return _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out error, out _, out getPolicy);
+
+            default:
+                getPolicy = null;
+                error = "Unsupported resource type";
+                return false;
+        }
+    }
+
+    private void HandleSuccess(AuthorizationHandlerContext context, SecurityRequirement requirement, string getPolicy, string requestedResource)
+    {
+        _logger.LogInformation("Request authorized successfully.");
+
+        if (!string.IsNullOrEmpty(getPolicy))
+        {
+            var response = _httpContextAccessor.HttpContext?.Response;
+            if (response != null)
             {
-                context.Response.Headers.Append("redirectInfo", responseUrl);
-                context.Response.Redirect(responseUrl);
-                context.Response.StatusCode = StatusCodes.Status307TemporaryRedirect;
+                response.Headers.Append("policy", getPolicy);
+                response.Headers.Append("policyRequestedResource", requestedResource);
             }
         }
 
-        private void AllowCORS()
+        context.Succeed(requirement);
+    }
+
+    private void HandleFailure(AuthorizationHandlerContext context, string httpRoute, string accessRole, string error)
+    {
+        _logger.LogInformation("Request could not be authorized successfully.");
+
+        if (httpRoute.Contains("/packages/") && !string.IsNullOrEmpty(Program.redirectServer) && (accessRole is "isNotAuthenticated" or null))
         {
-            var context = _httpContextAccessor.HttpContext;
-            context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
-            context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
-            context.Response.Headers.Add("Access-Control-Allow-Headers", "origin, content-type, accept, authorization");
-            context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
+            _logger.LogDebug("Request can be redirected.");
+            CreateRedirectResponse();
+            context.Fail();
         }
+        else
+        {
+            context.Fail(new AuthorizationFailureReason(this, error));
+        }
+    }
+
+    private void CreateRedirectResponse()
+    {
+        var context = _httpContextAccessor.HttpContext;
+        var originalRequest = context?.Request.GetDisplayUrl();
+        var response = $"{Program.redirectServer}?authType={Program.authType}&OriginalRequest={originalRequest}";
+
+        _logger.LogDebug($"Redirect OriginalRequest: {originalRequest}");
+        _logger.LogDebug($"Redirect Response: {response}");
+
+        AllowCors();
+
+        if (context == null)
+        {
+            return;
+        }
+
+        context.Response.Headers.Append("redirectInfo", response);
+        context.Response.Redirect(response);
+        context.Response.StatusCode = StatusCodes.Status307TemporaryRedirect;
+    }
+
+    private void AllowCors()
+    {
+        var response = _httpContextAccessor.HttpContext?.Response;
+        if (response == null)
+        {
+            return;
+        }
+
+        response.Headers.Add("Access-Control-Allow-Origin", "*");
+        response.Headers.Add("Access-Control-Allow-Credentials", "true");
+        response.Headers.Add("Access-Control-Allow-Headers", "origin, content-type, accept, authorization");
+        response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
     }
 }

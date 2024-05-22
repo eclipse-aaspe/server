@@ -2,7 +2,7 @@
 {
     internal class AccessControl
     {
-        internal List<AccessPermissionRule> AccessPermissionRules { get; set; }
+        internal List<AccessPermissionRule?> AccessPermissionRules { get; set; }
 
     }
 }
