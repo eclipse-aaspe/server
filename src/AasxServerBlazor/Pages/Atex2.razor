@@ -82,13 +82,21 @@
             {
                 if (eigensicheresbetriebsmittel[p] == ManufacturerProductType[i]
                     && (eigensicheresbetriebsmittelSeriennummer[p] == "" || eigensicheresbetriebsmittelSeriennummer[p] == SerialNumber[i]))
-                        iIn = i;
+                    iIn = i;
                 if (zugehoerigesbetriebsmittel[p] == ManufacturerProductType[i]
                     && (zugehoerigesbetriebsmittelSeriennummer[p] == "" || zugehoerigesbetriebsmittelSeriennummer[p] == SerialNumber[i]))
-                        iOut = i;
+                    iOut = i;
             }
             if (iOut == -1 || iIn == -1)
+            {
+                <b><span style="color:red">@projectName[p] can not be shown!</span></b><br />
+                <span style="color:red">Type: @zugehoerigesbetriebsmittel[p] SerialNumber: @zugehoerigesbetriebsmittelSeriennummer[p]</span><br />
+                <span style="color:red">Type: @eigensicheresbetriebsmittel[p] SerialNumber: @eigensicheresbetriebsmittelSeriennummer[p]</span>
+
+                <br />
+                <br />
                 continue;
+            }
 
             if (certifiedBy[iOut] == "" && pCertifiedBy[p] != null)
                 certifiedBy[iOut] = pCertifiedBy[p].Value;
@@ -479,7 +487,7 @@
                                                         }
                                                     }
                                                     <b>
-                                                        <select style="width:100%;height:100%;background-color:lightblue"
+                                                        <select class="atex-blue" style="width:100%;height:100%"
                                                             value="@ManufacturerProductType[i2]" @onchange="@((ChangeEventArgs args) => OnChangeProductOut(args, iOut))">
                                                             @foreach (var t in options2)
                                                             {
@@ -493,7 +501,7 @@
                                                 @{
                                                     int i3 = iOut;
                                                     <b>
-                                                        <select style="width:100%;height:100%;background-color:lightblue"
+                                                        <select class="atex-blue" style="width:100%;height:100%"
                                                             value="@SerialNumber[i3]" @onchange="@((ChangeEventArgs args) => OnChangeSerialNumberOut(args, iOut))">
                                                             @for (int j3 = 0; j3 < SerialNumber.Count; j3++)
                                                             {
@@ -618,7 +626,7 @@
                                                         }
                                                     }
                                                     <b>
-                                                        <select style="width:100%;height:100%;background-color:lightpink"
+                                                        <select class="atex-pink" style="width:100%;height:100%"
                                                             value="@ManufacturerProductType[ii2]" @onchange="@((ChangeEventArgs args) => OnChangeProductIn(args, iIn))">
                                                             @foreach (var t in oo2)
                                                             {
@@ -632,7 +640,7 @@
                                                 @{
                                                     int i4 = iIn;
                                                     <b>
-                                                        <select style="width:100%;height:100%;background-color:lightpink"
+                                                        <select class="atex-pink" style="width:100%;height:100%"
                                                             value="@SerialNumber[i4]" @onchange="@((ChangeEventArgs args) => OnChangeSerialNumberIn(args, iIn))">
                                                             @for (int j4 = 0; j4 < SerialNumber.Count; j4++)
                                                             {
@@ -754,7 +762,7 @@
                                             </td>
                                             <td class="atex-border atex-white">
                                                 <b>
-                                                    <input @bind="inputLength[iOut]" class="atex-white" style="min-width:100%;min-height:100%" />
+                                                    <input @bind="inputLength[iOut]" class="atex-white" style="width:100%;min-height:100%" />
                                                 </b>
                                             </td>
                                             <td class="atex-border atex-gray">
@@ -1349,6 +1357,14 @@
                                                     if (pEigensicheresbetriebsmittelSeriennummer[countProject] == null)
                                                         pEigensicheresbetriebsmittelSeriennummer[countProject] = sme as Property;
                                                 }
+                                                sme = findeSME(smc: project[countProject], idShortPath: "intrinsicallysafeapparatusserialnumber", ignore: true);
+                                                if (sme != null)
+                                                {
+                                                    if (eigensicheresbetriebsmittelSeriennummer[countProject] == "")
+                                                        eigensicheresbetriebsmittelSeriennummer[countProject] = sme.ValueAsText();
+                                                    if (pEigensicheresbetriebsmittelSeriennummer[countProject] == null)
+                                                        pEigensicheresbetriebsmittelSeriennummer[countProject] = sme as Property;
+                                                }
                                                 sme = findeSME(smc: project[countProject], idShortPath: "zugehoerigesbetriebsmittel", ignore: true);
                                                 if (sme != null)
                                                 {
@@ -1366,6 +1382,14 @@
                                                         pZugehoerigesbetriebsmittel[countProject] = sme as Property;
                                                 }
                                                 sme = findeSME(smc: project[countProject], idShortPath: "zugehoerigesbetriebsmittelSeriennummer", ignore: true);
+                                                if (sme != null)
+                                                {
+                                                    if (zugehoerigesbetriebsmittelSeriennummer[countProject] == "")
+                                                        zugehoerigesbetriebsmittelSeriennummer[countProject] = sme.ValueAsText();
+                                                    if (pZugehoerigesbetriebsmittelSeriennummer[countProject] == null)
+                                                        pZugehoerigesbetriebsmittelSeriennummer[countProject] = sme as Property;
+                                                }
+                                                sme = findeSME(smc: project[countProject], idShortPath: "associatedapparatusserialnumber", ignore: true);
                                                 if (sme != null)
                                                 {
                                                     if (zugehoerigesbetriebsmittelSeriennummer[countProject] == "")
