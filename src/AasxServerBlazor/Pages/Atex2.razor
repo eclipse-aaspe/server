@@ -80,13 +80,23 @@
             int iIn = -1;
             for (int i = 0; i < count; i++)
             {
-                if (eigensicheresbetriebsmittel[p] == ManufacturerProductType[i])
+                if (eigensicheresbetriebsmittel[p] == ManufacturerProductType[i]
+                    && (eigensicheresbetriebsmittelSeriennummer[p] == "" || eigensicheresbetriebsmittelSeriennummer[p] == SerialNumber[i]))
                     iIn = i;
-                if (zugehoerigesbetriebsmittel[p] == ManufacturerProductType[i])
+                if (zugehoerigesbetriebsmittel[p] == ManufacturerProductType[i]
+                    && (zugehoerigesbetriebsmittelSeriennummer[p] == "" || zugehoerigesbetriebsmittelSeriennummer[p] == SerialNumber[i]))
                     iOut = i;
             }
             if (iOut == -1 || iIn == -1)
+            {
+                <b><span style="color:red">@projectName[p] can not be shown!</span></b><br />
+                <span style="color:red">Type: @zugehoerigesbetriebsmittel[p] SerialNumber: @zugehoerigesbetriebsmittelSeriennummer[p]</span><br />
+                <span style="color:red">Type: @eigensicheresbetriebsmittel[p] SerialNumber: @eigensicheresbetriebsmittelSeriennummer[p]</span>
+
+                <br />
+                <br />
                 continue;
+            }
 
             if (certifiedBy[iOut] == "" && pCertifiedBy[p] != null)
                 certifiedBy[iOut] = pCertifiedBy[p].Value;
@@ -426,62 +436,90 @@
                                 <td class="atex-border" style="width:100%">
                                     <table style="min-width:100%">
                                         <tr>
-                                            <td class="atex-border atex-gray" style="width:12%">
+                                            <td class="atex-border atex-gray" style="width:10%">
                                                 Name
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:12%">
+                                            <td class="atex-border atex-gray" style="width:10%">
                                                 Type
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:12%">
+                                            <td class="atex-border atex-gray" style="width:10%">
+                                                SerialNumber
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:10%">
                                                 Manufacturer
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:12%">
+                                            <td class="atex-border atex-gray" style="width:10%">
                                                 Certificate
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:12%">
+                                            <td class="atex-border atex-gray" style="width:10%">
                                                 Identification
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:6%">
+                                            <td class="atex-border atex-gray" style="width:8%">
                                                 U<sub>o</sub> [V]
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:6%">
+                                            <td class="atex-border atex-gray" style="width:8%">
                                                 I<sub>o</sub> [mA]
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:6%">
+                                            <td class="atex-border atex-gray" style="width:8%">
                                                 P<sub>o</sub> [mW]
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:6%">
+                                            <td class="atex-border atex-gray" style="width:8%">
                                                 L<sub>o</sub> [mH]
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:6%">
+                                            <td class="atex-border atex-gray" style="width:8%">
                                                 C<sub>o</sub> [nF]
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="atex-border atex-blue" style="width:12%">
+                                            <td class="atex-border atex-blue">
                                                 <b>@ManufacturerProductDesignation[iOut]</b>
                                             </td>
-                                            <td class="atex-border atex-blue" style="width:12%">
+                                            <td class="atex-border atex-blue">
                                                 @{
-                                                    int ii = iOut;
+                                                    int i2 = iOut;
+                                                    List<string> options2 = new List<string>();
+                                                    for (int j2 = 0; j2 < ManufacturerProductType.Count; j2++)
+                                                    {
+                                                        var t2 = ManufacturerProductType[j2];
+                                                        if (t2 != "" && isOutput[j2] && !options2.Contains(t2))
+                                                        {
+                                                            options2.Add(t2);
+                                                        }
+                                                    }
                                                     <b>
-                                                        <select style="width:100%;height:100%;background-color:lightblue"
-                                                            value="@ManufacturerProductType[ii]" @onchange="@((ChangeEventArgs args) => OnChangeProductOut(args, ii))">
-                                                            @foreach (var t in ManufacturerProductType)
+                                                        <select class="atex-blue" style="width:100%;height:100%"
+                                                            value="@ManufacturerProductType[i2]" @onchange="@((ChangeEventArgs args) => OnChangeProductOut(args, iOut))">
+                                                            @foreach (var t in options2)
                                                             {
-                                                                if (t != "")
+                                                                <option value="@t">@t</option>
+                                                            }
+                                                        </select>
+                                                    </b>
+                                                }
+                                            </td>
+                                            <td class="atex-border atex-blue">
+                                                @{
+                                                    int i3 = iOut;
+                                                    <b>
+                                                        <select class="atex-blue" style="width:100%;height:100%"
+                                                            value="@SerialNumber[i3]" @onchange="@((ChangeEventArgs args) => OnChangeSerialNumberOut(args, iOut))">
+                                                            @for (int j3 = 0; j3 < SerialNumber.Count; j3++)
+                                                            {
+                                                                var t3 = ManufacturerProductType[j3];
+                                                                var s3 = SerialNumber[j3];
+                                                                if (ManufacturerProductType[i3] == ManufacturerProductType[j3])
                                                                 {
-                                                                    <option value="@t">@t</option>
+                                                                    <option value="@s3">@s3</option>
                                                                 }
                                                             }
                                                         </select>
                                                     </b>
                                                 }
                                             </td>
-                                            <td class="atex-border atex-blue" style="width:12%">
+                                            <td class="atex-border atex-blue">
                                                 <b>@ManufacturerName[iOut]</b>
                                             </td>
-                                            <td class="atex-border atex-blue" style="width:12%">
+                                            <td class="atex-border atex-blue">
                                                 @{
                                                     if (PreviewFileUrl[iOut] != "")
                                                     {
@@ -494,22 +532,22 @@
                                                     }
                                                 }
                                             </td>
-                                            <td class="atex-border atex-blue" style="width:12%">
+                                            <td class="atex-border atex-blue">
                                                 <b>@Identification[iOut]</b>
                                             </td>
-                                            <td class="atex-border atex-blue" style="width:6%">
+                                            <td class="atex-border atex-blue">
                                                 <b>@U[iOut].ToString(CultureInfo.InvariantCulture)</b>
                                             </td>
-                                            <td class="atex-border atex-blue" style="width:6%">
+                                            <td class="atex-border atex-blue">
                                                 <b>@I[iOut].ToString(CultureInfo.InvariantCulture)</b>
                                             </td>
-                                            <td class="atex-border atex-blue" style="width:6%">
+                                            <td class="atex-border atex-blue">
                                                 <b>@P[iOut].ToString(CultureInfo.InvariantCulture)</b>
                                             </td>
-                                            <td class="atex-border atex-blue" style="width:6%">
+                                            <td class="atex-border atex-blue">
                                                 <b>@L[iOut].ToString(CultureInfo.InvariantCulture)</b>
                                             </td>
-                                            <td class="atex-border atex-blue" style="width:6%">
+                                            <td class="atex-border atex-blue">
                                                 <b>@C[iOut].ToString(CultureInfo.InvariantCulture)</b>
                                             </td>
                                         </tr>
@@ -537,62 +575,90 @@
                                 <td class="atex-border" style="width:100%">
                                     <table style="min-width:100%">
                                         <tr>
-                                            <td class="atex-border atex-gray" style="width:12%">
+                                            <td class="atex-border atex-gray" style="width:10%">
                                                 Name
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:12%">
+                                            <td class="atex-border atex-gray" style="width:10%">
                                                 Type
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:12%">
+                                            <td class="atex-border atex-gray" style="width:10%">
+                                                SerialNumber
+                                            </td>
+                                            <td class="atex-border atex-gray" style="width:10%">
                                                 Manufacturer
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:12%">
+                                            <td class="atex-border atex-gray" style="width:10%">
                                                 Certificate
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:12%">
+                                            <td class="atex-border atex-gray" style="width:10%">
                                                 Identification
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:6%">
+                                            <td class="atex-border atex-gray" style="width:8%">
                                                 U<sub>i</sub> [V]
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:6%">
+                                            <td class="atex-border atex-gray" style="width:8%">
                                                 I<sub>i</sub> [mA]
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:6%">
+                                            <td class="atex-border atex-gray" style="width:8%">
                                                 P<sub>i</sub> [mW]
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:6%">
+                                            <td class="atex-border atex-gray" style="width:8%">
                                                 L<sub>i</sub> [mH]
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:6%">
+                                            <td class="atex-border atex-gray" style="width:8%">
                                                 C<sub>i</sub> [nF]
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="atex-border atex-pink" style="width:12%">
+                                            <td class="atex-border atex-pink">
                                                 <b>@ManufacturerProductDesignation[iIn]</b>
                                             </td>
-                                            <td class="atex-border atex-pink" style="width:12%">
+                                            <td class="atex-border atex-pink">
                                                 @{
                                                     var ii2 = iIn;
+                                                    List<string> oo2 = new List<string>();
+                                                    for (int jj2 = 0; jj2 < ManufacturerProductType.Count; jj2++)
+                                                    {
+                                                        var tt2 = ManufacturerProductType[jj2];
+                                                        if (tt2 != "" && !isOutput[jj2] && !oo2.Contains(tt2))
+                                                        {
+                                                            oo2.Add(tt2);
+                                                        }
+                                                    }
                                                     <b>
-                                                        <select style="width:100%;height:100%;background-color:lightpink"
-                                                            value="@ManufacturerProductType[ii2]" @onchange="@((ChangeEventArgs args) => OnChangeProductIn(args, ii2))">
-                                                            @foreach (var t in ManufacturerProductType)
+                                                        <select class="atex-pink" style="width:100%;height:100%"
+                                                            value="@ManufacturerProductType[ii2]" @onchange="@((ChangeEventArgs args) => OnChangeProductIn(args, iIn))">
+                                                            @foreach (var t in oo2)
                                                             {
-                                                                if (t != "")
+                                                                <option value="@t">@t</option>
+                                                            }
+                                                        </select>
+                                                    </b>
+                                                }
+                                            </td>
+                                            <td class="atex-border atex-pink">
+                                                @{
+                                                    int i4 = iIn;
+                                                    <b>
+                                                        <select class="atex-pink" style="width:100%;height:100%"
+                                                            value="@SerialNumber[i4]" @onchange="@((ChangeEventArgs args) => OnChangeSerialNumberIn(args, iIn))">
+                                                            @for (int j4 = 0; j4 < SerialNumber.Count; j4++)
+                                                            {
+                                                                var t4 = ManufacturerProductType[j4];
+                                                                var s4 = SerialNumber[j4];
+                                                                if (ManufacturerProductType[i4] == ManufacturerProductType[j4])
                                                                 {
-                                                                    <option value="@t">@t</option>
+                                                                    <option value="@s4">@s4</option>
                                                                 }
                                                             }
                                                         </select>
                                                     </b>
                                                 }
                                             </td>
-                                            <td class="atex-border atex-pink" style="width:12%">
+                                            <td class="atex-border atex-pink">
                                                 <b>@ManufacturerName[iIn]</b>
                                             </td>
-                                            <td class="atex-border atex-blue" style="width:12%">
+                                            <td class="atex-border atex-blue">
                                                 @{
                                                     if (PreviewFileUrl[iIn] != "")
                                                     {
@@ -605,22 +671,22 @@
                                                     }
                                                 }
                                             </td>
-                                            <td class="atex-border atex-blue" style="width:12%">
+                                            <td class="atex-border atex-blue">
                                                 <b>@Identification[iIn]</b>
                                             </td>
-                                            <td class="atex-border atex-blue" style="width:6%">
+                                            <td class="atex-border atex-blue">
                                                 <b>@U[iIn].ToString(CultureInfo.InvariantCulture)</b>
                                             </td>
-                                            <td class="atex-border atex-blue" style="width:6%">
+                                            <td class="atex-border atex-blue">
                                                 <b>@I[iIn].ToString(CultureInfo.InvariantCulture)</b>
                                             </td>
-                                            <td class="atex-border atex-blue" style="width:6%">
+                                            <td class="atex-border atex-blue">
                                                 <b>@P[iIn].ToString(CultureInfo.InvariantCulture)</b>
                                             </td>
-                                            <td class="atex-border atex-blue" style="width:6%">
+                                            <td class="atex-border atex-blue">
                                                 <b>@L[iIn].ToString(CultureInfo.InvariantCulture)</b>
                                             </td>
-                                            <td class="atex-border atex-blue" style="width:6%">
+                                            <td class="atex-border atex-blue">
                                                 <b>@C[iIn].ToString(CultureInfo.InvariantCulture)</b>
                                             </td>
                                         </tr>
@@ -637,81 +703,81 @@
                                 <td class="atex-border" style="width:100%">
                                     <table style="min-width:100%">
                                         <tr>
-                                            <td class="atex-border atex-gray" style="width:24%">
+                                            <td class="atex-border atex-gray" style="width:30%">
                                                 <b>Cable capacities and inductance</b>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:12%">
+                                            <td class="atex-border atex-gray" style="width:10%">
                                                 Manufacturer
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:12%">
+                                            <td class="atex-border atex-gray" style="width:10%">
                                                 Cable length
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:6%">
+                                            <td class="atex-border atex-gray" style="width:5%">
                                                 Cable L<sub>c</sub>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:6%">
+                                            <td class="atex-border atex-gray" style="width:5%">
                                                 Cable C<sub>c</sub>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:18%">
+                                            <td class="atex-border atex-gray" style="width:24%">
                                                 Maximum cable length
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:6%">
+                                            <td class="atex-border atex-gray" style="width:8%">
                                                 L<sub>c</sub>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:6%">
+                                            <td class="atex-border atex-gray" style="width:8%">
                                                 C<sub>c</sub>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="atex-border atex-gray" style="width:24%">
+                                            <td class="atex-border atex-gray">
                                             </td>
-                                            <td class="atex-border atex-blue" style="width:12%">
+                                            <td class="atex-border atex-blue">
                                                 <b>STANDARD</b>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:12%">
+                                            <td class="atex-border atex-gray">
                                                 [m]
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:6%">
+                                            <td class="atex-border atex-gray">
                                                 [mH/km]
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:6%">
+                                            <td class="atex-border atex-gray">
                                                 [nF/km]
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:18%">
+                                            <td class="atex-border atex-gray">
                                                 [m]
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:6%;">
+                                            <td class="atex-border atex-gray">
                                                 [mH]
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:6%;">
+                                            <td class="atex-border atex-gray">
                                                 [nF]
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="atex-border atex-gray" style="width:24%">
+                                            <td class="atex-border atex-gray">
                                                 (Manufacturer specification (Datasheet) or <br>
                                                 L<sub>c</sub> = 1 mH/km, C<sub>c</sub> = 110 nF/km)
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:12%">
+                                            <td class="atex-border atex-gray">
                                             </td>
-                                            <td class="atex-border atex-white" style="width:12%">
+                                            <td class="atex-border atex-white">
                                                 <b>
-                                                    <input @bind="inputLength[iOut]" class="atex-white" style="min-width:100%;min-height:100%" />
+                                                    <input @bind="inputLength[iOut]" class="atex-white" style="width:100%;min-height:100%" />
                                                 </b>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:6%">
+                                            <td class="atex-border atex-gray">
                                                 <b>1</b>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:6%">
+                                            <td class="atex-border atex-gray">
                                                 <b>110</b>
                                             </td>
-                                            <td class="atex-border atex-green" style="width:18%">
+                                            <td class="atex-border atex-green">
                                                 <b>@clMax1.ToString(CultureInfo.InvariantCulture)</b>
                                             </td>
-                                            <td class="atex-border atex-green" style="width:6%">
+                                            <td class="atex-border atex-green">
                                                 @Lc.ToString(CultureInfo.InvariantCulture)
                                             </td>
-                                            <td class="atex-border atex-green" style="width:6%">
+                                            <td class="atex-border atex-green">
                                                 @Cc.ToString(CultureInfo.InvariantCulture)
                                             </td>
                                         </tr>
@@ -722,33 +788,33 @@
                                 <td class="atex-border" style="width:100%">
                                     <table style="min-width:100%">
                                         <tr>
-                                            <td class="atex-border atex-gray" style="width:78%">
+                                            <td class="atex-border atex-gray" style="width:84%">
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:6%">
+                                            <td class="atex-border atex-gray" style="width:8%">
                                                 L<sub>i</sub> + L<sub>c</sub>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:6%">
+                                            <td class="atex-border atex-gray" style="width:8%">
                                                 C<sub>i</sub> + C<sub>c</sub>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="atex-border atex-gray" style="width:78%">
+                                            <td class="atex-border atex-gray">
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:6%">
+                                            <td class="atex-border atex-gray">
                                                 [mH]
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:6%">
+                                            <td class="atex-border atex-gray">
                                                 [nF]
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="atex-border atex-gray" style="width:78%">
+                                            <td class="atex-border atex-gray">
                                                 <b>Inductance (L<sub>i</sub> + L<sub>c</sub>) and capacities (C<sub>i</sub> + C<sub>c</sub>)</b>
                                             </td>
-                                            <td class="atex-border atex-green" style="width:6%">
+                                            <td class="atex-border atex-green">
                                                 <b>@sumLiLc.ToString(CultureInfo.InvariantCulture)</b>
                                             </td>
-                                            <td class="atex-border atex-green" style="width:6%">
+                                            <td class="atex-border atex-green">
                                                 <b>@sumCiCc.ToString(CultureInfo.InvariantCulture)</b>
                                             </td>
                                         </tr>
@@ -765,13 +831,13 @@
                                 <td class="atex-border atex-gray" style="width:100%">
                                     <table style="min-width:100%">
                                         <tr>
-                                            <td class="atex-border atex-gray" style="width:48%">
+                                            <td class="atex-border atex-gray" style="width:40%">
                                                 <b>Condition / Verification for intrinsic safety</b>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:12%">
+                                            <td class="atex-border atex-gray" style="width:10%">
                                                 <b>Intrinsic safety ok</b>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:40%">
+                                            <td class="atex-border atex-gray" style="width:50%">
                                                 <b>Additional condition</b>
                                             </td>
                                         </tr>
@@ -785,7 +851,7 @@
                                             }
                                         }
                                         <tr>
-                                            <td class="atex-border atex-gray" style="width:48%">
+                                            <td class="atex-border atex-gray" style="width:40%">
                                                 <table style="min-width:100%">
                                                     <tr>
                                                         <td class="atex-border atex-gray" style="width:25%;color:@color">
@@ -803,10 +869,10 @@
                                                     </tr>
                                                 </table>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:12%;color:@color">
+                                            <td class="atex-border atex-gray" style="width:10%;color:@color">
                                                 <b>@ok</b>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:40%">
+                                            <td class="atex-border atex-gray" style="width:50%">
                                                 Zone at the installation: Zone 0/1
                                             </td>
                                         </tr>
@@ -820,7 +886,7 @@
                                             }
                                         }
                                         <tr>
-                                            <td class="atex-border atex-gray" style="width:48%">
+                                            <td class="atex-border atex-gray" style="width:40%">
                                                 <table style="min-width:100%">
                                                     <tr>
                                                         <td class="atex-border atex-gray" style="width:25%;color:@color">
@@ -838,10 +904,10 @@
                                                     </tr>
                                                 </table>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:12%;color:@color">
+                                            <td class="atex-border atex-gray" style="width:10%;color:@color">
                                                 <b>@ok</b>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:40%">
+                                            <td class="atex-border atex-gray" style="width:50%">
                                                 Ex Group: IIC
                                             </td>
                                         </tr>
@@ -855,7 +921,7 @@
                                             }
                                         }
                                         <tr>
-                                            <td class="atex-border atex-gray" style="width:48%">
+                                            <td class="atex-border atex-gray" style="width:40%">
                                                 <table style="min-width:100%">
                                                     <tr>
                                                         <td class="atex-border atex-gray" style="width:25%;color:@color">
@@ -873,10 +939,10 @@
                                                     </tr>
                                                 </table>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:12%;color:@color">
+                                            <td class="atex-border atex-gray" style="width:10%;color:@color">
                                                 <b>@ok</b>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:40%">
+                                            <td class="atex-border atex-gray" style="width:50%">
                                                 max. ambient temperature:
                                             </td>
                                         </tr>
@@ -890,7 +956,7 @@
                                             }
                                         }
                                         <tr>
-                                            <td class="atex-border atex-gray" style="width:48%">
+                                            <td class="atex-border atex-gray" style="width:40%">
                                                 <table style="min-width:100%">
                                                     <tr class="atex-border atex-gray">
                                                         <td class="atex-border atex-gray" style="width:25%;color:@color">
@@ -916,10 +982,10 @@
                                                     </tr>
                                                 </table>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:12%;color:@color">
+                                            <td class="atex-border atex-gray" style="width:10%;color:@color">
                                                 <b>@ok</b>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:40%">
+                                            <td class="atex-border atex-gray" style="width:50%">
                                                 Mixed IS circuit:
                                             </td>
                                         </tr>
@@ -933,7 +999,7 @@
                                             }
                                         }
                                         <tr>
-                                            <td class="atex-border atex-gray" style="width:48%">
+                                            <td class="atex-border atex-gray" style="width:40%">
                                                 <table style="min-width:100%">
                                                     <tr>
                                                         <td class="atex-border atex-gray" style="width:25%;color:@color">
@@ -959,10 +1025,10 @@
                                                     </tr>
                                                 </table>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:12%;color:@color">
+                                            <td class="atex-border atex-gray" style="width:10%;color:@color">
                                                 <b>@ok</b>
                                             </td>
-                                            <td class="atex-border atex-gray" style="width:40%">
+                                            <td class="atex-border atex-gray" style="width:50%">
                                                 (with concentrated Li (≥ 1% Lo) and concentrated Ci (≥ 1% Co): YES
                                             </td>
                                         </tr>
@@ -1005,8 +1071,21 @@
             {
                 if (zugehoerigesbetriebsmittel[i] == ManufacturerProductType[iOut])
                 {
-                   zugehoerigesbetriebsmittel[i] = a;
-                   pZugehoerigesbetriebsmittel[i].Value = a;
+                    zugehoerigesbetriebsmittel[i] = a;
+                    pZugehoerigesbetriebsmittel[i].Value = a;
+                    for (int j = 0; j < ManufacturerProductType.Count; j++)
+                    {
+                        if (a == ManufacturerProductType[j])
+                        {
+                            zugehoerigesbetriebsmittelSeriennummer[i] = SerialNumber[j];
+                            if (pZugehoerigesbetriebsmittelSeriennummer[i] != null)
+                            {
+                                pZugehoerigesbetriebsmittelSeriennummer[i].Value = SerialNumber[j];
+                            }
+                            break;
+                        }
+                    }
+                    break;
                 }
             }
             Program.signalNewData(0);
@@ -1024,6 +1103,63 @@
                 {
                     eigensicheresbetriebsmittel[i] = a;
                     pEigensicheresbetriebsmittel[i].Value = a;
+                    for (int j = 0; j < ManufacturerProductType.Count; j++)
+                    {
+                        if (a == ManufacturerProductType[j])
+                        {
+                            eigensicheresbetriebsmittelSeriennummer[i] = SerialNumber[j];
+                            if (pEigensicheresbetriebsmittelSeriennummer[i] != null)
+                            {
+                                pEigensicheresbetriebsmittelSeriennummer[i].Value = SerialNumber[j];
+                            }
+                            break;
+                        }
+                    }
+                    break;
+                }
+            }
+            Program.signalNewData(0);
+        }
+    }
+
+    void OnChangeSerialNumberOut(ChangeEventArgs args, int iOut)
+    {
+        if (args.Value != null)
+        {
+            var a = args.Value.ToString();
+            for (int i = 0; i < zugehoerigesbetriebsmittel.Count; i++)
+            {
+                if (zugehoerigesbetriebsmittel[i] == ManufacturerProductType[iOut]
+                    && zugehoerigesbetriebsmittelSeriennummer[i] == SerialNumber[iOut])
+                {
+                    zugehoerigesbetriebsmittelSeriennummer[i] = a;
+                    if (pZugehoerigesbetriebsmittelSeriennummer[i] != null)
+                    {
+                        pZugehoerigesbetriebsmittelSeriennummer[i].Value = a;
+                    }
+                    break;
+                }
+            }
+            Program.signalNewData(0);
+        }
+    }
+
+    void OnChangeSerialNumberIn(ChangeEventArgs args, int iIn)
+    {
+        if (args.Value != null)
+        {
+            var a = args.Value.ToString();
+            for (int i = 0; i < eigensicheresbetriebsmittel.Count; i++)
+            {
+                if (eigensicheresbetriebsmittel[i] == ManufacturerProductType[iIn]
+                    && eigensicheresbetriebsmittelSeriennummer[i] == SerialNumber[iIn])
+                {
+                    eigensicheresbetriebsmittelSeriennummer[i] = a;
+                    if (pEigensicheresbetriebsmittelSeriennummer[i] != null)
+                    {
+                        pEigensicheresbetriebsmittelSeriennummer[i].Value = a;
+                    }
+                    break;
                 }
             }
             Program.signalNewData(0);
@@ -1044,8 +1180,12 @@
     List<Property> pCertifiedAt = null;
     List<string> eigensicheresbetriebsmittel = null;
     List<Property> pEigensicheresbetriebsmittel = null;
+    List<string> eigensicheresbetriebsmittelSeriennummer = null;
+    List<Property> pEigensicheresbetriebsmittelSeriennummer = null;
     List<string> zugehoerigesbetriebsmittel = null;
     List<Property> pZugehoerigesbetriebsmittel = null;
+    List<string> zugehoerigesbetriebsmittelSeriennummer = null;
+    List<Property> pZugehoerigesbetriebsmittelSeriennummer = null;
 
     int count = 0;
     List<bool> isOutput = null;
@@ -1054,6 +1194,7 @@
     List<Submodel> TechnicalData = null;
     List<string> ManufacturerProductDesignation = null;
     List<string> ManufacturerProductType = null;
+    List<string> SerialNumber = null;
     List<string> ManufacturerName = null;
     List<string> ManufacturerLogo = null;
     List<string> ProductImage = null;
@@ -1090,22 +1231,20 @@
         cableLength = new List<double>();
         pCableLength = new List<Property>();
         if (dataMode != 0)
+        {
             certifiedBy = new List<string>();
-        if (dataMode != 0)
             pCertifiedBy = new List<Property>();
-        if (dataMode != 0)
             certifiedAt = new List<string>();
-        if (dataMode != 0)
             pCertifiedAt = new List<Property>();
-        if (dataMode != 0)
             eigensicheresbetriebsmittel = new List<string>();
-        if (dataMode != 0)
             pEigensicheresbetriebsmittel = new List<Property>();
-        if (dataMode != 0)
+            eigensicheresbetriebsmittelSeriennummer = new List<string>();
+            pEigensicheresbetriebsmittelSeriennummer = new List<Property>();
             zugehoerigesbetriebsmittel = new List<string>();
-        if (dataMode != 0)
             pZugehoerigesbetriebsmittel = new List<Property>();
-
+            zugehoerigesbetriebsmittelSeriennummer = new List<string>();
+            pZugehoerigesbetriebsmittelSeriennummer = new List<Property>();
+        }
         count = 0;
         isOutput = new List<bool>();
         envIndex = new List<int>();
@@ -1113,7 +1252,10 @@
         TechnicalData = new List<Submodel>();
         ManufacturerProductDesignation = new List<string>();
         if (dataMode != 0)
+        {
             ManufacturerProductType = new List<string>();
+            SerialNumber = new List<string>();
+        }
         ManufacturerName = new List<string>();
         ManufacturerLogo = new List<string>();
         ProductImage = new List<string>();
@@ -1172,10 +1314,18 @@
                                                     eigensicheresbetriebsmittel.Add("");
                                                 if (pEigensicheresbetriebsmittel.Count <= countProject)
                                                     pEigensicheresbetriebsmittel.Add(null);
+                                                if (eigensicheresbetriebsmittelSeriennummer.Count <= countProject)
+                                                    eigensicheresbetriebsmittelSeriennummer.Add("");
+                                                if (pEigensicheresbetriebsmittelSeriennummer.Count <= countProject)
+                                                    pEigensicheresbetriebsmittelSeriennummer.Add(null);
                                                 if (zugehoerigesbetriebsmittel.Count <= countProject)
                                                     zugehoerigesbetriebsmittel.Add("");
                                                 if (pZugehoerigesbetriebsmittel.Count <= countProject)
                                                     pZugehoerigesbetriebsmittel.Add(null);
+                                                if (zugehoerigesbetriebsmittelSeriennummer.Count <= countProject)
+                                                    zugehoerigesbetriebsmittelSeriennummer.Add("");
+                                                if (pZugehoerigesbetriebsmittelSeriennummer.Count <= countProject)
+                                                    pZugehoerigesbetriebsmittelSeriennummer.Add(null);
 
                                                 var sme = findeSME(smc: project[countProject], idShortPath: "projektbezeichnung", ignore: true);
                                                 if (sme != null)
@@ -1199,6 +1349,22 @@
                                                     if (pEigensicheresbetriebsmittel[countProject] == null)
                                                         pEigensicheresbetriebsmittel[countProject] = sme as Property;
                                                 }
+                                                sme = findeSME(smc: project[countProject], idShortPath: "eigensicheresbetriebsmittelSeriennummer", ignore: true);
+                                                if (sme != null)
+                                                {
+                                                    if (eigensicheresbetriebsmittelSeriennummer[countProject] == "")
+                                                        eigensicheresbetriebsmittelSeriennummer[countProject] = sme.ValueAsText();
+                                                    if (pEigensicheresbetriebsmittelSeriennummer[countProject] == null)
+                                                        pEigensicheresbetriebsmittelSeriennummer[countProject] = sme as Property;
+                                                }
+                                                sme = findeSME(smc: project[countProject], idShortPath: "intrinsicallysafeapparatusserialnumber", ignore: true);
+                                                if (sme != null)
+                                                {
+                                                    if (eigensicheresbetriebsmittelSeriennummer[countProject] == "")
+                                                        eigensicheresbetriebsmittelSeriennummer[countProject] = sme.ValueAsText();
+                                                    if (pEigensicheresbetriebsmittelSeriennummer[countProject] == null)
+                                                        pEigensicheresbetriebsmittelSeriennummer[countProject] = sme as Property;
+                                                }
                                                 sme = findeSME(smc: project[countProject], idShortPath: "zugehoerigesbetriebsmittel", ignore: true);
                                                 if (sme != null)
                                                 {
@@ -1214,6 +1380,22 @@
                                                         zugehoerigesbetriebsmittel[countProject] = sme.ValueAsText();
                                                     if (pZugehoerigesbetriebsmittel[countProject] == null)
                                                         pZugehoerigesbetriebsmittel[countProject] = sme as Property;
+                                                }
+                                                sme = findeSME(smc: project[countProject], idShortPath: "zugehoerigesbetriebsmittelSeriennummer", ignore: true);
+                                                if (sme != null)
+                                                {
+                                                    if (zugehoerigesbetriebsmittelSeriennummer[countProject] == "")
+                                                        zugehoerigesbetriebsmittelSeriennummer[countProject] = sme.ValueAsText();
+                                                    if (pZugehoerigesbetriebsmittelSeriennummer[countProject] == null)
+                                                        pZugehoerigesbetriebsmittelSeriennummer[countProject] = sme as Property;
+                                                }
+                                                sme = findeSME(smc: project[countProject], idShortPath: "associatedapparatusserialnumber", ignore: true);
+                                                if (sme != null)
+                                                {
+                                                    if (zugehoerigesbetriebsmittelSeriennummer[countProject] == "")
+                                                        zugehoerigesbetriebsmittelSeriennummer[countProject] = sme.ValueAsText();
+                                                    if (pZugehoerigesbetriebsmittelSeriennummer[countProject] == null)
+                                                        pZugehoerigesbetriebsmittelSeriennummer[countProject] = sme as Property;
                                                 }
                                                 sme = findeSME(smc: project[countProject], idShortPath: "leitungslaenge", ignore: true);
                                                 if (sme != null)
@@ -1277,6 +1459,8 @@
                                     C.Add(0);
                                     if (C.Count > ManufacturerProductType.Count)
                                         ManufacturerProductType.Add("");
+                                    if (C.Count > SerialNumber.Count)
+                                        SerialNumber.Add("");
                                     if (C.Count > Alternatives.Count)
                                         Alternatives.Add("");
                                     if (C.Count > inputLength.Count)
@@ -1307,6 +1491,20 @@
                                             if (sme is MultiLanguageProperty mlp && mlp.Value != null && mlp.Value.Count > 0)
                                             {
                                                 ManufacturerProductType[count] = mlp.Value[0].Text;
+                                            }
+                                        }
+                                    }
+
+                                    if (SerialNumber[count] == "")
+                                    {
+                                        sme = findeSME(sm: sm, idShortPath: "SerialNumber", ignore: true);
+                                        if (sme != null)
+                                        {
+                                            if (sme is Property p)
+                                                SerialNumber[count] = p.Value;
+                                            if (sme is MultiLanguageProperty mlp && mlp.Value != null && mlp.Value.Count > 0)
+                                            {
+                                                SerialNumber[count] = mlp.Value[0].Text;
                                             }
                                         }
                                     }
