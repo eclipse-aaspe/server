@@ -1,6 +1,8 @@
 ﻿using AasOpcUaServer;
 using AasxMqttServer;
 using AasxRestServerLibrary;
+using AasxServerStandardBib;
+
 //using AasxServerStandardBib.Migrations;
 using AdminShellNS;
 using Extensions;
@@ -34,6 +36,7 @@ using System.Threading.Tasks;
 using System.Timers;
 using System.Xml;
 using System.Xml.Serialization;
+using static AasxServerStandardBib.IDatabase;
 using Formatting = Newtonsoft.Json.Formatting;
 /*
 Copyright (c) 2019-2020 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski
@@ -530,6 +533,7 @@ namespace AasxServer
         public static string[] envFileName = null;
         public static string[] envSymbols = null;
         public static string[] envSubjectIssuer = null;
+        public static IDatabase database = null;
         /*
         public static AdminShellPackageEnv[] env = new AdminShellPackageEnv[envimax];
             {
@@ -688,6 +692,7 @@ namespace AasxServer
         public static bool withPolicy = false;
 
         public static bool showWeight = false;
+        public static string withMongoDB { get; set; }
         private class CommandLineArguments
         {
             // ReSharper disable UnusedAutoPropertyAccessor.Local
@@ -717,6 +722,7 @@ namespace AasxServer
             public bool WithDb { get; set; }
             public bool NoDbFiles { get; set; }
             public int StartIndex { get; set; }
+            public string WithMongoDB { get; set; }
 #pragma warning restore 8618
             // ReSharper enable UnusedAutoPropertyAccessor.Local
         }
@@ -872,6 +878,7 @@ namespace AasxServer
             {
                 Console.WriteLine("Recommend an OPC client update rate > 200 ms.");
             }
+            Program.withMongoDB = a.WithMongoDB;
 
             // allocate memory
             env = new AdminShellPackageEnv[envimax];
@@ -1026,6 +1033,14 @@ namespace AasxServer
             int envi = 0;
             int count = 0;
 
+            //Mongo Database
+            if (!withMongoDB.IsNullOrEmpty())
+            {
+                database = new MongoDatabase();
+                //database.Initialize("mongodb://mongo:mongo@localhost:27017/");
+                database.Initialize(withMongoDB);
+            }
+
             // Migrate always
             if (withDb)
             {
@@ -1124,6 +1139,11 @@ namespace AasxServer
                     // try
                     {
                         fn = fileNames[fi];
+
+                        //Insert into DB
+                        //database.importAASCoreEnvironment(new AdminShellPackageEnv(fn, true, false).AasEnv);
+                        database.importAdminShellPackageEnv(new AdminShellPackageEnv(fn, true, false));
+
                         if (fn.ToLower().Contains("globalsecurity"))
                         {
                             envFileName[envi] = fn;
@@ -1679,7 +1699,11 @@ namespace AasxServer
 
                 new Option<int>(
                     new[] {"--start-index"},
-                    "If set, start index in list of AASX files")
+                    "If set, start index in list of AASX files"),
+
+                new Option<string>(
+                    new[] {"--with-mongodb"},
+                    "If set, will use MongoDB Data save")
             };
 
             if (args.Length == 0)

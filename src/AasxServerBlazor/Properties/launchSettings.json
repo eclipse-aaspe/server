@@ -10,7 +10,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--no-security --secret-string-api 1234 --aasx-in-memory 1000 --data-path \"C:\\Development\\Ronny\" --edit --external-blazor http://localhost:5001",
+      "commandLineArgs": "--no-security --aasx-in-memory 1000 --data-path \"C:\\GitClones\\aasx-server\\content-for-demo\\aasxs\" --edit --external-blazor http://localhost:5001 --with-mongodb \"mongodb://mongo:mongo@localhost:27017/\"",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
