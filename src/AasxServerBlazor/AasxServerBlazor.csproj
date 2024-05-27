@@ -63,8 +63,12 @@
 
   <ItemGroup>
     <Content Remove="wwwroot\2022-02-15_IDTA_AAS-Logo_Final_RGB.png" />
+    <Content Remove="wwwroot\Cable2.jpg" />
     <Content Remove="wwwroot\db-schema.jpg" />
+    <Content Remove="wwwroot\ex.png" />
+    <Content Remove="wwwroot\Ex_IECEx.jpg" />
     <Content Remove="wwwroot\Logo_IDTA.jpg" />
+    <Content Remove="wwwroot\NOA.jpg" />
     <Content Remove="wwwroot\sm_icons\bom.svg" />
     <Content Remove="wwwroot\sm_icons\pcf v1.0.svg" />
   </ItemGroup>

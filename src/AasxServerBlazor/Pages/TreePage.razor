@@ -700,10 +700,10 @@
      filename,
      data
      );
-        /*
-        await js.InvokeAsync<object>(
-    "saveAsFile",
-    filename,
+    /*
+    await js.InvokeAsync<object>(
+        "saveAsFile",
+        filename,
         Convert.ToBase64String(data)
         );
         */
@@ -1267,9 +1267,10 @@
         if (o is AssetAdministrationShell)
         {
             // return prefix + hostPort + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
-            //return Program.externalRest + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
-            string currentUrl = NavigationManager.Uri;
-            return currentUrl + "packages/" + Base64UrlEncoder.Encode(Convert.ToString(selectedNode.envIndex));
+            // return Program.externalRest + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
+            // string currentUrl = NavigationManager.Uri;
+            // return currentUrl + "packages/" + Base64UrlEncoder.Encode(Convert.ToString(selectedNode.envIndex));
+            return Program.externalBlazor + "/packages/" + Base64UrlEncoder.Encode(Convert.ToString(selectedNode.envIndex));
         }
 
         if (o is AasCore.Aas3_0.File || o is Property)
@@ -1328,8 +1329,9 @@
                         parent = (IReferable)parent.Parent;
                     }
 
-                    string currentUrl = NavigationManager.Uri;
-                    
+                    // string currentUrl = NavigationManager.Uri;
+                    string currentUrl = Program.externalBlazor + "/";
+
                     return currentUrl + "submodels/" + Base64UrlEncoder.Encode((parent as Submodel).Id) +
                     "/submodel-elements/" + path + "/attachment";
                 }

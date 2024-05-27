@@ -9,6 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
 		README.md = README.md
+		..\CHANGELOG.md = ..\CHANGELOG.md
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "jsoncanonicalizer", "jsoncanonicalizer\jsoncanonicalizer.csproj", "{A420D3A9-3725-4F4D-9185-2957F2F9F0A9}"
@@ -32,8 +33,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExampleClient", "ExampleClient\ExampleClient.csproj", "{0AC394F6-EA59-4400-8C9D-3A97E77A94A4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AasxServerAspNetCore", "AasxServerAspNetCore\AasxServerAspNetCore.csproj", "{D467D497-18D8-4E26-8671-8AC73BE9AC4F}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AasxServerDB", "AasxServerDB\AasxServerDB.csproj", "{160D10DB-17FC-485E-B667-DB33DF38029A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -264,24 +263,6 @@ Global
 		{D467D497-18D8-4E26-8671-8AC73BE9AC4F}.Release|x64.Build.0 = Release|Any CPU
 		{D467D497-18D8-4E26-8671-8AC73BE9AC4F}.Release|x86.ActiveCfg = Release|Any CPU
 		{D467D497-18D8-4E26-8671-8AC73BE9AC4F}.Release|x86.Build.0 = Release|Any CPU
-		{160D10DB-17FC-485E-B667-DB33DF38029A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{160D10DB-17FC-485E-B667-DB33DF38029A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{160D10DB-17FC-485E-B667-DB33DF38029A}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{160D10DB-17FC-485E-B667-DB33DF38029A}.Debug|x64.Build.0 = Debug|Any CPU
-		{160D10DB-17FC-485E-B667-DB33DF38029A}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{160D10DB-17FC-485E-B667-DB33DF38029A}.Debug|x86.Build.0 = Debug|Any CPU
-		{160D10DB-17FC-485E-B667-DB33DF38029A}.DebugSlow|Any CPU.ActiveCfg = Debug|Any CPU
-		{160D10DB-17FC-485E-B667-DB33DF38029A}.DebugSlow|Any CPU.Build.0 = Debug|Any CPU
-		{160D10DB-17FC-485E-B667-DB33DF38029A}.DebugSlow|x64.ActiveCfg = Debug|Any CPU
-		{160D10DB-17FC-485E-B667-DB33DF38029A}.DebugSlow|x64.Build.0 = Debug|Any CPU
-		{160D10DB-17FC-485E-B667-DB33DF38029A}.DebugSlow|x86.ActiveCfg = Debug|Any CPU
-		{160D10DB-17FC-485E-B667-DB33DF38029A}.DebugSlow|x86.Build.0 = Debug|Any CPU
-		{160D10DB-17FC-485E-B667-DB33DF38029A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{160D10DB-17FC-485E-B667-DB33DF38029A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{160D10DB-17FC-485E-B667-DB33DF38029A}.Release|x64.ActiveCfg = Release|Any CPU
-		{160D10DB-17FC-485E-B667-DB33DF38029A}.Release|x64.Build.0 = Release|Any CPU
-		{160D10DB-17FC-485E-B667-DB33DF38029A}.Release|x86.ActiveCfg = Release|Any CPU
-		{160D10DB-17FC-485E-B667-DB33DF38029A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
