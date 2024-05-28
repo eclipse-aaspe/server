@@ -1545,6 +1545,19 @@
                                             }
                                         }
 
+                                        sme = findeSME(smc: s, idShortPath: "DigitalFile", ignore: true);
+                                        if (sme != null)
+                                        {
+                                            if (sme is File f)
+                                            {
+                                                var path = getPath(sme);
+                                                if (path != null)
+                                                {
+                                                    PreviewFileUrl[count] = path;
+                                                }
+                                            }
+                                        }
+
                                         sme = findeSME(smc: s, idShortPath: "TypeOfApproval", ignore: true);
                                         if (sme != null)
                                         {
