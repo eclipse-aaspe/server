@@ -23,7 +23,6 @@ using IO.Swagger.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing.Template;
 using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Annotations;
 using System;
@@ -143,7 +142,6 @@ namespace IO.Swagger.Controllers
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received a request to delete a submodel with id {decodedSubmodelIdentifier}");
-
             _submodelService.DeleteSubmodelById(decodedSubmodelIdentifier);
 
             return NoContent();
@@ -2087,7 +2085,6 @@ namespace IO.Swagger.Controllers
             _logger.LogInformation($"Received request to create a submodel.");
 
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
-
             var output = _submodelService.CreateSubmodel(body, decodedAasIdentifier);
 
             return CreatedAtAction("PostSubmodel", output);
@@ -2223,7 +2220,6 @@ namespace IO.Swagger.Controllers
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to replace a submodel {decodedSubmodelIdentifier}");
-
             _submodelService.ReplaceSubmodelById(decodedSubmodelIdentifier, body);
 
             return NoContent();

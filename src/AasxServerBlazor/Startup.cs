@@ -1,26 +1,4 @@
-<<<<<<< HEAD
-﻿using AasSecurity;
-using AasxServerDB;
-using AasxServerBlazor.Data;
-using AasxServerStandardBib.Extensions;
-using AasxServerStandardBib.Interfaces;
-using AasxServerStandardBib.Logging;
-using AasxServerStandardBib.Services;
-using IO.Swagger.Controllers;
-using IO.Swagger.Lib.V3.Formatters;
-using IO.Swagger.Lib.V3.Interfaces;
-using IO.Swagger.Lib.V3.Middleware;
-using IO.Swagger.Lib.V3.SerializationModifiers.Mappers;
-using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers;
-using IO.Swagger.Lib.V3.Services;
-using IO.Swagger.Registry.Lib.V3.Formatters;
-using IO.Swagger.Registry.Lib.V3.Interfaces;
-using IO.Swagger.Registry.Lib.V3.Services;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Builder;
-=======
 ﻿using Microsoft.AspNetCore.Builder;
->>>>>>> main
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

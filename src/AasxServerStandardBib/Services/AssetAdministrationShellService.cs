@@ -107,8 +107,7 @@ namespace AasxServerStandardBib.Services
 
         public void DeleteFileByPath(string aasIdentifier, string submodelIdentifier, string idShortPath)
         {
-            var found = IsSubmodelPresentWithinAAS(aasIdentifier, submodelIdentifier);
-            if (found)
+            if (IsSubmodelPresentWithinAAS(aasIdentifier, submodelIdentifier))
             {
                 _logger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
                 _submodelService.DeleteFileByPath(submodelIdentifier, idShortPath);
@@ -121,8 +120,7 @@ namespace AasxServerStandardBib.Services
 
         public void DeleteSubmodelById(string aasIdentifier, string submodelIdentifier)
         {
-            var found = IsSubmodelPresentWithinAAS(aasIdentifier, submodelIdentifier);
-            if (found)
+            if (IsSubmodelPresentWithinAAS(aasIdentifier, submodelIdentifier))
             {
                 _logger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
                 //delete the submodel first, this should eventually delete the submodel reference from all the AASs
@@ -136,8 +134,7 @@ namespace AasxServerStandardBib.Services
 
         public void DeleteSubmodelElementByPath(string aasIdentifier, string submodelIdentifier, string idShortPath)
         {
-            var found = IsSubmodelPresentWithinAAS(aasIdentifier, submodelIdentifier);
-            if (found)
+            if (IsSubmodelPresentWithinAAS(aasIdentifier, submodelIdentifier))
             {
                 _logger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
                 _submodelService.DeleteSubmodelElementByPath(submodelIdentifier, idShortPath);

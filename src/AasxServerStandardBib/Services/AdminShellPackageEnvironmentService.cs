@@ -63,11 +63,11 @@ namespace AasxServerStandardBib.Services
         {
             if (EmptyPackageAvailable(out int emptyPackageIndex))
             {
-
                 _packages[emptyPackageIndex].AasEnv.AssetAdministrationShells.Add(body);
                 var timeStamp = DateTime.UtcNow;
                 body.TimeStampCreate = timeStamp;
                 body.SetTimeStamp(timeStamp);
+                _packages[emptyPackageIndex].setWrite(true);
                 Program.signalNewData(2);
                 return _packages[emptyPackageIndex].AasEnv.AssetAdministrationShells[0]; //Considering it is the first AAS being added to empty package.
             }
@@ -91,7 +91,7 @@ namespace AasxServerStandardBib.Services
                     {
                         _packages[packageIndex] = null;
                     }
-
+                    //_packages[packageIndex].setWrite(true);
                     Program.signalNewData(2);
                 }
                 else
@@ -139,7 +139,7 @@ namespace AasxServerStandardBib.Services
             return IsAssetAdministrationShellPresent(aasIdentifier, out _, out _);
         }
 
-        private bool IsAssetAdministrationShellPresent(string aasIdentifier, out IAssetAdministrationShell output, out int packageIndex)
+        public bool IsAssetAdministrationShellPresent(string aasIdentifier, out IAssetAdministrationShell output, out int packageIndex)
         {
             output = null; packageIndex = -1;
 
@@ -177,6 +177,7 @@ namespace AasxServerStandardBib.Services
                 var timeStamp = DateTime.UtcNow;
                 body.TimeStampCreate = timeStamp;
                 body.SetTimeStamp(timeStamp);
+                _packages[packageIndex].setWrite(true);
                 Program.signalNewData(1); //0 not working, hence 1 = same tree, structure may change
 
                 _logger.LogDebug($"Successfully updated the AAS with requested AAS");
@@ -214,7 +215,8 @@ namespace AasxServerStandardBib.Services
                 }
                 _packages[packageIndex].AasEnv.Submodels.Remove(submodel);
                 _logger.LogDebug($"Deleted submodel with id {submodelIdentifier}.");
-                AasxServer.Program.signalNewData(1);
+                _packages[packageIndex].setWrite(true);
+                Program.signalNewData(1);
             }
         }
 
@@ -296,7 +298,7 @@ namespace AasxServerStandardBib.Services
             {
                 _packages[packageIndex].AasEnv.ConceptDescriptions.Remove(conceptDescription);
                 _logger.LogDebug($"Delete ConceptDescription with id {cdIdentifier}");
-                AasxServer.Program.signalNewData(1);
+                Program.signalNewData(1);
             }
         }
 
@@ -424,6 +426,7 @@ namespace AasxServerStandardBib.Services
                 var timeStamp = DateTime.UtcNow;
                 newAas.TimeStampCreate = timeStamp;
                 newAas.SetTimeStamp(timeStamp);
+                _packages[packageIndex].setWrite(true);
                 Program.signalNewData(1);
             }
         }
@@ -439,6 +442,7 @@ namespace AasxServerStandardBib.Services
                 var timeStamp = DateTime.UtcNow;
                 newSubmodel.TimeStampCreate = timeStamp;
                 newSubmodel.SetParentAndTimestamp(timeStamp);
+                _packages[packageIndex].setWrite(true);
                 Program.signalNewData(1);
             }
         }
@@ -523,7 +527,8 @@ namespace AasxServerStandardBib.Services
                     aas.SetTimeStamp(timeStamp);
                     newSubmodel.TimeStampCreate = timeStamp;
                     newSubmodel.SetTimeStamp(timeStamp);
-                    AasxServer.Program.signalNewData(2);
+                    _packages[packageIndex].setWrite(true);
+                    Program.signalNewData(2);
                     return newSubmodel; // TODO: jtikekar find proper solution
                 }
             }
@@ -534,6 +539,7 @@ namespace AasxServerStandardBib.Services
                 var timeStamp = DateTime.UtcNow;
                 newSubmodel.TimeStampCreate = timeStamp;
                 newSubmodel.SetTimeStamp(timeStamp);
+                _packages[emptyPackageIndex].setWrite(true);
                 Program.signalNewData(2);
                 return _packages[emptyPackageIndex].AasEnv.Submodels[0]; //Considering it is the first AAS being added to empty package.
             }

@@ -106,7 +106,7 @@ namespace AasxServerDB
                         mlp.Value = ls;
                         nextSME = mlp;
                         break;
-                    case "F":
+                    case "File":
                         nextSME = new AasCore.Aas3_0.File("text", idShort: smel.IdShort, value: smel.getValue());
                         break;
                 }

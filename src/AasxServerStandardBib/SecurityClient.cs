@@ -2250,6 +2250,7 @@ namespace AasxServer
                             newData = true;
                         }
                     }
+                    // delete of aas handeling
                 }
                 envi++;
             }
