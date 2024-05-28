@@ -7,121 +7,98 @@
 @using AasSecurity.Models;
 @using Extensions
 @using Microsoft.IdentityModel.Tokens;
-@using System
 @using System.Net;
 @using QRCoder;
-@using System.Drawing;
-@using System.IO;
 @using AasxServerBlazor.Data
-@*@using static AdminShellNS.AdminShellV30;*@
 @using static AasxServerStandardBib.TimeSeriesPlotting;
+@using Range = AasCore.Aas3_0.Range
 
 @implements IDisposable
 
 <div class="col-12 row">
-    <br />
+    <br/>
     <div class="col-5" style="border-width:3px; border-style: solid; border-color: blue; border-radius: 8px; background-color:aliceblue;
             word-wrap: break-word; word-break: break-all; position: sticky">
-        @updateVisibleTree(Items, selectedNode)
+        @updateVisibleTree(Items, SelectedNode)
         @if (Program.isLoading)
         {
-            <span style="color:white;background-color:blue;">Loading...</span>
+        <span style="color:white;background-color:blue;">Loading...</span>
         }
         else
-        { 
-            // IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.initRegistry(DateTime.UtcNow);
-            AasxRestServerLibrary.AasxRestServer.TestResource.initListOfRepositories();
+        {
+        AasxRestServerLibrary.AasxRestServer.TestResource.initListOfRepositories();
         }
-        <Tree Nodes="Items" ChildSelector="@(item => item.Childs)"
-              @bind-SelectedNode="SelectedNode"
-              @bind-ExpandedNodes="ExpandedNodes"
-              HasChildNodes="@(item => item.Childs?.Any() == true)"
-              HtmlId="@(item => GetHtmlId(item))">
+        <Tree @bind-ExpandedNodes="ExpandedNodes" @bind-SelectedNode="SelectedNode" ChildSelector="@(item => item.Children)"
+              HasChildNodes="@(item => item.Children?.Any() == true)" HtmlId="@(item => GetHtmlId(item))" Nodes="Items">
             <TitleTemplate>
-                @{ 
-                string getPolicy = "";
-                @* @if (AasxRestServerLibrary.AasxHttpContextHelper.withAuthentification) *@
+                @{
+                var getPolicy = string.Empty;
                 @if (GlobalSecurityVariables.WithAuthentication)
                 {
-                    var display = false;
-                    var access = false;
-                    bool withAllow = false;
-                    if (context.Tag is Submodel sm)
-                    {
-                        // check, if access to submodel is allowed
-                        string error = "";
-                        withAllow = false;
-                        // JUIJUI
-                        //TODO:jtikekar Remove after testing
-                        @* access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(
-                            out error, null, "/submodels", "READ", out withAllow, out getPolicy,
-                            sm.IdShort, "sm", sm, null);
-                        access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithAllow(
-                            null, "/submodels", "READ", out withAllow,
-                                sm.IdShort, "sm", sm); *@
-                        access = SecService.AuthorizeRequest(null, "/submodels", AccessRights.READ,
-                            out error, out withAllow, out getPolicy, sm.IdShort! , "submodel", sm);
-                        // JUIJUI
-                        display = true;
-                    }
-                    if (context.Tag is ISubmodelElement sme)
-                    {
-                        string path = sme.IdShort;
-                        var p = sme.Parent;
-                        while (!(p is Submodel))
-                        {
-                            path = (p as ISubmodelElement).IdShort + "." + path;
-                            p = (p as ISubmodelElement).Parent;
-                        }
-                        path = (p as Submodel).IdShort + "." + path;
-                        // check, if access to submodelelement is allowed
-                        /*
-                        access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithAllow(
-                            null, "/submodelelements", "READ", out withAllow,
-                                path, "", p);
-                        */
-                        string error = "";
-                        // JUIJUI
-                        //TODO:jtikekar Remove after testing
-                        @* access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(
-                        out error, null, "/submodelelements", "READ", out withAllow, out getPolicy,
-                        path, "", p, null); *@
-                        access = SecService.AuthorizeRequest(null, "/submodel-elements", AccessRights.READ,
-                            out error, out withAllow, out getPolicy, path, "", p);
-                        display = true;
-                        // JUIJUI
-                    }
-                    if (display)
-                    {
-                        if (context.Childs == null || context.Childs.Count() == 0)
-                            withAllow = false;
-                        if (access)
-                        {
-                            <span style="color:green;background-color:green;">&nbsp&nbsp</span>
-                            <span>&nbsp</span>
-                        }
-                        else
-                        {
-                            if (!withAllow)
-                            {
-                                <span style="color:red;background-color:red;">&nbsp&nbsp</span>
-                                <span>&nbsp</span>
-                            }
-                            else
-                            {
-                                <span style="color:red;background-color:red;">&nbsp</span><span style="color:green;background-color:green;">&nbsp</span>
-                                <span>&nbsp</span>
-                            }
-                        }
-                    }
+                var display = false;
+                var access = false;
+                var withAllow = false;
+                switch (context.Tag)
+                {
+                case Submodel sm:
+                {
+                // check, if access to submodel is allowed
+                withAllow = false;
+                access = SecService.AuthorizeRequest(null, "/submodels", AccessRights.READ,
+                out _, out withAllow, out getPolicy, sm.IdShort!, "submodel", sm);
+                display = true;
+                break;
                 }
+                case ISubmodelElement sme:
+                {
+                var path = sme.IdShort;
+                var p = sme.Parent;
+                while (p is not Submodel)
+                {
+                path = $"{(p as ISubmodelElement).IdShort}.{path}";
+                p = (p as ISubmodelElement).Parent;
+                }
+
+                path = $"{(p as Submodel).IdShort}.{path}";
+                var error = string.Empty;
+                access = SecService.AuthorizeRequest(null, "/submodel-elements", AccessRights.READ,
+                out error, out withAllow, out getPolicy, path, string.Empty, p);
+                display = true;
+                break;
+                }
+                }
+
+                if (display)
+                {
+                if (context.Children == null || !context.Children.Any())
+                withAllow = false;
+                if (access)
+                {
+                <span style="color:green;background-color:green;">&nbsp&nbsp</span>
+                }
+                else
+                {
+                if (!withAllow)
+                {
+                <span style="color:red;background-color:red;">&nbsp&nbsp</span>
+                }
+                else
+                {
+                <span style="color:red;background-color:red;">&nbsp</span>
+                <span style="color:green;background-color:green;">&nbsp</span>
+                }
+                }
+                }
+                }
+
                 <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
                 @ViewNodeID(context)@ViewNodeInfo(context)
-                @if (Program.withPolicy && getPolicy != "")
+                @if (Program.withPolicy && !string.IsNullOrEmpty(getPolicy))
                 {
-                    <span style="color:blue">&nbsp @getPolicy</span>
+                <span style="color:blue"> @getPolicy</span>
                 }
-                <span style="color:blue;font-size:14px">@getSymbols(context)</span>
+
+                <span style="color:blue;font-size:14px">@GetSymbols(context)</span>
                 <span style="color:lightgray;font-size:14px">@ViewTimeStamp(context)</span>
                 }
             </TitleTemplate>
@@ -130,461 +107,471 @@
     <div class="col-7" style="border-width: 3px; border-style: solid; border-color: blue; border-radius: 8px; position: sticky; background-color:aliceblue;">
         <div class="sticky-top" style="word-wrap:break-word;word-break:break-all;">
             @{
-                if (selectedNode != null)
+            if (SelectedNode != null)
+            {
+            if (SelectedNode.Tag is not string)
+            {
+            <span style="color:white;background-color:blue;" id="SelectedNodeInfoType">@ViewNodeType(SelectedNode)</span>
+            <span id="SelectedNodeInfoId">@ViewNodeID(SelectedNode)</span>
+            <br>
+            }
+            else
+            {
+            if (SelectedNode.Tag is string && SelectedNode.Text.Contains("/readme"))
+            {
+            var text = System.IO.File.ReadAllText(SelectedNode.Text);
+            text = text.Replace("%BLAZOR%", Program.externalBlazor);
+            if (text.Contains("%ACCESSRULES%"))
+            {
+            var accessRules = SecService.GetSecurityRules();
+            <table class="table table-bordered table-sm">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th nowrap>Kind</th>
+                    <th>Permission</th>
+                    <th>Type</th>
+                    <th>API</th>
+                    <th>Path</th>
+                    <th>SemanticID</th>
+                    <th>See</th>
+                </tr>
+                </thead>
+                <tbody>
+                @{
+                var lines = accessRules.Split('\n');
+                foreach (var l in lines)
                 {
-                    if (!(selectedNode.Tag is string))
+                <tr>
+                    @{
+                    var cols = l.Split('\t');
+                    for (var c = 0; c < cols.Count(); c++)
                     {
-                        <span style="color:white;background-color:blue;" id="SelectedNodeInfoType">@ViewNodeType(selectedNode)</span>
-                        <span id="SelectedNodeInfoId">@ViewNodeID(selectedNode)</span>
-                        <br>
+                    if (c != 1 && c != 2)
+                    {
+                    <td>@cols[c]</td>
                     }
                     else
                     {
-                        if (selectedNode.Tag is string && selectedNode.Text.Contains("/readme"))
-                        {
-                            string text = System.IO.File.ReadAllText(selectedNode.Text);
-                            text = text.Replace("%BLAZOR%", Program.externalBlazor);
-                            if (text.Contains("%ACCESSRULES%"))
-                            {
-                                // string accessRules = AasxRestServerLibrary.AasxHttpContextHelper.securityAccessRules();
-                                string accessRules = SecService.GetSecurityRules();
-                                <table class="table table-bordered table-sm">
-                                @*<table border=1 cellpadding=4>*@
-                                    <thead>
-                                        <tr>
-                                            <th>Name</th>
-                                            <th nowrap>Kind</th>
-                                            <th>Permission</th>
-                                            <th>Type</th>
-                                            <th>API</th>
-                                            <th>Path</th>
-                                            <th>SemanticID</th>
-                                            <th>See</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @{
-                                            var lines = accessRules.Split('\n');
-                                            foreach (var l in lines)
-                                            {
-                                                <tr>
-                                                    @{
-                                                        var cols = l.Split('\t');
-                                                        for (int c = 0; c < cols.Count(); c++)
-                                                        {
-                                                            if (c != 1 && c!= 2)
-                                                            {
-                                                                <td>@cols[c]</td>
-                                                            }
-                                                            else
-                                                            {
-                                                                <td nowrap>@cols[c]</td>
-                                                            }
-                                                        }
-                                                }
-                                                </tr>
-                                            }
-                                        }
-                                    </tbody>
-                                </table>
-                            }
-                            else
-                            {
-                                <span>@((MarkupString)text)</span>
-                            }
-                        }
+                    <td nowrap>@cols[c]</td>
                     }
+                    }
+                    }
+                </tr>
                 }
-                for (int line = 0; line < 20; line++)
-                {
-                    string nodeDetails0 = ViewNodeDetails(selectedNode, line, 0);
-                    string nodeDetails1 = ViewNodeDetails(selectedNode, line, 1);
-                    string nodeDetails2 = ViewNodeDetails(selectedNode, line, 2);
-                    if (nodeDetails0 != "" && nodeDetails1 != "")
-                    {
-                        string detailsId="SelectedNodeDetailsLeft_" + line;
-                        <span style="color:white;background-color:blue;" id="@detailsId">@nodeDetails0</span>
-                        detailsId = "SelectedNodeDetailsRight_" + line;
-                        <span id="@detailsId">&nbsp;@nodeDetails1 @nodeDetails2</span>
-                        <br>
-                    }
                 }
-                if (selectedNode != null && selectedNode.Tag is IReferable r)
-                {
-                    <span style="color:lightgray;">UPDATE @r.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
-                    <button style="border-width: 1px; border-color: black; background-color: lightgray" @onclick="setTimeStamp">TIMESTAMP</button><br />
-                    <span style="color:lightgray;">CREATE @r.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
-                    <span style="color:lightgray;">TREE @r.TimeStampTree.ToString("yy-MM-dd HH:mm:ss.fff")</span>
+                </tbody>
+            </table>
+            }
+            else
+            {
+            <span>@((MarkupString) text)</span>
+            }
+            }
+            }
+            }
 
-                    <br />
-                    @code {
-                        private void setTimeStamp()
-                        {
-                            (selectedNode.Tag as IReferable).SetTimeStamp(DateTime.UtcNow);
-                            Program.env[selectedNode.envIndex].setWrite(true);
-                        }
-                    }
-                }
-                // if (selectedNode != null && hasDownloadFile(selectedNode))
-                // {
-                //     <button @onclick="DownloadFile">Download File</button><br>
-                //     <img src="test.jpg" alt="Thumbnail" />
-                // }
-                bool externalLink = false;
-                string link = getLink(selectedNode, out externalLink);
-                if (selectedNode != null && link != "")
-                {
-                    // if (externalLink)
-                    if (true)
-                    {
-                        <a href="@link" target="_blank">@link</a><br>
-                    }
-                    else
-                    {
-                        <button onclick="window.location.href = '@link'; ">Download</button><br>
-                    }
-                    if (selectedNode != null && selectedNode.Tag is Submodel && Program.connectServer != "")
-                    {
-                        bool toPublish = Program.submodelsToPublish.Contains(selectedNode.Tag);
-                        bool toSubscribe = Program.submodelsToSubscribe.Contains(selectedNode.Tag);
-                        if (toPublish)
-                        {
-                            <button style="color:white;background-color:blue" @onclick="resetSubmodelToPublish">Publish</button>
-                        }
-                        else
-                        {
-                            <button @onclick="setSubmodelToPublish">Publish</button>
-                        }
-                        if (toSubscribe)
-                        {
-                            <button style="color:white;background-color:blue" @onclick="resetSubmodelToSubscribe">Subscribe</button>
-                        }
-                        else
-                        {
-                            <button @onclick="setSubmodelToSubscribe">Subscribe</button>
-                        }
-                        // <button onclick="window.location.href = '@link';">Subscribe</button><br>
-                        @code {
-                            private void resetSubmodelToPublish()
-                            {
-                                Program.submodelsToPublish.Remove(selectedNode.Tag);
-                            }
-                            private void setSubmodelToPublish()
-                            {
-                                bool toSubscribe = Program.submodelsToSubscribe.Contains(selectedNode.Tag);
-                                if (!toSubscribe)
-                                    Program.submodelsToPublish.Add(selectedNode.Tag);
-                            }
-                            private void resetSubmodelToSubscribe()
-                            {
-                                Program.submodelsToSubscribe.Remove(selectedNode.Tag);
-                            }
-                            private void setSubmodelToSubscribe()
-                            {
-                                bool toPublish = Program.submodelsToPublish.Contains(selectedNode.Tag);
-                                if (!toPublish)
-                                    Program.submodelsToSubscribe.Add(selectedNode.Tag);
-                            }
-                        }
-                    }
-                }
-                if (selectedNode != null && selectedNode.Tag is Property && Program.edit)
-                {
-                    // <input @bind="CurrentValue" @bind:event="oninput" /> <span style="color:white;background-color:blue;">@CurrentValue</span><br>
-                    <input @bind="CurrentValue" style="width:500px; border-width: 1px; border-color: black;" />
-                    <span style="border-width: 1px; border-color: black; background-color: blue;">@CurrentValue</span>
-                    <br>
-                    @code { private string CurrentValue { get; set; } }
-                    if (CurrentValue != null && CurrentValue != "")
-                    {
-                        if (selectedNode.Tag is Property)
-                        {
-                            if (CurrentValue == " ")
-                                CurrentValue = "";
-                            (selectedNode.Tag as Property).Value = CurrentValue;
-                            (selectedNode.Tag as Property).SetTimeStamp(DateTime.UtcNow);
-                            Program.env[selectedNode.envIndex].setWrite(true);
-                            Program.signalNewData(0);
-                            // this.StateHasChanged();
-                        }
-                        CurrentValue = "";
-                    }
-                }
-                if (selectedNode != null && (selectedNode.Tag is AssetAdministrationShell || selectedNode.Tag is AasCore.Aas3_0.File))
-                {
-                    if (selectedNode.Tag is AssetAdministrationShell)
-                    {
-                        <button style="border-width: 1px; border-color: black; color: white; background-color: blue" @onclick="runCreateQRCodeImage">QRCODE</button><br />
-                        string qrcodeLink = getQRCodeLink(selectedNode);
-                        if (Program.generatedQrCodes.ContainsKey(selectedNode.Tag))
-                        {
-                            string qrcodeImage = getQRCodeImage(selectedNode);
-                            if (qrcodeImage != "")
-                            {
-                                <a href="@qrcodeLink" target="_blank">
-                                    <div>
-                                        <img src=data:image;base64,@qrcodeImage style="max-width: 25%;" alt="Qrcode Image" />
-                                    </div>
-                                </a>
-                            }
-                        }
-                        else
-                        {
-                            <a href="@qrcodeLink" target="_blank">@qrcodeLink</a><br>
-                        }
-                        @code {
-                            private void runCreateQRCodeImage()
-                            {
-                                createQRCodeImage(selectedNode);
-                            }
-                        }
-                    }
-                }
+            for (var line = 0; line < 20; line++)
+            {
+            var nodeDetails0 = ViewNodeDetails(SelectedNode, line, 0);
+            var nodeDetails1 = ViewNodeDetails(SelectedNode, line, 1);
+            var nodeDetails2 = ViewNodeDetails(SelectedNode, line, 2);
+            if (nodeDetails0 != "" && nodeDetails1 != "")
+            {
+            var detailsId = "SelectedNodeDetailsLeft_" + line;
+            <span style="color:white;background-color:blue;" id="@detailsId">@nodeDetails0</span>
+            detailsId = "SelectedNodeDetailsRight_" + line;
+            <span id="@detailsId">&nbsp;@nodeDetails1 @nodeDetails2</span>
+            <br>
+            }
+            }
 
-                if (selectedNode != null && selectedNode.Tag is Submodel sm)
-                {
-                    var idEncoded = Base64UrlEncoder.Encode(sm.Id);
-                    var path = Program.externalBlazor + "/submodels/" + idEncoded;
-                    <span style="color:white;background-color:blue;">URL:</span>
-                    <span>&nbsp</span>
-                    <a href="@path" target="_blank">@path</a><br>
-                }
+            if (SelectedNode != null && SelectedNode.Tag is IReferable r)
+            {
+            <span style="color:lightgray;">UPDATE @r.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span>
+            <br/>
+            <button style="border-width: 1px; border-color: black; background-color: lightgray" @onclick="SetTimeStamp">TIMESTAMP</button>
+            <br/>
+            <span style="color:lightgray;">CREATE @r.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span>
+            <br/>
+            <span style="color:lightgray;">TREE @r.TimeStampTree.ToString("yy-MM-dd HH:mm:ss.fff")</span>
 
-                if (selectedNode != null && selectedNode.Tag is ISubmodelElement sme)
-                {
-                    string path = sme.IdShort;
-                    IReferable parent = sme.Parent as IReferable;
-                    while(parent is not Submodel)
-                    {
-                        if(parent is ISubmodelElementList parentList)
-                        {
-                            if(path.Equals(sme.IdShort)) 
-                            {
-                                var index = parentList.Value?.IndexOf(sme);
-                                path = "[" + index + "]";
-                            }
-                            path = parentList.IdShort + path;
-                        }
-                        else if(parent.Parent is ISubmodelElementList prevParentList)
-                        {
-                            var index = prevParentList.Value?.IndexOf(parent as ISubmodelElement);
-                            path = "[" + index + "]" + "." + path;
-                        }
-                        else
-                        {
-                            path = parent.IdShort + "." + path;
-                        }
+            <br/>
+            @code {
 
-                        parent = (IReferable)parent.Parent;
-                    }
-                    var idEncoded = Base64UrlEncoder.Encode((parent as Submodel).Id);
-                    // path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodelelements/" + path;
-                    path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodel-elements/" + path;
-                    <span style="color:white;background-color:blue;">URL:</span>
-                    <span>&nbsp</span>
-                    <a href="@path" target="_blank">@path</a><br>
-                }
+            private void SetTimeStamp()
+            {
+            (SelectedNode.Tag as IReferable).SetTimeStamp(DateTime.UtcNow);
+            Program.env[SelectedNode.envIndex].setWrite(true);
+            }
 
-                if (selectedNode != null && selectedNode.Tag is SubmodelElementCollection smc)
-                {
-                    string semanticId = "";
-                    // bool render = false;
+            }
+            }
 
-                    try
-                    {
-                        semanticId = smc.SemanticId?.GetAsIdentifier();
-                    }
-                    catch { }
-                    if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeries/1/0" ||
-                        semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
-                    {
-                        TimeSpan diff = smc.TimeStamp - timeStampPlot;
+            var externalLink = false;
+            var link = GetLink(SelectedNode, out externalLink);
+            if (SelectedNode != null && !string.IsNullOrEmpty(link))
+            {
+            <a href="@link" target="_blank">@link</a>
+            <br>
 
-                        if (smc != collectionPlot || diff.TotalSeconds < 0 || diff.TotalSeconds >= 5)
-                        {
-                            watchTimeToProcessImage = System.Diagnostics.Stopwatch.StartNew();
+            if (SelectedNode != null && SelectedNode.Tag is Submodel && !string.IsNullOrEmpty(Program.connectServer))
+            {
+            var toPublish = Program.submodelsToPublish.Contains(SelectedNode.Tag);
+            var toSubscribe = Program.submodelsToSubscribe.Contains(SelectedNode.Tag);
+            if (toPublish)
+            {
+            <button style="color:white;background-color:blue" @onclick="ResetSubmodelToPublish">Publish</button>
+            }
+            else
+            {
+            <button @onclick="SetSubmodelToPublish">Publish</button>
+            }
 
-                            collectionPlot = smc;
-                            timeStampPlot = smc.TimeStampTree;
+            if (toSubscribe)
+            {
+            <button style="color:white;background-color:blue" @onclick="ResetSubmodelToSubscribe">Subscribe</button>
+            }
+            else
+            {
+            <button @onclick="SetSubmodelToSubscribe">Subscribe</button>
+            }
+            @code {
 
-                            //ListOfTimeSeriesData _timeSeriesData = new ListOfTimeSeriesData();
-                            _timeSeriesData.Clear();
-                            //var mm = AdminShell.Key.MatchMode.Relaxed;
+            private void ResetSubmodelToPublish()
+            {
+            Program.submodelsToPublish.Remove(SelectedNode.Tag);
+            }
 
-                            // make initial data for time series
-                            var tsd = new TimeSeriesData() { SourceTimeSeries = smc };
-                            _timeSeriesData.Add(tsd);
+            private void SetSubmodelToPublish()
+            {
+            var toSubscribe = Program.submodelsToSubscribe.Contains(SelectedNode.Tag);
+            if (!toSubscribe)
+            Program.submodelsToPublish.Add(SelectedNode.Tag);
+            }
 
-                            // plot arguments for time series
-                            tsd.Args = PlotArguments.Parse(smc.FindQualifierOfType("TimeSeries.Args")?.Value);
+            private void ResetSubmodelToSubscribe()
+            {
+            Program.submodelsToSubscribe.Remove(SelectedNode.Tag);
+            }
 
-                            // TODO: info - ZveiTimeSeriesDataV10 is currently hardcoded as JSON string in code
-                            var pcts = ZveiTimeSeriesDataV10.Static;
+            private void SetSubmodelToSubscribe()
+            {
+            var toPublish = Program.submodelsToPublish.Contains(SelectedNode.Tag);
+            if (!toPublish)
+            Program.submodelsToSubscribe.Add(SelectedNode.Tag);
+            }
 
-                            //var tssReference = pcts.CD_TimeSeriesSegment.GetReference();
-                            // var tssReference = pcts.CD_TimeSeriesSegment.GetCdReference();
-                            var tssReferenceKey = new Key(KeyTypes.ConceptDescription, "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0");
-                            //var k = new Key("ConceptDescription", false, "IRI", "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0");
-                            //var tssReference = new Reference(k);
-                            //var smcAllValues = smc.value.FindAllSemanticIdAs<AdminShell.SubmodelElementCollection>(tssReference, mm);
+            }
+            }
+            }
 
-                            // is it a segment
-                            if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
-                            {
-                                TimeSeriesAddSegmentData(pcts, tsd, smc);
-                            }
-                            else
-                            {
-                                // search for segements on current level
-                                // var smcAllValues = smc.Value.FindAllSemanticIdAs<SubmodelElementCollection>(tssReference.GetAsExactlyOneKey().Value);
-                                var smcAllValues = smc.Value.FindAllSemanticIdAs<SubmodelElementCollection>(tssReferenceKey, MatchMode.Relaxed);
+            if (SelectedNode is {Tag: Property} && Program.edit)
+            {
+            <input @bind="CurrentValue" style="width:500px; border-width: 1px; border-color: black;"/>
+            <span style="border-width: 1px; border-color: black; background-color: blue;">@CurrentValue</span>
+            <br>
+            @code { private string CurrentValue { get; set; } }
+            if (!string.IsNullOrEmpty(CurrentValue))
+            {
+            if (SelectedNode.Tag is Property)
+            {
+            if (CurrentValue == " ")
+            CurrentValue = string.Empty;
+            (SelectedNode.Tag as Property).Value = CurrentValue;
+            (SelectedNode.Tag as Property).SetTimeStamp(DateTime.UtcNow);
+            Program.env[SelectedNode.envIndex].setWrite(true);
+            Program.signalNewData(0);
+            }
 
-                                if (smcAllValues.Count() != 0)
-                                {
-                                    foreach (var smcseg in smcAllValues)
-                                    {
-                                        TimeSeriesAddSegmentData(pcts, tsd, smcseg);
-                                    }
-                                }
-                            }
+            CurrentValue = string.Empty;
+            }
+            }
 
-                            _timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en", bi.sessionNumber, plotFilter.combinedFromDate, plotFilter.combinedToDate);
-                            watchTimeToProcessImage.Stop();
-                        }
+            if (SelectedNode is {Tag: (AssetAdministrationShell or File) and AssetAdministrationShell})@code {
 
-                        byte[] imageArray;
-                        string timeSeriesImageBase64 = "";
-                        string scottplotImgPath = "wwwroot/images/scottplot/smc_timeseries_clientid" + bi.sessionNumber + ".png";
+            private void runCreateQRCodeImage()
+            {
+            CreateQRCodeImage(SelectedNode);
+            }
 
-                        if (System.IO.File.Exists(scottplotImgPath))
-                        {
-                            imageArray = System.IO.File.ReadAllBytes(scottplotImgPath);
-                            timeSeriesImageBase64 = Convert.ToBase64String(imageArray);
-                        }
+            }
+            {
+            <button style="border-width: 1px; border-color: black; color: white; background-color: blue" @onclick="runCreateQRCodeImage">QRCODE</button>
+            <br/>
+            var qrcodeLink = GetQRCodeLink(SelectedNode);
+            if (Program.generatedQrCodes.ContainsKey(SelectedNode.Tag))
+            {
+            var qrcodeImage = GetQRCodeImage(SelectedNode);
+            if (qrcodeImage != "")
+            {
+            <a href="@qrcodeLink" target="_blank">
+                <div>
+                    <img src=data:image;base64,@qrcodeImage style="max-width: 25%;" alt="Qrcode Image"/>
+                </div>
+            </a>
+            }
+            }
+            else
+            {
+            <a href="@qrcodeLink" target="_blank">@qrcodeLink</a>
+            @:<br>
+            }
 
-                        var elapsedMsToProcessImage = watchTimeToProcessImage.ElapsedMilliseconds;
 
-                        if (System.IO.File.Exists(scottplotImgPath))
-                        {
-                            <EditForm Model="@plotFilter" OnValidSubmit="() => plotFilter.UpdateFilter(_timeSeriesData, bi.sessionNumber)">
-                                <label for="filterFromDate">Filter from</label>
-                                <InputDate id="filterFromDate" @bind-Value="plotFilter.fromDate" />
-                                <input type="time" @bind-value="plotFilter.fromTime" />
-                                <label for="filterToDate">Filter to</label>
-                                <InputDate id="filterToDate" @bind-Value="plotFilter.toDate" />
-                                <input type="time" @bind-value="plotFilter.toTime" />
-                                <div>
-                                    <button style="border-width: 1px; border-color: black; background-color: lightgray" 
-                                        type="submit">Apply</button>
-                                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                                        @onclick="plotFilter.SetInitialFilterState">Reset</button>
-                                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                                        @onclick="() => { plotFilterTsdOffset = 0; plotFilter.SetFilterStateDay(0); }">Today</button>
-                                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                                        @onclick="() => { plotFilterTsdOffset = -1; plotFilter.SetFilterStateDay(-1); }">Yesterday</button>
-                                    <button style="border-width: 1px; border-color: black; background-color: lightgray" 
-                                        @onclick="() => plotFilter.SetFilterStateDay(--plotFilterTsdOffset)">Prev day</button>
-                                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                                        @onclick="() => plotFilter.SetFilterStateDay(++plotFilterTsdOffset)">Next day</button>
-                                </div>
-                            </EditForm>
+            }
 
-                            <div class="d-flex flex-column">
-                                <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:950px;cursor:zoom-in;" />
-                                <span class="text-muted" style="font-size:14px;">
+            if (SelectedNode is {Tag: Submodel sm})
+            {
+            var idEncoded = Base64UrlEncoder.Encode(sm.Id);
+            var path = Program.externalBlazor + "/submodels/" + idEncoded;
+            <span style="color:white;background-color:blue;">URL:</span>
+            <a href="@path" target="_blank">@path</a>
+            <br>
+            }
+
+            if (SelectedNode != null && SelectedNode.Tag is ISubmodelElement sme)
+            {
+            var path = sme.IdShort;
+            var parent = sme.Parent as IReferable;
+            while (parent is not Submodel)
+            {
+            if (parent is ISubmodelElementList parentList)
+            {
+            if (path.Equals(sme.IdShort))
+            {
+            var index = parentList.Value?.IndexOf(sme);
+            path = $"[{index}]";
+            }
+
+            path = parentList.IdShort + path;
+            }
+            else if (parent.Parent is ISubmodelElementList prevParentList)
+            {
+            var index = prevParentList.Value?.IndexOf(parent as ISubmodelElement);
+            path = $"[{index}].{path}";
+            }
+            else
+            {
+            path = $"{parent.IdShort}.{path}";
+            }
+
+            parent = (IReferable) parent.Parent;
+            }
+
+            var idEncoded = Base64UrlEncoder.Encode((parent as Submodel).Id);
+            path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodel-elements/" + path;
+            <span style="color:white;background-color:blue;">URL:</span>
+            <a href="@path" target="_blank">@path</a>
+            <br>
+            }
+
+            if (SelectedNode != null && SelectedNode.Tag is SubmodelElementCollection smc)
+            {
+            var semanticId = string.Empty;
+
+            try
+            {
+            semanticId = smc.SemanticId?.GetAsIdentifier();
+            }
+            catch
+            {
+            }
+
+            if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeries/1/0" ||
+            semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
+            {
+            var diff = smc.TimeStamp - timeStampPlot;
+
+            if (smc != collectionPlot || diff.TotalSeconds < 0 || diff.TotalSeconds >= 5)
+            {
+            watchTimeToProcessImage = System.Diagnostics.Stopwatch.StartNew();
+
+            collectionPlot = smc;
+            timeStampPlot = smc.TimeStampTree;
+
+            _timeSeriesData.Clear();
+
+            // make initial data for time series
+            var tsd = new TimeSeriesData() {SourceTimeSeries = smc};
+            _timeSeriesData.Add(tsd);
+
+            // plot arguments for time series
+            tsd.Args = PlotArguments.Parse(smc.FindQualifierOfType("TimeSeries.Args")?.Value);
+
+            // TODO: info - ZveiTimeSeriesDataV10 is currently hardcoded as JSON string in code
+            var pcts = ZveiTimeSeriesDataV10.Static;
+
+            var tssReferenceKey = new Key(KeyTypes.ConceptDescription, "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0");
+
+            // is it a segment
+            if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
+            {
+            TimeSeriesAddSegmentData(pcts, tsd, smc);
+            }
+            else
+            {
+            // search for segments on current level
+            var smcAllValues = smc.Value.FindAllSemanticIdAs<SubmodelElementCollection>(tssReferenceKey, MatchMode.Relaxed);
+
+            if (smcAllValues.Count() != 0)
+            {
+            foreach (var smcseg in smcAllValues)
+            {
+            TimeSeriesAddSegmentData(pcts, tsd, smcseg);
+            }
+            }
+            }
+
+            _timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en", bi.sessionNumber, plotFilter.combinedFromDate, plotFilter.combinedToDate);
+            watchTimeToProcessImage.Stop();
+            }
+
+            var timeSeriesImageBase64 = string.Empty;
+            var scottplotImgPath = $"wwwroot/images/scottplot/smc_timeseries_clientid{bi.sessionNumber}.png";
+
+            if (System.IO.File.Exists(scottplotImgPath))
+            {
+            var imageArray = System.IO.File.ReadAllBytes(scottplotImgPath);
+            timeSeriesImageBase64 = Convert.ToBase64String(imageArray);
+            }
+
+            var elapsedMsToProcessImage = watchTimeToProcessImage.ElapsedMilliseconds;
+
+            if (System.IO.File.Exists(scottplotImgPath))
+            {
+            <EditForm Model="@plotFilter" OnValidSubmit="() => plotFilter.UpdateFilter(_timeSeriesData, bi.sessionNumber)">
+                <label for="filterFromDate">Filter from</label>
+                <InputDate id="filterFromDate" @bind-Value="plotFilter.fromDate"/>
+                <input type="time" @bind-value="plotFilter.fromTime"/>
+                <label for="filterToDate">Filter to</label>
+                <InputDate id="filterToDate" @bind-Value="plotFilter.toDate"/>
+                <input type="time" @bind-value="plotFilter.toTime"/>
+                <div>
+                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
+                            type="submit">
+                        Apply
+                    </button>
+                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
+                            @onclick="plotFilter.SetInitialFilterState">
+                        Reset
+                    </button>
+                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
+                            @onclick="() => { plotFilterTsdOffset = 0; plotFilter.SetFilterStateDay(0); }">
+                        Today
+                    </button>
+                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
+                            @onclick="() => { plotFilterTsdOffset = -1; plotFilter.SetFilterStateDay(-1); }">
+                        Yesterday
+                    </button>
+                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
+                            @onclick="() => plotFilter.SetFilterStateDay(--plotFilterTsdOffset)">
+                        Prev day
+                    </button>
+                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
+                            @onclick="() => plotFilter.SetFilterStateDay(++plotFilterTsdOffset)">
+                        Next day
+                    </button>
+                </div>
+            </EditForm>
+
+            <div class="d-flex flex-column">
+                <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series"
+                     style="max-width:950px;cursor:zoom-in;"/>
+                <span class="text-muted" style="font-size:14px;">
                                     Image processing took @elapsedMsToProcessImage ms (Last update: @timeStampPlot.ToString("yy-MM-dd HH:mm:ss.fff"))
                                 </span>
-                            </div>
+            </div>
 
-                            <div class="modal modal-fullscreen @(showImageModal ? " d-block" : "d-none" )" style="margin-top:3.5rem;" tabindex="-1">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Visualization of time series</h5>
-                                            <button type="button" @onclick="() => showImageModal = !showImageModal" class="close" data-dismiss="modal" aria-label="Close">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
-                                        </div>
-                                        <div class="modal-body text-center">
-                                            <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:90%;max-height:90%;cursor:zoom-out;" class="mb-2" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="my-2">Rendering time series...</div>
-                        }
-                    }
-                    else
-                    {
-                        collectionPlot = null;
-                    }
-                }
+            <div class="modal modal-fullscreen @(showImageModal ? " d-block" : "d-none")" style="margin-top:3.5rem;" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Visualization of time series</h5>
+                            <button type="button" @onclick="() => showImageModal = !showImageModal" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body text-center">
+                            <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64
+                                 alt="Visualization of time series" style="max-width:90%;max-height:90%;cursor:zoom-out;" class="mb-2"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            }
+            else
+            {
+            <div class="my-2">Rendering time series...</div>
+            }
+            }
+            else
+            {
+            collectionPlot = null;
+            }
+            }
             }
 
             @{
-                bool svg = false;
-                bool url = false;
-                string detailsImage = createDetailsImage(selectedNode, out url, out svg);
-                if (detailsImage != "")
-                {
-                    if (!svg)
-                    {
-                        if (!url)
-                        {
-                            <br />
-                            <div>
-                                <img src=data:image;base64,@detailsImage style="max-width: 50%" alt="Details Image" />
-                            </div>
-                        }
-                        else
-                        {
-                            <br />
-                            <div>
-                                <img src="@detailsImage" style="max-width: 50%" alt="Details Image" />
-                            </div>
-                        }
-                    }
-                    else
-                    {
-                        if (!url)
-                        {
-                            <br />
-                            <div>
-                                <img src=data:image/svg+xml;base64,@detailsImage style="max-width: 50%" alt="Details Image" />
-                            </div>
-                        }
-                        else
-                        {
-                            <br />
-                            <div>
-                                <img src="detailsImage" style="max-width: 50%" alt="Details Image" />
-                            </div>
-                        }
-                    }
-                }
+            var detailsImage = CreateDetailsImage(SelectedNode, out var url, out var svg);
+            if (!string.IsNullOrEmpty(detailsImage))
+            {
+            if (!svg)
+            {
+            if (!url)
+            {
+            <br/>
+            <div>
+                <img src=data:image;base64,@detailsImage style="max-width: 50%" alt="Details Image"/>
+            </div>
+            }
+            else
+            {
+            <br/>
+            <div>
+                <img src="@detailsImage" style="max-width: 50%" alt="Details Image"/>
+            </div>
+            }
+            }
+            else
+            {
+            if (!url)
+            {
+            <br/>
+            <div>
+                <img src=data:image/svg+xml;base64,@detailsImage style="max-width: 50%" alt="Details Image"/>
+            </div>
+            }
+            else
+            {
+            <br/>
+            <div>
+                <img src="detailsImage" style="max-width: 50%" alt="Details Image"/>
+            </div>
+            }
+            }
+            }
 
-                if (selectedNode != null && (selectedNode.Tag is BasicEventElement be))
-                {
-                    if (be.Observed != null)
-                    {
-                        string okey = be.Observed.GetAsExactlyOneKey().ToStringExtended();
-                        <span style="color:white;background-color:blue;">Observed</span>
-                        <span>@(" " + okey)</span><br />
-                        var refsme = Program.env[0].AasEnv.FindReferableByReference(be.Observed);
-                        if (refsme != null)
-                        {
-                            <span style="color:lightgray;">UPDATE @refsme.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
-                            <span style="color:lightgray;">CREATE @refsme.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
-                        }
-                        else
-                        {
-                            <span>Referenced element does not exist!</span><br />
-                        }
-                    }
-                }
+            if (SelectedNode is {Tag: BasicEventElement be} && be.Observed != null)
+            {
+            var observedSingleKey = be.Observed.GetAsExactlyOneKey().ToStringExtended();
+            <span style="color:white;background-color:blue;">Observed</span>
+            <span>@($" {observedSingleKey}")</span>
+            <br/>
+            var refsme = Program.env[0].AasEnv.FindReferableByReference(be.Observed);
+            if (refsme != null)
+            {
+            <span style="color:lightgray;">UPDATE @refsme.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span>
+            <br/>
+            <span style="color:lightgray;">CREATE @refsme.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span>
+            <br/>
+            }
+            else
+            {
+            <span>Referenced element does not exist!</span>
+            <br/>
+            }
+            }
             }
         </div>
     </div>
@@ -594,1884 +581,1847 @@
 @inject IJSRuntime js
 @inject BlazorSessionService bi;
 @using AasxServer;
-@using AdminShellNS;
-@using System.Globalization;
-@using System.Reflection;
-@using Newtonsoft.Json;
-@using Newtonsoft.Json.Linq;
-@using ScottPlot;
 
 @code {
-    System.Diagnostics.Stopwatch watchTimeToProcessImage = new System.Diagnostics.Stopwatch();
-    DateTime timeStampPlot = new DateTime();
-    PlotFilter plotFilter = new PlotFilter();
-    SubmodelElementCollection collectionPlot = null;
-    bool showImageModal = false;
-    ListOfTimeSeriesData _timeSeriesData = new ListOfTimeSeriesData();
-    int plotFilterTsdOffset = 0;
-
-    private class PlotFilter
-    {
-        public DateTime fromDate { get; set; }
-        public DateTime fromTime { get; set; }
-        public DateTime toDate { get; set; }
-        public DateTime toTime { get; set; }
-        public DateTime combinedFromDate { get; set; }
-        public DateTime combinedToDate { get; set; }
-
-        public PlotFilter()
-        {
-            this.SetInitialFilterState();
-        }
-
-        public void SetInitialFilterState()
-        {
-            ResetTimeOfDates();
-            var initialFromDate = DateTime.Now.AddYears(-3);
-            var initialToDate = DateTime.Now.AddYears(3);
-            fromDate = initialFromDate;
-            toDate = initialToDate;
-            combinedFromDate = initialFromDate;
-            combinedToDate = initialToDate;
-        }
-
-        public void SetFilterStateDay(int offset)
-        {
-            ResetTimeOfDates();
-            DateTime day = DateTime.Today.AddDays(offset);
-            TimeSpan midnight = new System.TimeSpan(0, 23, 59, 59);
-            DateTime endOfDay = day.Add(midnight);
-
-            fromDate = day;
-            fromTime = day;
-            toDate = endOfDay;
-            toTime = endOfDay;
-            combinedFromDate = day;
-            combinedToDate = endOfDay;
-        }
-
-        public void ResetTimeOfDates()
-        {
-            // Reset to 0 AM
-            fromDate = new DateTime(fromDate.Year, fromDate.Month, fromDate.Day, 0, 0, 0);
-            toDate = new DateTime(toDate.Year, toDate.Month, toDate.Day, 0, 0, 0);
-        }
-
-        public void UpdateFilter(ListOfTimeSeriesData tsd, int sessionNumber)
-        {
-            ResetTimeOfDates();
-            TimeSpan fromTimeSpan = fromTime.TimeOfDay;
-            TimeSpan toTimeSpan = toTime.TimeOfDay;
-            combinedFromDate = fromDate.Add(fromTimeSpan);
-            combinedToDate = toDate.Add(toTimeSpan);
-            tsd?.RenderTimeSeries(defPlotHeight: 200, "en", sessionNumber, combinedFromDate, combinedToDate);
-        }
-    }
-
-    async Task DownloadFile()
-    {
-        this.StateHasChanged();
-        var f = selectedNode.Tag as AasCore.Aas3_0.File;
-        var fileName = System.IO.Path.GetFileName(f.Value);
-        if (fileName != "")
-        {
-            try
-            {
-                byte[] data;
-                using (System.IO.MemoryStream ms = new System.IO.MemoryStream())
-                {
-                    Program.env[selectedNode.envIndex].GetLocalStreamFromPackage(f.Value).CopyTo(ms);
-                    data = ms.ToArray();
-                }
-                //
-                await SaveAs(js, fileName, data);
-            }
-            catch
-            {
-            }
-
-        }
-    }
-    async Task SaveAs(IJSRuntime js, string filename, byte[] data)
-    // async Task SaveAs(IJSRuntime js, string filename, string data)
-    {
-        ; await js.InvokeAsync<object>(
-     "saveAsFile",
-     filename,
-     data
-     );
-    /*
-    await js.InvokeAsync<object>(
-        "saveAsFile",
-        filename,
-        Convert.ToBase64String(data)
-        );
-        */
-        /*
-        await js.InvokeAsync<object>(
-            "download",
-            data,
-            filename,
-            "application/pdf"
-    );
-    */
-    }
-
-    public class Item
-    {
-        public string Text { get; set; }
-        public IEnumerable<Item> Childs { get; set; }
-        public object parent { get; set; }
-        // public List<Item> Childs { get; set; }
-        public string Type { get; set; }
-        public object Tag { get; set; }
-        public int envIndex { get; set; }
-    }
-
-    List<Item> Items = null;
-
-    IList<Item> ExpandedNodes = new List<Item>();
-    Item selectedNode;
-    Item SelectedNode
-    {
-        get { return selectedNode; }
-        set
-        {
-            selectedNode = value;
-            // OnSelectNode(selectedNode);
-        }
-    }
-
-    static ulong dataVersion = 0;
-
-    public static void checkDataVersion()
-    {
-        if (Program.getDataVersion() != dataVersion)
-        {
-            dataVersion = Program.getDataVersion();
-            // TreePage.StateHasChanged();
-        }
-    }
-
-    static int hack = 0;
-
-    System.Threading.Timer refresh = null;
-
-    protected override void OnInitialized()
-    {
-        // OnInitialized() allways called twice
-        // if (hack++ == 0)
-        //    return;
-
-        // hack = 0;
-        // SubmodelService.buildTree();
-        // Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
-        // newDataMode = 1;
-        // StateHasChanged();
-
-        //ExpandedNodes.Add(Items.Skip(1).First());
-        //ExpandedNodes.Add(Items.Skip(1).Take(1).First().Childs.Skip(1).First());
-
-        SubmodelService.NewDataAvailable += NewData;
-        Program.signalNewData(1);
-
-        /*
-        refresh = new System.Threading.Timer(new System.Threading.TimerCallback(_ =>
-            {
-            // Note that the following line is necessary because otherwise
-            // Blazor would not recognize the state change and not refresh the UI
-            // InvokeAsync(() => this.StateHasChanged());
-        }), null, 5000, 5000);
-    */
-    }
-
-    public void Dispose()
-    {
-        SubmodelService.NewDataAvailable -= NewData;
-    }
-
-    int newDataMode = 0;
-
-    void NewData(object source, EventArgs args)
-    {
-        if (Program.isLoading)
-            return;
-
-        // update = true;
-        if (newDataMode == 0)
-        {
-            if (args is Program.NewDataAvailableArgs newArgs)
-            {
-                newDataMode = newArgs.signalNewDataMode;
-                // Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
-                InvokeAsync(() => this.StateHasChanged());
-            }
-        }
-        // newDataMode = Program.getSignalNewDataMode();
-        // Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
-
-        // InvokeAsync(() => this.StateHasChanged());
-        // this.StateHasChanged();
-    }
-
-    bool update = true;
-
-    string updateVisibleTree(List<Item> viewItems, Item selectedNode)
-    {
-        if (update)
-        {
-            switch (newDataMode)
-            {
-                // 0 == same tree, only values changed
-                case 0:
-                    break;
-                // 1 == same tree, structure may change
-                // 2 == build new tree, keep open nodes
-                case 1:
-                case 2:
-                    bool isSelected = selectedNode != null;
-                    bool isExpanded = ExpandedNodes.Count != 0;
-                    List<string>[] expandedNodesPath = new List<string>[ExpandedNodes.Count + 1];
-                    List<string> selectedNodePath = getPath(selectedNode);
-                    if (isExpanded)
-                    {
-                        for (int j = 0; j < ExpandedNodes.Count; j++)
-                        {
-                            expandedNodesPath[j] = getPath(ExpandedNodes[j]);
-                        }
-                    }
-                    SubmodelService.buildTree();
-                    Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
-                    ExpandedNodes.Clear();
-                    selectedNode = null;
-                    if (isSelected)
-                    {
-                        selectedNode = findPath(selectedNodePath);
-                    }
-                    if (isExpanded)
-                    {
-                        foreach (var path in expandedNodesPath)
-                        {
-                            Item p = findPath(path);
-                            if (p != null)
-                                ExpandedNodes.Add(p);
-                        }
-                    }
-                    newDataMode = 0;
-                    break;
-                // 3 == build new tree, all nodes closed
-                case 3:
-                    SubmodelService.buildTree();
-                    Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
-                    ExpandedNodes.Clear();
-                    selectedNode = null;
-                    newDataMode = 0;
-                    break;
-            }
-            SelectedNode = selectedNode;
-            // update = false;
-            // updateNode(viewItems[0]);
-        }
-        return "";
-    }
-
-    List<string> getPath(Item i)
-    {
-        if (i == null)
-            return null;
-
-        List<string> upPath = new List<string>();
-        upPath.Add(i.Text);
-        while (i.parent != null)
-        {
-            i = (Item)i.parent;
-            upPath.Add(i.Text);
-        }
-        List<string> downPath = new List<string>();
-        int j = upPath.Count - 1;
-        while (j >= 0)
-        {
-            downPath.Add(upPath[j--]);
-        }
-        return downPath;
-    }
-
-    Item findPath(List<string> path)
-    {
-        if (path != null && path.Count > 0)
-        {
-            Item found = null;
-            int k = 0;
-            while (k < Items.Count)
-            {
-                Item i = Items[k];
-                if (i.Text != path[0])
-                {
-                    k++;
-                    continue;
-                }
-                int j = 0;
-                found = i;
-                while (++j < path.Count)
-                {
-                    if (i.Childs != null)
-                    {
-                        found = null;
-                        foreach (var c in i.Childs)
-                        {
-                            if (c.Text == path[j])
-                            {
-                                found = c;
-                                break;
-                            }
-                        }
-                    }
-                    if (found == null)
-                    {
-                        return null;
-                    }
-                    i = found;
-                }
-                if (found != null)
-                    return found;
-            }
-        }
-        return null;
-    }
-
-    void updateNode(Item i)
-    {
-        var clist = i.Childs as List<Item>;
-        List<string> listIdshort = new List<string>();
-        bool done = false;
-        if (!done && i.Tag is Submodel sm)
-        {
-            foreach (var smew1 in sm.SubmodelElements)
-            {
-                listIdshort.Add(smew1.IdShort);
-            }
-            done = true;
-        }
-        if (!done && i.Tag is SubmodelElementCollection smec)
-        {
-            foreach (var smew2 in smec.Value)
-            {
-                listIdshort.Add(smew2.IdShort);
-            }
-            done = true;
-        }
-        if (!done && i.Tag is ISubmodelElement sme)
-        {
-            listIdshort.Add(sme.IdShort);
-            done = true;
-        }
-        // check if child name exists in data children idshorts, if not delete
-        if (done)
-        {
-            List<Item> toDelete = new List<Item>();
-            if (clist != null)
-            {
-                foreach (var c in clist)
-                {
-                    if (!listIdshort.Contains(c.Text))
-                    {
-                        toDelete.Add(c);
-                    }
-                }
-            }
-            else
-            {
-                if (!listIdshort.Contains(i.Text))
-                {
-                    toDelete.Add(i);
-                }
-            }
-            foreach (var c in toDelete)
-            {
-                var parent = c.parent as Item;
-                if (parent != null)
-                {
-                    (parent.Childs as List<Item>).Remove(c);
-                }
-            }
-        }
-        // check if data children idshorts exist in child names, if not insert
-        if (clist != null)
-        {
-            foreach (var c in clist)
-            {
-                updateNode(c);
-            }
-        }
-    }
-
-    public static string createDetailsImage(Item item, out bool url, out bool svg)
-    {
-        svg = false;
-        url = false;
-        // System.IO.File.Delete("wwwroot/detailsImage.jpg");
-
-        if (item == null)
-        {
-            return "";
-        }
-
-        object o = item.Tag;
-
-        if (o is AssetAdministrationShell)
-        {
-            var aas = o as AssetAdministrationShell;
-            lock (Program.changeAasxFile)
-            {
-                try
-                {
-                    // if (Program.env[item.envIndex].IsOpen)
-                    {
-                        if (Program.env[item.envIndex] == null)
-                            return "";
-
-                        using (System.IO.Stream s = Program.env[item.envIndex].GetLocalThumbnailStream())
-                        {
-                            if (s != null)
-                            {
-                                using (var m = new System.IO.MemoryStream())
-                                {
-                                    s.CopyTo(m);
-                                    return System.Convert.ToBase64String(m.ToArray());
-                                }
-                            }
-                        }
-                    }
-                }
-                catch { }
-            }
-        }
-
-        if (o is AasCore.Aas3_0.File f)
-        {
-
-            // Test for /aasx/
-            if (!string.IsNullOrEmpty(f.Value))
-            {
-                string[] split = f.Value.Split(new Char[] { '/' });
-                if (split.Length == 2 || split.Length > 1 && split[1].ToLower() == "aasx")
-                {
-                    split = f.Value.Split(new Char[] { '.' });
-                    switch (split.Last().ToLower())
-                    {
-                        case "jpg":
-                        case "bmp":
-                        case "png":
-                        case "svg":
-                            try
-                            {
-                                using (System.IO.Stream s = Program.env[item.envIndex].GetLocalStreamFromPackage(f.Value))
-                                {
-                                    if (s != null)
-                                    {
-                                        using (var m = new System.IO.MemoryStream())
-                                        {
-                                            if (split.Last().ToLower() == "svg")
-                                            {
-                                                svg = true;
-                                            }
-                                            s.CopyTo(m);
-                                            return System.Convert.ToBase64String(m.ToArray());
-                                        }
-                                    }
-                                }
-                            }
-                            catch { }
-                            break;
-                    }
-                }
-                else
-                {
-                    url = true;
-                    return f.Value;
-                }
-            }
-        }
-
-        return "";
-    }
-
-    string getQRCodeLink(Item item)
-    {
-        if (item == null)
-        {
-            return "";
-        }
-
-        string prefix = "http://";
-        string hostPort = Program.hostPort;
-
-        string[] split = Program.hostPort.Split(':');
-        if (split[0].ToLower() == "admin-shell-io.com")
-        {
-            // prefix = "https://";
-            // hostPort = split[0] + ":" + (Convert.ToInt32(split[1]) + 1);
-        }
-
-        object o = item.Tag;
-
-        if (o is AssetAdministrationShell)
-        {
-            var aas = o as AssetAdministrationShell;
-            var asset = aas.AssetInformation;
-            if (asset != null)
-            {
-                // string url = WebUtility.UrlEncode(asset.identification.id);
-                string url = asset.GlobalAssetId;
-                // string link = prefix + hostPort + "/server/getaasxbyassetid/" + url;
-                // string link = Program.externalRest + "/server/getaasxbyassetid/" + url;
-                string link = url;
-
-                return link;
-            }
-        }
-
-        return "";
-    }
-
-    string getQRCodeImage(Item item)
-    {
-        if (item == null)
-        {
-            return "";
-        }
-
-        object o = item.Tag;
-
-        if (o is AssetAdministrationShell)
-        {
-            string image = Program.generatedQrCodes[item.Tag];
-
-            if (image != null)
-                return image;
-        }
-
-        return "";
-    }
-
-    void createQRCodeImage(Item item)
-    {
-        // System.IO.File.Delete("wwwroot/detailsImage.jpg");
-
-        if (item == null)
-        {
-            return;
-        }
-
-        string prefix = "http://";
-        string hostPort = Program.hostPort;
-
-        string[] split = Program.hostPort.Split(':');
-        if (split[0].ToLower() == "admin-shell-io.com")
-        {
-            // prefix = "https://";
-            // hostPort = split[0] + ":" + (Convert.ToInt32(split[1]) + 1);
-        }
-
-        object o = item.Tag;
-
-        if (o is AssetAdministrationShell)
-        {
-            if (Program.generatedQrCodes.ContainsKey(item.Tag))
-            {
-                Program.generatedQrCodes.Remove(item.Tag);
-                return;
-            }
-
-            var aas = o as AssetAdministrationShell;
-            var asset = aas.AssetInformation;
-            if (asset != null)
-            {
-                // string url = WebUtility.UrlEncode(asset.identification.id);
-                string url = asset.GlobalAssetId;
-                // string link = prefix + hostPort + "/server/getaasxbyassetid/" + url;
-                // string link = Program.externalRest + "/server/getaasxbyassetid/" + url;
-                string link = url;
-
-                QRCodeGenerator qrGenerator = new QRCodeGenerator();
-                QRCodeData qrCodeData = qrGenerator.CreateQrCode(link, QRCodeGenerator.ECCLevel.Q);
-                QRCode qrCode = new QRCode(qrCodeData);
-                Bitmap qrCodeImage = qrCode.GetGraphic(20);
-                using (System.IO.MemoryStream memory = new System.IO.MemoryStream())
-                {
-                    qrCodeImage.Save(memory, System.Drawing.Imaging.ImageFormat.Bmp);
-                    string base64 = Convert.ToBase64String(memory.ToArray());
-
-                    Program.generatedQrCodes.Add(item.Tag, base64);
-
-                }
-                return;
-            }
-        }
-
-        return;
-    }
-
-    bool hasDownloadFile(Item item)
-    {
-        return false;
-
-        if (item == null)
-        {
-            return false;
-        }
-
-        object o = item.Tag;
-
-        if (o is AasCore.Aas3_0.File f)
-        {
-
-            // Test for /aasx/
-            string[] split = f.Value.Split(new Char[] { '/' });
-            if (split.Length == 2 || split[1].ToLower() == "aasx")
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    string getLink(Item item, out bool external)
-    {
-        external = false;
-
-        if (item == null)
-        {
-            return "";
-        }
-
-        string prefix = "http://";
-        string hostPort = Program.hostPort;
-
-        string[] split = Program.hostPort.Split(':');
-        if (split[0].ToLower() == "admin-shell-io.com")
-        {
-            prefix = "https://";
-            hostPort = split[0] + ":" + (Convert.ToInt32(split[1]) + 1);
-        }
-
-        object o = item.Tag;
-
-        if (o == null && Program.envSymbols[item.envIndex] == "L")
-        {
-            // return prefix + hostPort + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
-            return Program.externalRest + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
-        }
-
-        if (o is AssetAdministrationShell)
-        {
-            // return prefix + hostPort + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
-            // return Program.externalRest + "/server/getaasx/" + Convert.ToString(selectedNode.envIndex);
-            // string currentUrl = NavigationManager.Uri;
-            // return currentUrl + "packages/" + Base64UrlEncoder.Encode(Convert.ToString(selectedNode.envIndex));
-            return Program.externalBlazor + "/packages/" + Base64UrlEncoder.Encode(Convert.ToString(selectedNode.envIndex));
-        }
-
-        if (o is AasCore.Aas3_0.File || o is Property)
-        {
-            string value = "";
-
-            if (o is AasCore.Aas3_0.File)
-            {
-                value = (o as AasCore.Aas3_0.File).Value;
-            }
-            if (o is Property)
-            {
-                value = (o as Property).Value;
-            }
-
-            if (value == null || value == "")
-                return "";
-
-            split = value.Split(new Char[] { ':' });
-            if (split[0].ToLower() == "http" || split[0].ToLower() == "https")
-            {
-                external = true;
-                return value;
-            }
-
-            // Test for /aasx/
-            split = value.Split(new Char[] { '/' });
-            if (split.Length > 1)
-            {
-                if (split.Length == 2 || split[1].ToLower() == "aasx")
-                {
-                    ISubmodelElement sme = item.Tag as ISubmodelElement;
-                    string path = sme.IdShort;
-                    IReferable parent = sme.Parent as IReferable;
-                    while (parent is not Submodel)
-                    {
-                        if (parent is ISubmodelElementList parentList)
-                        {
-                            if (path.Equals(sme.IdShort))
-                            {
-                                var index = parentList.Value?.IndexOf(sme);
-                                path = "[" + index + "]";
-                            }
-                            path = parentList.IdShort + path;
-                        }
-                        else if (parent.Parent is ISubmodelElementList prevParentList)
-                        {
-                            var index = prevParentList.Value?.IndexOf(parent as ISubmodelElement);
-                            path = "[" + index + "]" + "." + path;
-                        }
-                        else
-                        {
-                            path = parent.IdShort + "." + path;
-                        }
-
-                        parent = (IReferable)parent.Parent;
-                    }
-
-                    // string currentUrl = NavigationManager.Uri;
-                    string currentUrl = Program.externalBlazor + "/";
-
-                    return currentUrl + "submodels/" + Base64UrlEncoder.Encode((parent as Submodel).Id) +
-                    "/submodel-elements/" + path + "/attachment";
-                }
-            }
-        }
-
-        return "";
-    }
-
-    string getSymbols(Item item)
-    {
-        if (item == null)
-        {
-            return "";
-        }
-
-        string ret = "";
-        object o = item.Tag;
-
-        if (o is AssetAdministrationShell)
-        {
-            string symbols = Program.envSymbols[item.envIndex];
-
-            if (symbols != null)
-            {
-                string[] s = symbols.Split(';');
-
-                for (int i = 0; i < s.Length; i++)
-                {
-                    switch (s[i])
-                    {
-                        case "L":
-                            ret += "ENCRYPTED ";
-                            break;
-                        case "S":
-                            ret += "SIGNED ";
-                            break;
-                        case "V":
-                            ret += "VALIDATED ";
-                            break;
-                    }
-                }
-            }
-        }
-
-        return ret;
-    }
-
-    /// <summary>
-    /// This method list added to check if Node is only SubmodelElementCollection (from V2)
-    /// 
-    /// </summary>
-    /// <param name="item"></param>
-    /// <returns></returns>
-    bool IsSmColl(Item item)
-    {
-        if(item == null)
-        {
-            return false;
-        }
-
-        if(item.Tag is SubmodelElementList)
-        {
-            return false;
-        }
-
-        if(item.Tag is SubmodelElementCollection)
-        {
-            return true;
-        }
-
-        return false;
-    }
-
-    string ViewNodeType(Item item)
-    {
-        if (item == null)
-        {
-            return "";
-        }
-
-        string ret = "";
-
-        if (item.Type != null)
-        {
-            ret = item.Type + " ";
-        }
-
-        object o = item.Tag;
-
-        /*
-        if (o is Referable)
-        {
-        ret = (o as Referable).GetElementName();
-        return (ret);
-        }
-        */
-
-        if (o is string && item.Text.Contains("/readme"))
-        {
-            ret += item.Text;
-        }
-
-        if (o == null && Program.envSymbols[item.envIndex] == "L")
-        {
-            ret += "AASX2";
-        }
-
-        if (o is AssetAdministrationShell)
-        {
-            ret += "AAS";
-        }
-        if (o is Submodel)
-        {
-            ret += "Sub";
-        }
-        if (o is ISubmodelElement)
-        {
-            if(o is SubmodelElementList)
-            {
-                ret += "SML";
-            }
-            else if (o is SubmodelElementCollection)
-            {
-                ret += "Coll";
-            }
-            if (o is Property)
-            {
-                ret += "Prop";
-            }
-        }
-        if (o is Operation)
-        {
-            ret += "Opr";
-        }
-        if (o is AasCore.Aas3_0.File)
-        {
-            ret += "File";
-        }
-        if (o is Blob)
-        {
-            ret += "Blob";
-        }
-        if (o is AasCore.Aas3_0.Range)
-        {
-            ret += "Range";
-        }
-        if (o is MultiLanguageProperty)
-        {
-            ret += "Lang";
-        }
-        if (o is RelationshipElement)
-        {
-            ret += "Rel";
-        }
-        if (o is ReferenceElement)
-        {
-            ret += "Ref";
-        }
-        if (o is Entity)
-        {
-            ret += "Ent";
-        }
-        if (o is BasicEventElement)
-        {
-            ret += "Evt";
-        }
-        if(o is AnnotatedRelationshipElement)
-        {
-            ret += "RelA";
-        }
-        if(o is Capability)
-        {
-            ret += "Cap";
-        }
-
-        return (ret);
-    }
-
-    string ViewTimeStamp(Item item)
-    {
-        if (item == null)
-        {
-            return "";
-        }
-
-        string ret = "";
-
-        object o = item.Tag;
-
-        if (o is IReferable r)
-            // ret += " (" + r.TimeStamp.Ticks + ") ";
-            ret += " (" + r.TimeStampTree.ToString("yy-MM-dd HH:mm:ss.fff") + ") ";
-
-        return ret;
-    }
-
-    string ViewNodeID(Item item)
-    {
-        if (item == null)
-        {
-            return "";
-        }
-
-        string ret = "NULL";
-
-        object o = item.Tag;
-
-        if (o == null && Program.envSymbols[item.envIndex] == "L")
-        {
-            ret = item.Text;
-        }
-
-        if (o is string && item.Text.Contains("/readme"))
-        {
-            ret = " ";
-        }
-
-        if (o is AssetAdministrationShell)
-        {
-            var aas = o as AssetAdministrationShell;
-            ret = aas.IdShort;
-        }
-        if (o is Submodel)
-        {
-            var sm = o as Submodel;
-            ret = "";
-            if (sm.Kind != null && sm.Kind == ModellingKind.Template)
-                ret += "<T> ";
-            ret += sm.IdShort;
-        }
-        if (o is ISubmodelElement)
-        {
-            var sme = o as ISubmodelElement;
-            ret = "";
-            ret += sme.IdShort;
-        }
-        if (o is AasCore.Aas3_0.File f)
-        {
-            ret = "";
-            ret += f.IdShort;
-        }
-        if (o is Blob)
-        {
-            var b = o as Blob;
-            ret = "";
-            ret += b.IdShort;
-        }
-        if (o is AasCore.Aas3_0.Range)
-        {
-            var r = o as AasCore.Aas3_0.Range;
-            ret = "";
-            ret += r.IdShort;
-        }
-        if (o is MultiLanguageProperty)
-        {
-            var mlp = o as MultiLanguageProperty;
-            ret = "";
-            ret += mlp.IdShort;
-        }
-        return (ret);
-    }
-
-    string GetHtmlId(Item item)
-    {
-        string ret = ViewNodeID(item);
-        if (item.parent != null)
-        {
-            ret = GetHtmlId(item.parent as Item) + "." + ret;
-        }
-        return (ret);
-    }
-
-    string ViewNodeInfo(Item item)
-    {
-        if (item == null)
-        {
-            return "";
-        }
-
-        string ret = "";
-
-        object o = item.Tag;
-
-        if (o is AssetAdministrationShell)
-        {
-            var aas = o as AssetAdministrationShell;
-            // ret = aas.identification.ToString();
-        }
-        if (o is Submodel)
-        {
-            var sm = o as Submodel;
-            // ret = sm.identification.ToString();
-            if (sm.Qualifiers != null && sm.Qualifiers.Count > 0)
-            {
-                ret += " @QUALIFIERS";
-            }
-        }
-        if (o is SubmodelElementCollection)
-        {
-            var sme = o as SubmodelElementCollection;
-            // ret = sm.identification.ToString();
-            if (sme.Value != null)
-            {
-                if (sme.Value.Count > 0)
-                {
-                    ret += " #" + sme.Value.Count;
-                }
-            }
-            if (sme.Qualifiers != null && sme.Qualifiers.Count > 0)
-            {
-                ret += " @QUALIFIERS";
-            }
-        }
-        if (o is ISubmodelElement)
-        {
-            if (o is Property)
-            {
-                var prop = o as Property;
-                if (prop.Value!= null && prop.Value != "")
-                {
-                    string v = prop.Value;
-                    if (v.Length > 100)
-                        v = v.Substring(0, 100) + " ..";
-                    ret = " = " + v;
-                }
-                if (prop.Qualifiers != null && prop.Qualifiers.Count > 0)
-                {
-                    ret += " @QUALIFIERS";
-                }
-            }
-            if (o is AasCore.Aas3_0.File f)
-            {
-                if (f.Value != null)
-                    ret = " = " + f.Value;
-                if (f.Qualifiers != null && f.Qualifiers.Count > 0)
-                {
-                    ret += " @QUALIFIERS";
-                }
-            }
-        }
-        if (o is AasCore.Aas3_0.Range)
-        {
-            var r = o as AasCore.Aas3_0.Range;
-            if (r.Min != null && r.Max != null)
-                ret = " = " + r.Min + " .. " + r.Max;
-            if (r.Qualifiers != null && r.Qualifiers.Count > 0)
-            {
-                ret += " @QUALIFIERS";
-            }
-        }
-        if (o is MultiLanguageProperty)
-        {
-            var mlp = o as MultiLanguageProperty;
-            var ls = mlp.Value;
-            if (ls != null)
-            {
-                ret = " = ";
-                for (int i = 0; i < ls.Count; i++)
-                {
-                    ret += ls[i].Language + " ";
-                    if (i == 0)
-                        ret += ls[i].Text + " ";
-                }
-            }
-            if (mlp.Qualifiers != null && mlp.Qualifiers.Count > 0)
-            {
-                ret += " @QUALIFIERS";
-            }
-        }
-        return (ret);
-    }
-
-    string ViewNodeDetails(Item item, int line, int col)
-    {
-        if (item == null)
-        {
-            return "";
-        }
-
-        // string ret = "NULL";
-        string ret = "";
-
-        object o = item.Tag;
-
-        if (o == null)
-        {
-            return "";
-        }
-
-        if (o is AssetAdministrationShell)
-        {
-            string subjectIssuer = null;
-
-            ret = "";
-            var aas = o as AssetAdministrationShell;
-
-            var asset = aas.AssetInformation;
-
-            switch (line)
-            {
-                case 0:
-                    if (col == 0)
-                        ret = "ID";
-                    if (col == 1)
-                        ret = aas.Id + "";
-                    if (col == 2)
-                        ret = " ==> " + Base64UrlEncoder.Encode(aas.Id) + "";
-                    break;
-                case 1:
-                    if (asset != null)
-                    {
-                        if (col == 0)
-                            ret = "ASSET";
-                        if (col == 1)
-                            ret = asset.GlobalAssetId;
-                    }
-                    break;
-                case 2:
-                    if (asset != null)
-                    {
-                        if (col == 0)
-                            ret = "ASSETID";
-                        if (col == 1)
-                            ret = asset.GlobalAssetId + "";
-                        if (col == 2)
-                            if(asset.GlobalAssetId != null)
-                            {
-                                ret = " ==> " + Base64UrlEncoder.Encode(asset.GlobalAssetId) + "";
-                            }
-                    }
-                    break;
-                case 3:
-                    if (asset != null)
-                    {
-                        if (col == 0)
-                            ret = "ASSETID URLENCODED";
-                        if (col == 1)
-                        {
-                            string url = WebUtility.UrlEncode(asset.GlobalAssetId);
-                            ret = url;
-                        }
-                    }
-                    break;
-                /*
-                case 3:
-                subjectIssuer = Program.envSubjectIssuer[item.envIndex];
-                if (subjectIssuer != null)
-                            {
-                            string[] s = subjectIssuer.Split(';');
-                            if (s.Length > 0 && s[0] != "")
-                {
-                ret = "SUBJECT";
-                if (col == 1)
-                ret = s[0];
-                }
-                }
-                break;
-                case 4:
-                subjectIssuer = Program.envSubjectIssuer[item.envIndex];
-                if (subjectIssuer != null)
-                    {
-                        string[] s = subjectIssuer.Split(';');
-                        if (s.Length > 1 && s[1] != "")
-                        {
-                        ret = "ISSUER";
-                            if (col == 1)
-                            ret = s[1];
-                            }
-                }
-                break;
-                */
-                case 4:
-                    if (aas.Extensions != null)
-                    {
-                        if (col == 0)
-                            ret = "Extensions";
-                        if (col == 1)
-                        {
-                            ret = "";
-                            foreach (var e in aas.Extensions)
-                            {
-                                ret += e.Name + " : " + e.Value + "; ";
-                            }
-                        }
-                    }
-                    break;
-                default:
-                    ret = "";
-                    break;
-            }
-            return ret;
-        }
-
-        if (o is Submodel)
-        {
-            var sm = o as Submodel;
-            ret = "";
-            switch (line)
-            {
-                case 0:
-                    if (col == 0)
-                        ret = "ID";
-                    if (col == 1)
-                        ret = sm.Id + "";
-                    if (col == 2)
-                        ret = " ==> " + Base64UrlEncoder.Encode(sm.Id) + "";
-                    break;
-                case 1:
-                    if (col == 0)
-                        ret = "Semantic ID";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        var k = sm.SemanticId?.GetAsExactlyOneKey();
-                        if (k != null)
-                        {
-                            ret = $"[{k.Type}, {k.Value}]";
-                        }
-                    }
-                    break;
-                case 2:
-                    ret = getQualifiers(sm.Qualifiers, col);
-                    break;
-                case 3:
-                    if (sm.Extensions != null)
-                    {
-                        if (col == 0)
-                            ret = "Extensions";
-                        if (col == 1)
-                        {
-                            ret = "";
-                            foreach (var e in sm.Extensions)
-                            {
-                                ret += e.Name + " : " + e.Value + "; ";
-                            }
-                        }
-                    }
-                    break;
-                default:
-                    ret = "";
-                    break;
-            }
-            return ret;
-        }
-
-        if (o is Property)
-        {
-            var prop = o as Property;
-            // ret += ", " + prop.value;
-            ret = "";
-            switch (line)
-            {
-                case 0:
-                    if (col == 0)
-                        ret = "Semantic ID";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        var k = prop.SemanticId?.GetAsExactlyOneKey();
-                        if (k != null)
-                        {
-                            ret = $"[{k.Type}, {k.Value}]";
-                        }
-                    }
-                    break;
-                case 1:
-                    if (col == 0)
-                        ret = "Value Type";
-                    if (col == 1)
-                        ret = prop.ValueType + "";
-                    break;
-                case 2:
-                    if (col == 0)
-                        ret = "Value";
-                    if (col == 1)
-                        ret = prop.Value + "";
-                    break;
-                case 3:
-                    ret = getQualifiers(prop.Qualifiers, col);
-                    break;
-                case 4:
-                    if (col == 0)
-                        ret = getUnit(item, prop, col);
-                    break;
-                default:
-                    ret = "";
-                    break;
-            }
-            return ret;
-        }
-
-        if (o is Entity)
-        {
-            var e = o as Entity;
-            // ret += ", " + e.entityType;
-            switch (line)
-            {
-                case 0:
-                    if (col == 0)
-                        ret = "Semantic ID";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        var k = e.SemanticId?.GetAsExactlyOneKey();
-                        if (k != null)
-                        {
-                            ret = $"[{k.Type}, {k.Value}]";
-                        }
-                    }
-                    break;
-                case 1:
-                    if (col == 0)
-                        ret = "Entity Type";
-                    if (col == 1)
-                        ret = e.EntityType + "";
-                    break;
-                case 2:
-                    ret = "";
-                    if (e.EntityType == EntityType.SelfManagedEntity)
-                    {
-                        if (e.GlobalAssetId != null)
-                        {
-                            if (col == 0)
-                                ret = "Asset";
-                            if (col == 1)
-                            {
-                                var k = e.GlobalAssetId;
-                            }
-                        }
-
-                        if (e.SpecificAssetIds != null)
-                        {
-                            if (col == 0)
-                                ret = "Asset";
-                            if (col == 1)
-                            {
-                                foreach(var specificAssetId in e.SpecificAssetIds)
-                                {
-                                    var k = specificAssetId.Value;
-                                    if(!string.IsNullOrEmpty(k))
-                                    {
-                                        ret = "[" + k + "]";
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    break;
-                case 3:
-                    ret = getQualifiers(e.Qualifiers, col);
-                    break;
-                default:
-                    ret = "";
-                    break;
-            }
-            return ret;
-        }
-
-        if (o is AasCore.Aas3_0.File f)
-        {
-            ret += ", " + f.Value;
-            switch (line)
-            {
-                case 0:
-                    if (col == 0)
-                        ret = "Semantic ID";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        var k = f.SemanticId?.GetAsExactlyOneKey();
-                        if (k != null)
-                        {
-                            ret = $"[{k.Type}, {k.Value}]";
-                        }
-                    }
-                    break;
-                case 1:
-                    if (col == 0)
-                        ret = "Value";
-                    if (col == 1)
-                        ret = f.Value;
-                    break;
-                case 2:
-                    ret = getQualifiers(f.Qualifiers, col);
-                    break;
-                default:
-                    ret = "";
-                    break;
-            }
-            return ret;
-        }
-
-        if (o is Blob b)
-        {
-            ret = "";
-            switch (line)
-            {
-                case 0:
-                    if (col == 0)
-                        ret = "Semantic ID";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        var k = b.SemanticId?.GetAsExactlyOneKey();
-                        if (k != null)
-                        {
-                            ret = $"[{k.Type}, {k.Value}]";
-                        }
-                    }
-                    break;
-                case 1:
-                    if (col == 0)
-                        ret = "ContentType";
-                    if (col == 1)
-                        ret = b.ContentType;
-                    break;
-                case 2:
-                    if (col == 0)
-                        ret = "Value";
-                    if (col == 1)
-                        ret = System.Text.Encoding.ASCII.GetString(b.Value);
-                    break;
-                case 3:
-                    ret = getQualifiers(b.Qualifiers, col);
-                    break;
-                default:
-                    ret = "";
-                    break;
-            }
-            return ret;
-        }
-
-        if (o is AasCore.Aas3_0.Range)
-        {
-            var r = o as AasCore.Aas3_0.Range;
-            ret = r.IdShort;
-            switch (line)
-            {
-                case 0:
-                    if (col == 0)
-                        ret = "Semantic ID";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        var k = r.SemanticId?.GetAsExactlyOneKey();
-                        if (k != null)
-                        {
-                            ret = $"[{k.Type}, {k.Value}]";
-                        }
-                    }
-                    break;
-                case 1:
-                    if (col == 0)
-                        ret = "Min";
-                    if (col == 1)
-                        ret = r.Min + "";
-                    break;
-                case 2:
-                    if (col == 0)
-                        ret = "Max";
-                    if (col == 1)
-                        ret = r.Max + "";
-                    break;
-                case 3:
-                    ret = getQualifiers(r.Qualifiers, col);
-                    break;
-                case 4:
-                    if (col == 0)
-                        ret = getUnit(item, r, col);
-                    break;
-                default:
-                    ret = "";
-                    break;
-            }
-            return ret;
-        }
-
-        if (o is Operation)
-        {
-            var op = o as Operation;
-            // ret = op.idShort;
-            switch (line)
-            {
-                case 0:
-                    if (col == 0)
-                        ret = "Semantic ID";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        var k = op.SemanticId?.GetAsExactlyOneKey();
-                        if (k != null)
-                        {
-                            ret = $"[{k.Type}, {k.Value}]";
-                        }
-                    }
-                    break;
-                case 1:
-                    if (col == 0)
-                        ret = "CountInputs";
-                    if (col == 1)
-                    {
-                        ret = "0";
-                        if (op.InputVariables != null)
-                        {
-                            ret = op.InputVariables.Count + "";
-                        }
-                    }
-                    break;
-                case 2:
-                    if (col == 0)
-                        ret = "CountOutputs";
-                    if (col == 1)
-                    {
-                        ret = "0";
-                        if (op.OutputVariables != null)
-                        {
-                            ret = op.OutputVariables.Count + "";
-                        }
-                    }
-                    break;
-                case 3:
-                    ret = getQualifiers(op.Qualifiers, col);
-                    break;
-                default:
-                    ret = "";
-                    break;
-            }
-            return ret;
-        }
-
-        if (o is AnnotatedRelationshipElement)
-        {
-            var r = o as AnnotatedRelationshipElement;
-            // ret = r.idShort;
-            switch (line)
-            {
-                case 0:
-                    if (col == 0)
-                        ret = "Semantic ID";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        var k = r.SemanticId?.GetAsExactlyOneKey();
-                        if (k != null)
-                        {
-                            ret = $"[{k.Type}, {k.Value}]";
-                        }
-                    }
-                    break;
-                case 1:
-                    if (col == 0)
-                        ret = "First";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        var k = r.First;
-                        if (k != null)
-                        {
-                            ret = k.Keys.ToStringExtended();
-                        }
-                    }
-                    break;
-                case 2:
-                    if (col == 0)
-                        ret = "Second";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        var k = r.Second;
-                        if (k != null)
-                        {
-                            ret = k.Keys.ToStringExtended();
-                        }
-                    }
-                    break;
-                case 3:
-                    if (col == 0)
-                        ret = getQualifiers(r.Qualifiers, col);
-                    break;
-                default:
-                    ret = "";
-                    break;
-            }
-            return ret;
-        }
-        if (o is RelationshipElement)
-        {
-            var r = o as RelationshipElement;
-            // ret = r.idShort;
-            switch (line)
-            {
-                case 0:
-                    if (col == 0)
-                        ret = "Semantic ID";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        var k = r.SemanticId?.GetAsExactlyOneKey();
-                        if (k != null)
-                        {
-                            ret = $"[{k.Type}, {k.Value}]";
-                        }
-                    }
-                    break;
-                case 1:
-                    if (col == 0)
-                        ret = "First";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        var k = r.First;
-                        if (k != null)
-                        {
-                            ret = k.Keys.ToStringExtended();
-                        }
-                    }
-                    break;
-                case 2:
-                    if (col == 0)
-                        ret = "Second";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        var k = r.Second;
-                        if (k != null)
-                        {
-                            ret = k.Keys.ToStringExtended();
-                        }
-                    }
-                    break;
-                case 3:
-                    ret = getQualifiers(r.Qualifiers, col);
-                    break;
-                default:
-                    ret = "";
-                    break;
-            }
-            return ret;
-        }
-
-        if (o is ReferenceElement)
-        {
-            var r = o as ReferenceElement;
-            // ret = r.idShort;
-            switch (line)
-            {
-                case 0:
-                    if (col == 0)
-                        ret = "Semantic ID";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        var k = r.SemanticId?.GetAsExactlyOneKey();
-                        if (k != null)
-                        {
-                            ret = $"[{k.Type}, {k.Value}]";
-                        }
-                    }
-                    break;
-                case 1:
-                    if (col == 0)
-                        ret = "Value";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        /*
-                        if (r.GetModelReference() != null)
-                        {
-                            var k = r.Value.Keys;
-                            if (k != null)
-                            {
-                                ret = k.ToStringExtended();
-                            }
-                        }
-                        */
-                        if (r.Value != null)
-                        {
-                            var k = r.Value.Keys;
-                            if (k != null)
-                            {
-                                ret = k.ToStringExtended();
-                            }
-                        }
-                    }
-                    break;
-                case 2:
-                    ret = getQualifiers(r.Qualifiers, col);
-                    break;
-                default:
-                    ret = "";
-                    break;
-            }
-            return ret;
-        }
-
-        if (o is MultiLanguageProperty)
-        {
-            var mlp = o as MultiLanguageProperty;
-            var ls = mlp.Value;
-            for (int i = 0; i < ls.Count; i++)
-            {
-                ret += ls[i].Language + " ";
-            }
-            switch (line)
-            {
-                case 0:
-                    if (col == 0)
-                        ret = "Semantic ID";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        var k = mlp.SemanticId?.GetAsExactlyOneKey();
-                        if (k != null)
-                        {
-                            ret = $"[{k.Type}, {k.Value}]";
-                        }
-                    }
-                    break;
-                case 1:
-                    ret = getQualifiers(mlp.Qualifiers, col);
-                    break;                
-                default:
-                    ret = "";
-                    if (ls.Count > line - 2)
-                    {
-                        if (col == 0)
-                            ret = ls[line - 2].Language;
-                        if (col == 1)
-                            ret = ls[line - 2].Text + "";
-                    }
-                    break;
-            }
-            return ret;
-        }
-
-        if (o is ISubmodelElement)
-        {
-            var sme = o as ISubmodelElement;
-            // ret = sme.idShort + ", " + sme.semanticId;
-            switch (line)
-            {
-                case 0:
-                    if (col == 0)
-                        ret = "Semantic ID";
-                    if (col == 1)
-                    {
-                        ret = "NULL";
-                        var k = sme.SemanticId?.GetAsExactlyOneKey();
-                        if (k != null)
-                        {
-                            ret = $"[{k.Type}, {k.Value}]";
-                        }
-                    }
-                    break;
-                case 1:
-                    ret = getQualifiers(sme.Qualifiers, col);
-                    break;
-                default:
-                    ret = "";
-                    break;
-            }
-            return ret;
-        }
-
-        return (ret);
-    }
-
-    static string getQualifiers(List<IQualifier> q, int col)
-    {
-        string ret = "";
-
-        if (q != null && q.Count > 0)
-        {
-            if (col == 0)
-                ret = "Qualifiers";
-            if (col == 1)
-            {
-                ret = "";
-                for (int i = 0; i < q.Count; i++)
-                {
-                    if (i != 0)
-                        ret += ", ";
-                    if (q[i].Type != null && q[i].Type != "")
-                    {
-                        ret += q[i].Type + " ";
-                    }
-                    if (q[i].Value != null && q[i].Value != "")
-                    {
-                        ret += "= " + q[i].Value;
-                    }
-                }
-            }
-        }
-        return ret;
-    }
-
-    public string getUnit(Item item, ISubmodelElement se, int col)
-    {
-        string ret = "";
-        if (se.SemanticId == null || se.SemanticId.Keys != null || se.SemanticId.Keys.Count != 0)
-        {
-            return ret;
-        }
-        var cd = Program.env[item.envIndex].AasEnv.FindConceptDescriptionByReference(se.SemanticId);
-        if (cd != null)
-        {
-            // TODO (jtikekar, 2023-09-04): temporarily commented
-            //var iec = cd.GetIEC61360();
-            //if (iec != null)
-            //{
-            //    ret = "Unit";
-            //    if (col == 1)
-            //    {
-            //        ret = iec.unit;
-            //        if (iec.unitId != null && iec.unitId.Value != null && iec.unitId.Value.Count > 0)
-            //            ret += " (UnitId = " + iec.unitId.Value.ToString() + ")";
-            //    }
-            //}
-        }
-        return ret;
-    }
+System.Diagnostics.Stopwatch watchTimeToProcessImage = new();
+DateTime timeStampPlot = new();
+PlotFilter plotFilter = new();
+SubmodelElementCollection collectionPlot = null;
+bool showImageModal = false;
+ListOfTimeSeriesData _timeSeriesData = new();
+int plotFilterTsdOffset = 0;
+
+private class PlotFilter
+{
+public DateTime fromDate { get; set; }
+public DateTime fromTime { get; set; }
+public DateTime toDate { get; set; }
+public DateTime toTime { get; set; }
+public DateTime combinedFromDate { get; set; }
+public DateTime combinedToDate { get; set; }
+
+public PlotFilter()
+{
+SetInitialFilterState();
+}
+
+public void SetInitialFilterState()
+{
+ResetTimeOfDates();
+var initialFromDate = DateTime.Now.AddYears(-3);
+var initialToDate = DateTime.Now.AddYears(3);
+fromDate = initialFromDate;
+toDate = initialToDate;
+combinedFromDate = initialFromDate;
+combinedToDate = initialToDate;
+}
+
+public void SetFilterStateDay(int offset)
+{
+ResetTimeOfDates();
+var day = DateTime.Today.AddDays(offset);
+var midnight = new TimeSpan(0, 23, 59, 59);
+var endOfDay = day.Add(midnight);
+
+fromDate = day;
+fromTime = day;
+toDate = endOfDay;
+toTime = endOfDay;
+combinedFromDate = day;
+combinedToDate = endOfDay;
+}
+
+public void ResetTimeOfDates()
+{
+// Reset to 0 AM
+fromDate = new DateTime(fromDate.Year, fromDate.Month, fromDate.Day, 0, 0, 0);
+toDate = new DateTime(toDate.Year, toDate.Month, toDate.Day, 0, 0, 0);
+}
+
+public void UpdateFilter(ListOfTimeSeriesData tsd, int sessionNumber)
+{
+ResetTimeOfDates();
+var fromTimeSpan = fromTime.TimeOfDay;
+var toTimeSpan = toTime.TimeOfDay;
+combinedFromDate = fromDate.Add(fromTimeSpan);
+combinedToDate = toDate.Add(toTimeSpan);
+tsd?.RenderTimeSeries(defPlotHeight: 200, "en", sessionNumber, combinedFromDate, combinedToDate);
+}
+}
+
+async Task DownloadFile()
+{
+StateHasChanged();
+if (SelectedNode.Tag is File f)
+{
+var fileName = System.IO.Path.GetFileName(f.Value);
+if (!string.IsNullOrEmpty(fileName))
+{
+try
+{
+byte[] data;
+using (var ms = new System.IO.MemoryStream())
+{
+await Program.env[SelectedNode.envIndex].GetLocalStreamFromPackage(f.Value).CopyToAsync(ms);
+data = ms.ToArray();
+}
+
+await SaveAs(js, fileName, data);
+}
+catch
+{
+}
+}
+}
+}
+
+async Task SaveAs(IJSRuntime js, string filename, byte[] data)
+{
+;
+await js.InvokeAsync<object>(
+"saveAsFile",
+filename,
+data
+);
+}
+
+public class Item
+{
+public string Text { get; set; }
+public IEnumerable<Item> Children { get; set; }
+
+public object parent { get; set; }
+public string Type { get; set; }
+public object Tag { get; set; }
+public int envIndex { get; set; }
+}
+
+List<Item> Items = null;
+
+IList<Item> ExpandedNodes = new List<Item>();
+
+private Item SelectedNode { get; set; }
+
+static ulong dataVersion = 0;
+
+public static void checkDataVersion()
+{
+if (Program.getDataVersion() != dataVersion)
+{
+dataVersion = Program.getDataVersion();
+}
+}
+
+System.Threading.Timer refresh = null;
+
+protected override void OnInitialized()
+{
+// OnInitialized() always called twice
+SubmodelService.NewDataAvailable += NewData;
+Program.signalNewData(1);
+}
+
+public void Dispose()
+{
+SubmodelService.NewDataAvailable -= NewData;
+}
+
+int newDataMode = 0;
+
+void NewData(object source, EventArgs args)
+{
+if (Program.isLoading)
+return;
+
+if (newDataMode != 0 || args is not Program.NewDataAvailableArgs newArgs)
+{
+return;
+}
+newDataMode = newArgs.signalNewDataMode;
+InvokeAsync(StateHasChanged);
+}
+
+bool update = true;
+
+string updateVisibleTree(List<Item> viewItems, Item selectedNode)
+{
+if (!update)
+{
+return string.Empty;
+}
+switch (newDataMode)
+{
+case 0:
+break;
+case 1:
+case 2:
+var isSelected = selectedNode != null;
+var isExpanded = ExpandedNodes.Count != 0;
+var expandedNodesPath = new List<string>[ExpandedNodes.Count + 1];
+var selectedNodePath = GetPath(selectedNode);
+if (isExpanded)
+{
+for (var j = 0; j < ExpandedNodes.Count; j++)
+{
+expandedNodesPath[j] = GetPath(ExpandedNodes[j]);
+}
+}
+
+SubmodelService.buildTree();
+Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
+ExpandedNodes.Clear();
+selectedNode = null;
+if (isSelected)
+{
+selectedNode = FindPath(selectedNodePath);
+}
+
+if (isExpanded)
+{
+foreach (var path in expandedNodesPath)
+{
+var p = FindPath(path);
+if (p != null)
+ExpandedNodes.Add(p);
+}
+}
+
+newDataMode = 0;
+break;
+// 3 == build new tree, all nodes closed
+case 3:
+SubmodelService.buildTree();
+Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
+ExpandedNodes.Clear();
+selectedNode = null;
+newDataMode = 0;
+break;
+}
+
+SelectedNode = selectedNode;
+
+return string.Empty;
+}
+
+List<string> GetPath(Item i)
+{
+if (i == null)
+return null;
+
+var upPath = new List<string> {i.Text};
+while (i.parent != null)
+{
+i = (Item) i.parent;
+upPath.Add(i.Text);
+}
+
+var downPath = new List<string>();
+var j = upPath.Count - 1;
+while (j >= 0)
+{
+downPath.Add(upPath[j--]);
+}
+
+return downPath;
+}
+
+Item FindPath(List<string> path)
+{
+switch (path)
+{
+case {Count: > 0}:
+{
+var k = 0;
+while (k < Items.Count)
+{
+var i = Items[k];
+if (i.Text != path[0])
+{
+k++;
+continue;
+}
+
+var j = 0;
+var found = i;
+while (++j < path.Count)
+{
+if (i.Children != null)
+{
+found = i.Children.FirstOrDefault(c => c.Text == path[j]);
+}
+
+if (found == null)
+{
+return null;
+}
+
+i = found;
+}
+
+return found;
+}
+
+break;
+}
+}
+
+return null;
+}
+
+void UpdateNode(Item i)
+{
+var clist = i.Children as List<Item>;
+var listIdshort = new List<string>();
+var done = false;
+if (i.Tag is Submodel sm)
+{
+listIdshort.AddRange(sm.SubmodelElements.Select(smew1 => smew1.IdShort));
+
+done = true;
+}
+
+if (!done && i.Tag is SubmodelElementCollection smec)
+{
+listIdshort.AddRange(smec.Value.Select(smew2 => smew2.IdShort));
+
+done = true;
+}
+
+if (!done && i.Tag is ISubmodelElement sme)
+{
+listIdshort.Add(sme.IdShort);
+done = true;
+}
+
+// check if child name exists in data children idshorts, if not delete
+if (done)
+{
+var toDelete = new List<Item>();
+if (clist != null)
+{
+toDelete.AddRange(clist.Where(c => !listIdshort.Contains(c.Text)));
+}
+else
+{
+if (!listIdshort.Contains(i.Text))
+{
+toDelete.Add(i);
+}
+}
+
+foreach (var c in toDelete)
+{
+if (c.parent is Item parent)
+{
+(parent.Children as List<Item>)?.Remove(c);
+}
+}
+}
+
+// check if data children idshorts exist in child names, if not insert
+if (clist == null)
+{
+return;
+}
+
+foreach (var c in clist)
+{
+UpdateNode(c);
+}
+
+}
+
+public static string CreateDetailsImage(Item item, out bool url, out bool svg)
+{
+svg = false;
+url = false;
+
+if (item == null)
+{
+return string.Empty;
+}
+
+var itemTag = item.Tag;
+
+switch (itemTag)
+{
+case AssetAdministrationShell tag:
+{
+var aas = tag;
+lock (Program.changeAasxFile)
+{
+try
+{
+{
+if (Program.env[item.envIndex] == null)
+return string.Empty;
+
+using var s = Program.env[item.envIndex].GetLocalThumbnailStream();
+if (s != null)
+{
+using var m = new System.IO.MemoryStream();
+s.CopyTo(m);
+return Convert.ToBase64String(m.ToArray());
+}
+}
+}
+catch
+{
+}
+}
+
+break;
+}
+case AasCore.Aas3_0.File f:
+{
+// Test for /aasx/
+if (!string.IsNullOrEmpty(f.Value))
+{
+var  split = f.Value.Split(new[] {'/'});
+if (split.Length == 2 || split.Length > 1 && split[1].ToLower() == "aasx")
+{
+split = f.Value.Split(new[] {'.'});
+switch (split.Last().ToLower())
+{
+case "jpg":
+case "bmp":
+case "png":
+case "svg":
+try
+{
+using var s = Program.env[item.envIndex].GetLocalStreamFromPackage(f.Value);
+if (s != null)
+{
+using var m = new System.IO.MemoryStream();
+if (split.Last().ToLower().Equals("svg"))
+{
+svg = true;
+}
+
+s.CopyTo(m);
+return Convert.ToBase64String(m.ToArray());
+}
+}
+catch
+{
+}
+
+break;
+}
+}
+else
+{
+url = true;
+return f.Value;
+}
+}
+
+break;
+}
+}
+
+return string.Empty;
+}
+
+string GetQRCodeLink(Item item)
+{
+if (item == null)
+{
+return string.Empty;
+}
+
+var prefix = "http://";
+
+
+var itemTag = item.Tag;
+
+if (itemTag is not AssetAdministrationShell aas)
+{
+return string.Empty;
+}
+
+var asset = aas.AssetInformation;
+var url = asset.GlobalAssetId;
+
+return url;
+
+}
+
+string GetQRCodeImage(Item item)
+{
+var itemTag = item.Tag;
+
+if (itemTag is not AssetAdministrationShell)
+{
+return string.Empty;
+}
+
+var image = Program.generatedQrCodes[item.Tag];
+
+return image ?? string.Empty;
+}
+
+void CreateQRCodeImage(Item item)
+{
+if (item == null)
+{
+return;
+}
+
+var prefix = "http://";
+
+var itemTag = item.Tag;
+
+if (itemTag is not AssetAdministrationShell aas)
+{
+return;
+}
+
+if (Program.generatedQrCodes.ContainsKey(item.Tag))
+{
+Program.generatedQrCodes.Remove(item.Tag);
+return;
+}
+
+var asset = aas.AssetInformation;
+var url = asset.GlobalAssetId;
+
+var qrGenerator = new QRCodeGenerator();
+var qrCodeData = qrGenerator.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);
+var qrCode = new QRCode(qrCodeData);
+var qrCodeImage = qrCode.GetGraphic(20);
+using var memory = new System.IO.MemoryStream();
+qrCodeImage.Save(memory, System.Drawing.Imaging.ImageFormat.Bmp);
+var base64 = Convert.ToBase64String(memory.ToArray());
+
+Program.generatedQrCodes.Add(item.Tag, base64);
+}
+
+bool HasDownloadFile(Item item)
+{
+return false;
+}
+
+string GetLink(Item item, out bool external)
+{
+external = false;
+
+if (item == null)
+{
+return string.Empty;
+}
+
+var itemTag = item.Tag;
+
+switch (itemTag)
+{
+case null when Program.envSymbols[item.envIndex] == "L":
+return $"{Program.externalRest}/server/getaasx/{Convert.ToString(SelectedNode.envIndex)}";
+case AssetAdministrationShell:
+return $"{Program.externalBlazor}/packages/{Base64UrlEncoder.Encode(Convert.ToString(SelectedNode.envIndex))}";
+case File:
+case Property:
+{
+var value = itemTag switch
+{
+AasCore.Aas3_0.File file => file.Value,
+Property property => property.Value,
+_ => string.Empty
+};
+
+if (string.IsNullOrEmpty(value))
+return string.Empty;
+
+var split = value.Split(new[] {':'});
+if (split[0].ToLower() == "http" || split[0].ToLower() == "https")
+{
+external = true;
+return value;
+}
+
+// Test for /aasx/
+split = value.Split(new[] {'/'});
+if (split.Length > 1)
+{
+if (split.Length == 2 || split[1].ToLower() == "aasx")
+{
+var sme = item.Tag as ISubmodelElement;
+var path = sme.IdShort;
+var parent = sme.Parent as IReferable;
+while (parent is not Submodel)
+{
+if (parent is ISubmodelElementList parentList)
+{
+if (path.Equals(sme.IdShort))
+{
+var index = parentList.Value?.IndexOf(sme);
+path = $"[{index}]";
+}
+
+path = parentList.IdShort + path;
+}
+else if (parent.Parent is ISubmodelElementList prevParentList)
+{
+var index = prevParentList.Value?.IndexOf(parent as ISubmodelElement);
+path = $"[{index}].{path}";
+}
+else
+{
+path = $"{parent.IdShort}.{path}";
+}
+
+parent = (IReferable) parent.Parent;
+}
+
+
+var currentUrl = $"{Program.externalBlazor}/";
+
+return $"{currentUrl}submodels/{Base64UrlEncoder.Encode((parent as Submodel).Id)}/submodel-elements/{path}/attachment";
+}
+}
+
+break;
+}
+}
+
+return string.Empty;
+}
+
+string GetSymbols(Item item)
+{
+if (item == null)
+{
+return string.Empty;
+}
+
+var ret = string.Empty;
+var o = item.Tag;
+
+if (o is not AssetAdministrationShell)
+{
+return ret;
+}
+
+var symbols = Program.envSymbols[item.envIndex];
+
+if (symbols == null)
+{
+return ret;
+}
+
+var s = symbols.Split(';');
+
+foreach (var t in s)
+{
+switch (t)
+{
+case "L":
+ret += "ENCRYPTED ";
+break;
+case "S":
+ret += "SIGNED ";
+break;
+case "V":
+ret += "VALIDATED ";
+break;
+}
+}
+
+return ret;
+}
+
+/// <summary>
+/// This method list added to check if Node is only SubmodelElementCollection (from V2)
+/// 
+/// </summary>
+/// <param name="item"></param>
+/// <returns></returns>
+bool IsSmColl(Item item)
+{
+if (item == null)
+{
+return false;
+}
+
+return item.Tag switch
+{
+SubmodelElementList => false,
+SubmodelElementCollection => true,
+_ => false
+};
+}
+
+string ViewNodeType(Item item)
+{
+if (item == null)
+{
+return string.Empty;
+}
+
+var ret = string.Empty;
+
+if (item.Type != null)
+{
+ret = $"{item.Type} ";
+}
+
+var itemTag = item.Tag;
+
+
+switch (itemTag)
+{
+case string when item.Text.Contains("/readme"):
+ret += item.Text;
+break;
+case null when Program.envSymbols[item.envIndex] == "L":
+ret += "AASX2";
+break;
+case AssetAdministrationShell:
+ret += "AAS";
+break;
+case Submodel:
+ret += "Sub";
+break;
+case ISubmodelElement:
+{
+switch (itemTag)
+{
+case SubmodelElementList:
+ret += "SML";
+break;
+case SubmodelElementCollection:
+ret += "Coll";
+break;
+case Property:
+ret += "Prop";
+break;
+}
+
+break;
+}
+}
+
+switch (itemTag)
+{
+case Operation:
+ret += "Opr";
+break;
+case File:
+ret += "File";
+break;
+case Blob:
+ret += "Blob";
+break;
+case Range:
+ret += "Range";
+break;
+case MultiLanguageProperty:
+ret += "Lang";
+break;
+case RelationshipElement:
+ret += "Rel";
+break;
+case ReferenceElement:
+ret += "Ref";
+break;
+case Entity:
+ret += "Ent";
+break;
+case BasicEventElement:
+ret += "Evt";
+break;
+case AnnotatedRelationshipElement:
+ret += "RelA";
+break;
+case Capability:
+ret += "Cap";
+break;
+}
+
+return (ret);
+}
+
+string ViewTimeStamp(Item item)
+{
+if (item == null)
+{
+return string.Empty;
+}
+
+var ret = string.Empty;
+
+var itemTag = item.Tag;
+
+if (itemTag is IReferable r)
+ret += $" ({r.TimeStampTree:yy-MM-dd HH:mm:ss.fff}) ";
+
+return ret;
+}
+
+string ViewNodeID(Item item)
+{
+if (item == null)
+{
+return string.Empty;
+}
+
+var ret = "NULL";
+
+var itemTag = item.Tag;
+
+switch (itemTag)
+{
+case null when Program.envSymbols[item.envIndex] == "L":
+ret = item.Text;
+break;
+case string when item.Text.Contains("/readme"):
+ret = " ";
+break;
+case AssetAdministrationShell tag:
+{
+ret = tag.IdShort;
+break;
+}
+case Submodel tag:
+{
+ret = string.Empty;
+if (tag.Kind is ModellingKind.Template)
+ret += "<T> ";
+ret += tag.IdShort;
+break;
+}
+case ISubmodelElement tag:
+{
+ret = string.Empty;
+ret += tag.IdShort;
+break;
+}
+}
+
+switch (itemTag)
+{
+case AasCore.Aas3_0.File f:
+ret = string.Empty;
+ret += f.IdShort;
+break;
+case Blob tag:
+{
+ret = string.Empty;
+ret += tag.IdShort;
+break;
+}
+case Range tag:
+{
+ret = string.Empty;
+ret += tag.IdShort;
+break;
+}
+case MultiLanguageProperty tag:
+{
+ret = string.Empty;
+ret += tag.IdShort;
+break;
+}
+}
+
+return (ret);
+}
+
+string GetHtmlId(Item item)
+{
+var ret = ViewNodeID(item);
+if (item.parent != null)
+{
+ret = $"{GetHtmlId(item.parent as Item)}.{ret}";
+}
+
+return (ret);
+}
+
+string ViewNodeInfo(Item item)
+{
+if (item == null)
+{
+return string.Empty;
+}
+
+var ret = string.Empty;
+
+var itemTag = item.Tag;
+
+switch (itemTag)
+{
+case AssetAdministrationShell tag:
+{
+var aas = tag;
+break;
+}
+case Submodel tag:
+{
+if (tag.Qualifiers is {Count: > 0})
+{
+ret += " @QUALIFIERS";
+}
+
+break;
+}
+case SubmodelElementCollection tag:
+{
+if (tag.Value != null && tag.Value.Count > 0)
+{
+ret += $" #{tag.Value.Count}";
+}
+
+if (tag.Qualifiers != null && tag.Qualifiers.Count > 0)
+{
+ret += " @QUALIFIERS";
+}
+
+break;
+}
+}
+
+if (itemTag is ISubmodelElement)
+{
+switch (itemTag)
+{
+case Property prop:
+{
+if (!string.IsNullOrEmpty(prop.Value))
+{
+var v = prop.Value;
+if (v.Length > 100)
+v = v[..100] + " ..";
+ret = $" = {v}";
+}
+
+if (prop.Qualifiers != null && prop.Qualifiers.Count > 0)
+{
+ret += " @QUALIFIERS";
+}
+
+break;
+}
+case AasCore.Aas3_0.File f:
+{
+if (f.Value != null)
+ret = $" = {f.Value}";
+if (f.Qualifiers is {Count: > 0})
+{
+ret += " @QUALIFIERS";
+}
+
+break;
+}
+}
+}
+
+switch (itemTag)
+{
+case AasCore.Aas3_0.Range range:
+{
+if (range.Min != null && range.Max != null)
+ret = $" = {range.Min} .. {range.Max}";
+if (range.Qualifiers is {Count: > 0})
+{
+ret += " @QUALIFIERS";
+}
+
+break;
+}
+case MultiLanguageProperty tag:
+{
+var ls = tag.Value;
+if (ls != null)
+{
+ret = " = ";
+for (var i = 0; i < ls.Count; i++)
+{
+ret += $"{ls[i].Language} ";
+if (i == 0)
+ret += $"{ls[i].Text} ";
+}
+}
+
+if (tag.Qualifiers != null && tag.Qualifiers.Count > 0)
+{
+ret += " @QUALIFIERS";
+}
+
+break;
+}
+}
+
+return (ret);
+}
+
+string ViewNodeDetails(Item item, int line, int col)
+{
+if (item == null)
+{
+return string.Empty;
+}
+
+var ret = string.Empty;
+
+var itemTag = item.Tag;
+
+switch (itemTag)
+{
+case null:
+return string.Empty;
+case AssetAdministrationShell tag:
+{
+ret = string.Empty;
+
+var asset = tag.AssetInformation;
+
+switch (line)
+{
+case 0:
+ret = col switch
+{
+0 => "ID",
+1 => $"{tag.Id}",
+2 => $" ==> {Base64UrlEncoder.Encode(tag.Id)}",
+_ => ret
+};
+break;
+case 1:
+if (asset != null)
+{
+ret = col switch
+{
+0 => "ASSET",
+1 => asset.GlobalAssetId,
+_ => ret
+};
+}
+
+break;
+case 2:
+switch (col)
+{
+case 0:
+ret = "ASSETID";
+break;
+case 1:
+ret = $"{asset.GlobalAssetId}";
+break;
+case 2:
+{
+if (asset.GlobalAssetId != null)
+{
+ret = $" ==> {Base64UrlEncoder.Encode(asset.GlobalAssetId)}";
+}
+
+break;
+}
+}
+
+break;
+case 3:
+switch (col)
+{
+case 0:
+ret = "ASSETID URLENCODED";
+break;
+case 1:
+{
+var url = WebUtility.UrlEncode(asset.GlobalAssetId);
+ret = url;
+break;
+}
+}
+
+break;
+
+case 4:
+if (tag.Extensions != null)
+{
+ret = col switch
+{
+0 => "Extensions",
+1 => tag.Extensions.Aggregate(string.Empty, (current, e) => current + ($"{e.Name} : {e.Value}; ")),
+_ => ret
+};
+}
+
+break;
+default:
+ret = string.Empty;
+break;
+}
+
+return ret;
+}
+case Submodel tag:
+{
+ret = string.Empty;
+switch (line)
+{
+case 0:
+ret = col switch
+{
+0 => "ID",
+1 => $"{tag.Id}",
+2 => $" ==> {Base64UrlEncoder.Encode(tag.Id)}",
+_ => ret
+};
+break;
+case 1:
+switch (col)
+{
+case 0:
+ret = "Semantic ID";
+break;
+case 1:
+{
+ret = "NULL";
+var k = tag.SemanticId?.GetAsExactlyOneKey();
+if (k != null)
+{
+ret = $"[{k.Type}, {k.Value}]";
+}
+
+break;
+}
+}
+
+break;
+case 2:
+ret = GetQualifiers(tag.Qualifiers, col);
+break;
+case 3:
+if (tag.Extensions != null)
+{
+switch (col)
+{
+case 0:
+ret = "Extensions";
+break;
+case 1:
+{
+ret = tag.Extensions.Aggregate(string.Empty, (current, e) => current + $"{e.Name} : {e.Value}; ");
+
+break;
+}
+}
+}
+
+break;
+default:
+ret = string.Empty;
+break;
+}
+
+return ret;
+}
+case Property tag:
+{
+ret = string.Empty;
+switch (line)
+{
+case 0:
+switch (col)
+{
+case 0:
+ret = "Semantic ID";
+break;
+case 1:
+{
+ret = "NULL";
+var k = tag.SemanticId?.GetAsExactlyOneKey();
+if (k != null)
+{
+ret = $"[{k.Type}, {k.Value}]";
+}
+
+break;
+}
+}
+
+break;
+case 1:
+ret = col switch
+{
+0 => "Value Type",
+1 => $"{tag.ValueType}",
+_ => ret
+};
+break;
+case 2:
+ret = col switch
+{
+0 => "Value",
+1 => $"{tag.Value}",
+_ => ret
+};
+break;
+case 3:
+ret = GetQualifiers(tag.Qualifiers, col);
+break;
+case 4:
+if (col == 0)
+ret = GetUnit(tag);
+break;
+default:
+ret = string.Empty;
+break;
+}
+
+return ret;
+}
+case Entity tag:
+{
+switch (line)
+{
+case 0:
+switch (col)
+{
+case 0:
+ret = "Semantic ID";
+break;
+case 1:
+{
+ret = "NULL";
+var k = tag.SemanticId?.GetAsExactlyOneKey();
+if (k != null)
+{
+ret = $"[{k.Type}, {k.Value}]";
+}
+
+break;
+}
+}
+
+break;
+case 1:
+ret = col switch
+{
+0 => "Entity Type",
+1 => $"{tag.EntityType}",
+_ => ret
+};
+break;
+case 2:
+ret = string.Empty;
+if (tag.EntityType == EntityType.SelfManagedEntity)
+{
+if (tag.GlobalAssetId != null)
+{
+switch (col)
+{
+case 0:
+ret = "Asset";
+break;
+case 1:
+{
+var k = tag.GlobalAssetId;
+break;
+}
+}
+}
+
+if (tag.SpecificAssetIds != null)
+{
+switch (col)
+{
+case 0:
+ret = "Asset";
+break;
+case 1:
+{
+foreach (var k in tag.SpecificAssetIds.Select(specificAssetId => specificAssetId.Value).Where(k => !string.IsNullOrEmpty(k)))
+{
+ret = $"[{k}]";
+}
+
+break;
+}
+}
+}
+}
+
+break;
+case 3:
+ret = GetQualifiers(tag.Qualifiers, col);
+break;
+default:
+ret = string.Empty;
+break;
+}
+
+return ret;
+}
+case AasCore.Aas3_0.File f:
+ret += $", {f.Value}";
+switch (line)
+{
+case 0:
+switch (col)
+{
+case 0:
+ret = "Semantic ID";
+break;
+case 1:
+{
+ret = "NULL";
+var k = f.SemanticId?.GetAsExactlyOneKey();
+if (k != null)
+{
+ret = $"[{k.Type}, {k.Value}]";
+}
+
+break;
+}
+}
+
+break;
+case 1:
+ret = col switch
+{
+0 => "Value",
+1 => f.Value,
+_ => ret
+};
+break;
+case 2:
+ret = GetQualifiers(f.Qualifiers, col);
+break;
+default:
+ret = string.Empty;
+break;
+}
+
+return ret;
+case Blob b:
+ret = string.Empty;
+switch (line)
+{
+case 0:
+switch (col)
+{
+case 0:
+ret = "Semantic ID";
+break;
+case 1:
+{
+ret = "NULL";
+var k = b.SemanticId?.GetAsExactlyOneKey();
+if (k != null)
+{
+ret = $"[{k.Type}, {k.Value}]";
+}
+
+break;
+}
+}
+
+break;
+case 1:
+ret = col switch
+{
+0 => "ContentType",
+1 => b.ContentType,
+_ => ret
+};
+break;
+case 2:
+ret = col switch
+{
+0 => "Value",
+1 => System.Text.Encoding.ASCII.GetString(b.Value),
+_ => ret
+};
+break;
+case 3:
+ret = GetQualifiers(b.Qualifiers, col);
+break;
+default:
+ret = string.Empty;
+break;
+}
+
+return ret;
+case Range tag:
+{
+ret = tag.IdShort;
+switch (line)
+{
+case 0:
+switch (col)
+{
+case 0:
+ret = "Semantic ID";
+break;
+case 1:
+{
+ret = "NULL";
+var k = tag.SemanticId?.GetAsExactlyOneKey();
+if (k != null)
+{
+ret = $"[{k.Type}, {k.Value}]";
+}
+
+break;
+}
+}
+
+break;
+case 1:
+ret = col switch
+{
+0 => "Min",
+1 => $"{tag.Min}",
+_ => ret
+};
+break;
+case 2:
+ret = col switch
+{
+0 => "Max",
+1 => $"{tag.Max}",
+_ => ret
+};
+break;
+case 3:
+ret = GetQualifiers(tag.Qualifiers, col);
+break;
+case 4:
+if (col == 0)
+ret = GetUnit(tag);
+break;
+default:
+ret = string.Empty;
+break;
+}
+
+return ret;
+}
+case Operation tag:
+{
+switch (line)
+{
+case 0:
+switch (col)
+{
+case 0:
+ret = "Semantic ID";
+break;
+case 1:
+{
+ret = "NULL";
+var k = tag.SemanticId?.GetAsExactlyOneKey();
+if (k != null)
+{
+ret = $"[{k.Type}, {k.Value}]";
+}
+
+break;
+}
+}
+
+break;
+case 1:
+switch (col)
+{
+case 0:
+ret = "CountInputs";
+break;
+case 1:
+{
+ret = "0";
+if (tag.InputVariables != null)
+{
+ret = $"{tag.InputVariables.Count}";
+}
+
+break;
+}
+}
+
+break;
+case 2:
+switch (col)
+{
+case 0:
+ret = "CountOutputs";
+break;
+case 1:
+{
+ret = "0";
+if (tag.OutputVariables != null)
+{
+ret = $"{tag.OutputVariables.Count}";
+}
+
+break;
+}
+}
+
+break;
+case 3:
+ret = GetQualifiers(tag.Qualifiers, col);
+break;
+default:
+ret = string.Empty;
+break;
+}
+
+return ret;
+}
+case AnnotatedRelationshipElement tag:
+{
+switch (line)
+{
+case 0:
+switch (col)
+{
+case 0:
+ret = "Semantic ID";
+break;
+case 1:
+{
+ret = "NULL";
+var k = tag.SemanticId?.GetAsExactlyOneKey();
+if (k != null)
+{
+ret = $"[{k.Type}, {k.Value}]";
+}
+
+break;
+}
+}
+
+break;
+case 1:
+switch (col)
+{
+case 0:
+ret = "First";
+break;
+case 1:
+{
+var k = tag.First;
+ret = k.Keys.ToStringExtended();
+break;
+}
+}
+
+break;
+case 2:
+switch (col)
+{
+case 0:
+ret = "Second";
+break;
+case 1:
+{
+var k = tag.Second;
+ret = k.Keys.ToStringExtended();
+break;
+}
+}
+
+break;
+case 3:
+if (col == 0)
+ret = GetQualifiers(tag.Qualifiers, col);
+break;
+default:
+ret = string.Empty;
+break;
+}
+
+return ret;
+}
+case RelationshipElement tag:
+{
+switch (line)
+{
+case 0:
+switch (col)
+{
+case 0:
+ret = "Semantic ID";
+break;
+case 1:
+{
+ret = "NULL";
+var k = tag.SemanticId?.GetAsExactlyOneKey();
+if (k != null)
+{
+ret = $"[{k.Type}, {k.Value}]";
+}
+
+break;
+}
+}
+
+break;
+case 1:
+switch (col)
+{
+case 0:
+ret = "First";
+break;
+case 1:
+{
+var k = tag.First;
+ret = k.Keys.ToStringExtended();
+
+break;
+}
+}
+
+break;
+case 2:
+switch (col)
+{
+case 0:
+ret = "Second";
+break;
+case 1:
+{
+var k = tag.Second;
+ret = k.Keys.ToStringExtended();
+
+
+break;
+}
+}
+
+break;
+case 3:
+ret = GetQualifiers(tag.Qualifiers, col);
+break;
+default:
+ret = string.Empty;
+break;
+}
+
+return ret;
+}
+case ReferenceElement tag:
+{
+switch (line)
+{
+case 0:
+switch (col)
+{
+case 0:
+ret = "Semantic ID";
+break;
+case 1:
+{
+ret = "NULL";
+var k = tag.SemanticId?.GetAsExactlyOneKey();
+if (k != null)
+{
+ret = $"[{k.Type}, {k.Value}]";
+}
+
+break;
+}
+}
+
+break;
+case 1:
+switch (col)
+{
+case 0:
+ret = "Value";
+break;
+case 1:
+{
+ret = "NULL";
+var k = tag.Value?.Keys;
+if (k != null)
+{
+ret = k.ToStringExtended();
+}
+
+break;
+}
+}
+
+break;
+case 2:
+ret = GetQualifiers(tag.Qualifiers, col);
+break;
+default:
+ret = string.Empty;
+break;
+}
+
+return ret;
+}
+case MultiLanguageProperty multiLanguageProperty:
+{
+var ls = multiLanguageProperty.Value;
+if (ls == null)
+{
+return ret;
+}
+ret = ls.Aggregate(ret, (current, t) => current + $"{t.Language} ");
+
+switch (line)
+{
+case 0:
+{
+switch (col)
+{
+case 0:
+ret = "Semantic ID";
+break;
+case 1:
+{
+ret = "NULL";
+var k = multiLanguageProperty.SemanticId?.GetAsExactlyOneKey();
+if (k != null)
+{
+ret = $"[{k.Type}, {k.Value}]";
+}
+
+break;
+}
+}
+
+break;
+}
+case 1:
+ret = GetQualifiers(multiLanguageProperty.Qualifiers, col);
+break;
+default:
+ret = string.Empty;
+if (ls.Count > line - 2)
+{
+ret = col switch
+{
+0 => ls[line - 2].Language,
+1 => $"{ls[line - 2].Text}",
+_ => ret
+};
+}
+
+break;
+}
+
+return ret;
+}
+}
+
+if (itemTag is not ISubmodelElement sme)
+{
+return (ret);
+}
+
+switch (line)
+{
+case 0:
+switch (col)
+{
+case 0:
+ret = "Semantic ID";
+break;
+case 1:
+{
+ret = "NULL";
+var k = sme.SemanticId?.GetAsExactlyOneKey();
+if (k != null)
+{
+ret = $"[{k.Type}, {k.Value}]";
+}
+
+break;
+}
+}
+
+break;
+case 1:
+ret = GetQualifiers(sme.Qualifiers, col);
+break;
+default:
+ret = string.Empty;
+break;
+}
+
+return ret;
+}
+
+static string GetQualifiers(List<IQualifier> q, int col)
+{
+var ret = string.Empty;
+
+if (q is not {Count: > 0})
+{
+return ret;
+}
+
+switch (col)
+{
+case 0:
+ret = "Qualifiers";
+break;
+case 1:
+{
+ret = string.Empty;
+for (var i = 0; i < q.Count; i++)
+{
+if (i != 0)
+ret += ", ";
+if (q[i].Type != null && q[i].Type != "")
+{
+ret += $"{q[i].Type} ";
+}
+
+if (!string.IsNullOrEmpty(q[i].Value))
+{
+ret += $"= {q[i].Value}";
+}
+}
+
+break;
+}
+}
+
+return ret;
+}
+
+private string GetUnit(ISubmodelElement se)
+{
+var ret = string.Empty;
+if (se.SemanticId == null || se.SemanticId.Keys != null || se.SemanticId.Keys.Count != 0)
+{
+return ret;
+}
+
+
+return ret;
+}
+
 }
 
 <style>
-.modal-fullscreen {
-  padding: 0 !important;
-}
-.modal-fullscreen .modal-dialog {
-  width: 100%;
-  max-width: none;
-  height: 100%;
-  margin: 0;
-}
-.modal-fullscreen .modal-content {
-  height: 100%;
-  border: 0;
-  border-radius: 0;
-}
-.modal-fullscreen .modal-body {
-  overflow-y: auto;
-}
+    .modal-fullscreen {
+        padding: 0 !important;
+    }
+
+    .modal-fullscreen .modal-dialog {
+        width: 100%;
+        max-width: none;
+        height: 100%;
+        margin: 0;
+    }
+
+    .modal-fullscreen .modal-content {
+        height: 100%;
+        border: 0;
+        border-radius: 0;
+    }
+
+    .modal-fullscreen .modal-body {
+        overflow-y: auto;
+    }
 </style>

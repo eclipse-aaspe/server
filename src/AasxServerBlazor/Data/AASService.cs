@@ -51,7 +51,7 @@ namespace AasxServerBlazor.Data
             if (item.Tag is SubmodelElementCollection)
             {
                 var smec = item.Tag as SubmodelElementCollection;
-                if (item.Childs.Count() != smec.Value.Count)
+                if (item.Children.Count() != smec.Value.Count)
                 {
                     createSMECItems(item, smec, item.envIndex);
                 }
@@ -140,12 +140,12 @@ namespace AasxServerBlazor.Data
                                                         CreateSMEListItems(smeItem, smeList, i);
                                                     }
                                                 }
-                                            smItem.Childs = smChilds;
+                                            smItem.Children = smChilds;
                                             foreach (var c in smChilds)
                                                 c.parent = smItem;
                                         }
                                     }
-                                root.Childs = childs;
+                                root.Children = childs;
                                 foreach (var c in childs)
                                     c.parent = root;
                                 items.Add(root);
@@ -201,7 +201,7 @@ namespace AasxServerBlazor.Data
                         }
                     }
                 }
-                smeRootItem.Childs = smChilds;
+                smeRootItem.Children = smChilds;
                 foreach (var c in smChilds)
                     c.parent = smeRootItem;
             }
@@ -223,7 +223,7 @@ namespace AasxServerBlazor.Data
                         smChilds.Add(smeItem);
                     }
                 }
-                smeRootItem.Childs = smChilds;
+                smeRootItem.Children = smChilds;
                 foreach (var c in smChilds)
                     c.parent = smeRootItem;
             }
@@ -269,7 +269,7 @@ namespace AasxServerBlazor.Data
                             }
                         }
                     }
-                smeRootItem.Childs = smChilds;
+                smeRootItem.Children = smChilds;
                 foreach (var c in smChilds)
                     c.parent = smeRootItem;
             }
@@ -314,7 +314,7 @@ namespace AasxServerBlazor.Data
                     smChilds.Add(smeItem);
                 }
             }
-            smeRootItem.Childs = smChilds;
+            smeRootItem.Children = smChilds;
             foreach (var c in smChilds)
                 c.parent = smeRootItem;
         }
@@ -345,7 +345,7 @@ namespace AasxServerBlazor.Data
                     }
                 }
             }
-            smeRootItem.Childs = smChilds;
+            smeRootItem.Children = smChilds;
             foreach (var c in smChilds)
                 c.parent = smeRootItem;
         }
