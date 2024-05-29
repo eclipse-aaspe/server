@@ -298,20 +298,20 @@ namespace AasxServerDB
         public override void VisitExtension(IExtension that)
         {
             // not supported in the db yet
-            Console.WriteLine("IExtension");
-            base.VisitExtension(that);
+           /* Console.WriteLine("IExtension");
+            base.VisitExtension(that);*/
         }
         public override void VisitAdministrativeInformation(IAdministrativeInformation that)
         {
             // not supported in the db yet
-            Console.WriteLine("IAdministrativeInformation");
-            base.VisitAdministrativeInformation(that);
+            /*Console.WriteLine("IAdministrativeInformation");
+            base.VisitAdministrativeInformation(that);*/
         }
         public override void VisitQualifier(IQualifier that)
         {
             // not supported in the db yet
-            Console.WriteLine("IQualifier");
-            base.VisitQualifier(that);
+            /*Console.WriteLine("IQualifier");
+            base.VisitQualifier(that);*/
         }
         public override void VisitAssetAdministrationShell(IAssetAdministrationShell that)
         {
@@ -327,20 +327,20 @@ namespace AasxServerDB
         public override void VisitAssetInformation(IAssetInformation that)
         {
             // not supported in the db yet
-            Console.WriteLine("AssetInformation");
-            base.VisitAssetInformation(that);
+            /*Console.WriteLine("AssetInformation");
+            base.VisitAssetInformation(that);*/
         }
         public override void VisitResource(IResource that)
         {
             // not supported in the db yet
-            Console.WriteLine("Resource");
-            base.VisitResource(that);
+            /*Console.WriteLine("Resource");
+            base.VisitResource(that);*/
         }
         public override void VisitSpecificAssetId(ISpecificAssetId that)
         {
             // not supported in the db yet
-            Console.WriteLine("SpecificAssetId");
-            base.VisitSpecificAssetId(that);
+            /*Console.WriteLine("SpecificAssetId");
+            base.VisitSpecificAssetId(that);*/
         }
         public override void VisitSubmodel(ISubmodel that)
         {
@@ -421,14 +421,14 @@ namespace AasxServerDB
         public override void VisitEventPayload(IEventPayload that)
         {
             // not supported in the db yet
-            Console.WriteLine("EventPayload");
-            base.VisitEventPayload(that);
+            /*Console.WriteLine("EventPayload");
+            base.VisitEventPayload(that);*/
         }
         public override void VisitBasicEventElement(IBasicEventElement that)
         {
             // not supported in the db yet
-            Console.WriteLine("BasicEventElement");
-            base.VisitBasicEventElement(that);
+            /*Console.WriteLine("BasicEventElement");
+            base.VisitBasicEventElement(that);*/
         }
         public override void VisitOperation(IOperation that)
         {
@@ -438,8 +438,8 @@ namespace AasxServerDB
         public override void VisitOperationVariable(IOperationVariable that)
         {
             // not supported in the db yet
-            Console.WriteLine("OperationVariable");
-            base.VisitOperationVariable(that);
+            /*Console.WriteLine("OperationVariable");
+            base.VisitOperationVariable(that);*/
         }
         public override void VisitCapability(ICapability that)
         {
@@ -449,88 +449,88 @@ namespace AasxServerDB
         public override void VisitConceptDescription(IConceptDescription that)
         {
             // not supported in the db yet
-            Console.WriteLine("ConceptDescription");
-            base.VisitConceptDescription(that);
+            /*Console.WriteLine("ConceptDescription");
+            base.VisitConceptDescription(that);*/
         }
         public override void VisitReference(AasCore.Aas3_0.IReference that)
         {
             // not supported in the db yet
-            Console.WriteLine("Reference");
-            base.VisitReference(that);
+            /*Console.WriteLine("Reference");
+            base.VisitReference(that);*/
         }
         public override void VisitKey(IKey that)
         {
             // not supported in the db yet
-            Console.WriteLine("Key");
-            base.VisitKey(that);
+            /*Console.WriteLine("Key");
+            base.VisitKey(that);*/
         }
 
         public override void VisitEnvironment(AasCore.Aas3_0.IEnvironment that)
         {
             // not supported in the db yet
-            Console.WriteLine("Environment");
-            base.VisitEnvironment(that);
+            /*Console.WriteLine("Environment");
+            base.VisitEnvironment(that);*/
         }
 
         public override void VisitLangStringNameType(ILangStringNameType that)
         {
             // not supported in the db yet
-            Console.WriteLine("LangStringNameType");
-            base.VisitLangStringNameType(that);
+            /*Console.WriteLine("LangStringNameType");
+            base.VisitLangStringNameType(that);*/
         }
         public override void VisitLangStringTextType(ILangStringTextType that)
         {
             // not supported in the db yet
-            Console.WriteLine("LangStringTextType");
-            base.VisitLangStringTextType(that);
+            /*Console.WriteLine("LangStringTextType");
+            base.VisitLangStringTextType(that);*/
         }
         public override void VisitEmbeddedDataSpecification(IEmbeddedDataSpecification that)
         {
             // not supported in the db yet
-            Console.WriteLine("EmbeddedDataSpecification");
-            base.VisitEmbeddedDataSpecification(that);
+            /*Console.WriteLine("EmbeddedDataSpecification");
+            base.VisitEmbeddedDataSpecification(that);*/
         }
         public override void VisitLevelType(ILevelType that)
         {
             // not supported in the db yet
-            Console.WriteLine("LevelType");
-            base.VisitLevelType(that);
+            /*Console.WriteLine("LevelType");
+            base.VisitLevelType(that);*/
         }
         public override void VisitValueReferencePair(IValueReferencePair that)
         {
             // not supported in the db yet
-            Console.WriteLine("ValueReferencePair");
-            base.VisitValueReferencePair(that);
+            /*Console.WriteLine("ValueReferencePair");
+            base.VisitValueReferencePair(that);*/
         }
         public override void VisitValueList(IValueList that)
         {
             // not supported in the db yet
-            Console.WriteLine("ValueList");
-            base.VisitValueList(that);
+            /*Console.WriteLine("ValueList");
+            base.VisitValueList(that);*/
         }
         public override void VisitLangStringPreferredNameTypeIec61360(ILangStringPreferredNameTypeIec61360 that)
         {
             // not supported in the db yet
-            Console.WriteLine("LangStringPreferredNameTypeIec61360");
-            base.VisitLangStringPreferredNameTypeIec61360(that);
+            /*Console.WriteLine("LangStringPreferredNameTypeIec61360");
+            base.VisitLangStringPreferredNameTypeIec61360(that);*/
         }
         public override void VisitLangStringShortNameTypeIec61360(ILangStringShortNameTypeIec61360 that)
         {
             // not supported in the db yet
-            Console.WriteLine("LangStringShortNameTypeIec61360");
-            base.VisitLangStringShortNameTypeIec61360(that);
+            /*Console.WriteLine("LangStringShortNameTypeIec61360");
+            base.VisitLangStringShortNameTypeIec61360(that);*/
         }
         public override void VisitLangStringDefinitionTypeIec61360(ILangStringDefinitionTypeIec61360 that)
         {
             // not supported in the db yet
-            Console.WriteLine("LangStringDefinitionTypeIec61360");
-            base.VisitLangStringDefinitionTypeIec61360(that);
+            /*Console.WriteLine("LangStringDefinitionTypeIec61360");
+            base.VisitLangStringDefinitionTypeIec61360(that);*/
         }
         public override void VisitDataSpecificationIec61360(IDataSpecificationIec61360 that)
         {
             // not supported in the db yet
-            Console.WriteLine("DataSpecificationIec61360");
-            base.VisitDataSpecificationIec61360(that);
+            /*Console.WriteLine("DataSpecificationIec61360");
+            base.VisitDataSpecificationIec61360(that);*/
         }
     }
 }
