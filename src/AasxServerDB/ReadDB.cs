@@ -1,6 +1,7 @@
 ﻿using AasCore.Aas3_0;
 using AdminShellNS;
 using Extensions;
+using Microsoft.IdentityModel.Tokens;
 
 namespace AasxServerDB
 {
@@ -113,7 +114,7 @@ namespace AasxServerDB
                 if (nextSME == null)
                     continue;
 
-                if (smel.SemanticId != "")
+                if (!smel.SemanticId.IsNullOrEmpty()) 
                 {
                     nextSME.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
                         new List<IKey>() { new Key(KeyTypes.GlobalReference, smel.SemanticId) });

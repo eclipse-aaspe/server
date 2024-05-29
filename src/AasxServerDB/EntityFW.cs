@@ -23,7 +23,7 @@ namespace AasxServerDB
     {
         public static IConfiguration _con { get; set; }
         public static string _dataPath { get; set; }
-        public static bool _isPostgres { get; set; }
+        public static bool isPostgres { get; set; }
 
         public DbSet<AASXSet> AASXSets { get; set; }
         public DbSet<AASSet> AASSets { get; set; }
@@ -60,12 +60,12 @@ namespace AasxServerDB
                             Params[i] = "Password=" + dbPassword;
                         }
                     }
-                    _isPostgres = true;
+                    isPostgres = true;
                     options.UseNpgsql(connectionString);
                 }
                 else // SQLite
                 {
-                    _isPostgres = false;
+                    isPostgres = false;
                     options.UseSqlite(connectionString);
                 }
             }

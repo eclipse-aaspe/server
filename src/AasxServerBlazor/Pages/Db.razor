@@ -62,7 +62,7 @@
                 @code {
                     private string CurrentValue { get; set; }
                 }
-                if (CurrentValue != null && CurrentValue != "")
+                if (!CurrentValue.IsNullOrEmpty())
                 {
                     var splitCur = CurrentValue.Split("=");
                     if (splitCur.Count() == 2)
@@ -71,7 +71,7 @@
                         {
                             case "size":
                                 size = 1000;
-                                if (splitCur[1] != "")
+                                if (!splitCur[1].IsNullOrEmpty())
                                     size = Convert.ToInt32(splitCur[1]);
                                 break;
                             case "search":
@@ -79,22 +79,22 @@
                                 break;
                             case "aasxid":
                                 aasxid = 0;
-                                if (splitCur[1] != "")
+                                if (!splitCur[1].IsNullOrEmpty())
                                     aasxid = Convert.ToInt32(splitCur[1]);
                                 break;
                             case "aasid":
                                 aasid = 0;
-                                if (splitCur[1] != "")
+                                if (!splitCur[1].IsNullOrEmpty())
                                     aasid = Convert.ToInt32(splitCur[1]);
                                 break;
                             case "smid":
                                 smid = 0;
-                                if (splitCur[1] != "")
+                                if (!splitCur[1].IsNullOrEmpty())
                                     smid = Convert.ToInt32(splitCur[1]);
                                 break;
                             case "smeid":
                                 smeid = 0;
-                                if (splitCur[1] != "")
+                                if (!splitCur[1].IsNullOrEmpty())
                                     smeid = Convert.ToInt32(splitCur[1]);
                                 break;
                         }
@@ -111,7 +111,7 @@
                 if (!(url.EndsWith("/aasx") || url.EndsWith("/aas") || url.EndsWith("/sm") || url.EndsWith("/smjson") 
                 || url.EndsWith("/sme") || url.EndsWith("/svalue") || url.EndsWith("/ivalue") || url.EndsWith("/dvalue")))
                 {
-                    if (AasContext._isPostgres)
+                    if (AasContext.isPostgres)
                     {
                         <span>PostgreSQL database</span>
                         <br />
@@ -201,8 +201,8 @@
                                     <td style="word-break:keep-all"><b>@aasxDB.Id</b></td>
                                     <td>@aasxDB.AASX</td>
                                     <td style="word-break:keep-all">
-                                        <a href="@(shorturl + "/aas?aasxid=" + aasxDB.Id)" target="_blank">aas </a>
-                                        <a href="@(shorturl + "/sm?aasxid=" + aasxDB.Id)" target="_blank">sm</a>
+                                        <a href="@($"{shorturl}/aas?aasxid={aasxDB.Id}")" target="_blank">aas </a>
+                                        <a href="@($"{shorturl}/sm?aasxid={aasxDB.Id}")" target="_blank">sm</a>
                                     </td>
                                 </tr>
                             }
@@ -220,8 +220,8 @@
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@aasxDB.AASX</span>
                             <span style="background-color:blue;">&nbsp</span>
-                            <a href="@(shorturl + "/aas?aasxid=" + aasxDB.Id)" target="_blank">aas </a>
-                            <a href="@(shorturl + "/sm?aasxid=" + aasxDB.Id)" target="_blank">sm</a>
+                            <a href="@($"{shorturl}/aas?aasxid={aasxDB.Id}")" target="_blank">aas </a>
+                            <a href="@($"{shorturl}/sm?aasxid={aasxDB.Id}")" target="_blank">sm</a>
                             <br />
                         }
                         <br />
@@ -268,8 +268,8 @@
                                     <td>@aasDB.AssetKind</td>
                                     <td>@aasDB.GlobalAssetId</td>
                                     <td style="word-break:keep-all">
-                                        <a href="@(shorturl + "/aasx?aasxid=" + aasDB.AASXId)" target="_blank">aasx </a>
-                                        <a href="@(shorturl + "/sm?aasid=" + aasDB.Id)" target="_blank">sm</a>
+                                        <a href="@($"{shorturl}/aasx?aasxid={aasDB.AASXId}")" target="_blank">aasx </a>
+                                        <a href="@($"{shorturl}/sm?aasid={aasDB.Id}")" target="_blank">sm</a>
                                     </td>
                                     <td><a href="@link" target="_blank">@link</a></td>
                                 </tr>
@@ -298,8 +298,8 @@
                             <span smDB="background-color:blue;">&nbsp</span>
                             <span>@aasDB.GlobalAssetId</span>
                             <span style="background-color:blue;">&nbsp</span>
-                            <a href="@(shorturl + "/aasx?aasxid=" + aasDB.AASXId)" target="_blank">aasx </a>
-                            <a href="@(shorturl + "/sm?aasid=" + aasDB.Id)" target="_blank">sm</a>
+                            <a href="@($"{shorturl}/aasx?aasxid={aasDB.AASXId}")" target="_blank">aasx </a>
+                            <a href="@($"{shorturl}/sm?aasid={aasDB.Id}")" target="_blank">sm</a>
                             <span style="background-color:blue;">&nbsp</span>
                             <a href="@link" target="_blank">@link</a>
                             <br />
@@ -352,9 +352,9 @@
                                     <td>@smDB.IdShort</td>
                                     <td>@smDB.SemanticId</td>
                                     <td style="word-break:keep-all">
-                                        <a href="@(shorturl + "/aasx?aasxid=" + smDB.AASXId)" target="_blank">aasx </a>
-                                        <a href="@(shorturl + "/aas?aasid=" + smDB.AASId)" target="_blank">aas </a>
-                                        <a href="@(shorturl + "/sme?smid=" + smDB.Id)" target="_blank">sme:@(smeCount)</a>
+                                        <a href="@($"{shorturl}/aasx?aasxid={smDB.AASXId}")" target="_blank">aasx </a>
+                                        <a href="@($"{shorturl}/aas?aasid={smDB.AASId}")" target="_blank">aas </a>
+                                        <a href="@($"{shorturl}/sme?smid={smDB.Id}")" target="_blank">sme:@(smeCount)</a>
                                     </td>
                                     <td><a href="@link" target="_blank">@link</a></td>
                                 </tr>
@@ -384,9 +384,9 @@
                             <span smDB="background-color:blue;">&nbsp</span>
                             <span>@smDB.SemanticId</span>
                             <span style="background-color:blue;">&nbsp</span>
-                            <a href="@(shorturl + "/aasx?aasxid=" + smDB.AASXId)" target="_blank">aasx </a>
-                            <a href="@(shorturl + "/aas?aasid=" + smDB.AASId)" target="_blank">aas </a>
-                            <a href="@(shorturl + "/sme?smid=" + smDB.Id)" target="_blank">sme:@(smeCount)</a>
+                            <a href="@($"{shorturl}/aasx?aasxid={smDB.AASXId}")" target="_blank">aasx </a>
+                            <a href="@($"{shorturl}/aas?aasid={smDB.AASId}")" target="_blank">aas </a>
+                            <a href="@($"{shorturl}/sme?smid={smDB.Id}")" target="_blank">sme:@(smeCount)</a>
                             <span style="background-color:blue;">&nbsp</span>
                             <a href="@link" target="_blank">@link</a>
                             <br />
@@ -397,7 +397,7 @@
                     <br />
                 }
 
-                if (url.EndsWith("/smjson") && smidentifier != "")
+                if (url.EndsWith("/smjson") && !smidentifier.IsNullOrEmpty())
                 {
                     var smDBList = db.SMSets.Where(s => s.Identifier.Equals(smidentifier)).ToList();
                     if (smDBList.Any())
@@ -405,7 +405,7 @@
                         var smDB = smDBList.First();
                         var submodel = ReadDB.GetSubmodel(smDB: smDB);
 
-                        string json =  "";
+                        string json = string.Empty;
                         if (submodel != null)
                         {
                             var j = Jsonization.Serialize.ToJsonObject(submodel);
@@ -488,22 +488,22 @@
                                     </td>
                                     <td style="word-break:keep-all">@smeDB.ValueType</td>
                                     <td style="word-break:keep-all">
-                                        <a href="@(shorturl + "/sm?smid=" + smeDB.SMId)" target="_blank">sm </a>
+                                        <a href="@($"{shorturl}/sm?smid={smeDB.SMId}")" target="_blank">sm </a>
                                         @if (smeDB.ParentSMEId != null)
                                         {
-                                            <a href="@(shorturl + "/sme?smid="+ smeDB.SMId + "&smeid=" + smeDB.ParentSMEId)" target="_blank">par </a>
+                                            <a href="@($"{shorturl}/sme?smid={smeDB.SMId}" + "&smeid=" + smeDB.ParentSMEId)" target="_blank">par </a>
                                         }
                                         @if (smeDB.ValueType == "S")
                                         {
-                                            <a href="@(shorturl + "/svalue?smeid=" + smeDB.Id)" target="_blank">svalue</a>
+                                            <a href="@($"{shorturl}/svalue?smeid={smeDB.Id}")" target="_blank">svalue</a>
                                         }
                                         @if (smeDB.ValueType == "I")
                                         {
-                                            <a href="@(shorturl + "/ivalue?smeid=" + smeDB.Id)" target="_blank">ivalue</a>
+                                            <a href="@($"{shorturl}/ivalue?smeid={smeDB.Id}")" target="_blank">ivalue</a>
                                         }
                                         @if (smeDB.ValueType == "F")
                                         {
-                                            <a href="@(shorturl + "/dvalue?smeid=" + smeDB.Id)" target="_blank">fvalue</a>
+                                            <a href="@($"{shorturl}/dvalue?smeid={smeDB.Id}")" target="_blank">fvalue</a>
                                         }
                                     </td>
                                     <td><a href="@link" target="_blank">@link</a></td>
@@ -548,7 +548,7 @@
                                     List<string> list = smeDB.getMLPValue();
                                     if (list.Count > 0)
                                     {
-                                        string mlp = "";
+                                        string mlp = string.Empty;
                                         string seperateString = " | ";
                                         @for (int z = 0; z + 1 < list.Count; z++)
                                         {
@@ -566,14 +566,14 @@
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@smeDB.ValueType</span>
                             <span style="background-color:blue;">&nbsp</span>
-                            <a href="@(shorturl + "/sm?smid=" + smeDB.SMId)" target="_blank">sm </a>
+                            <a href="@($"{shorturl}/sm?smid={smeDB.SMId}")" target="_blank">sm </a>
                             @if (smeDB.ParentSMEId != null)
                             {
-                                <a href="@(shorturl + "/sme?smid="+ smeDB.SMId + "&smeid=" + smeDB.ParentSMEId)" target="_blank">par </a>
+                                <a href="@($"{shorturl}/sme?smid={smeDB.SMId}" + "&smeid=" + smeDB.ParentSMEId)" target="_blank">par </a>
                             }
                             @if (smeDB.SMEType == "MLP")
                             {
-                                <a href="@(shorturl + "/svalue?smeid=" + smeDB.Id)" target="_blank">mlp</a>
+                                <a href="@($"{shorturl}/svalue?smeid={smeDB.Id}")" target="_blank">mlp</a>
                             }
                             <span style="background-color:blue;">&nbsp</span>
                             <a href="@link" target="_blank">@link</a>
@@ -618,7 +618,7 @@
                                     <td style="word-break:keep-all">
                                         @if (smeDB.SMEId != null)
                                         {
-                                            <a href="@(shorturl + "/sme?smeid=" + smeDB.SMEId)" target="_blank">par</a>
+                                            <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
                                         }
                                     </td>
                                 </tr>
@@ -641,7 +641,7 @@
                             <span style="background-color:blue;">&nbsp</span>
                             @if (smeDB.SMEId != null)
                             {
-                                <a href="@(shorturl + "/sme?smeid=" + smeDB.SMEId)" target="_blank">par</a>
+                                <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
                             }
                             <br />
                         }
@@ -684,7 +684,7 @@
                                     <td style="word-break:keep-all">
                                         @if (smeDB.SMEId != null)
                                         {
-                                            <a href="@(shorturl + "/sme?smeid=" + smeDB.SMEId)" target="_blank">par</a>
+                                            <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
                                         }
                                     </td>
                                 </tr>
@@ -707,7 +707,7 @@
                             <span style="background-color:blue;">&nbsp</span>
                             @if (smeDB.SMEId != null)
                             {
-                                <a href="@(shorturl + "/sme?smeid=" + smeDB.SMEId)" target="_blank">par</a>
+                                <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
                             }
                             <br />
                         }
@@ -750,7 +750,7 @@
                                     <td style="word-break:keep-all">
                                         @if (smeDB.SMEId != null)
                                         {
-                                            <a href="@(shorturl + "/sme?smeid=" + smeDB.SMEId)" target="_blank">par</a>
+                                            <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
                                         }
                                     </td>
                                 </tr>
@@ -773,7 +773,7 @@
                             <span style="background-color:blue;">&nbsp</span>
                             @if (smeDB.SMEId != null)
                             {
-                                <a href="@(shorturl + "/sme?smeid=" + smeDB.SMEId)" target="_blank">par </a>
+                                <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par </a>
                             }
                             <br />
                         }

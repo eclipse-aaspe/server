@@ -4,6 +4,7 @@ using System.Globalization;
 using static AasCore.Aas3_0.Visitation;
 using Extensions;
 using System.IO.Compression;
+using Microsoft.IdentityModel.Tokens;
 
 namespace AasxServerDB
 {
@@ -87,14 +88,12 @@ namespace AasxServerDB
 
             foreach (IAssetAdministrationShell aas in asp.AasEnv.AssetAdministrationShells)
             {
-                if (aas.IdShort != null && aas.IdShort != "" && aas.IdShort.ToLower().Contains("globalsecurity"))
+                if (!aas.IdShort.IsNullOrEmpty() && aas.IdShort.ToLower().Contains("globalsecurity"))
                 {
-                    // AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
-                    // AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
                     continue;
                 }
 
-                if (aas.Id == null || aas.Id == "" || aas.AssetInformation.GlobalAssetId == null || aas.AssetInformation.GlobalAssetId == "")
+                if (aas.Id.IsNullOrEmpty() || aas.AssetInformation.GlobalAssetId.IsNullOrEmpty())
                     continue;
                 new VisitorAASX(aasxDB: aasxDB).Visit(aas);
 
@@ -199,7 +198,7 @@ namespace AasxServerDB
             if (sme is Property p)
             {
                 v = sme.ValueAsText();
-                if (v != "")
+                if (!v.IsNullOrEmpty())
                     vt = getValueAndType(v, out sValue, out iValue, out fValue);
             }
 
