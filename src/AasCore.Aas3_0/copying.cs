@@ -3,8 +3,8 @@
  * Do NOT edit or append.
  */
 
-using System.Collections.Generic;  // can't alias
 using Aas = AasCore.Aas3_0;  // renamed
+using System.Collections.Generic;  // can't alias
 
 namespace AasCore.Aas3_0
 {
@@ -1268,8 +1268,7 @@ namespace AasCore.Aas3_0
                         that.EmbeddedDataSpecifications.Count);
                     foreach (var item in that.EmbeddedDataSpecifications)
                     {
-                        if (item.DataSpecification != null && item.DataSpecificationContent != null)
-                           theEmbeddedDataSpecifications.Add(Deep(item));
+                        theEmbeddedDataSpecifications.Add(Deep(item));
                     }
                 }
 
@@ -2457,17 +2456,10 @@ namespace AasCore.Aas3_0
                 Aas.IEmbeddedDataSpecification that
             )
             {
-                IReference? theDataSpecification = null;
-                if (that.DataSpecification != null)
-                {
-                    theDataSpecification = Deep(that.DataSpecification);
-                }
-                IDataSpecificationContent? theDataSpecificationContent = null;
-                if (that.DataSpecificationContent != null)
-                {
-                    theDataSpecificationContent = Deep(that.DataSpecificationContent);
-                }
-                return new Aas.EmbeddedDataSpecification(theDataSpecification, theDataSpecificationContent);
+                return new Aas.EmbeddedDataSpecification(
+                    Deep(that.DataSpecification),
+                    Deep(that.DataSpecificationContent)
+                );
             }
 
             public override Aas.IClass TransformLevelType(

@@ -132,7 +132,6 @@ namespace AasCore.Aas3_0
             public void VisitDataSpecificationIec61360(
                 IDataSpecificationIec61360 that
             );
-            // OZ: void Visit(Extension that);
         }  // public interface IVisitor
 
         /// <summary>
@@ -868,7 +867,7 @@ namespace AasCore.Aas3_0
         public abstract class AbstractVisitorWithContext<TContext>
             : IVisitorWithContext<TContext>
         {
-            public void Visit(IClass that, TContext context)
+            public virtual void Visit(IClass that, TContext context)
             {
                 that.Accept(this, context);
             }
@@ -1162,7 +1161,7 @@ namespace AasCore.Aas3_0
         /// <typeparam name="T">The type of the transformation result</typeparam>
         public abstract class AbstractTransformer<T> : ITransformer<T>
         {
-            public T Transform(IClass that)
+            public virtual T Transform(IClass that)
             {
                 return that.Transform(this);
             }
@@ -1502,7 +1501,7 @@ namespace AasCore.Aas3_0
         public abstract class AbstractTransformerWithContext<TContext, T>
             : ITransformerWithContext<TContext, T>
         {
-            public T Transform(IClass that, TContext context)
+            public virtual T Transform(IClass that, TContext context)
             {
                 return that.Transform(this, context);
             }
