@@ -124,14 +124,14 @@ namespace AasxServerDB
             double fUpper = 0;
             try
             {
-                if (equal != "")
+                if (!equal.IsNullOrEmpty())
                 {
                     iEqual = Convert.ToInt64(equal);
                     withI = true;
                     fEqual = Convert.ToDouble(equal);
                     withF= true;
                 }
-                else if (lower != "" && upper != "")
+                else if (!lower.IsNullOrEmpty() && !upper.IsNullOrEmpty())
                 {
                     iLower = Convert.ToInt64(lower);
                     iUpper = Convert.ToInt64(upper);
@@ -143,7 +143,7 @@ namespace AasxServerDB
             }
             catch { }
 
-            if (semanticId == "" && equal == "" && lower == "" && upper == "" && contains == "")
+            if (semanticId.IsNullOrEmpty() && equal.IsNullOrEmpty() && lower.IsNullOrEmpty() && upper.IsNullOrEmpty() && contains.IsNullOrEmpty())
                 return result;
 
             using (AasContext db = new AasContext())
@@ -154,9 +154,9 @@ namespace AasxServerDB
                 Console.WriteLine("Total number of SMEs " + db.SMESets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
                 watch.Restart();
 
-                bool withContains = (contains != "");
-                bool withEqual = !withContains && (equal != "");
-                bool withCompare = !withContains && !withEqual && (lower != "" && upper != "");
+                bool withContains = (!contains.IsNullOrEmpty());
+                bool withEqual = !withContains && (!equal.IsNullOrEmpty());
+                bool withCompare = !withContains && !withEqual && (!lower.IsNullOrEmpty() && !upper.IsNullOrEmpty());
 
                 var list = db.SValueSets.Where(v =>
                     (withContains && v.Value.Contains(contains)) ||
@@ -229,7 +229,7 @@ namespace AasxServerDB
                     if (submodelDBList.Count() != 0)
                     {
                         var submodelDB = submodelDBList.First();
-                        if (submodelDB == null || (smSemanticId != "" && submodelDB.SemanticId != smSemanticId))
+                        if (submodelDB == null || (!smSemanticId.IsNullOrEmpty() && submodelDB.SemanticId != smSemanticId))
                             continue;
                         r.smId = submodelDB.Identifier;
                         r.value = l.Value;
@@ -264,11 +264,11 @@ namespace AasxServerDB
         {
             List<SmeResult> result = new List<SmeResult>();
             
-            if (searchSemanticId == "" && searchIdShort == "")
+            if (searchSemanticId.IsNullOrEmpty() && searchIdShort.IsNullOrEmpty())
                 return result;
-            if (equal == "" && contains == "")
+            if (equal.IsNullOrEmpty() && contains.IsNullOrEmpty())
                 return result;
-            if (resultSemanticId == "" && resultIdShort == "")
+            if (resultSemanticId.IsNullOrEmpty() && resultIdShort.IsNullOrEmpty())
                 return result;
 
             bool withI = false;
@@ -277,7 +277,7 @@ namespace AasxServerDB
             double fEqual = 0;
             try
             {
-                if (equal != "")
+                if (!equal.IsNullOrEmpty())
                 {
                     iEqual = Convert.ToInt64(equal);
                     withI = true;
@@ -295,8 +295,8 @@ namespace AasxServerDB
                 Console.WriteLine("Total number of SMEs " + db.SMESets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
                 watch.Restart();
 
-                bool withContains = (contains != "");
-                bool withEqual = !withContains && (equal != "");
+                bool withContains = (!contains.IsNullOrEmpty());
+                bool withEqual = !withContains && (!equal.IsNullOrEmpty());
 
                 var list = db.SValueSets.Where(v =>
                     (withContains && v.Value.Contains(contains)) ||
@@ -315,8 +315,8 @@ namespace AasxServerDB
                         }
                     )
                     .Where(s =>
-                        (searchSemanticId != "" && s.SemanticId == searchSemanticId) ||
-                        (searchIdShort != "" && s.IdShort == searchIdShort)
+                        (!searchSemanticId.IsNullOrEmpty() && s.SemanticId == searchSemanticId) ||
+                        (!searchIdShort.IsNullOrEmpty() && s.IdShort == searchIdShort)
                     )
                     .Join(db.SMSets,
                         v => v.SMId,
@@ -350,8 +350,8 @@ namespace AasxServerDB
                         }
                     )
                     .Where(s =>
-                        (searchSemanticId != "" && s.SemanticId == searchSemanticId) ||
-                        (searchIdShort != "" && s.IdShort == searchIdShort)
+                        (!searchSemanticId.IsNullOrEmpty() && s.SemanticId == searchSemanticId) ||
+                        (!searchIdShort.IsNullOrEmpty() && s.IdShort == searchIdShort)
                     )
                     .Join(db.SMSets,
                         v => v.SMId,
@@ -385,8 +385,8 @@ namespace AasxServerDB
                         }
                     )
                     .Where(s =>
-                        (searchSemanticId != "" && s.SemanticId == searchSemanticId) ||
-                        (searchIdShort != "" && s.IdShort == searchIdShort)
+                        (!searchSemanticId.IsNullOrEmpty() && s.SemanticId == searchSemanticId) ||
+                        (!searchIdShort.IsNullOrEmpty() && s.IdShort == searchIdShort)
                     )
                     .Join(db.SMSets,
                         v => v.SMId,
@@ -421,12 +421,12 @@ namespace AasxServerDB
 
                 var smeResult = db.SMESets.Where(s =>
                     hSubmodel.Contains(s.SMId) &&
-                    ((resultSemanticId != "" && s.SemanticId == resultSemanticId) ||
-                    (resultIdShort != "" && s.IdShort == resultIdShort))
+                    ((!resultSemanticId.IsNullOrEmpty() && s.SemanticId == resultSemanticId) ||
+                    (!resultIdShort.IsNullOrEmpty() && s.IdShort == resultIdShort))
                     )
                     .ToList();
 
-                if (equal == "")
+                if (equal.IsNullOrEmpty())
                     equal = contains;
 
                 foreach (var l in smeResult)
@@ -435,7 +435,7 @@ namespace AasxServerDB
                     bool found = false;
 
                     var submodelDB = db.SMSets.Where(s => s.Id == l.SMId).First();
-                    if (submodelDB != null && (smSemanticId == "" || submodelDB.SemanticId == smSemanticId))
+                    if (submodelDB != null && (smSemanticId.IsNullOrEmpty() || submodelDB.SemanticId == smSemanticId))
                     {
                         r.value = equal;
                         r.url = "";
@@ -460,7 +460,7 @@ namespace AasxServerDB
                         }
                         r.idShortPath = path;
                         string sub64 = Base64UrlEncoder.Encode(r.smId);
-                        if (r.url == "")
+                        if (r.url.IsNullOrEmpty())
                             r.url = ExternalBlazor + "/submodels/" + sub64 + "/submodel-elements/" + path + "/attachment";
                         if (found)
                             result.Add(r);
@@ -489,14 +489,14 @@ namespace AasxServerDB
             double fUpper = 0;
             try
             {
-                if (equal != "")
+                if (!equal.IsNullOrEmpty())
                 {
                     iEqual = Convert.ToInt64(equal);
                     withI = true;
                     fEqual = Convert.ToDouble(equal);
                     withF = true;
                 }
-                else if (lower != "" && upper != "")
+                else if (!lower.IsNullOrEmpty() && !upper.IsNullOrEmpty())
                 {
                     iLower = Convert.ToInt64(lower);
                     iUpper = Convert.ToInt64(upper);
@@ -508,7 +508,7 @@ namespace AasxServerDB
             }
             catch { }
 
-            if (semanticId == "" && equal == "" && lower == "" && upper == "" && contains == "")
+            if (semanticId.IsNullOrEmpty() && equal.IsNullOrEmpty() && lower.IsNullOrEmpty() && upper.IsNullOrEmpty() && contains.IsNullOrEmpty())
                 return c;
             
             using (AasContext db = new AasContext())
@@ -519,9 +519,9 @@ namespace AasxServerDB
                 Console.WriteLine("Total number of SMEs " + db.SMESets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
                 watch.Restart();
 
-                bool withContains = (contains != "");
-                bool withEqual = !withContains && (equal != "");
-                bool withCompare = !withContains && !withEqual && (lower != "" && upper != "");
+                bool withContains = (!contains.IsNullOrEmpty());
+                bool withEqual = !withContains && (!equal.IsNullOrEmpty());
+                bool withCompare = !withContains && !withEqual && (!lower.IsNullOrEmpty() && !upper.IsNullOrEmpty());
 
                 c = db.SValueSets.Where(v =>
                     (withContains && v.Value.Contains(contains)) ||

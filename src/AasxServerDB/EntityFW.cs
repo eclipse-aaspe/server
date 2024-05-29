@@ -23,7 +23,7 @@ namespace AasxServerDB
     {
         public static IConfiguration _con { get; set; }
         public static string _dataPath { get; set; }
-        public static bool _isPostgres { get; set; }
+        public static bool isPostgres { get; set; }
 
         public DbSet<AASXSet> AASXSets { get; set; }
         public DbSet<AASSet> AASSets { get; set; }
@@ -46,12 +46,30 @@ namespace AasxServerDB
                     connectionString = connectionString.Replace("$DATAPATH", _dataPath);
                 if (connectionString.ToLower().Contains("host")) // Postgres
                 {
+<<<<<<< HEAD
                     _isPostgres = true;
+=======
+                    string[] Params = connectionString.Split(";");
+                    string dbPassword = Environment.GetEnvironmentVariable("DATABASE_PASSWORD");
+                    string dbUser = Environment.GetEnvironmentVariable("DATABASE_PASSWORD");
+                    for (int i = 0; i < Params.Length; i++)
+                    {
+                        if (Params[i].Contains("Username") && dbUser != null)
+                        {
+                            Params[i] = "Username=" + dbUser;
+                        }
+                        if (Params[i].Contains("Password") && dbPassword != null)
+                        {
+                            Params[i] = "Password=" + dbPassword;
+                        }
+                    }
+                    isPostgres = true;
+>>>>>>> aasx-server/main
                     options.UseNpgsql(connectionString);
                 }
                 else // SQLite
                 {
-                    _isPostgres = false;
+                    isPostgres = false;
                     options.UseSqlite(connectionString);
                 }
             }

@@ -78,202 +78,6 @@ namespace AasxServer
 
             return "";
         }
-        public static void createDbFiles(List<SMSet> slist, AdminShellPackageEnv env, string dataPath, string fileName)
-        {
-            string envXml = env.getEnvXml();
-
-            Console.WriteLine("Length XML env: " + envXml.Length);
-            string fnXml = dataPath + "/xml/" + fileName + ".xml";
-            System.IO.File.WriteAllText(fnXml, envXml);
-
-            // extract semanticIds
-            int pos = 0;
-            int found1 = -1;
-            int found2 = -1;
-            string semanticId = "";
-            int countSemanticId = 0;
-            int countIdShort = 0;
-            HashSet<string> hsSubSemanticId = null;
-            HashSet<string> hsSubIdShort = null;
-            string subId = null;
-
-            string search = "";
-            string text = "";
-            XmlReader reader = XmlReader.Create(new StringReader(envXml));
-            while (!reader.EOF)
-            {
-                reader.Read();
-                if (!reader.EOF)
-                {
-                    if (reader.NodeType == XmlNodeType.Element)
-                    {
-                        if (reader.Name == "submodel" || reader.Name == "aas:submodel")
-                        {
-                            search = "id aas:identification";
-                            hsSubSemanticId = new HashSet<string>();
-                            hsSubIdShort = new HashSet<string>();
-                            subId = null;
-                            countSemanticId = 0;
-                            countIdShort = 0;
-                        }
-                        else if (search.Contains(reader.Name))
-                        {
-                            switch (reader.Name)
-                            {
-                                case "aas:semanticId":
-                                case "semanticId":
-                                    search = "aas:key key";
-                                    break;
-                                case "key":
-                                    search = "value";
-                                    break;
-                            }
-                        }
-                    }
-                    if (reader.NodeType == XmlNodeType.Text)
-                    {
-                        text = reader.Value;
-                    }
-                    if (reader.NodeType == XmlNodeType.EndElement)
-                    {
-                        switch (reader.Name)
-                        {
-                            case "id":
-                            case "aas:identification":
-                                if (search.Contains(reader.Name))
-                                {
-                                    subId = text;
-                                    search = "aas:semanticId semanticId";
-                                }
-                                break;
-                            case "aas:semanticId":
-                            case "semanticId":
-                            case "key":
-                                search = "aas:semanticId semanticId";
-                                break;
-                            case "aas:key":
-                            case "value":
-                                if (subId != null && search.Contains(reader.Name))
-                                {
-                                    hsSubSemanticId.Add(text);
-                                    countSemanticId++;
-                                    search = "aas:semanticId semanticId";
-                                }
-                                break;
-                            case "idShort":
-                            case "aas:idShort":
-                                if (subId != null)
-                                {
-                                    hsSubIdShort.Add(text);
-                                    countIdShort++;
-                                }
-                                break;
-                            case "submodel":
-                            case "aas:submodel":
-                                // Submodel complete
-                                search = "";
-                                if (subId != null)
-                                {
-                                    SMSet submodelDB = null;
-                                    var submodelDBList = slist.Where(s => s.Identifier == subId);
-                                    if (submodelDBList.Any())
-                                    {
-                                        submodelDB = submodelDBList.First();
-                                    }
-
-                                    Console.WriteLine("Found " + hsSubSemanticId.Count + " different semanticIds in total of " + countSemanticId + " in submodel " + subId);
-                                    string subId64 = Base64UrlEncoder.Encode(subId);
-                                    string fnSemanticId = dataPath + "/xml/semanticid--" + subId64 + ".txt";
-
-                                    string lines = "";
-                                    foreach (var h in hsSubSemanticId)
-                                    {
-                                        lines += h + "\r\n";
-                                    }
-                                    System.IO.File.WriteAllText(fnSemanticId, lines);
-                                    /*
-                                    if (submodelDB != null)
-                                        submodelDB.AllSemanticId = lines;
-                                    */
-
-                                    Console.WriteLine("Found " + hsSubIdShort.Count + " different idShorts in total of " + countIdShort + " in submodel " + subId);
-                                    subId64 = Base64UrlEncoder.Encode(subId);
-                                    string fnIdShort = dataPath + "/xml/idshort--" + subId64 + ".txt";
-
-                                    lines = "";
-                                    foreach (var h in hsSubIdShort)
-                                    {
-                                        lines += h + "\r\n";
-                                    }
-                                    System.IO.File.WriteAllText(fnIdShort, lines);
-                                    /*
-                                    if (submodelDB != null)
-                                        submodelDB.AllIdshort = lines;
-                                    */
-
-                                    subId = null;
-                                }
-                                break;
-                        }
-                    }
-                }
-            }
-
-            /*
-            // Pattern 1
-            do
-            {
-                found1 = envXml.IndexOf("<aas:semanticId>", pos);
-                if (found1 != -1)
-                {
-                    found1 = envXml.IndexOf("<aas:key ", found1);
-                    if (found1 != -1)
-                    {
-                        found1 = envXml.IndexOf(">", found1);
-                        if (found1 != -1)
-                        {
-                            found2 = envXml.IndexOf("</aas:key>", found1);
-                            if (found2 != -1)
-                            {
-                                found1 += 1;
-                                semanticId = envXml.Substring(found1, found2-found1);
-                                hs.Add(semanticId);
-                                pos = found2;
-                                count++;
-                            }
-                        }
-                    }
-                }
-            }
-            while (found1 != -1);
-            // Pattern 2
-            do
-            {
-                found1 = envXml.IndexOf("<semanticId>", pos);
-                if (found1 != -1)
-                {
-                    found1 = envXml.IndexOf("<key>", found1);
-                    if (found1 != -1)
-                    {
-                        found1 = envXml.IndexOf("<value>", found1);
-                        if (found1 != -1)
-                        {
-                            found2 = envXml.IndexOf("</value>", found1);
-                            if (found2 != -1)
-                            {
-                                found1 += "<value>".Length;
-                                semanticId = envXml.Substring(found1, found2 - found1);
-                                hs.Add(semanticId);
-                                pos = found2;
-                                count++;
-                            }
-                        }
-                    }
-                }
-            }
-            while (found1 != -1);
-            */
-        }
         public static void saveEnv(int envIndex)
         {
             Console.WriteLine("SAVE: " + envFileName[envIndex]);
@@ -969,7 +773,7 @@ namespace AasxServer
             // Migrate always
             if (withDb)
             {
-                if (AasContext._isPostgres)
+                if (AasContext.isPostgres)
                 {
                     Console.WriteLine("Use POSTGRES");
                     using (PostgreAasContext db = new PostgreAasContext())
@@ -1366,7 +1170,7 @@ namespace AasxServer
             {
                 if (con["DatabaseConnection:ConnectionString"] != null)
                 {
-                    AasContext._isPostgres = con["DatabaseConnection:ConnectionString"].ToLower().Contains("host");
+                    AasContext.isPostgres = con["DatabaseConnection:ConnectionString"].ToLower().Contains("host");
                 }
             }
 

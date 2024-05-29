@@ -476,20 +476,20 @@
                                             </td>
                                             <td class="atex-border atex-blue">
                                                 @{
-                                                    int i2 = iOut;
-                                                    List<string> options2 = new List<string>();
-                                                    for (int j2 = 0; j2 < ManufacturerProductType.Count; j2++)
+                                                    int iProductOut = iOut;
+                                                    List<string> optionsProductOut = new List<string>();
+                                                    for (int loopProductOut = 0; loopProductOut < ManufacturerProductType.Count; loopProductOut++)
                                                     {
-                                                        var t2 = ManufacturerProductType[j2];
-                                                        if (t2 != "" && isOutput[j2] && !options2.Contains(t2))
+                                                        var tProductOut = ManufacturerProductType[loopProductOut];
+                                                        if (tProductOut != "" && isOutput[loopProductOut] && !optionsProductOut.Contains(tProductOut))
                                                         {
-                                                            options2.Add(t2);
+                                                            optionsProductOut.Add(tProductOut);
                                                         }
                                                     }
                                                     <b>
                                                         <select class="atex-blue" style="width:100%;height:100%"
-                                                            value="@ManufacturerProductType[i2]" @onchange="@((ChangeEventArgs args) => OnChangeProductOut(args, iOut))">
-                                                            @foreach (var t in options2)
+                                                            value="@ManufacturerProductType[iProductOut]" @onchange="@((ChangeEventArgs args) => OnChangeProductOut(args, iOut))">
+                                                            @foreach (var t in optionsProductOut)
                                                             {
                                                                 <option value="@t">@t</option>
                                                             }
@@ -499,17 +499,16 @@
                                             </td>
                                             <td class="atex-border atex-blue">
                                                 @{
-                                                    int i3 = iOut;
+                                                    int iSerialNumberOut = iOut;
                                                     <b>
                                                         <select class="atex-blue" style="width:100%;height:100%"
-                                                            value="@SerialNumber[i3]" @onchange="@((ChangeEventArgs args) => OnChangeSerialNumberOut(args, iOut))">
-                                                            @for (int j3 = 0; j3 < SerialNumber.Count; j3++)
+                                                            value="@SerialNumber[iSerialNumberOut]" @onchange="@((ChangeEventArgs args) => OnChangeSerialNumberOut(args, iOut))">
+                                                            @for (int loopSerialNumberOut = 0; loopSerialNumberOut < SerialNumber.Count; loopSerialNumberOut++)
                                                             {
-                                                                var t3 = ManufacturerProductType[j3];
-                                                                var s3 = SerialNumber[j3];
-                                                                if (ManufacturerProductType[i3] == ManufacturerProductType[j3])
+                                                                var sSerialNumberOut = SerialNumber[loopSerialNumberOut];
+                                                                if (ManufacturerProductType[iSerialNumberOut] == ManufacturerProductType[loopSerialNumberOut])
                                                                 {
-                                                                    <option value="@s3">@s3</option>
+                                                                    <option value="@sSerialNumberOut">@sSerialNumberOut</option>
                                                                 }
                                                             }
                                                         </select>
@@ -615,20 +614,20 @@
                                             </td>
                                             <td class="atex-border atex-pink">
                                                 @{
-                                                    var ii2 = iIn;
-                                                    List<string> oo2 = new List<string>();
-                                                    for (int jj2 = 0; jj2 < ManufacturerProductType.Count; jj2++)
+                                                    var iProductIn = iIn;
+                                                    List<string> optionsProductIn = new List<string>();
+                                                    for (int loopProductIn = 0; loopProductIn < ManufacturerProductType.Count; loopProductIn++)
                                                     {
-                                                        var tt2 = ManufacturerProductType[jj2];
-                                                        if (tt2 != "" && !isOutput[jj2] && !oo2.Contains(tt2))
+                                                        var tProductIn = ManufacturerProductType[loopProductIn];
+                                                        if (tProductIn != "" && !isOutput[loopProductIn] && !optionsProductIn.Contains(tProductIn))
                                                         {
-                                                            oo2.Add(tt2);
+                                                            optionsProductIn.Add(tProductIn);
                                                         }
                                                     }
                                                     <b>
                                                         <select class="atex-pink" style="width:100%;height:100%"
-                                                            value="@ManufacturerProductType[ii2]" @onchange="@((ChangeEventArgs args) => OnChangeProductIn(args, iIn))">
-                                                            @foreach (var t in oo2)
+                                                            value="@ManufacturerProductType[iProductIn]" @onchange="@((ChangeEventArgs args) => OnChangeProductIn(args, iIn))">
+                                                            @foreach (var t in optionsProductIn)
                                                             {
                                                                 <option value="@t">@t</option>
                                                             }
@@ -638,17 +637,16 @@
                                             </td>
                                             <td class="atex-border atex-pink">
                                                 @{
-                                                    int i4 = iIn;
+                                                    int iSerialNumberIn = iIn;
                                                     <b>
                                                         <select class="atex-pink" style="width:100%;height:100%"
-                                                            value="@SerialNumber[i4]" @onchange="@((ChangeEventArgs args) => OnChangeSerialNumberIn(args, iIn))">
-                                                            @for (int j4 = 0; j4 < SerialNumber.Count; j4++)
+                                                            value="@SerialNumber[iSerialNumberIn]" @onchange="@((ChangeEventArgs args) => OnChangeSerialNumberIn(args, iIn))">
+                                                            @for (int loopSerialNumberIn = 0; loopSerialNumberIn < SerialNumber.Count; loopSerialNumberIn++)
                                                             {
-                                                                var t4 = ManufacturerProductType[j4];
-                                                                var s4 = SerialNumber[j4];
-                                                                if (ManufacturerProductType[i4] == ManufacturerProductType[j4])
+                                                                var sSerialNumberIn = SerialNumber[loopSerialNumberIn];
+                                                                if (ManufacturerProductType[iSerialNumberIn] == ManufacturerProductType[loopSerialNumberIn])
                                                                 {
-                                                                    <option value="@s4">@s4</option>
+                                                                    <option value="@sSerialNumberIn">@sSerialNumberIn</option>
                                                                 }
                                                             }
                                                         </select>
@@ -1544,6 +1542,19 @@
                                             if (sme is File f)
                                             {
                                                 PreviewFile[count] = f.Value;
+                                            }
+                                        }
+
+                                        sme = findeSME(smc: s, idShortPath: "DigitalFile", ignore: true);
+                                        if (sme != null)
+                                        {
+                                            if (sme is File f)
+                                            {
+                                                var path = getPath(sme);
+                                                if (path != null)
+                                                {
+                                                    PreviewFileUrl[count] = path;
+                                                }
                                             }
                                         }
 

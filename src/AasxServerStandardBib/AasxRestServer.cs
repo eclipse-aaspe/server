@@ -1511,9 +1511,6 @@ namespace AasxRestServerLibrary
                                 AssetAdministrationShell aas = new AssetAdministrationShell(
                                     id: aasDB.Identifier,
                                     idShort: aasDB.IdShort,
-                                    /*assetInformation: new AssetInformation(AssetKind.Type,
-                                        new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, 
-                                            new List<IKey>() { new Key(KeyTypes.GlobalReference, aasDB.GlobalAssetId) })*/
                                     assetInformation: new AssetInformation(AssetKind.Type, aasDB.GlobalAssetId)
                                     );
 
