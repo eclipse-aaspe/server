@@ -3,6 +3,7 @@
     zur Foerderung der angewandten Forschung e.V.
  */
 using AasxServer;
+using AasxServerDB;
 using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
@@ -269,7 +270,7 @@ namespace AasxServerStandardBib.Services
                             }
                             else
                             {
-                                output = DBRead.getSubmodel(submodelIdentifier);
+                                output = ReadDB.GetSubmodel(smIdentifier:submodelIdentifier);
                             }
                             */
                             output = submodels.First();

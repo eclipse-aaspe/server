@@ -1,7 +1,7 @@
-﻿using AasOpcUaServer;
+using AasOpcUaServer;
 using AasxMqttServer;
+using AasxServerDB;
 using AasxRestServerLibrary;
-//using AasxServerStandardBib.Migrations;
 using AdminShellNS;
 using Extensions;
 using Jose;
@@ -35,6 +35,7 @@ using System.Timers;
 using System.Xml;
 using System.Xml.Serialization;
 using Formatting = Newtonsoft.Json.Formatting;
+
 /*
 Copyright (c) 2019-2020 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski
 Copyright (c) 2018-2020 Festo SE & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
@@ -78,7 +79,7 @@ namespace AasxServer
 
             return "";
         }
-        public static void createDbFiles(List<SubmodelSet> slist, AdminShellPackageEnv env, string dataPath, string fileName)
+        public static void createDbFiles(List<SMSet> slist, AdminShellPackageEnv env, string dataPath, string fileName)
         {
             string envXml = env.getEnvXml();
 
@@ -174,8 +175,8 @@ namespace AasxServer
                                 search = "";
                                 if (subId != null)
                                 {
-                                    SubmodelSet submodelDB = null;
-                                    var submodelDBList = slist.Where(s => s.SubmodelId == subId);
+                                    SMSet submodelDB = null;
+                                    var submodelDBList = slist.Where(s => s.Identifier == subId);
                                     if (submodelDBList.Any())
                                     {
                                         submodelDB = submodelDBList.First();
@@ -318,86 +319,57 @@ namespace AasxServer
                     oldest = envimin;
             }
 
-            using (AasContext db = new AasContext())
+            lock (Program.changeAasxFile)
             {
-                var aasDBList = db.AasSets.Where(a => a.AasId == aasIdentifier);
-                if (aasDBList.Any())
+                envFileName[i] = ReadDB.GetAASXPath(aasId: aasIdentifier);
+                if (envFileName[i].Equals(""))
+                    return false;
+                    
+                if (env[i] != null)
                 {
-                    lock (Program.changeAasxFile)
+                    Console.WriteLine("UNLOAD: " + envFileName[i]);
+                    if (env[i].getWrite())
                     {
-                        if (env[i] != null)
-                        {
-                            Console.WriteLine("UNLOAD: " + envFileName[i]);
-                            if (env[i].getWrite())
-                            {
-                                saveEnv(i);
-                                env[i].setWrite(false);
-                            }
-                            env[i].Close();
-                        }
+                        saveEnv(i);
+                        env[i].setWrite(false);
+                    }
+                    env[i].Close();
+                }
 
+
+                if (!withDbFiles)
+                {
+                    Console.WriteLine("LOAD: " + envFileName[i]);
+                    env[i] = new AdminShellPackageEnv(envFileName[i]);
+
+                    DateTime timeStamp = DateTime.Now;
+                    var a = env[i].AasEnv.AssetAdministrationShells[0];
+                    a.TimeStampCreate = timeStamp;
+                    a.SetTimeStamp(timeStamp);
+                    foreach (var submodel in env[i].AasEnv.Submodels)
+                    {
+                        submodel.TimeStampCreate = timeStamp;
+                        submodel.SetTimeStamp(timeStamp);
+                        submodel.SetAllParents(timeStamp);
+                    }
+                    output = a;
+                }
+                else
+                {
+                    using (AasContext db = new AasContext())
+                    {
+                        Console.WriteLine("LOAD: " + aasIdentifier);
+                        var aasDBList = db.AASSets.Where(a => a.Identifier == aasIdentifier);
                         var aasDB = aasDBList.First();
-                        long aasxNum = aasDB.AASXNum;
-                        var aasxDBList = db.AASXSets.Where(a => a.AASXNum == aasxNum);
-                        var aasxDB = aasxDBList.First();
-                        string fn = aasxDB.AASX;
-                        envFileName[i] = fn;
-
-                        if (!withDbFiles)
-                        {
-                            Console.WriteLine("LOAD: " + fn);
-                            env[i] = new AdminShellPackageEnv(fn);
-
-                            DateTime timeStamp = DateTime.Now;
-                            var a = env[i].AasEnv.AssetAdministrationShells[0];
-                            a.TimeStampCreate = timeStamp;
-                            a.SetTimeStamp(timeStamp);
-                            foreach (var submodel in env[i].AasEnv.Submodels)
-                            {
-                                submodel.TimeStampCreate = timeStamp;
-                                submodel.SetTimeStamp(timeStamp);
-                                submodel.SetAllParents(timeStamp);
-                            }
-                            output = a;
-                        }
-                        else
-                        {
-                            Console.WriteLine("LOAD: " + aasDB.Idshort);
-                            env[i] = new AdminShellPackageEnv();
-                            env[i].SetFilename(fn);
-
-                            AssetAdministrationShell aas = new AssetAdministrationShell(
-                                id: aasDB.AasId,
-                                idShort: aasDB.Idshort,
-                                assetInformation: new AssetInformation(AssetKind.Type, aasDB.AssetId)
-                                /* new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
-                                    new List<Key>() { new Key(KeyTypes.GlobalReference, aasDB.AssetId) }) */
-                                );
-                            env[i].AasEnv.AssetAdministrationShells.Add(aas);
-
-                            var submodelDBList = db.SubmodelSets
-                                .OrderBy(sm => sm.SubmodelNum)
-                                .Where(sm => sm.AasNum == aasDB.AasNum)
-                                .ToList();
-
-                            aas.Submodels = new List<AasCore.Aas3_0.IReference>();
-                            foreach (var submodelDB in submodelDBList)
-                            {
-                                var sm = DBRead.getSubmodel(submodelDB.SubmodelId);
-                                aas.Submodels.Add(sm.GetReference());
-                                env[i].AasEnv.Submodels.Add(sm);
-                            }
-                            output = aas;
-                        }
-
-                        packageIndex = i;
-                        AasxServer.Program.signalNewData(2);
-                        return true;
+                        env[i] = ReadDB.GetPackageEnv(envFileName[i], aasDB);
+                        output = env[i].AasEnv.AssetAdministrationShells[0];
                     }
                 }
-            }
 
-            return false;
+                packageIndex = i;
+                Program.signalNewData(2);
+                return true;
+            }
         }
 
         public static bool loadPackageForSubmodel(string submodelIdentifier, out ISubmodel output, out int packageIndex)
@@ -432,96 +404,64 @@ namespace AasxServer
                     oldest = envimin;
             }
 
-            using (AasContext db = new AasContext())
+            lock (Program.changeAasxFile)
             {
-                var submodelDBList = db.SubmodelSets.Where(s => s.SubmodelId == submodelIdentifier);
-                if (submodelDBList.Any())
+                envFileName[i] = ReadDB.GetAASXPath(submodelId: submodelIdentifier);
+                if (envFileName[i].Equals(""))
+                    return false;
+                
+                if (env[i] != null)
                 {
-                    lock (Program.changeAasxFile)
+                    Console.WriteLine("UNLOAD: " + envFileName[i]);
+                    if (env[i].getWrite())
                     {
-                        if (env[i] != null)
-                        {
-                            Console.WriteLine("UNLOAD: " + envFileName[i]);
-                            if (env[i].getWrite())
-                            {
-                                saveEnv(i);
-                                env[i].setWrite(false);
-                            }
-                            env[i].Close();
-                        }
+                        saveEnv(i);
+                        env[i].setWrite(false);
+                    }
+                    env[i].Close();
+                }
 
-                        var submodelDB = submodelDBList.First();
-                        long aasxNum = submodelDB.AASXNum;
-                        var aasxDBList = db.AASXSets.Where(a => a.AASXNum == aasxNum);
-                        var aasxDB = aasxDBList.First();
-                        string fn = aasxDB.AASX;
-                        envFileName[i] = fn;
+                if (!withDbFiles)
+                {
+                    Console.WriteLine("LOAD: " + envFileName[i]);
+                    env[i] = new AdminShellPackageEnv(envFileName[i]);
 
-                        if (!withDbFiles)
-                        {
-                            Console.WriteLine("LOAD: " + fn);
-                            env[i] = new AdminShellPackageEnv(fn);
+                    DateTime timeStamp = DateTime.Now;
+                    var a = env[i].AasEnv.AssetAdministrationShells[0];
+                    a.TimeStampCreate = timeStamp;
+                    a.SetTimeStamp(timeStamp);
+                    foreach (var submodel in env[i].AasEnv.Submodels)
+                    {
+                        submodel.TimeStampCreate = timeStamp;
+                        submodel.SetTimeStamp(timeStamp);
+                        submodel.SetAllParents(timeStamp);
+                    }
 
-                            DateTime timeStamp = DateTime.Now;
-                            var a = env[i].AasEnv.AssetAdministrationShells[0];
-                            a.TimeStampCreate = timeStamp;
-                            a.SetTimeStamp(timeStamp);
-                            foreach (var submodel in env[i].AasEnv.Submodels)
-                            {
-                                submodel.TimeStampCreate = timeStamp;
-                                submodel.SetTimeStamp(timeStamp);
-                                submodel.SetAllParents(timeStamp);
-                            }
-
-                            var submodels = env[i].AasEnv.Submodels.Where(s => s.Id.Equals(submodelIdentifier));
-                            if (submodels.Any())
-                            {
-                                output = submodels.First();
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("LOAD Submodel: " + submodelDB.Idshort);
-                            env[i] = new AdminShellPackageEnv();
-                            env[i].SetFilename(fn);
-
-                            var aasDBList = db.AasSets.Where(a => a.AASXNum == submodelDB.AASXNum);
-                            var aasDB = aasDBList.First();
-
-                            AssetAdministrationShell aas = new AssetAdministrationShell(
-                                id: aasDB.AasId,
-                                idShort: aasDB.Idshort,
-                                assetInformation: new AssetInformation(AssetKind.Type, aasDB.AssetId)
-                                /* new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
-                                    new List<IKey>() { new Key(KeyTypes.GlobalReference, aasDB.AssetId) })
-                                ) */
-                                );
-                            env[i].AasEnv.AssetAdministrationShells.Add(aas);
-
-                            var submodelDBList2 = db.SubmodelSets
-                                .OrderBy(sm => sm.SubmodelNum)
-                                .Where(sm => sm.AasNum == aasDB.AasNum)
-                                .ToList();
-
-                            aas.Submodels = new List<AasCore.Aas3_0.IReference>();
-                            foreach (var sDB in submodelDBList2)
-                            {
-                                var sm = DBRead.getSubmodel(sDB.SubmodelId);
-                                aas.Submodels.Add(sm.GetReference());
-                                env[i].AasEnv.Submodels.Add(sm);
-                                if (sDB.SubmodelId == submodelIdentifier)
-                                    output = sm;
-                            }
-                        }
-
-                        packageIndex = i;
-                        AasxServer.Program.signalNewData(2);
-                        return true;
+                    var submodels = env[i].AasEnv.Submodels.Where(s => s.Id.Equals(submodelIdentifier));
+                    if (submodels.Any())
+                    {
+                        output = submodels.First();
                     }
                 }
-            }
+                else
+                {
+                    using (AasContext db = new AasContext())
+                    {
+                        var submodelDBList = db.SMSets.OrderBy(sm => sm.Id).Where(sm => sm.Identifier == submodelIdentifier).ToList();
+                        var submodelDB = submodelDBList.First();
 
-            return false;
+                        Console.WriteLine("LOAD Submodel: " + submodelDB.IdShort);
+                        var aasDBList = db.AASSets.Where(a => a.AASXId == submodelDB.AASXId);
+                        var aasDB = aasDBList.First();
+                        env[i] = ReadDB.GetPackageEnv(envFileName[i], aasDB);
+                        output = ReadDB.GetSubmodel(smDB: submodelDB);
+                    }
+                }
+
+                packageIndex = i;
+                Program.signalNewData(2);
+                return true;
+            }
         }
 
         public static int envimin = 0;
@@ -681,12 +621,11 @@ namespace AasxServer
         public static Dictionary<string, string> envVariables = new Dictionary<string, string>();
 
         public static bool withDb = false;
-        public static bool isPostgres = false;
         public static bool withDbFiles = false;
         public static int startIndex = 0;
 
         public static bool withPolicy = false;
-
+        
         public static bool showWeight = false;
         private class CommandLineArguments
         {
@@ -759,6 +698,7 @@ namespace AasxServer
                 }
                 Console.WriteLine("withPolicy: " + withPolicy);
             }
+
             if (envVariables.TryGetValue("SHOWWEIGHT", out w))
             {
                 if (w.ToLower() == "true" || w.ToLower() == "on")
@@ -846,6 +786,7 @@ namespace AasxServer
             {
                 Console.WriteLine($"Serving the AASXs from: {a.DataPath}");
                 AasxHttpContextHelper.DataPath = a.DataPath;
+                AasContext._dataPath = AasxHttpContextHelper.DataPath;
             }
             Program.runOPC = a.Opc;
             Program.noSecurity = a.NoSecurity;
@@ -940,8 +881,9 @@ namespace AasxServer
             }
             else
             {
-                externalBlazor = blazorHostPort;
+                externalBlazor = "http://" + blazorHostPort;
             }
+            Query.ExternalBlazor = externalBlazor;
 
             /*
             if (File.Exists("redirect.dat"))
@@ -1024,12 +966,11 @@ namespace AasxServer
                 createFilesOnly = true;
 
             int envi = 0;
-            int count = 0;
 
             // Migrate always
             if (withDb)
             {
-                if (isPostgres)
+                if (AasContext._isPostgres)
                 {
                     Console.WriteLine("Use POSTGRES");
                     using (PostgreAasContext db = new PostgreAasContext())
@@ -1050,55 +991,9 @@ namespace AasxServer
             // Clear DB
             if (withDb && startIndex == 0 && !createFilesOnly)
             {
-                /*
-                if (isPostgres)
-                {
-                    Console.WriteLine("Use POSTGRES");
-                    using (PostgreAasContext db = new PostgreAasContext())
-                    {
-                        db.Database.Migrate();
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Use SQLITE");
-                    using (SqliteAasContext db = new SqliteAasContext())
-                    {
-                        db.Database.Migrate();
-                    }
-                }
-                */
-
                 using (AasContext db = new AasContext())
                 {
-                    var task = Task.Run(async () => count = await db.DbConfigSets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.AASXSets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.AasSets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.SubmodelSets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.SMESets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.IValueSets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.SValueSets.ExecuteDeleteAsync());
-                    task.Wait();
-                    task = Task.Run(async () => count = await db.DValueSets.ExecuteDeleteAsync());
-                    task.Wait();
-
-                    DbConfigSet dbConfig = null;
-                    dbConfig = new DbConfigSet
-                    {
-                        Id = 1,
-                        AasCount = 0,
-                        SubmodelCount = 0,
-                        AASXCount = 0,
-                        SMECount = 0
-                    };
-                    db.Add(dbConfig);
-                    db.SaveChanges();
+                    db.ClearDB();
                 }
             }
 
@@ -1183,127 +1078,9 @@ namespace AasxServer
                             }
                             else
                             {
+                                VisitorAASX.LoadAASXInDB(fn, createFilesOnly, withDbFiles);
                                 envFileName[envi] = null;
                                 env[envi] = null;
-
-                                using (var asp = new AdminShellPackageEnv(fn, false, true))
-                                {
-                                    if (!createFilesOnly)
-                                    {
-                                        using (AasContext db = new AasContext())
-                                        {
-                                            var configDBList = db.DbConfigSets.Where(d => true);
-                                            var dbConfig = configDBList.FirstOrDefault();
-
-                                            long aasxNum = ++dbConfig.AASXCount;
-                                            var aasxDB = new AASXSet
-                                            {
-                                                AASXNum = aasxNum,
-                                                AASX = fn
-                                            };
-                                            db.Add(aasxDB);
-
-                                            var aas = asp.AasEnv.AssetAdministrationShells[0];
-                                            var aasId = aas.Id;
-                                            var assetId = aas.AssetInformation.GlobalAssetId;
-
-                                            // Check security
-                                            if (aas.IdShort.ToLower().Contains("globalsecurity"))
-                                            {
-                                                // AasxHttpContextHelper.securityInit(); // read users and access rights form AASX Security
-                                                // AasxHttpContextHelper.serverCertsInit(); // load certificates of auth servers
-                                            }
-                                            else
-                                            {
-                                                if (aasId != null && aasId != "" && assetId != null && assetId != "")
-                                                {
-                                                    VisitorAASX.LoadAASInDB(db, aas, aasxNum, asp, dbConfig);
-                                                }
-                                            }
-                                            db.SaveChanges();
-                                            /*
-                                            Task t = db.SaveChangesAsync();
-                                            if (saveTasks.Count == maxTasks)
-                                            {
-                                                // search for completed task
-                                                int i = 0;
-                                                while (!saveTasks[i].IsCompleted && i < maxTasks)
-                                                {
-                                                    i++;
-                                                }
-                                                if (i < maxTasks)
-                                                {
-                                                    taskIndex = i;
-                                                }
-                                                else
-                                                {
-                                                    await saveTasks[taskIndex];
-                                                }
-                                            }
-                                            if (taskIndex <= saveTasks.Count)
-                                            {
-                                                saveTasks.Add(t);
-                                            }
-                                            else
-                                            {
-                                                saveTasks[taskIndex] = t;
-                                            }
-                                            taskIndex++;
-                                            if (taskIndex >= maxTasks)
-                                                taskIndex = 0;
-                                            */
-                                        }
-                                    }
-
-                                    if (withDbFiles)
-                                    {
-                                        try
-                                        {
-                                            string fcopyt = name + "__thumbnail";
-                                            fcopyt = fcopyt.Replace("/", "_");
-                                            fcopyt = fcopyt.Replace(".", "_");
-                                            Uri dummy = null;
-                                            using (var st = asp.GetLocalThumbnailStream(ref dummy, init: true))
-                                            {
-                                                Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/files/" + fcopyt + ".dat");
-                                                var fst = System.IO.File.Create(AasxHttpContextHelper.DataPath + "/files/" + fcopyt + ".dat");
-                                                if (st != null)
-                                                {
-                                                    st.CopyTo(fst);
-                                                }
-                                            }
-                                        }
-                                        catch { }
-
-                                        using (var fileStream = new FileStream(AasxHttpContextHelper.DataPath + "/files/" + name + ".zip", FileMode.Create))
-                                        using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
-                                        {
-                                            var files = asp.GetListOfSupplementaryFiles();
-                                            foreach (var f in files)
-                                            {
-                                                try
-                                                {
-                                                    // string fcopy = name + "__" + f.Uri.OriginalString;
-                                                    // fcopy = fcopy.Replace("/", "_");
-                                                    // fcopy = fcopy.Replace(".", "_");
-                                                    using (var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true))
-                                                    {
-                                                        var archiveFile = archive.CreateEntry(f.Uri.OriginalString);
-                                                        Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/" + name + "/" + f.Uri.OriginalString);
-
-                                                        using (var archiveStream = archiveFile.Open())
-                                                        {
-                                                            // Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/files/" + fcopy + ".dat");
-                                                            // var fs = System.IO.File.Create(AasxHttpContextHelper.DataPath + "/files/" + fcopy + ".dat");
-                                                            s.CopyTo(archiveStream);
-                                                        }
-                                                    }
-                                                }
-                                                catch { }
-                                            }
-                                        }
-                                    }
-                                }
                             }
 
                             // check if signed
@@ -1590,7 +1367,7 @@ namespace AasxServer
             {
                 if (con["DatabaseConnection:ConnectionString"] != null)
                 {
-                    isPostgres = con["DatabaseConnection:ConnectionString"].ToLower().Contains("host");
+                    AasContext._isPostgres = con["DatabaseConnection:ConnectionString"].ToLower().Contains("host");
                 }
             }
 
