@@ -1,5 +1,4 @@
-﻿using AasCore.Aas3_0;
-using AdminShellNS;
+﻿using AdminShellNS;
 using Microsoft.EntityFrameworkCore;
 
 namespace AasxServerDB

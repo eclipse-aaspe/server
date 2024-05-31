@@ -5,7 +5,6 @@ using static AasCore.Aas3_0.Visitation;
 using Extensions;
 using System.IO.Compression;
 using Microsoft.IdentityModel.Tokens;
-using System.Linq;
 
 namespace AasxServerDB
 {
@@ -101,7 +100,7 @@ namespace AasxServerDB
             if (asp.AasEnv.AssetAdministrationShells != null && asp.AasEnv.Submodels != null)
                 foreach (var aas in asp.AasEnv.AssetAdministrationShells)
                 {
-                    var aasDB = aasxDB.AASSets.First(aasV => aas.Id == aasV.Identifier);
+                    var aasDB = aasxDB.AASSets.FirstOrDefault(aasV => aas.Id == aasV.Identifier);
                     if (aasDB != null && aas.Submodels != null)
                         foreach (var smRef in aas.Submodels)
                         {
