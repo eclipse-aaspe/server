@@ -150,8 +150,8 @@ namespace AasxServerDB
         public virtual AASXSet AASXSet { get; set; }
 
         [ForeignKey("AASSet")]
-        public int AASId { get; set; }
-        public virtual AASSet AASSet { get; set; }
+        public int? AASId { get; set; }
+        public virtual AASSet? AASSet { get; set; }
 
         public string? SemanticId { get; set; }
         public string? Identifier { get; set; }

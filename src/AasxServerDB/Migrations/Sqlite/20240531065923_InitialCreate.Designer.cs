@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AasxServerDB.Migrations.Sqlite
 {
     [DbContext(typeof(SqliteAasContext))]
-    [Migration("20240527060227_InitialCreate")]
+    [Migration("20240531065923_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -146,7 +146,7 @@ namespace AasxServerDB.Migrations.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("AASId")
+                    b.Property<int?>("AASId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("AASXId")
@@ -246,9 +246,7 @@ namespace AasxServerDB.Migrations.Sqlite
                 {
                     b.HasOne("AasxServerDB.AASSet", "AASSet")
                         .WithMany("SMSets")
-                        .HasForeignKey("AASId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("AASId");
 
                     b.HasOne("AasxServerDB.AASXSet", "AASXSet")
                         .WithMany("SMSets")

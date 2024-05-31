@@ -53,7 +53,7 @@ namespace AasxServerDB.Migrations.Sqlite
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     AASXId = table.Column<int>(type: "INTEGER", nullable: false),
-                    AASId = table.Column<int>(type: "INTEGER", nullable: false),
+                    AASId = table.Column<int>(type: "INTEGER", nullable: true),
                     SemanticId = table.Column<string>(type: "TEXT", nullable: true),
                     Identifier = table.Column<string>(type: "TEXT", nullable: true),
                     IdShort = table.Column<string>(type: "TEXT", nullable: true)
@@ -65,8 +65,7 @@ namespace AasxServerDB.Migrations.Sqlite
                         name: "FK_SMSets_AASSets_AASId",
                         column: x => x.AASId,
                         principalTable: "AASSets",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_SMSets_AASXSets_AASXId",
                         column: x => x.AASXId,

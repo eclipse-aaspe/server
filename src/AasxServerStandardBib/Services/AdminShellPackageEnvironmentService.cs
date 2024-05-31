@@ -3,7 +3,6 @@
     zur Foerderung der angewandten Forschung e.V.
  */
 using AasxServer;
-using AasxServerDB;
 using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
@@ -13,7 +12,6 @@ using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Packaging;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -417,6 +415,9 @@ namespace AasxServerStandardBib.Services
 
         public void ReplaceAssetAdministrationShellById(string aasIdentifier, IAssetAdministrationShell newAas)
         {
+            if (!aasIdentifier.Equals(newAas.Id))
+                throw new UnprocessableEntityException($"The AAS ID can currently not be changed.");
+
             var aas = GetAssetAdministrationShellById(aasIdentifier, out int packageIndex);
             if (aas != null && packageIndex != -1)
             {

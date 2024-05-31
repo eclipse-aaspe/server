@@ -54,7 +54,7 @@ namespace AasxServerDB.Migrations.Postgres
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     AASXId = table.Column<int>(type: "integer", nullable: false),
-                    AASId = table.Column<int>(type: "integer", nullable: false),
+                    AASId = table.Column<int>(type: "integer", nullable: true),
                     SemanticId = table.Column<string>(type: "text", nullable: true),
                     Identifier = table.Column<string>(type: "text", nullable: true),
                     IdShort = table.Column<string>(type: "text", nullable: true)
@@ -66,8 +66,7 @@ namespace AasxServerDB.Migrations.Postgres
                         name: "FK_SMSets_AASSets_AASId",
                         column: x => x.AASId,
                         principalTable: "AASSets",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_SMSets_AASXSets_AASXId",
                         column: x => x.AASXId,

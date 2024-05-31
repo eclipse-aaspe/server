@@ -5,6 +5,7 @@ using static AasCore.Aas3_0.Visitation;
 using Extensions;
 using System.IO.Compression;
 using Microsoft.IdentityModel.Tokens;
+using System.Linq;
 
 namespace AasxServerDB
 {
@@ -83,25 +84,35 @@ namespace AasxServerDB
 
         public static void LoadAASInDB(AdminShellPackageEnv asp, AASXSet aasxDB)
         {
-            if (aasxDB == null || asp == null || asp.AasEnv == null || asp.AasEnv.AssetAdministrationShells == null || asp.AasEnv.AssetAdministrationShells.Count <= 0)
+            if (aasxDB == null || asp == null || asp.AasEnv == null)
                 return;
 
-            foreach (IAssetAdministrationShell aas in asp.AasEnv.AssetAdministrationShells)
-            {
-                if (!aas.IdShort.IsNullOrEmpty() && aas.IdShort.ToLower().Contains("globalsecurity"))
-                {
-                    continue;
-                }
+            if (asp.AasEnv.AssetAdministrationShells != null)
+                foreach (var aas in asp.AasEnv.AssetAdministrationShells)
+                    if (!aas.Id.IsNullOrEmpty() && !aas.AssetInformation.GlobalAssetId.IsNullOrEmpty() &&
+                        !(!aas.IdShort.IsNullOrEmpty() && aas.IdShort.ToLower().Contains("globalsecurity")))
+                        new VisitorAASX(aasxDB: aasxDB).Visit(aas);
 
-                if (aas.Id.IsNullOrEmpty() || aas.AssetInformation.GlobalAssetId.IsNullOrEmpty())
-                    continue;
-                new VisitorAASX(aasxDB: aasxDB).Visit(aas);
-
-                if (asp.AasEnv.Submodels == null || asp.AasEnv.Submodels.Count <= 0)
-                    continue;
+            if (asp.AasEnv.Submodels != null)
                 foreach (var sm in asp.AasEnv.Submodels)
-                    new VisitorAASX(aasxDB: aasxDB).Visit(sm);
-            }
+                    if (!sm.Id.IsNullOrEmpty())
+                        new VisitorAASX(aasxDB: aasxDB).Visit(sm);
+
+            if (asp.AasEnv.AssetAdministrationShells != null && asp.AasEnv.Submodels != null)
+                foreach (var aas in asp.AasEnv.AssetAdministrationShells)
+                {
+                    var aasDB = aasxDB.AASSets.First(aasV => aas.Id == aasV.Identifier);
+                    if (aasDB != null && aas.Submodels != null)
+                        foreach (var smRef in aas.Submodels)
+                        {
+                            if (smRef.Keys != null && smRef.Keys.Count > 0)
+                            {
+                                var smDB = aasxDB.SMSets.FirstOrDefault(smV => smRef.Keys[0].Value == smV.Identifier);
+                                if (smDB != null)
+                                    smDB.AASSet = aasDB;
+                            }
+                        }
+                }
         }
 
         private string shortType(ISubmodelElement sme)
@@ -349,7 +360,7 @@ namespace AasxServerDB
                 semanticId = "";
             _smDB = new SMSet
             {
-                AASSet = _aasxDB.AASSets.First(),
+                //AASSet = _aasxDB.AASSets.First(),
                 SemanticId = semanticId,
                 Identifier = that.Id,
                 IdShort = that.IdShort

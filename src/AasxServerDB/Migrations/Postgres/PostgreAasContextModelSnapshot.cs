@@ -160,7 +160,7 @@ namespace AasxServerDB.Migrations.Postgres
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AASId")
+                    b.Property<int?>("AASId")
                         .HasColumnType("integer");
 
                     b.Property<int>("AASXId")
@@ -262,9 +262,7 @@ namespace AasxServerDB.Migrations.Postgres
                 {
                     b.HasOne("AasxServerDB.AASSet", "AASSet")
                         .WithMany("SMSets")
-                        .HasForeignKey("AASId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("AASId");
 
                     b.HasOne("AasxServerDB.AASXSet", "AASXSet")
                         .WithMany("SMSets")

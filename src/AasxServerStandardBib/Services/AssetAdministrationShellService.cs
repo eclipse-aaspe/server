@@ -3,6 +3,7 @@ using AasxServer;
 using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
+using AdminShellNS;
 using AdminShellNS.Extensions;
 using Extensions;
 using Microsoft.IdentityModel.Tokens;
@@ -19,6 +20,7 @@ namespace AasxServerStandardBib.Services
         private readonly IAdminShellPackageEnvironmentService _packageEnvService;
         private readonly IMetamodelVerificationService _verificationService;
         private readonly ISubmodelService _submodelService;
+        private AdminShellPackageEnv[] _packages;
 
         public AssetAdministrationShellService(IAppLogger<AssetAdministrationShellService> logger, IAdminShellPackageEnvironmentService packageEnvService, IMetamodelVerificationService verificationService, ISubmodelService submodelService)
         {
@@ -26,6 +28,7 @@ namespace AasxServerStandardBib.Services
             _packageEnvService = packageEnvService;
             _verificationService = verificationService;
             _submodelService = submodelService;
+            _packages = Program.env;
         }
 
         public IAssetAdministrationShell CreateAssetAdministrationShell(IAssetAdministrationShell body)
@@ -52,7 +55,7 @@ namespace AasxServerStandardBib.Services
             _verificationService.VerifyRequestBody(body);
 
             // TODO (jtikekar, 2023-09-04): to check if submodel with requested submodelReference exists in the server
-            var aas = _packageEnvService.GetAssetAdministrationShellById(aasIdentifier, out _);
+            var aas = _packageEnvService.GetAssetAdministrationShellById(aasIdentifier, out int packageIndex);
 
             if (aas != null)
             {
@@ -88,6 +91,7 @@ namespace AasxServerStandardBib.Services
                         output = aas.Submodels.Last();
                     }
                 }
+                _packages[packageIndex].setWrite(true);
             }
 
             return output;
@@ -150,7 +154,7 @@ namespace AasxServerStandardBib.Services
 
         public void DeleteSubmodelReferenceById(string aasIdentifier, string submodelIdentifier)
         {
-            var aas = _packageEnvService.GetAssetAdministrationShellById(aasIdentifier, out _);
+            var aas = _packageEnvService.GetAssetAdministrationShellById(aasIdentifier, out int packageIndex);
 
             if (aas != null)
             {
@@ -162,6 +166,7 @@ namespace AasxServerStandardBib.Services
                     if (deleted)
                     {
                         _logger.LogDebug($"Deleted submodel reference with id {submodelIdentifier} from the AAS with id {aasIdentifier}.");
+                        _packages[packageIndex].setWrite(true);
                         Program.signalNewData(1);
                     }
                     else

@@ -8,34 +8,18 @@ namespace AasxServerDB
     {
         static public void EditAAS(AdminShellPackageEnv env)
         {
-            Dictionary<string, int> aasToDeleteAASXIdsDic; 
-
-            var aasList = env.AasEnv.AssetAdministrationShells;
-            var aasIds = aasList.Select(x => x.Id).ToList();
-
             using (AasContext db = new AasContext())
             {
                 // Delets automtically from DB
-                aasToDeleteAASXIdsDic = db.AASSets.Where(x => aasIds.Contains(x.Identifier)).ToDictionary(x => x.Identifier, x => x.AASXId);
-                db.AASSets.Where(x => aasIds.Contains(x.Identifier)).ExecuteDelete();
+                db.AASXSets.Where(a => a.AASX == env.Filename).ExecuteDelete();
 
                 // Load Everything back in
-                foreach (IAssetAdministrationShell aas in aasList)
+                var aasxDB = new AASXSet
                 {
-                    int aasxId = 0;
-                    if (aasToDeleteAASXIdsDic.ContainsKey(aas.Id))
-                        aasxId = aasToDeleteAASXIdsDic[aas.Id];
-
-                    AASXSet aasxDBOld = db.AASXSets.Where(a => a.Id == aasxId).ToList<AASXSet>().First();
-                    var aasxDB = new AASXSet
-                    {
-                        AASX = aasxDBOld.AASX
-                    };
-                    db.AASXSets.Where(a => a.Id == aasxId).ExecuteDelete();
-
-                    VisitorAASX.LoadAASInDB(env, aasxDB);
-                    db.Add(aasxDB);
-                }
+                    AASX = env.Filename
+                };
+                VisitorAASX.LoadAASInDB(env, aasxDB);
+                db.Add(aasxDB);
                 db.SaveChanges();
             }
             env.setWrite(false);
