@@ -1772,7 +1772,7 @@
                                                         if (TypeOfApproval[count] == "")
                                                             TypeOfApproval[count] = "ATEX";
                                                     }
-                                                    if (f.Value.ToLower().Contains("iecex") && TypeOfApproval[count] != "ATEX")
+                                                    if (f.Value.ToLower().Contains("iecex") && TypeOfApproval[count] == "")
                                                     {
                                                         PreviewFile[count] = f.Value;
                                                         var path = getPath(f);
