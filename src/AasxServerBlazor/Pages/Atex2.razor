@@ -1769,9 +1769,10 @@
                                                         {
                                                             PreviewFileUrl[count] = path.Replace("PreviewFile", "DigitalFile");
                                                         }
-                                                        TypeOfApproval[count] = "ATEX";
+                                                        if (TypeOfApproval[count] == "")
+                                                            TypeOfApproval[count] = "ATEX";
                                                     }
-                                                    if (f.Value.ToLower().Contains("iecex") && TypeOfApproval[count] != "ATEX")
+                                                    if (f.Value.ToLower().Contains("iecex") && TypeOfApproval[count] == "")
                                                     {
                                                         PreviewFile[count] = f.Value;
                                                         var path = getPath(f);
@@ -1779,7 +1780,8 @@
                                                         {
                                                             PreviewFileUrl[count] = path.Replace("PreviewFile", "DigitalFile");
                                                         }
-                                                        TypeOfApproval[count] = "IECEX";
+                                                        if (TypeOfApproval[count] == "")
+                                                            TypeOfApproval[count] = "IECEX";
                                                     }
                                                 }
                                             }
