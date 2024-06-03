@@ -388,3 +388,4 @@ healthchecksdb
 /Grapevine/Shared/UriSchemeExtensions.cs
 /src/AasxServerStandardBib/AdminShell.cs.old
 /src/AasxServerBlazor/temp.aasx
+/src/AasxServerBlazor/Properties/launchSettings.json
