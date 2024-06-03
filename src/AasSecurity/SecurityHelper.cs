@@ -20,42 +20,43 @@ namespace AasSecurity
 
         private static void ParseSecurityMetamodel()
         {
+            if (Program.env == null)
+            {
+                return;
+            }
+
             foreach (var env in Program.env)
             {
-                if (env != null && env.AasEnv != null && env.AasEnv.AssetAdministrationShells != null)
+                if (env is not {AasEnv.AssetAdministrationShells: not null})
                 {
-                    foreach (var aas in env.AasEnv.AssetAdministrationShells)
-                    {
-                        if (aas != null && aas.Submodels != null)
-                        {
-                            foreach (var submodelReference in aas.Submodels)
-                            {
-                                var submodel = env.AasEnv.FindSubmodel(submodelReference);
-                                if (submodel != null && !string.IsNullOrEmpty(submodel.IdShort))
-                                {
-                                    switch (submodel.IdShort.ToLower())
-                                    {
-                                        case "securitysettingsforserver":
-                                            {
-                                                //_logger.LogDebug($"Parsing the submodel {submodel.IdShort}");
-                                                SecuritySettingsForServerParser.ParseSecuritySettingsForServer(env, submodel);
-                                            }
-                                            break;
-                                        case "securitymetamodelforaas":
-                                        case "securitymetamodelforserver":
-                                            {
-                                                //_logger.LogDebug($"Parsing the submodel {submodel.IdShort}");
-                                                SecurityMetamodelParser.ParserSecurityMetamodel(env, submodel);
-                                            }
-                                            break;
-                                        default:
-                                            {
+                    continue;
+                }
 
-                                            }
-                                            break;
-                                    }
-                                }
+                foreach (var aas in env.AasEnv.AssetAdministrationShells)
+                {
+                    if (aas is not {Submodels: not null})
+                    {
+                        continue;
+                    }
+
+                    foreach (var submodel in aas.Submodels.Select(submodelReference => env.AasEnv.FindSubmodel(submodelReference)).OfType<ISubmodel>()
+                                 .Where(submodel => !string.IsNullOrEmpty(submodel.IdShort)))
+                    {
+                        switch (submodel.IdShort?.ToLower())
+                        {
+                            case "securitysettingsforserver":
+                            {
+                                //_logger.LogDebug($"Parsing the submodel {submodel.IdShort}");
+                                SecuritySettingsForServerParser.ParseSecuritySettingsForServer(env, submodel);
                             }
+                                break;
+                            case "securitymetamodelforaas":
+                            case "securitymetamodelforserver":
+                            {
+                                //_logger.LogDebug($"Parsing the submodel {submodel.IdShort}");
+                                SecurityMetamodelParser.ParserSecurityMetamodel(env, submodel);
+                            }
+                                break;
                         }
                     }
                 }
