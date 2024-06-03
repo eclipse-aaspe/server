@@ -7,10 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Updated
-
-- **AasxServerStandardBib**: Microsoft.IdentityModel.Tokens from **6.13.1** to **6.34.0** because of a package vulnerability. (@Freezor)
-  - Fixing open security issue: CVE-2024-21319
 
 ### Changed
 
@@ -18,6 +14,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cleaned BlazorServerStarter in general to have an easier understanding on the process (@Freezor)
 - Extracted dependency registration into DependencyRegistry.cs and server configuration into ServerConfiguration.cs from Startup.cs (@Freezor)
 - Refactored ServerConfiguration.cs into smaller parts and applying Clean code and SOLID principles. (@Freezor)
+
+### Fixed
+
+- Fixed Bug in SecurityHelper.ParseSecurityMetamodel() when Program.env is null. (@Freezor)
+
+### Updated
+
+- **AasxServerStandardBib**: Microsoft.IdentityModel.Tokens from **6.13.1** to **6.34.0** because of a package vulnerability. (@Freezor)
+  - Fixing open security issue: CVE-2024-21319
 
 ## [Released]
 
