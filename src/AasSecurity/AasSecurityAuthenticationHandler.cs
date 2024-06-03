@@ -5,44 +5,59 @@ using Microsoft.Extensions.Options;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 
-namespace AasSecurity
+namespace AasSecurity;
+
+public class AasSecurityAuthenticationHandler : AuthenticationHandler<AasSecurityAuthenticationOptions>
 {
-    public class AasSecurityAuthenticationHandler : AuthenticationHandler<AasSecurityAuthenticationOptions>
+    private static readonly ILogger Logger = ApplicationLogging.CreateLogger("AasSecurityAuthenticationHandler");
+    private readonly ISecurityService _securityService;
+
+    public AasSecurityAuthenticationHandler(
+        IOptionsMonitor<AasSecurityAuthenticationOptions> options,
+        ILoggerFactory logger,
+        UrlEncoder encoder,
+        ISystemClock clock,
+        ISecurityService securityService)
+        : base(options, logger, encoder, clock)
     {
-        private static ILogger _logger = ApplicationLogging.CreateLogger("AasSecurityAuthenticationHandler");
-        private readonly ISecurityService _securityService;
+        _securityService = securityService;
+    }
 
-        public AasSecurityAuthenticationHandler(IOptionsMonitor<AasSecurityAuthenticationOptions> options, ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock, ISecurityService securityService) : base(options, logger, encoder, clock)
+    protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+    {
+        Logger.LogDebug("Authenticating the request.");
+
+        if (GlobalSecurityVariables.WithAuthentication)
         {
-            _securityService = securityService;
+            return AuthenticateRequestAsync();
         }
 
+        Logger.LogDebug("Server is configured without security. Therefore, skipping authentication.");
+        return Task.FromResult(CreateAuthenticationTicket());
+    }
 
-        protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
+    private Task<AuthenticateResult> AuthenticateRequestAsync()
+    {
+        var httpMethod = Request.Method;
+        var httpRoute = Request.Path.Value;
+        var context = Request.HttpContext;
+
+        if (httpRoute == null)
         {
-            _logger.LogDebug("Authenticating the request.");
-            if (!GlobalSecurityVariables.WithAuthentication)
-            {
-                _logger.LogDebug("Server is configured without security. Therefore, skipping authentication.");
-                var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(Enumerable.Empty<Claim>(), Scheme.Name));
-                var authenticationTicket = new AuthenticationTicket(claimsPrincipal, Scheme.Name);
-
-                return AuthenticateResult.Success(authenticationTicket);
-            }
-
-            var httpMethod = Request.Method;
-            var httpRoute = Request.Path.Value;
-            var context = Request.HttpContext;
-            var ticket = _securityService.AuthenticateRequest(context, httpRoute, httpMethod, Scheme.Name);
-            if (ticket == null)
-            {
-                return AuthenticateResult.Fail(new Exception($"Request cannot be authenticated."));
-            }
-
-            _logger.LogInformation($"Request is successfully authenticated.");
-            return AuthenticateResult.Success(ticket);
-
+            Logger.LogError("Request route is null. Unable to authenticate.");
+            return Task.FromResult(AuthenticateResult.Fail("Request route is null. Unable to authenticate."));
         }
 
+        var ticket = _securityService.AuthenticateRequest(context, httpRoute, httpMethod, Scheme.Name);
+
+        Logger.LogInformation("Request is successfully authenticated.");
+        return Task.FromResult(AuthenticateResult.Success(ticket));
+    }
+
+    private AuthenticateResult CreateAuthenticationTicket()
+    {
+        var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(Enumerable.Empty<Claim>(), Scheme.Name));
+        var authenticationTicket = new AuthenticationTicket(claimsPrincipal, Scheme.Name);
+        return AuthenticateResult.Success(authenticationTicket);
     }
 }

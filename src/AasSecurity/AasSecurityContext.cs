@@ -1,39 +1,26 @@
 ﻿using AasSecurity.Exceptions;
 using AasSecurity.Models;
 
-namespace AasSecurity
-{
-    public class AasSecurityContext
-    {
-        public AasSecurityContext(string accessRole, string route, string httpOperation)
-        {
-            AccessRole = accessRole;
-            Route = route;
-            switch (httpOperation.ToLower())
-            {
-                case "post":
-                    NeededRights = AccessRights.CREATE;
-                    break;
-                case "head":
-                case "get":
-                    NeededRights = AccessRights.READ;
-                    break;
-                case "put":
-                    NeededRights = AccessRights.UPDATE;
-                    break;
-                case "delete":
-                    NeededRights = AccessRights.DELETE;
-                    break;
-                case "patch":
-                    NeededRights = AccessRights.UPDATE;
-                    break;
-                default:
-                    throw new AuthorizationException($"Unsupported HTTP Operation {httpOperation}");
-            }
-        }
+namespace AasSecurity;
 
-        internal string AccessRole { get; }
-        internal string Route { get; }
-        internal AccessRights NeededRights { get; set; }
+public class AasSecurityContext
+{
+    public AasSecurityContext(string accessRole, string route, string httpOperation)
+    {
+        AccessRole = accessRole;
+        Route = route;
+        NeededRights = httpOperation.ToLower() switch
+        {
+            "post" => AccessRights.CREATE,
+            "head" or "get" => AccessRights.READ,
+            "put" => AccessRights.UPDATE,
+            "delete" => AccessRights.DELETE,
+            "patch" => AccessRights.UPDATE,
+            _ => throw new AuthorizationException($"Unsupported HTTP Operation {httpOperation}")
+        };
     }
+
+    internal string AccessRole { get; }
+    internal string Route { get; }
+    internal AccessRights NeededRights { get; set; }
 }

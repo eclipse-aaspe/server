@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 
-namespace AasSecurity
+namespace AasSecurity;
+
+public class AasSecurityAuthenticationOptions : AuthenticationSchemeOptions
 {
-    public class AasSecurityAuthenticationOptions : AuthenticationSchemeOptions
-    {
-    }
 }
