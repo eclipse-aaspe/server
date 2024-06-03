@@ -1,66 +1,81 @@
 ﻿using AasxServer;
 using Extensions;
 using System.Security.Cryptography.X509Certificates;
-using AdminShellNS;
 
-namespace AasSecurity;
-
-public static class SecurityHelper
+namespace AasSecurity
 {
-    public static void SecurityInit()
+    /**
+     * This class initiates the security from Program.cs
+     */
+    public static class SecurityHelper
     {
-        GlobalSecurityVariables.WithAuthentication = !Program.noSecurity;
-        ParseSecurityMetamodel();
-    }
+        //private static ILogger _logger = ApplicationLogging.CreateLogger("SecurityHelper");
 
-    private static void ParseSecurityMetamodel()
-    {
-        foreach (var env in Program.env.Where(IsValidEnvironment))
+        public static void SecurityInit()
         {
-            foreach (var submodel in GetAllValidSubmodels(env))
+            GlobalSecurityVariables.WithAuthentication = !Program.noSecurity;
+            //_logger.LogInformation($"IsSecurityEnabled: {GlobalSecurityVariables.WithAuthentication}");
+            ParseSecurityMetamodel();
+        }
+
+        private static void ParseSecurityMetamodel()
+        {
+            foreach (var env in Program.env)
             {
-                ProcessSecuritySubmodel(env, submodel);
+                if (env != null && env.AasEnv != null && env.AasEnv.AssetAdministrationShells != null)
+                {
+                    foreach (var aas in env.AasEnv.AssetAdministrationShells)
+                    {
+                        if (aas != null && aas.Submodels != null)
+                        {
+                            foreach (var submodelReference in aas.Submodels)
+                            {
+                                var submodel = env.AasEnv.FindSubmodel(submodelReference);
+                                if (submodel != null && !string.IsNullOrEmpty(submodel.IdShort))
+                                {
+                                    switch (submodel.IdShort.ToLower())
+                                    {
+                                        case "securitysettingsforserver":
+                                            {
+                                                //_logger.LogDebug($"Parsing the submodel {submodel.IdShort}");
+                                                SecuritySettingsForServerParser.ParseSecuritySettingsForServer(env, submodel);
+                                            }
+                                            break;
+                                        case "securitymetamodelforaas":
+                                        case "securitymetamodelforserver":
+                                            {
+                                                //_logger.LogDebug($"Parsing the submodel {submodel.IdShort}");
+                                                SecurityMetamodelParser.ParserSecurityMetamodel(env, submodel);
+                                            }
+                                            break;
+                                        default:
+                                            {
+
+                                            }
+                                            break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
-    }
 
-    private static bool IsValidEnvironment(AdminShellPackageEnv env)
-    {
-        return env?.AasEnv?.AssetAdministrationShells != null;
-    }
-
-    private static IEnumerable<ISubmodel> GetAllValidSubmodels(AdminShellPackageEnv env)
-    {
-        return (env.AasEnv.AssetAdministrationShells ?? new List<IAssetAdministrationShell>())
-            .Where(aas => aas?.Submodels != null)
-            .SelectMany(aas => (aas.Submodels ?? new List<IReference>()).Select(submodelReference => env.AasEnv.FindSubmodel(submodelReference)))
-            .Where(submodel => !string.IsNullOrEmpty(submodel.IdShort));
-    }
-
-    private static void ProcessSecuritySubmodel(AdminShellPackageEnv env, ISubmodel submodel)
-    {
-        switch (submodel.IdShort?.ToLower())
+        internal static X509Certificate2? FindServerCertificate(string serverName)
         {
-            case "securitysettingsforserver":
-                SecuritySettingsForServerParser.ParseSecuritySettingsForServer(env, submodel);
-                break;
-            case "securitymetamodelforaas":
-            case "securitymetamodelforserver":
-                SecurityMetamodelParser.ParserSecurityMetamodel(env, submodel);
-                break;
-        }
-    }
-
-    public static X509Certificate2? FindServerCertificate(string serverName)
-    {
-        for (var i = 0; i < GlobalSecurityVariables.ServerCertFileNames.Count; i++)
-        {
-            if (Path.GetFileName(GlobalSecurityVariables.ServerCertFileNames[i]).Equals($"{serverName}.cer", StringComparison.OrdinalIgnoreCase))
+            if (GlobalSecurityVariables.ServerCertFileNames != null)
             {
-                return GlobalSecurityVariables.ServerCertificates[i];
+                for (int i = 0; i < GlobalSecurityVariables.ServerCertFileNames.Count; i++)
+                {
+                    if (Path.GetFileName(GlobalSecurityVariables.ServerCertFileNames[i]) == serverName + ".cer")
+                    {
+                        return GlobalSecurityVariables.ServerCertificates[i];
+                    }
+                }
             }
-        }
 
-        return null;
+            return null;
+        }
     }
 }

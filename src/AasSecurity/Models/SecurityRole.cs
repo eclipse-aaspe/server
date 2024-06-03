@@ -13,7 +13,7 @@ namespace AasSecurity.Models
         internal string ObjectPath { get; set; }
         internal AccessRights Permission { get; set; }
         internal KindOfPermissionEnum? Kind { get; set; }
-        internal ISubmodel? Submodel { get; set; }
+        internal ISubmodel Submodel { get; set; }
         internal string SemanticId { get; set; }
         internal ISubmodelElementCollection Usage { get; set; }
         internal string AAS { get; set; }
