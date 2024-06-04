@@ -138,6 +138,10 @@ namespace AasxServerDB
         public string? AssetKind { get; set; }
         public string? GlobalAssetId { get; set; }
 
+        public DateTime TimeStampCreate { get; set; }
+        public DateTime TimeStamp { get; set; }
+        public DateTime TimeStampTree { get; set; }
+
         public virtual ICollection<SMSet> SMSets { get; } = new List<SMSet>();
     }
 
@@ -157,6 +161,10 @@ namespace AasxServerDB
         public string? Identifier { get; set; }
         public string? IdShort { get; set; }
 
+        public DateTime TimeStampCreate { get; set; }
+        public DateTime TimeStamp { get; set; }
+        public DateTime TimeStampTree { get; set; }
+
         public virtual ICollection<SMESet> SMESets { get; } = new List<SMESet>();
     }
 
@@ -175,6 +183,10 @@ namespace AasxServerDB
         public string? ValueType { get; set; }
         public string? SemanticId { get; set; }
         public string? IdShort { get; set; }
+
+        public DateTime TimeStampCreate { get; set; }
+        public DateTime TimeStamp { get; set; }
+        public DateTime TimeStampTree { get; set; }
 
         public virtual ICollection<IValueSet> IValueSets { get; } = new List<IValueSet>();
         public virtual ICollection<DValueSet> DValueSets { get; } = new List<DValueSet>();

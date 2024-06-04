@@ -18,7 +18,11 @@ namespace AasxServerDB
                     id: aasDB.Identifier,
                     idShort: aasDB.IdShort,
                     assetInformation: new AssetInformation(AssetKind.Type, aasDB.GlobalAssetId),
-                    submodels: new List<AasCore.Aas3_0.IReference>());
+                    submodels: new List<AasCore.Aas3_0.IReference>()
+                );
+                aas.TimeStamp = aasDB.TimeStamp;
+                aas.TimeStampCreate = aasDB.TimeStampCreate;
+                aas.TimeStampTree = aasDB.TimeStampTree;
 
                 AdminShellPackageEnv aasEnv = new AdminShellPackageEnv();
                 aasEnv.SetFilename(path);
@@ -62,13 +66,11 @@ namespace AasxServerDB
                 submodel.IdShort = smDB.IdShort;
                 submodel.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
                     new List<IKey>() { new Key(KeyTypes.GlobalReference, smDB.SemanticId) });
+                submodel.TimeStamp = smDB.TimeStamp;
+                submodel.TimeStampCreate = smDB.TimeStampCreate;
+                submodel.TimeStampTree = smDB.TimeStampTree;
 
                 LoadSME(submodel, null, null, SMEList, null);
-
-                DateTime timeStamp = DateTime.Now;
-                submodel.TimeStampCreate = timeStamp;
-                submodel.SetTimeStamp(timeStamp);
-                submodel.SetAllParents(timeStamp);
 
                 return submodel;
             }           
@@ -119,6 +121,9 @@ namespace AasxServerDB
                     nextSME.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
                         new List<IKey>() { new Key(KeyTypes.GlobalReference, smel.SemanticId) });
                 }
+                nextSME.TimeStamp = smel.TimeStamp;
+                nextSME.TimeStampCreate = smel.TimeStampCreate;
+                nextSME.TimeStampTree = smel.TimeStampTree;
 
                 if (sme == null)
                 {

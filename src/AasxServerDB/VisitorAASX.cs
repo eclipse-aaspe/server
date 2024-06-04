@@ -241,6 +241,10 @@ namespace AasxServerDB
 
         private SMESet collectSMEData(ISubmodelElement sme)
         {
+            DateTime currentDataTime = DateTime.UtcNow;
+            DateTime timeStamp = (sme.TimeStamp == default(DateTime)) ? currentDataTime : sme.TimeStamp;
+            DateTime timeStampCreate = (sme.TimeStampCreate == default(DateTime)) ? currentDataTime : sme.TimeStampCreate;
+            DateTime timeStampTree = (sme.TimeStampTree == default(DateTime)) ? currentDataTime : sme.TimeStampTree;
             string st = shortType(sme);
             var semanticId = sme.SemanticId.GetAsIdentifier();
             if (semanticId == null)
@@ -252,7 +256,10 @@ namespace AasxServerDB
                 SMEType = st,
                 ValueType = vt,
                 SemanticId = semanticId,
-                IdShort = sme.IdShort
+                IdShort = sme.IdShort,
+                TimeStamp = timeStamp,
+                TimeStampCreate = timeStampCreate,
+                TimeStampTree = timeStampTree
             };
             _smDB.SMESets.Add(smeDB);
 
@@ -325,12 +332,19 @@ namespace AasxServerDB
         }
         public override void VisitAssetAdministrationShell(IAssetAdministrationShell that)
         {
+            DateTime currentDataTime = DateTime.UtcNow;
+            DateTime timeStamp = (that.TimeStamp == default(DateTime))? currentDataTime : that.TimeStamp;
+            DateTime timeStampCreate = (that.TimeStampCreate == default(DateTime)) ? currentDataTime : that.TimeStampCreate;
+            DateTime timeStampTree = (that.TimeStampTree == default(DateTime)) ? currentDataTime : that.TimeStampTree;
             var aasDB = new AASSet
             {
                 Identifier = that.Id,
                 IdShort = that.IdShort,
                 AssetKind = that.AssetInformation.AssetKind.ToString(),
                 GlobalAssetId = that.AssetInformation.GlobalAssetId,
+                TimeStamp = timeStamp,
+                TimeStampCreate = timeStampCreate,
+                TimeStampTree = timeStampTree
             };
             _aasxDB.AASSets.Add(aasDB);
         }
@@ -354,15 +368,21 @@ namespace AasxServerDB
         }
         public override void VisitSubmodel(ISubmodel that)
         {
+            DateTime currentDataTime = DateTime.UtcNow;
+            DateTime timeStamp = (that.TimeStamp == default(DateTime)) ? currentDataTime : that.TimeStamp;
+            DateTime timeStampCreate = (that.TimeStampCreate == default(DateTime)) ? currentDataTime : that.TimeStampCreate;
+            DateTime timeStampTree = (that.TimeStampTree == default(DateTime)) ? currentDataTime : that.TimeStampTree;
             var semanticId = that.SemanticId.GetAsIdentifier();
             if (semanticId == null)
                 semanticId = "";
             _smDB = new SMSet
             {
-                //AASSet = _aasxDB.AASSets.First(),
                 SemanticId = semanticId,
                 Identifier = that.Id,
-                IdShort = that.IdShort
+                IdShort = that.IdShort,
+                TimeStamp = timeStamp,
+                TimeStampCreate = timeStampCreate,
+                TimeStampTree = timeStampTree
             };
             _aasxDB.SMSets.Add(_smDB);
             base.VisitSubmodel(that);

@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AasxServerDB.Migrations.Sqlite
 {
     [DbContext(typeof(SqliteAasContext))]
-    [Migration("20240531065923_InitialCreate")]
+    [Migration("20240604060814_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -39,6 +39,15 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Identifier")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("TimeStamp")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("TimeStampCreate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("TimeStampTree")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -128,6 +137,15 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Property<string>("SemanticId")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime>("TimeStamp")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("TimeStampCreate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("TimeStampTree")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("ValueType")
                         .HasColumnType("TEXT");
 
@@ -159,6 +177,15 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SemanticId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("TimeStamp")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("TimeStampCreate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("TimeStampTree")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
