@@ -653,6 +653,7 @@ namespace AasxServer
         public static bool edit = false;
         public static string externalRest = "";
         public static string externalBlazor = "";
+        public static string externalRepository = "";
         public static bool readTemp = false;
         public static int saveTemp = 0;
         public static DateTime saveTempDt = new DateTime();
@@ -734,7 +735,7 @@ namespace AasxServer
             }
 
             // Read environment variables
-            string[] evlist = { "PLCNEXTTARGET", "WITHPOLICY", "SHOWWEIGHT" };
+            string[] evlist = { "PLCNEXTTARGET", "WITHPOLICY", "SHOWWEIGHT", "AASREPOSITORY" };
             foreach (var ev in evlist)
             {
                 string v = System.Environment.GetEnvironmentVariable(ev);
@@ -771,6 +772,7 @@ namespace AasxServer
                 }
                 Console.WriteLine("showWeight: " + showWeight);
             }
+            envVariables.TryGetValue("AASREPOSITORY", out externalRepository);
 
             if (a.Connect != null)
             {
@@ -944,6 +946,8 @@ namespace AasxServer
             }
             externalBlazor = externalBlazor.Replace("\r", "");
             externalBlazor = externalBlazor.Replace("\n", "");
+            if (externalRepository == "")
+                externalRepository = externalBlazor;
 
             /*
             if (File.Exists("redirect.dat"))

@@ -657,7 +657,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
             var e = new Endpoint();
             e.ProtocolInformation = new ProtocolInformation();
             e.ProtocolInformation.Href =
-                Program.externalBlazor + "/shells/" +
+                Program.externalRepository + "/shells/" +
                 Base64UrlEncoder.Encode(ad.Id);
             Console.WriteLine("AAS " + ad.IdShort + " " + e.ProtocolInformation.Href);
             e.Interface = "AAS-1.0";
@@ -687,7 +687,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                         var esm = new Models.Endpoint();
                         esm.ProtocolInformation = new ProtocolInformation();
                         esm.ProtocolInformation.Href =
-                            AasxServer.Program.externalBlazor + "/shells/" +
+                            AasxServer.Program.externalRepository + "/shells/" +
                             Base64UrlEncoder.Encode(ad.Id) + "/submodels/" +
                             Base64UrlEncoder.Encode(sd.Id);
                         // Console.WriteLine("SM " + sd.IdShort + " " + esm.ProtocolInformation.EndpointAddress);
