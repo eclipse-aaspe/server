@@ -1,5 +1,6 @@
 ﻿using Extensions;
 using Microsoft.IdentityModel.Tokens;
+using System.Runtime.Intrinsics.X86;
 
 namespace AasxServerDB
 {
@@ -67,20 +68,19 @@ namespace AasxServerDB
             Console.WriteLine("Total number of SMEs " + new AasContext().SMESets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
 
             watch.Restart();
+
             bool withSmId = !smSemanticId.IsNullOrEmpty();
-            List<SMSet> smList = new List<SMSet>();
-            if (withSmId)
-                smList = getSMSet(smSemanticId);
-            List<SMESet> smeList = getSMESet(semanticId);
-            List<SValueSet> sValueList = getSValueSet(contains, equal);
-            List<IValueSet> iValueList = new List<IValueSet>();
-            List<DValueSet> dValueList = new List<DValueSet>();
-            if (contains.IsNullOrEmpty())
-            {
-                iValueList = getIValueSet(equal, lower, upper);
-                dValueList = getDValueSet(equal, lower, upper);
-            }
-            List<smeWithValue> smeValue = combineSMEValue(withSmId, smList, smeList, sValueList, iValueList, dValueList);
+            bool withSmeId = !semanticId.IsNullOrEmpty();
+            bool withValue = !(equal.IsNullOrEmpty() && contains.IsNullOrEmpty() && lower.IsNullOrEmpty() && upper.IsNullOrEmpty());
+
+            List<SMSet> smList = withSmId ? getSMSet(smSemanticId) : new List<SMSet>();
+            List<SMESet> smeList = withSmeId ? getSMESet(semanticId) : new List<SMESet>();
+
+            List<SValueSet> sValueList = withSmeId ? getSValueSet(contains, equal) : new List<SValueSet>();
+            List<IValueSet> iValueList = (withSmeId && contains.IsNullOrEmpty()) ? getIValueSet(equal, lower, upper) : new List<IValueSet>();
+            List<DValueSet> dValueList = (withSmeId && contains.IsNullOrEmpty()) ? getDValueSet(equal, lower, upper) : new List<DValueSet>();
+
+            List<smeWithValue> smeValue = combineSMEValue(withSmId, smList, withSmeId, smeList, withValue, sValueList, iValueList, dValueList);
             Console.WriteLine("Found " + smeValue.Count() + " SMEs in " + watch.ElapsedMilliseconds + "ms");
 
             watch.Restart();
@@ -105,16 +105,27 @@ namespace AasxServerDB
             List<SMSet> smList = new List<SMSet>();
             if (withSmId)
                 smList = getSMSet(smSemanticId);
-            List<SMESet> smeList = getSMESet(semanticId);
-            List<SValueSet> sValueList = getSValueSet(contains, equal);
+
+            bool withSmeId = !semanticId.IsNullOrEmpty();
+            List<SMESet> smeList = new List<SMESet>();
+            if (withSmeId)
+                smeList = getSMESet(semanticId);
+
+            bool withValue = !(equal.IsNullOrEmpty() && contains.IsNullOrEmpty() && lower.IsNullOrEmpty() && upper.IsNullOrEmpty());
+            List<SValueSet> sValueList = new List<SValueSet>();
             List<IValueSet> iValueList = new List<IValueSet>();
             List<DValueSet> dValueList = new List<DValueSet>();
-            if (contains.IsNullOrEmpty())
+            if (withSmeId)
             {
-                iValueList = getIValueSet(equal, lower, upper);
-                dValueList = getDValueSet(equal, lower, upper);
+                sValueList = getSValueSet(contains, equal);
+                if (contains.IsNullOrEmpty())
+                {
+                    iValueList = getIValueSet(equal, lower, upper);
+                    dValueList = getDValueSet(equal, lower, upper);
+                }
             }
-            List<smeWithValue> smeValue = combineSMEValue(withSmId, smList, smeList, sValueList, iValueList, dValueList);
+                
+            List<smeWithValue> smeValue = combineSMEValue(withSmId, smList, withSmeId, smeList, withValue, sValueList, iValueList, dValueList);
             int count = smeValue.Count();
             Console.WriteLine("Found " + count + " SMEs in " + watch.ElapsedMilliseconds + "ms");
 
@@ -380,9 +391,11 @@ namespace AasxServerDB
 
         private List<SValueSet> getSValueSet(string contains = "", string equal = "")
         {
-            if (contains.IsNullOrEmpty() && equal.IsNullOrEmpty())
-                return new List<SValueSet>();
-            return new AasContext().SValueSets.Where(v => v.Value != null && (v.Value.Contains(contains) || v.Value.Equals(equal))).ToList();
+            if (!contains.IsNullOrEmpty())
+                return new AasContext().SValueSets.Where(v => v.Value != null && v.Value.Contains(contains)).ToList();
+            if (!equal.IsNullOrEmpty())
+                return new AasContext().SValueSets.Where(v => v.Value != null && v.Value.Equals(equal)).ToList();
+            return new List<SValueSet>();
         }
 
         private List<IValueSet> getIValueSet(string equal = "", string lower = "", string upper = "")
@@ -425,71 +438,119 @@ namespace AasxServerDB
             return new List<DValueSet>();
         }
 
-        private List<smeWithValue> combineSMEValue(bool withSmId, List<SMSet> smList, List<SMESet> smeList, List<SValueSet> sValueList, List<IValueSet> iValueList, List<DValueSet> dValueList)
+        private List<smeWithValue> combineSMEValue(bool withSmId, List<SMSet> smList, bool withSmeId, List<SMESet> smeList, bool withValue, List<SValueSet> sValueList, List<IValueSet> iValueList, List<DValueSet> dValueList)
         {
-            if (smeList.Count() == 0 || (sValueList.Count() == 0 && iValueList.Count() == 0 && dValueList.Count() == 0))
+            if ((!withSmeId && !withValue) ||
+                (withSmId && smList.Count() == 0) || 
+                (withSmeId && smeList.Count() == 0) || 
+                (withValue && sValueList.Count() == 0 && iValueList.Count() == 0 && dValueList.Count() == 0))
                 return new List<smeWithValue>();
 
-            var resultS = smeList
-                .Join(sValueList,
-                sme => sme.Id,
-                v => v.SMEId,
-                (sme, v) => new smeWithValue
+            var resultS = new List<smeWithValue>();
+            var resultI = new List<smeWithValue>();
+            var resultD = new List<smeWithValue>();
+            using (AasContext db = new AasContext())
+            { 
+                if (withSmeId && withValue)
                 {
-                    sme = sme,
-                    value = v.Value
+                    resultS = smeList
+                        .Join(sValueList,
+                        sme => sme.Id,
+                        v => v.SMEId,
+                        (sme, v) => new smeWithValue
+                        {
+                            sme = sme,
+                            value = v.Value
+                        }
+                    ).ToList();
+                    resultI = smeList
+                        .Join(iValueList,
+                        sme => sme.Id,
+                        v => v.SMEId,
+                        (sme, v) => new smeWithValue
+                        {
+                            sme = sme,
+                            value = v.Value.ToString()
+                        }
+                    ).ToList();
+                    resultD = smeList
+                        .Join(dValueList,
+                        sme => sme.Id,
+                        v => v.SMEId,
+                        (sme, v) => new smeWithValue
+                        {
+                            sme = sme,
+                            value = v.Value.ToString()
+                        }
+                    ).ToList();
                 }
-            );
-            var resultI = smeList
-                .Join(iValueList,
-                sme => sme.Id,
-                v => v.SMEId,
-                (sme, v) => new smeWithValue
+                else if (!withSmeId && withValue)
                 {
-                    sme = sme,
-                    value = v.Value.ToString()
+                    resultS = sValueList
+                        .Join(db.SMESets, 
+                        v => v.SMEId,
+                        sme => sme.Id,
+                        (v, sme) => new smeWithValue
+                        {
+                            sme = sme,
+                            value = v.Value
+                        }
+                    ).ToList();
+                    resultI = iValueList
+                        .Join(db.SMESets,
+                        v => v.SMEId,
+                        sme => sme.Id,
+                        (v, sme) => new smeWithValue
+                        {
+                            sme = sme,
+                            value = v.Value.ToString()
+                        }
+                    ).ToList();
+                    resultD = dValueList
+                        .Join(db.SMESets,
+                        v => v.SMEId,
+                        sme => sme.Id,
+                        (v, sme) => new smeWithValue
+                        {
+                            sme = sme,
+                            value = v.Value.ToString()
+                        }
+                    ).ToList();
                 }
-            );
-            var resultD = smeList
-                .Join(dValueList,
-                sme => sme.Id,
-                v => v.SMEId,
-                (sme, v) => new smeWithValue
-                {
-                    sme = sme,
-                    value = v.Value.ToString()
-                }
-            );
-            var resultSME = resultS.Concat(resultI).Concat(resultD);
 
-            if (!withSmId)
-            {
-                return resultSME
-                    .Join(new AasContext().SMSets,
-                    sme => sme.sme.SMId,
-                    sm => sm.Id,
-                    (sme, sm) => new smeWithValue
-                    {
-                        sme = sme.sme,
-                        value = sme.value,
-                        smId = sm.Identifier
-                    }
-                ).ToList();
+                var resultSME = resultS.Concat(resultI).Concat(resultD);
+
+                if (!withSmId && (withSmeId || withValue))
+                {
+                    return resultSME
+                        .Join(db.SMSets,
+                        sme => sme.sme.SMId,
+                        sm => sm.Id,
+                        (sme, sm) => new smeWithValue
+                        {
+                            sme = sme.sme,
+                            value = sme.value,
+                            smId = sm.Identifier
+                        }
+                    ).ToList();
+                }
+                else if (withSmId && (withSmeId || withValue))
+                {
+                    return resultSME
+                        .Join(smList,
+                        sme => sme.sme.SMId,
+                        sm => sm.Id,
+                        (sme, sm) => new smeWithValue
+                        {
+                            sme = sme.sme,
+                            value = sme.value,
+                            smId = sm.Identifier
+                        }
+                    ).ToList();
+                }
+                return new List<smeWithValue>();
             }
-            else
-            {
-                return smList
-                .Join(resultSME,
-                    sm => sm.Id,
-                    sme => sme.sme.SMId,
-                    (sm, sme) => new smeWithValue
-                    {
-                        sme = sme.sme,
-                        value = sme.value,
-                        smId = sm.Identifier
-                    }
-                ).ToList();
-            }
+                
         }
 
         private List<SMEResult> getSMEResult(List<smeWithValue> smeList)
