@@ -250,6 +250,7 @@
                                 <th style="word-break:keep-all">IdShort</th>
                                 <th style="word-break:keep-all">AssetKind</th>
                                 <th style="word-break:keep-all">GlobalAssetId</th>
+                                <th style="word-break:keep-all">TimeStamp</th>
                                 <th style="word-break:keep-all">Links</th>
                                 <th style="word-break:keep-all">API</th>
                             </tr>
@@ -267,6 +268,11 @@
                                     <td>@aasDB.IdShort</td>
                                     <td>@aasDB.AssetKind</td>
                                     <td>@aasDB.GlobalAssetId</td>
+                                    <ul style="color:lightgray;font-size:smaller">
+                                        <li>@($"UPDATE {FormatTimeStamp(aasDB.TimeStamp)}")</li>
+                                        <li>@($"CREATE {FormatTimeStamp(aasDB.TimeStampCreate)}")</li>
+                                        <li>@($"TREE {FormatTimeStamp(aasDB.TimeStampTree)}")</li>
+                                    </ul>
                                     <td style="word-break:keep-all">
                                         <a href="@($"{shorturl}/aasx?aasxid={aasDB.AASXId}")" target="_blank">aasx </a>
                                         <a href="@($"{shorturl}/sm?aasid={aasDB.Id}")" target="_blank">sm</a>
@@ -297,6 +303,10 @@
                             <span>@aasDB.AssetKind</span>
                             <span smDB="background-color:blue;">&nbsp</span>
                             <span>@aasDB.GlobalAssetId</span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            <span>@($"UPDATE {FormatTimeStamp(aasDB.TimeStamp)}")</span>
+                            <span>@($"CREATE {FormatTimeStamp(aasDB.TimeStampCreate)}")</span>
+                            <span>@($"TREE {FormatTimeStamp(aasDB.TimeStampTree)}")</span>
                             <span style="background-color:blue;">&nbsp</span>
                             <a href="@($"{shorturl}/aasx?aasxid={aasDB.AASXId}")" target="_blank">aasx </a>
                             <a href="@($"{shorturl}/sm?aasid={aasDB.Id}")" target="_blank">sm</a>
@@ -332,6 +342,7 @@
                                 <th style="word-break:keep-all">Id</th>
                                 <th style="word-break:keep-all">IdShort</th>
                                 <th style="word-break:keep-all">SemanticId</th>
+                                <th style="word-break:keep-all">TimeStamp</th>
                                 <th style="word-break:keep-all">Links</th>
                                 <th style="word-break:keep-all">API</th>
                             </tr>
@@ -351,6 +362,11 @@
                                     <td>@smDB.Identifier</td>
                                     <td>@smDB.IdShort</td>
                                     <td>@smDB.SemanticId</td>
+                                    <ul style="color:lightgray;font-size:smaller">
+                                        <li>@($"UPDATE {FormatTimeStamp(smDB.TimeStamp)}")</li>
+                                        <li>@($"CREATE {FormatTimeStamp(smDB.TimeStampCreate)}")</li>
+                                        <li>@($"TREE {FormatTimeStamp(smDB.TimeStampTree)}")</li>
+                                    </ul>
                                     <td style="word-break:keep-all">
                                         <a href="@($"{shorturl}/aasx?aasxid={smDB.AASXId}")" target="_blank">aasx </a>
                                         <a href="@($"{shorturl}/aas?aasid={smDB.AASId}")" target="_blank">aas </a>
@@ -383,6 +399,10 @@
                             <span>@smDB.IdShort</span>
                             <span smDB="background-color:blue;">&nbsp</span>
                             <span>@smDB.SemanticId</span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            <span>@($"UPDATE {FormatTimeStamp(smDB.TimeStamp)}")</span>
+                            <span>@($"CREATE {FormatTimeStamp(smDB.TimeStampCreate)}")</span>
+                            <span>@($"TREE {FormatTimeStamp(smDB.TimeStampTree)}")</span>
                             <span style="background-color:blue;">&nbsp</span>
                             <a href="@($"{shorturl}/aasx?aasxid={smDB.AASXId}")" target="_blank">aasx </a>
                             <a href="@($"{shorturl}/aas?aasid={smDB.AASId}")" target="_blank">aas </a>
@@ -441,6 +461,7 @@
                                 <th style="word-break:keep-all">SemanticId</th>
                                 <th style="word-break:keep-all">Value</th>
                                 <th style="word-break:keep-all">ValueType</th>
+                                <th style="word-break:keep-all">TimeStamp</th>
                                 <th style="word-break:keep-all">Links</th>
                                 <th style="word-break:keep-all">API</th>
                             </tr>
@@ -487,6 +508,11 @@
                                         }
                                     </td>
                                     <td style="word-break:keep-all">@smeDB.ValueType</td>
+                                    <ul style="color:lightgray;font-size:smaller">
+                                        <li>@($"UPDATE {FormatTimeStamp(smeDB.TimeStamp)}")</li>
+                                        <li>@($"CREATE {FormatTimeStamp(smeDB.TimeStampCreate)}")</li>
+                                        <li>@($"TREE {FormatTimeStamp(smeDB.TimeStampTree)}")</li>
+                                    </ul>
                                     <td style="word-break:keep-all">
                                         <a href="@($"{shorturl}/sm?smid={smeDB.SMId}")" target="_blank">sm </a>
                                         @if (smeDB.ParentSMEId != null)
@@ -565,6 +591,10 @@
                             </span>
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@smeDB.ValueType</span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            <span>@($"UPDATE {FormatTimeStamp(smeDB.TimeStamp)}")</span>
+                            <span>@($"CREATE {FormatTimeStamp(smeDB.TimeStampCreate)}")</span>
+                            <span>@($"TREE {FormatTimeStamp(smeDB.TimeStampTree)}")</span>
                             <span style="background-color:blue;">&nbsp</span>
                             <a href="@($"{shorturl}/sm?smid={smeDB.SMId}")" target="_blank">sm </a>
                             @if (smeDB.ParentSMEId != null)
@@ -788,6 +818,10 @@
             }
             <br />
             <br />
+        }
+        string FormatTimeStamp(DateTime dateTime)
+        {
+            return dateTime.ToString("yy-MM-dd HH:mm:ss");
         }
     }
 </div>
