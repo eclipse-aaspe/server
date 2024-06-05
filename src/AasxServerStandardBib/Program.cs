@@ -942,6 +942,8 @@ namespace AasxServer
             {
                 externalBlazor = blazorHostPort;
             }
+            externalBlazor = externalBlazor.Replace("\r", "");
+            externalBlazor = externalBlazor.Replace("\n", "");
 
             /*
             if (File.Exists("redirect.dat"))
