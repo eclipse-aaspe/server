@@ -1,6 +1,7 @@
 ﻿using Extensions;
 using System.Globalization;
 using Microsoft.IdentityModel.Tokens;
+using System;
 
 namespace AasxServerDB
 {
@@ -29,7 +30,7 @@ namespace AasxServerDB
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
             Console.WriteLine();
-            Console.WriteLine("SearchSubmodels");
+            Console.WriteLine("SearchSMs");
             Console.WriteLine("Total number of SMs " + (new AasContext()).SMSets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
 
             watch.Restart();
@@ -53,7 +54,7 @@ namespace AasxServerDB
             watch.Restart();
             var smList = getSMSet(semanticId);
             int count = smList.Count();
-            Console.WriteLine("Count " + count + " SMEs in " + watch.ElapsedMilliseconds + "ms");
+            Console.WriteLine("Found " + count + " SM in " + watch.ElapsedMilliseconds + "ms");
 
             return count;
         }
@@ -595,16 +596,17 @@ namespace AasxServerDB
 
         private List<SMResult> getSMResult(List<SMSet> smList)
         {
-            List<SMResult> result = new List<SMResult>();
-            foreach (var sm in smList)
-            {
-                var SMResult = new SMResult();
-                SMResult.smId = (sm != null && sm.Identifier != null) ? sm.Identifier : "";
-                string sub64 = Base64UrlEncoder.Encode(SMResult.smId);
-                SMResult.url = ExternalBlazor + "/submodels/" + sub64;
-                result.Add(SMResult);
-            }
-            return result;
+            return smList.ConvertAll(
+                sm =>
+                {
+                    string identifier = (sm != null && sm.Identifier != null) ? sm.Identifier : "";
+                    return new SMResult()
+                    {
+                        smId = identifier,
+                        url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(identifier)}"
+                    };
+                }
+            );
         }
 
         // --------------- SME Methodes ---------------
