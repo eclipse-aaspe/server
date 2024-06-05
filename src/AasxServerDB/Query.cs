@@ -2,6 +2,9 @@
 using System.Globalization;
 using Microsoft.IdentityModel.Tokens;
 using System;
+using System.Collections.Generic;
+using System.Collections;
+using System.Runtime.Intrinsics.X86;
 
 namespace AasxServerDB
 {
@@ -364,7 +367,7 @@ namespace AasxServerDB
             }
             List<smeWithValue> smeValue = combineSMEValue(withSmId, smList, smeList, sValueList, iValueList, dValueList);
             int count = smeValue.Count();
-            Console.WriteLine("Count " + count + " SMEs in " + watch.ElapsedMilliseconds + "ms");
+            Console.WriteLine("Found " + count + " SMEs in " + watch.ElapsedMilliseconds + "ms");
 
             return count;
         }
@@ -591,7 +594,9 @@ namespace AasxServerDB
         // --------------- SM Methodes ---------------
         private List<SMSet> getSMSet(string semanticId = "")
         {
-            return new AasContext().SMSets.Where(s => s.SemanticId == semanticId).ToList();
+            if (semanticId.IsNullOrEmpty())
+                return new List<SMSet>();
+            return new AasContext().SMSets.Where(s => s.SemanticId != null && s.SemanticId.Equals(semanticId)).ToList();
         }
 
         private List<SMResult> getSMResult(List<SMSet> smList)
@@ -612,24 +617,23 @@ namespace AasxServerDB
         // --------------- SME Methodes ---------------
         private class smeWithValue
         {
-            public SMESet sme;
-            public string value;
-            public string smId;
+            public SMESet? sme;
+            public string? value;
+            public string? smId;
         }
 
         private List<SMESet> getSMESet(string semanticId = "")
         {
-            return new AasContext().SMESets.Where(s => semanticId == "" || s.SemanticId == semanticId).ToList();
+            if (semanticId.IsNullOrEmpty())
+                return new List<SMESet>();
+            return new AasContext().SMESets.Where(s => s.SemanticId != null && s.SemanticId.Equals(semanticId)).ToList();
         }
 
         private List<SValueSet> getSValueSet(string contains = "", string equal = "")
         {
             if (contains.IsNullOrEmpty() && equal.IsNullOrEmpty())
                 return new List<SValueSet>();
-            return new AasContext().SValueSets.Where(v =>
-                v.Value != null &&
-                (v.Value.Contains(contains) || v.Value.Equals(equal)))
-                .ToList();
+            return new AasContext().SValueSets.Where(v => v.Value != null && (v.Value.Contains(contains) || v.Value.Equals(equal))).ToList();
         }
 
         private List<IValueSet> getIValueSet(string equal = "", string lower = "", string upper = "")
@@ -674,6 +678,9 @@ namespace AasxServerDB
 
         private List<smeWithValue> combineSMEValue(bool withSmId, List<SMSet> smList, List<SMESet> smeList, List<SValueSet> sValueList, List<IValueSet> iValueList, List<DValueSet> dValueList)
         {
+            if (smeList.Count() == 0 || (sValueList.Count() == 0 && iValueList.Count() == 0 && dValueList.Count() == 0))
+                return new List<smeWithValue>();
+
             var resultS = smeList
                 .Join(sValueList,
                 sme => sme.Id,
@@ -681,8 +688,7 @@ namespace AasxServerDB
                 (sme, v) => new smeWithValue
                 {
                     sme = sme,
-                    value = v.Value,
-                    smId = ""
+                    value = v.Value
                 }
             );
             var resultI = smeList
@@ -692,8 +698,7 @@ namespace AasxServerDB
                 (sme, v) => new smeWithValue
                 {
                     sme = sme,
-                    value = v.Value.ToString(),
-                    smId = ""
+                    value = v.Value.ToString()
                 }
             );
             var resultD = smeList
@@ -703,8 +708,7 @@ namespace AasxServerDB
                 (sme, v) => new smeWithValue
                 {
                     sme = sme,
-                    value = v.Value.ToString(),
-                    smId = ""
+                    value = v.Value.ToString()
                 }
             );
             var resultSME = resultS.Concat(resultI).Concat(resultD);
@@ -741,29 +745,32 @@ namespace AasxServerDB
 
         private List<SMEResult> getSMEResult(List<smeWithValue> smeList)
         {
-            List<SMEResult> results = new List<SMEResult>();
+            List<SMEResult> result = new List<SMEResult>();
             using (AasContext db = new AasContext())
-            { 
-                foreach (var smeV in smeList)
-                {
-                    SMEResult result = new SMEResult();
-                    result.smId = smeV.smId;
-                    result.value = smeV.value;
-                    string path = smeV.sme.IdShort;
-                    int? pId = smeV.sme.ParentSMEId;
-                    while (pId != null)
+            {
+                result = smeList.ConvertAll(
+                    sme =>
                     {
-                        var smeDB = db.SMESets.Where(s => s.Id == pId).First();
-                        path = smeDB.IdShort + "." + path;
-                        pId = smeDB.ParentSMEId;
+                        string identifier = (sme != null && sme.smId != null) ? sme.smId : "";
+                        string path = sme.sme.IdShort;
+                        int? pId = sme.sme.ParentSMEId;
+                        while (pId != null)
+                        {
+                            var smeDB = db.SMESets.Where(s => s.Id == pId).First();
+                            path = $"{smeDB.IdShort}.{path}";
+                            pId = smeDB.ParentSMEId;
+                        }
+                        return new SMEResult()
+                        {
+                            smId = identifier,
+                            value = sme.value,
+                            idShortPath = path,
+                            url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(identifier)}/submodel-elements/{path}"
+                        };
                     }
-                    result.idShortPath = path;
-                    string sub64 = Base64UrlEncoder.Encode(result.smId);
-                    result.url = ExternalBlazor + "/submodels/" + sub64 + "/submodel-elements/" + path;
-                    results.Add(result);
-                }
+                );
             }
-            return results;
+            return result;
         }
     }
 }
