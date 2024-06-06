@@ -203,6 +203,16 @@ namespace IO.Swagger.Registry.Lib.V3.Services
 
                         // basyx with Submodel Registry: read submodel descriptors
                         string requestPath = submodelRegistryUrl + "/submodel-descriptors";
+                        string queryPara = "";
+                        string userPW = "";
+                        string urlEdcWrapper = "";
+                        string replace = "";
+
+                        if (AasxCredentials.get(cs.credentials, requestPath, out queryPara, out userPW, out urlEdcWrapper, out replace))
+                        {
+                            if (replace != "")
+                                requestPath = replace;
+                        }
 
                         var handler = new HttpClientHandler();
 
@@ -279,6 +289,16 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                         string accessToken = null;
                         //string requestPath = greg + "/" + "registry/shell-descriptors";
                         string requestPath = greg + "/shell-descriptors";
+                        string queryPara = "";
+                        string userPW = "";
+                        string urlEdcWrapper = "";
+                        string replace = "";
+
+                        if (AasxCredentials.get(cs.credentials, requestPath, out queryPara, out userPW, out urlEdcWrapper, out replace))
+                        {
+                            if (replace != "")
+                                requestPath = replace;
+                        }
 
                         var handler = new HttpClientHandler();
 
@@ -422,10 +442,10 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                         }
                                     }
                                     requestPath = endpoint;
-                                    string queryPara = "";
-                                    string userPW = "";
-                                    string urlEdcWrapper = "";
-                                    string replace = "";
+                                    queryPara = "";
+                                    userPW = "";
+                                    urlEdcWrapper = "";
+                                    replace = "";
                                     client.DefaultRequestHeaders.Clear();
                                     if (AasxCredentials.get(cList, requestPath, out queryPara, out userPW, out urlEdcWrapper, out replace))
                                     {
