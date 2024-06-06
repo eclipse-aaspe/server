@@ -1,5 +1,4 @@
-﻿
-using AasxServer;
+﻿using AasxServer;
 using AdminShellNS;
 using Extensions;
 using Grapevine.Interfaces.Server;
@@ -56,7 +55,7 @@ namespace AasxRestServerLibrary
 
         public bool PathEndsWith(string path, string tag)
         {
-            return path.Trim().ToLower().TrimEnd(new char[] { '/' }).EndsWith(tag);
+            return path.Trim().ToLower().TrimEnd(new char[] {'/'}).EndsWith(tag);
         }
 
         public bool PathEndsWith(Grapevine.Interfaces.Server.IHttpContext context, string tag)
@@ -106,7 +105,9 @@ namespace AasxRestServerLibrary
                         }
                     }
                 }
-                catch { }
+                catch
+                {
+                }
             }
 
             // done
@@ -226,7 +227,8 @@ namespace AasxRestServerLibrary
             */
         }
 
-        public IReference FindSubmodelRefWithinAas(FindAasReturn findAasReturn, string smid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
+        public IReference FindSubmodelRefWithinAas(FindAasReturn findAasReturn, string smid, System.Collections.Specialized.NameValueCollection queryStrings = null,
+            string rawUrl = null)
         {
             // trivial
             if (Packages[findAasReturn.iPackage] == null || Packages[findAasReturn.iPackage].AasEnv == null || findAasReturn.aas == null || smid == null || smid.Trim() == "")
@@ -256,7 +258,8 @@ namespace AasxRestServerLibrary
             return null;
         }
 
-        public ISubmodel FindSubmodelWithinAas(FindAasReturn findAasReturn, string smid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
+        public ISubmodel FindSubmodelWithinAas(FindAasReturn findAasReturn, string smid, System.Collections.Specialized.NameValueCollection queryStrings = null,
+            string rawUrl = null)
         {
             // trivial
             if (Packages[findAasReturn.iPackage] == null || Packages[findAasReturn.iPackage].AasEnv == null || findAasReturn.aas == null || smid == null || smid.Trim() == "")
@@ -347,7 +350,6 @@ namespace AasxRestServerLibrary
         }
 
 
-
         public ISubmodel FindSubmodelWithoutAas(string smid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
         {
             // trivial
@@ -371,7 +373,8 @@ namespace AasxRestServerLibrary
             return null;
         }
 
-        public IConceptDescription FindCdWithoutAas(FindAasReturn findAasReturn, string cdid, System.Collections.Specialized.NameValueCollection queryStrings = null, string rawUrl = null)
+        public IConceptDescription FindCdWithoutAas(FindAasReturn findAasReturn, string cdid, System.Collections.Specialized.NameValueCollection queryStrings = null,
+            string rawUrl = null)
         {
             // trivial
             if (Packages[findAasReturn.iPackage] == null || Packages[findAasReturn.iPackage].AasEnv == null || findAasReturn.aas == null || cdid == null || cdid.Trim() == "")
@@ -489,7 +492,9 @@ namespace AasxRestServerLibrary
             public bool SmcHasValue = true;
             public bool OpHasVariables = true;
 
-            public AdaptiveFilterContractResolver() { }
+            public AdaptiveFilterContractResolver()
+            {
+            }
 
             public AdaptiveFilterContractResolver(bool deep = true, bool complete = true)
             {
@@ -499,12 +504,12 @@ namespace AasxRestServerLibrary
                     this.SmcHasValue = false;
                     this.OpHasVariables = false;
                 }
+
                 if (!complete)
                 {
                     this.AasHasViews = false;
                     this.BlobHasValue = false;
                 }
-
             }
 
             protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
@@ -555,6 +560,7 @@ namespace AasxRestServerLibrary
                         {
                             jsonld += c;
                         }
+
                         break;
                     case 1:
                         if (c == '"')
@@ -565,6 +571,7 @@ namespace AasxRestServerLibrary
                         {
                             name += c;
                         }
+
                         break;
                     case 2:
                         if (c == ':')
@@ -583,6 +590,7 @@ namespace AasxRestServerLibrary
                                     {
                                         j--;
                                     }
+
                                     if (jsonld[j] == ',' && json[i] != ',')
                                     {
                                         jsonld = jsonld.Substring(0, j) + "\r\n";
@@ -591,6 +599,7 @@ namespace AasxRestServerLibrary
                                     {
                                         jsonld = jsonld.Substring(0, j + 1) + "\r\n";
                                     }
+
                                     while (json[i] != '\n')
                                         i++;
                                 }
@@ -608,6 +617,7 @@ namespace AasxRestServerLibrary
                                     {
                                         j++;
                                     }
+
                                     j++;
                                     while (j < json.Length && json[j] != '"')
                                     {
@@ -615,6 +625,7 @@ namespace AasxRestServerLibrary
                                         j++;
                                     }
                                 }
+
                                 count++;
                                 name += "__" + count;
                                 if (header != "")
@@ -627,6 +638,7 @@ namespace AasxRestServerLibrary
                         {
                             jsonld += "\"" + name + "\"" + c;
                         }
+
                         state = 0;
                         name = "";
                         break;
@@ -643,15 +655,16 @@ namespace AasxRestServerLibrary
             {
                 k--;
             }
-            #pragma warning disable format
-            jsonld = jsonld.Substring(0, k+1);
+#pragma warning disable format
+            jsonld = jsonld.Substring(0, k + 1);
             jsonld += ",\r\n" + "  \"id\": \"" + id + "\"\r\n}\r\n";
             jsonld = "\"doc\": " + jsonld;
             jsonld = "{\r\n\r\n" + header + jsonld + "\r\n\r\n}\r\n";
-            #pragma warning restore format
+#pragma warning restore format
 
             return jsonld;
         }
+
         protected static void SendJsonResponse(Grapevine.Interfaces.Server.IHttpContext context, object obj, IContractResolver contractResolver = null)
         {
             var queryString = context.Request.QueryString;
@@ -661,6 +674,7 @@ namespace AasxRestServerLibrary
                 context.Response.Headers.Remove("Refresh");
                 context.Response.Headers.Add("Refresh", refresh);
             }
+
             string jsonld = queryString["jsonld"];
             string vc = queryString["vc"];
 
@@ -705,6 +719,7 @@ namespace AasxRestServerLibrary
                     {
                         error = true;
                     }
+
                     if (!error)
                     {
                         json = response.Content.ReadAsStringAsync().Result;
@@ -729,16 +744,15 @@ namespace AasxRestServerLibrary
                 {
                     if (kvp.Key.Equals("AAS"))
                     {
-                        value["AAS"] = Jsonization.Serialize.ToJsonObject((AssetAdministrationShell)kvp.Value);
+                        value["AAS"] = Jsonization.Serialize.ToJsonObject((AssetAdministrationShell) kvp.Value);
                     }
                     else if (kvp.Key.Equals("Asset"))
                     {
-                        value["AssetInformation"] = Jsonization.Serialize.ToJsonObject((AssetInformation)kvp.Value);
+                        value["AssetInformation"] = Jsonization.Serialize.ToJsonObject((AssetInformation) kvp.Value);
                     }
                 }
 
                 json = value.ToString();
-
             }
 
             var buffer = context.Request.ContentEncoding.GetBytes(json);
@@ -796,7 +810,6 @@ namespace AasxRestServerLibrary
             context.Response.Redirect(redirectUrl);
             context.Response.SendResponse(HttpStatusCode.TemporaryRedirect, redirectUrl);
         }
-
 
         #endregion
 
@@ -881,7 +894,7 @@ namespace AasxRestServerLibrary
             try
             {
                 var sourceEnvironment = Packages[findAasReturn.iPackage].AasEnv;
-                var aasList = new List<IAssetAdministrationShell>() { findAasReturn.aas };
+                var aasList = new List<IAssetAdministrationShell>() {findAasReturn.aas};
                 copyenv = copyenv.CreateFromExistingEnvironment(sourceEnvironment, aasList);
             }
             catch (Exception ex)
@@ -910,6 +923,7 @@ namespace AasxRestServerLibrary
                         jsonwriter.Close();
                     }
                 }
+
                 if (PathEndsWith(context, "aasenvjson"))
                 {
                     // result
@@ -1183,6 +1197,7 @@ namespace AasxRestServerLibrary
                         return;
                     }
                 }
+
                 context.Response.StatusCode = HttpStatusCode.NotFound;
                 SendTextResponse(context, "Failed: Server used to capacity.");
                 return;
@@ -1421,7 +1436,10 @@ namespace AasxRestServerLibrary
                                             {
                                                 s = Program.env[envi].GetLocalThumbnailStream();
                                             }
-                                            catch { }
+                                            catch
+                                            {
+                                            }
+
                                             if (s != null)
                                             {
                                                 using (var m = new System.IO.MemoryStream())
@@ -1429,29 +1447,31 @@ namespace AasxRestServerLibrary
                                                     s.CopyTo(m);
                                                     detailsImage = System.Convert.ToBase64String(m.ToArray());
                                                 }
+
                                                 if (detailsImage != "")
                                                 {
                                                     text += "<br>" +
-                                                        "Your product image:" +
-                                                        "<div><img src=data:image;base64," +
-                                                        detailsImage +
-                                                        " style=\"max-width: 25%;\" alt=\"Details Image\" /></div>";
+                                                            "Your product image:" +
+                                                            "<div><img src=data:image;base64," +
+                                                            detailsImage +
+                                                            " style=\"max-width: 25%;\" alt=\"Details Image\" /></div>";
                                                 }
                                             }
                                         }
+
                                         text += "<br>";
 
                                         // var link = "http://" + Program.hostPort + "/server/getaasxbyassetid/" + assetId;
                                         var link = Program.externalRest + "/server/getaasxbyassetid/" + assetId;
 
                                         text += "Please open AAS in AASX Package Explorer by: File / Other Connect Options / Connect via REST:<br>" +
-                                            "<a href= \"" + link + "\" target=\"_blank\">" +
-                                            link + "</a>" + "<br><br>";
+                                                "<a href= \"" + link + "\" target=\"_blank\">" +
+                                                link + "</a>" + "<br><br>";
 
                                         text += "Please use Postman to get raw data:<br>GET " +
-                                            "<a href= \"" + link + "\" target=\"_blank\">" +
-                                            link + "</a>" + "<br>" +
-                                        "and set Headers / Accept application/aas" + "<br><br>";
+                                                "<a href= \"" + link + "\" target=\"_blank\">" +
+                                                link + "</a>" + "<br>" +
+                                                "and set Headers / Accept application/aas" + "<br><br>";
 
                                         context.Response.ContentType = ContentType.HTML;
                                         context.Response.ContentEncoding = System.Text.Encoding.UTF8;
@@ -1467,6 +1487,7 @@ namespace AasxRestServerLibrary
                     }
                 }
             }
+
             context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS with assetId '{assetId}' found.");
         }
 
@@ -1734,6 +1755,7 @@ namespace AasxRestServerLibrary
             object existingAsset = null;
             SendTextResponse(context, "OK" + ((existingAsset != null) ? " (updated)" : " (new)"));
         }
+
         #endregion
 
         #region // List of Submodels
@@ -1744,7 +1766,9 @@ namespace AasxRestServerLibrary
             public string IdShort = "";
             public string kind = "";
 
-            public GetSubmodelsItem() { }
+            public GetSubmodelsItem()
+            {
+            }
 
             public GetSubmodelsItem(IIdentifiable id, string IdShort, string kind)
             {
@@ -1807,6 +1831,7 @@ namespace AasxRestServerLibrary
         }
 
         static long countPut = 0;
+
         public void EvalPutSubmodel(IHttpContext context, string aasid)
         {
             dynamic res = new ExpandoObject();
@@ -1850,7 +1875,7 @@ namespace AasxRestServerLibrary
                 {
                     JsonSerializer serializer = new JsonSerializer();
                     serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                    submodel = (Submodel)serializer.Deserialize(reader, typeof(Submodel));
+                    submodel = (Submodel) serializer.Deserialize(reader, typeof(Submodel));
                 }
             }
             catch (Exception ex)
@@ -1869,7 +1894,8 @@ namespace AasxRestServerLibrary
             }
 
             // datastructure update
-            if (this.Packages[findAasReturn.iPackage] == null || this.Packages[findAasReturn.iPackage].AasEnv == null /*|| this.Packages[findAasReturn.iPackage].AasEnv.Assets == null*/)
+            if (this.Packages[findAasReturn.iPackage] == null ||
+                this.Packages[findAasReturn.iPackage].AasEnv == null /*|| this.Packages[findAasReturn.iPackage].AasEnv.Assets == null*/)
             {
                 context.Response.SendResponse(HttpStatusCode.InternalServerError, $"Error accessing internal data structures.");
                 return;
@@ -1891,7 +1917,7 @@ namespace AasxRestServerLibrary
 
             // add SubmodelRef to AAS
             var key = new Key(KeyTypes.Submodel, submodel.Id);
-            var KeyList = new List<IKey>() { key };
+            var KeyList = new List<IKey>() {key};
             Reference newsmr = new Reference(AasCore.Aas3_0.ReferenceTypes.ModelReference, KeyList);
             //var newsmr = SubmodelRef.CreateNew("Submodel", submodel.Id);
             var existsmr = findAasReturn.aas.HasSubmodelReference(newsmr);
@@ -1946,7 +1972,8 @@ namespace AasxRestServerLibrary
             var smref = this.FindSubmodelRefWithinAas(findAasReturn, smid, context.Request.QueryString, context.Request.RawUrl);
             if (smref != null)
             {
-                context.Server.Logger.Debug($"Removing SubmodelRef {smid} from AAS with IdShort {findAasReturn.aas.IdShort ?? "--"} and id {findAasReturn.aas.Id?.ToString() ?? "--"}");
+                context.Server.Logger.Debug(
+                    $"Removing SubmodelRef {smid} from AAS with IdShort {findAasReturn.aas.IdShort ?? "--"} and id {findAasReturn.aas.Id?.ToString() ?? "--"}");
                 findAasReturn.aas.Submodels.Remove(smref);
             }
 
@@ -1971,6 +1998,7 @@ namespace AasxRestServerLibrary
         #endregion
 
         #region // Submodel Complete
+
         static long countGet = 0;
 
         public void EvalGetSubmodelContents(IHttpContext context, string aasid, string smid, bool deep = false, bool complete = false)
@@ -2067,7 +2095,8 @@ namespace AasxRestServerLibrary
                 //row.typeName = sme.GetElementName();
                 row.typeName = sme.GetType().ToString();
                 if (sme.SemanticId == null || sme.SemanticId.Keys == null /*|| sme.semanticId.Keys.Count == 0*/)
-                { }
+                {
+                }
                 else if (sme.SemanticId.Keys.Count > 1)
                 {
                     row.semId = "(complex)";
@@ -2134,7 +2163,6 @@ namespace AasxRestServerLibrary
 
                 // recurse
                 return true;
-
             });
 
             // return as JSON
@@ -2251,6 +2279,7 @@ namespace AasxRestServerLibrary
                 dblval += Math.Sin((0.001 * DateTime.UtcNow.Millisecond) * 6.28);
                 strval = dblval.ToString(CultureInfo.InvariantCulture);
             }
+
             return strval;
         }
 
@@ -2338,7 +2367,7 @@ namespace AasxRestServerLibrary
                 else
                 {
                     context.Response.SendResponse(HttpStatusCode.NotFound, $"No matching Property element(s) " +
-                        $"in Submodel found.");
+                                                                           $"in Submodel found.");
                     return;
                 }
             }
@@ -2541,6 +2570,7 @@ namespace AasxRestServerLibrary
                         context.Server.Logger.Debug($"Adding new SubmodelElement {sme.IdShort} to SubmodelCollection.");
                         parentsmc.Add(sme);
                     }
+
                     sme.SetAllParentsAndTimestamps(parentsmc, timeStamp, sme.TimeStampCreate);
                     sme.SetTimeStamp(timeStamp);
                 }
@@ -2599,7 +2629,7 @@ namespace AasxRestServerLibrary
             {
                 context.Server.Logger.Debug($"Deleting specified SubmodelElement {elinfo} from Submodel {smid}.");
                 AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
-                    fse.submodelElement, "Remove", sm, (ulong)DateTime.UtcNow.Ticks);
+                    fse.submodelElement, "Remove", sm, (ulong) DateTime.UtcNow.Ticks);
                 sm.SubmodelElements.Remove(fse.submodelElement);
                 deleted = true;
             }
@@ -2744,7 +2774,8 @@ namespace AasxRestServerLibrary
             // create a new, filtered AasEnv
             // (this is expensive, but delivers us with a list of CDs which are in relation to the respective AAS)
             var copyenv = new AasCore.Aas3_0.Environment();
-            copyenv = copyenv.CreateFromExistingEnvironment(this.Packages[findAasReturn.iPackage].AasEnv, filterForAas: new List<IAssetAdministrationShell>(new AssetAdministrationShell[] { (AssetAdministrationShell)findAasReturn.aas }));
+            copyenv = copyenv.CreateFromExistingEnvironment(this.Packages[findAasReturn.iPackage].AasEnv,
+                filterForAas: new List<IAssetAdministrationShell>(new AssetAdministrationShell[] {(AssetAdministrationShell) findAasReturn.aas}));
 
             // get all CDs and describe them
             foreach (var cd in copyenv.ConceptDescriptions)
@@ -2828,7 +2859,8 @@ namespace AasxRestServerLibrary
 
             // delete ?!
             var deleted = false;
-            if (this.Packages[findAasReturn.iPackage] != null && this.Packages[findAasReturn.iPackage].AasEnv != null && this.Packages[findAasReturn.iPackage].AasEnv.ConceptDescriptions.Contains(cd))
+            if (this.Packages[findAasReturn.iPackage] != null && this.Packages[findAasReturn.iPackage].AasEnv != null &&
+                this.Packages[findAasReturn.iPackage].AasEnv.ConceptDescriptions.Contains(cd))
             {
                 this.Packages[findAasReturn.iPackage].AasEnv.ConceptDescriptions.Remove(cd);
                 deleted = true;
@@ -2906,6 +2938,7 @@ namespace AasxRestServerLibrary
                 context.Response.SendResponse(HttpStatusCode.BadRequest, $"Cannot deserialize payload: {ex.Message}.");
                 return;
             }
+
             if (ids == null || ids.Count < 1)
             {
                 context.Response.SendResponse(HttpStatusCode.BadRequest, $"No Identification entities in payload.");
@@ -2956,8 +2989,9 @@ namespace AasxRestServerLibrary
 
             // get the list
             dynamic res = new ExpandoObject();
-            var capabilities = new List<ulong>(new ulong[]{
-                80,81,82,10,11,12,13,15,16,20,21,30,31,40,41,42,43,50,51,52,53,54,55,56,57,58,59,60,61,70,71,72,73
+            var capabilities = new List<ulong>(new ulong[]
+            {
+                80, 81, 82, 10, 11, 12, 13, 15, 16, 20, 21, 30, 31, 40, 41, 42, 43, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 70, 71, 72, 73
             });
             res.apiversion = 1;
             res.capabilities = capabilities;
@@ -2995,8 +3029,8 @@ namespace AasxRestServerLibrary
             dynamic res = new ExpandoObject();
             var payload = new Dictionary<string, object>()
             {
-                { "sessionID", sessionCount },
-                { "sessionRandom", sessionRandom[sessionCount] }
+                {"sessionID", sessionCount},
+                {"sessionRandom", sessionRandom[sessionCount]}
             };
 
             System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
@@ -3074,8 +3108,8 @@ namespace AasxRestServerLibrary
 
             var payload = new Dictionary<string, object>()
             {
-                { "sessionID", sessionCount },
-                { "sessionRandom", sessionRandom[sessionCount] }
+                {"sessionID", sessionCount},
+                {"sessionRandom", sessionRandom[sessionCount]}
             };
 
             System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
@@ -3332,7 +3366,7 @@ namespace AasxRestServerLibrary
 
                 var payload = new Dictionary<string, object>()
                 {
-                    { "sessionID", sessionCount },
+                    {"sessionID", sessionCount},
                 };
 
                 try
@@ -3382,6 +3416,7 @@ namespace AasxRestServerLibrary
             return checkAccessLevelWithError(out error, currentRole, operation, neededRights, out withAllow, out getPolicy,
                 objPath, aasOrSubmodel, objectAasOrSubmodel);
         }
+
         public static bool checkAccessLevelWithAllow(string currentRole, string operation, string neededRights,
             out bool withAllow, string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null,
             string policy = null)
@@ -3392,6 +3427,7 @@ namespace AasxRestServerLibrary
             return checkAccessLevelWithError(out error, currentRole, operation, neededRights, out withAllow, out getPolicy,
                 objPath, aasOrSubmodel, objectAasOrSubmodel, policy);
         }
+
         public static bool checkAccessLevelWithError(out string error, string currentRole, string operation,
             string neededRights, out bool withAllow, out string getPolicy,
             string objPath = "", string aasOrSubmodel = null, object objectAasOrSubmodel = null, string policy = null)
@@ -3399,7 +3435,7 @@ namespace AasxRestServerLibrary
             error = "";
             getPolicy = null;
             withAllow = false;
-            
+
             if (Program.secretStringAPI != null)
             {
                 /*
@@ -3416,11 +3452,11 @@ namespace AasxRestServerLibrary
                 currentRole = "isNotAuthenticated";
 
             Console.WriteLine("checkAccessLevel: " +
-                " currentRole = " + currentRole +
-                " operation = " + operation +
-                " neededRights = " + neededRights +
-                " objPath = " + objPath
-                );
+                              " currentRole = " + currentRole +
+                              " operation = " + operation +
+                              " neededRights = " + neededRights +
+                              " objPath = " + objPath
+            );
 
             if (objPath == "")
             {
@@ -3428,10 +3464,10 @@ namespace AasxRestServerLibrary
                 while (securityRole != null && iRole < securityRole.Count && securityRole[iRole].name != null)
                 {
                     if (aasOrSubmodel == "aas" && securityRole[iRole].objType == "aas")
-                    /* (aasOrSubmodel == "submodel" && securityRole[iRole].objType == "sm")) */
+                        /* (aasOrSubmodel == "submodel" && securityRole[iRole].objType == "sm")) */
                     {
                         if (objectAasOrSubmodel != null && securityRole[iRole].objReference == objectAasOrSubmodel &&
-                        securityRole[iRole].permission == neededRights)
+                            securityRole[iRole].permission == neededRights)
                         {
                             if ((securityRole[iRole].condition == "" && securityRole[iRole].name == currentRole) ||
                                 (securityRole[iRole].condition == "not" && securityRole[iRole].name != currentRole))
@@ -3446,6 +3482,7 @@ namespace AasxRestServerLibrary
                             }
                         }
                     }
+
                     if (securityRole[iRole].name == currentRole && securityRole[iRole].objType == "api" &&
                         securityRole[iRole].permission == neededRights)
                     {
@@ -3457,9 +3494,11 @@ namespace AasxRestServerLibrary
                             }
                         }
                     }
+
                     iRole++;
                 }
             }
+
             if (objPath != "" && (operation == "/submodels" || operation == "/submodelelements"))
             {
                 // next object with rule must have allow
@@ -3489,6 +3528,7 @@ namespace AasxRestServerLibrary
                                             deepestAllowRole = role;
                                         }
                                     }
+
                                     if (role.kind == "deny")
                                     {
                                         if (deepestDeny == "")
@@ -3497,6 +3537,7 @@ namespace AasxRestServerLibrary
                                 }
                             }
                         }
+
                         if (objectAasOrSubmodel is string s2)
                         {
                             if (s2 != null && s2 != "")
@@ -3512,6 +3553,7 @@ namespace AasxRestServerLibrary
                                             deepestAllowRole = role;
                                         }
                                     }
+
                                     if (role.kind == "deny")
                                     {
                                         if (deepestDeny == "")
@@ -3521,6 +3563,7 @@ namespace AasxRestServerLibrary
                             }
                         }
                     }
+
                     if ((role.objType == "sm" || role.objType == "submodelElement") &&
                         role.submodel == objectAasOrSubmodel && role.permission == neededRights)
                     {
@@ -3531,6 +3574,7 @@ namespace AasxRestServerLibrary
                                 if (role.objPath == objPath.Substring(0, role.objPath.Length))
                                     deepestDeny = role.objPath;
                             }
+
                             if (role.objPath.Length >= objPath.Length) // deny in tree below
                             {
                                 if (objPath == role.objPath.Substring(0, objPath.Length))
@@ -3540,6 +3584,7 @@ namespace AasxRestServerLibrary
                                 }
                             }
                         }
+
                         if (role.kind == "allow")
                         {
                             if (objPath.Length >= role.objPath.Length) // allow in tree above
@@ -3554,16 +3599,19 @@ namespace AasxRestServerLibrary
                         }
                     }
                 }
+
                 if (deepestAllow == "")
                 {
                     error = "ALLOW not defined";
                     return false;
                 }
+
                 if (deepestDeny.Length > deepestAllow.Length)
                 {
                     error = "DENY " + deepestDeny;
                     return false;
                 }
+
                 return checkPolicy(out error, deepestAllowRole, out getPolicy, policy);
             }
 
@@ -3574,7 +3622,7 @@ namespace AasxRestServerLibrary
         public static bool checkPolicy(out string error, securityRoleClass sr, out string getPolicy, string policy = null)
         {
             error = "";
-            getPolicy= null;
+            getPolicy = null;
             Property pPolicy = null;
             AasCore.Aas3_0.File fPolicy = null;
 
@@ -3610,6 +3658,7 @@ namespace AasxRestServerLibrary
                                         break;
                                 }
                             }
+
                             if (maxCount == null || duration == null || actualCount == null || actualTime == null)
                                 return false;
                             int d = 0;
@@ -3617,6 +3666,7 @@ namespace AasxRestServerLibrary
                             {
                                 return false;
                             }
+
                             DateTime dt = new DateTime();
                             if (actualTime.Value != null && actualTime.Value != "")
                             {
@@ -3629,29 +3679,36 @@ namespace AasxRestServerLibrary
                                         actualTime.Value = null;
                                     }
                                 }
-                                catch { }
+                                catch
+                                {
+                                }
                             }
+
                             if (actualTime.Value == null || actualTime.Value == "")
                             {
                                 actualTime.Value = DateTime.UtcNow.ToString();
                                 actualCount.Value = null;
                             }
+
                             if (actualCount.Value == null || actualCount.Value == "")
                             {
                                 actualCount.Value = "0";
                             }
+
                             int ac = 0;
                             if (!int.TryParse(actualCount.Value, out ac))
                             {
                                 Program.signalNewData(0);
                                 return false;
                             }
+
                             int mc = 0;
                             if (!int.TryParse(maxCount.Value, out mc))
                             {
                                 Program.signalNewData(0);
                                 return false;
                             }
+
                             ac++;
                             actualCount.Value = ac.ToString();
                             if (ac <= mc)
@@ -3660,6 +3717,7 @@ namespace AasxRestServerLibrary
                                 return true;
                             }
                         }
+
                         break;
                     case "policy":
                         pPolicy = sme as Property;
@@ -3687,7 +3745,7 @@ namespace AasxRestServerLibrary
                         {
                             if (s != null)
                             {
-                                s.Position= 0;
+                                s.Position = 0;
                                 byte[] hashValue = mySHA256.ComputeHash(s);
                                 getPolicy = Convert.ToHexString(hashValue);
                                 Console.WriteLine("hash: " + getPolicy);
@@ -3695,7 +3753,9 @@ namespace AasxRestServerLibrary
                             }
                         }
                     }
-                    catch { }
+                    catch
+                    {
+                    }
                 }
 
                 if (policy == null || policy.Contains(getPolicy))
@@ -3723,10 +3783,11 @@ namespace AasxRestServerLibrary
                 if (currentRole == "CREATE")
                     return true;
             }
+
             // else
             {
                 if (checkAccessLevel(currentRole, operation, neededRights,
-                    objPath, aasOrSubmodel, objectAasOrSubmodel))
+                        objPath, aasOrSubmodel, objectAasOrSubmodel))
                     return true;
 
                 if (currentRole == null)
@@ -3761,7 +3822,7 @@ namespace AasxRestServerLibrary
         static string checkUserPW(string userPW64)
         {
             var credentialBytes = Convert.FromBase64String(userPW64);
-            var credentials = Encoding.UTF8.GetString(credentialBytes).Split(new[] { ':' }, 2);
+            var credentials = Encoding.UTF8.GetString(credentialBytes).Split(new[] {':'}, 2);
             string username = credentials[0];
             string password = credentials[1];
 
@@ -3777,6 +3838,7 @@ namespace AasxRestServerLibrary
 
             return null;
         }
+
         public static string SecurityCheck(NameValueCollection queryString, NameValueCollection headers, ref int index)
         {
             string policy = "";
@@ -3793,6 +3855,7 @@ namespace AasxRestServerLibrary
 
         static List<userCert> certList = new List<userCert>();
         public static object lockCertList = new object();
+
         public static string SecurityCheckWithPolicy(NameValueCollection queryString, NameValueCollection headers, ref int index,
             out string policy, out string policyRequestedResource)
         {
@@ -3844,7 +3907,7 @@ namespace AasxRestServerLibrary
             token = headers["Authorization"];
             if (token != null)
             {
-                split = token.Split(new Char[] { ' ', '\t' });
+                split = token.Split(new Char[] {' ', '\t'});
                 if (split[0] != null)
                 {
                     if (split[0].ToLower() == "bearer")
@@ -3852,6 +3915,7 @@ namespace AasxRestServerLibrary
                         Console.WriteLine("Received bearer token = " + split[1]);
                         bearerToken = split[1];
                     }
+
                     if (bearerToken == null && split[0].ToLower() == "basic")
                     {
                         try
@@ -3859,7 +3923,7 @@ namespace AasxRestServerLibrary
                             if (Program.secretStringAPI != null)
                             {
                                 var credentialBytes = Convert.FromBase64String(split[1]);
-                                var credentials = Encoding.UTF8.GetString(credentialBytes).Split(new[] { ':' }, 2);
+                                var credentials = Encoding.UTF8.GetString(credentialBytes).Split(new[] {':'}, 2);
                                 string u = credentials[0];
                                 string p = credentials[1];
                                 Console.WriteLine("Received username+password http header = " + u + " : " + p);
@@ -3883,7 +3947,9 @@ namespace AasxRestServerLibrary
                                 Console.WriteLine("Received username+password http header = " + user);
                             }
                         }
-                        catch { }
+                        catch
+                        {
+                        }
                     }
                 }
             }
@@ -3913,6 +3979,7 @@ namespace AasxRestServerLibrary
                 user = token;
                 error = false;
             }
+
             // Check email query string
             token = queryString["Email"];
             if (token != null)
@@ -3921,6 +3988,7 @@ namespace AasxRestServerLibrary
                 user = token;
                 error = false;
             }
+
             // Username+password query string
             token = queryString["_up"];
             if (token != null)
@@ -3934,7 +4002,9 @@ namespace AasxRestServerLibrary
                         Console.WriteLine("Received username+password query string = " + user);
                     }
                 }
-                catch { }
+                catch
+                {
+                }
             }
 
             if (!error)
@@ -3954,7 +4024,10 @@ namespace AasxRestServerLibrary
                         {
                             email = parsed2.SelectToken("email").Value<string>();
                         }
-                        catch { }
+                        catch
+                        {
+                        }
+
                         try
                         {
                             serverName = parsed2.SelectToken("serverName").Value<string>();
@@ -3963,16 +4036,22 @@ namespace AasxRestServerLibrary
                         {
                             // serverName = "keycloak";
                         }
+
                         try
                         {
                             policy = parsed2.SelectToken("policy").Value<string>();
                         }
-                        catch { }
+                        catch
+                        {
+                        }
+
                         try
                         {
                             policyRequestedResource = parsed2.SelectToken("policyRequestedResource").Value<string>();
                         }
-                        catch { }
+                        catch
+                        {
+                        }
 
                         if (email != "")
                         {
@@ -3985,7 +4064,9 @@ namespace AasxRestServerLibrary
                             user = parsed2.SelectToken("userName").Value<string>();
                             user = user.ToLower();
                         }
-                        catch { }
+                        catch
+                        {
+                        }
 
                         if (serverName != "") // token from Auth Server
                         {
@@ -4014,7 +4095,9 @@ namespace AasxRestServerLibrary
                             {
                                 certificate = parsed2.SelectToken("certificate").Value<string>();
                             }
-                            catch { }
+                            catch
+                            {
+                            }
 
                             if (certificate != "")
                             {
@@ -4033,6 +4116,7 @@ namespace AasxRestServerLibrary
                                             break;
                                         }
                                     }
+
                                     if (i == certList.Count)
                                     {
                                         var cl = new userCert();
@@ -4067,6 +4151,7 @@ namespace AasxRestServerLibrary
                             {
                                 x509 = null;
                             }
+
                             if (x509 == null)
                             {
                                 Console.WriteLine("Invalid client token!");
@@ -4102,6 +4187,7 @@ namespace AasxRestServerLibrary
                             }
                         }
                     }
+
                     for (int i = 0; i < rightsCount; i++)
                     {
                         if (!securityRights[i].name.Contains("@")) // domain name only or non email
@@ -4112,6 +4198,7 @@ namespace AasxRestServerLibrary
                                 string[] splitUser = user.Split('@');
                                 u = splitUser[1]; // domain only
                             }
+
                             if (u == securityRights[i].name)
                             {
                                 // accessrights = securityRightsValue[i];
@@ -4193,6 +4280,7 @@ namespace AasxRestServerLibrary
             {
                 index = id;
             }
+
             return accessrights;
         }
 
@@ -4232,9 +4320,9 @@ namespace AasxRestServerLibrary
                         if (addEntry)
                         {
                             string s = i.ToString() + " : "
-                                + IdShort + " : "
-                                + aas.Id + " : "
-                                + AasxServer.Program.envFileName[i];
+                                                    + IdShort + " : "
+                                                    + aas.Id + " : "
+                                                    + AasxServer.Program.envFileName[i];
                             if (withasset)
                             {
                                 //var asset = Program.env[i].AasEnv.FindAsset(aas.assetRef);
@@ -4242,6 +4330,7 @@ namespace AasxRestServerLibrary
                                 s += " : " + asset.GlobalAssetId;
                                 s += " : " + asset.AssetKind;
                             }
+
                             aaslist.Add(s);
                         }
                     }
@@ -4418,6 +4507,7 @@ namespace AasxRestServerLibrary
             context.Response.StatusCode = HttpStatusCode.Ok;
             SendJsonResponse(context, res);
         }
+
         #endregion
 
         public void EvalGetFile(IHttpContext context, int envIndex, string filePath)
@@ -4458,6 +4548,7 @@ namespace AasxRestServerLibrary
             public string value = null;
             public string role = null;
         }
+
         public static List<securityRightsClass> securityRights = null;
 
         public class securityRoleClass
@@ -4475,8 +4566,12 @@ namespace AasxRestServerLibrary
             public string semanticId = "";
             public SubmodelElementCollection usage = null;
             public int usageEnvIndex = -1;
-            public securityRoleClass() { }
+
+            public securityRoleClass()
+            {
+            }
         }
+
         public static List<securityRoleClass> securityRole = null;
 
         public static string securityAccessRules()
@@ -4515,6 +4610,7 @@ namespace AasxRestServerLibrary
 
             return rules;
         }
+
         public static void securityInit()
         {
             withAuthentification = !Program.noSecurity;
@@ -4591,9 +4687,11 @@ namespace AasxRestServerLibrary
                                                                     Console.WriteLine("Loaded auth server certifcate: " + serverCertfileNames[0]);
                                                                 }
                                                             }
+
                                                             break;
                                                     }
                                                 }
+
                                                 break;
                                             case "roleMapping":
                                                 securityRights = new List<securityRightsClass>();
@@ -4624,9 +4722,9 @@ namespace AasxRestServerLibrary
                                                                         default:
                                                                             subjects.Add(p.IdShort);
                                                                             break;
-
                                                                     }
                                                                 }
+
                                                                 break;
                                                             case "roles":
                                                                 for (int iSmec3 = 0; iSmec3 < countSmec3; iSmec3++)
@@ -4640,10 +4738,12 @@ namespace AasxRestServerLibrary
                                                                         securityRights.Add(sr);
                                                                     }
                                                                 }
+
                                                                 break;
                                                         }
                                                     }
                                                 }
+
                                                 break;
                                             case "basicAuth":
                                                 for (int iSmec = 0; iSmec < countSmec; iSmec++)
@@ -4654,10 +4754,12 @@ namespace AasxRestServerLibrary
                                                         securityUserPassword.Add(p.Value);
                                                     }
                                                 }
+
                                                 break;
                                         }
                                     }
                                 }
+
                                 if (sm.IdShort == "SecurityMetaModelForServer" || sm.IdShort == "SecurityMetaModelForAAS")
                                 {
                                     //var smc1 = sm.SubmodelElements.FindFirstIdShortAs<SubmodelElementCollection>("accessControlPolicyPoints");
@@ -4681,8 +4783,10 @@ namespace AasxRestServerLibrary
                                             {
                                                 role.Add(rp);
                                             }
+
                                             iRole++;
                                         }
+
                                         smc6 = smc5?.FindFirstIdShortAs<SubmodelElementCollection>("permissionsPerObject");
                                         var smc7 = smc6?.Value[0] as SubmodelElementCollection;
                                         var objProp = smc7?.FindFirstIdShortAs<Property>("object");
@@ -4692,6 +4796,7 @@ namespace AasxRestServerLibrary
                                         {
                                             aasObject = env.AasEnv.FindReferableByReference(objRef.Value);
                                         }
+
                                         var smc8 = smc7?.FindFirstIdShortAs<SubmodelElementCollection>("permission");
                                         var smc9 = smc7?.FindFirstIdShortAs<SubmodelElementCollection>("usage");
 
@@ -4725,6 +4830,7 @@ namespace AasxRestServerLibrary
                                                     src.usage = smc9;
                                                     src.usageEnvIndex = i;
                                                 }
+
                                                 if (r.IdShort.Contains(":"))
                                                 {
                                                     split = r.IdShort.Split(':');
@@ -4736,6 +4842,7 @@ namespace AasxRestServerLibrary
                                                     src.condition = "";
                                                     src.name = r.IdShort;
                                                 }
+
                                                 if (objProp != null)
                                                 {
                                                     string value = objProp.Value.ToLower();
@@ -4749,6 +4856,7 @@ namespace AasxRestServerLibrary
                                                             src.apiOperation = split[1];
                                                         }
                                                     }
+
                                                     if (value.Contains("semanticid"))
                                                     {
                                                         split = value.Split(':');
@@ -4774,6 +4882,7 @@ namespace AasxRestServerLibrary
                                                             src.submodel = aasObject as Submodel;
                                                             src.objPath = src.submodel.IdShort;
                                                         }
+
                                                         if (aasObject is ISubmodelElement smep)
                                                         {
                                                             IReferable rp = smep;
@@ -4781,14 +4890,16 @@ namespace AasxRestServerLibrary
                                                             string path = rp.IdShort;
                                                             while (rp.Parent != null)
                                                             {
-                                                                rp = (IReferable)rp.Parent;
+                                                                rp = (IReferable) rp.Parent;
                                                                 path = rp.IdShort + "." + path;
                                                             }
+
                                                             src.submodel = rp as Submodel;
                                                             src.objPath = path;
                                                         }
                                                     }
                                                 }
+
                                                 src.permission = l.ToUpper();
                                                 if (kind != null)
                                                     src.kind = kind.Value.ToLower();
@@ -4796,6 +4907,7 @@ namespace AasxRestServerLibrary
                                                 securityRole.Add(src);
                                             }
                                         }
+
                                         continue;
                                     }
                                 }
@@ -4895,7 +5007,8 @@ namespace AasxRestServerLibrary
             }
 
             // datastructure update
-            if (this.Packages[findAasReturn.iPackage] == null || this.Packages[findAasReturn.iPackage].AasEnv == null /*|| this.Packages[findAasReturn.iPackage].AasEnv.Assets == null*/)
+            if (this.Packages[findAasReturn.iPackage] == null ||
+                this.Packages[findAasReturn.iPackage].AasEnv == null /*|| this.Packages[findAasReturn.iPackage].AasEnv.Assets == null*/)
             {
                 context.Response.SendResponse(HttpStatusCode.InternalServerError, $"Error accessing internal data structures.");
                 return;

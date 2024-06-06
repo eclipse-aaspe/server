@@ -1,7 +1,8 @@
 ﻿/*  Copyright (c) 2019-2023 Fraunhofer IOSB-INA Lemgo,
-    eine rechtlich nicht selbstaendige Einrichtung der Fraunhofer-Gesellschaft
-    zur Foerderung der angewandten Forschung e.V.
+eine rechtlich nicht selbstaendige Einrichtung der Fraunhofer-Gesellschaft
+zur Foerderung der angewandten Forschung e.V.
  */
+
 using AasxServer;
 using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Interfaces;
@@ -58,11 +59,11 @@ namespace AasxServerStandardBib.Services
         #endregion
 
         #region AssetAdministrationShell
+
         public IAssetAdministrationShell CreateAssetAdministrationShell(IAssetAdministrationShell body)
         {
             if (EmptyPackageAvailable(out int emptyPackageIndex))
             {
-
                 _packages[emptyPackageIndex].AasEnv.AssetAdministrationShells.Add(body);
                 var timeStamp = DateTime.UtcNow;
                 body.TimeStampCreate = timeStamp;
@@ -80,7 +81,7 @@ namespace AasxServerStandardBib.Services
         {
             if (aas != null && packageIndex != -1)
             {
-                bool deleted = (bool)(_packages[packageIndex].AasEnv?.AssetAdministrationShells.Remove(aas));
+                bool deleted = (bool) (_packages[packageIndex].AasEnv?.AssetAdministrationShells.Remove(aas));
                 if (deleted)
                 {
                     _logger.LogDebug($"Deleted Asset Administration Shell with id {aas.Id}");
@@ -140,7 +141,8 @@ namespace AasxServerStandardBib.Services
 
         private bool IsAssetAdministrationShellPresent(string aasIdentifier, out IAssetAdministrationShell output, out int packageIndex)
         {
-            output = null; packageIndex = -1;
+            output = null;
+            packageIndex = -1;
 
             Program.loadPackageForAas(aasIdentifier, out output, out packageIndex);
 
@@ -198,6 +200,7 @@ namespace AasxServerStandardBib.Services
             _packages[packageIndex].EmbeddAssetInformationThumbnail(defaultThumbnail, fileContent);
             Program.signalNewData(0);
         }
+
         #endregion
 
         #region Submodel
@@ -211,6 +214,7 @@ namespace AasxServerStandardBib.Services
                 {
                     _aasService.Value.DeleteSubmodelReferenceById(aas.Id, submodelIdentifier);
                 }
+
                 _packages[packageIndex].AasEnv.Submodels.Remove(submodel);
                 _logger.LogDebug($"Deleted submodel with id {submodelIdentifier}.");
                 AasxServer.Program.signalNewData(1);
@@ -367,9 +371,8 @@ namespace AasxServerStandardBib.Services
         {
             if (EmptyPackageAvailable(out int emptyPackageIndex))
             {
-
                 _packages[emptyPackageIndex].AasEnv.ConceptDescriptions.Add(body);
-                var timeStamp = DateTime.UtcNow; 
+                var timeStamp = DateTime.UtcNow;
                 body.TimeStampCreate = timeStamp;
                 body.SetTimeStamp(timeStamp);
                 Program.signalNewData(2);
@@ -492,7 +495,6 @@ namespace AasxServerStandardBib.Services
 
                         output = submodels;
                     }
-
                 }
             }
 
