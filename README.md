@@ -478,5 +478,6 @@ https://github.com/admin-shell-io/aasx-server/issues/new).
 
 ## Contributing
 
-Code contributions are very welcome! Please see
-[CONTRIBUTING.md](CONTRIBUTING.md) for more information.
+Please see [CONTRIBUTING](CONTRIBUTING.md) for instructions on joining the development and general contribution guidelines.
+For a complete list of all contributing individuals and companies, please visit our [CONTRIBUTORS](CONTRIBUTORS.md) page.
+
