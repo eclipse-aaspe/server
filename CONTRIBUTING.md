@@ -61,11 +61,24 @@ Run the checks with:
 
 ### Branching
 
-**If you are part of the `Eclipse AASX Package Explorer and Server`GitHub organization:**
-Create a branch prefixed with your GitHub username using dashes to describe the change (e.g., `mristin/Add-a-shiny-new-feature-B`).
+#### For `Eclipse AASX Package Explorer and Server` Committers
 
-**Otherwise:** If you are not a member of the organization, you need to fork the repository and create your feature branch on the fork. 
-See the [GitHub documentation about forking][github-fork].
+1. **Integration Branch:**
+    - Create a new integration branch in the main repository (e.g., "integration/freezor").
+        - All your unique PRs will be collected there and, upon consultation, merged to the 'main' branch.
+        - Keep this branch up to date with the main regularly and resolve merge conflicts.
+2. **Feature Branch:**
+    - Create a branch prefixed with your GitHub username using dashes to describe the change (e.g., `mristin/Add-a-shiny-new-feature-B`).
+        - This branch can reside in the repository or your own fork.
+        - When naming branches, refer to [Tilburg Science Hub](https://tilburgsciencehub.com/topics/automation/version-control/advanced-git/naming-git-branches/).
+
+#### For Community Contributors
+
+1. **Forking Repository:**
+    - If you are not a member of the organization, you need to fork the repository and create your feature branch on the fork.
+        - See the [GitHub documentation about forking][github-fork].
+2. **Naming Convention:**
+    - Ensure good naming practices for your branches. Refer to [Tilburg Science Hub](https://tilburgsciencehub.com/topics/automation/version-control/advanced-git/naming-git-branches/) for guidelines on branch names.
 
 [github-fork]: https://docs.github.com/en/github/getting-started-with-github/fork-a-repo
 
