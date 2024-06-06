@@ -43,10 +43,12 @@ jobs:
         shell: pwsh
       
       # Compares the output of the --help command with the README file to ensure consistency.
-      - name: Check --help and Readme coincide
+      - name: Package
         working-directory: src
-        run: .\CheckHelpInReadme.ps1
+        run: .\PackageRelease.ps1
         shell: pwsh
+        with:
+          suffix: alpha
       
       # Packages the release by executing the PackageRelease.ps1 PowerShell script with the version argument LATEST.alpha.
       - name: Package

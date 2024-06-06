@@ -1,13 +1,8 @@
 param(
-    [Parameter(HelpMessage = "Version to be packaged", Mandatory = $true)]
+    [Parameter(HelpMessage = "Suffix to be appended to the version (e.g., alpha, beta)", Mandatory = $false)]
     [string]
-    $version
+    $suffix = "alpha"
 )
-
-<#
-.SYNOPSIS
-This script packages files to be released.
-#>
 
 # Set error action preference to stop on errors.
 $ErrorActionPreference = "Stop"
@@ -15,7 +10,68 @@ $ErrorActionPreference = "Stop"
 # Import necessary functions from Common.psm1 module.
 Import-Module (Join-Path $PSScriptRoot Common.psm1) -Function GetArtefactsDir
 
-function PackageRelease($outputDir)
+function GetNextBuildNumber
+{
+    # Read the current build number from the file.
+    $currentBuild = Get-Content (Join-Path $PSScriptRoot "current_build_number.cfg") | ForEach-Object { $_.Trim() }
+
+    # Increment the build number and save it back to the file.
+    $nextBuild = [int]$currentBuild + 1
+    $nextBuild | Set-Content (Join-Path $PSScriptRoot "current_build_number.cfg")
+
+    # Return the incremented build number.
+    return $nextBuild
+}
+
+function GetVersionCore
+{
+    # Read the current version from the file.
+    $versionCore = Get-Content (Join-Path $PSScriptRoot "current_version.cfg") | ForEach-Object { $_.Trim() }
+
+    # Return the version core.
+    return $versionCore
+}
+
+function GetBuildSuffix
+{
+    # Determine if the build is on the main or release branch.
+    $branch = git branch --show-current
+
+    if ($branch -eq "main")
+    {
+        return "latest"
+    }
+    elseif ($branch -eq "release")
+    {
+        return "stable"
+    }
+    else
+    {
+        return "development"
+    }
+}
+
+function GetVersion
+{
+    # Get the version core from the file.
+    $versionCore = GetVersionCore
+
+    # Get the build suffix based on the branch.
+    $buildSuffix = GetBuildSuffix
+
+    # Get the next build number.
+    $buildNumber = GetNextBuildNumber
+
+    # Set the used AAS meta model version.
+    $aasModelVersion = "AASV3"
+
+    # Construct the semantic version.
+    $semanticVersion = "$versionCore+$buildNumber-$aasModelVersion-$suffix-$buildSuffix"
+
+    return $semanticVersion
+}
+
+function PackageRelease($outputDir, $version)
 {
     # Define the base directory where built release files are stored.
     $baseBuildDir = Join-Path $( GetArtefactsDir ) "build" | Join-Path -ChildPath "Release"
@@ -56,25 +112,13 @@ function PackageRelease($outputDir)
 
 function Main
 {
-    # Validate version parameter.
+    # Get the semantic version.
+    $version = GetVersion
+
+    # Validate the generated semantic version.
     if ($version -eq "")
     {
-        throw "Unexpected empty version"
-    }
-
-    # Regular expressions for version validation.
-    $versionRe = [Regex]::new(
-            '^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|1[0-9]|2[0-9]|3[0-1])' +
-                    '(\.(alpha|beta))?$')
-    $latestVersionRe = [Regex]::new('^LATEST(\.(alpha|beta))?$')
-
-    # Validate the provided version.
-    if ((!$latestVersionRe.IsMatch($version)) -and
-            (!$versionRe.IsMatch($version)))
-    {
-        throw ("Unexpected version; expected either year-month-day (*e.g., 2019-10-23) " +
-                "followed by an optional maturity tag (*e.g., 2019-10-23.alpha) " +
-                "or LATEST, but got: $version")
+        throw "Failed to generate semantic version."
     }
 
     # Define the output directory for the packaged release.
@@ -88,7 +132,7 @@ function Main
     }
 
     # Package the release.
-    PackageRelease -outputDir $outputDir
+    PackageRelease -outputDir $outputDir -version $version
 }
 
 # Store the current location, execute the main function, and return to the original location.
