@@ -37,6 +37,20 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExampleClient", "ExampleCli
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AasxServerAspNetCore", "AasxServerAspNetCore\AasxServerAspNetCore.csproj", "{D467D497-18D8-4E26-8671-8AC73BE9AC4F}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{F847719C-7CF2-40D5-BF7B-6F51E551E13F}"
+	ProjectSection(SolutionItems) = preProject
+		..\.github\ISSUE_TEMPLATE\BugReport.yml = ..\.github\ISSUE_TEMPLATE\BugReport.yml
+		..\.github\workflows\build-and-package-release.yml = ..\.github\workflows\build-and-package-release.yml
+		..\.github\workflows\build-and-publish-docker-images.yml = ..\.github\workflows\build-and-publish-docker-images.yml
+		..\.github\workflows\build-and-publish-docker-images-release.yml = ..\.github\workflows\build-and-publish-docker-images-release.yml
+		..\.github\workflows\build-docker-images.yml = ..\.github\workflows\build-docker-images.yml
+		..\.github\workflows\check-release.yml = ..\.github\workflows\check-release.yml
+		..\.github\workflows\check-style.yml = ..\.github\workflows\check-style.yml
+		..\.github\ISSUE_TEMPLATE\FeatureRequest.yml = ..\.github\ISSUE_TEMPLATE\FeatureRequest.yml
+		..\.github\pull_request_template.md = ..\.github\pull_request_template.md
+		..\.github\ISSUE_TEMPLATE\Questions_and_help.md = ..\.github\ISSUE_TEMPLATE\Questions_and_help.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -272,5 +286,8 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A6054B71-0BA2-4582-9B76-805D46670242}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{F847719C-7CF2-40D5-BF7B-6F51E551E13F} = {B8C116C4-932B-4071-9DCC-D4F64E3C4E6F}
 	EndGlobalSection
 EndGlobal
