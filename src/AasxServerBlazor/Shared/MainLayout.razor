@@ -301,25 +301,34 @@
         {
             if (env != null)
             {
+                var queryPara = "";
+                var userPW = "";
+                var urlEdcWrapper = "";
+                string replace = "";
+
                 var aas = env.AasEnv.AssetAdministrationShells[0];
                 if (aas.IdShort != "ZveiControlCabinetAas - EXTERNAL")
                     continue;
 
                 link = getAasLink(aas);
 
-                // var registry = IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.getRegistry;
-                // JUIJUI
                 var registry = AasRegistryService.GetRegistryList();
                 if (registry != null && registry.Count != 0)
                 {
-                    link += "&registryURL=" + registry[0];
-                }
-                // JUIJUI
+                    string registryURL = registry[0];
 
-                var queryPara = "";
-                var userPW = "";
-                var urlEdcWrapper = "";
-                string replace = "";
+                    if (AasxCredentials.get(cs.credentials, registryURL, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
+                    {
+                        if (replace != "")
+                            registryURL = replace;
+                    }
+                    link += registryURL;
+                }
+
+                queryPara = "";
+                userPW = "";
+                urlEdcWrapper = "";
+                replace = "";
                 if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
                 {
                     if (replace != "")
