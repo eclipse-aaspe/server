@@ -1563,6 +1563,20 @@ namespace AasxServer
                                     {
                                         var requestPath = sm.Extensions[0].Value;
 
+                                        string queryPara = "";
+                                        string userPW = "";
+                                        string urlEdcWrapper = "";
+                                        string replace = "";
+                                        if (AasxCredentials.get(cs.credentials, requestPath, out queryPara, out userPW, out urlEdcWrapper, out replace))
+                                        {
+                                            if (replace != "")
+                                                requestPath = replace;
+                                            if (queryPara != "")
+                                                queryPara = "?" + queryPara;
+                                            if (urlEdcWrapper != "")
+                                                requestPath = urlEdcWrapper;
+                                        }
+
                                         var handler = new HttpClientHandler();
                                         if (!requestPath.Contains("localhost"))
                                         {
@@ -1574,28 +1588,16 @@ namespace AasxServer
 
                                         var client = new HttpClient(handler);
 
+                                        if (userPW != "")
+                                            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", userPW);
                                         string clientToken = "";
                                         if (sm.Extensions != null && sm.Extensions.Count > 1 && sm.Extensions[1].Name == "clientToken")
                                             clientToken = sm.Extensions[1].Value;
                                         if (clientToken != "")
                                             client.SetBearerToken(clientToken);
 
-                                        string queryPara = "";
-                                        string userPW = "";
-                                        string urlEdcWrapper = "";
-                                        string replace = "";
                                         client.DefaultRequestHeaders.Clear();
-                                        if (AasxCredentials.get(cs.credentials, requestPath, out queryPara, out userPW, out urlEdcWrapper, out replace))
-                                        {
-                                            if (replace != "")
-                                                requestPath = replace;
-                                            if (queryPara != "")
-                                                queryPara = "?" + queryPara;
-                                            if (userPW != "")
-                                                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", userPW);
-                                            if (urlEdcWrapper != "")
-                                                requestPath = urlEdcWrapper;
-                                        }
+
                                         bool success = false;
                                         HttpResponseMessage response = new HttpResponseMessage();
                                         try

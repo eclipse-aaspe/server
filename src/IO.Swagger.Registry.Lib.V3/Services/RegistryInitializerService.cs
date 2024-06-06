@@ -429,6 +429,8 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                     client.DefaultRequestHeaders.Clear();
                                     if (AasxCredentials.get(cList, requestPath, out queryPara, out userPW, out urlEdcWrapper, out replace))
                                     {
+                                        if (replace != "")
+                                            requestPath = replace;
                                         if (queryPara != "")
                                             queryPara = "?" + queryPara;
                                         if (userPW != "")

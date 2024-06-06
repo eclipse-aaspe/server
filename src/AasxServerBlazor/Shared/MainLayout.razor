@@ -305,7 +305,7 @@
                 if (aas.IdShort != "ZveiControlCabinetAas - EXTERNAL")
                     continue;
 
-                link = "?aasUrl=" + getAasLink(aas);
+                link = getAasLink(aas);
 
                 // var registry = IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.getRegistry;
                 // JUIJUI
@@ -329,6 +329,7 @@
                     // Console.WriteLine("iframe:" + link);
                 }
 
+                link = "?aasUrl=" + link;
             }
         }
 
