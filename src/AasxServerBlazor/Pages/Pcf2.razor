@@ -374,7 +374,7 @@
                                             userPW = "";
                                             urlEdcWrapper = "";
                                             replace = "";
-                                            if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper, out replace))
+                                            if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
                                             {
                                                 if (replace != "")
                                                     link = replace;
@@ -492,7 +492,7 @@
                                                             }
                                                         
                                                             var icon = id;
-                                                            if (AasxCredentials.get(cs.credentials, smlink, out queryPara, out userPW, out urlEdcWrapper, out replace))
+                                                            if (AasxCredentials.get(cs.credentials, smlink, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
                                                             {
                                                                 if (replace != "")
                                                                     smlink = replace;
@@ -689,7 +689,7 @@
                             string userPW = "";
                             string urlEdcWrapper = "";
                             string replace = "";
-                            if (AasxCredentials.get(credentials, path, out queryPara, out userPW, out urlEdcWrapper, out replace))
+                            if (AasxCredentials.get(credentials, path, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
                             {
                                 if (replace != "")
                                     path = replace;
