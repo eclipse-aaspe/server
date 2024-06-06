@@ -353,20 +353,27 @@
                                             var registry = AasRegistryService.GetRegistryList();
                                             if (registry.Count != 0)
                                             {
+                                                string registryURL = "";
                                                 // check for buffered shell descriptors from getregistry() for basyx
                                                 var aasDescriptors = AasRegistryService.GetAasDescriptorsForSubmodelView();
-
                                                 if (aasDescriptors != null && aasDescriptors.Count != 0)
                                                 {
-                                                    string registryURL = NavMan.Uri;
+                                                    registryURL = NavMan.Uri;
                                                     registryURL = registryURL.Substring(0, registryURL.Length - "/pcf".Length);
                                                     Console.WriteLine("registryURL " + registryURL);
-                                                    link += "&registryURL=" + registryURL;
                                                 }
                                                 else
                                                 {
-                                                    link += "&registryURL=" + registry[0];
+                                                    registryURL = registry[0];
                                                 }
+
+                                                if (AasxCredentials.get(cs.credentials, registryURL, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
+                                                {
+                                                    if (replace != "")
+                                                        registryURL = replace;
+                                                }
+
+                                                link += "&registryURL=" + registryURL;
                                             }
                                            
                                             // JUIJUI
@@ -383,7 +390,6 @@
                                                     queryPara = Base64UrlEncoder.Encode(queryPara);
                                                     link += "&query=" + queryPara;
                                                 }
-                                                // Console.WriteLine("iframe:" + link);
                                             }
 
                                             if (node.aas != null)
