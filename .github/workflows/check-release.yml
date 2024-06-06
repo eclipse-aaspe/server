@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - release
-      - freezor/**
+      - *
     types: [ opened, synchronize, reopened, edited ]
 
   push:
