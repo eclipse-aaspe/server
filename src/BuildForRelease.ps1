@@ -9,11 +9,10 @@
 This script builds the solution for debugging (manual or automatic testing).
 #>
 
+# Set error action preference to stop on errors.
 $ErrorActionPreference = "Stop"
 
-Import-Module (Join-Path $PSScriptRoot Common.psm1) -Function `
-    AssertDotnet, `
-      GetArtefactsDir
+Import-Module (Join-Path $PSScriptRoot Common.psm1) -Function AssertDotnet, GetArtefactsDir
 
 function CopyContentForDemo($Destination)
 {
@@ -25,19 +24,20 @@ function CopyContentForDemo($Destination)
 
     Write-Host "Copying content for demo from $contentForDemoDir to: $Destination"
 
-    Get-ChildItem -Path $contentForDemoDir `
-        | Copy-Item -Destination $Destination -Recurse -Container -Force
+    Get-ChildItem -Path $contentForDemoDir | Copy-Item -Destination $Destination -Recurse -Container -Force
 }
 
 function Main
 {
+    # Change to the script root directory.
     Set-Location $PSScriptRoot
 
-    $baseBuildDir = Join-Path $( GetArtefactsDir ) "build" `
-        | Join-Path -ChildPath "Release"
+    # Define the base build directory.
+    $baseBuildDir = Join-Path $(GetArtefactsDir) "build" | Join-Path -ChildPath "Release"
 
     if ($clean)
     {
+        # Clean up previous build if requested.
         Write-Host "dotnet clean'ing ..."
         dotnet clean
         if ($LASTEXITCODE -ne 0)
@@ -50,15 +50,13 @@ function Main
     }
     else
     {
+        # Ensure dotnet is installed.
         AssertDotnet
 
-        ##
-        # Build dotnet targets
-        ##
-
-        $dotnetTargets = $(
-        "AasxServerBlazor"
-        "AasxServerAspNetCore"
+        # Build dotnet targets.
+        $dotnetTargets = @(
+            "AasxServerBlazor"
+            "AasxServerAspNetCore"
         )
 
         foreach ($target in $dotnetTargets)
@@ -73,12 +71,15 @@ function Main
                 throw "Failed to dotnet publish: $target"
             }
 
+            # Copy content for demo to the build directory.
             CopyContentForDemo -Destination $buildDir
         }
     }
 }
 
-$previousLocation = Get-Location; try
+# Store the current location, execute the main function, and return to the original location.
+$previousLocation = Get-Location
+try
 {
     Main
 }
