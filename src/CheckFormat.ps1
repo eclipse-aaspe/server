@@ -30,20 +30,12 @@ function Main {
     Write-Host "Report path: $reportPath"
 
     Write-Host "Running dotnet format..."
-    $result = dotnet format --verify-no-changes --report $reportPath --exclude "**/DocTest*.cs" 2>&1
-    Write-Host "dotnet format output:"
-    Write-Host $result
-
-    if (Test-Path $reportPath) {
-        Write-Host "Report generated successfully."
-        $formatReport = Get-Content $reportPath | ConvertFrom-Json
-        if ($formatReport.Count -ge 1) {
-            throw "There are $($formatReport.Count) dotnet-format issue(s). The report is stored in: $reportPath"
-        } else {
-            Write-Host "No formatting issues found."
-        }
-    } else {
-        throw "The report file $reportPath was not generated."
+    dotnet format --verify-no-changes --report $reportPath --exclude "**/DocTest*.cs"
+    $formatReport = Get-Content $reportPath |ConvertFrom-Json
+    if ($formatReport.Count -ge 1)
+    {
+        throw "There are $( $formatReport.Count ) dotnet-format issue(s). " +  `
+             "The report is stored in: $reportPath"
     }
 }
 
