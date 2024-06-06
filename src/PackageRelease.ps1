@@ -61,7 +61,7 @@ function GetVersion {
     $buildNumber = GetNextBuildNumber
 
     # Construct the semantic version.
-    $semanticVersion = "$versionCore+$buildNumber-$suffix-$buildSuffix"
+    $semanticVersion = "$versionCore-$buildNumber-$suffix-$buildSuffix"
 
     return $semanticVersion
 }
@@ -113,10 +113,6 @@ function PackageRelease($outputDir, $version) {
     # The source code will be distributed automatically through GitHub releases.
 
     Write-Host "Done packaging the release."
-}
-
-function GetArtefactsDir {
-    return Join-Path (Split-Path -Parent $PSScriptRoot) "artefacts"
 }
 
 function Main {
