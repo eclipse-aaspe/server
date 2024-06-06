@@ -32,7 +32,11 @@ function GetVersionCore {
 
 function GetBuildSuffix {
     # Determine if the build is on the main or release branch.
-    $branch = git branch --show-current
+    $branch = git branch --show-current 2>$null  # Suppress errors if not in a Git repository
+    if (-not $?) {
+        Write-Host "Not in a Git repository. Assuming develop branch."
+        return "develop"
+    }
 
     if ($branch -eq "main") {
         return "latest"
@@ -41,7 +45,8 @@ function GetBuildSuffix {
         return "stable"
     }
     else {
-        throw "Unknown branch: $branch"
+        Write-Host "Not main or release branch. Assuming develop branch."
+        return "develop"
     }
 }
 
@@ -63,7 +68,7 @@ function GetVersion {
 
 function UpdateProjectVersions($version) {
     # Get all csproj files in the solution.
-    $projectFiles = Get-ChildItem -Path "$(Get-ArtefactsDir)\..\" -Recurse -Filter *.csproj
+    $projectFiles = Get-ChildItem -Path "$\..\" -Recurse -Filter *.csproj
 
     # Iterate through each project file and update the <Version> tag.
     foreach ($file in $projectFiles) {
@@ -108,6 +113,10 @@ function PackageRelease($outputDir, $version) {
     # The source code will be distributed automatically through GitHub releases.
 
     Write-Host "Done packaging the release."
+}
+
+function GetArtefactsDir {
+    return Join-Path (Split-Path -Parent $PSScriptRoot) "artefacts"
 }
 
 function Main {

@@ -50,12 +50,6 @@ jobs:
         with:
           suffix: alpha
       
-      # Packages the release by executing the PackageRelease.ps1 PowerShell script with the version argument LATEST.alpha.
-      - name: Package
-        working-directory: src
-        run: .\PackageRelease.ps1 -version LATEST.alpha
-        shell: pwsh
-      
       # Uploads the AasxServerBlazor artifact with a timestamp to the artifacts' repository.
       - name: Upload AasxServerBlazor
         uses: actions/upload-artifact@v3
