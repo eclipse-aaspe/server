@@ -39,16 +39,38 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AasxServerAspNetCore", "Aas
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{F847719C-7CF2-40D5-BF7B-6F51E551E13F}"
 	ProjectSection(SolutionItems) = preProject
+		..\.github\pull_request_template.md = ..\.github\pull_request_template.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "issue_templates", "issue_templates", "{6F3BB70E-0095-4D58-AE5E-D7D02FD7BB01}"
+	ProjectSection(SolutionItems) = preProject
 		..\.github\ISSUE_TEMPLATE\BugReport.yml = ..\.github\ISSUE_TEMPLATE\BugReport.yml
+		..\.github\ISSUE_TEMPLATE\FeatureRequest.yml = ..\.github\ISSUE_TEMPLATE\FeatureRequest.yml
+		..\.github\ISSUE_TEMPLATE\Questions_and_help.md = ..\.github\ISSUE_TEMPLATE\Questions_and_help.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{01BD6F10-2DE0-4D88-8EB0-62705AE8F6FC}"
+	ProjectSection(SolutionItems) = preProject
 		..\.github\workflows\build-and-package-release.yml = ..\.github\workflows\build-and-package-release.yml
 		..\.github\workflows\build-and-publish-docker-images.yml = ..\.github\workflows\build-and-publish-docker-images.yml
 		..\.github\workflows\build-and-publish-docker-images-release.yml = ..\.github\workflows\build-and-publish-docker-images-release.yml
 		..\.github\workflows\build-docker-images.yml = ..\.github\workflows\build-docker-images.yml
 		..\.github\workflows\check-release.yml = ..\.github\workflows\check-release.yml
 		..\.github\workflows\check-style.yml = ..\.github\workflows\check-style.yml
-		..\.github\ISSUE_TEMPLATE\FeatureRequest.yml = ..\.github\ISSUE_TEMPLATE\FeatureRequest.yml
-		..\.github\pull_request_template.md = ..\.github\pull_request_template.md
-		..\.github\ISSUE_TEMPLATE\Questions_and_help.md = ..\.github\ISSUE_TEMPLATE\Questions_and_help.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ProjectScripts", "ProjectScripts", "{39F9287F-CBC6-4F56-AA55-81A013A89AAE}"
+	ProjectSection(SolutionItems) = preProject
+		AdditionalVerbsInImperativeMood.txt = AdditionalVerbsInImperativeMood.txt
+		BuildDockerImages.ps1 = BuildDockerImages.ps1
+		BuildForRelease.ps1 = BuildForRelease.ps1
+		Check.ps1 = Check.ps1
+		CheckFormat.ps1 = CheckFormat.ps1
+		CheckHelpInReadme.ps1 = CheckHelpInReadme.ps1
+		Common.psm1 = Common.psm1
+		CopyLicense.ps1 = CopyLicense.ps1
+		FormatCode.ps1 = FormatCode.ps1
+		PackageRelease.ps1 = PackageRelease.ps1
 	EndProjectSection
 EndProject
 Global
@@ -289,5 +311,8 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{F847719C-7CF2-40D5-BF7B-6F51E551E13F} = {B8C116C4-932B-4071-9DCC-D4F64E3C4E6F}
+		{6F3BB70E-0095-4D58-AE5E-D7D02FD7BB01} = {F847719C-7CF2-40D5-BF7B-6F51E551E13F}
+		{01BD6F10-2DE0-4D88-8EB0-62705AE8F6FC} = {F847719C-7CF2-40D5-BF7B-6F51E551E13F}
+		{39F9287F-CBC6-4F56-AA55-81A013A89AAE} = {B8C116C4-932B-4071-9DCC-D4F64E3C4E6F}
 	EndGlobalSection
 EndGlobal
