@@ -7,10 +7,11 @@ $ErrorActionPreference = "Stop"
 
 Import-Module (Join-Path $PSScriptRoot Common.psm1) -Function `
     AssertDotnet, `
-    AssertDotnetFormatVersion, `
-    GetArtefactsDir
+     AssertDotnetFormatVersion, `
+     GetArtefactsDir
 
-function Main {
+function Main
+{
     AssertDotnetFormatVersion
 
     $scriptDir = $PSScriptRoot
@@ -31,17 +32,28 @@ function Main {
 
     Write-Host "Running dotnet format..."
     dotnet format --verify-no-changes --report $reportPath --exclude "**/DocTest*.cs"
-    $formatReport = Get-Content $reportPath |ConvertFrom-Json
+    $formatReport = Get-Content $reportPath | ConvertFrom-Json
     if ($formatReport.Count -ge 1)
     {
-        throw "There are $( $formatReport.Count ) dotnet-format issue(s). " +  `
-             "The report is stored in: $reportPath"
+        Write-Host "There are $( $formatReport.Count ) dotnet-format issue(s):"
+        foreach ($issue in $formatReport)
+        {
+            Write-Host "  - $( $issue.FileName ): Line $( $issue.LineSpan.StartLinePosition.Line ), Column $( $issue.LineSpan.StartLinePosition.Character ): $( $issue.Failure.Message )"
+        }
+        throw "Formatting issues found. The report is stored in: $reportPath"
+    }
+    else
+    {
+        Write-Host "No formatting issues found."
     }
 }
 
 $previousLocation = Get-Location
-try {
+try
+{
     Main
-} finally {
+}
+finally
+{
     Set-Location $previousLocation
 }
