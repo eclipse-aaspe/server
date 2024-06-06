@@ -3,24 +3,27 @@ name: Check-style-workflow
 on:
   pull_request:
     branches:
-      - master
+      - main
+      - release
+      - 'integration/**'
     types: [opened, synchronize, reopened, edited]
-
   push:
+    branches:
+      - main
+      - release
+      - 'integration/**'
 
 jobs:
   Check-style:
     runs-on: windows-latest
-    if: contains(github.event.pull_request.body, 'The workflow check-style was intentionally skipped.') == false
     steps:
-      - uses: actions/checkout@master
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Install dotnet tools
+      - name: Install .NET tools
         working-directory: src
         run: dotnet tool restore
-        if: always()
 
-      - name: Check format
+      - name: Check code format
         working-directory: src
         run: powershell .\CheckFormat.ps1
-        if: always()

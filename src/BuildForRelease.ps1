@@ -13,14 +13,14 @@ $ErrorActionPreference = "Stop"
 
 Import-Module (Join-Path $PSScriptRoot Common.psm1) -Function `
     AssertDotnet, `
-    GetArtefactsDir
+     GetArtefactsDir
 
 function CopyContentForDemo($Destination)
 {
     $contentForDemoDir = Join-Path (Split-Path -Parent $PSScriptRoot) "content-for-demo"
     if (!(Test-Path $contentForDemoDir))
     {
-       throw "The directory with the content for demo does not exist: $contentForDemoDir"
+        throw "The directory with the content for demo does not exist: $contentForDemoDir"
     }
 
     Write-Host "Copying content for demo from $contentForDemoDir to: $Destination"
