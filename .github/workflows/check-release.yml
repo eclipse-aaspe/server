@@ -3,7 +3,8 @@ name: Check-release-workflow
 on:
   pull_request:
     branches:
-      - master
+      - main
+      - release
     types: [opened, synchronize, reopened, edited]
 
   push:

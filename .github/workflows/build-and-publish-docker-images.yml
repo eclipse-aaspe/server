@@ -4,7 +4,7 @@ on:
   push:
 
   release:
-    types: [published]
+    types: [ published ]
 
 jobs:
   Build-and-publish-docker-images:
@@ -14,7 +14,7 @@ jobs:
       contains(github.event.head_commit.message, 'DockerHub')
     steps:
       - uses: actions/checkout@master
-        
+
       - name: Build and publish AasxServerBlazor
         uses: docker/build-push-action@v1
         with:
@@ -41,7 +41,7 @@ jobs:
           repository: adminshellio/aasx-server-blazor-for-demo-arm64
           tags: v3latest
           dockerfile: src/docker/Dockerfile-AasxServerBlazor-arm64
-          
+
       - name: Build and publish AasxServerCore
         uses: docker/build-push-action@v1
         with:
