@@ -9,8 +9,7 @@ on:
 
   push:
     branches:
-      - main
-      - release
+      - '*'
 
 jobs:
   Check-release:
