@@ -61,7 +61,7 @@ function Main
 
     $versionRe = [Regex]::new(
             '^[0-9]{4}-(0[1-9]|10|11|12)-(0[1-9]|1[0-9]|2[0-9]|3[0-1])' +
-            '(\.(alpha|beta))?$')
+                    '(\.(alpha|beta))?$')
 
     $latestVersionRe = [Regex]::new('^LATEST(\.(alpha|beta))?$')
 

@@ -13,7 +13,7 @@ $ErrorActionPreference = "Stop"
 
 Import-Module (Join-Path $PSScriptRoot Common.psm1) -Function `
     AssertDotnet, `
-     GetArtefactsDir
+      GetArtefactsDir
 
 function CopyContentForDemo($Destination)
 {
