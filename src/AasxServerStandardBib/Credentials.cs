@@ -72,6 +72,7 @@ namespace AasxServer
                             line = sr.ReadLine();
                         }
                     }
+                    Console.WriteLine("CREDENTIALS " + fileName + ":" + cList.Count + " entries read");
                 }
                 catch (IOException e)
                 {
