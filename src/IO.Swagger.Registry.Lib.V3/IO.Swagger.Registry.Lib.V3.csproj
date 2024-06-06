@@ -8,7 +8,7 @@
         <AssemblyName>IO.Swagger.Registry.Lib.V3</AssemblyName>
         <PackageId>IO.Swagger.Registry</PackageId>
         <OutputType>Library</OutputType>
-        <Version>0.3.0-2-alpha-develop</Version>
+        <Version>0.3.0-2-aasV3-alpha-develop</Version>
     </PropertyGroup>
     <PropertyGroup>
         <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>

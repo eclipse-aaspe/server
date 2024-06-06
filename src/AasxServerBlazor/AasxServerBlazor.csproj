@@ -3,7 +3,7 @@
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
         <SatelliteResourceLanguages>en-US;de-DE</SatelliteResourceLanguages>
-        <Version>0.3.0-2-alpha-develop</Version>
+        <Version>0.3.0-2-aasV3-alpha-develop</Version>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

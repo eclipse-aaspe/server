@@ -59,9 +59,11 @@ function GetVersion {
 
     # Get the next build number.
     $buildNumber = GetNextBuildNumber
+    
+    $aasmodel = "aasV3"
 
     # Construct the semantic version.
-    $semanticVersion = "$versionCore-$buildNumber-$suffix-$buildSuffix"
+    $semanticVersion = "$versionCore-$buildNumber-$aasmodel-$suffix-$buildSuffix"
 
     return $semanticVersion
 }

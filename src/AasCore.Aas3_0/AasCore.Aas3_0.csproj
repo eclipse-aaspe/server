@@ -7,7 +7,7 @@
     <LangVersion>8</LangVersion>
 
     <PackageId>AasCore.Aas3_0</PackageId>
-    <Version>0.3.0-2-alpha-develop</Version>
+    <Version>0.3.0-2-aasV3-alpha-develop</Version>
     <Authors>Marko Ristin</Authors>
     <Description>
         An SDK for manipulating, verifying and de/serializing Asset Administration Shells.
