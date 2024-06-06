@@ -3,19 +3,11 @@ using AdminShellNS;
 using Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
-using SpookilySharp;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
-// using System.Drawing;
 using System.Globalization;
-using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using static AasCore.Aas3_0.Visitation;
 
 // https://learn.microsoft.com/en-us/ef/core/get-started/overview/first-app?tabs=netcore-cli
@@ -57,6 +49,7 @@ namespace AasxServer
             {
                 throw new Exception("No Configuration!");
             }
+
             connectionString = _con["DatabaseConnection:ConnectionString"];
             if (connectionString != null)
             {
@@ -73,11 +66,13 @@ namespace AasxServer
                         {
                             Params[i] = "Username=" + dbUser;
                         }
+
                         if (Params[i].Contains("Password") && dbPassword != null)
                         {
                             Params[i] = "Password=" + dbPassword;
                         }
                     }
+
                     // Console.WriteLine("Use POSTGRES: " + connectionString);
                     Program.isPostgres = true;
                     options.UseNpgsql(connectionString);
@@ -186,6 +181,7 @@ namespace AasxServer
             }
         }
     }
+
     public class DbConfigSet
     {
         public int Id { get; set; }
@@ -263,6 +259,7 @@ namespace AasxServer
                         break;
                 }
             }
+
             return "";
         }
 
@@ -281,6 +278,7 @@ namespace AasxServer
                         list.Add(MLPValue.Annotation);
                         list.Add(MLPValue.Value);
                     }
+
                     return list;
                 }
             }
@@ -307,13 +305,16 @@ namespace AasxServer
 
                 // SValue, IValue, DValue Tabellen zusammenführen
                 var watch2 = System.Diagnostics.Stopwatch.StartNew();
-                valueList = db.SValueSets.FromSqlRaw("SELECT * FROM SValueSets WHERE ParentSMENum >= " + first + " AND ParentSMENum <=" + last + " UNION SELECT * FROM IValueSets WHERE ParentSMENum >= " + first + " AND ParentSMENum <=" + last + " UNION SELECT * FROM DValueSets WHERE ParentSMENum >= " + first + " AND ParentSMENum <=" + last)
+                valueList = db.SValueSets.FromSqlRaw("SELECT * FROM SValueSets WHERE ParentSMENum >= " + first + " AND ParentSMENum <=" + last +
+                                                     " UNION SELECT * FROM IValueSets WHERE ParentSMENum >= " + first + " AND ParentSMENum <=" + last +
+                                                     " UNION SELECT * FROM DValueSets WHERE ParentSMENum >= " + first + " AND ParentSMENum <=" + last)
                     .Where(v => smeNums.Contains(v.ParentSMENum))
                     .OrderBy(v => v.ParentSMENum)
                     .ToList();
                 watch2.Stop();
                 Console.WriteLine("It took this time: " + watch2.ElapsedMilliseconds);
             }
+
             return valueList;
         }
     }
@@ -325,6 +326,7 @@ namespace AasxServer
         public long ParentSMENum { get; set; }
         public long Value { get; set; }
         public string Annotation { get; set; }
+
         public StringValue asStringValue()
         {
             return new StringValue
@@ -353,6 +355,7 @@ namespace AasxServer
         public long ParentSMENum { get; set; }
         public double Value { get; set; }
         public string Annotation { get; set; }
+
         public StringValue asStringValue()
         {
             return new StringValue
@@ -370,6 +373,7 @@ namespace AasxServer
         public string submodelId { get; set; }
         public string url { get; set; }
     }
+
     public class SmeResult
     {
         public string submodelId { get; set; }
@@ -377,6 +381,7 @@ namespace AasxServer
         public string value { get; set; }
         public string url { get; set; }
     }
+
     public class Query
     {
         public List<SubmodelResult> SearchSubmodels(string semanticId)
@@ -402,6 +407,7 @@ namespace AasxServer
                     sr.url = Program.externalBlazor + "/submodels/" + sub64;
                     list.Add(sr);
                 }
+
                 Console.WriteLine("Collected result in " + watch.ElapsedMilliseconds + "ms");
             }
 
@@ -425,6 +431,7 @@ namespace AasxServer
                         if (!legal.Contains(c))
                             return false;
                     }
+
                     var decSep = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
                     // Console.WriteLine("seperator = " + decSep);
                     lower = lower.Replace(".", decSep);
@@ -489,7 +496,7 @@ namespace AasxServer
                     iEqual = Convert.ToInt64(equal);
                     withI = true;
                     fEqual = Convert.ToDouble(equal);
-                    withF= true;
+                    withF = true;
                 }
                 else if (lower != "" && upper != "")
                 {
@@ -501,7 +508,9 @@ namespace AasxServer
                     withF = true;
                 }
             }
-            catch { }
+            catch
+            {
+            }
 
             if (semanticId == "" && equal == "" && lower == "" && upper == "" && contains == "")
                 return result;
@@ -519,8 +528,8 @@ namespace AasxServer
                 bool withCompare = !withContains && !withEqual && (lower != "" && upper != "");
 
                 var list = db.SValueSets.Where(v =>
-                    (withContains && v.Value.Contains(contains)) ||
-                    (withEqual && v.Value == equal)
+                        (withContains && v.Value.Contains(contains)) ||
+                        (withEqual && v.Value == equal)
                     )
                     .Join(db.SMESets,
                         v => v.ParentSMENum,
@@ -538,8 +547,8 @@ namespace AasxServer
                     .ToList();
 
                 list.AddRange(db.IValueSets.Where(v =>
-                    (withEqual && withI && v.Value == iEqual) ||
-                    (withCompare && withI && v.Value >= iLower && v.Value <= iUpper)
+                        (withEqual && withI && v.Value == iEqual) ||
+                        (withCompare && withI && v.Value >= iLower && v.Value <= iUpper)
                     )
                     .Join(db.SMESets,
                         v => v.ParentSMENum,
@@ -557,8 +566,8 @@ namespace AasxServer
                     .ToList());
 
                 list.AddRange(db.DValueSets.Where(v =>
-                    (withEqual && withF && v.Value == fEqual) ||
-                    (withCompare && withF && v.Value >= fLower && v.Value <= fUpper)
+                        (withEqual && withF && v.Value == fEqual) ||
+                        (withCompare && withF && v.Value >= fLower && v.Value <= fUpper)
                     )
                     .Join(db.SMESets,
                         v => v.ParentSMENum,
@@ -595,12 +604,14 @@ namespace AasxServer
                             path = smeDB.Idshort + "." + path;
                             pnum = smeDB.ParentSMENum;
                         }
+
                         r.idShortPath = path;
                         string sub64 = Base64UrlEncoder.Encode(r.submodelId);
                         r.url = Program.externalBlazor + "/submodels/" + sub64 + "/submodel-elements/" + path;
                         result.Add(r);
                     }
                 }
+
                 Console.WriteLine("Collected result in " + watch.ElapsedMilliseconds + "ms");
             }
 
@@ -615,7 +626,7 @@ namespace AasxServer
             string contains = "",
             string resultSemanticId = "",
             string resultIdShort = ""
-            )
+        )
         {
             List<SmeResult> result = new List<SmeResult>();
 
@@ -640,7 +651,9 @@ namespace AasxServer
                     withF = true;
                 }
             }
-            catch { }
+            catch
+            {
+            }
 
             using (AasContext db = new AasContext())
             {
@@ -654,8 +667,8 @@ namespace AasxServer
                 bool withEqual = !withContains && (equal != "");
 
                 var list = db.SValueSets.Where(v =>
-                    (withContains && v.Value.Contains(contains)) ||
-                    (withEqual && v.Value == equal)
+                        (withContains && v.Value.Contains(contains)) ||
+                        (withEqual && v.Value == equal)
                     )
                     .Join(db.SMESets,
                         v => v.ParentSMENum,
@@ -690,7 +703,7 @@ namespace AasxServer
                     .ToList();
 
                 list.AddRange(db.IValueSets.Where(v =>
-                    (withEqual && withI && v.Value == iEqual)
+                        (withEqual && withI && v.Value == iEqual)
                     )
                     .Join(db.SMESets,
                         v => v.ParentSMENum,
@@ -725,7 +738,7 @@ namespace AasxServer
                     .ToList());
 
                 list.AddRange(db.DValueSets.Where(v =>
-                    (withEqual && withF && v.Value == fEqual)
+                        (withEqual && withF && v.Value == fEqual)
                     )
                     .Join(db.SMESets,
                         v => v.ParentSMENum,
@@ -775,9 +788,9 @@ namespace AasxServer
                 watch.Restart();
 
                 var smeResult = db.SMESets.Where(s =>
-                    hSubmodel.Contains(s.SubmodelNum) &&
-                    ((resultSemanticId != "" && s.SemanticId == resultSemanticId) ||
-                    (resultIdShort != "" && s.Idshort == resultIdShort))
+                        hSubmodel.Contains(s.SubmodelNum) &&
+                        ((resultSemanticId != "" && s.SemanticId == resultSemanticId) ||
+                         (resultIdShort != "" && s.Idshort == resultIdShort))
                     )
                     .ToList();
 
@@ -813,6 +826,7 @@ namespace AasxServer
                                 }
                             }
                         }
+
                         r.idShortPath = path;
                         string sub64 = Base64UrlEncoder.Encode(r.submodelId);
                         if (r.url == "")
@@ -821,6 +835,7 @@ namespace AasxServer
                             result.Add(r);
                     }
                 }
+
                 Console.WriteLine("Collected result in " + watch.ElapsedMilliseconds + "ms");
             }
 
@@ -859,7 +874,9 @@ namespace AasxServer
                     withF = true;
                 }
             }
-            catch { }
+            catch
+            {
+            }
 
             if (semanticId == "" && equal == "" && lower == "" && upper == "" && contains == "")
                 return 0;
@@ -879,8 +896,8 @@ namespace AasxServer
                 bool withCompare = !withContains && !withEqual && (lower != "" && upper != "");
 
                 c = db.SValueSets.Where(v =>
-                    (withContains && v.Value.Contains(contains)) ||
-                    (withEqual && v.Value == equal) 
+                        (withContains && v.Value.Contains(contains)) ||
+                        (withEqual && v.Value == equal)
                     )
                     .Join(db.SMESets,
                         v => v.ParentSMENum,
@@ -898,8 +915,8 @@ namespace AasxServer
                     .Count();
 
                 c += db.IValueSets.Where(v =>
-                    (withEqual && withI && v.Value == iEqual) ||
-                    (withCompare && withI && v.Value >= iLower && v.Value <= iUpper)
+                        (withEqual && withI && v.Value == iEqual) ||
+                        (withCompare && withI && v.Value >= iLower && v.Value <= iUpper)
                     )
                     .Join(db.SMESets,
                         v => v.ParentSMENum,
@@ -916,9 +933,9 @@ namespace AasxServer
                     .Where(s => semanticId == "" || s.SemanticId == semanticId)
                     .Count();
 
-                 c += db.DValueSets.Where(v =>
-                    (withEqual && withF && v.Value == fEqual) ||
-                    (withCompare && withF && v.Value >= fLower && v.Value <= fUpper)
+                c += db.DValueSets.Where(v =>
+                        (withEqual && withF && v.Value == fEqual) ||
+                        (withCompare && withF && v.Value >= fLower && v.Value <= fUpper)
                     )
                     .Join(db.SMESets,
                         v => v.ParentSMENum,
@@ -948,6 +965,7 @@ namespace AasxServer
         DbConfigSet _dbConfig = null;
         long _smNum = 0;
         List<long> _parentNum = null;
+
         public VisitorAASX(AasContext db, DbConfigSet dbConfigSet, long smNum)
         {
             _db = db;
@@ -964,7 +982,6 @@ namespace AasxServer
 
         public static void LoadAASInDB(AasContext db, IAssetAdministrationShell aas, long aasxNum, AdminShellPackageEnv asp, DbConfigSet dbConfig)
         {
-
             long aasNum = ++dbConfig.AasCount;
             var aasDB = new AasSet
             {
@@ -1086,12 +1103,15 @@ namespace AasxServer
                     fValue = Convert.ToDouble(v);
                     return "F";
                 }
-                catch { }
+                catch
+                {
+                }
             }
 
             sValue = v;
             return "S";
         }
+
         private void getValue(ISubmodelElement sme, long smeNum, out string vt, out string sValue, out long iValue, out double fValue)
         {
             sValue = "";
@@ -1131,10 +1151,12 @@ namespace AasxServer
                         };
                         _db.Add(mlpval);
                     }
+
                     vt = "S";
                     sValue = v;
                 }
             }
+
             if (sme is AasCore.Aas3_0.Range r)
             {
                 v = r.Min;
@@ -1148,7 +1170,7 @@ namespace AasxServer
 
                 v += "$$" + v2;
                 vt = "S";
-                sValue= v;
+                sValue = v;
 
                 /*
                 if (vt == "S" || vt2 == "S")
@@ -1160,6 +1182,7 @@ namespace AasxServer
                 */
             }
         }
+
         private long collectSMEData(ISubmodelElement sme)
         {
             string st = shortType(sme);
@@ -1186,9 +1209,10 @@ namespace AasxServer
                     ParentSMENum = smeNum,
                     Value = sValue,
                     Annotation = ""
-            };
+                };
                 _db.Add(ValueDB);
             }
+
             if (vt == "I")
             {
                 var ValueDB = new IntValue
@@ -1199,6 +1223,7 @@ namespace AasxServer
                 };
                 _db.Add(ValueDB);
             }
+
             if (vt == "F")
             {
                 var ValueDB = new DoubleValue
@@ -1216,38 +1241,47 @@ namespace AasxServer
                 SMEType = st,
                 SemanticId = semanticId,
                 Idshort = sme.IdShort,
-                ValueType= vt,
+                ValueType = vt,
                 SubmodelNum = _smNum,
                 ParentSMENum = pn
             };
             _db.Add(smeDB);
             return smeNum;
         }
+
         public override void VisitExtension(IExtension that)
         {
         }
+
         public override void VisitAdministrativeInformation(IAdministrativeInformation that)
         {
         }
+
         public override void VisitQualifier(IQualifier that)
         {
         }
+
         public override void VisitAssetAdministrationShell(IAssetAdministrationShell that)
         {
         }
+
         public override void VisitAssetInformation(IAssetInformation that)
         {
         }
+
         public override void VisitResource(IResource that)
         {
         }
+
         public override void VisitSpecificAssetId(ISpecificAssetId that)
         {
         }
+
         public override void VisitSubmodel(ISubmodel that)
         {
             base.VisitSubmodel(that);
         }
+
         public override void VisitRelationshipElement(IRelationshipElement that)
         {
             long smeNum = collectSMEData(that);
@@ -1255,6 +1289,7 @@ namespace AasxServer
             base.VisitRelationshipElement(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
+
         public override void VisitSubmodelElementList(ISubmodelElementList that)
         {
             long smeNum = collectSMEData(that);
@@ -1262,6 +1297,7 @@ namespace AasxServer
             base.VisitSubmodelElementList(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
+
         public override void VisitSubmodelElementCollection(ISubmodelElementCollection that)
         {
             long smeNum = collectSMEData(that);
@@ -1269,6 +1305,7 @@ namespace AasxServer
             base.VisitSubmodelElementCollection(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
+
         public override void VisitProperty(IProperty that)
         {
             long smeNum = collectSMEData(that);
@@ -1276,6 +1313,7 @@ namespace AasxServer
             base.VisitProperty(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
+
         public override void VisitMultiLanguageProperty(IMultiLanguageProperty that)
         {
             long smeNum = collectSMEData(that);
@@ -1283,6 +1321,7 @@ namespace AasxServer
             base.VisitMultiLanguageProperty(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
+
         public override void VisitRange(AasCore.Aas3_0.IRange that)
         {
             long smeNum = collectSMEData(that);
@@ -1290,6 +1329,7 @@ namespace AasxServer
             base.VisitRange(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
+
         public override void VisitReferenceElement(IReferenceElement that)
         {
             long smeNum = collectSMEData(that);
@@ -1297,6 +1337,7 @@ namespace AasxServer
             base.VisitReferenceElement(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
+
         public override void VisitBlob(IBlob that)
         {
             long smeNum = collectSMEData(that);
@@ -1304,6 +1345,7 @@ namespace AasxServer
             base.VisitBlob(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
+
         public override void VisitFile(AasCore.Aas3_0.IFile that)
         {
             long smeNum = collectSMEData(that);
@@ -1311,6 +1353,7 @@ namespace AasxServer
             base.VisitFile(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
+
         public override void VisitAnnotatedRelationshipElement(IAnnotatedRelationshipElement that)
         {
             long smeNum = collectSMEData(that);
@@ -1318,6 +1361,7 @@ namespace AasxServer
             base.VisitAnnotatedRelationshipElement(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
+
         public override void VisitEntity(IEntity that)
         {
             long smeNum = collectSMEData(that);
@@ -1325,12 +1369,15 @@ namespace AasxServer
             base.VisitEntity(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
+
         public override void VisitEventPayload(IEventPayload that)
         {
         }
+
         public override void VisitBasicEventElement(IBasicEventElement that)
         {
         }
+
         public override void VisitOperation(IOperation that)
         {
             long smeNum = collectSMEData(that);
@@ -1338,9 +1385,11 @@ namespace AasxServer
             base.VisitOperation(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
+
         public override void VisitOperationVariable(IOperationVariable that)
         {
         }
+
         public override void VisitCapability(ICapability that)
         {
             long smeNum = collectSMEData(that);
@@ -1348,12 +1397,15 @@ namespace AasxServer
             base.VisitCapability(that);
             _parentNum.RemoveAt(_parentNum.Count - 1);
         }
+
         public override void VisitConceptDescription(IConceptDescription that)
         {
         }
+
         public override void VisitReference(AasCore.Aas3_0.IReference that)
         {
         }
+
         public override void VisitKey(IKey that)
         {
         }
@@ -1365,49 +1417,70 @@ namespace AasxServer
         public override void VisitLangStringNameType(
             ILangStringNameType that
         )
-        { }
+        {
+        }
+
         public override void VisitLangStringTextType(
             ILangStringTextType that
         )
-        { }
+        {
+        }
+
         public override void VisitEmbeddedDataSpecification(
             IEmbeddedDataSpecification that
         )
-        { }
+        {
+        }
+
         public override void VisitLevelType(
             ILevelType that
         )
-        { }
+        {
+        }
+
         public override void VisitValueReferencePair(
             IValueReferencePair that
         )
-        { }
+        {
+        }
+
         public override void VisitValueList(
             IValueList that
         )
-        { }
+        {
+        }
+
         public override void VisitLangStringPreferredNameTypeIec61360(
             ILangStringPreferredNameTypeIec61360 that
         )
-        { }
+        {
+        }
+
         public override void VisitLangStringShortNameTypeIec61360(
             ILangStringShortNameTypeIec61360 that
         )
-        { }
+        {
+        }
+
         public override void VisitLangStringDefinitionTypeIec61360(
             ILangStringDefinitionTypeIec61360 that
         )
-        { }
+        {
+        }
+
         public override void VisitDataSpecificationIec61360(
             IDataSpecificationIec61360 that
         )
-        { }
-
+        {
+        }
     }
 
     public class DBRead
     {
-        public DBRead() { }
+        public DBRead()
+        {
+        }
+
         static public Submodel getSubmodel(string submodelId)
         {
             using (AasContext db = new AasContext())
@@ -1421,14 +1494,14 @@ namespace AasxServer
                 if (subDB != null)
                 {
                     var SMEList = db.SMESets
-                            .OrderBy(sme => sme.SMENum)
-                            .Where(sme => sme.SubmodelNum == subDB.SubmodelNum)
-                            .ToList();
+                        .OrderBy(sme => sme.SMENum)
+                        .Where(sme => sme.SubmodelNum == subDB.SubmodelNum)
+                        .ToList();
 
                     Submodel submodel = new Submodel(submodelId);
                     submodel.IdShort = subDB.Idshort;
                     submodel.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
-                        new List<IKey>() { new Key(KeyTypes.GlobalReference, subDB.SemanticId) });
+                        new List<IKey>() {new Key(KeyTypes.GlobalReference, subDB.SemanticId)});
 
                     loadSME(submodel, null, null, SMEList, 0);
 
@@ -1460,11 +1533,11 @@ namespace AasxServer
 
         static private void loadSME(Submodel submodel, ISubmodelElement sme, string SMEType, List<SMESet> SMEList, long smeNum)
         {
-            var smeLevel = SMEList.Where(s => s.ParentSMENum== smeNum).OrderBy(s => s.Idshort).ToList();
+            var smeLevel = SMEList.Where(s => s.ParentSMENum == smeNum).OrderBy(s => s.Idshort).ToList();
 
             foreach (var smel in smeLevel)
             {
-                ISubmodelElement nextSME= null;
+                ISubmodelElement nextSME = null;
                 switch (smel.SMEType)
                 {
                     case "P":
@@ -1495,13 +1568,14 @@ namespace AasxServer
                         nextSME = new AasCore.Aas3_0.File("text", idShort: smel.Idshort, value: smel.getValue());
                         break;
                 }
+
                 if (nextSME == null)
                     continue;
 
                 if (smel.SemanticId != "")
                 {
                     nextSME.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
-                        new List<IKey>() { new Key(KeyTypes.GlobalReference, smel.SemanticId) });
+                        new List<IKey>() {new Key(KeyTypes.GlobalReference, smel.SemanticId)});
                 }
 
                 if (sme == null)
@@ -1510,7 +1584,7 @@ namespace AasxServer
                 }
                 else
                 {
-                    switch(SMEType)
+                    switch (SMEType)
                     {
                         case "SEC":
                             (sme as SubmodelElementCollection).Value.Add(nextSME);
