@@ -320,7 +320,7 @@
                 var userPW = "";
                 var urlEdcWrapper = "";
                 string replace = "";
-                if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper, out replace))
+                if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
                 {
                     if (replace != "")
                         link = replace;
