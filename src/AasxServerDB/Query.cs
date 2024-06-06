@@ -715,5 +715,31 @@ namespace AasxServerDB
             return result;
         }
 
+        public List<SMResult> SearchSMsOld(string semanticId)
+        {
+            List<SMResult> list = new List<SMResult>();
+            using (AasContext db = new AasContext())
+            {
+                var watch = System.Diagnostics.Stopwatch.StartNew();
+                Console.WriteLine();
+                Console.WriteLine("SearchSubmodels");
+                Console.WriteLine("Submodels " + db.SMSets.Count());
+
+                var subList = db.SMSets.Where(s => s.SemanticId == semanticId).ToList();
+                Console.WriteLine("Found " + subList.Count() + " Submodels in " + watch.ElapsedMilliseconds + "ms");
+                watch.Restart();
+
+                foreach (var submodel in subList)
+                {
+                    var sr = new SMResult();
+                    sr.smId = submodel.Identifier;
+                    string sub64 = Base64UrlEncoder.Encode(sr.smId);
+                    sr.url = ExternalBlazor + "/submodels/" + sub64;
+                    list.Add(sr);
+                }
+                Console.WriteLine("Collected result in " + watch.ElapsedMilliseconds + "ms");
+            }
+            return list;
+        }
     }
 }
