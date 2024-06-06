@@ -5,7 +5,7 @@
         <TargetFramework>net6.0</TargetFramework>
         <SatelliteResourceLanguages>en-US;de-DE</SatelliteResourceLanguages>
         <UserSecretsId>ef550880-6a5f-4e0c-b634-8284f1dc5445</UserSecretsId>
-        <Version>0.3.0-6-alpha-develop</Version>
+        <Version>0.3.0-2-alpha-develop</Version>
     </PropertyGroup>
 
     <PropertyGroup>

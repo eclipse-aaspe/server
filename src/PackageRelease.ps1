@@ -68,13 +68,13 @@ function GetVersion {
 
 function UpdateProjectVersions($version) {
     # Get all csproj files in the solution.
-    $projectFiles = Get-ChildItem -Path "$\..\" -Recurse -Filter *.csproj
+    $projectFiles = Get-ChildItem -Path "$PSScriptRoot\.." -Recurse -Filter *.csproj
 
     # Iterate through each project file and update the <Version> tag.
     foreach ($file in $projectFiles) {
         Write-Host "Updating version in $($file.FullName)"
         (Get-Content -Path $file.FullName) | ForEach-Object {
-            $_ -replace '<Version>.*<\/Version>', "<Version>$version<\/Version>"
+            $_ -replace '<Version>.*<\/Version>', "<Version>$version</Version>"
         } | Set-Content -Path $file.FullName
     }
 }

@@ -4,7 +4,7 @@
         <OutputType>Library</OutputType>
         <RootNamespace>AdminShellNS</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-        <Version>0.3.0-6-alpha-develop</Version>
+        <Version>0.3.0-2-alpha-develop</Version>
     </PropertyGroup>
     <PropertyGroup>
         <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
