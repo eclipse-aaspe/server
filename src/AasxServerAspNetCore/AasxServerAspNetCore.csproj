@@ -1,32 +1,33 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-  </PropertyGroup>
-  <PropertyGroup>
-		<ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
-	</PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Version>0.3.0-6-alpha-develop</Version>
+    </PropertyGroup>
+    <PropertyGroup>
+        <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="HotChocolate.AspNetCore" Version="13.5.1" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="6.5.0" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="HotChocolate.AspNetCore" Version="13.5.1"/>
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0"/>
+        <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="6.5.0"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\IO.Swagger.Lib.V3\IO.Swagger.Lib.V3.csproj" />
-    <ProjectReference Include="..\IO.Swagger.Registry.Lib.V3\IO.Swagger.Registry.Lib.V3.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\IO.Swagger.Lib.V3\IO.Swagger.Lib.V3.csproj"/>
+        <ProjectReference Include="..\IO.Swagger.Registry.Lib.V3\IO.Swagger.Registry.Lib.V3.csproj"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <None Update="startForDemo.bat">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="startForDemo.sh">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+    <ItemGroup>
+        <None Update="startForDemo.bat">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="startForDemo.sh">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
 
 </Project>
