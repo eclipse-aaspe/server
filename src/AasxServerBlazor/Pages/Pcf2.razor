@@ -353,28 +353,31 @@
                                             var registry = AasRegistryService.GetRegistryList();
                                             if (registry.Count != 0)
                                             {
+                                                string registryURL = registry[0];
+
                                                 // check for buffered shell descriptors from getregistry() for basyx
                                                 var aasDescriptors = AasRegistryService.GetAasDescriptorsForSubmodelView();
-
                                                 if (aasDescriptors != null && aasDescriptors.Count != 0)
                                                 {
-                                                    string registryURL = NavMan.Uri;
+                                                    registryURL = NavMan.Uri;
                                                     registryURL = registryURL.Substring(0, registryURL.Length - "/pcf".Length);
                                                     Console.WriteLine("registryURL " + registryURL);
-                                                    link += "&registryURL=" + registryURL;
                                                 }
-                                                else
+
+                                                if (AasxCredentials.get(cs.credentials, registryURL, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
                                                 {
-                                                    link += "&registryURL=" + registry[0];
+                                                    if (replace != "")
+                                                        registryURL = replace;
                                                 }
+
+                                                link += "&registryURL=" + registryURL;
                                             }
                                            
-                                            // JUIJUI
                                             queryPara = "";
                                             userPW = "";
                                             urlEdcWrapper = "";
                                             replace = "";
-                                            if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper, out replace))
+                                            if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
                                             {
                                                 if (replace != "")
                                                     link = replace;
@@ -383,7 +386,6 @@
                                                     queryPara = Base64UrlEncoder.Encode(queryPara);
                                                     link += "&query=" + queryPara;
                                                 }
-                                                // Console.WriteLine("iframe:" + link);
                                             }
 
                                             if (node.aas != null)
@@ -492,7 +494,7 @@
                                                             }
                                                         
                                                             var icon = id;
-                                                            if (AasxCredentials.get(cs.credentials, smlink, out queryPara, out userPW, out urlEdcWrapper, out replace))
+                                                            if (AasxCredentials.get(cs.credentials, smlink, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
                                                             {
                                                                 if (replace != "")
                                                                     smlink = replace;
@@ -689,7 +691,7 @@
                             string userPW = "";
                             string urlEdcWrapper = "";
                             string replace = "";
-                            if (AasxCredentials.get(credentials, path, out queryPara, out userPW, out urlEdcWrapper, out replace))
+                            if (AasxCredentials.get(credentials, path, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
                             {
                                 if (replace != "")
                                     path = replace;

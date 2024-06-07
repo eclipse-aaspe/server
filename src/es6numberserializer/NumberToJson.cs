@@ -54,10 +54,10 @@ namespace Org.Webpki.Es6NumberSerialization
             {
                 return result;
             }
+
             StringBuilder buffer = new StringBuilder();
             NumberDToA.JS_dtostr(buffer, NumberDToA.DTOSTR_STANDARD, 0, value);
             return buffer.ToString();
         }
     }
 }
-

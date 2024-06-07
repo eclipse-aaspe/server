@@ -1,5 +1,4 @@
-﻿
-using AasxServer;
+﻿using AasxServer;
 using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
@@ -8,7 +7,6 @@ using Extensions;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection.Metadata;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -22,7 +20,8 @@ namespace AasxServerStandardBib.Services
         private readonly IIdShortPathParserService _pathParserService;
         private const string SML_IdShortPath_Regex = @"\[(?<numbers>[\d]+)\]";
 
-        public SubmodelService(IAppLogger<SubmodelService> logger, IAdminShellPackageEnvironmentService packageEnvService, IMetamodelVerificationService verificationService, IIdShortPathParserService pathParserService)
+        public SubmodelService(IAppLogger<SubmodelService> logger, IAdminShellPackageEnvironmentService packageEnvService, IMetamodelVerificationService verificationService,
+            IIdShortPathParserService pathParserService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _packageEnvService = packageEnvService ?? throw new ArgumentNullException(nameof(_packageEnvService));
@@ -48,7 +47,6 @@ namespace AasxServerStandardBib.Services
                     _logger.LogInformation($"Found SubmodelElement at {idShortPath} in submodel with Id {submodelIdentifier}");
                     return true;
                 }
-
             }
 
             return false;
@@ -63,8 +61,9 @@ namespace AasxServerStandardBib.Services
 
             if (idShorts.Count == 1)
             {
-                return parent.FindSubmodelElementByIdShort((string)idShorts[0]);
+                return parent.FindSubmodelElementByIdShort((string) idShorts[ 0 ]);
             }
+
             foreach (var idShortObject in idShorts)
             {
                 if (output != null)
@@ -75,7 +74,7 @@ namespace AasxServerStandardBib.Services
                 if (idShortObject is string idShortStr)
                 {
                     output = outParent.FindSubmodelElementByIdShort(idShortStr);
-                    if(output == null)
+                    if (output == null)
                     {
                         return null;
                     }
@@ -86,7 +85,7 @@ namespace AasxServerStandardBib.Services
                     {
                         try
                         {
-                            output = smeList.Value?[idShortInt];
+                            output = smeList.Value?[ idShortInt ];
                         }
                         catch (ArgumentOutOfRangeException ex)
                         {
@@ -169,11 +168,11 @@ namespace AasxServerStandardBib.Services
                 annotatedRelationshipElement.Annotations ??= new List<IDataElement>();
                 if (first)
                 {
-                    annotatedRelationshipElement.Annotations.Insert(0, (IDataElement)newSubmodelElement);
+                    annotatedRelationshipElement.Annotations.Insert(0, (IDataElement) newSubmodelElement);
                 }
                 else
                 {
-                    annotatedRelationshipElement.Annotations.Add((IDataElement)newSubmodelElement);
+                    annotatedRelationshipElement.Annotations.Add((IDataElement) newSubmodelElement);
                 }
             }
             else
@@ -215,7 +214,7 @@ namespace AasxServerStandardBib.Services
                 }
                 else if (smeParent is AnnotatedRelationshipElement annotatedRelationshipElement)
                 {
-                    annotatedRelationshipElement.Annotations.Remove((IDataElement)submodelElement);
+                    annotatedRelationshipElement.Annotations.Remove((IDataElement) submodelElement);
                 }
                 else if (smeParent is Entity entity)
                 {
@@ -306,7 +305,6 @@ namespace AasxServerStandardBib.Services
 
             if (fileElement != null)
             {
-
                 if (fileElement is AasCore.Aas3_0.File file)
                 {
                     fileName = file.Value;
@@ -337,7 +335,6 @@ namespace AasxServerStandardBib.Services
                         _logger.LogError($"Incorrect value {file.Value} of the Submodel-Element File with IdShort {file.IdShort}");
                         throw new UnprocessableEntityException($"Incorrect value {file.Value} of the File with IdShort {file.IdShort}.");
                     }
-
                 }
                 else
                 {
@@ -415,10 +412,8 @@ namespace AasxServerStandardBib.Services
             {
                 return CreateSubmodelElementByPath(smeParent, newSubmodelElement, first);
             }
-            
         }
 
-        
 
         public void ReplaceSubmodelById(string submodelIdentifier, ISubmodel newSubmodel)
         {
@@ -460,9 +455,9 @@ namespace AasxServerStandardBib.Services
                 }
                 else if (smeParent is AnnotatedRelationshipElement annotatedRelElement)
                 {
-                    var existingIndex = annotatedRelElement.Annotations.IndexOf((IDataElement)existingSme);
-                    annotatedRelElement.Annotations.Remove((IDataElement)existingSme);
-                    annotatedRelElement.Annotations.Insert(existingIndex, (IDataElement)newSme);
+                    var existingIndex = annotatedRelElement.Annotations.IndexOf((IDataElement) existingSme);
+                    annotatedRelElement.Annotations.Remove((IDataElement) existingSme);
+                    annotatedRelElement.Annotations.Insert(existingIndex, (IDataElement) newSme);
                 }
                 else
                 {
@@ -590,14 +585,12 @@ namespace AasxServerStandardBib.Services
                         file.Value = FormatFileName(targetFile);
                         AasxServer.Program.signalNewData(2);
                     }
-
                 }
                 else
                 {
                     throw new NotFoundException($"Submodel element {fileElement.IdShort} is not of type File.");
                 }
             }
-
         }
 
         private string FormatFileName(string fileName)
