@@ -1,4 +1,6 @@
-﻿namespace AasxServerDB
+﻿using System.Linq;
+
+namespace AasxServerDB
 {
     public class PageDB
     {
@@ -19,51 +21,51 @@
 
         static public List<AASSet> GetPageAASData(int size = 1000, string searchLower = "", long aasxid = 0, long aasid = 0)
         {
+            DateTime searchDateTime = new();
+            bool withDateTime = false;
+            GetDateTime(ref searchDateTime, ref withDateTime, searchLower);
+
             List<AASSet> data;
-            using (AasContext db = new AasContext())
-            {
-                data = db.AASSets
-                    .OrderBy(a => a.Id)
-                    .Where(a => (aasxid == 0 || a.AASXId == aasxid) && (aasid == 0 || a.Id == aasid) &&
-                        (searchLower == "" ||
-                        (a.IdShort != null && a.IdShort.ToLower().Contains(searchLower)) ||
-                        (a.Identifier != null && a.Identifier.ToLower().Contains(searchLower)) ||
-                        (a.AssetKind != null && a.AssetKind.ToLower().Contains(searchLower)) ||
-                        (a.GlobalAssetId != null && a.GlobalAssetId.ToLower().Contains(searchLower)) ||
-                        a.TimeStamp.ToString("yy-MM-dd HH:mm:ss").Contains(searchLower) ||
-                        a.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss").Contains(searchLower) ||
-                        a.TimeStampTree.ToString("yy-MM-dd HH:mm:ss").Contains(searchLower)))
-                    .Take(size)
-                    .ToList();
-            }
-            return data;
+            return data = new AasContext().AASSets
+                .OrderBy(a => a.Id)
+                .Where(a => (aasxid == 0 || a.AASXId == aasxid) && (aasid == 0 || a.Id == aasid) &&
+                    (searchLower == "" ||
+                    (a.IdShort != null && a.IdShort.ToLower().Contains(searchLower)) ||
+                    (a.Identifier != null && a.Identifier.ToLower().Contains(searchLower)) ||
+                    (a.AssetKind != null && a.AssetKind.ToLower().Contains(searchLower)) ||
+                    (a.GlobalAssetId != null && a.GlobalAssetId.ToLower().Contains(searchLower)) ||
+                    (withDateTime && a.TimeStamp.CompareTo(searchDateTime) > 0)))
+                .Take(size)
+                .ToList();
         }
 
         static public List<SMSet> GetPageSMData(int size = 1000, string searchLower = "", long aasxid = 0, long aasid = 0, long smid = 0)
         {
+            DateTime searchDateTime = new();
+            bool withDateTime = false;
+            GetDateTime(ref searchDateTime, ref withDateTime, searchLower);
+
             List<SMSet> data;
-            using (AasContext db = new AasContext())
-            {
-                data = db.SMSets
-                    .OrderBy(s => s.Id)
-                    .Where(s => (aasxid == 0 || s.AASXId == aasxid) && (aasid == 0 || s.AASId == aasid) && (smid == 0 || s.Id == smid) &&
-                        (searchLower == "" ||
-                        (s.Identifier != null && s.Identifier.ToLower().Contains(searchLower)) ||
-                        (s.IdShort != null && s.IdShort.ToLower().Contains(searchLower)) ||
-                        (s.SemanticId != null && s.SemanticId.ToLower().Contains(searchLower)) ||
-                        s.TimeStamp.ToString("yy-MM-dd HH:mm:ss").Contains(searchLower) ||
-                        s.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss").Contains(searchLower) ||
-                        s.TimeStampTree.ToString("yy-MM-dd HH:mm:ss").Contains(searchLower)))
-                    .Take(size)
-                    .ToList();
-            }
-            return data;
+            return data = new AasContext().SMSets
+                .OrderBy(s => s.Id)
+                .Where(s => (aasxid == 0 || s.AASXId == aasxid) && (aasid == 0 || s.AASId == aasid) && (smid == 0 || s.Id == smid) &&
+                    (searchLower == "" ||
+                    (s.Identifier != null && s.Identifier.ToLower().Contains(searchLower)) ||
+                    (s.IdShort != null && s.IdShort.ToLower().Contains(searchLower)) ||
+                    (s.SemanticId != null && s.SemanticId.ToLower().Contains(searchLower)) ||
+                    (withDateTime && s.TimeStamp.CompareTo(searchDateTime) > 0)))
+                .Take(size)
+                .ToList();
         }
 
         static public List<SMESet> GetPageSMEData(int size = 1000, string searchLower = "", long smid = 0, long smeid = 0)
         {
+            DateTime searchDateTime = new();
+            bool withDateTime = false;
+            GetDateTime(ref searchDateTime, ref withDateTime, searchLower);
+
             List<SMESet> data;
-            using (AasContext db = new AasContext())
+            using (AasContext db = new())
             {
                 data = db.SMESets
                     .OrderBy(sme => sme.Id)
@@ -75,7 +77,8 @@
                         (sme.ValueType != null && sme.ValueType.ToLower().Contains(searchLower)) || 
                         (sme.ValueType == "S" && db.SValueSets.Any(sv => sv.SMEId == sme.Id && (sv.Annotation != null && sv.Annotation.ToLower().Contains(searchLower)) && (sv.Value != null && sv.Value.ToLower().Contains(searchLower)))) ||
                         (sme.ValueType == "I" && db.IValueSets.Any(sv => sv.SMEId == sme.Id && (sv.Annotation != null && sv.Annotation.ToLower().Contains(searchLower)) && (sv.Value != null && sv.Value.ToString().ToLower().Contains(searchLower)))) ||
-                        (sme.ValueType == "F" && db.DValueSets.Any(sv => sv.SMEId == sme.Id && (sv.Annotation != null && sv.Annotation.ToLower().Contains(searchLower)) && (sv.Value != null && sv.Value.ToString().ToLower().Contains(searchLower))))))
+                        (sme.ValueType == "F" && db.DValueSets.Any(sv => sv.SMEId == sme.Id && (sv.Annotation != null && sv.Annotation.ToLower().Contains(searchLower)) && (sv.Value != null && sv.Value.ToString().ToLower().Contains(searchLower)))) ||
+                        (withDateTime && sme.TimeStamp.CompareTo(searchDateTime) > 0)))
                     .Take(size)
                     .ToList();
             }
@@ -145,6 +148,27 @@
                     .ToList();
             }
             return data;
+        }
+    
+        static private void GetDateTime(ref DateTime searchDateTime, ref bool withDateTime, string searchLower)
+        {
+            try
+            {
+                bool withDate = searchLower.Split("-").Length == 3;
+                bool withTime = searchLower.Split(":").Length == 3;
+                bool withMSec = searchLower.Split(".").Length == 2;
+                if (withDate && !withTime && !withMSec)
+                    searchDateTime = DateTime.ParseExact(searchLower, "yy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+                else if (withDate && withTime && !withMSec)
+                    searchDateTime = DateTime.ParseExact(searchLower, "yy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
+                else
+                    searchDateTime = DateTime.ParseExact(searchLower, "yy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
+                withDateTime = true;
+            }
+            catch (Exception)
+            {
+
+            }
         }
     }
 }

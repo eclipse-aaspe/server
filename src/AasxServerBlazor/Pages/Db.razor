@@ -268,11 +268,11 @@
                                     <td>@aasDB.IdShort</td>
                                     <td>@aasDB.AssetKind</td>
                                     <td>@aasDB.GlobalAssetId</td>
-                                    <ul style="color:lightgray;font-size:smaller">
-                                        <li>@($"UPDATE {FormatTimeStamp(aasDB.TimeStamp)}")</li>
-                                        <li>@($"CREATE {FormatTimeStamp(aasDB.TimeStampCreate)}")</li>
-                                        <li>@($"TREE {FormatTimeStamp(aasDB.TimeStampTree)}")</li>
-                                    </ul>
+                                    <td style="word-break:keep-all;color:lightgray;font-size:x-small">
+                                        @($"UPDATE {FormatTimeStamp(aasDB.TimeStamp)}")<br/>
+                                        @($"CREATE {FormatTimeStamp(aasDB.TimeStampCreate)}")<br/>
+                                        @($"TREE {FormatTimeStamp(aasDB.TimeStampTree)}")
+                                    </td>
                                     <td style="word-break:keep-all">
                                         <a href="@($"{shorturl}/aasx?aasxid={aasDB.AASXId}")" target="_blank">aasx </a>
                                         <a href="@($"{shorturl}/sm?aasid={aasDB.Id}")" target="_blank">sm</a>
@@ -362,11 +362,11 @@
                                     <td>@smDB.Identifier</td>
                                     <td>@smDB.IdShort</td>
                                     <td>@smDB.SemanticId</td>
-                                    <ul style="color:lightgray;font-size:smaller">
-                                        <li>@($"UPDATE {FormatTimeStamp(smDB.TimeStamp)}")</li>
-                                        <li>@($"CREATE {FormatTimeStamp(smDB.TimeStampCreate)}")</li>
-                                        <li>@($"TREE {FormatTimeStamp(smDB.TimeStampTree)}")</li>
-                                    </ul>
+                                    <td style="word-break:keep-all;color:lightgray;font-size:x-small">
+                                        @($"UPDATE {FormatTimeStamp(smDB.TimeStamp)}")<br/>
+                                        @($"CREATE {FormatTimeStamp(smDB.TimeStampCreate)}")<br/>
+                                        @($"TREE {FormatTimeStamp(smDB.TimeStampTree)}")
+                                    </td>
                                     <td style="word-break:keep-all">
                                         <a href="@($"{shorturl}/aasx?aasxid={smDB.AASXId}")" target="_blank">aasx </a>
                                         <a href="@($"{shorturl}/aas?aasid={smDB.AASId}")" target="_blank">aas </a>
@@ -508,11 +508,11 @@
                                         }
                                     </td>
                                     <td style="word-break:keep-all">@smeDB.ValueType</td>
-                                    <ul style="color:lightgray;font-size:smaller">
-                                        <li>@($"UPDATE {FormatTimeStamp(smeDB.TimeStamp)}")</li>
-                                        <li>@($"CREATE {FormatTimeStamp(smeDB.TimeStampCreate)}")</li>
-                                        <li>@($"TREE {FormatTimeStamp(smeDB.TimeStampTree)}")</li>
-                                    </ul>
+                                    <td style="word-break:keep-all;color:lightgray;font-size:x-small">
+                                        @($"UPDATE {FormatTimeStamp(smeDB.TimeStamp)}")<br/>
+                                        @($"CREATE {FormatTimeStamp(smeDB.TimeStampCreate)}")<br/>
+                                        @($"TREE {FormatTimeStamp(smeDB.TimeStampTree)}")
+                                    </td>
                                     <td style="word-break:keep-all">
                                         <a href="@($"{shorturl}/sm?smid={smeDB.SMId}")" target="_blank">sm </a>
                                         @if (smeDB.ParentSMEId != null)
@@ -821,7 +821,7 @@
         }
         string FormatTimeStamp(DateTime dateTime)
         {
-            return dateTime.ToString("yy-MM-dd HH:mm:ss");
+            return dateTime.ToString("yy-MM-dd HH:mm:ss.fff");
         }
     }
 </div>
