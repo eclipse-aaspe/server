@@ -2,9 +2,10 @@
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-env
 WORKDIR /repo/src
 
-# Copy everything else and build
+# Copy the source code and build
 COPY ./src/ /repo/src/
 COPY ./LICENSE.TXT /repo/LICENSE.txt
+
 RUN dotnet publish -c Release -o /out/AasxServerBlazor AasxServerBlazor
 
 FROM mcr.microsoft.com/dotnet/aspnet:6.0 as base
@@ -14,4 +15,5 @@ EXPOSE 5001
 COPY --from=build-env /out/AasxServerBlazor/ /AasxServerBlazor/
 COPY ./content-for-demo/ /AasxServerBlazor/
 WORKDIR /AasxServerBlazor
+RUN chmod +x ./startForDemo.sh
 ENTRYPOINT ["/bin/bash", "-c", "./startForDemo.sh"]
