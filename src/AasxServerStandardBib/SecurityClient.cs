@@ -102,10 +102,10 @@ namespace AasxServer
 
             for (int i = 0; i < aascount; i++)
             {
-                var env = AasxServer.Program.env[i];
+                var env = AasxServer.Program.env[ i ];
                 if (env != null)
                 {
-                    var aas = env.AasEnv.AssetAdministrationShells[0];
+                    var aas = env.AasEnv.AssetAdministrationShells[ 0 ];
                     if (aas.Submodels != null && aas.Submodels.Count > 0)
                     {
                         foreach (var smr in aas.Submodels)
@@ -119,7 +119,7 @@ namespace AasxServer
                                     countSme = sm.SubmodelElements.Count;
                                 for (int iSme = 0; iSme < countSme; iSme++)
                                 {
-                                    var sme = sm.SubmodelElements[iSme];
+                                    var sme = sm.SubmodelElements[ iSme ];
                                     if (sme is SubmodelElementCollection smec)
                                     {
                                         var nextTask = new AasxTask();
@@ -130,7 +130,7 @@ namespace AasxServer
                                         int countSmec = smec.Value.Count;
                                         for (int iSmec = 0; iSmec < countSmec; iSmec++)
                                         {
-                                            var sme2 = smec.Value[iSmec];
+                                            var sme2 = smec.Value[ iSmec ];
                                             var idShort = sme2.IdShort.ToLower();
 
                                             switch (idShort)
@@ -186,7 +186,7 @@ namespace AasxServer
             int countSmec = smec.Value.Count;
             for (int iSmec = 0; iSmec < countSmec; iSmec++)
             {
-                var sme2 = smec.Value[iSmec];
+                var sme2 = smec.Value[ iSmec ];
 
                 if (sme2 is Operation op)
                 {
@@ -246,7 +246,7 @@ namespace AasxServer
                 var inputRef = input.Value;
                 if (!(inputRef is ReferenceElement))
                     return;
-                var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as ReferenceElement).Value);
+                var refElement = Program.env[ envIndex ].AasEnv.FindReferableByReference((inputRef as ReferenceElement).Value);
                 if (refElement is SubmodelElementCollection re)
                     smec = re;
             }
@@ -254,7 +254,7 @@ namespace AasxServer
             int countSmec = smec.Value.Count;
             for (int iSmec = 0; iSmec < countSmec; iSmec++)
             {
-                var sme2 = smec.Value[iSmec];
+                var sme2 = smec.Value[ iSmec ];
                 var idShort = sme2.IdShort.ToLower();
 
                 switch (idShort)
@@ -377,7 +377,7 @@ namespace AasxServer
             Stream s = null;
             try
             {
-                s = AasxServer.Program.env[envIndex].GetLocalStreamFromPackage(authServerCertificate.Value, access: FileAccess.Read);
+                s = AasxServer.Program.env[ envIndex ].GetLocalStreamFromPackage(authServerCertificate.Value, access: FileAccess.Read);
             }
             catch
             {
@@ -404,7 +404,7 @@ namespace AasxServer
             Stream s2 = null;
             try
             {
-                s2 = AasxServer.Program.env[envIndex].GetLocalStreamFromPackage(clientCertificate.Value, access: FileAccess.Read);
+                s2 = AasxServer.Program.env[ envIndex ].GetLocalStreamFromPackage(clientCertificate.Value, access: FileAccess.Read);
             }
             catch
             {
@@ -443,7 +443,7 @@ namespace AasxServer
                 for (int i = 0; i < xc.Count; i++)
                 {
                     xce.MoveNext();
-                    X509Base64[--j] = Convert.ToBase64String(xce.Current.GetRawCertData());
+                    X509Base64[ --j ] = Convert.ToBase64String(xce.Current.GetRawCertData());
                     // X509Base64[--j] = Base64UrlEncoder.Encode(xce.Current.GetRawCertData());
                 }
 
@@ -454,12 +454,12 @@ namespace AasxServer
                 string email = "";
                 string subject = certificate.Subject;
                 var split = subject.Split(new Char[] {','});
-                if (split[0] != "")
+                if (split[ 0 ] != "")
                 {
-                    var split2 = split[0].Split(new Char[] {'='});
-                    if (split2[0] == "E")
+                    var split2 = split[ 0 ].Split(new Char[] {'='});
+                    if (split2[ 0 ] == "E")
                     {
-                        email = split2[1];
+                        email = split2[ 1 ];
                     }
                 }
 
@@ -643,7 +643,7 @@ namespace AasxServer
 
                 if (inputRef is ReferenceElement)
                 {
-                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as ReferenceElement).Value);
+                    var refElement = Program.env[ envIndex ].AasEnv.FindReferableByReference((inputRef as ReferenceElement).Value);
                     if (refElement is SubmodelElementCollection)
                         smec = refElement as SubmodelElementCollection;
                     if (refElement is Submodel)
@@ -698,7 +698,7 @@ namespace AasxServer
 
                 if (outputRef is ReferenceElement)
                 {
-                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((outputRef as ReferenceElement).Value);
+                    var refElement = Program.env[ envIndex ].AasEnv.FindReferableByReference((outputRef as ReferenceElement).Value);
                     if (refElement is SubmodelElementCollection)
                         smec = refElement as SubmodelElementCollection;
                     if (refElement is Submodel)
@@ -728,7 +728,7 @@ namespace AasxServer
                 int countSmec = smec.Value.Count;
                 for (int iSmec = 0; iSmec < countSmec; iSmec++)
                 {
-                    var sme2 = smec.Value[iSmec];
+                    var sme2 = smec.Value[ iSmec ];
                     var idShort = sme2.IdShort.ToLower();
 
                     switch (idShort)
@@ -831,13 +831,13 @@ namespace AasxServer
                 Task task = null;
                 string diffPath = "";
                 var splitPath = path.Value.Split('/');
-                string aasPath = splitPath[0];
+                string aasPath = splitPath[ 0 ];
                 string subPath = "";
                 int i = 1;
                 string pre = "";
                 while (i < splitPath.Length)
                 {
-                    subPath += pre + splitPath[i];
+                    subPath += pre + splitPath[ i ];
                     pre = ".";
                     i++;
                 }
@@ -865,11 +865,11 @@ namespace AasxServer
                         {
                             opName = "get";
                             requestPath = endPoint.Value + "/aas/" + aasPath +
-                                          "/submodels/" + splitPath[1] + "/elements";
+                                          "/submodels/" + splitPath[ 1 ] + "/elements";
                             i = 2;
                             while (i < splitPath.Length)
                             {
-                                requestPath += "/" + splitPath[i];
+                                requestPath += "/" + splitPath[ i ];
                                 i++;
                             }
 
@@ -879,7 +879,7 @@ namespace AasxServer
                         {
                             last = DateTime.Parse(lastDiff.Value).ToUniversalTime();
                             requestPath = endPoint.Value +
-                                          "/diffjson/aas/" + splitPath[0] +
+                                          "/diffjson/aas/" + splitPath[ 0 ] +
                                           "?path=" + subPath;
                             requestPath += "."; // to avoid wrong data by prefix only
                             requestPath += "&time=" + lastDiff.Value;
@@ -1048,20 +1048,20 @@ namespace AasxServer
                                         continue;
                                     receiveSubmodel.Id = elementSubmodel.Id;
 
-                                    var aas = Program.env[envIndex].AasEnv.FindAasWithSubmodelId(elementSubmodel.Id);
+                                    var aas = Program.env[ envIndex ].AasEnv.FindAasWithSubmodelId(elementSubmodel.Id);
 
                                     // datastructure update
-                                    if (Program.env == null || Program.env[envIndex].AasEnv == null /*|| Program.env[envIndex].AasEnv.Assets == null*/)
+                                    if (Program.env == null || Program.env[ envIndex ].AasEnv == null /*|| Program.env[envIndex].AasEnv.Assets == null*/)
                                         continue;
 
                                     // add Submodel
-                                    var existingSm = Program.env[envIndex].AasEnv.FindSubmodelById(elementSubmodel.Id);
+                                    var existingSm = Program.env[ envIndex ].AasEnv.FindSubmodelById(elementSubmodel.Id);
                                     if (existingSm != null)
-                                        Program.env[envIndex].AasEnv.Submodels.Remove(existingSm);
-                                    Program.env[envIndex].AasEnv.Submodels.Add(receiveSubmodel);
+                                        Program.env[ envIndex ].AasEnv.Submodels.Remove(existingSm);
+                                    Program.env[ envIndex ].AasEnv.Submodels.Add(receiveSubmodel);
                                     for (int s = 0; s < aas.Submodels.Count; s++)
                                     {
-                                        if (aas.Submodels[s].Keys[0].Value == existingSm.Id)
+                                        if (aas.Submodels[ s ].Keys[ 0 ].Value == existingSm.Id)
                                         {
                                             aas.Submodels.RemoveAt(s);
                                             break;
@@ -1093,11 +1093,11 @@ namespace AasxServer
                                                     if (splitPath.Length < 2)
                                                         continue;
                                                     requestPath = endPoint.Value + "/aas/" + aasPath +
-                                                                  "/submodels/" + splitPath[0] + "/elements";
+                                                                  "/submodels/" + splitPath[ 0 ] + "/elements";
                                                     i = 1;
                                                     while (i < splitPath.Length)
                                                     {
-                                                        requestPath += "/" + splitPath[i];
+                                                        requestPath += "/" + splitPath[ i ];
                                                         i++;
                                                     }
 
@@ -1285,7 +1285,7 @@ namespace AasxServer
 
                                             if (elementCollection.Value.Count == 1)
                                             {
-                                                if (elementCollection.Value[0] is SubmodelElementCollection smc)
+                                                if (elementCollection.Value[ 0 ] is SubmodelElementCollection smc)
                                                 {
                                                     if (smc.IdShort == "latestData")
                                                     {
@@ -1349,7 +1349,7 @@ namespace AasxServer
                         {
                             if (opName == "putdiff")
                             {
-                                var sme = diffCollection.Value[i];
+                                var sme = diffCollection.Value[ i ];
                                 if (!(sme is SubmodelElementCollection))
                                     continue;
                                 elementCollection = sme as SubmodelElementCollection;
@@ -1482,7 +1482,7 @@ namespace AasxServer
 
                 if (inputRef is ReferenceElement)
                 {
-                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as ReferenceElement).Value);
+                    var refElement = Program.env[ envIndex ].AasEnv.FindReferableByReference((inputRef as ReferenceElement).Value);
                     if (refElement is SubmodelElementCollection)
                         smec = refElement as SubmodelElementCollection;
                 }
@@ -1515,7 +1515,7 @@ namespace AasxServer
                 int i = 0;
                 while (i < collection.Value.Count)
                 {
-                    if (pre == collection.Value[i].IdShort.Substring(0, pre.Length))
+                    if (pre == collection.Value[ i ].IdShort.Substring(0, pre.Length))
                         preCount++;
                     i++;
                 }
@@ -1523,9 +1523,9 @@ namespace AasxServer
                 i = 0;
                 while (preCount > count && i < collection.Value.Count)
                 {
-                    if (pre == collection.Value[i].IdShort.Substring(0, pre.Length))
+                    if (pre == collection.Value[ i ].IdShort.Substring(0, pre.Length))
                     {
-                        IReferable r = collection.Value[i];
+                        IReferable r = collection.Value[ i ];
                         var sm = r.GetParentSubmodel();
                         AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
                             r, "Remove", sm, (ulong) timeStamp.Ticks);
@@ -1615,10 +1615,10 @@ namespace AasxServer
 
             for (int i = 0; i < aascount; i++)
             {
-                env = AasxServer.Program.env[i];
+                env = AasxServer.Program.env[ i ];
                 if (env != null)
                 {
-                    var aas = env.AasEnv.AssetAdministrationShells[0];
+                    var aas = env.AasEnv.AssetAdministrationShells[ 0 ];
                     // if (aas.IdShort != "ZveiControlCabinetAas - EXTERNAL")
                     //    continue;
 
@@ -1628,15 +1628,15 @@ namespace AasxServer
                         // foreach (var smr in aas.Submodels)
                         for (int j = 0; j < aas.Submodels.Count; j++)
                         {
-                            var smr = aas.Submodels[j];
+                            var smr = aas.Submodels[ j ];
                             var sm = env.AasEnv.FindSubmodel(smr);
                             if (sm != null && sm.IdShort != null)
                             {
                                 if (sm.IdShort.Contains("BillOfMaterial"))
                                 {
-                                    if (sm.Extensions != null && sm.Extensions.Count != 0 && sm.Extensions[0].Name == "endpoint")
+                                    if (sm.Extensions != null && sm.Extensions.Count != 0 && sm.Extensions[ 0 ].Name == "endpoint")
                                     {
-                                        var requestPath = sm.Extensions[0].Value;
+                                        var requestPath = sm.Extensions[ 0 ].Value;
 
                                         string queryPara = "";
                                         string userPW = "";
@@ -1666,8 +1666,8 @@ namespace AasxServer
                                         if (userPW != "")
                                             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", userPW);
                                         string clientToken = "";
-                                        if (sm.Extensions != null && sm.Extensions.Count > 1 && sm.Extensions[1].Name == "clientToken")
-                                            clientToken = sm.Extensions[1].Value;
+                                        if (sm.Extensions != null && sm.Extensions.Count > 1 && sm.Extensions[ 1 ].Name == "clientToken")
+                                            clientToken = sm.Extensions[ 1 ].Value;
                                         if (clientToken != "")
                                             client.SetBearerToken(clientToken);
 
@@ -1744,10 +1744,10 @@ namespace AasxServer
             // Collect data from all AAS into cfpNode(s)
             for (int i = 0; i < aascount; i++)
             {
-                env = AasxServer.Program.env[i];
+                env = AasxServer.Program.env[ i ];
                 if (env != null)
                 {
-                    var aas = env.AasEnv.AssetAdministrationShells[0];
+                    var aas = env.AasEnv.AssetAdministrationShells[ 0 ];
 
                     //var assetId = aas.assetRef.Keys[0].Value;
                     var assetId = aas.AssetInformation.GlobalAssetId;
@@ -2218,7 +2218,7 @@ namespace AasxServer
                     }
                     else
                     {
-                        parent = stack[sp];
+                        parent = stack[ sp ];
                         if (parent.cradleToGateCombination != null)
                         {
                             Property p = node.cradleToGateModule;
@@ -2312,7 +2312,7 @@ namespace AasxServer
                         }
 
                         parent = null;
-                        node = stack[sp];
+                        node = stack[ sp ];
                         stack.RemoveAt(sp);
                         sp--;
                     }
@@ -2322,7 +2322,7 @@ namespace AasxServer
                     // Interate children
                     stack.Add(node);
                     sp++;
-                    node = node.children[node.iChild++];
+                    node = node.children[ node.iChild++ ];
                 }
             }
 
@@ -2344,7 +2344,7 @@ namespace AasxServer
             {
                 if (!Program.withDb)
                 {
-                    string fn = Program.envFileName[envi];
+                    string fn = Program.envFileName[ envi ];
 
                     if (fn != null && fn != "")
                     {
@@ -2354,9 +2354,9 @@ namespace AasxServer
                             lock (Program.changeAasxFile)
                             {
                                 Console.WriteLine("SAVE TEMP: " + fn);
-                                Program.env[envi].SaveAs("./temp/" + fn, true);
+                                Program.env[ envi ].SaveAs("./temp/" + fn, true);
                                 DateTime timeStamp = DateTime.Now;
-                                foreach (var submodel in Program.env[envi].AasEnv.Submodels)
+                                foreach (var submodel in Program.env[ envi ].AasEnv.Submodels)
                                 {
                                     submodel.TimeStampCreate = timeStamp;
                                     submodel.SetTimeStamp(timeStamp);
@@ -2370,14 +2370,14 @@ namespace AasxServer
                 }
                 else
                 {
-                    if (Program.env[envi] != null && Program.env[envi].getWrite())
+                    if (Program.env[ envi ] != null && Program.env[ envi ].getWrite())
                     {
                         lock (Program.changeAasxFile)
                         {
-                            var aasList = Program.env[envi].AasEnv.AssetAdministrationShells;
+                            var aasList = Program.env[ envi ].AasEnv.AssetAdministrationShells;
                             var aasIds = aasList.Select(x => x.Id).ToList();
 
-                            var submodelList = Program.env[envi].AasEnv.Submodels;
+                            var submodelList = Program.env[ envi ].AasEnv.Submodels;
                             var submodelIds = submodelList.Select(x => x.Id).ToList();
 
                             Dictionary<string, long> aasToDeleteAASXNumsDic;
@@ -2405,17 +2405,17 @@ namespace AasxServer
                                     long assxNum = 0;
                                     if (aasToDeleteAASXNumsDic.ContainsKey(aas.Id))
                                     {
-                                        assxNum = aasToDeleteAASXNumsDic[aas.Id];
+                                        assxNum = aasToDeleteAASXNumsDic[ aas.Id ];
                                     }
 
-                                    VisitorAASX.LoadAASInDB(db, aas, assxNum, Program.env[envi]);
+                                    VisitorAASX.LoadAASInDB(db, aas, assxNum, Program.env[ envi ]);
                                 }
 
                                 db.SaveChanges();
                             }
 
                             //Program.saveEnv(envi);
-                            Program.env[envi].setWrite(false);
+                            Program.env[ envi ].setWrite(false);
                             newData = true;
                         }
                     }
@@ -2460,7 +2460,7 @@ namespace AasxServer
             bool taskRun = false;
             for (int i = 0; i < taskList.Count; i++)
             {
-                var t = taskList[i];
+                var t = taskList[ i ];
                 if (t.taskType?.Value.ToLower() == "cyclic")
                 {
                     if (t.nextExecution > timeStamp)

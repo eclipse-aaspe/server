@@ -615,7 +615,7 @@ namespace Extensions
 
             // over all wrappers
             foreach (var smw in submodelElements)
-                if (smw != null && smw.IdShort.Equals(keys[keyIndex].Value, StringComparison.OrdinalIgnoreCase))
+                if (smw != null && smw.IdShort.Equals(keys[ keyIndex ].Value, StringComparison.OrdinalIgnoreCase))
                 {
                     // match on this level. Did we find a leaf element?
                     if ((keyIndex + 1) >= keys.Count)

@@ -56,7 +56,7 @@ namespace AasxRestServerLibrary
             return url;
         }
 
-        [RestResource]
+        [ RestResource ]
         public class TestResource
         {
             public static List<string> listofRepositories = new List<string>();
@@ -71,7 +71,7 @@ namespace AasxRestServerLibrary
                     int aascount = AasxServer.Program.env.Length;
                     for (int i = 0; i < aascount; i++)
                     {
-                        var env = AasxServer.Program.env[i];
+                        var env = AasxServer.Program.env[ i ];
                         if (env?.AasEnv?.AssetAdministrationShells == null)
                             continue;
 
@@ -106,8 +106,8 @@ namespace AasxRestServerLibrary
             }
 
             // query
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/queryregistry/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/queryregistry/(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/queryregistry/([^/]+)(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/queryregistry/(/|)$") ]
             public IHttpContext Queryregistry(IHttpContext context)
             {
                 allowCORS(context);
@@ -186,20 +186,20 @@ namespace AasxRestServerLibrary
                     right = right.Substring(1, rightlen - 2);
                     right = right.Replace("><", " ");
                     var split = right.Split(' ');
-                    if (split.Count() == 3 && split[0] == "right")
+                    if (split.Count() == 3 && split[ 0 ] == "right")
                     {
-                        if (left.Contains(split[1]))
+                        if (left.Contains(split[ 1 ]))
                         {
-                            right = split[2];
+                            right = split[ 2 ];
                             rightlen = right.Length;
-                            int found = left.IndexOf(split[1]);
-                            found += split[1].Length;
+                            int found = left.IndexOf(split[ 1 ]);
+                            found += split[ 1 ].Length;
                             string l = "";
-                            while (char.IsWhiteSpace(left[found]) && found < leftlen - 1)
+                            while (char.IsWhiteSpace(left[ found ]) && found < leftlen - 1)
                                 found++;
-                            while (char.IsDigit(left[found]) && found < leftlen - 1)
+                            while (char.IsDigit(left[ found ]) && found < leftlen - 1)
                             {
-                                l += left[found];
+                                l += left[ found ];
                                 found++;
                             }
 
@@ -366,19 +366,19 @@ namespace AasxRestServerLibrary
                         error = true;
                     else
                     {
-                        if (split[0] != "SELECT:")
+                        if (split[ 0 ] != "SELECT:")
                             error = true;
                         // if (split[1] != "aas" && split[1] != "submodel")
                         //    error = true;
-                        if (split[2] != "FROM:")
+                        if (split[ 2 ] != "FROM:")
                             error = true;
-                        if (split[3] != "registry")
+                        if (split[ 3 ] != "registry")
                             error = true;
-                        if (split[4] != "WHERE:")
+                        if (split[ 4 ] != "WHERE:")
                             error = true;
-                        if (split[5] != "submodelelement" && split[5] != "submodel" && split[5] != "aas")
+                        if (split[ 5 ] != "submodelelement" && split[ 5 ] != "submodel" && split[ 5 ] != "aas")
                             error = true;
-                        if (split[6] != "AND" && split[6] != "OR")
+                        if (split[ 6 ] != "AND" && split[ 6 ] != "OR")
                             error = true;
                     }
 
@@ -399,9 +399,9 @@ namespace AasxRestServerLibrary
 
                     result += "registry endpoint " + AasxServer.Program.externalBlazor + "\n";
 
-                    var sSplit = split[1].Split(' ');
-                    string select = sSplit[0];
-                    string selectParameters = split[1].Substring(select.Length);
+                    var sSplit = split[ 1 ].Split(' ');
+                    string select = sSplit[ 0 ];
+                    string selectParameters = split[ 1 ].Substring(select.Length);
                     string whereAasCondition = "";
                     string whereSmCondition = "";
                     string whereSmeCondition = "";
@@ -409,25 +409,25 @@ namespace AasxRestServerLibrary
                     List<string> whereSmOperations = new List<string>();
                     List<string> whereSmeOperations = new List<string>();
 
-                    if (split[5] == "aas")
+                    if (split[ 5 ] == "aas")
                     {
-                        whereAasCondition = split[6].ToLower();
+                        whereAasCondition = split[ 6 ].ToLower();
                         for (int i = 7; i < split.Length; i++)
-                            whereAasOperations.Add(split[i]);
+                            whereAasOperations.Add(split[ i ]);
                     }
 
-                    if (split[5] == "submodel")
+                    if (split[ 5 ] == "submodel")
                     {
-                        whereSmCondition = split[6].ToLower();
+                        whereSmCondition = split[ 6 ].ToLower();
                         for (int i = 7; i < split.Length; i++)
-                            whereSmOperations.Add(split[i]);
+                            whereSmOperations.Add(split[ i ]);
                     }
 
-                    if (split[5] == "submodelelement")
+                    if (split[ 5 ] == "submodelelement")
                     {
-                        whereSmeCondition = split[6].ToLower();
+                        whereSmeCondition = split[ 6 ].ToLower();
                         for (int i = 7; i < split.Length; i++)
-                            whereSmeOperations.Add(split[i]);
+                            whereSmeOperations.Add(split[ i ]);
                     }
 
                     int totalFound = 0;
@@ -491,9 +491,9 @@ namespace AasxRestServerLibrary
                                     split = wo.Split(' ');
                                     if (split.Length == 3)
                                     {
-                                        attr = split[0];
-                                        op = split[1];
-                                        attrValue = split[2].Replace("\"", "");
+                                        attr = split[ 0 ];
+                                        op = split[ 1 ];
+                                        attrValue = split[ 2 ].Replace("\"", "");
                                     }
 
                                     string compare = "";
@@ -595,9 +595,9 @@ namespace AasxRestServerLibrary
                                         split = wo.Split(' ');
                                         if (split.Length == 3)
                                         {
-                                            attr = split[0];
-                                            op = split[1];
-                                            attrValue = split[2].Replace("\"", "");
+                                            attr = split[ 0 ];
+                                            op = split[ 1 ];
+                                            attrValue = split[ 2 ].Replace("\"", "");
                                         }
 
                                         string compare = "";
@@ -648,7 +648,7 @@ namespace AasxRestServerLibrary
                                     {
                                         while (iLevel < level.Count)
                                         {
-                                            var sme = level[iLevel];
+                                            var sme = level[ iLevel ];
 
                                             int conditionsTrue = 0;
                                             foreach (var wo in whereSmeOperations)
@@ -659,9 +659,9 @@ namespace AasxRestServerLibrary
                                                 split = wo.Split(' ');
                                                 if (split.Length == 3)
                                                 {
-                                                    attr = split[0];
-                                                    op = split[1];
-                                                    attrValue = split[2].Replace("\"", "");
+                                                    attr = split[ 0 ];
+                                                    op = split[ 1 ];
+                                                    attrValue = split[ 2 ].Replace("\"", "");
                                                 }
 
                                                 string compare = "";
@@ -676,7 +676,7 @@ namespace AasxRestServerLibrary
                                                         break;
                                                     case "%semanticid":
                                                         if (sme.SemanticId != null && sme.SemanticId.Keys != null && sme.SemanticId.Keys.Count != 0)
-                                                            compare = sme.SemanticId.Keys[0].Value;
+                                                            compare = sme.SemanticId.Keys[ 0 ].Value;
                                                         break;
                                                 }
 
@@ -713,8 +713,8 @@ namespace AasxRestServerLibrary
                                                         {
                                                             for (int iMlp = 0; iMlp < mlp.Value.Count; iMlp++)
                                                             {
-                                                                result += " [" + mlp.Value[iMlp].Language + "]" +
-                                                                          mlp.Value[iMlp].Text;
+                                                                result += " [" + mlp.Value[ iMlp ].Language + "]" +
+                                                                          mlp.Value[ iMlp ].Text;
                                                             }
                                                         }
                                                     }
@@ -730,7 +730,7 @@ namespace AasxRestServerLibrary
                                                 depth++;
                                                 string smcSemanticId = "";
                                                 if (smc2.SemanticId != null && smc2.SemanticId.Keys != null && smc2.SemanticId.Keys.Count != 0)
-                                                    smcSemanticId = smc2.SemanticId.Keys[0].Value;
+                                                    smcSemanticId = smc2.SemanticId.Keys[ 0 ].Value;
                                                 level = smc2.Value;
                                                 iLevel = 0;
                                                 continue;
@@ -742,9 +742,9 @@ namespace AasxRestServerLibrary
                                         depth--;
                                         if (depth >= 0)
                                         {
-                                            level = stack[depth];
+                                            level = stack[ depth ];
                                             stack.RemoveAt(depth);
-                                            iLevel = iStack[depth];
+                                            iLevel = iStack[ depth ];
                                             iStack.RemoveAt(depth);
                                         }
                                     }
@@ -949,16 +949,16 @@ namespace AasxRestServerLibrary
                         {
                             case "select:":
                                 var sSplit = s.Split(' ');
-                                select = sSplit[0];
+                                select = sSplit[ 0 ];
                                 selectParameters = s.Substring(select.Length);
                                 break;
                             case "from:":
                                 var fromsplit = sp.Split(' ');
-                                from = fromsplit[0].ToLower();
+                                from = fromsplit[ 0 ].ToLower();
                                 if (from == "aas" || from == "submodel")
                                 {
                                     if (fromsplit.Length == 2)
-                                        fromId = fromsplit[1].Replace("\"", "");
+                                        fromId = fromsplit[ 1 ].Replace("\"", "");
                                 }
 
                                 break;
@@ -1046,7 +1046,7 @@ namespace AasxRestServerLibrary
                         for (int i = 0; i < aascount; i++)
                         {
                             int foundInAas = 0;
-                            var env = AasxServer.Program.env[i];
+                            var env = AasxServer.Program.env[ i ];
                             if (env?.AasEnv?.AssetAdministrationShells == null)
                                 continue;
 
@@ -1078,9 +1078,9 @@ namespace AasxRestServerLibrary
                                         split = wo.Split(' ');
                                         if (split.Length == 3)
                                         {
-                                            attr = split[0];
-                                            op = split[1];
-                                            attrValue = split[2];
+                                            attr = split[ 0 ];
+                                            op = split[ 1 ];
+                                            attrValue = split[ 2 ];
                                         }
 
                                         string compare = "";
@@ -1170,7 +1170,7 @@ namespace AasxRestServerLibrary
 
                                     string smSemanticId = "";
                                     if (sm.SemanticId != null && sm.SemanticId.Keys != null && sm.SemanticId.Keys.Count != 0)
-                                        smSemanticId = sm.SemanticId.Keys[0].Value;
+                                        smSemanticId = sm.SemanticId.Keys[ 0 ].Value;
 
                                     int foundInSubmodel = 0;
                                     if (whereSmCondition != "" && accessSubmodel)
@@ -1184,9 +1184,9 @@ namespace AasxRestServerLibrary
                                             split = wo.Split(' ');
                                             if (split.Length == 3)
                                             {
-                                                attr = split[0];
-                                                op = split[1];
-                                                attrValue = split[2];
+                                                attr = split[ 0 ];
+                                                op = split[ 1 ];
+                                                attrValue = split[ 2 ];
 
                                                 string compare = "";
                                                 switch (attr)
@@ -1200,7 +1200,7 @@ namespace AasxRestServerLibrary
                                                     case "%semanticid":
                                                         compare = "";
                                                         if (sm.SemanticId != null && sm.SemanticId.Keys != null && sm.SemanticId.Keys.Count != 0)
-                                                            compare = sm.SemanticId.Keys[0].Value;
+                                                            compare = sm.SemanticId.Keys[ 0 ].Value;
                                                         break;
                                                 }
 
@@ -1275,7 +1275,7 @@ namespace AasxRestServerLibrary
                                         {
                                             while (iLevel < level.Count)
                                             {
-                                                var sme = level[iLevel];
+                                                var sme = level[ iLevel ];
 
                                                 // check, if access to submodelelement is allowed
                                                 string _path = sm.IdShort + ".";
@@ -1298,9 +1298,9 @@ namespace AasxRestServerLibrary
                                                         split = wo.Split(' ');
                                                         if (split.Length == 3)
                                                         {
-                                                            attr = split[0];
-                                                            op = split[1];
-                                                            attrValue = split[2];
+                                                            attr = split[ 0 ];
+                                                            op = split[ 1 ];
+                                                            attrValue = split[ 2 ];
                                                         }
 
                                                         string compare = "";
@@ -1315,7 +1315,7 @@ namespace AasxRestServerLibrary
                                                                 break;
                                                             case "%semanticid":
                                                                 if (sme.SemanticId != null && sme.SemanticId.Keys != null && sme.SemanticId.Keys.Count != 0)
-                                                                    compare = sme.SemanticId.Keys[0].Value;
+                                                                    compare = sme.SemanticId.Keys[ 0 ].Value;
                                                                 break;
                                                             case "%path":
                                                                 attrValue = attrValue.Replace(".", "/");
@@ -1378,8 +1378,8 @@ namespace AasxRestServerLibrary
                                                                         {
                                                                             for (int iMlp = 0; iMlp < mlp.Value.Count; iMlp++)
                                                                             {
-                                                                                result += " [" + mlp.Value[iMlp].Language + "]" +
-                                                                                          mlp.Value[iMlp].Text;
+                                                                                result += " [" + mlp.Value[ iMlp ].Language + "]" +
+                                                                                          mlp.Value[ iMlp ].Text;
                                                                             }
                                                                         }
                                                                     }
@@ -1388,7 +1388,7 @@ namespace AasxRestServerLibrary
                                                                 if (selectParameters.Contains("%semanticid"))
                                                                 {
                                                                     if (sme.SemanticId != null && sme.SemanticId.Keys != null && sme.SemanticId.Keys.Count != 0)
-                                                                        result += " " + sme.SemanticId.Keys[0].Value;
+                                                                        result += " " + sme.SemanticId.Keys[ 0 ].Value;
                                                                 }
 
                                                                 if (selectParameters.Contains("%path"))
@@ -1443,7 +1443,7 @@ namespace AasxRestServerLibrary
                                                     path += smc.IdShort + "/";
                                                     string smcSemanticId = "";
                                                     if (smc.SemanticId != null && smc.SemanticId.Keys != null && smc.SemanticId.Keys.Count != 0)
-                                                        smcSemanticId = smc.SemanticId.Keys[0].Value;
+                                                        smcSemanticId = smc.SemanticId.Keys[ 0 ].Value;
                                                     semanticIdPath += smcSemanticId + ".";
                                                     level = smc.Value;
                                                     iLevel = 0;
@@ -1456,13 +1456,13 @@ namespace AasxRestServerLibrary
                                             depth--;
                                             if (depth >= 0)
                                             {
-                                                level = stack[depth];
+                                                level = stack[ depth ];
                                                 stack.RemoveAt(depth);
-                                                iLevel = iStack[depth];
+                                                iLevel = iStack[ depth ];
                                                 iStack.RemoveAt(depth);
-                                                path = pathStack[depth];
+                                                path = pathStack[ depth ];
                                                 pathStack.RemoveAt(depth);
-                                                semanticIdPath = semanticIdPathStack[depth];
+                                                semanticIdPath = semanticIdPathStack[ depth ];
                                                 semanticIdPathStack.RemoveAt(depth);
                                             }
                                         }
@@ -1492,7 +1492,7 @@ namespace AasxRestServerLibrary
                                         if (selectParameters.Contains("%semanticid"))
                                         {
                                             if (sm.SemanticId != null && sm.SemanticId.Keys != null && sm.SemanticId.Keys.Count != 0)
-                                                result += " " + sm.SemanticId.Keys[0].Value;
+                                                result += " " + sm.SemanticId.Keys[ 0 ].Value;
                                         }
 
                                         result += "\n";
@@ -1572,7 +1572,7 @@ namespace AasxRestServerLibrary
                             {
                                 int foundInAas = 0;
 
-                                var aasDB = aasDBList[i];
+                                var aasDB = aasDBList[ i ];
                                 AssetAdministrationShell aas = new AssetAdministrationShell(
                                     id: aasDB.AasId,
                                     idShort: aasDB.Idshort,
@@ -1606,9 +1606,9 @@ namespace AasxRestServerLibrary
                                             split = wo.Split(' ');
                                             if (split.Length == 3)
                                             {
-                                                attr = split[0];
-                                                op = split[1];
-                                                attrValue = split[2];
+                                                attr = split[ 0 ];
+                                                op = split[ 1 ];
+                                                attrValue = split[ 2 ];
                                             }
 
                                             string compare = "";
@@ -1697,7 +1697,7 @@ namespace AasxRestServerLibrary
 
                                         string smSemanticId = "";
                                         if (sm.SemanticId != null && sm.SemanticId.Keys != null && sm.SemanticId.Keys.Count != 0)
-                                            smSemanticId = sm.SemanticId.Keys[0].Value;
+                                            smSemanticId = sm.SemanticId.Keys[ 0 ].Value;
 
                                         int foundInSubmodel = 0;
                                         if (whereSmCondition != "" && accessSubmodel)
@@ -1711,9 +1711,9 @@ namespace AasxRestServerLibrary
                                                 split = wo.Split(' ');
                                                 if (split.Length == 3)
                                                 {
-                                                    attr = split[0];
-                                                    op = split[1];
-                                                    attrValue = split[2];
+                                                    attr = split[ 0 ];
+                                                    op = split[ 1 ];
+                                                    attrValue = split[ 2 ];
 
                                                     string compare = "";
                                                     switch (attr)
@@ -1727,7 +1727,7 @@ namespace AasxRestServerLibrary
                                                         case "%semanticid":
                                                             compare = "";
                                                             if (sm.SemanticId != null && sm.SemanticId.Keys != null && sm.SemanticId.Keys.Count != 0)
-                                                                compare = sm.SemanticId.Keys[0].Value;
+                                                                compare = sm.SemanticId.Keys[ 0 ].Value;
                                                             break;
                                                     }
 
@@ -1802,7 +1802,7 @@ namespace AasxRestServerLibrary
                                             {
                                                 while (iLevel < level.Count)
                                                 {
-                                                    var sme = level[iLevel];
+                                                    var sme = level[ iLevel ];
 
                                                     // check, if access to submodelelement is allowed
                                                     string _path = sm.IdShort + ".";
@@ -1825,9 +1825,9 @@ namespace AasxRestServerLibrary
                                                             split = wo.Split(' ');
                                                             if (split.Length == 3)
                                                             {
-                                                                attr = split[0];
-                                                                op = split[1];
-                                                                attrValue = split[2];
+                                                                attr = split[ 0 ];
+                                                                op = split[ 1 ];
+                                                                attrValue = split[ 2 ];
                                                             }
 
                                                             string compare = "";
@@ -1842,7 +1842,7 @@ namespace AasxRestServerLibrary
                                                                     break;
                                                                 case "%semanticid":
                                                                     if (sme.SemanticId != null && sme.SemanticId.Keys != null && sme.SemanticId.Keys.Count != 0)
-                                                                        compare = sme.SemanticId.Keys[0].Value;
+                                                                        compare = sme.SemanticId.Keys[ 0 ].Value;
                                                                     break;
                                                                 case "%path":
                                                                     attrValue = attrValue.Replace(".", "/");
@@ -1905,8 +1905,8 @@ namespace AasxRestServerLibrary
                                                                             {
                                                                                 for (int iMlp = 0; iMlp < mlp.Value.Count; iMlp++)
                                                                                 {
-                                                                                    result += " [" + mlp.Value[iMlp].Language + "]" +
-                                                                                              mlp.Value[iMlp].Text;
+                                                                                    result += " [" + mlp.Value[ iMlp ].Language + "]" +
+                                                                                              mlp.Value[ iMlp ].Text;
                                                                                 }
                                                                             }
                                                                         }
@@ -1915,7 +1915,7 @@ namespace AasxRestServerLibrary
                                                                     if (selectParameters.Contains("%semanticid"))
                                                                     {
                                                                         if (sme.SemanticId != null && sme.SemanticId.Keys != null && sme.SemanticId.Keys.Count != 0)
-                                                                            result += " " + sme.SemanticId.Keys[0].Value;
+                                                                            result += " " + sme.SemanticId.Keys[ 0 ].Value;
                                                                     }
 
                                                                     if (selectParameters.Contains("%path"))
@@ -1970,7 +1970,7 @@ namespace AasxRestServerLibrary
                                                         path += smc.IdShort + "/";
                                                         string smcSemanticId = "";
                                                         if (smc.SemanticId != null && smc.SemanticId.Keys != null && smc.SemanticId.Keys.Count != 0)
-                                                            smcSemanticId = smc.SemanticId.Keys[0].Value;
+                                                            smcSemanticId = smc.SemanticId.Keys[ 0 ].Value;
                                                         semanticIdPath += smcSemanticId + ".";
                                                         level = smc.Value;
                                                         iLevel = 0;
@@ -1983,13 +1983,13 @@ namespace AasxRestServerLibrary
                                                 depth--;
                                                 if (depth >= 0)
                                                 {
-                                                    level = stack[depth];
+                                                    level = stack[ depth ];
                                                     stack.RemoveAt(depth);
-                                                    iLevel = iStack[depth];
+                                                    iLevel = iStack[ depth ];
                                                     iStack.RemoveAt(depth);
-                                                    path = pathStack[depth];
+                                                    path = pathStack[ depth ];
                                                     pathStack.RemoveAt(depth);
-                                                    semanticIdPath = semanticIdPathStack[depth];
+                                                    semanticIdPath = semanticIdPathStack[ depth ];
                                                     semanticIdPathStack.RemoveAt(depth);
                                                 }
                                             }
@@ -2019,7 +2019,7 @@ namespace AasxRestServerLibrary
                                             if (selectParameters.Contains("%semanticid"))
                                             {
                                                 if (sm.SemanticId != null && sm.SemanticId.Keys != null && sm.SemanticId.Keys.Count != 0)
-                                                    result += " " + sm.SemanticId.Keys[0].Value;
+                                                    result += " " + sm.SemanticId.Keys[ 0 ].Value;
                                             }
 
                                             result += "\n";
@@ -2091,8 +2091,8 @@ namespace AasxRestServerLibrary
             }
 
             // query
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/query/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/query/(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/query/([^/]+)(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/query/(/|)$") ]
             public IHttpContext Query(IHttpContext context)
             {
                 allowCORS(context);
@@ -2111,8 +2111,8 @@ namespace AasxRestServerLibrary
             }
 
             // exit application
-            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/exit/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/exit/([^/]+)(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/exit/([^/]+)(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/exit/([^/]+)(/|)$") ]
             public IHttpContext Exit(IHttpContext context)
             {
                 string restPath = context.Request.PathInfo;
@@ -2151,8 +2151,8 @@ namespace AasxRestServerLibrary
             }
 
             // set secret string to write to API
-            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/secret/([^/]+)/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/secret/([^/]+)/([^/]+)(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/secret/([^/]+)/([^/]+)(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/secret/([^/]+)/([^/]+)(/|)$") ]
             public IHttpContext Secret(IHttpContext context)
             {
                 string requestSecret1 = null;
@@ -2165,8 +2165,8 @@ namespace AasxRestServerLibrary
                 string[] split = restPath.Split('/');
                 if (split.Count() == 2)
                 {
-                    requestSecret1 = split[0];
-                    requestSecret2 = split[1];
+                    requestSecret1 = split[ 0 ];
+                    requestSecret2 = split[ 1 ];
                 }
 
                 if (System.IO.File.Exists("SECRET.DAT"))
@@ -2231,7 +2231,7 @@ namespace AasxRestServerLibrary
                 context.Response.SendResponse(buffer);
             }
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/data4(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/data4(/|)$") ]
             public IHttpContext GetData4(IHttpContext context)
             {
                 varInt1++;
@@ -2330,9 +2330,9 @@ namespace AasxRestServerLibrary
                             o.IdShort = path;
                             */
                             deletedList.Add(new DeletedListItem() {sm = rootSubmodel, rf = o});
-                            if (deletedList.Count > 1000 && deletedList[0].rf != null)
+                            if (deletedList.Count > 1000 && deletedList[ 0 ].rf != null)
                             {
-                                olderDeletedTimeStamp = deletedList[0].rf.TimeStamp;
+                                olderDeletedTimeStamp = deletedList[ 0 ].rf.TimeStamp;
                                 deletedList.RemoveAt(0);
                             }
                         }
@@ -2342,7 +2342,7 @@ namespace AasxRestServerLibrary
 
             public static string posttimeseriesPayload = "";
 
-            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/posttimeseries(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/posttimeseries(/|)$") ]
             public IHttpContext posttimeseries(IHttpContext context)
             {
                 Console.WriteLine("posttimeseries:");
@@ -2356,7 +2356,7 @@ namespace AasxRestServerLibrary
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/calculatecfp/aas/([^/]+)(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/calculatecfp/aas/([^/]+)(/|)$") ]
             public IHttpContext calculatecfp(IHttpContext context)
             {
                 string restPath = context.Request.PathInfo;
@@ -2367,11 +2367,11 @@ namespace AasxRestServerLibrary
                 {
                     // specific AAS
                     string[] split = restPath.Split('/');
-                    if (split[2] == "aas")
+                    if (split[ 2 ] == "aas")
                     {
                         try
                         {
-                            if (!int.TryParse(split[3], out aasIndex))
+                            if (!int.TryParse(split[ 3 ], out aasIndex))
                                 aasIndex = -1;
                             if (aasIndex >= 0)
                             {
@@ -2397,18 +2397,18 @@ namespace AasxRestServerLibrary
 
             private static bool _setAllParentsExecuted = false;
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/values(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/time/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/deltasecs/(\\d+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/aas/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/aas/([^/]+)/values(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/aas/([^/]+)/time/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/aas/([^/]+)/deltasecs/(\\d+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/([^/]+)/geteventmessages(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/([^/]+)/geteventmessages/values(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/([^/]+)/geteventmessages/time/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/([^/]+)/geteventmessages/deltasecs/(\\d+)(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/values(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/time/([^/]+)(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/deltasecs/(\\d+)(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/aas/([^/]+)(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/aas/([^/]+)/values(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/aas/([^/]+)/time/([^/]+)(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/geteventmessages/aas/([^/]+)/deltasecs/(\\d+)(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/([^/]+)/geteventmessages(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/([^/]+)/geteventmessages/values(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/([^/]+)/geteventmessages/time/([^/]+)(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/([^/]+)/geteventmessages/deltasecs/(\\d+)(/|)$") ]
             public IHttpContext GetEventMessages(IHttpContext context)
             {
                 // 
@@ -2425,11 +2425,11 @@ namespace AasxRestServerLibrary
                 {
                     // specific AAS
                     string[] split = restPath.Split('/');
-                    if (split[2] == "aas")
+                    if (split[ 2 ] == "aas")
                     {
                         try
                         {
-                            if (!int.TryParse(split[3], out aasIndex))
+                            if (!int.TryParse(split[ 3 ], out aasIndex))
                                 aasIndex = -1;
                             if (aasIndex >= 0)
                             {
@@ -2438,7 +2438,7 @@ namespace AasxRestServerLibrary
                                 {
                                     if (i != 2 && i != 3)
                                     {
-                                        restPath += "/" + split[i];
+                                        restPath += "/" + split[ i ];
                                     }
                                 }
                             }
@@ -2448,11 +2448,11 @@ namespace AasxRestServerLibrary
                         }
                     }
 
-                    if (split[1] == "aas")
+                    if (split[ 1 ] == "aas")
                     {
                         try
                         {
-                            if (!int.TryParse(split[2], out aasIndex))
+                            if (!int.TryParse(split[ 2 ], out aasIndex))
                                 aasIndex = -1;
                             if (aasIndex >= 0)
                             {
@@ -2461,7 +2461,7 @@ namespace AasxRestServerLibrary
                                 {
                                     if (i != 1 && i != 2)
                                     {
-                                        restPath += "/" + split[i];
+                                        restPath += "/" + split[ i ];
                                     }
                                 }
                             }
@@ -2537,7 +2537,7 @@ namespace AasxRestServerLibrary
                     if (aasIndex >= 0 && i != aasIndex)
                         continue;
 
-                    var env = AasxServer.Program.env[i];
+                    var env = AasxServer.Program.env[ i ];
                     if (env?.AasEnv?.AssetAdministrationShells == null)
                         continue;
 
@@ -2768,7 +2768,7 @@ namespace AasxRestServerLibrary
                             int i = 0;
                             while (i < smec.Value.Count)
                             {
-                                var sme2 = smec.Value[i];
+                                var sme2 = smec.Value[ i ];
                                 if (sme2.TimeStamp != smec.TimeStamp)
                                 {
                                     deeper = true;
@@ -2786,7 +2786,7 @@ namespace AasxRestServerLibrary
                         int i = 0;
                         while (i < smec.Value.Count)
                         {
-                            var sme2 = smec.Value[i];
+                            var sme2 = smec.Value[ i ];
                             GetEventMsgRecurseDiff(
                                 mode,
                                 plStruct, plUpdate,
@@ -2848,7 +2848,7 @@ namespace AasxRestServerLibrary
                 var length = buffer.Length;
 
                 var queryString = context.Request.QueryString;
-                string refresh = queryString["refresh"];
+                string refresh = queryString[ "refresh" ];
                 if (refresh != null && refresh != "")
                 {
                     context.Response.Headers.Remove("Refresh");
@@ -2931,22 +2931,22 @@ namespace AasxRestServerLibrary
                 }
             }
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/update(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/update/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/aas/([^/]+)/time/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/aas/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/aas/([^/]+)/update(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/aas/([^/]+)/update/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diffjson/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diffjson(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diffjson/update(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diffjson/update/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diffjson/aas/([^/]+)/time/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diffjson/aas/([^/]+)(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diffjson/aas/([^/]+)/update(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diffjson/aas/([^/]+)/update/([^/]+)(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/([^/]+)(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/update(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/update/([^/]+)(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/aas/([^/]+)/time/([^/]+)(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/aas/([^/]+)(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/aas/([^/]+)/update(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diff/aas/([^/]+)/update/([^/]+)(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diffjson/([^/]+)(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diffjson(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diffjson/update(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diffjson/update/([^/]+)(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diffjson/aas/([^/]+)/time/([^/]+)(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diffjson/aas/([^/]+)(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diffjson/aas/([^/]+)/update(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/diffjson/aas/([^/]+)/update/([^/]+)(/|)$") ]
             public IHttpContext GetDiff(IHttpContext context)
             {
                 string[] modes = {"DELETE", "CREATE", "UPDATE"};
@@ -2958,14 +2958,14 @@ namespace AasxRestServerLibrary
                 bool diffJson = false;
 
                 var queryString = context.Request.QueryString;
-                string refresh = queryString["refresh"];
+                string refresh = queryString[ "refresh" ];
                 if (refresh != null && refresh != "")
                 {
                     context.Response.Headers.Remove("Refresh");
                     context.Response.Headers.Add("Refresh", refresh);
                 }
 
-                string m = queryString["mode"];
+                string m = queryString[ "mode" ];
                 if (m != null && m != "")
                 {
                     try
@@ -2977,7 +2977,7 @@ namespace AasxRestServerLibrary
                     }
                 }
 
-                string time = queryString["time"];
+                string time = queryString[ "time" ];
                 if (time != null && time != "")
                 {
                     try
@@ -2989,7 +2989,7 @@ namespace AasxRestServerLibrary
                     }
                 }
 
-                string auto = queryString["auto"];
+                string auto = queryString[ "auto" ];
                 if (auto != null && auto != "")
                 {
                     try
@@ -3002,14 +3002,14 @@ namespace AasxRestServerLibrary
                     }
                 }
 
-                string dd = queryString["deep"];
+                string dd = queryString[ "deep" ];
                 if (dd != null && dd != "")
                 {
                     deep = true;
                 }
 
                 {
-                    string path = queryString["path"];
+                    string path = queryString[ "path" ];
                     if (path != null && path != "")
                     {
                         searchPath = path;
@@ -3030,11 +3030,11 @@ namespace AasxRestServerLibrary
                 {
                     // specific AAS
                     string[] split = restPath.Split('/');
-                    if (split[2] == "aas")
+                    if (split[ 2 ] == "aas")
                     {
                         try
                         {
-                            if (!int.TryParse(split[3], out aasIndex))
+                            if (!int.TryParse(split[ 3 ], out aasIndex))
                                 aasIndex = -1;
                             if (aasIndex >= 0)
                             {
@@ -3043,7 +3043,7 @@ namespace AasxRestServerLibrary
                                 {
                                     if (i != 2 && i != 3)
                                     {
-                                        restPath += "/" + split[i];
+                                        restPath += "/" + split[ i ];
                                     }
                                 }
                             }
@@ -3063,7 +3063,7 @@ namespace AasxRestServerLibrary
 
                 for (int imode = 0; imode < modes.Length; imode++)
                 {
-                    string mode = modes[imode];
+                    string mode = modes[ imode ];
 
                     if (mode == "DELETE")
                     {
@@ -3104,10 +3104,10 @@ namespace AasxRestServerLibrary
                         if (aasIndex >= 0 && i != aasIndex)
                             continue;
 
-                        var env = AasxServer.Program.env[i];
+                        var env = AasxServer.Program.env[ i ];
                         if (env != null)
                         {
-                            var aas = env.AasEnv.AssetAdministrationShells[0];
+                            var aas = env.AasEnv.AssetAdministrationShells[ 0 ];
                             if (aas.Submodels != null && aas.Submodels.Count > 0)
                             {
                                 DateTime diffTimeStamp = new();
@@ -3255,7 +3255,7 @@ namespace AasxRestServerLibrary
 
             // get authserver
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/authserver(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/authserver(/|)$") ]
             public IHttpContext GetAuthserver(IHttpContext context)
             {
                 var txt = AasxServer.Program.redirectServer;
@@ -3269,7 +3269,7 @@ namespace AasxRestServerLibrary
             }
 
             // Basic AAS + Asset 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))(|/core|/complete|/thumbnail|/aasenv|/aasenvjson)(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))(|/core|/complete|/thumbnail|/aasenv|/aasenvjson)(/|)$") ]
             public IHttpContext GetAasAndAsset(IHttpContext context)
             {
                 if (context.Request.PathInfo.Contains("geteventmessages"))
@@ -3282,55 +3282,55 @@ namespace AasxRestServerLibrary
                 {
                     if (helper.PathEndsWith(context, "thumbnail"))
                     {
-                        helper.EvalGetAasThumbnail(context, m.Groups[1].ToString());
+                        helper.EvalGetAasThumbnail(context, m.Groups[ 1 ].ToString());
                     }
                     else if (helper.PathEndsWith(context, "aasenv") || helper.PathEndsWith(context, "aasenvjson"))
                     {
-                        helper.EvalGetAasEnv(context, m.Groups[1].ToString());
+                        helper.EvalGetAasEnv(context, m.Groups[ 1 ].ToString());
                     }
                     else
                     {
                         var complete = helper.PathEndsWith(context, "complete");
-                        helper.EvalGetAasAndAsset(context, m.Groups[1].ToString(), complete: complete);
+                        helper.EvalGetAasAndAsset(context, m.Groups[ 1 ].ToString(), complete: complete);
                     }
                 }
 
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/aas(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/aas(/|)$") ]
             public IHttpContext PutAas(IHttpContext context)
             {
                 helper.EvalPutAas(context);
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/aasx/server(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/aasx/server(/|)$") ]
             public IHttpContext PutAasxOnServer(IHttpContext context)
             {
                 helper.EvalPutAasxOnServer(context);
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/aasx/filesystem/([^/]+)(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/aasx/filesystem/([^/]+)(/|)$") ]
             public IHttpContext PutAasxToFileSystem(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 2)
                 {
-                    helper.EvalPutAasxToFilesystem(context, m.Groups[1].ToString());
+                    helper.EvalPutAasxToFilesystem(context, m.Groups[ 1 ].ToString());
                 }
 
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.DELETE, PathInfo = "^/aas/([^/]+)(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.DELETE, PathInfo = "^/aas/([^/]+)(/|)$") ]
             public IHttpContext DeleteAasAndAsset(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 2)
                 {
-                    helper.EvalDeleteAasAndAsset(context, m.Groups[1].ToString(), deleteAsset: true);
+                    helper.EvalDeleteAasAndAsset(context, m.Groups[ 1 ].ToString(), deleteAsset: true);
                 }
 
                 return context;
@@ -3338,14 +3338,14 @@ namespace AasxRestServerLibrary
 
             // Handles
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/handles/identification(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/handles/identification(/|)$") ]
             public IHttpContext GetHandlesIdentification(IHttpContext context)
             {
                 helper.EvalGetHandlesIdentification(context);
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/handles/identification(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/handles/identification(/|)$") ]
             public IHttpContext PostHandlesIdentification(IHttpContext context)
             {
                 helper.EvalPostHandlesIdentification(context);
@@ -3354,7 +3354,7 @@ namespace AasxRestServerLibrary
 
             // Authenticate
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/authenticateGuest(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/authenticateGuest(/|)$") ]
             public IHttpContext GetAuthenticate(IHttpContext context)
             {
                 helper.EvalGetAuthenticateGuest(context);
@@ -3363,21 +3363,21 @@ namespace AasxRestServerLibrary
 
             // Authenticate User
 
-            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/authenticateUser(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/authenticateUser(/|)$") ]
             public IHttpContext PostAuthenticateUser(IHttpContext context)
             {
                 helper.EvalPostAuthenticateUser(context);
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/authenticateCert1(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/authenticateCert1(/|)$") ]
             public IHttpContext PostAuthenticateCert1(IHttpContext context)
             {
                 helper.EvalPostAuthenticateCert1(context);
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/authenticateCert2(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/authenticateCert2(/|)$") ]
             public IHttpContext PostAuthenticateCert2(IHttpContext context)
             {
                 helper.EvalPostAuthenticateCert2(context);
@@ -3386,7 +3386,7 @@ namespace AasxRestServerLibrary
 
             // Server
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/server/profile(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/server/profile(/|)$") ]
             public IHttpContext GetServerProfile(IHttpContext context)
             {
                 helper.EvalGetServerProfile(context);
@@ -3394,8 +3394,8 @@ namespace AasxRestServerLibrary
             }
 
             // OZ
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/server/listaas(/|)$")]
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/server/listasset(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/server/listaas(/|)$") ]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/server/listasset(/|)$") ]
             public IHttpContext GetServerAASX(IHttpContext context)
             {
                 if (context.Request.PathInfo.Contains("listasset"))
@@ -3410,32 +3410,32 @@ namespace AasxRestServerLibrary
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/assetid/(\d+)(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/assetid/(\d+)(/|)$") ]
             public IHttpContext AssetId(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 2)
                 {
-                    helper.EvalAssetId(context, Int32.Parse(m.Groups[1].ToString()));
+                    helper.EvalAssetId(context, Int32.Parse(m.Groups[ 1 ].ToString()));
                 }
 
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/server/getaasx/(\d+)(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/server/getaasx/(\d+)(/|)$") ]
             public IHttpContext GetAASX(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 2)
                 {
-                    helper.EvalGetAASX(context, Int32.Parse(m.Groups[1].ToString()));
+                    helper.EvalGetAASX(context, Int32.Parse(m.Groups[ 1 ].ToString()));
                     return context;
                 }
 
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = @"^/server/getaasx/(\d+)(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = @"^/server/getaasx/(\d+)(/|)$") ]
             public IHttpContext PutAASX(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
@@ -3458,7 +3458,7 @@ namespace AasxRestServerLibrary
                     else
                     {
                         // here goes the official code
-                        helper.EvalPutAasxReplacePackage(context, m.Groups[1].ToString());
+                        helper.EvalPutAasxReplacePackage(context, m.Groups[ 1 ].ToString());
                     }
 
                     return context;
@@ -3467,40 +3467,40 @@ namespace AasxRestServerLibrary
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/server/getaasxbyassetid/([^/]+)(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/server/getaasxbyassetid/([^/]+)(/|)$") ]
             public IHttpContext GetAASX2ByAssetId(IHttpContext context)
             {
                 helper.EvalGetAasxByAssetId(context);
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/server/getaasx2/(\d+)(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/server/getaasx2/(\d+)(/|)$") ]
             public IHttpContext GetAASX2(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 2)
                 {
-                    helper.EvalGetAASX2(context, Int32.Parse(m.Groups[1].ToString()));
+                    helper.EvalGetAASX2(context, Int32.Parse(m.Groups[ 1 ].ToString()));
                     return context;
                 }
 
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/server/getfile/(\d+)/(([^/]+)/){0,99}([^/]+)$")]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/server/getfile/(\d+)/(([^/]+)/){0,99}([^/]+)$") ]
             public IHttpContext GetFile(IHttpContext context)
             {
                 int index = -1;
                 string path = "";
 
                 string[] split = context.Request.PathInfo.Split(new Char[] {'/'});
-                if (split[1].ToLower() == "server" && split[2].ToLower() == "getfile")
+                if (split[ 1 ].ToLower() == "server" && split[ 2 ].ToLower() == "getfile")
                 {
-                    index = Int32.Parse(split[3]);
+                    index = Int32.Parse(split[ 3 ]);
                     int i = 4;
                     while (i < split.Length)
                     {
-                        path += "/" + split[i];
+                        path += "/" + split[ i ];
                         i++;
                     }
                 }
@@ -3512,32 +3512,32 @@ namespace AasxRestServerLibrary
 
             // Assets
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/assets/([^/]+)(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/assets/([^/]+)(/|)$") ]
             public IHttpContext GetAssets(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 2)
                 {
-                    helper.EvalGetAssetLinks(context, m.Groups[1].ToString());
+                    helper.EvalGetAssetLinks(context, m.Groups[ 1 ].ToString());
                 }
 
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/assets(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/assets(/|)$") ]
             public IHttpContext PutAssets(IHttpContext context)
             {
                 helper.EvalPutAsset(context);
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/aas/(id|([^/]+))/asset(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/aas/(id|([^/]+))/asset(/|)$") ]
             public IHttpContext PutAssetsToAas(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 2)
                 {
-                    helper.EvalPutAssetToAas(context, m.Groups[1].ToString());
+                    helper.EvalPutAssetToAas(context, m.Groups[ 1 ].ToString());
                 }
 
                 return context;
@@ -3545,37 +3545,37 @@ namespace AasxRestServerLibrary
 
             // List of Submodels
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels(/|)$") ]
             public IHttpContext GetSubmodels(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 2)
                 {
-                    helper.EvalGetSubmodels(context, m.Groups[1].ToString());
+                    helper.EvalGetSubmodels(context, m.Groups[ 1 ].ToString());
                 }
 
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/aas/(id|([^/]+))/submodels(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/aas/(id|([^/]+))/submodels(/|)$") ]
             public IHttpContext PutSubmodel(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 2)
                 {
-                    helper.EvalPutSubmodel(context, m.Groups[1].ToString());
+                    helper.EvalPutSubmodel(context, m.Groups[ 1 ].ToString());
                 }
 
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.DELETE, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.DELETE, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)(/|)$") ]
             public IHttpContext DeleteSubmodel(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 4)
                 {
-                    helper.EvalDeleteSubmodel(context, m.Groups[1].ToString(), m.Groups[3].ToString());
+                    helper.EvalDeleteSubmodel(context, m.Groups[ 1 ].ToString(), m.Groups[ 3 ].ToString());
                 }
 
                 return context;
@@ -3583,14 +3583,14 @@ namespace AasxRestServerLibrary
 
             // Contents of a Submodel
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)(|/core|/deep|/complete|/values)(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)(|/core|/deep|/complete|/values)(/|)$") ]
             public IHttpContext GetSubmodelContents(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 4)
                 {
-                    var aasid = m.Groups[1].ToString();
-                    var smid = m.Groups[3].ToString();
+                    var aasid = m.Groups[ 1 ].ToString();
+                    var smid = m.Groups[ 3 ].ToString();
 
                     if (helper.PathEndsWith(context, "values"))
                     {
@@ -3607,13 +3607,13 @@ namespace AasxRestServerLibrary
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/table(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/table(/|)$") ]
             public IHttpContext GetSubmodelContentsAsTable(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 4)
                 {
-                    helper.EvalGetSubmodelContentsAsTable(context, m.Groups[1].ToString(), m.Groups[3].ToString());
+                    helper.EvalGetSubmodelContentsAsTable(context, m.Groups[ 1 ].ToString(), m.Groups[ 3 ].ToString());
                 }
 
                 return context;
@@ -3621,21 +3621,21 @@ namespace AasxRestServerLibrary
 
             // Contents of SubmodelElements
 
-            [RestRoute(HttpMethod = HttpMethod.GET,
+            [ RestRoute(HttpMethod = HttpMethod.GET,
                 PathInfo =
-                    "^/aas/(id|([^/]+))/submodels/([^/]+)/submodel/submodelElements(/([^/]+)){1,99}?(|/core|/complete|/deep|/file|/blob|/events|/values/value)(/|)$")] // BaSyx-Style
-            [RestRoute(HttpMethod = HttpMethod.GET,
-                PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){1,99}?(|/core|/complete|/deep|/file|/blob|/events|/values|/value)(/|)$")]
+                    "^/aas/(id|([^/]+))/submodels/([^/]+)/submodel/submodelElements(/([^/]+)){1,99}?(|/core|/complete|/deep|/file|/blob|/events|/values/value)(/|)$") ] // BaSyx-Style
+            [ RestRoute(HttpMethod = HttpMethod.GET,
+                PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){1,99}?(|/core|/complete|/deep|/file|/blob|/events|/values|/value)(/|)$") ]
             public IHttpContext GetSubmodelElementsContents(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo.Replace("submodel/submodelElements", "elements"));
-                if (m.Success && m.Groups.Count >= 6 && m.Groups[5].Captures != null && m.Groups[5].Captures.Count >= 1)
+                if (m.Success && m.Groups.Count >= 6 && m.Groups[ 5 ].Captures != null && m.Groups[ 5 ].Captures.Count >= 1)
                 {
-                    var aasid = m.Groups[1].ToString();
-                    var smid = m.Groups[3].ToString();
+                    var aasid = m.Groups[ 1 ].ToString();
+                    var smid = m.Groups[ 3 ].ToString();
                     var elemids = new List<string>();
-                    for (int i = 0; i < m.Groups[5].Captures.Count; i++)
-                        elemids.Add(m.Groups[5].Captures[i].ToString());
+                    for (int i = 0; i < m.Groups[ 5 ].Captures.Count; i++)
+                        elemids.Add(m.Groups[ 5 ].Captures[ i ].ToString());
 
                     // special case??
                     if (helper.PathEndsWith(context, "file"))
@@ -3673,17 +3673,17 @@ namespace AasxRestServerLibrary
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){1,99}?/invoke(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.POST, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){1,99}?/invoke(/|)$") ]
             public IHttpContext PostSubmodelElementsContents(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
-                if (m.Success && m.Groups.Count >= 6 && m.Groups[5].Captures != null && m.Groups[5].Captures.Count >= 1)
+                if (m.Success && m.Groups.Count >= 6 && m.Groups[ 5 ].Captures != null && m.Groups[ 5 ].Captures.Count >= 1)
                 {
-                    var aasid = m.Groups[1].ToString();
-                    var smid = m.Groups[3].ToString();
+                    var aasid = m.Groups[ 1 ].ToString();
+                    var smid = m.Groups[ 3 ].ToString();
                     var elemids = new List<string>();
-                    for (int i = 0; i < m.Groups[5].Captures.Count; i++)
-                        elemids.Add(m.Groups[5].Captures[i].ToString());
+                    for (int i = 0; i < m.Groups[ 5 ].Captures.Count; i++)
+                        elemids.Add(m.Groups[ 5 ].Captures[ i ].ToString());
 
                     // special case??
                     if (helper.PathEndsWith(context, "invoke"))
@@ -3695,18 +3695,18 @@ namespace AasxRestServerLibrary
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){0,99}?(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){0,99}?(/|)$") ]
             public IHttpContext PutSubmodelElementsContents(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 6)
                 {
-                    var aasid = m.Groups[1].ToString();
-                    var smid = m.Groups[3].ToString();
+                    var aasid = m.Groups[ 1 ].ToString();
+                    var smid = m.Groups[ 3 ].ToString();
                     var elemids = new List<string>();
-                    if (m.Groups[5].Captures != null)
-                        for (int i = 0; i < m.Groups[5].Captures.Count; i++)
-                            elemids.Add(m.Groups[5].Captures[i].ToString());
+                    if (m.Groups[ 5 ].Captures != null)
+                        for (int i = 0; i < m.Groups[ 5 ].Captures.Count; i++)
+                            elemids.Add(m.Groups[ 5 ].Captures[ i ].ToString());
 
                     helper.EvalPutSubmodelElementContents(context, aasid, smid, elemids.ToArray());
                 }
@@ -3715,7 +3715,7 @@ namespace AasxRestServerLibrary
             }
 
             //An OPTIONS preflight call is made by browser before calling actual PUT
-            [RestRoute(HttpMethod = HttpMethod.OPTIONS, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){0,99}?(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.OPTIONS, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){0,99}?(/|)$") ]
             public IHttpContext OptionsSubmodelElementsContents(IHttpContext context)
             {
                 SendJsonResponse(context, new Object()); //returning just an empty object
@@ -3723,18 +3723,18 @@ namespace AasxRestServerLibrary
             }
 
 
-            [RestRoute(HttpMethod = HttpMethod.DELETE, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){0,99}?(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.DELETE, PathInfo = "^/aas/(id|([^/]+))/submodels/([^/]+)/elements(/([^/]+)){0,99}?(/|)$") ]
             public IHttpContext DeleteSubmodelElementsContents(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 6)
                 {
-                    var aasid = m.Groups[1].ToString();
-                    var smid = m.Groups[3].ToString();
+                    var aasid = m.Groups[ 1 ].ToString();
+                    var smid = m.Groups[ 3 ].ToString();
                     var elemids = new List<string>();
-                    if (m.Groups[5].Captures != null)
-                        for (int i = 0; i < m.Groups[5].Captures.Count; i++)
-                            elemids.Add(m.Groups[5].Captures[i].ToString());
+                    if (m.Groups[ 5 ].Captures != null)
+                        for (int i = 0; i < m.Groups[ 5 ].Captures.Count; i++)
+                            elemids.Add(m.Groups[ 5 ].Captures[ i ].ToString());
 
                     helper.EvalDeleteSubmodelElementContents(context, aasid, smid, elemids.ToArray());
                 }
@@ -3744,49 +3744,49 @@ namespace AasxRestServerLibrary
 
             // concept descriptions
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/cds(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/cds(/|)$") ]
             public IHttpContext GetCds(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 2)
                 {
-                    helper.EvalGetAllCds(context, m.Groups[1].ToString());
+                    helper.EvalGetAllCds(context, m.Groups[ 1 ].ToString());
                 }
 
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/aas/(id|([^/]+))/cds(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.PUT, PathInfo = "^/aas/(id|([^/]+))/cds(/|)$") ]
             public IHttpContext PutConceptDescription(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 2)
                 {
-                    helper.EvalPutCd(context, m.Groups[1].ToString());
+                    helper.EvalPutCd(context, m.Groups[ 1 ].ToString());
                 }
 
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/cds/([^/]+)(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = "^/aas/(id|([^/]+))/cds/([^/]+)(/|)$") ]
             public IHttpContext GetSpecificCd(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 4)
                 {
-                    helper.EvalGetCdContents(context, m.Groups[1].ToString(), m.Groups[3].ToString());
+                    helper.EvalGetCdContents(context, m.Groups[ 1 ].ToString(), m.Groups[ 3 ].ToString());
                 }
 
                 return context;
             }
 
-            [RestRoute(HttpMethod = HttpMethod.DELETE, PathInfo = "^/aas/(id|([^/]+))/cds/([^/]+)(/|)$")]
+            [ RestRoute(HttpMethod = HttpMethod.DELETE, PathInfo = "^/aas/(id|([^/]+))/cds/([^/]+)(/|)$") ]
             public IHttpContext DeleteSpecificCd(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 4)
                 {
-                    helper.EvalDeleteSpecificCd(context, m.Groups[1].ToString(), m.Groups[3].ToString());
+                    helper.EvalDeleteSpecificCd(context, m.Groups[ 1 ].ToString(), m.Groups[ 3 ].ToString());
                 }
 
                 return context;

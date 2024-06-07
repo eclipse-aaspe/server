@@ -32,7 +32,7 @@ namespace IO.Swagger.Registry.Lib.V3.Filters
         /// <param name="context">FilterContext</param>
         public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
         {
-            swaggerDoc.Servers.Add(new OpenApiServer() { Url = BasePath });
+            swaggerDoc.Servers.Add(new OpenApiServer() {Url = BasePath});
 
             var pathsToModify = swaggerDoc.Paths.Where(p => p.Key.StartsWith(BasePath)).ToList();
 

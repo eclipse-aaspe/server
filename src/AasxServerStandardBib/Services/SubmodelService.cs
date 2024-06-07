@@ -61,7 +61,7 @@ namespace AasxServerStandardBib.Services
 
             if (idShorts.Count == 1)
             {
-                return parent.FindSubmodelElementByIdShort((string) idShorts[0]);
+                return parent.FindSubmodelElementByIdShort((string) idShorts[ 0 ]);
             }
 
             foreach (var idShortObject in idShorts)
@@ -85,7 +85,7 @@ namespace AasxServerStandardBib.Services
                     {
                         try
                         {
-                            output = smeList.Value?[idShortInt];
+                            output = smeList.Value?[ idShortInt ];
                         }
                         catch (ArgumentOutOfRangeException ex)
                         {

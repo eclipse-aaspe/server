@@ -20,14 +20,14 @@ namespace IO.Swagger.Models
     /// <summary>
     /// 
     /// </summary>
-    [DataContract]
+    [ DataContract ]
     public partial class Result : IEquatable<Result>
     {
         /// <summary>
         /// Gets or Sets Messages
         /// </summary>
 
-        [DataMember(Name = "messages")]
+        [ DataMember(Name = "messages") ]
         public List<Message> Messages { get; set; }
 
         /// <summary>
