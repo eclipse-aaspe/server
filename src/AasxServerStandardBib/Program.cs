@@ -1,7 +1,5 @@
 ﻿using AasOpcUaServer;
-using AasxMqttServer;
 using AasxRestServerLibrary;
-//using AasxServerStandardBib.Migrations;
 using AdminShellNS;
 using Extensions;
 using Jose;
@@ -18,7 +16,6 @@ using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Help;
 using System.CommandLine.IO;
-using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
@@ -635,8 +632,6 @@ namespace AasxServer
 
         static Dictionary<string, SampleClient.UASampleClient> OPCClients = new Dictionary<string, SampleClient.UASampleClient>();
         static readonly object opcclientAddLock = new object(); // object for lock around connecting to an external opc server
-
-        static MqttServer AASMqttServer = new MqttServer();
 
         static bool runOPC = false;
 
@@ -1412,17 +1407,6 @@ namespace AasxServer
             // MICHA MICHA
             AasxTimeSeries.TimeSeries.timeSeriesInit();
 
-            /* OZOZ
-            var _energyModelInstances = new List<EnergyModelInstance>();
-            foreach (var penv in AasxServer.Program.env)
-            {
-                EnergyModelInstance.TagAllAasAndSm(penv?.AasEnv, DateTime.UtcNow);
-                _energyModelInstances.AddRange(
-                    EnergyModelInstance.FindAllSmInstances(penv?.AasEnv));
-            }
-            EnergyModelInstance.StartAllAsOneThread(_energyModelInstances);
-            */
-
             AasxTask.taskInit();
 
             RunScript(true);
@@ -1432,12 +1416,6 @@ namespace AasxServer
             //// ProductChange.pcn.pcnInit();
 
             isLoading = false;
-
-            if (a.Mqtt)
-            {
-                AASMqttServer.MqttSeverStartAsync().Wait();
-                Console.WriteLine("MQTT Publisher started.");
-            }
 
             MySampleServer server = null;
             if (a.Opc)
@@ -1565,11 +1543,6 @@ namespace AasxServer
                 {
                     connectLoop = false;
                 }
-            }
-
-            if (a.Mqtt)
-            {
-                AASMqttServer.MqttSeverStopAsync().Wait();
             }
 
             AasxRestServer.Stop();
@@ -2126,40 +2099,6 @@ namespace AasxServer
                     envi++;
                 }
 
-                // i40language
-                if (i40LanguageRuntime.isRequester && i40LanguageRuntime.sendFrameJSONRequester.Count != 0)
-                {
-                    foreach (string s in i40LanguageRuntime.sendFrameJSONRequester)
-                    {
-                        td = new TransmitData
-                        {
-                            source = connectNodeName
-                        };
-
-                        td.type = "i40LanguageRuntime.sendFrameJSONRequester";
-                        var json = JsonConvert.SerializeObject(s, Newtonsoft.Json.Formatting.Indented);
-                        td.publish.Add(json);
-                        tf.data.Add(td);
-                    }
-                    i40LanguageRuntime.sendFrameJSONRequester.Clear();
-                }
-                if (i40LanguageRuntime.isProvider && i40LanguageRuntime.sendFrameJSONProvider.Count != 0)
-                {
-                    td = new TransmitData
-                    {
-                        source = connectNodeName
-                    };
-
-                    foreach (string s in i40LanguageRuntime.sendFrameJSONProvider)
-                    {
-                        td.type = "i40LanguageRuntime.sendFrameJSONProvider";
-                        var json = JsonConvert.SerializeObject(s, Newtonsoft.Json.Formatting.Indented);
-                        td.publish.Add(json);
-                        tf.data.Add(td);
-                    }
-                    i40LanguageRuntime.sendFrameJSONProvider.Clear();
-                }
-
                 string publish = JsonConvert.SerializeObject(tf, Formatting.Indented);
 
                 HttpClient httpClient;
@@ -2488,22 +2427,6 @@ namespace AasxServer
                                     }
                                 }
                             }
-
-                            // i40language
-                            if (i40LanguageRuntime.isRequester && td2.type == "i40LanguageRuntime.sendFrameJSONProvider")
-                            {
-                                foreach (string s in td2.publish)
-                                {
-                                    i40LanguageRuntime.receivedFrameJSONRequester.Add(JsonConvert.DeserializeObject<string>(s));
-                                }
-                            }
-                            if (i40LanguageRuntime.isProvider && td2.type == "i40LanguageRuntime.sendFrameJSONRequester")
-                            {
-                                foreach (string s in td2.publish)
-                                {
-                                    i40LanguageRuntime.receivedFrameJSONProvider.Add(JsonConvert.DeserializeObject<string>(s));
-                                }
-                            }
                         }
                     }
                     catch
@@ -2759,25 +2682,6 @@ namespace AasxServer
             }
 
             RESTalreadyRunning = false;
-
-            // start MQTT Client as a worker (will start in the background)
-            var worker = new BackgroundWorker();
-            worker.DoWork += async (s1, e1) =>
-            {
-
-                try
-                {
-                    await AasxMqttClient.MqttClient.StartAsync(env);
-                }
-                catch (Exception)
-                {
-                }
-            };
-            worker.RunWorkerCompleted += (s1, e1) =>
-            {
-
-            };
-            worker.RunWorkerAsync();
         }
 
         private static Boolean OPCWrite(string nodeId, object value)
