@@ -318,7 +318,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                         }
 
                         var client = new HttpClient(handler);
-                        client.Timeout = TimeSpan.FromSeconds(3);
+                        client.Timeout = TimeSpan.FromSeconds(10);
                         if (accessToken != null)
                             client.SetBearerToken(accessToken);
 
