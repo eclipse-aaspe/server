@@ -585,7 +585,7 @@ namespace Extensions
             // now move these 
             for (int i = 0; i < toMove.Count; i++)
             {
-                var q = toMove[i];
+                var q = toMove[ i ];
                 var ext = new Extension(
                     name: q.Type, semanticId: q.SemanticId,
                     valueType: q.ValueType, value: q.Value);

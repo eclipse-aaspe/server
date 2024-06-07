@@ -626,7 +626,7 @@ namespace AdminShellNS
             {
                 if (_aasEnv.AssetAdministrationShells.Count > 0)
                 {
-                    _aasEnv.AssetAdministrationShells[0].AssetInformation.DefaultThumbnail = new Resource(thumbUri.OriginalString);
+                    _aasEnv.AssetAdministrationShells[ 0 ].AssetInformation.DefaultThumbnail = new Resource(thumbUri.OriginalString);
                 }
             }
         }
@@ -980,7 +980,7 @@ namespace AdminShellNS
                         // create, as not existing
                         var frn = "aasenv-with-no-id";
                         if (_aasEnv.AssetAdministrationShells.Count > 0)
-                            frn = _aasEnv.AssetAdministrationShells[0].GetFriendlyName() ?? frn;
+                            frn = _aasEnv.AssetAdministrationShells[ 0 ].GetFriendlyName() ?? frn;
                         var aas_spec_fn = "/aasx/#/#.aas";
                         if (prefFmt == SerializationFormat.Json)
                             aas_spec_fn += ".json";

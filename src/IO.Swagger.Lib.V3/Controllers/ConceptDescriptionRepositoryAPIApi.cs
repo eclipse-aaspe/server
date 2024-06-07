@@ -29,8 +29,8 @@ namespace IO.Swagger.Controllers
     /// <summary>
     /// 
     /// </summary>
-    [Authorize(AuthenticationSchemes = "AasSecurityAuth")]
-    [ApiController]
+    [ Authorize(AuthenticationSchemes = "AasSecurityAuth") ]
+    [ ApiController ]
     public class ConceptDescriptionRepositoryAPIApiController : ControllerBase
     {
         private readonly IAppLogger<ConceptDescriptionRepositoryAPIApiController> _logger;
@@ -61,16 +61,16 @@ namespace IO.Swagger.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        [HttpDelete]
-        [Route("/concept-descriptions/{cdIdentifier}")]
-        [ValidateModelState]
-        [SwaggerOperation("DeleteConceptDescriptionById")]
-        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-        [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
-        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult DeleteConceptDescriptionById([FromRoute] [Required] string cdIdentifier)
+        [ HttpDelete ]
+        [ Route("/concept-descriptions/{cdIdentifier}") ]
+        [ ValidateModelState ]
+        [ SwaggerOperation("DeleteConceptDescriptionById") ]
+        [ SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.") ]
+        [ SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden") ]
+        [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
+        [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
+        [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
+        public virtual IActionResult DeleteConceptDescriptionById([ FromRoute ] [ Required ] string cdIdentifier)
         {
             var decodedCdIdentifier = _decoderService.Decode("cdIdentifier", cdIdentifier);
 
@@ -94,18 +94,18 @@ namespace IO.Swagger.Controllers
         /// <response code="403">Forbidden</response>
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        [HttpGet]
-        [Route("/concept-descriptions")]
-        [ValidateModelState]
-        [SwaggerOperation("GetAllConceptDescriptions")]
+        [ HttpGet ]
+        [ Route("/concept-descriptions") ]
+        [ ValidateModelState ]
+        [ SwaggerOperation("GetAllConceptDescriptions") ]
         //[SwaggerResponse(statusCode: 200, type: typeof(GetConceptDescriptionsResult), description: "Requested Concept Descriptions")]
-        [SwaggerResponse(statusCode: 200, type: typeof(List<ConceptDescription>), description: "Requested Concept Descriptions")]
-        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-        [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllConceptDescriptions([FromQuery] string idShort, [FromQuery] string isCaseOf, [FromQuery] string dataSpecificationRef,
-            [FromQuery] int? limit, [FromQuery] string cursor)
+        [ SwaggerResponse(statusCode: 200, type: typeof(List<ConceptDescription>), description: "Requested Concept Descriptions") ]
+        [ SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.") ]
+        [ SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden") ]
+        [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
+        [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
+        public virtual IActionResult GetAllConceptDescriptions([ FromQuery ] string idShort, [ FromQuery ] string isCaseOf, [ FromQuery ] string dataSpecificationRef,
+            [ FromQuery ] int? limit, [ FromQuery ] string cursor)
         {
             _logger.LogInformation($"Received request to get all the concept descriptions.");
             var reqIsCaseOf = _jsonQueryDeserializer.DeserializeReference("isCaseOf", isCaseOf);
@@ -139,17 +139,17 @@ namespace IO.Swagger.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        [HttpGet]
-        [Route("/concept-descriptions/{cdIdentifier}")]
-        [ValidateModelState]
-        [SwaggerOperation("GetConceptDescriptionById")]
-        [SwaggerResponse(statusCode: 200, type: typeof(ConceptDescription), description: "Requested Concept Description")]
-        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-        [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
-        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetConceptDescriptionById([FromRoute] [Required] string cdIdentifier)
+        [ HttpGet ]
+        [ Route("/concept-descriptions/{cdIdentifier}") ]
+        [ ValidateModelState ]
+        [ SwaggerOperation("GetConceptDescriptionById") ]
+        [ SwaggerResponse(statusCode: 200, type: typeof(ConceptDescription), description: "Requested Concept Description") ]
+        [ SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.") ]
+        [ SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden") ]
+        [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
+        [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
+        [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
+        public virtual IActionResult GetConceptDescriptionById([ FromRoute ] [ Required ] string cdIdentifier)
         {
             var decodedCdIdentifier = _decoderService.Decode("cdIdentifier", cdIdentifier);
 
@@ -180,19 +180,19 @@ namespace IO.Swagger.Controllers
         /// <response code="409">Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.</response>
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        [HttpPost]
-        [Route("/concept-descriptions")]
-        [ValidateModelState]
-        [SwaggerOperation("PostConceptDescription")]
-        [SwaggerResponse(statusCode: 201, type: typeof(ConceptDescription), description: "Concept Description created successfully")]
-        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-        [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-        [SwaggerResponse(statusCode: 409, type: typeof(Result),
+        [ HttpPost ]
+        [ Route("/concept-descriptions") ]
+        [ ValidateModelState ]
+        [ SwaggerOperation("PostConceptDescription") ]
+        [ SwaggerResponse(statusCode: 201, type: typeof(ConceptDescription), description: "Concept Description created successfully") ]
+        [ SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.") ]
+        [ SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden") ]
+        [ SwaggerResponse(statusCode: 409, type: typeof(Result),
             description:
-            "Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.")]
-        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PostConceptDescription([FromBody] ConceptDescription body)
+            "Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.") ]
+        [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
+        [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
+        public virtual IActionResult PostConceptDescription([ FromBody ] ConceptDescription body)
         {
             var output = _cdService.CreateConceptDescription(body);
 
@@ -210,16 +210,16 @@ namespace IO.Swagger.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        [HttpPut]
-        [Route("/concept-descriptions/{cdIdentifier}")]
-        [ValidateModelState]
-        [SwaggerOperation("PutConceptDescriptionById")]
-        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-        [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
-        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PutConceptDescriptionById([FromBody] ConceptDescription body, [FromRoute] [Required] string cdIdentifier)
+        [ HttpPut ]
+        [ Route("/concept-descriptions/{cdIdentifier}") ]
+        [ ValidateModelState ]
+        [ SwaggerOperation("PutConceptDescriptionById") ]
+        [ SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.") ]
+        [ SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden") ]
+        [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
+        [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
+        [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
+        public virtual IActionResult PutConceptDescriptionById([ FromBody ] ConceptDescription body, [ FromRoute ] [ Required ] string cdIdentifier)
         {
             var decodedCdId = _decoderService.Decode("cdIdentifier", cdIdentifier);
 

@@ -71,7 +71,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                 int i = initiallyEmpty;
                 while (i < AasxServer.Program.env.Length)
                 {
-                    AasxServer.Program.env[i] = null;
+                    AasxServer.Program.env[ i ] = null;
                     i++;
                 }
             }
@@ -82,7 +82,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                 {
                     if (env != null)
                     {
-                        var aas = env.AasEnv.AssetAdministrationShells[0];
+                        var aas = env.AasEnv.AssetAdministrationShells[ 0 ];
                         if (aas.IdShort == "REGISTRY")
                         {
                             envRegistry = env.AasEnv;
@@ -157,7 +157,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                         {
                             if (env != null)
                             {
-                                var aas = env.AasEnv.AssetAdministrationShells[0];
+                                var aas = env.AasEnv.AssetAdministrationShells[ 0 ];
                                 if (aas.IdShort != "REGISTRY" && aas.IdShort != "myAASwithGlobalSecurityMetaModel")
                                 {
                                     AddAasToRegistry(env, timestamp);
@@ -255,7 +255,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                 {
                                     if (jo.ContainsKey("result"))
                                     {
-                                        node = (JsonNode) jo["result"];
+                                        node = (JsonNode) jo[ "result" ];
                                         if (node is JsonArray a)
                                         {
                                             foreach (JsonNode n in a)
@@ -340,7 +340,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                 {
                                     if (jo.ContainsKey("result"))
                                     {
-                                        node = (JsonNode) jo["result"];
+                                        node = (JsonNode) jo[ "result" ];
                                         if (node is JsonArray a)
                                         {
                                             foreach (JsonNode n in a)
@@ -353,7 +353,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                                         ad.SubmodelDescriptors = new List<SubmodelDescriptor>();
                                                     if (ad.SubmodelDescriptors.Count == 0)
                                                     {
-                                                        requestPath = ad.Endpoints[0].ProtocolInformation.Href;
+                                                        requestPath = ad.Endpoints[ 0 ].ProtocolInformation.Href;
                                                         Console.WriteLine("GET " + requestPath);
                                                         task = Task.Run(async () => { response = await client.GetAsync(requestPath); });
                                                         task.Wait();
@@ -365,7 +365,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                                         var ids = new List<string>();
                                                         foreach (var s in aas.Submodels)
                                                         {
-                                                            var id = s.Keys[0].Value;
+                                                            var id = s.Keys[ 0 ].Value;
                                                             ids.Add(id);
                                                         }
 
@@ -404,7 +404,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                             int i = 0;
                             while (i < AasxServer.Program.env.Length)
                             {
-                                var env = AasxServer.Program.env[i];
+                                var env = AasxServer.Program.env[ i ];
                                 if (env == null)
                                 {
                                     break;
@@ -422,7 +422,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                 var watch = System.Diagnostics.Stopwatch.StartNew();
 
                                 // check, if AAS is exisiting and must be replaced
-                                var extensions = new List<IExtension> {new Extension("endpoint", value: ad.Endpoints[0].ProtocolInformation.Href)};
+                                var extensions = new List<IExtension> {new Extension("endpoint", value: ad.Endpoints[ 0 ].ProtocolInformation.Href)};
                                 var aas = new AssetAdministrationShell(ad.Id, new AssetInformation(AssetKind.Instance, ad.GlobalAssetId), extensions,
                                     idShort: ad.IdShort + " - EXTERNAL");
                                 aas.TimeStamp = timestamp;
@@ -438,16 +438,16 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                     bool success = false;
                                     bool external = false;
                                     string idEncoded = "";
-                                    string endpoint = sd.Endpoints[0].ProtocolInformation.Href;
+                                    string endpoint = sd.Endpoints[ 0 ].ProtocolInformation.Href;
                                     var s1 = endpoint.Split("/shells/");
                                     if (s1.Length == 2)
                                     {
-                                        var s2 = s1[1].Split("/submodels/");
+                                        var s2 = s1[ 1 ].Split("/submodels/");
                                         if (s2.Length == 2)
                                         {
-                                            idEncoded = s2[1].Replace("/submodel/", "");
+                                            idEncoded = s2[ 1 ].Replace("/submodel/", "");
                                             ;
-                                            endpoint = s1[0] + "/submodels/" + idEncoded;
+                                            endpoint = s1[ 0 ] + "/submodels/" + idEncoded;
                                         }
                                     }
 
@@ -552,7 +552,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                                         sm.IdShort += " - COPY";
                                                         sm.Extensions = new List<IExtension>
                                                         {
-                                                            new Extension("endpoint", value: sd.Endpoints[0].ProtocolInformation.Href),
+                                                            new Extension("endpoint", value: sd.Endpoints[ 0 ].ProtocolInformation.Href),
                                                             new Extension("clientToken", value: clientToken)
                                                         };
                                                         sm.SetAllParentsAndTimestamps(null, timestamp, timestamp);
@@ -623,7 +623,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
 
                                         sm.Extensions = new List<IExtension>
                                         {
-                                            new Extension("endpoint", value: sd.Endpoints[0].ProtocolInformation.Href),
+                                            new Extension("endpoint", value: sd.Endpoints[ 0 ].ProtocolInformation.Href),
                                             new Extension("clientToken", value: clientToken)
                                         };
                                         sm.SetAllParentsAndTimestamps(null, timestamp, timestamp);
@@ -635,7 +635,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                 watch.Stop();
                                 Console.WriteLine(watch.ElapsedMilliseconds + " ms");
 
-                                AasxServer.Program.env[i] = newEnv;
+                                AasxServer.Program.env[ i ] = newEnv;
                                 i++;
                             }
                         }
@@ -676,7 +676,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
         static void AddAasToRegistry(AdminShellNS.AdminShellPackageEnv env, DateTime timestamp)
 #pragma warning restore IDE1006 // Benennungsstile
         {
-            var aas = env.AasEnv.AssetAdministrationShells[0];
+            var aas = env.AasEnv.AssetAdministrationShells[ 0 ];
 
             AssetAdministrationShellDescriptor ad = new AssetAdministrationShellDescriptor();
             string globalAssetId = aas.AssetInformation.GlobalAssetId!;
@@ -741,15 +741,15 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                             {
                                 var sme = se;
                                 bool federate = false;
-                                if (sme.SemanticId != null && sme.SemanticId.Keys != null && sme.SemanticId.Keys.Count != 0 && sme.SemanticId.Keys[0] != null)
+                                if (sme.SemanticId != null && sme.SemanticId.Keys != null && sme.SemanticId.Keys.Count != 0 && sme.SemanticId.Keys[ 0 ] != null)
                                 {
-                                    if (federatedElemensSemanticId.Contains(sme.SemanticId.Keys[0].Value))
+                                    if (federatedElemensSemanticId.Contains(sme.SemanticId.Keys[ 0 ].Value))
                                         federate = true;
                                 }
 
                                 if (sme.Qualifiers != null && sme.Qualifiers.Count != 0)
                                 {
-                                    if (sme.Qualifiers[0].Type == "federatedElement")
+                                    if (sme.Qualifiers[ 0 ].Type == "federatedElement")
                                         federate = true;
                                 }
 
@@ -924,7 +924,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
             string endpoint = "";
             if (ad.Endpoints != null && ad.Endpoints.Count != 0)
             {
-                endpoint = ad.Endpoints[0].ProtocolInformation.Href;
+                endpoint = ad.Endpoints[ 0 ].ProtocolInformation.Href;
             }
 
             // overwrite existing entry, if assetID AND aasID are identical
@@ -1046,7 +1046,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                 cs.Value.Add(ps);
                 if (sd.Endpoints != null && sd.Endpoints.Count != 0)
                 {
-                    endpoint = sd.Endpoints[0].ProtocolInformation.Href;
+                    endpoint = sd.Endpoints[ 0 ].ProtocolInformation.Href;
                 }
 
                 ps = new Property(DataTypeDefXsd.String, idShort: "endpoint");
@@ -1082,9 +1082,9 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                 int last = r.Value.Keys.Count - 1;
                 while (first < last)
                 {
-                    var temp = r.Value.Keys[first];
-                    r.Value.Keys[first] = r.Value.Keys[last];
-                    r.Value.Keys[last] = temp;
+                    var temp = r.Value.Keys[ first ];
+                    r.Value.Keys[ first ] = r.Value.Keys[ last ];
+                    r.Value.Keys[ last ] = temp;
                     first++;
                     last--;
                 }
@@ -1095,7 +1095,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                 {
                     if (sd.Endpoints != null && sd.Endpoints.Count > 0)
                     {
-                        var ep = sd.Endpoints[0].ProtocolInformation.Href;
+                        var ep = sd.Endpoints[ 0 ].ProtocolInformation.Href;
                         p = new Property(DataTypeDefXsd.String, idShort: "NameplateVC");
                         p.TimeStampCreate = timestamp;
                         p.TimeStamp = timestamp;

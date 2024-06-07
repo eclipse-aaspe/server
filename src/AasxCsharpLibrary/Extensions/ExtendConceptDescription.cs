@@ -28,9 +28,7 @@ namespace Extensions
             string[] definition = null
         )
         {
-            var eds = new EmbeddedDataSpecification(
-                new Reference(ReferenceTypes.ExternalReference,
-                    new List<IKey> {ExtendIDataSpecificationContent.GetKeyForIec61360()}),
+            var eds = new EmbeddedDataSpecification(new Reference(ReferenceTypes.ExternalReference, new List<IKey> {ExtendIDataSpecificationContent.GetKeyForIec61360()}),
                 new DataSpecificationIec61360(
                     ExtendLangStringSet.CreateManyPreferredNamesFromStringArray(preferredNames),
                     new List<ILangStringShortNameTypeIec61360> {new LangStringShortNameTypeIec61360("EN?", shortName)},

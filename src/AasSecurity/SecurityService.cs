@@ -117,7 +117,7 @@ namespace AasSecurity
                             if (user.Contains('@'))
                             {
                                 string[] split = user.Split('@');
-                                domain = split[1];
+                                domain = split[ 1 ];
                             }
 
                             if (domain != null && domain.Equals(securityRight.Name))
@@ -241,25 +241,25 @@ namespace AasSecurity
                 {
                     case "authorization":
                     {
-                        var token = headers[key];
+                        var token = headers[ key ];
                         if (token != null)
                         {
                             string[] split = token.Split(new Char[] {' ', '\t'});
-                            if (split[0].ToLower().Equals("bearer"))
+                            if (split[ 0 ].ToLower().Equals("bearer"))
                             {
-                                _logger.LogDebug($"Received bearer token {split[1]}");
-                                bearerToken = split[1];
+                                _logger.LogDebug($"Received bearer token {split[ 1 ]}");
+                                bearerToken = split[ 1 ];
                             }
-                            else if (split[0].ToLower().Equals("basic") && bearerToken == null)
+                            else if (split[ 0 ].ToLower().Equals("basic") && bearerToken == null)
                             {
                                 try
                                 {
                                     if (Program.secretStringAPI != null)
                                     {
-                                        var credentialBytes = Convert.FromBase64String(split[1]);
+                                        var credentialBytes = Convert.FromBase64String(split[ 1 ]);
                                         var credentials = Encoding.UTF8.GetString(credentialBytes).Split(new[] {':'}, 2);
-                                        string u = credentials[0];
-                                        string p = credentials[1];
+                                        string u = credentials[ 0 ];
+                                        string p = credentials[ 1 ];
                                         Console.WriteLine("Received username+password http header = " + u + " : " + p);
 
                                         if (u == "secret")
@@ -275,7 +275,7 @@ namespace AasSecurity
                                         }
                                     }
 
-                                    string username = CheckUserPW(split[1]);
+                                    string username = CheckUserPW(split[ 1 ]);
                                     if (username != null)
                                     {
                                         user = username;
@@ -292,7 +292,7 @@ namespace AasSecurity
                     }
                     case "email":
                     {
-                        var token = headers[key];
+                        var token = headers[ key ];
                         if (token != null)
                         {
                             _logger.LogDebug($"Received email token from header: {token}");
@@ -312,7 +312,7 @@ namespace AasSecurity
                 {
                     case "s":
                     {
-                        string secretQuery = queries["s"]!;
+                        string secretQuery = queries[ "s" ]!;
                         if (!secretQuery.IsNullOrEmpty())
                         {
                             _logger.LogDebug($"Received token of type s: {secretQuery}");
@@ -329,7 +329,7 @@ namespace AasSecurity
                     }
                     case "bearer":
                     {
-                        var token = queries[key];
+                        var token = queries[ key ];
                         if (token != null)
                         {
                             _logger.LogDebug($"Received token of type bear {token}");
@@ -340,7 +340,7 @@ namespace AasSecurity
                     }
                     case "email":
                     {
-                        var token = queries[key];
+                        var token = queries[ key ];
                         if (token != null)
                         {
                             _logger.LogDebug($"Received token of type email {token}");
@@ -352,7 +352,7 @@ namespace AasSecurity
                     }
                     case "_up":
                     {
-                        var token = queries[key];
+                        var token = queries[ key ];
                         if (token != null)
                         {
                             _logger.LogDebug($"Received token of type username-password {token}");
@@ -382,8 +382,8 @@ namespace AasSecurity
         {
             var credentialBytes = Convert.FromBase64String(userPW64);
             var credentials = Encoding.UTF8.GetString(credentialBytes).Split(new[] {':'}, 2);
-            string username = credentials[0];
-            string password = credentials[1];
+            string username = credentials[ 0 ];
+            string password = credentials[ 1 ];
 
             var found = GlobalSecurityVariables.SecurityUsernamePassword.TryGetValue(username, out string storedPassword);
             if (found)
@@ -675,7 +675,7 @@ namespace AasSecurity
                         {
                             if (securityRole.SemanticId == "*" || (submodel.SemanticId != null && submodel.SemanticId.Keys != null && submodel.SemanticId.Keys.Count != 0))
                             {
-                                if (securityRole.SemanticId == "*" || (securityRole.SemanticId.ToLower() == submodel.SemanticId?.Keys?[0].Value.ToLower()))
+                                if (securityRole.SemanticId == "*" || (securityRole.SemanticId.ToLower() == submodel.SemanticId?.Keys?[ 0 ].Value.ToLower()))
                                 {
                                     if (securityRole.Kind == KindOfPermissionEnum.Allow)
                                     {
@@ -814,11 +814,11 @@ namespace AasSecurity
             {
                 for (int i = 0; i < apiOpSplit.Length; i++)
                 {
-                    if (apiOpSplit[i].Equals(opSplit[i]))
+                    if (apiOpSplit[ i ].Equals(opSplit[ i ]))
                     {
                         match = true;
                     }
-                    else if (apiOpSplit[i].StartsWith("{"))
+                    else if (apiOpSplit[ i ].StartsWith("{"))
                     {
                         continue;
                     }

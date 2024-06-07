@@ -24,21 +24,21 @@ namespace IO.Swagger.Models
     /// <summary>
     /// 
     /// </summary>
-    [DataContract]
+    [ DataContract ]
     public partial class BaseOperationResult : Result, IEquatable<BaseOperationResult>
     {
         /// <summary>
         /// Gets or Sets ExecutionState
         /// </summary>
 
-        [DataMember(Name = "executionState")]
+        [ DataMember(Name = "executionState") ]
         public ExecutionState ExecutionState { get; set; }
 
         /// <summary>
         /// Gets or Sets Success
         /// </summary>
 
-        [DataMember(Name = "success")]
+        [ DataMember(Name = "success") ]
         public bool? Success { get; set; }
 
         /// <summary>

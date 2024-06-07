@@ -34,13 +34,12 @@ namespace Org.Webpki.Es6NumberSerialization
 {
     class NumberDToA
     {
-
         public const int
-                DTOSTR_STANDARD = 0,              /* Either fixed or exponential format; round-trip */
-                DTOSTR_STANDARD_EXPONENTIAL = 1,  /* Always exponential format; round-trip */
-                DTOSTR_FIXED = 2,                 /* Round to <precision> digits after the decimal point; exponential if number is large */
-                DTOSTR_EXPONENTIAL = 3,           /* Always exponential format; <precision> significant digits */
-                DTOSTR_PRECISION = 4;             /* Either fixed or exponential format; <precision> significant digits */
+            DTOSTR_STANDARD = 0, /* Either fixed or exponential format; round-trip */
+            DTOSTR_STANDARD_EXPONENTIAL = 1, /* Always exponential format; round-trip */
+            DTOSTR_FIXED = 2, /* Round to <precision> digits after the decimal point; exponential if number is large */
+            DTOSTR_EXPONENTIAL = 3, /* Always exponential format; <precision> significant digits */
+            DTOSTR_PRECISION = 4; /* Either fixed or exponential format; <precision> significant digits */
 
 
         private const int Frac_mask = 0xfffff;
@@ -77,11 +76,11 @@ namespace Org.Webpki.Es6NumberSerialization
             1e20, 1e21, 1e22
         };
 
-        private static double[] bigtens = { 1e16, 1e32, 1e64, 1e128, 1e256 };
+        private static double[] bigtens = {1e16, 1e32, 1e64, 1e128, 1e256};
 
         private static int Lo0bits(int inty)
         {
-            uint y = (uint)inty;
+            uint y = (uint) inty;
             uint k;
             uint x = y;
 
@@ -93,29 +92,35 @@ namespace Org.Webpki.Es6NumberSerialization
                 {
                     return 1;
                 }
+
                 return 2;
             }
+
             k = 0;
             if ((x & 0xffff) == 0)
             {
                 k = 16;
                 x >>= 16;
             }
+
             if ((x & 0xff) == 0)
             {
                 k += 8;
                 x >>= 8;
             }
+
             if ((x & 0xf) == 0)
             {
                 k += 4;
                 x >>= 4;
             }
+
             if ((x & 0x3) == 0)
             {
                 k += 2;
                 x >>= 2;
             }
+
             if ((x & 1) == 0)
             {
                 k++;
@@ -123,7 +128,8 @@ namespace Org.Webpki.Es6NumberSerialization
                 if ((x & 1) == 0)
                     return 32;
             }
-            return (int)k;
+
+            return (int) k;
         }
 
         /* Return the number (0 through 32) of most significant zero bits in x. */
@@ -136,36 +142,41 @@ namespace Org.Webpki.Es6NumberSerialization
                 k = 16;
                 x <<= 16;
             }
+
             if ((x & 0xff000000) == 0)
             {
                 k += 8;
                 x <<= 8;
             }
+
             if ((x & 0xf0000000) == 0)
             {
                 k += 4;
                 x <<= 4;
             }
+
             if ((x & 0xc0000000) == 0)
             {
                 k += 2;
                 x <<= 2;
             }
+
             if ((x & 0x80000000) == 0)
             {
                 k++;
                 if ((x & 0x40000000) == 0)
                     return 32;
             }
+
             return k;
         }
 
         private static void StuffBits(byte[] bits, int offset, int val)
         {
-            bits[offset] = (byte)(val >> 24);
-            bits[offset + 1] = (byte)(val >> 16);
-            bits[offset + 2] = (byte)(val >> 8);
-            bits[offset + 3] = (byte)(val);
+            bits[ offset ] = (byte) (val >> 24);
+            bits[ offset + 1 ] = (byte) (val >> 16);
+            bits[ offset + 2 ] = (byte) (val >> 8);
+            bits[ offset + 3 ] = (byte) (val);
         }
 
         /* Convert d into the form b*2^e, where b is an odd integer.  b is the returned
@@ -175,12 +186,12 @@ namespace Org.Webpki.Es6NumberSerialization
         {
             byte[] dbl_bits;
             int i, k, y, z, de;
-            ulong dBits = (ulong)BitConverter.DoubleToInt64Bits(d);
-            int d0 = (int)(dBits >> 32);
-            int d1 = (int)(dBits);
+            ulong dBits = (ulong) BitConverter.DoubleToInt64Bits(d);
+            int d0 = (int) (dBits >> 32);
+            int d1 = (int) (dBits);
 
             z = d0 & Frac_mask;
-            d0 &= 0x7fffffff;   /* clear sign bit, which we ignore */
+            d0 &= 0x7fffffff; /* clear sign bit, which we ignore */
 
             if ((de = (d0 >> Exp_shift)) != 0)
                 z |= Exp_msk1;
@@ -189,7 +200,7 @@ namespace Org.Webpki.Es6NumberSerialization
             {
                 dbl_bits = new byte[8];
                 k = Lo0bits(y);
-                y = (int)((uint)y >> k);
+                y = (int) ((uint) y >> k);
                 if (k != 0)
                 {
                     StuffBits(dbl_bits, 4, y | z << (32 - k));
@@ -197,6 +208,7 @@ namespace Org.Webpki.Es6NumberSerialization
                 }
                 else
                     StuffBits(dbl_bits, 4, y);
+
                 StuffBits(dbl_bits, 0, z);
                 i = (z != 0) ? 2 : 1;
             }
@@ -211,22 +223,25 @@ namespace Org.Webpki.Es6NumberSerialization
                 k += 32;
                 i = 1;
             }
+
             if (de != 0)
             {
-                e[0] = de - Bias - (P - 1) + k;
-                bits[0] = P - k;
+                e[ 0 ] = de - Bias - (P - 1) + k;
+                bits[ 0 ] = P - k;
             }
             else
             {
-                e[0] = de - Bias - (P - 1) + 1 + k;
-                bits[0] = 32 * i - Hi0bits(z);
+                e[ 0 ] = de - Bias - (P - 1) + 1 + k;
+                bits[ 0 ] = 32 * i - Hi0bits(z);
             }
+
             byte[] reverse = new byte[dbl_bits.Length];
             int q = dbl_bits.Length;
             foreach (byte b in dbl_bits)
             {
-                reverse[--q] = b;
+                reverse[ --q ] = b;
             }
+
             return new BigInteger(reverse);
         }
 
@@ -267,20 +282,20 @@ namespace Org.Webpki.Es6NumberSerialization
         static int Word0(double d)
         {
             long dBits = BitConverter.DoubleToInt64Bits(d);
-            return (int)(dBits >> 32);
+            return (int) (dBits >> 32);
         }
 
         private static double SetWord0(double d, int i)
         {
             long dBits = BitConverter.DoubleToInt64Bits(d);
-            dBits = ((long)i << 32) | (dBits & 0x0FFFFFFFFL);
+            dBits = ((long) i << 32) | (dBits & 0x0FFFFFFFFL);
             return BitConverter.Int64BitsToDouble(dBits);
         }
 
         private static int Word1(double d)
         {
             long dBits = BitConverter.DoubleToInt64Bits(d);
-            return (int)(dBits);
+            return (int) (dBits);
         }
 
         /* Return b * 5^k.  k must be nonnegative. */
@@ -296,14 +311,15 @@ namespace Org.Webpki.Es6NumberSerialization
             while (i != 0)
             {
                 --i;
-                char c = buf[i];
+                char c = buf[ i ];
                 if (c != '9')
                 {
-                    buf[i] = (char)(c + 1);
+                    buf[ i ] = (char) (c + 1);
                     buf.Length = i + 1;
                     return false;
                 }
             }
+
             buf.Length = 0;
             return true;
         }
@@ -316,7 +332,7 @@ namespace Org.Webpki.Es6NumberSerialization
         /* bufsize should be at least 20 for modes 0 and 1.  For the other modes,
          * bufsize should be two greater than the maximum number of output characters expected. */
         public static int JS_dtoa(double d, int mode, bool biasUp, int ndigits,
-                                  bool[] sign, StringBuilder buf)
+            bool[] sign, StringBuilder buf)
         {
             /*  Arguments ndigits, decpt, sign are similar to those
                 of ecvt and fcvt; trailing zeros are suppressed from
@@ -352,8 +368,21 @@ namespace Org.Webpki.Es6NumberSerialization
                 to hold the suppressed trailing zeros.
             */
 
-            int b2, b5, i, ieps, ilim, ilim0, ilim1,
-                    j, j1, k, k0, m2, m5, s2, s5;
+            int b2,
+                b5,
+                i,
+                ieps,
+                ilim,
+                ilim0,
+                ilim1,
+                j,
+                j1,
+                k,
+                k0,
+                m2,
+                m5,
+                s2,
+                s5;
             char dig;
             long L;
             long x;
@@ -366,12 +395,12 @@ namespace Org.Webpki.Es6NumberSerialization
             if ((Word0(d) & Sign_bit) != 0)
             {
                 /* set sign for everything, including 0's and NaNs */
-                sign[0] = true;
+                sign[ 0 ] = true;
                 // Word0(d) &= ~Sign_bit;  /* clear sign bit */
                 d = SetWord0(d, Word0(d) & ~Sign_bit);
             }
             else
-                sign[0] = false;
+                sign[ 0 ] = false;
 
             if ((Word0(d) & Exp_mask) == Exp_mask)
             {
@@ -379,16 +408,17 @@ namespace Org.Webpki.Es6NumberSerialization
                 buf.Append(((Word1(d) == 0) && ((Word0(d) & Frac_mask) == 0)) ? "Infinity" : "NaN");
                 return 9999;
             }
+
             if (d == 0)
             {
                 //          no_digits:
                 buf.Length = 0;
-                buf.Append('0');        /* copy "0" to buffer */
+                buf.Append('0'); /* copy "0" to buffer */
                 return 1;
             }
 
             b = D2B(d, be, bbits);
-            if ((i = ((int)(((uint)Word0(d)) >> Exp_shift1) & (Exp_mask >> Exp_shift1))) != 0)
+            if ((i = ((int) (((uint) Word0(d)) >> Exp_shift1) & (Exp_mask >> Exp_shift1))) != 0)
             {
                 d2 = SetWord0(d, (Word0(d) & Frac_mask1) | Exp_11);
                 /* log(x)   ~=~ log(1.5) + (x-1.5)/1.5
@@ -418,31 +448,33 @@ namespace Org.Webpki.Es6NumberSerialization
             else
             {
                 /* d is denormalized */
-                i = bbits[0] + be[0] + (Bias + (P - 1) - 1);
+                i = bbits[ 0 ] + be[ 0 ] + (Bias + (P - 1) - 1);
                 x = (i > 32)
-                        ? ((long)Word0(d)) << (64 - i) | (((uint)Word1(d)) >> (i - 32))
-                        : ((long)Word1(d)) << (32 - i);
+                    ? ((long) Word0(d)) << (64 - i) | (((uint) Word1(d)) >> (i - 32))
+                    : ((long) Word1(d)) << (32 - i);
                 //            d2 = x;
                 //            Word0(d2) -= 31*Exp_msk1; /* adjust exponent */
                 d2 = SetWord0(x, Word0(x) - 31 * Exp_msk1);
                 i -= (Bias + (P - 1) - 1) + 1;
                 denorm = true;
             }
+
             /* At this point d = f*2^i, where 1 <= f < 2.  d2 is an approximation of f. */
             ds = (d2 - 1.5) * 0.289529654602168 + 0.1760912590558 + i * 0.301029995663981;
-            k = (int)ds;
+            k = (int) ds;
             if (ds < 0.0 && ds != k)
-                k--;    /* want k = floor(ds) */
+                k--; /* want k = floor(ds) */
             k_check = true;
             if (k >= 0 && k <= Ten_pmax)
             {
-                if (d < tens[k])
+                if (d < tens[ k ])
                     k--;
                 k_check = false;
             }
+
             /* At this point floor(log10(d)) <= k <= floor(log10(d))+1.
                If k_check is zero, we're guaranteed that k = floor(log10(d)). */
-            j = bbits[0] - i - 1;
+            j = bbits[ 0 ] - i - 1;
             /* At this point d = b/2^j, where b is an odd integer. */
             if (j >= 0)
             {
@@ -454,6 +486,7 @@ namespace Org.Webpki.Es6NumberSerialization
                 b2 = -j;
                 s2 = 0;
             }
+
             if (k >= 0)
             {
                 b5 = 0;
@@ -466,6 +499,7 @@ namespace Org.Webpki.Es6NumberSerialization
                 b5 = -k;
                 s5 = 0;
             }
+
             /* At this point d/10^k = (b * 2^b2 * 5^b5) / (2^s2 * 5^s5), where b is an odd integer,
                b2 >= 0, b5 >= 0, s2 >= 0, and s5 >= 0. */
             if (mode < 0 || mode > 9)
@@ -476,6 +510,7 @@ namespace Org.Webpki.Es6NumberSerialization
                 mode -= 4;
                 try_quick = false;
             }
+
             leftright = true;
             ilim = ilim1 = 0;
             switch (mode)
@@ -514,7 +549,6 @@ namespace Org.Webpki.Es6NumberSerialization
             bool fast_failed = false;
             if (ilim >= 0 && ilim <= Quick_max && try_quick)
             {
-
                 /* Try to get by with floating-point arithmetic. */
 
                 i = 0;
@@ -525,33 +559,36 @@ namespace Org.Webpki.Es6NumberSerialization
                 /* Divide d by 10^k, keeping track of the roundoff error and avoiding overflows. */
                 if (k > 0)
                 {
-                    ds = tens[k & 0xf];
+                    ds = tens[ k & 0xf ];
                     j = k >> 4;
                     if ((j & Bletch) != 0)
                     {
                         /* prevent overflows */
                         j &= Bletch - 1;
-                        d /= bigtens[n_bigtens - 1];
+                        d /= bigtens[ n_bigtens - 1 ];
                         ieps++;
                     }
+
                     for (; (j != 0); j >>= 1, i++)
                         if ((j & 1) != 0)
                         {
                             ieps++;
-                            ds *= bigtens[i];
+                            ds *= bigtens[ i ];
                         }
+
                     d /= ds;
                 }
                 else if ((j1 = -k) != 0)
                 {
-                    d *= tens[j1 & 0xf];
+                    d *= tens[ j1 & 0xf ];
                     for (j = j1 >> 4; (j != 0); j >>= 1, i++)
                         if ((j & 1) != 0)
                         {
                             ieps++;
-                            d *= bigtens[i];
+                            d *= bigtens[ i ];
                         }
                 }
+
                 /* Check that k was computed correctly. */
                 if (k_check && d < 1.0 && ilim > 0)
                 {
@@ -565,6 +602,7 @@ namespace Org.Webpki.Es6NumberSerialization
                         ieps++;
                     }
                 }
+
                 /* eps bounds the cumulative error. */
                 //            eps = ieps*d + 7.0;
                 //            Word0(eps) -= (P-1)*Exp_msk1;
@@ -580,14 +618,17 @@ namespace Org.Webpki.Es6NumberSerialization
                         k++;
                         return k + 1;
                     }
+
                     if (d < -eps)
                     {
                         buf.Length = 0;
-                        buf.Append('0');        /* copy "0" to buffer */
+                        buf.Append('0'); /* copy "0" to buffer */
                         return 1;
                     }
+
                     fast_failed = true;
                 }
+
                 if (!fast_failed)
                 {
                     fast_failed = true;
@@ -596,23 +637,24 @@ namespace Org.Webpki.Es6NumberSerialization
                         /* Use Steele & White method of only
                          * generating digits needed.
                          */
-                        eps = 0.5 / tens[ilim - 1] - eps;
-                        for (i = 0; ;)
+                        eps = 0.5 / tens[ ilim - 1 ] - eps;
+                        for (i = 0;;)
                         {
-                            L = (long)d;
+                            L = (long) d;
                             d -= L;
-                            buf.Append((char)('0' + L));
+                            buf.Append((char) ('0' + L));
                             if (d < eps)
                             {
                                 return k + 1;
                             }
+
                             if (1.0 - d < eps)
                             {
                                 //                            goto bump_up;
                                 char lastCh;
                                 while (true)
                                 {
-                                    lastCh = buf[buf.Length - 1];
+                                    lastCh = buf[ buf.Length - 1 ];
                                     buf.Length = buf.Length - 1;
                                     if (lastCh != '9') break;
                                     if (buf.Length == 0)
@@ -622,9 +664,11 @@ namespace Org.Webpki.Es6NumberSerialization
                                         break;
                                     }
                                 }
-                                buf.Append((char)(lastCh + 1));
+
+                                buf.Append((char) (lastCh + 1));
                                 return k + 1;
                             }
+
                             if (++i >= ilim)
                                 break;
                             eps *= 10.0;
@@ -634,12 +678,12 @@ namespace Org.Webpki.Es6NumberSerialization
                     else
                     {
                         /* Generate ilim digits, then fix them up. */
-                        eps *= tens[ilim - 1];
-                        for (i = 1; ; i++, d *= 10.0)
+                        eps *= tens[ ilim - 1 ];
+                        for (i = 1;; i++, d *= 10.0)
                         {
-                            L = (long)d;
+                            L = (long) d;
                             d -= L;
-                            buf.Append((char)('0' + L));
+                            buf.Append((char) ('0' + L));
                             if (i == ilim)
                             {
                                 if (d > 0.5 + eps)
@@ -648,7 +692,7 @@ namespace Org.Webpki.Es6NumberSerialization
                                     char lastCh;
                                     while (true)
                                     {
-                                        lastCh = buf[buf.Length - 1];
+                                        lastCh = buf[ buf.Length - 1 ];
                                         buf.Length = buf.Length - 1;
                                         if (lastCh != '9') break;
                                         if (buf.Length == 0)
@@ -658,7 +702,8 @@ namespace Org.Webpki.Es6NumberSerialization
                                             break;
                                         }
                                     }
-                                    buf.Append((char)(lastCh + 1));
+
+                                    buf.Append((char) (lastCh + 1));
                                     return k + 1;
                                 }
                                 else if (d < 0.5 - eps)
@@ -668,11 +713,13 @@ namespace Org.Webpki.Es6NumberSerialization
                                     //                                    s++;
                                     return k + 1;
                                 }
+
                                 break;
                             }
                         }
                     }
                 }
+
                 if (fast_failed)
                 {
                     buf.Length = 0;
@@ -684,27 +731,29 @@ namespace Org.Webpki.Es6NumberSerialization
 
             /* Do we have a "small" integer? */
 
-            if (be[0] >= 0 && k <= Int_max)
+            if (be[ 0 ] >= 0 && k <= Int_max)
             {
                 /* Yes. */
-                ds = tens[k];
+                ds = tens[ k ];
                 if (ndigits < 0 && ilim <= 0)
                 {
                     if (ilim < 0 || d < 5 * ds || (!biasUp && d == 5 * ds))
                     {
                         buf.Length = 0;
-                        buf.Append('0');        /* copy "0" to buffer */
+                        buf.Append('0'); /* copy "0" to buffer */
                         return 1;
                     }
+
                     buf.Append('1');
                     k++;
                     return k + 1;
                 }
-                for (i = 1; ; i++)
+
+                for (i = 1;; i++)
                 {
-                    L = (long)(d / ds);
+                    L = (long) (d / ds);
                     d -= L * ds;
-                    buf.Append((char)('0' + L));
+                    buf.Append((char) ('0' + L));
                     if (i == ilim)
                     {
                         d += d;
@@ -721,7 +770,7 @@ namespace Org.Webpki.Es6NumberSerialization
                             char lastCh;
                             while (true)
                             {
-                                lastCh = buf[buf.Length - 1];
+                                lastCh = buf[ buf.Length - 1 ];
                                 buf.Length = buf.Length - 1;
                                 if (lastCh != '9') break;
                                 if (buf.Length == 0)
@@ -731,14 +780,18 @@ namespace Org.Webpki.Es6NumberSerialization
                                     break;
                                 }
                             }
-                            buf.Append((char)(lastCh + 1));
+
+                            buf.Append((char) (lastCh + 1));
                         }
+
                         break;
                     }
+
                     d *= 10.0;
                     if (d == 0)
                         break;
                 }
+
                 return k + 1;
             }
 
@@ -749,7 +802,7 @@ namespace Org.Webpki.Es6NumberSerialization
             {
                 if (mode < 2)
                 {
-                    i = (denorm) ? be[0] + (Bias + (P - 1) - 1 + 1) : 1 + P - bbits[0];
+                    i = (denorm) ? be[ 0 ] + (Bias + (P - 1) - 1 + 1) : 1 + P - bbits[ 0 ];
                     /* i is 1 plus the number of trailing zero bits in d's significand. Thus,
                        (2^m2 * 5^m5) / (2^(s2+i) * 5^s5) = (1/2 lsb of d)/10^k. */
                 }
@@ -764,6 +817,7 @@ namespace Org.Webpki.Es6NumberSerialization
                         b5 += j;
                         m5 = 0;
                     }
+
                     if ((i = ilim) < 0)
                     {
                         m2 -= i;
@@ -771,12 +825,14 @@ namespace Org.Webpki.Es6NumberSerialization
                     }
                     /* (2^m2 * 5^m5) / (2^(s2+i) * 5^s5) = (1/2 * 10^(1-ilim))/10^k. */
                 }
+
                 b2 += i;
                 s2 += i;
                 mhi = 1;
                 /* (mhi * 2^m2 * 5^m5) / (2^s2 * 5^s5) = one-half of last printed (when mode >= 2) or
                    input (when mode < 2) significant digit, divided by 10^k. */
             }
+
             /* We still have d/10^k = (b * 2^b2 * 5^b5) / (2^s2 * 5^s5).  Reduce common factors in
                b2, m2, and s2 without changing the equalities. */
             if (m2 > 0 && s2 > 0)
@@ -798,6 +854,7 @@ namespace Org.Webpki.Es6NumberSerialization
                         b1 = mhi * b;
                         b = b1;
                     }
+
                     if ((j = b5 - m5) != 0)
                         b = Pow5mult(b, j);
                 }
@@ -818,8 +875,8 @@ namespace Org.Webpki.Es6NumberSerialization
             if (mode < 2)
             {
                 if ((Word1(d) == 0) && ((Word0(d) & Bndry_mask) == 0)
-                        && ((Word0(d) & (Exp_mask & Exp_mask << 1)) != 0)
-                        )
+                                    && ((Word0(d) & (Exp_mask & Exp_mask << 1)) != 0)
+                   )
                 {
                     /* The special case.  Here we want to be within a quarter of the last input
                        significant digit instead of one half of it when the decimal output string's value is less than d.  */
@@ -837,14 +894,15 @@ namespace Org.Webpki.Es6NumberSerialization
              * can do shifts and ors to compute the numerator for q.
              */
             byte[] S_bytes = S.ToByteArray();
-            Array.Reverse(S_bytes);  // Note: Opposite to java
+            Array.Reverse(S_bytes); // Note: Opposite to java
             int S_hiWord = 0;
             for (int idx = 0; idx < 4; idx++)
             {
                 S_hiWord = (S_hiWord << 8);
                 if (idx < S_bytes.Length)
-                    S_hiWord |= (S_bytes[idx] & 0xFF);
+                    S_hiWord |= (S_bytes[ idx ] & 0xFF);
             }
+
             if ((i = (((s5 != 0) ? 32 - Hi0bits(S_hiWord) : 1) + s2) & 0x1f) != 0)
                 i = 32 - i;
             /* i is the number of leading zero bits in the most significant word of S*2^s2. */
@@ -862,6 +920,7 @@ namespace Org.Webpki.Es6NumberSerialization
                 m2 += i;
                 s2 += i;
             }
+
             /* Now S*2^s2 has exactly four leading zero bits in its most significant word. */
             if (b2 > 0)
                 b <<= b2;
@@ -874,7 +933,7 @@ namespace Org.Webpki.Es6NumberSerialization
                 if (b.CompareTo(S) < 0)
                 {
                     k--;
-                    b *= 10;  /* we botched the k estimate */
+                    b *= 10; /* we botched the k estimate */
                     if (leftright)
                         mhi *= 10;
                     ilim = ilim1;
@@ -887,8 +946,8 @@ namespace Org.Webpki.Es6NumberSerialization
                 /* We're doing fixed-mode output and d is less than the minimum nonzero output in this mode.
                    Output either zero or the minimum nonzero output depending on which is closer to d. */
                 if ((ilim < 0)
-                        || ((i = b.CompareTo(S *= 5)) < 0)
-                        || ((i == 0 && !biasUp)))
+                    || ((i = b.CompareTo(S *= 5)) < 0)
+                    || ((i == 0 && !biasUp)))
                 {
                     /* Always emit at least one digit.  If the number appears to be zero
                        using the current mode, then emit one '0' digit and set decpt to 1. */
@@ -896,15 +955,17 @@ namespace Org.Webpki.Es6NumberSerialization
                         k = -1 - ndigits;
                         goto ret; */
                     buf.Length = 0;
-                    buf.Append('0');        /* copy "0" to buffer */
+                    buf.Append('0'); /* copy "0" to buffer */
                     return 1;
                     //                goto no_digits;
                 }
+
                 //        one_digit:
                 buf.Append('1');
                 k++;
                 return k + 1;
             }
+
             if (leftright)
             {
                 if (m2 > 0)
@@ -923,11 +984,11 @@ namespace Org.Webpki.Es6NumberSerialization
                 /* mlo/S = maximum acceptable error, divided by 10^k, if the output is less than d. */
                 /* mhi/S = maximum acceptable error, divided by 10^k, if the output is greater than d. */
 
-                for (i = 1; ; i++)
+                for (i = 1;; i++)
                 {
                     BigInteger quotient = BigInteger.DivRem(b, S, out BigInteger remainder);
                     b = remainder;
-                    dig = (char)((int)quotient + '0');
+                    dig = (char) ((int) quotient + '0');
                     /* Do we yet have the shortest decimal string
                      * that will round to d?
                      */
@@ -946,19 +1007,22 @@ namespace Org.Webpki.Es6NumberSerialization
                                 k++;
                                 buf.Append('1');
                             }
+
                             return k + 1;
                             //                        goto round_9_up;
                         }
+
                         if (j > 0)
                             dig++;
                         buf.Append(dig);
                         return k + 1;
                     }
+
                     if ((j < 0)
-                            || ((j == 0)
+                        || ((j == 0)
                             && (mode == 0)
                             && ((Word1(d) & 1) == 0)
-                    ))
+                        ))
                     {
                         if (j1 > 0)
                         {
@@ -967,7 +1031,7 @@ namespace Org.Webpki.Es6NumberSerialization
                             b <<= 1;
                             j1 = b.CompareTo(S);
                             if (((j1 > 0) || (j1 == 0 && (((dig & 1) == 1) || biasUp)))
-                                    && (dig++ == '9'))
+                                && (dig++ == '9'))
                             {
                                 buf.Append('9');
                                 if (RoundOff(buf))
@@ -975,17 +1039,21 @@ namespace Org.Webpki.Es6NumberSerialization
                                     k++;
                                     buf.Append('1');
                                 }
+
                                 return k + 1;
                                 //                                goto round_9_up;
                             }
                         }
+
                         buf.Append(dig);
                         return k + 1;
                     }
+
                     if (j1 > 0)
                     {
                         if (dig == '9')
-                        {  /* possible if i == 1 */
+                        {
+                            /* possible if i == 1 */
                             //                    round_9_up:
                             //                        *s++ = '9';
                             //                        goto roundoff;
@@ -995,11 +1063,14 @@ namespace Org.Webpki.Es6NumberSerialization
                                 k++;
                                 buf.Append('1');
                             }
+
                             return k + 1;
                         }
-                        buf.Append((char)(dig + 1));
+
+                        buf.Append((char) (dig + 1));
                         return k + 1;
                     }
+
                     buf.Append(dig);
                     if (i == ilim)
                         break;
@@ -1014,12 +1085,12 @@ namespace Org.Webpki.Es6NumberSerialization
                 }
             }
             else
-                for (i = 1; ; i++)
+                for (i = 1;; i++)
                 {
                     //                (char)(dig = quorem(b,S) + '0');
                     BigInteger quotient = BigInteger.DivRem(b, S, out BigInteger remainder);
                     b = remainder;
-                    dig = (char)((int)quotient + '0');
+                    dig = (char) ((int) quotient + '0');
 
                     buf.Append(dig);
                     if (i >= ilim)
@@ -1054,6 +1125,7 @@ namespace Org.Webpki.Es6NumberSerialization
                 //            while(*--s == '0') ;
                 //            s++;
             }
+
             //      ret:
             //        Bfree(S);
             //        if (mhi) {
@@ -1072,26 +1144,29 @@ namespace Org.Webpki.Es6NumberSerialization
             //      while(*--s == '0') ;
             //      s++;
             int bl = buf.Length;
-            while (bl-- > 0 && buf[bl] == '0')
+            while (bl-- > 0 && buf[ bl ] == '0')
             {
                 // empty
             }
+
             buf.Length = bl + 1;
         }
 
         /* Mapping of JSDToStrMode -> JS_dtoa mode */
-        private static int[] dtoaModes = {
-            0,   /* DTOSTR_STANDARD */
-            0,   /* DTOSTR_STANDARD_EXPONENTIAL, */
-            3,   /* DTOSTR_FIXED, */
-            2,   /* DTOSTR_EXPONENTIAL, */
-            2};  /* DTOSTR_PRECISION */
+        private static int[] dtoaModes =
+        {
+            0, /* DTOSTR_STANDARD */
+            0, /* DTOSTR_STANDARD_EXPONENTIAL, */
+            3, /* DTOSTR_FIXED, */
+            2, /* DTOSTR_EXPONENTIAL, */
+            2
+        }; /* DTOSTR_PRECISION */
 
         public static void JS_dtostr(StringBuilder buffer, int mode, int precision, double d)
         {
-            int decPt;                                    /* Position of decimal point relative to first digit returned by JS_dtoa */
-            bool[] sign = new bool[1];            /* true if the sign bit was set in d */
-            int nDigits;                                /* Number of significand digits returned by JS_dtoa */
+            int decPt; /* Position of decimal point relative to first digit returned by JS_dtoa */
+            bool[] sign = new bool[1]; /* true if the sign bit was set in d */
+            int nDigits; /* Number of significand digits returned by JS_dtoa */
 
             //        JS_ASSERT(bufferSize >= (size_t)(mode <= DTOSTR_STANDARD_EXPONENTIAL ? DTOSTR_STANDARD_BUFFER_SIZE :
             //                DTOSTR_VARIABLE_BUFFER_SIZE(precision)));
@@ -1099,14 +1174,14 @@ namespace Org.Webpki.Es6NumberSerialization
             if (mode == DTOSTR_FIXED && (d >= 1e21 || d <= -1e21))
                 mode = DTOSTR_STANDARD; /* Change mode here rather than below because the buffer may not be large enough to hold a large integer. */
 
-            decPt = JS_dtoa(d, dtoaModes[mode], mode >= DTOSTR_FIXED, precision, sign, buffer);
+            decPt = JS_dtoa(d, dtoaModes[ mode ], mode >= DTOSTR_FIXED, precision, sign, buffer);
             nDigits = buffer.Length;
 
             /* If Infinity, -Infinity, or NaN, return the string regardless of the mode. */
             if (decPt != 9999)
             {
                 bool exponentialNotation = false;
-                int minNDigits = 0;         /* Minimum number of significand digits required by mode and precision */
+                int minNDigits = 0; /* Minimum number of significand digits required by mode and precision */
                 int p;
 
                 switch (mode)
@@ -1160,6 +1235,7 @@ namespace Org.Webpki.Es6NumberSerialization
                     {
                         buffer.Insert(1, '.');
                     }
+
                     buffer.Append('e');
                     if ((decPt - 1) >= 0)
                         buffer.Append('+');
@@ -1186,10 +1262,10 @@ namespace Org.Webpki.Es6NumberSerialization
             }
 
             /* If negative and neither -0.0 nor NaN, output a leading '-'. */
-            if (sign[0] &&
-                    !(Word0(d) == Sign_bit && Word1(d) == 0) &&
-                    !((Word0(d) & Exp_mask) == Exp_mask &&
-                            ((Word1(d) != 0) || ((Word0(d) & Frac_mask) != 0))))
+            if (sign[ 0 ] &&
+                !(Word0(d) == Sign_bit && Word1(d) == 0) &&
+                !((Word0(d) & Exp_mask) == Exp_mask &&
+                  ((Word1(d) != 0) || ((Word0(d) & Frac_mask) != 0))))
             {
                 buffer.Insert(0, '-');
             }

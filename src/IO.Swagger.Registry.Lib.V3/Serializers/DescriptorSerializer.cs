@@ -22,7 +22,6 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
             {
                 throw new NotSupportedException();
             }
-
         }
 
         private static JsonObject Transform(AssetAdministrationShellDescriptor that)
@@ -33,17 +32,20 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
             var result = new JsonObject();
             if (that.Administration != null)
             {
-                result["administration"] = Jsonization.Serialize.ToJsonObject(that.Administration);
+                result[ "administration" ] = Jsonization.Serialize.ToJsonObject(that.Administration);
             }
+
             if (that.AssetKind != null)
             {
-                result["assetKind"] = Jsonization.Serialize.AssetKindToJsonValue(
+                result[ "assetKind" ] = Jsonization.Serialize.AssetKindToJsonValue(
                     that.AssetKind);
             }
+
             if (that.AssetType != null)
             {
-                result["assetType"] = that.AssetType;
+                result[ "assetType" ] = that.AssetType;
             }
+
             if (that.Endpoints != null)
             {
                 var arrayEndpoints = new JsonArray();
@@ -51,20 +53,25 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                 {
                     arrayEndpoints.Add(Transform(endpoint));
                 }
-                result["endpoints"] = arrayEndpoints;
+
+                result[ "endpoints" ] = arrayEndpoints;
             }
+
             if (that.GlobalAssetId != null)
             {
-                result["globalAssetId"] = that.GlobalAssetId;
+                result[ "globalAssetId" ] = that.GlobalAssetId;
             }
+
             if (that.IdShort != null)
             {
-                result["idShort"] = that.IdShort;
+                result[ "idShort" ] = that.IdShort;
             }
+
             if (that.Id != null)
             {
-                result["id"] = that.Id;
+                result[ "id" ] = that.Id;
             }
+
             if (that.SpecificAssetIds != null)
             {
                 var arraySpecificAssetIds = new JsonArray();
@@ -72,8 +79,10 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                 {
                     arraySpecificAssetIds.Add(Jsonization.Serialize.ToJsonObject(specificAssetId));
                 }
-                result["specificAssetIds"] = arraySpecificAssetIds;
+
+                result[ "specificAssetIds" ] = arraySpecificAssetIds;
             }
+
             if (that.SubmodelDescriptors != null)
             {
                 var arraySubmodelDescriptors = new JsonArray();
@@ -81,7 +90,8 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                 {
                     arraySubmodelDescriptors.Add(Transform(submodelDescriptor));
                 }
-                result["submodelDescriptors"] = arraySubmodelDescriptors;
+
+                result[ "submodelDescriptors" ] = arraySubmodelDescriptors;
             }
 
             return result;
@@ -95,7 +105,7 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
             var result = new JsonObject();
             if (that.Administration != null)
             {
-                result["administration"] = Jsonization.Serialize.ToJsonObject(that.Administration);
+                result[ "administration" ] = Jsonization.Serialize.ToJsonObject(that.Administration);
             }
 
             if (that.Endpoints != null)
@@ -105,21 +115,25 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                 {
                     arrayEndpoints.Add(Transform(endpoint));
                 }
-                result["endpoints"] = arrayEndpoints;
+
+                result[ "endpoints" ] = arrayEndpoints;
             }
 
             if (that.IdShort != null)
             {
-                result["idShort"] = that.IdShort;
+                result[ "idShort" ] = that.IdShort;
             }
+
             if (that.Id != null)
             {
-                result["id"] = that.Id;
+                result[ "id" ] = that.Id;
             }
+
             if (that.SemanticId != null)
             {
-                result["semanticId"] = Jsonization.Serialize.ToJsonObject(that.SemanticId);
+                result[ "semanticId" ] = Jsonization.Serialize.ToJsonObject(that.SemanticId);
             }
+
             if (that.SupplementalSemanticId != null)
             {
                 var arraySupplementalSemanticId = new JsonArray();
@@ -127,8 +141,10 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                 {
                     arraySupplementalSemanticId.Add(Jsonization.Serialize.ToJsonObject(suppSemId));
                 }
-                result["supplementalSemanticId"] = arraySupplementalSemanticId;
+
+                result[ "supplementalSemanticId" ] = arraySupplementalSemanticId;
             }
+
             if (that.FederatedElements != null)
             {
                 var arrayFederatedElements = new JsonArray();
@@ -136,7 +152,8 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                 {
                     arrayFederatedElements.Add(fedElement);
                 }
-                result["federatedElements"] = arrayFederatedElements;
+
+                result[ "federatedElements" ] = arrayFederatedElements;
             }
 
             return result;
@@ -151,12 +168,12 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
 
             if (that.Interface != null)
             {
-                result["interface"] = that.Interface;
+                result[ "interface" ] = that.Interface;
             }
 
             if (that.ProtocolInformation != null)
             {
-                result["protocolInformation"] = Transform(that.ProtocolInformation);
+                result[ "protocolInformation" ] = Transform(that.ProtocolInformation);
             }
 
             return result;
@@ -171,12 +188,12 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
 
             if (that.Href != null)
             {
-                result["href"] = that.Href;
+                result[ "href" ] = that.Href;
             }
 
             if (that.EndpointProtocol != null)
             {
-                result["endpointProtocol"] = that.EndpointProtocol;
+                result[ "endpointProtocol" ] = that.EndpointProtocol;
             }
 
             if (that.EndpointProtocolVersion != null)
@@ -186,22 +203,23 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                 {
                     arrayProtocolVersion.Add(protocol);
                 }
-                result["endpointProtocolVersion"] = arrayProtocolVersion;
+
+                result[ "endpointProtocolVersion" ] = arrayProtocolVersion;
             }
 
             if (that.Subprotocol != null)
             {
-                result["subprotocol"] = that.Subprotocol;
+                result[ "subprotocol" ] = that.Subprotocol;
             }
 
             if (that.SubprotocolBody != null)
             {
-                result["subprotocolBody"] = that.SubprotocolBody;
+                result[ "subprotocolBody" ] = that.SubprotocolBody;
             }
 
             if (that.SubprotocolBodyEncoding != null)
             {
-                result["subprotocolBodyEncoding"] = that.SubprotocolBodyEncoding;
+                result[ "subprotocolBodyEncoding" ] = that.SubprotocolBodyEncoding;
             }
 
             if (that.SecurityAttributes != null)
@@ -211,7 +229,8 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                 {
                     arraySecurityAttributes.Add(Transform(securityAttribute));
                 }
-                result["securityAttributes"] = arraySecurityAttributes;
+
+                result[ "securityAttributes" ] = arraySecurityAttributes;
             }
 
             return result;
@@ -225,15 +244,17 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
             var result = new JsonObject();
             if (that.Type != null)
             {
-                result["type"] = that.Type.ToString();
+                result[ "type" ] = that.Type.ToString();
             }
+
             if (that.Key != null)
             {
-                result["key"] = that.Key;
+                result[ "key" ] = that.Key;
             }
+
             if (that.Value != null)
             {
-                result["value"] = that.Value;
+                result[ "value" ] = that.Value;
             }
 
             return result;

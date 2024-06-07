@@ -50,7 +50,7 @@ namespace AasxServer
                 throw new Exception("No Configuration!");
             }
 
-            connectionString = _con["DatabaseConnection:ConnectionString"];
+            connectionString = _con[ "DatabaseConnection:ConnectionString" ];
             if (connectionString != null)
             {
                 if (connectionString.Contains("$DATAPATH"))
@@ -62,14 +62,14 @@ namespace AasxServer
                     string dbUser = System.Environment.GetEnvironmentVariable("DATABASE_PASSWORD");
                     for (int i = 0; i < Params.Length; i++)
                     {
-                        if (Params[i].Contains("Username") && dbUser != null)
+                        if (Params[ i ].Contains("Username") && dbUser != null)
                         {
-                            Params[i] = "Username=" + dbUser;
+                            Params[ i ] = "Username=" + dbUser;
                         }
 
-                        if (Params[i].Contains("Password") && dbPassword != null)
+                        if (Params[ i ].Contains("Password") && dbPassword != null)
                         {
-                            Params[i] = "Password=" + dbPassword;
+                            Params[ i ] = "Password=" + dbPassword;
                         }
                     }
 
@@ -156,7 +156,7 @@ namespace AasxServer
             }
             else
             {
-                var connectionString = _con["DatabaseConnection:ConnectionString"];
+                var connectionString = _con[ "DatabaseConnection:ConnectionString" ];
                 if (connectionString.Contains("$DATAPATH"))
                     connectionString = connectionString.Replace("$DATAPATH", AasxHttpContextHelper.DataPath);
                 options.UseSqlite(connectionString);
@@ -174,7 +174,7 @@ namespace AasxServer
             }
             else
             {
-                var connectionString = _con["DatabaseConnection:ConnectionString"];
+                var connectionString = _con[ "DatabaseConnection:ConnectionString" ];
                 if (connectionString.Contains("$DATAPATH"))
                     connectionString = connectionString.Replace("$DATAPATH", AasxHttpContextHelper.DataPath);
                 options.UseNpgsql(connectionString);
@@ -191,7 +191,7 @@ namespace AasxServer
         public long SMECount { get; set; }
     }
 
-    [Index(nameof(AASXNum))]
+    [ Index(nameof(AASXNum)) ]
     public class AASXSet
     {
         public int Id { get; set; }
@@ -199,7 +199,7 @@ namespace AasxServer
         public string AASX { get; set; }
     }
 
-    [Index(nameof(AasNum))]
+    [ Index(nameof(AasNum)) ]
     public class AasSet
     {
         public int Id { get; set; }
@@ -211,7 +211,7 @@ namespace AasxServer
         public string AssetKind { get; set; }
     }
 
-    [Index(nameof(SubmodelNum))]
+    [ Index(nameof(SubmodelNum)) ]
     public class SubmodelSet
     {
         public int Id { get; set; }
@@ -223,8 +223,8 @@ namespace AasxServer
         public string SemanticId { get; set; }
     }
 
-    [Index(nameof(SubmodelNum))]
-    [Index(nameof(SMENum))]
+    [ Index(nameof(SubmodelNum)) ]
+    [ Index(nameof(SMENum)) ]
     public class SMESet
     {
         public int Id { get; set; }
@@ -319,7 +319,7 @@ namespace AasxServer
         }
     }
 
-    [Index(nameof(ParentSMENum))]
+    [ Index(nameof(ParentSMENum)) ]
     public class IntValue
     {
         public int Id { get; set; }
@@ -339,7 +339,7 @@ namespace AasxServer
         }
     }
 
-    [Index(nameof(ParentSMENum))]
+    [ Index(nameof(ParentSMENum)) ]
     public class StringValue
     {
         public int Id { get; set; }
@@ -348,7 +348,7 @@ namespace AasxServer
         public string Annotation { get; set; }
     }
 
-    [Index(nameof(ParentSMENum))]
+    [ Index(nameof(ParentSMENum)) ]
     public class DoubleValue
     {
         public int Id { get; set; }
@@ -1145,8 +1145,8 @@ namespace AasxServer
                     {
                         var mlpval = new StringValue()
                         {
-                            Annotation = ls[i].Language,
-                            Value = ls[i].Text,
+                            Annotation = ls[ i ].Language,
+                            Value = ls[ i ].Text,
                             ParentSMENum = smeNum
                         };
                         _db.Add(mlpval);
@@ -1191,7 +1191,7 @@ namespace AasxServer
             long smeNum = ++_dbConfig.SMECount;
             long pn = 0;
             if (_parentNum.Count > 0)
-                pn = _parentNum[_parentNum.Count - 1];
+                pn = _parentNum[ _parentNum.Count - 1 ];
             var semanticId = sme.SemanticId.GetAsIdentifier();
             if (semanticId == null)
                 semanticId = "";
