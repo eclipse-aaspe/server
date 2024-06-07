@@ -1,6 +1,4 @@
-﻿using System.Linq;
-
-namespace AasxServerDB
+﻿namespace AasxServerDB
 {
     public class PageDB
     {
