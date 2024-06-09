@@ -98,7 +98,7 @@ namespace AasxServer
             DateTime timeStamp = DateTime.UtcNow;
             taskList = new List<AasxTask>();
 
-            int aascount = AasxServer.Program.env.Length;
+            int aascount = AasxServer.Program.env.Count;
 
             for (int i = 0; i < aascount; i++)
             {
@@ -1611,7 +1611,7 @@ namespace AasxServer
 
             // GET actual BOM
             AdminShellPackageEnv env = null;
-            int aascount = AasxServer.Program.env.Length;
+            int aascount = AasxServer.Program.env.Count;
 
             for (int i = 0; i < aascount; i++)
             {
@@ -1738,7 +1738,7 @@ namespace AasxServer
 
             Dictionary<string, cfpNode> assetCfp = new Dictionary<string, cfpNode>();
             // cfpNode root = new cfpNode();
-            aascount = AasxServer.Program.env.Length;
+            aascount = AasxServer.Program.env.Count;
             root = null;
 
             // Collect data from all AAS into cfpNode(s)
@@ -2340,7 +2340,7 @@ namespace AasxServer
         {
             bool newData = false;
             int envi = 0;
-            while (envi < Program.env.Length)
+            while (envi < Program.env.Count)
             {
                 if (!Program.withDb)
                 {

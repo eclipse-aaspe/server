@@ -288,7 +288,7 @@ namespace AasxServer
                 return false;
 
             int i = envimin;
-            while (i < env.Length)
+            while (i < env.Count)
             {
                 if (env[i] == null)
                     break;
@@ -304,10 +304,10 @@ namespace AasxServer
             }
 
             // not found in memory
-            if (i == env.Length)
+            if (i == env.Count)
             {
                 i = oldest++;
-                if (oldest == env.Length)
+                if (oldest == env.Count)
                     oldest = envimin;
             }
 
@@ -402,7 +402,7 @@ namespace AasxServer
                 return false;
 
             int i = envimin;
-            while (i < env.Length)
+            while (i < env.Count)
             {
                 if (env[i] == null)
                     break;
@@ -418,10 +418,10 @@ namespace AasxServer
             }
 
             // not found in memory
-            if (i == env.Length)
+            if (i == env.Count)
             {
                 i = oldest++;
-                if (oldest == env.Length)
+                if (oldest == env.Count)
                     oldest = envimin;
             }
 
@@ -519,104 +519,11 @@ namespace AasxServer
 
         public static int envimin = 0;
         public static int envimax = 200;
-        public static AdminShellPackageEnv[] env = null;
+        public static IList<AdminShellPackageEnv> env = new List<AdminShellPackageEnv>();
         public static string[] envFileName = null;
         public static string[] envSymbols = null;
         public static string[] envSubjectIssuer = null;
-        /*
-        public static AdminShellPackageEnv[] env = new AdminShellPackageEnv[envimax];
-            {
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null
-            };
-        public static string[] envFileName = new string[envimax];
-            {
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null
-            };
-        public static string[] envSymbols = new string[envimax];
-            {
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null
-            };
-        public static string[] envSubjectIssuer = new string[envimax];
-            {
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null
-            };
-        */
+        
 
         public static string hostPort = "";
         public static string blazorPort = "";
@@ -1796,7 +1703,7 @@ namespace AasxServer
 
                     adp.source = connectNodeName;
 
-                    int aascount = Program.env.Length;
+                    int aascount = Program.env.Count;
 
                     for (int j = 0; j < aascount; j++)
                     {
@@ -2535,7 +2442,7 @@ namespace AasxServer
             lock (Program.changeAasxFile)
             {
                 int i = 0;
-                while (i < env.Length && env[i] != null)
+                while (i < env.Count && env[i] != null)
                 {
                     if (env[i].AasEnv.Submodels != null)
                     {

@@ -66,7 +66,7 @@ namespace AasxRestServerLibrary
                 {
                     firstListOfRepositories = false;
 
-                    int aascount = AasxServer.Program.env.Length;
+                    int aascount = AasxServer.Program.env.Count;
                     for (int i = 0; i < aascount; i++)
                     {
                         var env = AasxServer.Program.env[ i ];
@@ -1040,7 +1040,7 @@ namespace AasxRestServerLibrary
                         // search in memory
                         int totalFound = 0;
                         int foundInRepository = 0;
-                        int aascount = AasxServer.Program.env.Length;
+                        int aascount = AasxServer.Program.env.Count;
                         for (int i = 0; i < aascount; i++)
                         {
                             int foundInAas = 0;
@@ -2529,7 +2529,7 @@ namespace AasxRestServerLibrary
 
                 var envelopes = new List<AasEventMsgEnvelope>();
 
-                int aascount = AasxServer.Program.env.Length;
+                int aascount = AasxServer.Program.env.Count;
                 for (int i = 0; i < aascount; i++)
                 {
                     if (aasIndex >= 0 && i != aasIndex)
@@ -3057,7 +3057,7 @@ namespace AasxRestServerLibrary
 
                 addEntry(diffJson, ref diffText, ref diffList, "OPEN");
 
-                int aascount = AasxServer.Program.env.Length;
+                int aascount = AasxServer.Program.env.Count;
 
                 for (int imode = 0; imode < modes.Length; imode++)
                 {

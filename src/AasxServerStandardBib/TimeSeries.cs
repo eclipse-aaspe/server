@@ -76,7 +76,7 @@ namespace AasxTimeSeries
             timeSeriesBlockList = new List<TimeSeriesBlock>();
             timeSeriesSubscribe = new List<SubmodelElementCollection>();
 
-            int aascount = AasxServer.Program.env.Length;
+            int aascount = AasxServer.Program.env.Count;
 
             for (int i = 0; i < aascount; i++)
             {

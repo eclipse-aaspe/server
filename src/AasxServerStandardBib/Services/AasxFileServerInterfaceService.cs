@@ -16,7 +16,7 @@ namespace AasxServerStandardBib.Services
     public class AasxFileServerInterfaceService : IAasxFileServerInterfaceService
     {
         private readonly IAppLogger<AasxFileServerInterfaceService> _logger;
-        private AdminShellPackageEnv[] _packages;
+        private IList<AdminShellPackageEnv> _packages;
         private string[] _envFileNames;
 
         public AasxFileServerInterfaceService(IAppLogger<AasxFileServerInterfaceService> logger)
@@ -121,7 +121,7 @@ namespace AasxServerStandardBib.Services
         {
             var output = new List<PackageDescription>();
 
-            for (int i = 0; i < _packages.Length; i++)
+            for (int i = 0; i < _packages.Count; i++)
             {
                 var package = _packages[i];
                 if (package != null)
@@ -280,7 +280,7 @@ namespace AasxServerStandardBib.Services
         {
             emptyPackageIndex = -1;
 
-            for (int envi = 0; envi < _packages.Length; envi++)
+            for (int envi = 0; envi < _packages.Count; envi++)
             {
                 if (_packages[envi] == null)
                 {

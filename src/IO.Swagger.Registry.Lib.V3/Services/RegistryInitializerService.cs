@@ -69,7 +69,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                 submodelRegistry = null;
 
                 int i = initiallyEmpty;
-                while (i < AasxServer.Program.env.Length)
+                while (i < AasxServer.Program.env.Count)
                 {
                     AasxServer.Program.env[ i ] = null;
                     i++;
@@ -402,7 +402,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                         else
                         {
                             int i = 0;
-                            while (i < AasxServer.Program.env.Length)
+                            while (i < AasxServer.Program.env.Count)
                             {
                                 var env = AasxServer.Program.env[ i ];
                                 if (env == null)
