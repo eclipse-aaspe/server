@@ -14,7 +14,7 @@ jobs:
       - name: Infer the version from the GitHub ref
         id: inferVersion
         run: |
-          $version = .\BuildVersionNumber.ps1 -suffix alpha
+          $version = .\GetVersion.ps1 -suffix alpha
           echo "::set-output name=version::$version"
         shell: pwsh
 
@@ -66,9 +66,21 @@ jobs:
           }
         shell: pwsh
 
-      - name: Upload the release assets
-        uses: AButler/upload-release-assets@v2.0
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: "artefacts/release/${{ steps.inferVersion.outputs.version }}/*.zip"
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          release-tag: "v${{ steps.inferVersion.outputs.version }}"
+          tag_name: "v${{ steps.inferVersion.outputs.version }}"
+          release_name: "Release v${{ steps.inferVersion.outputs.version }}"
+          draft: false
+          prerelease: false
+
+      - name: Upload the release assets
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artefacts/release/${{ steps.inferVersion.outputs.version }}/*.zip
+          asset_name: $(basename ${{ steps.inferVersion.outputs.version }}/*.zip)
+          asset_content_type: application/zip
