@@ -270,7 +270,7 @@ namespace AasxServerStandardBib.Services
                             }
                             else
                             {
-                                output = ReadDB.GetSubmodel(smIdentifier:submodelIdentifier);
+                                output = DBConverter.GetSubmodel(smIdentifier:submodelIdentifier);
                             }
                             */
                             output = submodels.First();

@@ -1,6 +1,6 @@
 ﻿namespace AasxServerDB
 {
-    public class PageDB
+    public class PageRetriever
     {
         static public List<AASXSet> GetPageAASXData(int size = 1000, string searchLower = "", long aasxid = 0)
         {

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Extensions;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.IdentityModel.Tokens;
 
 /*
  * https://learn.microsoft.com/en-us/ef/core/get-started/overview/first-app?tabs=netcore-cli
@@ -36,48 +37,45 @@ namespace AasxServerDB
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
             if (_con == null)
-            {
                 throw new Exception("No Configuration!");
-            }
-            string connectionString = _con["DatabaseConnection:ConnectionString"];
-            if (connectionString != null)
-            {
-                if (connectionString.Contains("$DATAPATH"))
-                    connectionString = connectionString.Replace("$DATAPATH", _dataPath);
-                if (connectionString.ToLower().Contains("host")) // Postgres
-                {
-                    isPostgres = true;
-                    options.UseNpgsql(connectionString);
-                }
-                else // SQLite
-                {
-                    isPostgres = false;
-                    options.UseSqlite(connectionString);
-                }
-            }
-            else
-            {
+
+            var connectionString = _con["DatabaseConnection:ConnectionString"];
+            if (connectionString.IsNullOrEmpty())
                 throw new Exception("No connectionString in appsettings");
+
+            if (connectionString.Contains("$DATAPATH"))
+                connectionString = connectionString.Replace("$DATAPATH", _dataPath);
+
+            if (connectionString.ToLower().Contains("host")) // PostgreSQL
+            {
+                isPostgres = true;
+                options.UseNpgsql(connectionString);
+            }
+            else // SQLite
+            {
+                isPostgres = false;
+                options.UseSqlite(connectionString);
             }
         }
 
-        public void ClearDB()
+        public async Task ClearDB()
         {
-            int count = 0;
-            var task = Task.Run(async () => count = await AASXSets.ExecuteDeleteAsync());
-            task.Wait();
-            task = Task.Run(async () => count = await AASSets.ExecuteDeleteAsync());
-            task.Wait();
-            task = Task.Run(async () => count = await SMSets.ExecuteDeleteAsync());
-            task.Wait();
-            task = Task.Run(async () => count = await SMESets.ExecuteDeleteAsync());
-            task.Wait();
-            task = Task.Run(async () => count = await IValueSets.ExecuteDeleteAsync());
-            task.Wait();
-            task = Task.Run(async () => count = await SValueSets.ExecuteDeleteAsync());
-            task.Wait();
-            task = Task.Run(async () => count = await DValueSets.ExecuteDeleteAsync());
-            task.Wait();
+            // Queue up all delete operations asynchronously
+            var tasks = new List<Task<int>>
+            {
+                AASXSets.ExecuteDeleteAsync(),
+                AASSets.ExecuteDeleteAsync(),
+                SMSets.ExecuteDeleteAsync(),
+                SMESets.ExecuteDeleteAsync(),
+                IValueSets.ExecuteDeleteAsync(),
+                SValueSets.ExecuteDeleteAsync(),
+                DValueSets.ExecuteDeleteAsync()
+            };
+
+            // Wait for all delete tasks to complete
+            await Task.WhenAll(tasks);
+
+            // Save changes to the database
             SaveChanges();
         }
     }
@@ -189,21 +187,21 @@ namespace AasxServerDB
                     case "S":
                         var ls = db.SValueSets.Where(s => s.SMEId == Id).Select(s => s.Value).ToList();
                         if (ls.Count != 0)
-                            return ls.First() + "";
+                            return ls.First().ToString();
                         break;
                     case "I":
                         var li = db.IValueSets.Where(s => s.SMEId == Id).Select(s => s.Value).ToList();
                         if (li.Count != 0)
-                            return li.First() + "";
+                            return li.First().ToString();
                         break;
                     case "F":
                         var ld = db.DValueSets.Where(s => s.SMEId == Id).Select(s => s.Value).ToList();
                         if (ld.Count != 0)
-                            return ld.First() + "";
+                            return ld.First().ToString();
                         break;
                 }
             }
-            return "";
+            return string.Empty;
         }
 
         public List<string> getMLPValue()
@@ -213,13 +211,11 @@ namespace AasxServerDB
             {
                 using (AasContext db = new AasContext())
                 {
-                    var MLPValueSetList = db.SValueSets
-                        .Where(s => s.SMEId == Id)
-                        .ToList();
-                    foreach (var MLPValue in MLPValueSetList)
+                    var mlpValueSetList = db.SValueSets.Where(s => s.SMEId == Id).ToList();
+                    foreach (var mlpValue in mlpValueSetList)
                     {
-                        list.Add(MLPValue.Annotation);
-                        list.Add(MLPValue.Value);
+                        list.Add(mlpValue.Annotation);
+                        list.Add(mlpValue.Value);
                     }
                     return list;
                 }

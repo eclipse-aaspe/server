@@ -2246,7 +2246,7 @@ namespace AasxServer
                     {
                         lock (Program.changeAasxFile)
                         {
-                            EditDB.EditAAS(Program.env[envi]);
+                            Edit.Update(Program.env[envi]);
                             newData = true;
                         }
                     }

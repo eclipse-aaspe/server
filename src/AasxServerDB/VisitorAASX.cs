@@ -41,14 +41,14 @@ namespace AasxServerDB
                     string name = Path.GetFileName(filePath);
                     try
                     {
-                        string fcopyt = name + "__thumbnail";
-                        fcopyt = fcopyt.Replace("/", "_");
-                        fcopyt = fcopyt.Replace(".", "_");
+                        string temporaryFileName = name + "__thumbnail";
+                        temporaryFileName = temporaryFileName.Replace("/", "_");
+                        temporaryFileName = temporaryFileName.Replace(".", "_");
                         Uri dummy = null;
                         using (var st = asp.GetLocalThumbnailStream(ref dummy, init: true))
                         {
-                            Console.WriteLine("Copy " + AasContext._dataPath + "/files/" + fcopyt + ".dat");
-                            var fst = System.IO.File.Create(AasContext._dataPath + "/files/" + fcopyt + ".dat");
+                            Console.WriteLine("Copy " + AasContext._dataPath + "/files/" + temporaryFileName + ".dat");
+                            var fst = System.IO.File.Create(AasContext._dataPath + "/files/" + temporaryFileName + ".dat");
                             if (st != null)
                             {
                                 st.CopyTo(fst);
@@ -116,33 +116,37 @@ namespace AasxServerDB
 
         private string shortType(ISubmodelElement sme)
         {
-            if (sme is Capability)
-                return "Cap";
-            if (sme is Property)
-                return "Prop";
-            if (sme is MultiLanguageProperty)
-                return "MLP";
-            if (sme is AasCore.Aas3_0.Range)
-                return "Range";
-            if (sme is Entity)
-                return "Ent";
-            if (sme is AasCore.Aas3_0.File)
-                return "File";
-            if (sme is Blob)
-                return "Blob";
-            if (sme is Operation)
-                return "Opr";
-            if (sme is ReferenceElement)
-                return ("Ref");
-            if (sme is RelationshipElement)
-                return "Rel";
-            if (sme is AnnotatedRelationshipElement)
-                return "RelA";
-            if (sme is SubmodelElementCollection)
-                return "SMC";
-            if (sme is SubmodelElementList)
-                return "SML";
-            return null;
+            switch (sme)
+            {
+                case Capability:
+                    return "Cap";
+                case Property:
+                    return "Prop";
+                case MultiLanguageProperty:
+                    return "MLP";
+                case AasCore.Aas3_0.Range:
+                    return "Range";
+                case Entity:
+                    return "Ent";
+                case AasCore.Aas3_0.File:
+                    return "File";
+                case Blob:
+                    return "Blob";
+                case Operation:
+                    return "Opr";
+                case ReferenceElement:
+                    return "Ref";
+                case RelationshipElement:
+                    return "Rel";
+                case AnnotatedRelationshipElement:
+                    return "RelA";
+                case SubmodelElementCollection:
+                    return "SMC";
+                case SubmodelElementList:
+                    return "SML";
+                default:
+                    return null;
+            }
         }
 
         private string getValueAndType(string v, out string sValue, out long iValue, out double fValue)
