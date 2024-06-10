@@ -355,5 +355,14 @@ namespace AasxServerStandardBib.Services
             AasxServer.Program.signalNewData(1);
         }
         #endregion
+        public void setWrite(int packageIndex, bool status)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsSubmodelPresent(string submodelIdentifier, out ISubmodel output, out int packageIndex)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
