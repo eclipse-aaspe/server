@@ -43,7 +43,6 @@ jobs:
         shell: pwsh
 
       - name: Build for release
-        description:
         working-directory: src
         run: .\BuildForRelease.ps1
         shell: pwsh
