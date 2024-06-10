@@ -49,7 +49,8 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                 ad.GlobalAssetId = globalAssetId;
                 //
                 ad.SpecificAssetIds = new List<SpecificAssetId>();
-                var specificAssetId = new SpecificAssetId("AssetKind", aasDB.AssetKind, externalSubjectId: new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, "assetKind") }));
+                var specificAssetId = new SpecificAssetId("AssetKind", aasDB.AssetKind,
+                    externalSubjectId: new Reference(ReferenceTypes.ExternalReference, new List<IKey>() {new Key(KeyTypes.GlobalReference, "assetKind")}));
                 ad.SpecificAssetIds.Add(specificAssetId);
 
                 // Submodels
@@ -75,7 +76,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                         {
                             esm
                         };
-                        sd.SemanticId = new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, submodelDB.SemanticId) });
+                        sd.SemanticId = new Reference(ReferenceTypes.ExternalReference, new List<IKey>() {new Key(KeyTypes.GlobalReference, submodelDB.SemanticId)});
                         ad.SubmodelDescriptors.Add(sd);
                     }
                 }
@@ -85,7 +86,8 @@ namespace IO.Swagger.Registry.Lib.V3.Services
         }
 
         //getFromAasRegistry from old implementation
-        public List<AssetAdministrationShellDescriptor> GetAllAssetAdministrationShellDescriptors(string assetKind = null, List<string> assetList = null, string aasIdentifier = null)
+        public List<AssetAdministrationShellDescriptor> GetAllAssetAdministrationShellDescriptors(string assetKind = null, List<string> assetList = null,
+            string aasIdentifier = null)
         {
             List<AssetAdministrationShellDescriptor> result = new List<AssetAdministrationShellDescriptor>();
 
@@ -109,6 +111,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                             found = true;
                         }
                     }
+
                     if (found)
                         result.Add(ad);
                 }
@@ -143,9 +146,9 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                         descriptorJSON = p.Value;
                                         break;
                                 }
-
                             }
                         }
+
                         bool found = false;
                         if (aasIdentifier == null && assetList.IsNullOrEmpty())
                             found = true;
@@ -159,6 +162,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                 }
                             }
                         }
+
                         if (!assetList.IsNullOrEmpty())
                         {
                             if (assetID != "" && descriptorJSON != "")
@@ -169,6 +173,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                 }
                             }
                         }
+
                         if (found)
                         {
                             //ad = JsonConvert.DeserializeObject<AssetAdministrationShellDescriptor>(descriptorJSON);
@@ -181,11 +186,13 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                             {
                                 ad = null;
                             }
+
                             result.Add(ad);
                         }
                     }
                 }
             }
+
             return result;
         }
     }

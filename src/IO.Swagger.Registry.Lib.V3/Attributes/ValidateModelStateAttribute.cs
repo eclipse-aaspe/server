@@ -27,7 +27,7 @@ namespace IO.Swagger.Registry.Lib.V3.Attributes
                     object args = null;
                     if (context.ActionArguments.ContainsKey(parameter.Name))
                     {
-                        args = context.ActionArguments[parameter.Name];
+                        args = context.ActionArguments[ parameter.Name ];
                     }
 
                     ValidateAttributes(parameter, args, context.ModelState);

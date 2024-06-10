@@ -301,26 +301,35 @@
         {
             if (env != null)
             {
-                var aas = env.AasEnv.AssetAdministrationShells[0];
-                if (aas.IdShort != "ZveiControlCabinetAas - EXTERNAL")
-                    continue;
-
-                link = "?aasUrl=" + getAasLink(aas);
-
-                // var registry = IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.getRegistry;
-                // JUIJUI
-                var registry = AasRegistryService.GetRegistryList();
-                if (registry != null && registry.Count != 0)
-                {
-                    link += "&registryURL=" + registry[0];
-                }
-                // JUIJUI
-
                 var queryPara = "";
                 var userPW = "";
                 var urlEdcWrapper = "";
                 string replace = "";
-                if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper, out replace))
+
+                var aas = env.AasEnv.AssetAdministrationShells[0];
+                if (aas.IdShort != "ZveiControlCabinetAas - EXTERNAL")
+                    continue;
+
+                link = getAasLink(aas);
+
+                var registry = AasRegistryService.GetRegistryList();
+                if (registry != null && registry.Count != 0)
+                {
+                    string registryURL = registry[0];
+
+                    if (AasxCredentials.get(cs.credentials, registryURL, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
+                    {
+                        if (replace != "")
+                            registryURL = replace;
+                    }
+                    link += "&registryURL=" + registryURL;
+                }
+
+                queryPara = "";
+                userPW = "";
+                urlEdcWrapper = "";
+                replace = "";
+                if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
                 {
                     if (replace != "")
                         link = replace;
@@ -329,6 +338,7 @@
                     // Console.WriteLine("iframe:" + link);
                 }
 
+                link = "?aasUrl=" + link;
             }
         }
 

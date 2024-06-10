@@ -3,17 +3,14 @@ using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AasxServerStandardBib.Services
 {
-    public class IdShortPathParserService :IIdShortPathParserService
+    public class IdShortPathParserService : IIdShortPathParserService
     {
         private IAppLogger<SubmodelService> _logger;
 
-        public IdShortPathParserService(IAppLogger<SubmodelService> logger) 
+        public IdShortPathParserService(IAppLogger<SubmodelService> logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
