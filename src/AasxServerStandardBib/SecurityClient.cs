@@ -333,7 +333,10 @@ namespace AasxServer
                         if (authServerEndPoint != null && authServerCertificate != null && clientCertificate != null
                             && accessToken != null)
                         {
-                            if (!string.IsNullOrWhiteSpace(accessToken.Value))
+                            if (accessToken.Value == null)
+                                accessToken.Value = "";
+
+                            if (accessToken.Value != "")
                             {
                                 bool valid = true;
                                 var jwtToken = new JwtSecurityToken(accessToken.Value);
