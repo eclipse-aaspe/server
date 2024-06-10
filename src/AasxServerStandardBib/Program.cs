@@ -861,27 +861,10 @@ namespace AasxServer
             Console.WriteLine("Security 1 Startup - Server");
             Console.WriteLine("Security 1.1 Load X509 Root Certificates into X509 Store Root");
 
-            X509Store root = new X509Store("Root", StoreLocation.CurrentUser);
-            root.Open(OpenFlags.ReadWrite);
-
-            System.IO.DirectoryInfo ParentDirectory = new System.IO.DirectoryInfo(".");
-
-            if (Directory.Exists("./root"))
-            {
-                foreach (System.IO.FileInfo f in ParentDirectory.GetFiles("./root/*.cer"))
-                {
-                    X509Certificate2 cert = new X509Certificate2("./root/" + f.Name);
-
-                    root.Add(cert);
-                    Console.WriteLine("Security 1.1 Add " + f.Name);
-                }
-            }
+            InitializeCertificateValidation();
 
             if (!Directory.Exists("./temp"))
                 Directory.CreateDirectory("./temp");
-
-            string fn = null;
-
 
             bool createFilesOnly = false;
             if (System.IO.File.Exists(AasxHttpContextHelper.DataPath + "/FILES.ONLY"))
@@ -983,6 +966,7 @@ namespace AasxServer
                 int taskIndex = 0;
 
                 int fi = 0;
+                string fn = null;
                 while (fi < fileNames.Length)
                 {
                     // try
@@ -1270,7 +1254,7 @@ namespace AasxServer
             // MICHA MICHA
             AasxTimeSeries.TimeSeries.timeSeriesInit();
 
-            AasxTask.taskInit();
+            //AasxTask.taskInit();
 
             RunScript(true);
             //// Initialize            NewDataAvailable?.Invoke(null, EventArgs.Empty);
@@ -1334,6 +1318,45 @@ namespace AasxServer
             AasxRestServer.Stop();
 
             return 0;
+        }
+
+        private static void InitializeCertificateValidation()
+        {
+            try
+            {
+                using var root = new X509Store("Root", StoreLocation.CurrentUser);
+                root.Open(OpenFlags.ReadWrite);
+
+                const string rootDirectory = "./root";
+                if (!Directory.Exists(rootDirectory))
+                {
+                    Console.WriteLine("The directory './root' does not exist.");
+                }
+                else
+                {
+                    var parentDirectory = new DirectoryInfo(rootDirectory);
+
+                    foreach (var file in parentDirectory.GetFiles("*.cer"))
+                    {
+                        try
+                        {
+                            var certPath = Path.Combine(rootDirectory, file.Name);
+                            var cert = new X509Certificate2(certPath);
+
+                            root.Add(cert);
+                            Console.WriteLine($"Security 1.1 Add {file.Name}");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Failed to add certificate {file.Name}: {ex.Message}");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to open the certificate store: {ex.Message}");
+            }
         }
 
         public static void Main(string[] args)
