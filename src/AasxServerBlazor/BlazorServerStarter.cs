@@ -49,7 +49,7 @@ namespace AasxServerBlazor
             {
                 Program.blazorPort = url[2];
             }
-            
+
             return Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {

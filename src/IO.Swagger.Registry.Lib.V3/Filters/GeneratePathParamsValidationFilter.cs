@@ -24,7 +24,7 @@ namespace IO.Swagger.Registry.Lib.V3.Filters
             {
                 var swaggerParam = operation.Parameters.SingleOrDefault(p => p.Name == par.Name);
 
-                var attributes = ((ControllerParameterDescriptor)par.ParameterDescriptor).ParameterInfo.CustomAttributes;
+                var attributes = ((ControllerParameterDescriptor) par.ParameterDescriptor).ParameterInfo.CustomAttributes;
 
                 if (attributes != null && attributes.Count() > 0 && swaggerParam != null)
                 {
@@ -39,7 +39,7 @@ namespace IO.Swagger.Registry.Lib.V3.Filters
                     var regexAttr = attributes.FirstOrDefault(p => p.AttributeType == typeof(RegularExpressionAttribute));
                     if (regexAttr != null)
                     {
-                        string regex = (string)regexAttr.ConstructorArguments[0].Value;
+                        string regex = (string) regexAttr.ConstructorArguments[ 0 ].Value;
                         if (swaggerParam is OpenApiParameter)
                         {
                             swaggerParam.Schema.Pattern = regex;
@@ -53,21 +53,22 @@ namespace IO.Swagger.Registry.Lib.V3.Filters
                     {
                         if (stringLengthAttr.NamedArguments.Count == 1)
                         {
-                            minLenght = (int)stringLengthAttr.NamedArguments.Single(p => p.MemberName == "MinimumLength").TypedValue.Value;
+                            minLenght = (int) stringLengthAttr.NamedArguments.Single(p => p.MemberName == "MinimumLength").TypedValue.Value;
                         }
-                        maxLength = (int)stringLengthAttr.ConstructorArguments[0].Value;
+
+                        maxLength = (int) stringLengthAttr.ConstructorArguments[ 0 ].Value;
                     }
 
                     var minLengthAttr = attributes.FirstOrDefault(p => p.AttributeType == typeof(MinLengthAttribute));
                     if (minLengthAttr != null)
                     {
-                        minLenght = (int)minLengthAttr.ConstructorArguments[0].Value;
+                        minLenght = (int) minLengthAttr.ConstructorArguments[ 0 ].Value;
                     }
 
                     var maxLengthAttr = attributes.FirstOrDefault(p => p.AttributeType == typeof(MaxLengthAttribute));
                     if (maxLengthAttr != null)
                     {
-                        maxLength = (int)maxLengthAttr.ConstructorArguments[0].Value;
+                        maxLength = (int) maxLengthAttr.ConstructorArguments[ 0 ].Value;
                     }
 
                     if (swaggerParam is OpenApiParameter)
@@ -80,8 +81,8 @@ namespace IO.Swagger.Registry.Lib.V3.Filters
                     var rangeAttr = attributes.FirstOrDefault(p => p.AttributeType == typeof(RangeAttribute));
                     if (rangeAttr != null)
                     {
-                        int rangeMin = (int)rangeAttr.ConstructorArguments[0].Value;
-                        int rangeMax = (int)rangeAttr.ConstructorArguments[1].Value;
+                        int rangeMin = (int) rangeAttr.ConstructorArguments[ 0 ].Value;
+                        int rangeMax = (int) rangeAttr.ConstructorArguments[ 1 ].Value;
 
                         if (swaggerParam is OpenApiParameter)
                         {

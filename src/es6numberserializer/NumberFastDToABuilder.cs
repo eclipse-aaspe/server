@@ -24,12 +24,12 @@ namespace Org.Webpki.Es6NumberSerialization
 
         public void Append(char c)
         {
-            chars[end++] = c;
+            chars[ end++ ] = c;
         }
 
         public void DecreaseLast()
         {
-            chars[end - 1]--;
+            chars[ end - 1 ]--;
         }
 
         public void Reset()
@@ -43,7 +43,7 @@ namespace Org.Webpki.Es6NumberSerialization
             if (!formatted)
             {
                 // check for minus sign
-                int firstDigit = chars[0] == '-' ? 1 : 0;
+                int firstDigit = chars[ 0 ] == '-' ? 1 : 0;
                 int decPoint = point - firstDigit;
                 if (decPoint < -5 || decPoint > 21)
                 {
@@ -53,17 +53,18 @@ namespace Org.Webpki.Es6NumberSerialization
                 {
                     ToFixedFormat(firstDigit, decPoint);
                 }
+
                 formatted = true;
             }
-            return new String(chars, 0, end);
 
+            return new String(chars, 0, end);
         }
 
         private void ArrayFill0(int from, int to)
         {
             while (from < to)
             {
-                chars[from++] = '0';
+                chars[ from++ ] = '0';
             }
         }
 
@@ -76,7 +77,7 @@ namespace Org.Webpki.Es6NumberSerialization
                 {
                     // >= 1, split decimals and insert point
                     Array.Copy(chars, point, chars, point + 1, end - point);
-                    chars[point] = '.';
+                    chars[ point ] = '.';
                     end++;
                 }
                 else
@@ -84,12 +85,13 @@ namespace Org.Webpki.Es6NumberSerialization
                     // < 1,
                     int target = firstDigit + 2 - decPoint;
                     Array.Copy(chars, firstDigit, chars, target, end - firstDigit);
-                    chars[firstDigit] = '0';
-                    chars[firstDigit + 1] = '.';
+                    chars[ firstDigit ] = '0';
+                    chars[ firstDigit + 1 ] = '.';
                     if (decPoint < 0)
                     {
                         ArrayFill0(firstDigit + 2, target);
                     }
+
                     end += 2 - decPoint;
                 }
             }
@@ -108,10 +110,11 @@ namespace Org.Webpki.Es6NumberSerialization
                 // insert decimal point if more than one digit was produced
                 int dot = firstDigit + 1;
                 Array.Copy(chars, dot, chars, dot + 1, end - dot);
-                chars[dot] = '.';
+                chars[ dot ] = '.';
                 end++;
             }
-            chars[end++] = 'e';
+
+            chars[ end++ ] = 'e';
             char sign = '+';
             int exp = decPoint - 1;
             if (exp < 0)
@@ -119,16 +122,17 @@ namespace Org.Webpki.Es6NumberSerialization
                 sign = '-';
                 exp = -exp;
             }
-            chars[end++] = sign;
+
+            chars[ end++ ] = sign;
 
             int charPos = exp > 99 ? end + 2 : exp > 9 ? end + 1 : end;
             end = charPos + 1;
 
             // code below is needed because Integer.getChars() is not internal
-            for (; ; )
+            for (;;)
             {
                 int r = exp % 10;
-                chars[charPos--] = digits[r];
+                chars[ charPos-- ] = digits[ r ];
                 exp = exp / 10;
                 if (exp == 0) break;
             }

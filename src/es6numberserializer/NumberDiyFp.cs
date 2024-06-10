@@ -45,7 +45,6 @@ namespace Org.Webpki.Es6NumberSerialization
     // DiyFp are not designed to contain special doubles (NaN and Infinity).
     class NumberDiyFp
     {
-
         private long fv;
         private int ev;
 
@@ -101,19 +100,19 @@ namespace Org.Webpki.Es6NumberSerialization
             // significant 64 bits are only used for rounding the most significant 64
             // bits.
             const long kM32 = 0xFFFFFFFFL;
-            long a = (long)((ulong)fv >> 32);
+            long a = (long) ((ulong) fv >> 32);
             long b = fv & kM32;
-            long c = (long)((ulong)other.fv >> 32);
+            long c = (long) ((ulong) other.fv >> 32);
             long d = other.fv & kM32;
             long ac = a * c;
             long bc = b * c;
             long ad = a * d;
             long bd = b * d;
-            long tmp = ((long)((ulong)bd >> 32)) + (ad & kM32) + (bc & kM32);
+            long tmp = ((long) ((ulong) bd >> 32)) + (ad & kM32) + (bc & kM32);
             // By adding 1U << 31 to tmp we round the final result.
             // Halfway cases will be round up.
             tmp += 1L << 31;
-            long result_f = ac + ((long)((ulong)ad >> 32)) + ((long)((ulong)bc >> 32)) + ((long)((ulong)tmp >> 32));
+            long result_f = ac + ((long) ((ulong) ad >> 32)) + ((long) ((ulong) bc >> 32)) + ((long) ((ulong) tmp >> 32));
             ev += other.ev + 64;
             fv = result_f;
         }
@@ -140,11 +139,13 @@ namespace Org.Webpki.Es6NumberSerialization
                 f <<= 10;
                 e -= 10;
             }
+
             while ((f & kUint64MSB) == 0)
             {
                 f <<= 1;
                 e--;
             }
+
             this.fv = f;
             this.ev = e;
         }
@@ -175,6 +176,5 @@ namespace Org.Webpki.Es6NumberSerialization
         {
             ev = new_value;
         }
-
     }
 }
