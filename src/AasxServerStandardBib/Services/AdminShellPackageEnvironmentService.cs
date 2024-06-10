@@ -157,7 +157,8 @@ namespace AasxServerStandardBib.Services
                         if (aas.Any())
                         {
                             output = aas.First();
-                            packageIndex = Array.IndexOf(_packages, package);
+                            packageIndex = _packages.IndexOf(package);
+
                             return true;
                         }
                     }
@@ -277,7 +278,7 @@ namespace AasxServerStandardBib.Services
                             }
                             */
                             output = submodels.First();
-                            packageIndex = Array.IndexOf(_packages, package);
+                            packageIndex = _packages.IndexOf(package);
                             return true;
                         }
                     }
@@ -332,7 +333,7 @@ namespace AasxServerStandardBib.Services
                         if (conceptDescriptions.Any())
                         {
                             output = conceptDescriptions.First();
-                            packageIndex = Array.IndexOf(_packages, package);
+                            packageIndex = _packages.IndexOf(package);
                             return true;
                         }
                     }
