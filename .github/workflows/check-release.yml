@@ -3,68 +3,70 @@ name: Check-release-workflow
 on:
   pull_request:
     branches:
-      - master
-    types: [opened, synchronize, reopened, edited]
+      - main
+      - release
+    types: [ opened, synchronize, reopened, edited ]
 
   push:
+    branches:
+      - main
+      - release
 
 jobs:
   Check-release:
     runs-on: windows-latest
-    if: contains(github.event.pull_request.body, 'The workflow check-release was intentionally skipped.') == false
+    if: "!contains(github.event.pull_request.body, 'The workflow check-release was intentionally skipped.')"
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v3
 
       - name: Set timestamp
         id: setTimestamp
         run: |
-          $timestamp = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH-mm-ssZ")
-          if ($timestamp.Contains("'"))
+          $timestamp = (Get-Date).ToString("yyyy-MM-ddTHH-mm-ssZ")
+          if ($timestamp -match "'|\"|:")
           {
-              throw "Unexpected timestamp containing a single quote: $timestamp"
+              throw "Unexpected characters in timestamp: $timestamp"
           }
-          if ($timestamp.Contains('"'))
-          {
-              throw "Unexpected timestamp containing a double quote: $timestamp"
-          }
-          if ($timestamp.Contains(':'))
-          {
-              throw "Unexpected timestamp containing a full colon: $timestamp"
-          }
+          echo "::set-output name=timestamp::$timestamp"
+        shell: pwsh
 
-          Write-Output "::set-output name=timestamp::$timestamp"
-
-      - name: Install .NET core 6.0
-        uses: actions/setup-dotnet@v1
+      - name: Install .NET Core 6.0
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '6.0.x'
-
+      
+      # Builds the project for release by executing the BuildForRelease.ps1 PowerShell script in the 'src' directory.
       - name: Build for release
+        description:
         working-directory: src
-        run: powershell .\BuildForRelease.ps1
-
-      - name: Check --help and Readme coincide
-        working-directory: src
-        run: powershell .\CheckHelpInReadme.ps1
-
+        run: .\BuildForRelease.ps1
+        shell: pwsh
+      
+      # Compares the output of the --help command with the README file to ensure consistency.
       - name: Package
         working-directory: src
-        run: powershell .\PackageRelease.ps1 -version LATEST.alpha
-
+        run: .\PackageRelease.ps1
+        shell: pwsh
+        with:
+          suffix: alpha
+      
+      # Uploads the AasxServerBlazor artifact with a timestamp to the artifacts' repository.
       - name: Upload AasxServerBlazor
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: AasxServerBlazor.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
           path: artefacts/release/LATEST.alpha/AasxServerBlazor.zip
-
+      
+      # Uploads the AasxServerAspNetCore artifact with a timestamp to the artifacts' repository.
       - name: Upload AasxServerAspNetCore
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: AasxServerAspNetCore.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
           path: artefacts/release/LATEST.alpha/AasxServerAspNetCore.zip
 
+      # Uncomment the following steps if you need to upload the AasxServerWindows artifact
       # - name: Upload AasxServerWindows
-      #   uses: actions/upload-artifact@v2
+      #   uses: actions/upload-artifact@v3
       #   with:
       #     name: AasxServerWindows.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
       #     path: artefacts/release/LATEST.alpha/AasxServerWindows.zip
