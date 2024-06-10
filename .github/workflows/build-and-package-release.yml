@@ -23,7 +23,7 @@ jobs:
         run: |
           $version = .\BuildVersionNumber.ps1 -suffix alpha
           Write-Host "Inferred version: $version"
-          echo "::set-output name=version::$GITHUB_OUTPUT
+          echo "::set-output name=version::$version"
         shell: pwsh
 
       - name: Install .NET Core
