@@ -38,7 +38,7 @@ jobs:
       - name: Infer the version
         id: inferVersion
         run: |
-          $version = .\GetVersion.ps1 -suffix alpha
+          $version = .\BuildVersionNumber.ps1 -suffix alpha
           Write-Output "::set-output name=version::$version"
         shell: pwsh
 
