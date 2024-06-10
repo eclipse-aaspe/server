@@ -23,7 +23,7 @@ jobs:
         run: |
           $version = .\BuildVersionNumber.ps1 -suffix alpha
           Write-Host "Inferred version: $version"
-          echo "::set-output name=version::$version"
+          echo "version=$version" >> $GITHUB_ENV
         shell: pwsh
 
       - name: Install .NET Core
@@ -39,7 +39,7 @@ jobs:
       - name: Update version numbers in project
         working-directory: src
         run: |
-          $version = '${{ steps.inferVersion.outputs.version }}'
+          $version = '${{ env.version }}'
           Write-Host "Updating project versions to: $version"
           .\UpdateProjectVersions.ps1 -version $version
         shell: pwsh
@@ -47,7 +47,7 @@ jobs:
       - name: Package the release
         working-directory: src
         run: |
-          $version = '${{ steps.inferVersion.outputs.version }}'
+          $version = '${{ env.version }}'
           Write-Host "Packaging for the release version: $version"
           .\PackageRelease.ps1 -version $version
         shell: pwsh
@@ -55,7 +55,7 @@ jobs:
       - name: Rename the release assets
         working-directory: .
         run: |
-          $version = '${{ steps.inferVersion.outputs.version }}'
+          $version = '${{ env.version }}'
           $releaseDir = Join-Path $(Get-Location) "artefacts\release\$version"
           Write-Host "Release directory: $releaseDir"
 
@@ -80,7 +80,7 @@ jobs:
       - name: Verify the release assets
         working-directory: .
         run: |
-          $version = '${{ steps.inferVersion.outputs.version }}'
+          $version = '${{ env.version }}'
           $releaseDir = Join-Path $(Get-Location) "artefacts\release\$version"
           Write-Host "Verifying contents of the release directory: $releaseDir"
           Get-ChildItem $releaseDir
@@ -91,8 +91,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: "v${{ steps.inferVersion.outputs.version }}"
-          release_name: "Release v${{ steps.inferVersion.outputs.version }}"
+          tag_name: "v${{ env.version }}"
+          release_name: "Release v${{ env.version }}"
           draft: false
           prerelease: false
 
@@ -100,6 +100,6 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: artefacts/release/${{ steps.inferVersion.outputs.version }}/*.zip
-          asset_name: ${{ steps.inferVersion.outputs.version }}.zip
+          asset_path: artefacts/release/${{ env.version }}/*.zip
+          asset_name: ${{ env.version }}.zip
           asset_content_type: application/zip
