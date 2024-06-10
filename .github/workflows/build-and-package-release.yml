@@ -23,7 +23,7 @@ jobs:
         run: |
           $version = .\BuildVersionNumber.ps1 -suffix alpha
           Write-Host "Inferred version: $version"
-          echo "::set-output name=version::$version"
+          echo "{version}={$version}" >> $GITHUB_OUTPUT
         shell: pwsh
 
       - name: Install .NET Core
@@ -31,17 +31,17 @@ jobs:
         with:
           dotnet-version: '6.0.x'
 
-      - name: Build for release
-        working-directory: src
-        run: .\BuildForRelease.ps1
-        shell: pwsh
-
       - name: Update version numbers in project
         working-directory: src
         run: |
           $version = '${{ steps.inferVersion.outputs.version }}'
           Write-Host "Updating project versions to: $version"
           .\UpdateProjectVersions.ps1 -version $version
+        shell: pwsh
+        
+      - name: Build for release
+        working-directory: src
+        run: .\BuildForRelease.ps1
         shell: pwsh
 
       - name: Package the release
@@ -100,7 +100,6 @@ jobs:
       - name: Upload the release assets
         uses: actions/upload-release-asset@v1
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: artefacts/release/${{ steps.inferVersion.outputs.version }}/*.zip
           asset_name: ${{ steps.inferVersion.outputs.version }}.zip
           asset_content_type: application/zip
