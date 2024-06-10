@@ -3408,13 +3408,8 @@ namespace AasxRestServerLibrary
                 return context;
             }
 
-<<<<<<< HEAD
-            [RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/assetid/(\d+)(/|)$")]
-            public IHttpContext GlobalAssetId(IHttpContext context)
-=======
             [ RestRoute(HttpMethod = HttpMethod.GET, PathInfo = @"^/assetid/(\d+)(/|)$") ]
-            public IHttpContext AssetId(IHttpContext context)
->>>>>>> upstream/main
+            public IHttpContext GlobalAssetId(IHttpContext context)
             {
                 var m = helper.PathInfoRegexMatch(MethodBase.GetCurrentMethod(), context.Request.PathInfo);
                 if (m.Success && m.Groups.Count >= 2)
