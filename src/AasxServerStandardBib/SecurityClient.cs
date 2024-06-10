@@ -333,6 +333,9 @@ namespace AasxServer
                         if (authServerEndPoint != null && authServerCertificate != null && clientCertificate != null
                             && accessToken != null)
                         {
+                            if (accessToken.Value == null)
+                                accessToken.Value = "";
+
                             if (accessToken.Value != "")
                             {
                                 bool valid = true;
