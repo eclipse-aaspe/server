@@ -2,8 +2,6 @@ name: Build-and-package-release-workflow
 
 on:
   push:
-    branches:
-      - main
     tags:
       - 'v*'
 
@@ -22,7 +20,8 @@ jobs:
         working-directory: src
         run: |
           $version = .\BuildVersionNumber.ps1 -suffix alpha
-          echo "##[set-output name=version;$version]"
+          Write-Host "Inferred version: $version"
+          echo "::set-output name=version::$version"
         shell: pwsh
 
       - name: Install .NET Core
@@ -37,7 +36,10 @@ jobs:
 
       - name: Update version numbers in project
         working-directory: src
-        run: .\UpdateProjectVersions.ps1 -version ${{ steps.inferVersion.outputs.version }}
+        run: |
+          $version = '${{ steps.inferVersion.outputs.version }}'
+          Write-Host "Updating project versions to: $version"
+          .\UpdateProjectVersions.ps1 -version $version
         shell: pwsh
 
       - name: Package the release
