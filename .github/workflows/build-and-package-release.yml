@@ -13,6 +13,7 @@ jobs:
 
       - name: Infer the version from the GitHub ref
         id: inferVersion
+        working-directory: src
         run: |
           $version = .\BuildVersionNumber.ps1 -suffix alpha
           echo "::set-output name=version::$version"
