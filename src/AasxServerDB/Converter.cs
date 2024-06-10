@@ -5,13 +5,13 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace AasxServerDB
 {
-    public class ReadDB
+    public class Converter
     {
         static public AdminShellPackageEnv GetPackageEnv(string path, AASSet aasDB) 
         {
             using (AasContext db = new AasContext())
             {
-                if (path == null || path.Equals("") || aasDB == null)
+                if (path.IsNullOrEmpty() || aasDB == null)
                     return null;
 
                 AssetAdministrationShell aas = new AssetAdministrationShell(
@@ -34,7 +34,7 @@ namespace AasxServerDB
                     .ToList();
                 foreach (var submodelDB in submodelDBList)
                 {
-                    Submodel sm = ReadDB.GetSubmodel(smDB:submodelDB);
+                    Submodel sm = Converter.GetSubmodel(smDB:submodelDB);
                     aas.Submodels.Add(sm.GetReference());
                     aasEnv.AasEnv.Submodels.Add(sm);
                 }
@@ -43,11 +43,11 @@ namespace AasxServerDB
             }
         }
 
-        static public Submodel GetSubmodel(SMSet? smDB = null, string? smIdentifier = "")
+        static public Submodel GetSubmodel(SMSet? smDB = null, string smIdentifier = "")
         {
             using (AasContext db = new AasContext())
             {
-                if (!smIdentifier.Equals(""))
+                if (!smIdentifier.IsNullOrEmpty())
                 {
                     var smList = db.SMSets.Where(sm => sm.Identifier == smIdentifier).ToList();
                     if (smList.Count == 0)
@@ -150,23 +150,23 @@ namespace AasxServerDB
         {
             using AasContext db = new AasContext();
             int? aasxId = null;
-            if (!submodelId.Equals(""))
+            if (!submodelId.IsNullOrEmpty())
             {
                 var submodelDBList = db.SMSets.Where(s => s.Identifier == submodelId);
                 if (submodelDBList.Count() > 0)
                     aasxId = submodelDBList.First().AASXId;
             }
-            if (!aasId.Equals(""))
+            if (!aasId.IsNullOrEmpty())
             {
                 var aasDBList = db.AASSets.Where(a => a.Identifier == aasId);
                 if (aasDBList.Any())
                     aasxId = aasDBList.First().AASXId;
             }
             if (aasxId == null)
-                return "";
+                return string.Empty;
             var aasxDBList = db.AASXSets.Where(a => a.Id == aasxId);
             if (!aasxDBList.Any())
-                return "";
+                return string.Empty;
             var aasxDB = aasxDBList.First();
             return aasxDB.AASX;
 

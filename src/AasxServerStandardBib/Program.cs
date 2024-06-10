@@ -124,7 +124,7 @@ namespace AasxServer
 
             lock (Program.changeAasxFile)
             {
-                envFileName[i] = ReadDB.GetAASXPath(aasId: aasIdentifier);
+                envFileName[i] = Converter.GetAASXPath(aasId: aasIdentifier);
                 if (envFileName[i].Equals(""))
                     return false;
                     
@@ -164,7 +164,7 @@ namespace AasxServer
                         Console.WriteLine("LOAD: " + aasIdentifier);
                         var aasDBList = db.AASSets.Where(a => a.Identifier == aasIdentifier);
                         var aasDB = aasDBList.First();
-                        env[i] = ReadDB.GetPackageEnv(envFileName[i], aasDB);
+                        env[i] = Converter.GetPackageEnv(envFileName[i], aasDB);
                         output = env[i].AasEnv.AssetAdministrationShells[0];
                     }
                 }
@@ -209,7 +209,7 @@ namespace AasxServer
 
             lock (Program.changeAasxFile)
             {
-                envFileName[i] = ReadDB.GetAASXPath(submodelId: submodelIdentifier);
+                envFileName[i] = Converter.GetAASXPath(submodelId: submodelIdentifier);
                 if (envFileName[i].Equals(""))
                     return false;
                 
@@ -256,8 +256,8 @@ namespace AasxServer
                         Console.WriteLine("LOAD Submodel: " + submodelDB.IdShort);
                         var aasDBList = db.AASSets.Where(a => a.AASXId == submodelDB.AASXId);
                         var aasDB = aasDBList.First();
-                        env[i] = ReadDB.GetPackageEnv(envFileName[i], aasDB);
-                        output = ReadDB.GetSubmodel(smDB: submodelDB);
+                        env[i] = Converter.GetPackageEnv(envFileName[i], aasDB);
+                        output = Converter.GetSubmodel(smDB: submodelDB);
                     }
                 }
 
@@ -796,7 +796,7 @@ namespace AasxServer
             {
                 using (AasContext db = new AasContext())
                 {
-                    db.ClearDB();
+                    await db.ClearDB();
                 }
             }
 

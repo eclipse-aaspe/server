@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -341,10 +341,7 @@ namespace AasxServer
                             if (createAccessToken(envIndex, authServerEndPoint, authServerCertificate,
                                 clientCertificate, clientCertificatePassWord,
                                 accessToken, clientToken))
-                            {
                                 accessToken.SetTimeStamp(timeStamp);
-                                Program.env[envIndex].setWrite(true);
-                            }
                         }
                         break;
                 }
@@ -1387,7 +1384,6 @@ namespace AasxServer
                 duration.Value = watch.ElapsedMilliseconds + " ms";
                 duration.TimeStamp = timeStamp;
             }
-            Program.env[envIndex].setWrite(true);
             Program.signalNewData(2); // new tree, nodes opened
         }
         static void operation_limitCount(Operation op, int envIndex, DateTime timeStamp)
@@ -1473,7 +1469,6 @@ namespace AasxServer
             catch
             {
             }
-            Program.env[envIndex].setWrite(true);
             Program.signalNewData(1);
         }
 
@@ -2208,7 +2203,6 @@ namespace AasxServer
             // if (root != null && root.bomTimestamp > lastCreateTimestamp)
             if (changed || credentialsChanged)
             {
-                Program.env[envIndex].setWrite(true);
                 Program.signalNewData(1);
                 lastCreateTimestamp = timeStamp;
                 credentialsChanged = false;
@@ -2252,7 +2246,7 @@ namespace AasxServer
                     {
                         lock (Program.changeAasxFile)
                         {
-                            EditDB.EditAAS(Program.env[envi]);
+                            Edit.Update(Program.env[envi]);
                             newData = true;
                         }
                     }
@@ -2261,9 +2255,7 @@ namespace AasxServer
                 envi++;
             }
             if (newData)
-            {
                 Program.signalNewData(0);
-            }
         }
 
         static Thread tasksThread;
@@ -2315,7 +2307,6 @@ namespace AasxServer
                         t.nextCycle.Value = t.nextExecution.ToString();
                         t.nextCycle.SetTimeStamp(timeStamp);
                     }
-                    // Program.env[t.envIndex].setWrite(true);
                     Program.signalNewData(0);
 
                     runOperations(t.def, t.envIndex, timeStamp);
