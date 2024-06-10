@@ -9,68 +9,51 @@ jobs:
   Build-and-package-release:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v3
 
-      - name: Infer the version from the github ref
+      - name: Infer the version from the GitHub ref
         id: inferVersion
         run: |
-          $prefix = "refs/tags/v"
-          if (!${env:GITHUB_REF}.StartsWith($prefix))
-          {
-              throw "Unexpected GITHUB_REF: ${env:GITHUB_REF}"
-          }
+          $version = .\GetVersion.ps1 -suffix alpha
+          echo "::set-output name=version::$version"
+        shell: pwsh
 
-          $version = ${env:GITHUB_REF}.Substring($prefix.Length)
-          Write-Host "The version is: $version"
-
-          if ($version.Contains("'"))
-          {
-              throw "Unexpected version containing a single quote: $version"
-          }
-          if ($version.Contains('"'))
-          {
-              throw "Unexpected version containing a double quote: $version"
-          }
-          if ($version.Contains(':'))
-          {
-              throw "Unexpected version containing a full colon: $version"
-          }
-
-          Write-Output "::set-output name=version::$version"
-
-      - name: Install .NET core
-        uses: actions/setup-dotnet@v1
+      - name: Install .NET Core
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '6.0.x'
 
-      - name: Build for the release
+      - name: Build for release
         working-directory: src
-        run: powershell .\BuildForRelease.ps1
+        run: .\BuildForRelease.ps1
+        shell: pwsh
+
+      - name: Update version numbers in project
+        working-directory: src
+        run: .\UpdateProjectVersions.ps1 -version ${{ steps.inferVersion.outputs.version }}
+        shell: pwsh
 
       - name: Package the release
         working-directory: src
         run: |
           $version = '${{ steps.inferVersion.outputs.version }}'
           Write-Host "Packaging for the release version: $version"
-          powershell .\PackageRelease.ps1 -version $version
+          .\PackageRelease.ps1 -version $version
+        shell: pwsh
 
       - name: Rename the release assets
-        working-directory: ./
+        working-directory: .
         run: |
-          Write-Host "Current working directory: $(Get-Location)"
-
           $version = '${{ steps.inferVersion.outputs.version }}'
           $releaseDir = Join-Path $(Get-Location) "artefacts\release\$version"
           Write-Host "Release directory: $releaseDir"
 
-          if (!(Test-Path $releaseDir))
-          {
+          if (!(Test-Path $releaseDir)) {
               throw "The release directory does not exist: $releaseDir"
           }
 
           $archives = Get-ChildItem $releaseDir -Filter *.zip
-          foreach($archive in $archives)
-          {
+          foreach($archive in $archives) {
               $path = $archive.FullName
               Write-Host "The path to the archive is: $path"
 
@@ -78,10 +61,10 @@ jobs:
               Write-Host "The name without extension is: $nameWoExt"
 
               $target = Join-Path $releaseDir ($nameWoExt + "." + $version + ".zip")
-
               Write-Host "Moving: $path -> $target"
               Move-Item -Path $path -Destination $target
           }
+        shell: pwsh
 
       - name: Upload the release assets
         uses: AButler/upload-release-assets@v2.0

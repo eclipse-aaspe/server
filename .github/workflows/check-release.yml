@@ -34,39 +34,40 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '6.0.x'
-      
-      # Builds the project for release by executing the BuildForRelease.ps1 PowerShell script in the 'src' directory.
+
+      - name: Infer the version
+        id: inferVersion
+        run: |
+          $version = .\GetVersion.ps1 -suffix alpha
+          Write-Output "::set-output name=version::$version"
+        shell: pwsh
+
       - name: Build for release
         description:
         working-directory: src
         run: .\BuildForRelease.ps1
         shell: pwsh
-      
-      # Compares the output of the --help command with the README file to ensure consistency.
+
       - name: Package
         working-directory: src
-        run: .\PackageRelease.ps1
+        run: .\PackageRelease.ps1 -version ${{ steps.inferVersion.outputs.version }}
         shell: pwsh
-        with:
-          suffix: alpha
-      
-      # Uploads the AasxServerBlazor artifact with a timestamp to the artifacts' repository.
+
       - name: Upload AasxServerBlazor
         uses: actions/upload-artifact@v3
         with:
-          name: AasxServerBlazor.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
+          name: AasxServerBlazor.LATEST.${{ steps.inferVersion.outputs.version }}.${{ steps.setTimestamp.outputs.timestamp }}
           path: artefacts/release/LATEST.alpha/AasxServerBlazor.zip
-      
-      # Uploads the AasxServerAspNetCore artifact with a timestamp to the artifacts' repository.
+
       - name: Upload AasxServerAspNetCore
         uses: actions/upload-artifact@v3
         with:
-          name: AasxServerAspNetCore.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
+          name: AasxServerAspNetCore.LATEST.${{ steps.inferVersion.outputs.version }}.${{ steps.setTimestamp.outputs.timestamp }}
           path: artefacts/release/LATEST.alpha/AasxServerAspNetCore.zip
 
       # Uncomment the following steps if you need to upload the AasxServerWindows artifact
       # - name: Upload AasxServerWindows
       #   uses: actions/upload-artifact@v3
       #   with:
-      #     name: AasxServerWindows.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
+      #     name: AasxServerWindows.LATEST.${{ steps.inferVersion.outputs.version }}.${{ steps.setTimestamp.outputs.timestamp }}
       #     path: artefacts/release/LATEST.alpha/AasxServerWindows.zip
