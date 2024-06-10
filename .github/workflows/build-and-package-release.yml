@@ -103,3 +103,11 @@ jobs:
           asset_path: artefacts/release/${{ steps.inferVersion.outputs.version }}/*.zip
           asset_name: ${{ steps.inferVersion.outputs.version }}.zip
           asset_content_type: application/zip
+
+      
+      - name: Upload the release assets OLD WAY
+        uses: AButler/upload-release-assets@v2.0
+        with:
+          files: "artefacts/release/${{ steps.inferVersion.outputs.version }}/*.zip"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          release-tag: "v${{ steps.inferVersion.outputs.version }}"
