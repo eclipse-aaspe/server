@@ -39,7 +39,7 @@ jobs:
       - name: Update version numbers in project
         working-directory: src
         run: |
-          $version = '${{ env.version }}'
+          $version = '${{ steps.inferVersion.outputs.version }}'
           Write-Host "Updating project versions to: $version"
           .\UpdateProjectVersions.ps1 -version $version
         shell: pwsh
@@ -85,16 +85,17 @@ jobs:
           Write-Host "Verifying contents of the release directory: $releaseDir"
           Get-ChildItem $releaseDir
 
-      - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: "v${{ env.version }}"
-          release_name: "Release v${{ env.version }}"
-          draft: false
-          prerelease: false
+      # Use this once we can say when to automatically create a release
+      #- name: Create GitHub Release
+      #  id: create_release
+      #  uses: actions/create-release@v1
+      #  env:
+      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #  with:
+      #    tag_name: "v${{ env.version }}"
+      #    release_name: "Release v${{ env.version }}"
+      #    draft: false
+      #    prerelease: false
 
       - name: Upload the release assets
         uses: actions/upload-release-asset@v1
