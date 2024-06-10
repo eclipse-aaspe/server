@@ -5,7 +5,7 @@ contributes to this project.
 
 ## Contributing Companies
 
-> NOTE: The names of contributing companies and individuals are sorted alphabetically solely for improved readability and do not reflect any value or hierarchy.
+> **NOTE**: The names of contributing companies and individuals are sorted alphabetically solely for improved readability and do not reflect any value or hierarchy.
 
 Our heartfelt thanks go to the following companies and institutes, whose support and collaboration have been invaluable to the success of this project. Their
 contributions matter greatly and are deeply appreciated:
@@ -23,6 +23,9 @@ contributions matter greatly and are deeply appreciated:
 | [TUD Dresden University of Technology](https://tu-dresden.de/)                                          | <img src="https://tu-dresden.de/++theme++tud.theme.webcms2/img/tud-logo.svg" alt="TU Dresden Logo" style="max-width:250px;">                                |
 | [ZHAW Zürcher Hochschule für Angewandte Wissenschaften](https://www.zhaw.ch/)                           | <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/ZHAW_Logo.svg/514px-ZHAW_Logo.svg.png" alt="ZHAW Logo" style="max-width:250px;">        |
 
+> **NOTE:** All logos provided here are direct links from the respective company or organization's website and are not stored or used directly on our site. Each logo is licensed under its respective organization. The rights to use these logos within this project are held by the IDTA e.V.; however, the original rights remain with the respective organizations. For any questions or requests regarding additional use, please contact the IDTA at info@idtwin.org.
+
+
 ## Contributing People
 
 We are profoundly grateful to the following individuals for their time, effort, and dedication. Their contributions have been instrumental in the development
@@ -32,12 +35,12 @@ and success of this project:
 * [AlexanderWollbrink](https://github.com/AlexanderWollbrink) ([Fraunhofer IOSB-INA](https://www.iosb-ina.fraunhofer.de/))
 * [Andreas Orzelski](https://github.com/aorzelskiGH) ([Phoenix Contact](https://www.phoenixcontact.com/))
 * [Bastian Roessl](mailto:bastian.roessl@iosb-ina.fraunhofer.de) ([Fraunhofer IOSB-INA](https://www.iosb-ina.fraunhofer.de/))
-* [dschubertpxc](https://github.com/dschubertpxc)
+* [dschubertpxc](https://github.com/dschubertpxc) ([Phoenix Contact](https://www.phoenixcontact.com/))
 * [Gerd Brost](mailto:gerd.brost@aisec.fraunhofer.de) ([Fraunhofer AISEC](https://www.aisec.fraunhofer.de/))
 * [Harish Itian](https://github.com/harishpakala) ([Otto Von Guericke University](https://www.ovgu.de))
 * [jjtikekar](https://github.com/jjtikekar) ([Fraunhofer IOSB-INA](https://www.iosb-ina.fraunhofer.de/))
 * [Juilee Tikekar](https://github.com/juileetikekar) ([Industrial Digital Twin Association e.V. (IDTA)](https://www.idtwin.org/))
-* [Magnus Redeker](https://github.com/magnus-redeker)
+* [Magnus Redeker](https://github.com/magnus-redeker) ([Fraunhofer IOSB-INA](https://www.iosb-ina.fraunhofer.de/))
 * [Marko Ristin](https://github.com/mristin) ([ZHAW Zürcher Hochschule für Angewandte Wissenschaften](https://www.zhaw.ch/))
 * [Marta Fullen](https://github.com/martafullen) ([Fraunhofer IOSB-INA](https://www.iosb-ina.fraunhofer.de/))
 * [Michael Hoffmeister](https://github.com/MichaelHoffmeisterFesto) ([Festo](https://www.festo.com))
