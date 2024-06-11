@@ -38,7 +38,6 @@ jobs:
       - name: Infer the version from the GitHub ref
         id: inferVersion
         working-directory: src
-        needs: extract_branch
         run: |
           $branch = '${{ steps.extract_branch.outputs.branch }}'
           $version = .\BuildVersionNumber.ps1 -suffix alpha -branch $branch -githubRunNumber ${{ github.run_number }}
@@ -53,7 +52,6 @@ jobs:
 
       - name: Update version numbers in project
         working-directory: src
-        needs: inferVersion
         run: |
           $version = '${{ steps.inferVersion.outputs.version }}'
           Write-Host "Updating project versions to: $version"
@@ -68,7 +66,6 @@ jobs:
       - name: Rename the release assets
         id: rename_release_assets
         working-directory: .
-        needs: inferVersion
         run: |
           $version = '${{ steps.inferVersion.outputs.version }}'
           $releaseDir = Join-Path $(Get-Location) "artefacts/release/$version"
@@ -95,7 +92,6 @@ jobs:
       - name: Package the release
         id: package_release
         working-directory: src
-        needs: [ inferVersion,rename_release_assets ]
         run: |
           $version = '${{ steps.inferVersion.outputs.version }}'
           Write-Host "Packaging for the release version: $version"
@@ -104,7 +100,6 @@ jobs:
 
       - name: Verify the release assets
         working-directory: .
-        needs: [ inferVersion,package_release ]
         run: |
           $version = '${{ steps.inferVersion.outputs.version }}'
           $releaseDir = Join-Path $(Get-Location) "artefacts/release/$version"
@@ -135,7 +130,6 @@ jobs:
 
       - name: Create new pre-release
         id: create_pre_release
-        needs: [ delete_latest_pre_release, generate_release_notes ]
         uses: actions/create-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -148,7 +142,6 @@ jobs:
 
       - name: Upload the release assets
         uses: AButler/upload-release-assets@v3.0
-        needs: create_pre_release
         with:
           files: "artefacts/release/${{ steps.inferVersion.outputs.version }}/*.zip"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
