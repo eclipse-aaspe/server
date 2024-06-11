@@ -125,9 +125,17 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: pwsh
 
+      - name: Generate release notes
+        id: generate_release_notes
+        uses: release-drafter/release-drafter@v6
+        with:
+          config-name: release-drafter.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create new pre-release
         id: create_pre_release
-        needs: delete_latest_pre_release
+        needs: [ delete_latest_pre_release, generate_release_notes ]
         uses: actions/create-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -136,7 +144,7 @@ jobs:
           release_name: "Release v${{ steps.inferVersion.outputs.version }}"
           draft: false
           prerelease: true
-          body: "Pre-release for version ${{ steps.inferVersion.outputs.version }}"
+          body: ${{ steps.generate_release_notes.outputs.body }}
 
       - name: Upload the release assets
         uses: AButler/upload-release-assets@v3.0
