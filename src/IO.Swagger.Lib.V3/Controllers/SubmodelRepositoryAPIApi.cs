@@ -23,6 +23,7 @@ using IO.Swagger.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Annotations;
 using System;
@@ -243,7 +244,7 @@ namespace IO.Swagger.Controllers
 
             var filtered = new List<ISubmodelElement>();
             DateTime _diff = new DateTime();
-            if (diff != null && diff != "")
+            if (!diff.IsNullOrEmpty())
             {
                 try
                 {

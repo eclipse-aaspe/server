@@ -20,8 +20,9 @@ namespace AasxServerDB
                     assetInformation: new AssetInformation(AssetKind.Type, aasDB.GlobalAssetId),
                     submodels: new List<AasCore.Aas3_0.IReference>()
                 );
-                aas.TimeStamp = aasDB.TimeStamp;
                 aas.TimeStampCreate = aasDB.TimeStampCreate;
+                //aas.SetTimeStamp(aasDB.TimeStamp);
+                aas.TimeStamp = aasDB.TimeStamp;
                 aas.TimeStampTree = aasDB.TimeStampTree;
 
                 AdminShellPackageEnv aasEnv = new AdminShellPackageEnv();
@@ -66,11 +67,12 @@ namespace AasxServerDB
                 submodel.IdShort = smDB.IdShort;
                 submodel.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
                     new List<IKey>() { new Key(KeyTypes.GlobalReference, smDB.SemanticId) });
-                submodel.TimeStamp = smDB.TimeStamp;
-                submodel.TimeStampCreate = smDB.TimeStampCreate;
-                submodel.TimeStampTree = smDB.TimeStampTree;
-
                 LoadSME(submodel, null, null, SMEList, null);
+                submodel.TimeStampCreate = smDB.TimeStampCreate;
+                /*submodel.SetTimeStamp(smDB.TimeStamp);*/
+                submodel.TimeStamp = smDB.TimeStamp;
+                submodel.TimeStampTree = smDB.TimeStampTree;
+                submodel.SetAllParents();
 
                 return submodel;
             }           
@@ -137,6 +139,7 @@ namespace AasxServerDB
                             (sme as SubmodelElementCollection).Value.Add(nextSME);
                             break;
                     }
+                    nextSME.Parent = sme;
                 }
 
                 if (smel.SMEType == "SMC")

@@ -20,8 +20,7 @@
         static public List<AASSet> GetPageAASData(int size = 1000, string searchLower = "", long aasxid = 0, long aasid = 0)
         {
             DateTime searchDateTime = new();
-            bool withDateTime = false;
-            GetDateTime(ref searchDateTime, ref withDateTime, searchLower);
+            bool withDateTime = GetDateTime(ref searchDateTime, searchLower);            
 
             List<AASSet> data;
             return data = new AasContext().AASSets
@@ -40,8 +39,7 @@
         static public List<SMSet> GetPageSMData(int size = 1000, string searchLower = "", long aasxid = 0, long aasid = 0, long smid = 0)
         {
             DateTime searchDateTime = new();
-            bool withDateTime = false;
-            GetDateTime(ref searchDateTime, ref withDateTime, searchLower);
+            bool withDateTime = GetDateTime(ref searchDateTime, searchLower);
 
             List<SMSet> data;
             return data = new AasContext().SMSets
@@ -59,8 +57,7 @@
         static public List<SMESet> GetPageSMEData(int size = 1000, string searchLower = "", long smid = 0, long smeid = 0)
         {
             DateTime searchDateTime = new();
-            bool withDateTime = false;
-            GetDateTime(ref searchDateTime, ref withDateTime, searchLower);
+            bool withDateTime = GetDateTime(ref searchDateTime, searchLower);
 
             List<SMESet> data;
             using (AasContext db = new())
@@ -148,7 +145,7 @@
             return data;
         }
     
-        static private void GetDateTime(ref DateTime searchDateTime, ref bool withDateTime, string searchLower)
+        static public bool GetDateTime(ref DateTime searchDateTime, string searchLower)
         {
             try
             {
@@ -161,12 +158,13 @@
                     searchDateTime = DateTime.ParseExact(searchLower, "yy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
                 else
                     searchDateTime = DateTime.ParseExact(searchLower, "yy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
-                withDateTime = true;
+                return true;
             }
             catch (Exception)
             {
 
             }
+            return false;
         }
     }
 }
