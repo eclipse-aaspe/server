@@ -19,7 +19,8 @@ jobs:
         id: inferVersion
         working-directory: src
         run: |
-          $version = .\BuildVersionNumber.ps1 -suffix alpha
+          $ref = '${{ github.ref }}'
+          $version = $ref -replace 'refs/tags/', ''
           Write-Host "Inferred version: $version"
           echo "::set-output name=version::$version"
         shell: pwsh
@@ -36,7 +37,7 @@ jobs:
           Write-Host "Updating project versions to: $version"
           .\UpdateProjectVersions.ps1 -version $version
         shell: pwsh
-        
+
       - name: Build for release
         working-directory: src
         run: .\BuildForRelease.ps1
@@ -54,7 +55,7 @@ jobs:
         working-directory: .
         run: |
           $version = '${{ steps.inferVersion.outputs.version }}'
-          $releaseDir = Join-Path $(Get-Location) "artefacts\release\$version"
+          $releaseDir = Join-Path $(Get-Location) "artefacts/release/$version"
           Write-Host "Release directory: $releaseDir"
 
           if (!(Test-Path $releaseDir)) {
@@ -79,9 +80,28 @@ jobs:
         working-directory: .
         run: |
           $version = '${{ steps.inferVersion.outputs.version }}'
-          $releaseDir = Join-Path $(Get-Location) "artefacts\release\$version"
+          $releaseDir = Join-Path $(Get-Location) "artefacts/release/$version"
           Write-Host "Verifying contents of the release directory: $releaseDir"
           Get-ChildItem $releaseDir
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: "v${{ steps.inferVersion.outputs.version }}"
+          release_name: "Release v${{ steps.inferVersion.outputs.version }}"
+          draft: false
+          prerelease: false
+
+      - name: Upload the release assets
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artefacts/release/${{ steps.inferVersion.outputs.version }}/*.zip
+          asset_name: ${{ steps.inferVersion.outputs.version }}.zip
+          asset_content_type: application/zip
 
       # Use this once we can say when to automatically create a release
       #- name: Create GitHub Release
@@ -101,11 +121,3 @@ jobs:
      #     asset_path: artefacts/release/${{ steps.inferVersion.outputs.version }}/*.zip
      #     asset_name: ${{ steps.inferVersion.outputs.version }}.zip
      #     asset_content_type: application/zip
-
-      
-      - name: Upload the release assets OLD WAY
-        uses: AButler/upload-release-assets@v2.0
-        with:
-          files: "artefacts/release/${{ steps.inferVersion.outputs.version }}.zip"
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          release-tag: "v${{ steps.inferVersion.outputs.version }}"
