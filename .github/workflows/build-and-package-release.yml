@@ -2,8 +2,6 @@ name: Build-and-package-release-workflow
 
 on:
   push:
-    branches:
-      - main
     tags:
       - 'v*'
 
