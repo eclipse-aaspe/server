@@ -1,8 +1,6 @@
 name: Build-and-package-release-workflow
 
 on:
-  release:
-    types: [ published ]
   push:
     tags:
       - 'v*'
@@ -11,7 +9,7 @@ jobs:
   Build-and-package-release:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set execution policy
         shell: pwsh
@@ -86,14 +84,11 @@ jobs:
           Get-ChildItem $releaseDir
 
       - name: Upload the release assets
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: AButler/upload-release-assets@v3.0
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: artefacts/release/${{ steps.inferVersion.outputs.version }}/*.zip
-          asset_name: ${{ steps.inferVersion.outputs.version }}.zip
-          asset_content_type: application/zip
+          files: "artefacts/release/${{ steps.inferVersion.outputs.version }}/*.zip"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          release-tag: "v${{ steps.inferVersion.outputs.version }}"
 
       # Use this once we can say when to automatically create a release
       #- name: Create GitHub Release
