@@ -19,8 +19,7 @@ jobs:
         id: inferVersion
         working-directory: src
         run: |
-          $ref = '${{ github.ref }}'
-          $version = $ref -replace 'refs/tags/', ''
+          $version = .\BuildVersionNumber.ps1 -suffix alpha
           Write-Host "Inferred version: $version"
           echo "::set-output name=version::$version"
         shell: pwsh
