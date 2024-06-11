@@ -2,8 +2,11 @@ name: Build-and-package-release-workflow
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   Build-and-package-release:
@@ -23,15 +26,14 @@ jobs:
           # Fetch all branches
           git fetch --all
           
-          # Get the commit SHA for the tag
-          $tagCommit = git rev-list -n 1 $env:GITHUB_REF
+          # Get the commit SHA for the current ref
+          $commitSHA = git rev-parse HEAD
           
           # Find the branch that contains this commit
-          $branch = git branch -r --contains $tagCommit | Select-String -Pattern 'origin/' | Select-Object -First 1 | ForEach-Object { $_.Line -replace '.*origin/', '' } | ForEach-Object { $_.Trim() }
+          $branch = git branch -r --contains $commitSHA | Select-String -Pattern 'origin/' | Select-Object -First 1 |
+                  ForEach-Object { $_.Line -replace '.*origin/', '' } | ForEach-Object { $_.Trim() }
           
           echo "branch=$branch" >> $env:GITHUB_OUTPUT
-          echo "::set-output name=branch::$branch"
-
 
       - name: Infer the version from the GitHub ref
         id: inferVersion
@@ -43,7 +45,6 @@ jobs:
           Write-Host "Inferred version: $version"
           echo "version=$version" >> $env:GITHUB_OUTPUT
         shell: pwsh
-
 
       - name: Install .NET Core
         uses: actions/setup-dotnet@v3
@@ -110,28 +111,37 @@ jobs:
           Write-Host "Verifying contents of the release directory: $releaseDir"
           Get-ChildItem $releaseDir
 
+      - name: Delete latest pre-release
+        id: delete_latest_pre_release
+        run: |
+          $latestPreRelease = gh api repos/${{ github.repository }}/releases --jq '[.[] | select(.prerelease)] | max_by(.created_at) | .id'
+          if ($latestPreRelease) {
+            gh api repos/${{ github.repository }}/releases/$latestPreRelease -X DELETE
+            Write-Host "Deleted pre-release with ID: $latestPreRelease"
+          } else {
+            Write-Host "No pre-releases found to delete."
+          }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+
+      - name: Create new pre-release
+        id: create_pre_release
+        needs: delete_latest_pre_release
+        uses: actions/create-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: "v${{ steps.inferVersion.outputs.version }}"
+          release_name: "Release v${{ steps.inferVersion.outputs.version }}"
+          draft: false
+          prerelease: true
+          body: "Pre-release for version ${{ steps.inferVersion.outputs.version }}"
+
       - name: Upload the release assets
         uses: AButler/upload-release-assets@v3.0
+        needs: create_pre_release
         with:
           files: "artefacts/release/${{ steps.inferVersion.outputs.version }}/*.zip"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           release-tag: "v${{ steps.inferVersion.outputs.version }}"
-
-      # Use this once we can say when to automatically create a release
-      #- name: Create GitHub Release
-      #  id: create_release
-      #  uses: actions/create-release@v1
-      #  env:
-      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #  with:
-      #    tag_name: "v${{ steps.inferVersion.outputs.version }}"
-      #    release_name: "Release v${{ steps.inferVersion.outputs.version }}"
-      #    draft: false
-      #    prerelease: false
-      
-      # - name: Upload the release assets
-      #   uses: actions/upload-release-asset@v1
-      #   with:
-      #     asset_path: artefacts/release/${{ steps.inferVersion.outputs.version }}/*.zip
-      #     asset_name: ${{ steps.inferVersion.outputs.version }}.zip
-      #     asset_content_type: application/zip
