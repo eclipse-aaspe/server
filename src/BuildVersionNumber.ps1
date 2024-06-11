@@ -1,14 +1,17 @@
 param(
     [Parameter(HelpMessage = "Suffix to be appended to the version (e.g., alpha, beta)", Mandatory = $false)]
     [string]
-    $suffix = "alpha"
+    $suffix = "alpha",
+
+    [Parameter(HelpMessage = "Branch name to determine the build suffix (e.g., main, release, feature/*)", Mandatory = $false)]
+    [string]
+    $branch = "develop"
 )
 
 # Set error action preference to stop on errors.
 $ErrorActionPreference = "Stop"
 
-function GetNextBuildNumber
-{
+function GetNextBuildNumber {
     # Read the current build number from the file.
     $currentBuild = Get-Content (Join-Path $PSScriptRoot "current_build_number.cfg") | ForEach-Object { $_.Trim() }
 
@@ -20,8 +23,7 @@ function GetNextBuildNumber
     return $nextBuild
 }
 
-function GetVersionCore
-{
+function GetVersionCore {
     # Read the current version from the file.
     $versionCore = Get-Content (Join-Path $PSScriptRoot "current_version.cfg") | ForEach-Object { $_.Trim() }
 
@@ -29,38 +31,29 @@ function GetVersionCore
     return $versionCore
 }
 
-function GetBuildSuffix
-{
-    # Determine if the build is on the main or release branch.
-    $branch = git branch --show-current 2> $null  # Suppress errors if not in a Git repository
-    if (-not $?)
-    {
-        Write-Host "Not in a Git repository. Assuming develop branch."
-        return "develop"
-    }
+function GetBuildSuffix {
+    param (
+        [string] $branch
+    )
 
-    if ($branch -eq "main")
-    {
+    if ($branch -eq "main") {
         return "latest"
     }
-    elseif ($branch -eq "release")
-    {
+    elseif ($branch -eq "release") {
         return "stable"
     }
-    else
-    {
+    else {
         Write-Host "Not main or release branch. Assuming develop branch."
         return "develop"
     }
 }
 
-function GetVersion
-{
+function GetVersion {
     # Get the version core from the file.
     $versionCore = GetVersionCore
 
     # Get the build suffix based on the branch.
-    $buildSuffix = GetBuildSuffix
+    $buildSuffix = GetBuildSuffix -branch $branch
 
     # Get the next build number.
     $buildNumber = GetNextBuildNumber
