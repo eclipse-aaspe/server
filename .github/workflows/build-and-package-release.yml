@@ -18,12 +18,19 @@ jobs:
         run: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
 
       - name: Extract branch name
-        working-directory: src
         id: extract_branch
         run: |
-          $branch = if ($env:GITHUB_HEAD_REF) { $env:GITHUB_HEAD_REF } else { $env:GITHUB_REF -replace '^refs/heads/', '' }
-          echo "branch=$branch" >> $env:GITHUB_OUTPUT
-          Write-Host "Package release triggered from branch: $branch"
+          # Fetch all branches
+          git fetch --all
+
+          # Get the commit SHA for the tag
+          TAG_COMMIT=$(git rev-list -n 1 $GITHUB_REF)
+
+          # Find the branch that contains this commit
+          BRANCH=$(git branch -r --contains $TAG_COMMIT | grep -v '\->' | head -n 1 | sed 's/.*origin\///' | tr -d ' ')
+
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+          echo "::set-output name=branch::$BRANCH"
 
       - name: Infer the version from the GitHub ref
         id: inferVersion
