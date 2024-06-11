@@ -18,7 +18,8 @@ jobs:
       - name: Extract branch name
         id: extract_branch
         run: |
-          echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+          $branch = if ($env:GITHUB_HEAD_REF) { $env:GITHUB_HEAD_REF } else { $env:GITHUB_REF -replace '^refs/heads/', '' }
+          echo "branch=$branch" >> $env:GITHUB_OUTPUT
           echo "::set-output name=branch::$branch"
 
       - name: Infer the version from the GitHub ref
