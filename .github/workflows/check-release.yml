@@ -27,7 +27,6 @@ jobs:
           {
               throw "Unexpected characters in timestamp: $timestamp"
           }
-          echo "::set-output name=timestamp::$timestamp"
         shell: pwsh
 
       - name: Install .NET Core 6.0
