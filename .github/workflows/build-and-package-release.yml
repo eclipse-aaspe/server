@@ -10,17 +10,20 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set execution policy
         shell: pwsh
         run: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
 
       - name: Extract branch name
+        working-directory: src
         id: extract_branch
         run: |
           $branch = if ($env:GITHUB_HEAD_REF) { $env:GITHUB_HEAD_REF } else { $env:GITHUB_REF -replace '^refs/heads/', '' }
           echo "branch=$branch" >> $env:GITHUB_OUTPUT
-          echo "::set-output name=branch::$branch"
+          Write-Host "Package release triggered from branch: $branch"
 
       - name: Infer the version from the GitHub ref
         id: inferVersion
@@ -29,7 +32,7 @@ jobs:
           $branch = '${{ steps.extract_branch.outputs.branch }}'
           $version = .\BuildVersionNumber.ps1 -suffix alpha -branch $branch
           Write-Host "Inferred version: $version"
-          echo "::set-output name=version::$version"
+          echo "version=$version" >> $env:GITHUB_OUTPUT
         shell: pwsh
 
       - name: Install .NET Core
