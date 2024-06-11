@@ -352,7 +352,9 @@ namespace AasxServerDB
         private List<SMEWithValue> GetSMEWithValue( string smSemanticId = "", string semanticId = "", string diff = "", string contains = "", string equal = "", string lower = "", string upper = "")
         {
             var result = new List<SMEWithValue>();
+
             DateTime dateTime = new();
+            bool withDiff = PageRetriever.GetDateTime(ref dateTime, diff);
 
             int parameter = 0;
             if (!contains.IsNullOrEmpty())
@@ -361,7 +363,7 @@ namespace AasxServerDB
                 parameter++;
             if (!(lower.IsNullOrEmpty() && upper.IsNullOrEmpty()))
                 parameter++;
-            if (parameter > 1 || (semanticId.IsNullOrEmpty() && !PageRetriever.GetDateTime(ref dateTime, diff) && parameter != 1))
+            if (parameter > 1 || (semanticId.IsNullOrEmpty() && !withDiff && parameter != 1))
                 return result;
 
             GetSValue(ref result, semanticId, dateTime, contains, equal);
