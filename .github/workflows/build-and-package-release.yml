@@ -130,7 +130,7 @@ jobs:
 
       - name: Create new pre-release
         id: create_pre_release
-        uses: actions/create-release@v2
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
