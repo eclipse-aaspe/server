@@ -22,15 +22,16 @@ jobs:
         run: |
           # Fetch all branches
           git fetch --all
-
+          
           # Get the commit SHA for the tag
-          TAG_COMMIT=$(git rev-list -n 1 $GITHUB_REF)
-
+          $tagCommit = git rev-list -n 1 $env:GITHUB_REF
+          
           # Find the branch that contains this commit
-          BRANCH=$(git branch -r --contains $TAG_COMMIT | grep -v '\->' | head -n 1 | sed 's/.*origin\///' | tr -d ' ')
+          $branch = git branch -r --contains $tagCommit | Select-String -Pattern 'origin/' | Select-Object -First 1 | ForEach-Object { $_.Line -replace '.*origin/', '' } | ForEach-Object { $_.Trim() }
+          
+          echo "branch=$branch" >> $env:GITHUB_OUTPUT
+          echo "::set-output name=branch::$branch"
 
-          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
-          echo "::set-output name=branch::$BRANCH"
 
       - name: Infer the version from the GitHub ref
         id: inferVersion
