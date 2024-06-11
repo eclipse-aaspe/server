@@ -86,9 +86,8 @@ jobs:
       - name: Upload the release assets
         uses: AButler/upload-release-assets@v3.0
         with:
-          files: "D:/a/server/server/artefacts/release/${{ steps.inferVersion.outputs.version }}/*.zip"
+          files: "artefacts/release/${{ steps.inferVersion.outputs.version }}/*.zip"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          release-tag: "v${{ steps.inferVersion.outputs.version }}"
 
       # Use this once we can say when to automatically create a release
       #- name: Create GitHub Release
