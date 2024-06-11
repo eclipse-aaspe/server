@@ -5,23 +5,15 @@ param(
 
     [Parameter(HelpMessage = "Branch name to determine the build suffix (e.g., main, release, feature/*)", Mandatory = $false)]
     [string]
-    $branch = "develop"
+    $branch = "develop",
+
+    [Parameter(HelpMessage = "The GitHub run number", Mandatory = $true)]
+    [int]
+    $githubRunNumber
 )
 
 # Set error action preference to stop on errors.
 $ErrorActionPreference = "Stop"
-
-function GetNextBuildNumber {
-    # Read the current build number from the file.
-    $currentBuild = Get-Content (Join-Path $PSScriptRoot "current_build_number.cfg") | ForEach-Object { $_.Trim() }
-
-    # Increment the build number and save it back to the file.
-    $nextBuild = [int]$currentBuild + 1
-    $nextBuild | Set-Content (Join-Path $PSScriptRoot "current_build_number.cfg")
-
-    # Return the incremented build number.
-    return $nextBuild
-}
 
 function GetVersionCore {
     # Read the current version from the file.
@@ -55,8 +47,8 @@ function GetVersion {
     # Get the build suffix based on the branch.
     $buildSuffix = GetBuildSuffix -branch $branch
 
-    # Get the next build number.
-    $buildNumber = GetNextBuildNumber
+    # Use the GitHub run number as the build number.
+    $buildNumber = $githubRunNumber
 
     $aasmodel = "aasV3"
 

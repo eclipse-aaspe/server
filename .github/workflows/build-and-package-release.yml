@@ -36,12 +36,14 @@ jobs:
       - name: Infer the version from the GitHub ref
         id: inferVersion
         working-directory: src
+        needs: extract_branch
         run: |
           $branch = '${{ steps.extract_branch.outputs.branch }}'
-          $version = .\BuildVersionNumber.ps1 -suffix alpha -branch $branch
+          $version = .\BuildVersionNumber.ps1 -suffix alpha -branch $branch -githubRunNumber ${{ github.run_number }}
           Write-Host "Inferred version: $version"
           echo "version=$version" >> $env:GITHUB_OUTPUT
         shell: pwsh
+
 
       - name: Install .NET Core
         uses: actions/setup-dotnet@v3
@@ -50,6 +52,7 @@ jobs:
 
       - name: Update version numbers in project
         working-directory: src
+        needs: inferVersion
         run: |
           $version = '${{ steps.inferVersion.outputs.version }}'
           Write-Host "Updating project versions to: $version"
@@ -61,16 +64,10 @@ jobs:
         run: .\BuildForRelease.ps1
         shell: pwsh
 
-      - name: Package the release
-        working-directory: src
-        run: |
-          $version = '${{ steps.inferVersion.outputs.version }}'
-          Write-Host "Packaging for the release version: $version"
-          .\PackageRelease.ps1 -version $version
-        shell: pwsh
-
       - name: Rename the release assets
+        id: rename_release_assets
         working-directory: .
+        needs: inferVersion
         run: |
           $version = '${{ steps.inferVersion.outputs.version }}'
           $releaseDir = Join-Path $(Get-Location) "artefacts/release/$version"
@@ -94,8 +91,19 @@ jobs:
           }
         shell: pwsh
 
+      - name: Package the release
+        id: package_release
+        working-directory: src
+        needs: [ inferVersion,rename_release_assets ]
+        run: |
+          $version = '${{ steps.inferVersion.outputs.version }}'
+          Write-Host "Packaging for the release version: $version"
+          .\PackageRelease.ps1 -version $version
+        shell: pwsh
+
       - name: Verify the release assets
         working-directory: .
+        needs: [ inferVersion,package_release ]
         run: |
           $version = '${{ steps.inferVersion.outputs.version }}'
           $releaseDir = Join-Path $(Get-Location) "artefacts/release/$version"
