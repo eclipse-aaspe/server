@@ -63,6 +63,20 @@ jobs:
         run: .\BuildForRelease.ps1
         shell: pwsh
 
+      - name: Verify and list artefacts directory
+        working-directory: src
+        run: |
+          $version = '${{ steps.inferVersion.outputs.version }}'
+          $releaseDir = Join-Path $(Get-Location) "artefacts/release/$version"
+          Write-Host "Release directory: $releaseDir"
+          if (!(Test-Path $releaseDir)) {
+              Write-Host "The release directory does not exist."
+          } else {
+              Write-Host "The release directory exists. Listing contents:"
+              Get-ChildItem $releaseDir
+          }
+        shell: pwsh
+
       - name: Rename the release assets
         id: rename_release_assets
         working-directory: .
