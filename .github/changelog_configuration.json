@@ -2,60 +2,31 @@
   "categories": [
     {
       "title": "## ⚡️ Added",
-      "labels": [
-        "feature, add, added"
-      ]
+      "labels": ["feature"]
     },
     {
       "title": "## 🐛 Fixed",
-      "labels": [
-        "fix",
-        "bugfix",
-        "fixed",
-        "bug"
-      ]
+      "labels": ["fix"]
     },
     {
       "title": "## 🔄 Changed",
-      "labels": [
-        "changed",
-        "chore"
-      ]
-    },
-    {
-      "title": "## Deprecated",
-      "labels": [
-        "deprecated",
-        "deprecate",
-        "obsolete",
-        "obsoleted"
-      ]
+      "labels": ["changed"]
     },
     {
       "title": "## 🗑 Removed",
-      "labels": [
-        "removed",
-        "delete",
-        "deleted"
-      ]
+      "labels": ["removed"]
     },
     {
       "title": "## 🚀 Dependencies",
-      "labels": [
-        "dependencies"
-      ]
+      "labels": ["dependencies"]
     },
     {
       "title": "## 🛑 Breaking Changes",
-      "labels": [
-        "breaking"
-      ]
+      "labels": ["breaking"]
     },
     {
       "title": "## 🧪 Tests",
-      "labels": [
-        "test"
-      ]
+      "labels": ["test"]
     }
   ],
   "ignore_labels": [
@@ -65,8 +36,8 @@
     "order": "ASC",
     "on_property": "mergedAt"
   },
-  "template": "# Changelog\n\n<details>\n<summary>Uncategorized</summary>\n\n#{{UNCATEGORIZED}}\n</details>",
-  "pr_template": "- #{{TITLE}}\n   - PR: ##{{NUMBER}}",
+  "template": "# Changelog\n\n<details>\n<summary>Uncategorized</summary>\n\n#{{UNCATEGORIZED}}\n</details>\n\n[Release Diff](RELEASE_DIFF)",
+  "pr_template": "- #{{TITLE}} (by {{AUTHOR}})\n   - PR: ##{{NUMBER}}",
   "empty_template": "- No changes. See the [Changelog](CHANGELOG.md) for more information.",
   "label_extractor": [
     {
