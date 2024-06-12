@@ -23,7 +23,7 @@ namespace AasxServerStandardBib.Services
     {
         private readonly IAppLogger<AdminShellPackageEnvironmentService> _logger;
         private readonly Lazy<IAssetAdministrationShellService> _aasService;
-        private AdminShellPackageEnv[] _packages;
+        private IList<AdminShellPackageEnv> _packages;
 
         public AdminShellPackageEnvironmentService(IAppLogger<AdminShellPackageEnvironmentService> logger, Lazy<IAssetAdministrationShellService> aasService)
         {
@@ -38,7 +38,7 @@ namespace AasxServerStandardBib.Services
         {
             emptyPackageIndex = -1;
 
-            for (int envi = 0; envi < _packages.Length; envi++)
+            for (int envi = 0; envi < _packages.Count; envi++)
             {
                 if (_packages[ envi ] == null)
                 {
@@ -157,7 +157,8 @@ namespace AasxServerStandardBib.Services
                         if (aas.Any())
                         {
                             output = aas.First();
-                            packageIndex = Array.IndexOf(_packages, package);
+                            packageIndex = _packages.IndexOf(package);
+
                             return true;
                         }
                     }
@@ -277,7 +278,7 @@ namespace AasxServerStandardBib.Services
                             }
                             */
                             output = submodels.First();
-                            packageIndex = Array.IndexOf(_packages, package);
+                            packageIndex = _packages.IndexOf(package);
                             return true;
                         }
                     }
@@ -332,7 +333,7 @@ namespace AasxServerStandardBib.Services
                         if (conceptDescriptions.Any())
                         {
                             output = conceptDescriptions.First();
-                            packageIndex = Array.IndexOf(_packages, package);
+                            packageIndex = _packages.IndexOf(package);
                             return true;
                         }
                     }

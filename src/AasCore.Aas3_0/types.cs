@@ -8774,7 +8774,7 @@ namespace AasCore.Aas3_0
         /// the proprietary specification for the message broker.
         /// </summary>
         /// <remarks>
-        /// For different message infrastructure, e.g., OPC UA or MQTT or AMQP, this
+        /// For different message infrastructure, e.g., MQTT or AMQP, this
         /// proprietary specification could be standardized by having respective Submodels.
         /// </remarks>
         public IReference? MessageBroker { get; set; }
@@ -8962,7 +8962,7 @@ namespace AasCore.Aas3_0
         /// the proprietary specification for the message broker.
         /// </summary>
         /// <remarks>
-        /// For different message infrastructure, e.g., OPC UA or MQTT or AMQP, this
+        /// For different message infrastructure, e.g., MQTT or AMQP, this
         /// proprietary specification could be standardized by having respective Submodels.
         /// </remarks>
         public IReference? MessageBroker { get; set; }

@@ -3,11 +3,10 @@ using AasxServer;
 using Extensions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Opc.Ua;
 using Org.Webpki.JsonCanonicalizer;
-using SampleClient;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -77,7 +76,7 @@ namespace AasxTimeSeries
             timeSeriesBlockList = new List<TimeSeriesBlock>();
             timeSeriesSubscribe = new List<SubmodelElementCollection>();
 
-            int aascount = AasxServer.Program.env.Length;
+            int aascount = AasxServer.Program.env.Count;
 
             for (int i = 0; i < aascount; i++)
             {
@@ -449,65 +448,7 @@ namespace AasxTimeSeries
             opcClientRate = (long)value;
         }
 
-        private static void OnOPCClientNextTimedEvent(long ms)
-        {
-            if (opcClientRate != 0)
-            {
-                opcClientCount += ms;
-                if (opcClientCount >= opcClientRate)
-                {
-                    AasxServer.Program.OnOPCClientNextTimedEvent();
-                    opcClientCount = 0;
-                }
-            }
-        }
-
-        /*
-        static ulong ChangeNumber = 0;
-
-        static bool setChangeNumber(IReferable r, ulong changeNumber)
-        {
-            do
-            {
-                r.ChangeNumber = changeNumber;
-                if (r != r.parent)
-                {
-                    r = r.parent;
-                }
-                else
-                    r = null;
-            }
-            while (r != null);
-
-            return true;
-        }
-        */
-
-        /*
-        private static T AddToSMC<T>(
-            DateTime timestamp,
-            SubmodelElementCollection smc,
-            string idShort,
-            string semanticIdKey,
-            string smeValue = null) where T : ISubmodelElement
-        {
-            var newElem = CreateSubmodelElementInstance(typeof(T));
-            newElem.IdShort = idShort;
-            newElem.SemanticId = new Reference(AasCore.Aas3_0_RC02.ReferenceTypes.GlobalReference, new List<Key>() { new Key(KeyTypes.GlobalReference, semanticIdKey) });
-            newElem.SetTimeStamp(timestamp);
-            newElem.TimeStampCreate = timestamp;
-            if (smc?.Value != null)
-                smc.Value.Add(newElem);
-            if (smeValue != null && newElem is Property newP)
-                newP.Value = smeValue;
-            if (smeValue != null && newElem is Blob newB)
-                newB.Value = Encoding.ASCII.GetBytes(smeValue);
-            newElem.Qualifiers = new List<Qualifier>();
-            newElem.DataSpecifications = new List<Reference>();
-            return (T)newElem;
-        }
-        */
-
+       
         private static ISubmodelElement CreateSubmodelElementInstance(Type type)
         {
             if (type == null /*|| !type.IsSubclassOf(typeof(ISubmodelElement))*/)
@@ -655,11 +596,7 @@ namespace AasxTimeSeries
         {
             if (Program.isLoading)
                 return true;
-
-            OnOPCClientNextTimedEvent(100);
-
-            // ulong newChangeNumber = ChangeNumber + 1;
-            // bool useNewChangeNumber = false;
+            
             DateTime timeStamp = DateTime.UtcNow;
 
             foreach (var tsb in timeSeriesBlockList)
@@ -731,14 +668,10 @@ namespace AasxTimeSeries
                         }
                         if (tsb.sourceType == "opchd" && tsb.sourceAddress != "")
                         {
-                            GetHistory(tsb);
+                            
                             valueCount = 0;
                             if (table != null)
                                 valueCount = table.Count;
-                        }
-                        if (tsb.sourceType == "opcda" && tsb.sourceAddress != "")
-                        {
-                            valueCount = GetDAData(tsb);
                         }
                         if (tsb.sourceType == "modbus" && tsb.sourceAddress != "")
                         {
@@ -868,28 +801,7 @@ namespace AasxTimeSeries
                                             tsb.samplesValues[i] += latestDataValue;
                                         }
                                     }
-                                    if (tsb.sourceType == "opcda")
-                                    {
-                                        latestDataValue = opcDAValues[i];
-                                        switch (latestDataValue.ToLower())
-                                        {
-                                            case "true":
-                                                latestDataValue = "1";
-                                                break;
-                                            case "false":
-                                                latestDataValue = "0";
-                                                break;
-                                        }
-                                        if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
-                                        {
-                                            tsb.samplesValues[i] += $"[{tsb.totalSamples.Value}, {latestDataValue}]";
-                                        }
-                                        else
-                                        {
-                                            tsb.samplesValues[i] += latestDataValue;
-                                        }
-                                        Console.WriteLine(tsb.opcNodes[i] + " " + opcDAValues[i]);
-                                    }
+                                    
                                     if (tsb.sourceType == "modbus")
                                     {
                                         latestDataValue = modbusValues[i];
@@ -1331,11 +1243,8 @@ namespace AasxTimeSeries
 
         static List<List<object>> table = null;
         static string ErrorMessage { get; set; }
-        static UASampleClient opc = null;
-        static Opc.Ua.Client.Session session = null;
         static DateTime startTime;
         static DateTime endTime;
-        static List<string> opcDAValues = null;
         static List<string> modbusValues = null;
         static List<string> lastModbusValues = null;
         static Modbus.ModbusTCPClient mbClient = null;
@@ -1419,186 +1328,5 @@ namespace AasxTimeSeries
             return 1;
         }
 
-        public static int GetDAData(TimeSeriesBlock tsb)
-        {
-            Console.WriteLine("Read OPC DA Data:");
-            try
-            {
-                ErrorMessage = "";
-                if (session == null)
-                    Connect(tsb);
-                if (session != null)
-                {
-                    opcDAValues = new List<string>();
-                    for (int i = 0; i < tsb.opcNodes.Count; i++)
-                    {
-                        string[] split = tsb.opcNodes[i].Split(',');
-                        string value = opc.ReadSubmodelElementValue(split[1], (ushort)Convert.ToInt32(split[0]));
-                        opcDAValues.Add(value);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = ex.Message;
-                return 0;
-            }
-            /*
-            session?.Close();
-            session?.Dispose();
-            session = null;
-            */
-
-            return 1;
-        }
-
-        public static void GetHistory(TimeSeriesBlock tsb)
-        {
-            Console.WriteLine("Read OPC UA Historical Data:");
-            try
-            {
-                ErrorMessage = "";
-                if (session == null)
-                    Connect(tsb);
-                startTime = tsb.opcLastTimeStamp;
-                // get current time on server
-                if (session != null)
-                    endTime = (DateTime)session.ReadValue(new NodeId(2258, 0)).Value;
-                GetData(tsb);
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = ex.Message;
-                Console.WriteLine(ErrorMessage);
-                session?.Close();
-                session?.Dispose();
-                session = null;
-                opc = null;
-            }
-            /*
-            session?.Close();
-            session?.Dispose();
-            session = null;
-            */
-        }
-        public static void Connect(TimeSeriesBlock tsb)
-        {
-            Console.WriteLine("Connect OPC UA");
-            if (opc == null)
-                opc = new UASampleClient(tsb.sourceAddress, true, 10000, tsb.username, tsb.password);
-            opc.ConsoleSampleClient().Wait();
-            session = opc.session;
-            if (session == null)
-            {
-                Console.WriteLine("ERROR: Session not connected "
-                    + tsb.sourceAddress + " " + tsb.username + " " + tsb.password);
-            }
-            else
-            {
-                // get current time on server
-                tsb.opcLastTimeStamp = (DateTime)session.ReadValue(new NodeId(2258, 0)).Value;
-                tsb.opcLastTimeStamp -= TimeSpan.FromMinutes(1);
-            }
-        }
-        public static void GetData(TimeSeriesBlock tsb)
-        {
-            if (session != null)
-            {
-                ReadRawModifiedDetails details = new ReadRawModifiedDetails();
-                details.StartTime = startTime;
-                details.EndTime = endTime;
-                details.NumValuesPerNode = 0;
-                details.IsReadModified = false;
-                details.ReturnBounds = true;
-
-                var nodesToRead = new HistoryReadValueIdCollection();
-                for (int i = 0; i < tsb.opcNodes.Count; i++)
-                {
-                    var nodeToRead = new HistoryReadValueId();
-                    string[] split = tsb.opcNodes[i].Split(',');
-                    nodeToRead.NodeId = new NodeId(split[1], (ushort)Convert.ToInt32(split[0]));
-                    nodesToRead.Add(nodeToRead);
-                }
-
-                table = new List<List<object>>();
-
-                HistoryReadResultCollection results = null;
-                DiagnosticInfoCollection diagnosticInfos = null;
-
-                bool loop = true;
-                while (loop)
-                {
-                    session.HistoryRead(
-                        null,
-                        new ExtensionObject(details),
-                        TimestampsToReturn.Both,
-                        false,
-                        nodesToRead,
-                        out results,
-                        out diagnosticInfos);
-
-                    ClientBase.ValidateResponse(results, nodesToRead);
-                    ClientBase.ValidateDiagnosticInfos(diagnosticInfos, nodesToRead);
-
-                    foreach (var res in results)
-                    {
-                        if (StatusCode.IsBad(res.StatusCode))
-                        {
-                            throw new ServiceResultException(res.StatusCode);
-                        }
-                    }
-
-                    if (results.Count > 0)
-                    {
-                        HistoryData[] historyDatas = new HistoryData[results.Count];
-                        for (int i = 0; i < results.Count; i++)
-                        {
-                            historyDatas[i] = ExtensionObject.ToEncodeable(results[i].HistoryData) as HistoryData;
-                        }
-
-                        int dataValuesCount = historyDatas[0].DataValues.Count;
-                        for (int i = 0; i < dataValuesCount; i++)
-                        {
-                            var sourceTimeStamp = historyDatas[0].DataValues[i].SourceTimestamp;
-                            if (sourceTimeStamp != null && sourceTimeStamp >= startTime)
-                            {
-                                bool isValid = true;
-                                var row = new List<object>();
-                                row.Add(sourceTimeStamp);
-
-                                foreach (HistoryData historyData in historyDatas)
-                                {
-                                    var value = historyData.DataValues[i].Value?.ToString();
-                                    if (!string.IsNullOrEmpty(value))
-                                    {
-                                        row.Add(historyData.DataValues[i].Value);
-                                    }
-                                    else
-                                    {
-                                        isValid = false;
-                                        break;
-                                    }
-                                }
-                                if (isValid)
-                                {
-                                    table.Add(row);
-                                    tsb.opcLastTimeStamp = sourceTimeStamp + TimeSpan.FromMilliseconds(1);
-                                }
-                            }
-                        }
-                    }
-
-                    for (int i = 0; i < results.Count; i++)
-                    {
-                        if (results[i].ContinuationPoint == null || results[i].ContinuationPoint.Length == 0)
-                        {
-                            loop = false;
-                            break;
-                        }
-                        nodesToRead[i].ContinuationPoint = results[i].ContinuationPoint;
-                    }
-                }
-            }
-        }
     }
 }

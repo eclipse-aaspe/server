@@ -48,7 +48,7 @@ namespace ProductChange
                 AdminShellPackageEnv pcnEnv = null;
                 ISubmodel pcnSub = null;
                 SubmodelElementCollection imported = null;
-                int aascount = AasxServer.Program.env.Length;
+                int aascount = AasxServer.Program.env.Count;
 
                 for (int i = 0; i < aascount; i++)
                 {
@@ -415,7 +415,7 @@ namespace ProductChange
             AdminShellPackageEnv xmlEnv = null;
             ISubmodel xmlSub = null;
             SubmodelElementCollection imported = null;
-            int aascount = AasxServer.Program.env.Length;
+            int aascount = AasxServer.Program.env.Count;
 
             for (int i = 0; i < aascount; i++)
             {

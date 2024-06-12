@@ -67,7 +67,6 @@ internal class Startup
 
         services.AddControllers();
         services.AddLazyResolution();
-        services.AddSingleton<IAuthorizationHandler, AasSecurityAuthorizationHandler>();
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddSingleton<IRegistryInitializerService, RegistryInitializerService>();
         services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
@@ -156,10 +155,7 @@ internal class Startup
 
                     c.OperationFilter<IO.Swagger.Filters.GeneratePathParamsValidationFilter>();
                 });
-
-
-        services.AddAuthentication("AasSecurityAuth")
-                .AddScheme<AasSecurityAuthenticationOptions, AasSecurityAuthenticationHandler>("AasSecurityAuth", null);
+        
         services.AddAuthorization(c =>
         {
             c.AddPolicy("SecurityPolicy", policy =>

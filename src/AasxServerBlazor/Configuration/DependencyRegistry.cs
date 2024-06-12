@@ -26,7 +26,6 @@ public static class DependencyRegistry
         services.AddSingleton<CredentialService>();
 
         services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
-        services.AddSingleton<IAuthorizationHandler, AasSecurityAuthorizationHandler>();
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddSingleton<IRegistryInitializerService, RegistryInitializerService>();
         services.AddTransient<IAasDescriptorPaginationService, AasDescriptorPaginationService>();
