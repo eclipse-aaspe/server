@@ -1,31 +1,60 @@
 {
   "categories": [
     {
-      "title": "## 🚀 Features",
-      "labels": ["feature"]
+      "title": "## ⚡️ Added",
+      "labels": [
+        "feature, add, added"
+      ]
     },
     {
-      "title": "## 🐛 Fixes",
-      "labels": ["fix"]
+      "title": "## 🐛 Fixed",
+      "labels": [
+        "fix",
+        "bugfix",
+        "fixed",
+        "bug"
+      ]
     },
     {
-      "key": "tests",
+      "title": "## 🔄 Changed",
+      "labels": [
+        "changed",
+        "chore"
+      ]
+    },
+    {
+      "title": "## Deprecated",
+      "labels": [
+        "deprecated",
+        "deprecate",
+        "obsolete",
+        "obsoleted"
+      ]
+    },
+    {
+      "title": "## 🗑 Removed",
+      "labels": [
+        "removed",
+        "delete",
+        "deleted"
+      ]
+    },
+    {
+      "title": "## 🚀 Dependencies",
+      "labels": [
+        "dependencies"
+      ]
+    },
+    {
+      "title": "## 🛑 Breaking Changes",
+      "labels": [
+        "breaking"
+      ]
+    },
+    {
       "title": "## 🧪 Tests",
-      "labels": ["test"]
-    },
-    {
-      "title": "## 🧪 Tests and some 🪄 Magic",
-      "labels": ["test", "magic"],
-      "exclude_labels": ["no-magic"],
-      "exhaustive": true,
-      "exhaustive_rules": "false",
-      "empty_content": "- no matching PRs",
-      "rules": [
-        {
-          "pattern": "open",
-          "on_property": "status",
-          "flags": "gu"
-        }
+      "labels": [
+        "test"
       ]
     }
   ],
@@ -36,26 +65,16 @@
     "order": "ASC",
     "on_property": "mergedAt"
   },
-  "template": "#{{CHANGELOG}}\n\n<details>\n<summary>Uncategorized</summary>\n\n#{{UNCATEGORIZED}}\n</details>",
+  "template": "# Changelog\n\n<details>\n<summary>Uncategorized</summary>\n\n#{{UNCATEGORIZED}}\n</details>",
   "pr_template": "- #{{TITLE}}\n   - PR: ##{{NUMBER}}",
-  "empty_template": "- no changes",
+  "empty_template": "- No changes",
   "label_extractor": [
     {
       "pattern": "(.) (.+)",
       "target": "$1",
       "flags": "gu"
-    },
-    {
-      "pattern": "\\[Issue\\]",
-      "on_property": "title",
-      "method": "match"
     }
   ],
-  "duplicate_filter": {
-    "pattern": "\\[ABC-....\\]",
-    "on_property": "title",
-    "method": "match"
-  },
   "reference": {
     "pattern": ".*\\ \\#(.).*",
     "on_property": "body",
