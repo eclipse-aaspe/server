@@ -91,17 +91,6 @@ jobs:
           }
         shell: pwsh
 
-      - name: Check for existing tags
-        id: check_tags
-        shell: pwsh
-        run: |
-          $tags = git tag -l
-          if (-not $tags) {
-            echo "no-tags=true" >> $env:GITHUB_ENV
-          } else {
-            echo "no-tags=false" >> $env:GITHUB_ENV
-          }
-
       - name: Generate release notes
         id: generate_release_notes
         uses: mikepenz/release-changelog-builder-action@v4
