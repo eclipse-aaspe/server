@@ -7,7 +7,6 @@ on:
 
 jobs:
   draft_develop_release:
-    
     runs-on: windows-latest
 
     steps:
