@@ -53,7 +53,7 @@ function GetVersion {
     $aasmodel = "aasV3"
 
     # Construct the semantic version.
-    $semanticVersion = "$versionCore-$buildNumber-$aasmodel-$suffix-$buildSuffix"
+    $semanticVersion = "$versionCore.$buildNumber-$aasmodel-$suffix-$buildSuffix"
 
     return $semanticVersion
 }
