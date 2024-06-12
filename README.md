@@ -114,6 +114,42 @@ An example GraphQL query is:
 If you want to create a registry and also automatically POST to it, please take a look at
 our [GitHub issues](https://github.com/admin-shell-io/aasx-server/issues/189) page.
 
+## CREATE NEW RELEASES
+
+We've transitioned to [semantic versioning](https://semver.org) for better version distinctness. All versions follow this schema:
+
+```
+<major>.<minor>.<patch>-<buildnumber>-<AAS Schema Version>-<alpha>-<stable|latest|develop>
+```
+
+- **buildnumber**: An incremented value for each build, important for development or latest releases to distinguish builds even if there's no new version number.
+- **AAS Schema Version**: Indicates the AAS main schema used in this version.
+- **alpha**: Indicates this is still an alpha build, not a finished release.
+- **stable**: The latest stable release, where the main features are confirmed working.
+- **latest**: The most recent build on the main branch. It's relatively stable but may have some issues.
+- **develop**: A build from a branch other than main or develop. It's for testing and may be unstable.
+
+### Release a New Version
+
+With the change to semantic versioning, the release process has been updated as well.
+
+To release a new version, follow these steps:
+
+1. **Update the Changelog**
+  - Move all current changes to the [Released] section in the [changelog](CHANGELOG.md).
+  - Determine the new version number based on semantic versioning and add the release date.
+2. **Update the Version Configuration**
+  - Use the new version number to update the [current_version.cfg](src/current_version.cfg).
+3. **Push Changes**
+  - Push these changes to the branch you want to release from (main/develop/or your branch).
+4. **Create a New Version Tag on GitHub**
+  - Go to GitHub and create a new version tag on the branch. This tag should be the full version string, such as "0.3.0-1-aasV3-alpha-develop". The build number can be omitted in the tag name.
+
+### Example Version Tags
+- `1.0.0-1-aasV3-alpha-develop`: An alpha build on a develop branch with build number 1.
+- `1.0.0-2-aasV3-alpha-stable`: A stable release with build number 2.
+- `1.0.0-3-aasV3-alpha-latest`: The latest build on the main branch with build number 3.
+
 ## OLD DOCUMENTATION
 
 This documentation will be updated to V3 soon.

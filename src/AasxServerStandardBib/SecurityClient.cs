@@ -334,6 +334,9 @@ namespace AasxServer
                         if (authServerEndPoint != null && authServerCertificate != null && clientCertificate != null
                             && accessToken != null)
                         {
+                            if (accessToken.Value == null)
+                                accessToken.Value = "";
+
                             if (accessToken.Value != "")
                             {
                                 bool valid = true;
@@ -1653,7 +1656,11 @@ namespace AasxServer
                                                 requestPath = urlEdcWrapper;
                                         }
 
-                                        var handler = new HttpClientHandler();
+                                        var handler = new HttpClientHandler()
+                                        {
+                                            ServerCertificateCustomValidationCallback = delegate { return true; },
+                                        };
+
                                         if (!requestPath.Contains("localhost"))
                                         {
                                             if (AasxServer.AasxTask.proxy != null)

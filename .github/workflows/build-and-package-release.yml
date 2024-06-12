@@ -9,68 +9,60 @@ jobs:
   Build-and-package-release:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v4
 
-      - name: Infer the version from the github ref
+      - name: Set execution policy
+        shell: pwsh
+        run: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+
+      - name: Infer the version from the GitHub ref
         id: inferVersion
+        working-directory: src
         run: |
-          $prefix = "refs/tags/v"
-          if (!${env:GITHUB_REF}.StartsWith($prefix))
-          {
-              throw "Unexpected GITHUB_REF: ${env:GITHUB_REF}"
-          }
+          $version = .\BuildVersionNumber.ps1 -suffix alpha
+          Write-Host "Inferred version: $version"
+          echo "::set-output name=version::$version"
+        shell: pwsh
 
-          $version = ${env:GITHUB_REF}.Substring($prefix.Length)
-          Write-Host "The version is: $version"
-
-          if ($version.Contains("'"))
-          {
-              throw "Unexpected version containing a single quote: $version"
-          }
-          if ($version.Contains('"'))
-          {
-              throw "Unexpected version containing a double quote: $version"
-          }
-          if ($version.Contains(':'))
-          {
-              throw "Unexpected version containing a full colon: $version"
-          }
-
-          Write-Output "::set-output name=version::$version"
-
-      - name: Install .NET core
-        uses: actions/setup-dotnet@v1
+      - name: Install .NET Core
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '6.0.x'
 
-      - name: Build for the release
+      - name: Update version numbers in project
         working-directory: src
-        run: powershell .\BuildForRelease.ps1
+        run: |
+          $version = '${{ steps.inferVersion.outputs.version }}'
+          Write-Host "Updating project versions to: $version"
+          .\UpdateProjectVersions.ps1 -version $version
+        shell: pwsh
+
+      - name: Build for release
+        working-directory: src
+        run: .\BuildForRelease.ps1
+        shell: pwsh
 
       - name: Package the release
         working-directory: src
         run: |
           $version = '${{ steps.inferVersion.outputs.version }}'
           Write-Host "Packaging for the release version: $version"
-          powershell .\PackageRelease.ps1 -version $version
+          .\PackageRelease.ps1 -version $version
+        shell: pwsh
 
       - name: Rename the release assets
-        working-directory: ./
+        working-directory: .
         run: |
-          Write-Host "Current working directory: $(Get-Location)"
-
           $version = '${{ steps.inferVersion.outputs.version }}'
-          $releaseDir = Join-Path $(Get-Location) "artefacts\release\$version"
+          $releaseDir = Join-Path $(Get-Location) "artefacts/release/$version"
           Write-Host "Release directory: $releaseDir"
 
-          if (!(Test-Path $releaseDir))
-          {
+          if (!(Test-Path $releaseDir)) {
               throw "The release directory does not exist: $releaseDir"
           }
 
           $archives = Get-ChildItem $releaseDir -Filter *.zip
-          foreach($archive in $archives)
-          {
+          foreach($archive in $archives) {
               $path = $archive.FullName
               Write-Host "The path to the archive is: $path"
 
@@ -78,14 +70,41 @@ jobs:
               Write-Host "The name without extension is: $nameWoExt"
 
               $target = Join-Path $releaseDir ($nameWoExt + "." + $version + ".zip")
-
               Write-Host "Moving: $path -> $target"
               Move-Item -Path $path -Destination $target
           }
+        shell: pwsh
+
+      - name: Verify the release assets
+        working-directory: .
+        run: |
+          $version = '${{ steps.inferVersion.outputs.version }}'
+          $releaseDir = Join-Path $(Get-Location) "artefacts/release/$version"
+          Write-Host "Verifying contents of the release directory: $releaseDir"
+          Get-ChildItem $releaseDir
 
       - name: Upload the release assets
-        uses: AButler/upload-release-assets@v2.0
+        uses: AButler/upload-release-assets@v3.0
         with:
           files: "artefacts/release/${{ steps.inferVersion.outputs.version }}/*.zip"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           release-tag: "v${{ steps.inferVersion.outputs.version }}"
+
+      # Use this once we can say when to automatically create a release
+      #- name: Create GitHub Release
+      #  id: create_release
+      #  uses: actions/create-release@v1
+      #  env:
+      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #  with:
+      #    tag_name: "v${{ steps.inferVersion.outputs.version }}"
+      #    release_name: "Release v${{ steps.inferVersion.outputs.version }}"
+      #    draft: false
+      #    prerelease: false
+      
+      # - name: Upload the release assets
+      #   uses: actions/upload-release-asset@v1
+      #   with:
+      #     asset_path: artefacts/release/${{ steps.inferVersion.outputs.version }}/*.zip
+      #     asset_name: ${{ steps.inferVersion.outputs.version }}.zip
+      #     asset_content_type: application/zip
