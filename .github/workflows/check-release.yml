@@ -28,7 +28,7 @@ jobs:
         id: set_timestamp
         run: |
           echo "timestamp=$(date -u '+%Y-%m-%dT%H-%M-%SZ')" >> $GITHUB_ENV
-          Write-Host "The current timestamp is: timestamp"
+          Write-Host "The current timestamp is: $timestamp"
           
         
       - name: Extract branch name
