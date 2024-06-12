@@ -48,7 +48,7 @@ jobs:
             }
           }
         shell: pwsh
-        
+
       - name: Generate Version Number
         working-directory: src
         id: generate_version_number

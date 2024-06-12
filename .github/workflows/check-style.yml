@@ -6,11 +6,10 @@ on:
       - main
       - release
       - 'integration/**'
-    types: [opened, synchronize, reopened, edited]
+    types: [ opened, synchronize, reopened, edited ]
   push:
     branches:
       - main
-      - release
       - 'integration/**'
 
 jobs:
