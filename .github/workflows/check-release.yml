@@ -30,8 +30,8 @@ jobs:
           $current_time = $(date +'%Y-%m-%d-T-%H-%M-%S')
           echo "timestamp=$current_time" >> $GITHUB_ENV
           Write-Host "The current timestamp is: $current_time"
-          
-        
+
+
       - name: Extract branch name
         id: extract_branch
         run: |
