@@ -3,7 +3,7 @@ name: Prerelease on Merge to Main
 on:
   push:
     branches:
-      - main
+      - mainXXX
 
 jobs:
   create-new-prerelease:

@@ -24,6 +24,13 @@ jobs:
         run: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
         shell: pwsh
 
+      - name: Set timestamp
+        id: set_timestamp
+        run: |
+          echo "timestamp=$(date -u '+%Y-%m-%dT%H-%M-%SZ')" >> $GITHUB_ENV
+          Write-Host "The current timestamp is: timestamp"
+          
+        
       - name: Extract branch name
         id: extract_branch
         run: |
@@ -32,26 +39,6 @@ jobs:
           $branch = git branch -r --contains $commitSHA | Select-String -Pattern 'origin/' | Select-Object -First 1 | ForEach-Object { $_.Line -replace '.*origin/', '' } | ForEach-Object { $_.Trim() }
           echo "branch=$branch" >> $env:GITHUB_OUTPUT
           Write-Host "The current branch is: $branch"
-        shell: pwsh
-
-      - name: Get the newest develop or latest tag
-        id: get_latest_tag
-        run: |
-          $stableTags = git tag --list "*develop*" --sort=-v:refname
-          if ($stableTags) {
-            $newestStableTag = $stableTags | Select-Object -First 1
-            echo "from_tag=$newestStableTag" >> $env:GITHUB_OUTPUT
-            Write-Host "Latest found tag is $from_tag"
-          } else {
-            Write-Host "No stable tags found, fetching the latest tag."
-            $latestTag = git tag --list --sort=-v:refname | Select-Object -First 1
-            if ($latestTag) {
-              echo "from_tag=$latestTag" >> $env:GITHUB_OUTPUT
-              Write-Host "Latest found tag is $from_tag"
-            } else {
-              Write-Host "No tags found at all."
-            }
-          }
         shell: pwsh
 
       - name: Generate Version Number
@@ -80,16 +67,6 @@ jobs:
       - name: Build release
         working-directory: src
         run: .\BuildForRelease.ps1
-        shell: pwsh
-
-      - name: Set timestamp
-        id: set_timestamp
-        run: |
-          $timestamp = (Get-Date).ToString("yyyy-MM-ddTHH-mm-ssZ")
-          if ($timestamp -match "'|\"|:")
-          {
-              throw "Unexpected characters in timestamp: $timestamp"
-          }
         shell: pwsh
 
       - name: Package release
