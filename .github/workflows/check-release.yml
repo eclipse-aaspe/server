@@ -83,10 +83,12 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: AasxServerBlazor.LATEST.${{ steps.generate_version_number.outputs.version }}.${{ steps.set_timestamp.outputs.timestamp }}
-          path: artefacts/release/LATEST.alpha/AasxServerBlazor.zip
+          path: artefacts/release/${{ steps.generate_version_number.outputs.version }}/AasxServerBlazor.zip
+          if-no-files-found: error
 
       - name: Upload AasxServerAspNetCore
         uses: actions/upload-artifact@v3
         with:
           name: AasxServerAspNetCore.LATEST.${{ steps.generate_version_number.outputs.version }}.${{ steps.set_timestamp.outputs.timestamp }}
-          path: artefacts/release/LATEST.alpha/AasxServerAspNetCore.zip
+          path: artefacts/release/${{ steps.generate_version_number.outputs.version }}/AasxServerAspNetCore.zip
+          if-no-files-found: error
