@@ -91,14 +91,38 @@ jobs:
           }
         shell: pwsh
 
+      - name: Check for existing tags
+        id: check_tags
+        run: |
+          if [ -z "$(git tag -l)" ]; then
+            echo "no-tags=true" >> $GITHUB_ENV
+          else
+            echo "no-tags=false" >> $GITHUB_ENV
+          fi
+
+      - name: Set default changelog message
+        if: env.no-tags == 'true'
+        run: echo "DEFAULT_CHANGELOG='Initial release. No previous tags found.'" >> $GITHUB_ENV
+
       - name: Generate release notes
         id: generate_release_notes
+        if: env.no-tags == 'false'
         uses: mikepenz/release-changelog-builder-action@v4
         with:
           configuration: "changelog_configuration.json"
           token: ${{ secrets.GITHUB_TOKEN }}
           fetchReviewers: true
           fetchReleaseInformation: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set changelog output
+        if: env.no-tags == 'false'
+        run: echo "changelog=${{ steps.generate_release_notes.outputs.changelog }}" >> $GITHUB_ENV
+
+      - name: Set default changelog output
+        if: env.no-tags == 'true'
+        run: echo "changelog=$DEFAULT_CHANGELOG" >> $GITHUB_ENV
 
       - name: Create GitHub release
         id: create_release
@@ -110,7 +134,7 @@ jobs:
           release_name: "v${{ steps.generate_version_number.outputs.version }}"
           draft: false
           prerelease: true
-          body: ${{ steps.generate_release_notes.outputs.changelog }}
+          body: ${{ env.changelog }}
 
       - name: Upload the release assets
         uses: AButler/upload-release-assets@v3.0
