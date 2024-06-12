@@ -54,7 +54,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "issue_templates", "issue_te
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{01BD6F10-2DE0-4D88-8EB0-62705AE8F6FC}"
 	ProjectSection(SolutionItems) = preProject
-		..\.github\workflows\build-and-package-release.yml = ..\.github\workflows\build-and-package-release.yml
 		..\.github\workflows\build-and-publish-docker-images.yml = ..\.github\workflows\build-and-publish-docker-images.yml
 		..\.github\workflows\build-and-publish-docker-images-release.yml = ..\.github\workflows\build-and-publish-docker-images-release.yml
 		..\.github\workflows\build-docker-images.yml = ..\.github\workflows\build-docker-images.yml
