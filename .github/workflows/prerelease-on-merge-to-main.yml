@@ -58,7 +58,7 @@ jobs:
       - name: Rename release assets
         run: |
           $branch = '${{ steps.extract_branch.outputs.branch }}'
-          Rename-Item -Path "artefacts/release/*" -NewName "artefacts/release/$branch"
+          Rename-Item -Path "artefacts/build/Release/*" -NewName "artefacts/build/Release/$branch"
         shell: pwsh
 
       - name: Package release

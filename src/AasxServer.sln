@@ -78,6 +78,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ProjectScripts", "ProjectSc
 		CopyLicense.ps1 = CopyLicense.ps1
 		FormatCode.ps1 = FormatCode.ps1
 		PackageRelease.ps1 = PackageRelease.ps1
+		BuildVersionNumber.ps1 = BuildVersionNumber.ps1
+		UpdateProjectVersions.ps1 = UpdateProjectVersions.ps1
 	EndProjectSection
 EndProject
 Global
