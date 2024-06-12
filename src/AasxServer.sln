@@ -44,6 +44,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{F847
 	ProjectSection(SolutionItems) = preProject
 		..\.github\pull_request_template.md = ..\.github\pull_request_template.md
 		..\.github\release-drafter.yml = ..\.github\release-drafter.yml
+		..\.github\changelog_configuration.json = ..\.github\changelog_configuration.json
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "issue_templates", "issue_templates", "{6F3BB70E-0095-4D58-AE5E-D7D02FD7BB01}"
