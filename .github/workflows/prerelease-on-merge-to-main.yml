@@ -16,8 +16,8 @@ jobs:
           fetch-depth: 0
 
       - name: Set execution policy
-        shell: pwsh
         run: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+        shell: pwsh
 
       - name: Extract branch name
         id: extract_branch
@@ -53,14 +53,17 @@ jobs:
         working-directory: src
         run: .\BuildForRelease.ps1
         shell: pwsh
-        
+
       - name: Rename release assets
-        run: Rename-Item -Path "artefacts/release/*" -NewName "artefacts/release/${{ steps.extract_branch.outputs.branch }}"
+        run: |
+          $branch = '${{ steps.extract_branch.outputs.branch }}'
+          Rename-Item -Path "artefacts/release/*" -NewName "artefacts/release/$branch"
+        shell: pwsh
 
       - name: Package release
         working-directory: src
         run: |
-          $version = '${{ steps.inferVersion.outputs.version }}'+
+          $version = '${{ steps.generate_version_number.outputs.version }}'
           mkdir -p artefacts/release/$version
           Write-Host "Packaging for the release version: $version"
           .\PackageRelease.ps1 -version $version
@@ -80,8 +83,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: "v${{ steps.extract_branch.outputs.branch }}"
-          release_name: "v${{ steps.extract_branch.outputs.branch }}"
+          tag_name: "v${{ steps.generate_version_number.outputs.version }}"
+          release_name: "v${{ steps.generate_version_number.outputs.version }}"
           draft: false
           prerelease: true
           body: ${{ steps.generate_release_notes.outputs.body }}
@@ -90,6 +93,6 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: artefacts/release/${{ steps.extract_branch.outputs.branch }}
-          asset_name: release-${{ steps.extract_branch.outputs.branch }}.zip
+          asset_path: artefacts/release/${{ steps.generate_version_number.outputs.version }}
+          asset_name: release-${{ steps.generate_version_number.outputs.version }}.zip
           asset_content_type: application/zip
