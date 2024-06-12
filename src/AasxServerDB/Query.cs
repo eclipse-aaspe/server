@@ -1,24 +1,10 @@
-﻿using Extensions;
+﻿using AasxServerDB.Entities;
+using AasxServerDB.Result;
+using Extensions;
 using Microsoft.IdentityModel.Tokens;
 
 namespace AasxServerDB
 {
-    // --------------- Result Schema ---------------
-    public class SMResult
-    {
-        public string smId { get; set; }
-        public string url { get; set; }
-    }
-
-    public class SMEResult
-    {
-        public string smId { get; set; }
-        public string idShortPath { get; set; }
-        public string value { get; set; }
-        public string url { get; set; }
-    }
-
-    // --------------- Query ---------------
     public class Query
     {
         public static string ExternalBlazor { get; set; }

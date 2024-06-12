@@ -34,6 +34,7 @@ using System.Timers;
 using System.Xml;
 using System.Xml.Serialization;
 using Formatting = Newtonsoft.Json.Formatting;
+using AasxServerDB.Context;
 
 /*
 Copyright (c) 2019-2020 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski
@@ -396,7 +397,6 @@ namespace AasxServer
         public static bool edit = false;
         public static string externalRest = "";
         public static string externalBlazor = "";
-        public static string externalRepository = "";
         public static bool readTemp = false;
         public static int saveTemp = 0;
         public static DateTime saveTempDt = new DateTime();
@@ -477,7 +477,7 @@ namespace AasxServer
             }
 
             // Read environment variables
-            string[] evlist = { "PLCNEXTTARGET", "WITHPOLICY", "SHOWWEIGHT", "AASREPOSITORY" };
+            string[] evlist = { "PLCNEXTTARGET", "WITHPOLICY", "SHOWWEIGHT" };
             foreach (var ev in evlist)
             {
                 string v = System.Environment.GetEnvironmentVariable(ev);
@@ -515,7 +515,6 @@ namespace AasxServer
                 }
                 Console.WriteLine("showWeight: " + showWeight);
             }
-            envVariables.TryGetValue("AASREPOSITORY", out externalRepository);
 
             if (a.Connect != null)
             {
@@ -688,10 +687,6 @@ namespace AasxServer
             {
                 externalBlazor = "http://" + blazorHostPort;
             }
-            externalBlazor = externalBlazor.Replace("\r", "");
-            externalBlazor = externalBlazor.Replace("\n", "");
-            if (externalRepository == "")
-                externalRepository = externalBlazor;
             Query.ExternalBlazor = externalBlazor;
 
             /*
