@@ -15,9 +15,6 @@ function UpdateProjectVersions {
     # Get all csproj files in the solution.
     $projectFiles = Get-ChildItem -Path "$PSScriptRoot\.." -Recurse -Filter *.csproj
 
-    # Initialize Git
-    git init
-
     # Iterate through each project file and update the <Version> tag.
     foreach ($file in $projectFiles) {
         # Check if the file path contains "obsolete" (case-insensitive).
@@ -30,13 +27,7 @@ function UpdateProjectVersions {
         (Get-Content -Path $file.FullName) | ForEach-Object {
             $_ -replace '<Version>.*<\/Version>', "<Version>$version</Version>"
         } | Set-Content -Path $file.FullName
-
-        # Stage the changes
-        git add $file.FullName
     }
-
-    # Commit the changes
-    git commit -m "Update project version to $version"
 }
 
 # Execute the function
