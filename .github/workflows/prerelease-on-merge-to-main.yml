@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  prerelease:
+  create-new-prerelease:
     runs-on: windows-latest
 
     steps:
@@ -29,6 +29,7 @@ jobs:
         shell: pwsh
 
       - name: Generate Version Number
+        working-directory: src
         id: generate_version_number
         run: |
           $branch = '${{ steps.extract_branch.outputs.branch }}'
