@@ -93,16 +93,19 @@ jobs:
 
       - name: Check for existing tags
         id: check_tags
+        shell: pwsh
         run: |
-          if [ -z "$(git tag -l)" ]; then
-            echo "no-tags=true" >> $GITHUB_ENV
-          else
-            echo "no-tags=false" >> $GITHUB_ENV
-          fi
+          $tags = git tag -l
+          if (-not $tags) {
+            echo "no-tags=true" >> $env:GITHUB_ENV
+          } else {
+            echo "no-tags=false" >> $env:GITHUB_ENV
+          }
 
       - name: Set default changelog message
         if: env.no-tags == 'true'
-        run: echo "DEFAULT_CHANGELOG='Initial release. No previous tags found.'" >> $GITHUB_ENV
+        shell: pwsh
+        run: echo "DEFAULT_CHANGELOG='Initial release. No previous tags found.'" >> $env:GITHUB_ENV
 
       - name: Generate release notes
         id: generate_release_notes
@@ -118,11 +121,13 @@ jobs:
 
       - name: Set changelog output
         if: env.no-tags == 'false'
-        run: echo "changelog=${{ steps.generate_release_notes.outputs.changelog }}" >> $GITHUB_ENV
+        shell: pwsh
+        run: echo "changelog=${{ steps.generate_release_notes.outputs.changelog }}" >> $env:GITHUB_ENV
 
       - name: Set default changelog output
         if: env.no-tags == 'true'
-        run: echo "changelog=$DEFAULT_CHANGELOG" >> $GITHUB_ENV
+        shell: pwsh
+        run: echo "changelog=$DEFAULT_CHANGELOG" >> $env:GITHUB_ENV
 
       - name: Create GitHub release
         id: create_release
