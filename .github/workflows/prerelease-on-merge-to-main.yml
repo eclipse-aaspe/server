@@ -65,7 +65,7 @@ jobs:
           Write-Host "Packaging for the release version: $version"
           .\PackageRelease.ps1 -version $version
         shell: pwsh
-        
+
       - name: Rename the release assets
         working-directory: .
         run: |
@@ -111,10 +111,12 @@ jobs:
           prerelease: true
           body: ${{ steps.generate_release_notes.outputs.body }}
 
-      - name: Upload release assets
+      - name: Upload release asset
         uses: actions/upload-release-asset@v1
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: artefacts/release/${{ steps.generate_version_number.outputs.version }}
-          asset_name: release-${{ steps.generate_version_number.outputs.version }}.zip
+          upload_url: https://uploads.github.com/repos/Freezor/aasx-server/releases/160065180/assets{?name,label}
+          asset_path: artefacts/release/0.3.0-4-aasV3-alpha-latest/release-0.3.0-4-aasV3-alpha-latest.zip
+          asset_name: release-0.3.0-4-aasV3-alpha-latest.zip
           asset_content_type: application/zip
+        env:
+          DOTNET_ROOT: C:\Program Files\dotnet
