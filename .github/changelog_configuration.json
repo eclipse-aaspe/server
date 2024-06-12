@@ -69,18 +69,18 @@
     "order": "ASC",
     "on_property": "mergedAt"
   },
-  "template": "# 📦 Changelog\n\n<details>\n<summary>\n\n## Categories\n\n{{CATEGORIES}}Uncategorized</summary>\n\n#{{UNCATEGORIZED}}\n[🔗 Release Diff](RELEASE_DIFF)\n\n## 👥 Contributors\n\n{{CONTRIBUTORS}}\n</details>",
+  "template": "# 📦 Changelog\n\n<details>\n<summary>\n\n## Categories\n\n{{CATEGORIES}}\n</summary>\n\n# {{UNCATEGORIZED}}\n\n[🔗 Release Diff](RELEASE_DIFF)\n\n## 👥 Contributors\n\n{{CONTRIBUTORS}}\n</details>",
   "pr_template": "- #{{TITLE}} (by {{AUTHOR}} in ##{{NUMBER}})",
   "empty_template": "- No changes. See the [Changelog](CHANGELOG.md) for more information.",
   "label_extractor": [
     {
-      "pattern": "(.) (.+)",
+      "pattern": "(.*)",
       "target": "$1",
       "flags": "gu"
     }
   ],
   "reference": {
-    "pattern": ".*\\ \\#(.).*",
+    "pattern": ".*\\#(.*).*",
     "on_property": "body",
     "method": "replace",
     "target": "$1"
