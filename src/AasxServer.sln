@@ -43,7 +43,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{F847719C-7CF2-40D5-BF7B-6F51E551E13F}"
 	ProjectSection(SolutionItems) = preProject
 		..\.github\pull_request_template.md = ..\.github\pull_request_template.md
-		..\.github\release-drafter.yml = ..\.github\release-drafter.yml
 		..\.github\changelog_configuration.json = ..\.github\changelog_configuration.json
 	EndProjectSection
 EndProject

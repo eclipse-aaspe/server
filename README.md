@@ -119,7 +119,7 @@ our [GitHub issues](https://github.com/admin-shell-io/aasx-server/issues/189) pa
 We've transitioned to [semantic versioning](https://semver.org) for better version distinctness. All versions follow this schema:
 
 ```
-<major>.<minor>.<patch>-<buildnumber>-<AAS Schema Version>-<alpha>-<stable|latest|develop>
+<major>.<minor>.<patch>.<buildnumber>-<AAS Schema Version>-<alpha>-<stable|latest|develop>
 ```
 
 - **buildnumber**: An incremented value for each build, important for development or latest releases to distinguish builds even if there's no new version number.
