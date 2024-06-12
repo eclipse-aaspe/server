@@ -1655,7 +1655,11 @@ namespace AasxServer
                                                 requestPath = urlEdcWrapper;
                                         }
 
-                                        var handler = new HttpClientHandler();
+                                        var handler = new HttpClientHandler()
+                                        {
+                                            ServerCertificateCustomValidationCallback = delegate { return true; },
+                                        };
+
                                         if (!requestPath.Contains("localhost"))
                                         {
                                             if (AasxServer.AasxTask.proxy != null)

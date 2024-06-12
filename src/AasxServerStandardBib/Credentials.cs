@@ -242,7 +242,10 @@ namespace AasxServer
                     if (valid) return;
                 }
 
-                var handler = new HttpClientHandler();
+                var handler = new HttpClientHandler()
+                {
+                    ServerCertificateCustomValidationCallback = delegate { return true; },
+                };
                 if (AasxServer.AasxTask.proxy != null)
                     handler.Proxy = AasxServer.AasxTask.proxy;
                 else
