@@ -26,6 +26,7 @@ jobs:
           $commitSHA = git rev-parse HEAD
           $branch = git branch -r --contains $commitSHA | Select-String -Pattern 'origin/' | Select-Object -First 1 | ForEach-Object { $_.Line -replace '.*origin/', '' } | ForEach-Object { $_.Trim() }
           echo "branch=$branch" >> $env:GITHUB_OUTPUT
+          Write-Host "The current branch is: $branch"
         shell: pwsh
 
       - name: Generate Version Number
@@ -35,6 +36,7 @@ jobs:
           $branch = '${{ steps.extract_branch.outputs.branch }}'
           $version = .\BuildVersionNumber.ps1 -suffix alpha -branch $branch -githubRunNumber ${{ github.run_number }}
           echo "version=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "The version name to build is: $version"
         shell: pwsh
 
       - name: Update version numbers in project
@@ -55,12 +57,6 @@ jobs:
         run: .\BuildForRelease.ps1
         shell: pwsh
 
-      - name: Rename release assets
-        run: |
-          $branch = '${{ steps.extract_branch.outputs.branch }}'
-          Rename-Item -Path "artefacts/build/Release/*" -NewName "artefacts/build/Release/$branch"
-        shell: pwsh
-
       - name: Package release
         working-directory: src
         run: |
@@ -68,6 +64,31 @@ jobs:
           mkdir -p artefacts/release/$version
           Write-Host "Packaging for the release version: $version"
           .\PackageRelease.ps1 -version $version
+        shell: pwsh
+        
+      - name: Rename the release assets
+        working-directory: .
+        run: |
+          $version = '${{ steps.generate_version_number.outputs.version }}'
+          $releaseDir = Join-Path $(Get-Location) "artefacts/release/$version"
+          Write-Host "Release directory: $releaseDir"
+
+          if (!(Test-Path $releaseDir)) {
+              throw "The release directory does not exist: $releaseDir"
+          }
+
+          $archives = Get-ChildItem $releaseDir -Filter *.zip
+          foreach($archive in $archives) {
+              $path = $archive.FullName
+              Write-Host "The path to the archive is: $path"
+
+              $nameWoExt = [io.path]::GetFileNameWithoutExtension($path)
+              Write-Host "The name without extension is: $nameWoExt"
+
+              $target = Join-Path $releaseDir ($nameWoExt + "." + $version + ".zip")
+              Write-Host "Moving: $path -> $target"
+              Move-Item -Path $path -Destination $target
+          }
         shell: pwsh
 
       - name: Generate release notes

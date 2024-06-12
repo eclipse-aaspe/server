@@ -18,7 +18,7 @@ function UpdateProjectVersions {
     # Iterate through each project file and update the <Version> tag.
     foreach ($file in $projectFiles) {
         # Check if the file path contains "obsolete" (case-insensitive).
-        if ($file.FullName -notmatch 'obsolete') {
+        if ($file.FullName -match 'obsolete') {
             Write-Host "Skipping obsolete file: $($file.FullName)"
             continue
         }
