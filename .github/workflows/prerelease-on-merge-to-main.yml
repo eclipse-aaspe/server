@@ -114,8 +114,8 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: https://uploads.github.com/repos/Freezor/aasx-server/releases/160065180/assets{?name,label}
-          asset_path: artefacts/release/${{ steps.generate_version_number.outputs.version }}/*.zip
-          asset_name: release-${{ steps.generate_version_number.outputs.version }}.zip
+          asset_path: artefacts/release/
+          asset_name: ${{ steps.generate_version_number.outputs.version }}.zip
           asset_content_type: application/zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
