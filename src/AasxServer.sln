@@ -43,6 +43,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{F847719C-7CF2-40D5-BF7B-6F51E551E13F}"
 	ProjectSection(SolutionItems) = preProject
 		..\.github\pull_request_template.md = ..\.github\pull_request_template.md
+		..\.github\changelog_configuration.json = ..\.github\changelog_configuration.json
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "issue_templates", "issue_templates", "{6F3BB70E-0095-4D58-AE5E-D7D02FD7BB01}"
@@ -62,7 +63,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 		..\.github\workflows\draft-prerelease-on-pushed-tag.yml = ..\.github\workflows\draft-prerelease-on-pushed-tag.yml
 		..\.github\workflows\draft-release-on-merge-to-release-branch.yml = ..\.github\workflows\draft-release-on-merge-to-release-branch.yml
 		..\.github\workflows\prerelease-on-merge-to-main.yml = ..\.github\workflows\prerelease-on-merge-to-main.yml
-		..\.github\changelog_configuration.json = ..\.github\changelog_configuration.json
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ProjectScripts", "ProjectScripts", "{39F9287F-CBC6-4F56-AA55-81A013A89AAE}"

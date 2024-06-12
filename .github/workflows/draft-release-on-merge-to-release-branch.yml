@@ -113,7 +113,7 @@ jobs:
         id: generate_release_notes
         uses: mikepenz/release-changelog-builder-action@v4
         with:
-          configuration: "changelog_configuration.json"
+          configuration: ".github/changelog_configuration.json"
           token: ${{ secrets.GITHUB_TOKEN }}
           fetchReviewers: true
           fetchReleaseInformation: true
