@@ -4297,7 +4297,7 @@ namespace AasxRestServerLibrary
             if (!withAuthentification || checkAccessLevel(accessrights, "/server/listaas", "READ"))
             {
                 // get the list
-                int aascount = AasxServer.Program.env.Length;
+                int aascount = AasxServer.Program.env.Count;
 
                 for (int i = 0; i < aascount; i++)
                 {
@@ -4617,7 +4617,7 @@ namespace AasxRestServerLibrary
 
             securityRole = new List<securityRoleClass>();
 
-            int aascount = AasxServer.Program.env.Length;
+            int aascount = AasxServer.Program.env.Count;
 
             for (int i = 0; i < aascount; i++)
             {

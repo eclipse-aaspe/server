@@ -12,7 +12,7 @@ using System.IO;
 namespace AasxIntegrationBase
 {
     /// <summary>
-    /// This interface describes a connection for a server resource of AASX contents, such as OPC UA or REST
+    /// This interface describes a connection for a server resource of AASX contents, such as REST
     /// </summary>
     public interface IAasxOnlineConnection
     {

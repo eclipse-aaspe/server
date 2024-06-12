@@ -3,67 +3,19 @@ using AasxServer;
 using AasxServerStandardBib.Logging;
 using Extensions;
 using Jose;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System.Collections.Specialized;
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Web;
 
 namespace AasSecurity
 {
     public class SecurityService : ISecurityService
     {
         private static ILogger _logger = ApplicationLogging.CreateLogger("SecurityService");
-
-        public AuthenticationTicket AuthenticateRequest(HttpContext context, string route, string httpOperation, string authenticationSchemeName)
-        {
-            if (!GlobalSecurityVariables.WithAuthentication)
-            {
-                return null;
-            }
-
-            //Retrieve security related query strings from the request
-            NameValueCollection queries = HttpUtility.ParseQueryString(context.Request.QueryString.ToString());
-
-            //Retrieve headers from the request
-            NameValueCollection headers = new NameValueCollection();
-            foreach (var header in context.Request.Headers)
-            {
-                headers.Add(header.Key, header.Value.FirstOrDefault());
-                if (header.Key == "FORCE-POLICY")
-                {
-                    Program.withPolicy = !(header.Value.FirstOrDefault() == "OFF");
-                    _logger.LogDebug("FORCE-POLICY " + header.Value.FirstOrDefault());
-                }
-            }
-
-            var accessRole = GetAccessRole(queries, headers, out string policy, out string policyRequestedResource);
-            if (accessRole == null)
-            {
-                _logger.LogDebug($"Access Role found null. Hence setting the access role as isNotAuthenticated.");
-                accessRole = "isNotAuthenticated";
-            }
-
-            _logger.LogInformation($"Access role in authentication: {accessRole}, policy: {policy}, policyRequestedResource: {policyRequestedResource}");
-            var aasSecurityContext = new AasSecurityContext(accessRole, route, httpOperation);
-            //Create claims
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Role, aasSecurityContext.AccessRole),
-                new Claim("NeededRights", aasSecurityContext.NeededRights.ToString()),
-                new Claim("Policy", policy)
-            };
-
-            var identity = new ClaimsIdentity(claims, authenticationSchemeName);
-            var principal = new System.Security.Principal.GenericPrincipal(identity, null);
-            return new AuthenticationTicket(principal, authenticationSchemeName);
-        }
 
         private string? GetAccessRole(NameValueCollection queries, NameValueCollection headers, out string policy, out string policyRequestedResource)
         {

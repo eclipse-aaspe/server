@@ -65,9 +65,6 @@ public static class ServerConfiguration
         AddMvc(services);
         AddSwaggerGen(services);
 
-        services.AddAuthentication(AuthenticationScheme)
-            .AddScheme<AasSecurityAuthenticationOptions, AasSecurityAuthenticationHandler>(AuthenticationScheme, null);
-
         AddAuthorization(services);
     }
 

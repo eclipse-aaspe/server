@@ -1,5 +1,4 @@
-﻿
-using AasxServerStandardBib.Interfaces;
+﻿using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
 using AdminShellNS.Exceptions;
 using Microsoft.Extensions.Configuration;
@@ -18,22 +17,16 @@ namespace AasxServerStandardBib.Services
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _configuration = configuration;
         }
+
         public void VerifyRequestBody(IClass body)
         {
-            if (_configuration.GetValue<bool>("IsMetamodelVerificationStrict"))
+            var errorList = Verification.Verify(body).ToList();
+            if (errorList.Any())
             {
-                var errorList = Verification.Verify(body).ToList();
-                if (errorList.Any())
-                {
-                    throw new MetamodelVerificationException(errorList);
-                }
+                throw new MetamodelVerificationException(errorList);
+            }
 
-                _logger.LogDebug($"The request body is conformant with the metamodel.");
-            }
-            else
-            {
-                _logger.LogDebug("Metamodel verification is not strict. Therefore, skipping the verification.");
-            }
+            _logger.LogDebug($"The request body is conformant with the metamodel.");
         }
     }
 }

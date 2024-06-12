@@ -69,7 +69,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                 submodelRegistry = null;
 
                 int i = initiallyEmpty;
-                while (i < AasxServer.Program.env.Length)
+                while (i < AasxServer.Program.env.Count)
                 {
                     AasxServer.Program.env[ i ] = null;
                     i++;
@@ -222,7 +222,10 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                 requestPath = replace;
                         }
 
-                        var handler = new HttpClientHandler();
+                        var handler = new HttpClientHandler()
+                        {
+                            ServerCertificateCustomValidationCallback = delegate { return true; },
+                        };
 
                         if (!requestPath.Contains("localhost"))
                         {
@@ -307,7 +310,10 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                 requestPath = replace;
                         }
 
-                        var handler = new HttpClientHandler();
+                        var handler = new HttpClientHandler()
+                        {
+                            ServerCertificateCustomValidationCallback = delegate { return true; },
+                        };
 
                         if (!requestPath.Contains("localhost"))
                         {
@@ -402,7 +408,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                         else
                         {
                             int i = 0;
-                            while (i < AasxServer.Program.env.Length)
+                            while (i < AasxServer.Program.env.Count)
                             {
                                 var env = AasxServer.Program.env[ i ];
                                 if (env == null)
@@ -863,7 +869,10 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                 //string json = JsonConvert.SerializeObject(ad);
                 string json = DescriptorSerializer.ToJsonObject(ad).ToJsonString();
 
-                var handler = new HttpClientHandler();
+                var handler = new HttpClientHandler()
+                {
+                    ServerCertificateCustomValidationCallback = delegate { return true; },
+                };
 
                 if (AasxServer.AasxTask.proxy != null)
                     handler.Proxy = AasxServer.AasxTask.proxy;
