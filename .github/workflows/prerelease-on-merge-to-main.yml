@@ -100,7 +100,6 @@ jobs:
           fetchViaCommits: true
           fetchReviewers: true
           fetchReleaseInformation: true
-          commitMode: true
 
       - name: Create GitHub release
         id: create_release
