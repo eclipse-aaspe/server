@@ -27,8 +27,9 @@ jobs:
       - name: Set timestamp
         id: set_timestamp
         run: |
-          echo "timestamp=$(date -u '+%Y-%m-%dT%H-%M-%SZ')" >> $GITHUB_ENV
-          Write-Host "The current timestamp is: $timestamp"
+          $current_time = ate::$(date +'%Y-%m-%d-%h-%M')
+          echo "timestamp=$current_time" >> $GITHUB_ENV
+          Write-Host "The current timestamp is: $current_time"
           
         
       - name: Extract branch name
@@ -73,10 +74,9 @@ jobs:
         working-directory: src
         run: |
           $version = '${{ steps.generate_version_number.outputs.version }}'
-          $timestamp = '${{ steps.set_timestamp.outputs.timestamp }}'
-          mkdir -p artefacts/release/$version.$timestamp
-          Write-Host "Packaging for the release version: $version.$timestamp"
-          .\PackageRelease.ps1 -version $version.$timestamp
+          mkdir -p artefacts/release/$version
+          Write-Host "Packaging for the release version: $version"
+          .\PackageRelease.ps1 -version $version
         shell: pwsh
 
       - name: Upload AasxServerBlazor
