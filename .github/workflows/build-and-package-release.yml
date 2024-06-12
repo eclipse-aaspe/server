@@ -3,10 +3,10 @@ name: Build-and-package-release-workflow
 on:
   push:
     branches:
-      - main
+      - mainXX
   pull_request:
     branches:
-      - main
+      - mainXX
 
 jobs:
   Build-and-package-release:

@@ -10,7 +10,8 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -27,50 +28,42 @@ jobs:
           echo "branch=$branch" >> $env:GITHUB_OUTPUT
         shell: pwsh
 
-      - name: Infer the version
-        id: infer_version
+      - name: Generate Version Number
+        id: generate_version_number
         run: |
           $branch = '${{ steps.extract_branch.outputs.branch }}'
           $version = .\BuildVersionNumber.ps1 -suffix alpha -branch $branch -githubRunNumber ${{ github.run_number }}
           echo "version=$version" >> $env:GITHUB_OUTPUT
         shell: pwsh
 
-      - name: Install .NET Core
+      - name: Update version numbers in project
+        working-directory: src
+        run: |
+          $version = '${{ steps.generate_version_number.outputs.version }}'
+          Write-Host "Updating project versions to: $version"
+          .\UpdateProjectVersions.ps1 -version $version
+        shell: pwsh
+
+      - name: Setup .NET Core
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '6.0.x'
 
-      - name: Update version numbers
-        run: .\UpdateProjectVersions.ps1 -version '${{ steps.infer_version.outputs.version }}'
-        shell: pwsh
-
-      - name: Build for release
+      - name: Build release
+        working-directory: src
         run: .\BuildForRelease.ps1
         shell: pwsh
-
-      - name: Verify and list artefacts directory
-        run: |
-          $version = '${{ steps.infer_version.outputs.version }}'
-          $releaseDir = Join-Path $(Get-Location) "artefacts/release/$version"
-          if (!(Test-Path $releaseDir)) { Write-Host "The release directory does not exist." } else { Write-Host "The release directory exists. Listing contents:"; Get-ChildItem $releaseDir }
-        shell: pwsh
-
+        
       - name: Rename release assets
-        run: |
-          $version = '${{ steps.infer_version.outputs.version }}'
-          $releaseDir = Join-Path $(Get-Location) "artefacts/release/$version"
-          if (!(Test-Path $releaseDir)) { throw "The release directory does not exist: $releaseDir" }
-          $archives = Get-ChildItem $releaseDir -Filter *.zip
-          foreach($archive in $archives) {
-              $path = $archive.FullName
-              $nameWoExt = [io.path]::GetFileNameWithoutExtension($path)
-              $target = Join-Path $releaseDir ($nameWoExt + "." + $version + ".zip")
-              Move-Item -Path $path -Destination $target
-          }
-        shell: pwsh
+        run: Rename-Item -Path "artefacts/release/*" -NewName "artefacts/release/${{ steps.extract_branch.outputs.branch }}"
 
-      - name: Package the release
-        run: .\PackageRelease.ps1 -version '${{ steps.infer_version.outputs.version }}'
+      - name: Package release
+        working-directory: src
+        run: |
+          $version = '${{ steps.inferVersion.outputs.version }}'+
+          mkdir -p artefacts/release/$version
+          Write-Host "Packaging for the release version: $version"
+          .\PackageRelease.ps1 -version $version
         shell: pwsh
 
       - name: Generate release notes
@@ -82,19 +75,21 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub release
+        id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: "v${{ steps.infer_version.outputs.version }}"
-          release_name: "Release v${{ steps.infer_version.outputs.version }}"
+          tag_name: "v${{ steps.extract_branch.outputs.branch }}"
+          release_name: "v${{ steps.extract_branch.outputs.branch }}"
           draft: false
           prerelease: true
           body: ${{ steps.generate_release_notes.outputs.body }}
 
       - name: Upload release assets
-        uses: AButler/upload-release-assets@v3.0
+        uses: actions/upload-release-asset@v1
         with:
-          files: "artefacts/release/${{ steps.infer_version.outputs.version }}/*.zip"
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          release-tag: "v${{ steps.infer_version.outputs.version }}"
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artefacts/release/${{ steps.extract_branch.outputs.branch }}
+          asset_name: release-${{ steps.extract_branch.outputs.branch }}.zip
+          asset_content_type: application/zip
