@@ -110,13 +110,9 @@ jobs:
           prerelease: true
           body: ${{ steps.generate_release_notes.outputs.changelog }}
 
-      - name: Upload release assets
-        uses: actions/upload-release-asset@v1
+      - name: Upload the release assets
+        uses: AButler/upload-release-assets@v3.0
         with:
-          upload_url: https://uploads.github.com/repos/Freezor/aasx-server/releases/160065180/assets{?name,label}
-          asset_path: artefacts/release/
-          asset_name: ${{ steps.generate_version_number.outputs.version }}.zip
-          asset_content_type: application/zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DOTNET_ROOT: C:\Program Files\dotnet
+          files: "artefacts/release/${{ steps.inferVersion.outputs.version }}/*.zip"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          release-tag: "v${{ steps.inferVersion.outputs.version }}"
