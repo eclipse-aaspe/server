@@ -97,6 +97,10 @@ jobs:
         with:
           configuration: "changelog_configuration.json"
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetchViaCommits: true
+          fetchReviewers: true
+          fetchReleaseInformation: true
+          commitMode: true
 
       - name: Create GitHub release
         id: create_release
