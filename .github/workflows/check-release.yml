@@ -27,7 +27,7 @@ jobs:
       - name: Set timestamp
         id: set_timestamp
         run: |
-          $current_time = ate::$(date +'%Y-%m-%d-%h-%M')
+          $current_time = date::$(date +'%Y-%m-%d-%H-%M-%S')
           echo "timestamp=$current_time" >> $GITHUB_ENV
           Write-Host "The current timestamp is: $current_time"
           
