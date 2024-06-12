@@ -30,6 +30,24 @@ jobs:
           Write-Host "The current branch is: $branch"
         shell: pwsh
 
+      - name: Get the newest develop or latest tag
+        id: get_latest_tag
+        run: |
+          $stableTags = git tag --list "*develop*" --sort=-v:refname
+          if ($stableTags) {
+            $newestStableTag = $stableTags | Select-Object -First 1
+            echo "from_tag=$newestStableTag" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "No stable tags found, fetching the latest tag."
+            $latestTag = git tag --list --sort=-v:refname | Select-Object -First 1
+            if ($latestTag) {
+              echo "from_tag=$latestTag" >> $env:GITHUB_OUTPUT
+            } else {
+              Write-Host "No tags found at all."
+            }
+          }
+        shell: pwsh
+
       - name: Generate Version Number
         working-directory: src
         id: generate_version_number
@@ -100,6 +118,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetchReviewers: true
           fetchReleaseInformation: true
+          fromTag: ${{ steps.generate_version_number.outputs.from_tag }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
