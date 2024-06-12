@@ -61,7 +61,7 @@ jobs:
         shell: pwsh
 
       - name: Setup .NET Core
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '6.0.x'
 
@@ -80,14 +80,14 @@ jobs:
         shell: pwsh
 
       - name: Upload AasxServerBlazor
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: AasxServerBlazor.LATEST.${{ steps.generate_version_number.outputs.version }}.${{ steps.set_timestamp.outputs.timestamp }}
           path: artefacts/release/${{ steps.generate_version_number.outputs.version }}/AasxServerBlazor.zip
           if-no-files-found: error
 
       - name: Upload AasxServerAspNetCore
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: AasxServerAspNetCore.LATEST.${{ steps.generate_version_number.outputs.version }}.${{ steps.set_timestamp.outputs.timestamp }}
           path: artefacts/release/${{ steps.generate_version_number.outputs.version }}/AasxServerAspNetCore.zip
