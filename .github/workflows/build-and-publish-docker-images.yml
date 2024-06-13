@@ -1,8 +1,6 @@
-name: Build-and-publish-docker-images-workflow
+name: Build and publish docker images when release is published
 
 on:
-  push:
-
   release:
     types: [ published ]
 
@@ -10,8 +8,7 @@ jobs:
   Build-and-publish-docker-images:
     runs-on: ubuntu-latest
     if: |
-      contains(github.event.pull_request.body, 'The workflow build-and-publish-docker-images was intentionally skipped.') == false &&
-      contains(github.event.head_commit.message, 'DockerHub')
+      contains(github.event.pull_request.body, 'The workflow build-and-publish-docker-images was intentionally skipped.') == false
     steps:
       - uses: actions/checkout@master
 
