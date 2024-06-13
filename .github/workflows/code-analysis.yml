@@ -40,7 +40,10 @@ jobs:
           path: format-report.json
 
       - name: Check for formatting issues
-        if: failure()
         run: |
-          echo "Code formatting issues detected. Please fix the issues and commit again."
-          exit 1
+          if ($?) {
+            echo "No formatting issues detected."
+          } else {
+            echo "Code formatting issues detected. Please fix the issues and commit again."
+            exit 1
+          }
