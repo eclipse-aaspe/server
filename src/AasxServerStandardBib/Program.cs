@@ -2130,7 +2130,7 @@ public static class Program
     private static int getaasxFile_fileTransmitted;
     private static readonly int blockSize = 1500000;
 
-    private static readonly List<TransmitData> tdPending = new()();
+    private static readonly List<TransmitData> tdPending = new();
 
     public static void connectPublish(string type, string json)
     {
