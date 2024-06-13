@@ -18,7 +18,7 @@ namespace AasxServerDB
                 {
                     AASX = env.Filename
                 };
-                //VisitorAASX.LoadAASInDB(env, aasxDB);
+                VisitorAASX.LoadAASInDB(env, aasxDB);
                 db.Add(aasxDB);
                 try
                 {
