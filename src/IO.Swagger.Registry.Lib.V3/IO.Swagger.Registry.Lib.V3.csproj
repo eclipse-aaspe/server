@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
     <PropertyGroup>
         <Description>IO.Swagger</Description>
         <Copyright>IO.Swagger</Copyright>
@@ -8,7 +8,7 @@
         <AssemblyName>IO.Swagger.Registry.Lib.V3</AssemblyName>
         <PackageId>IO.Swagger.Registry</PackageId>
         <OutputType>Library</OutputType>
-        <Version>v0.3.0.1-aasV3-alpha-latest</Version>
+        <Version>0.3.0.1-aasV3-alpha-latest</Version>
     </PropertyGroup>
     <PropertyGroup>
         <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>

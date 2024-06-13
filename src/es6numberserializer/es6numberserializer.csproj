@@ -3,7 +3,7 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <Version>v0.3.0.1-aasV3-alpha-latest</Version>
+        <Version>0.3.0.1-aasV3-alpha-latest</Version>
     </PropertyGroup>
 
 </Project>

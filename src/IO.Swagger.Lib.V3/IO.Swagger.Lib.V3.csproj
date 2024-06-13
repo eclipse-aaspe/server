@@ -8,7 +8,7 @@
         <AssemblyName>IO.Swagger.Lib.V3</AssemblyName>
         <PackageId>IO.Swagger</PackageId>
         <OutputType>Library</OutputType>
-        <Version>v0.3.0.1-aasV3-alpha-latest</Version>
+        <Version>0.3.0.1-aasV3-alpha-latest</Version>
     </PropertyGroup>
     <PropertyGroup>
         <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>

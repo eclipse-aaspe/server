@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
@@ -7,7 +7,7 @@
     <LangVersion>8</LangVersion>
 
     <PackageId>AasCore.Aas3_0</PackageId>
-    <Version>v0.3.0.1-aasV3-alpha-latest</Version>
+    <Version>0.3.0.1-aasV3-alpha-latest</Version>
     <Authors>Marko Ristin</Authors>
     <Description>
         An SDK for manipulating, verifying and de/serializing Asset Administration Shells.
