@@ -12,37 +12,35 @@ namespace Extensions
         public static string GetDefaultPreferredName(this ConceptDescription conceptDescription, string defaultLang = null)
         {
             return "" +
-                conceptDescription.GetIEC61360()?
-                    .PreferredName?.GetDefaultString(defaultLang);
+                   conceptDescription.GetIEC61360()?
+                       .PreferredName?.GetDefaultString(defaultLang);
         }
 
         public static EmbeddedDataSpecification SetIEC61360Spec(this ConceptDescription conceptDescription,
-                string[] preferredNames = null,
-                string shortName = "",
-                string unit = "",
-                Reference unitId = null,
-                string valueFormat = null,
-                string sourceOfDefinition = null,
-                string symbol = null,
-                string dataType = "",
-                string[] definition = null
-            )
+            string[] preferredNames = null,
+            string shortName = "",
+            string unit = "",
+            Reference unitId = null,
+            string valueFormat = null,
+            string sourceOfDefinition = null,
+            string symbol = null,
+            string dataType = "",
+            string[] definition = null
+        )
         {
-            var eds = new EmbeddedDataSpecification(
-                new Reference(ReferenceTypes.ExternalReference,
-                new List<IKey> { ExtendIDataSpecificationContent.GetKeyForIec61360() }),
+            var eds = new EmbeddedDataSpecification(new Reference(ReferenceTypes.ExternalReference, new List<IKey> {ExtendIDataSpecificationContent.GetKeyForIec61360()}),
                 new DataSpecificationIec61360(
-                        ExtendLangStringSet.CreateManyPreferredNamesFromStringArray(preferredNames),
-                        new List<ILangStringShortNameTypeIec61360> { new LangStringShortNameTypeIec61360("EN?", shortName) },
-                        unit,
-                        unitId,
-                        sourceOfDefinition,
-                        symbol,
-                        Stringification.DataTypeIec61360FromString(dataType),
-                        ExtendLangStringSet.CreateManyDefinitionFromStringArray(definition)
-                    ));
+                    ExtendLangStringSet.CreateManyPreferredNamesFromStringArray(preferredNames),
+                    new List<ILangStringShortNameTypeIec61360> {new LangStringShortNameTypeIec61360("EN?", shortName)},
+                    unit,
+                    unitId,
+                    sourceOfDefinition,
+                    symbol,
+                    Stringification.DataTypeIec61360FromString(dataType),
+                    ExtendLangStringSet.CreateManyDefinitionFromStringArray(definition)
+                ));
 
-            conceptDescription.EmbeddedDataSpecifications = new List<IEmbeddedDataSpecification> { eds };
+            conceptDescription.EmbeddedDataSpecifications = new List<IEmbeddedDataSpecification> {eds};
 
             // TODO (MIHO, 2022-12-22): Check, but I think it makes no sense
             // conceptDescription.IsCaseOf ??= new List<Reference>();
@@ -79,8 +77,8 @@ namespace Extensions
         public static string GetDefaultShortName(this ConceptDescription conceptDescription, string defaultLang = null)
         {
             return "" +
-                    conceptDescription.GetIEC61360()?
-                        .ShortName?.GetDefaultString(defaultLang);
+                   conceptDescription.GetIEC61360()?
+                       .ShortName?.GetDefaultString(defaultLang);
         }
 
         public static DataSpecificationIec61360 GetIEC61360(this ConceptDescription conceptDescription)
@@ -100,13 +98,16 @@ namespace Extensions
         }
 
         #endregion
+
         #region ListOfConceptDescription
+
         public static ConceptDescription AddConceptDescriptionOrReturnExisting(this List<ConceptDescription> conceptDescriptions, ConceptDescription newConceptDescription)
         {
             if (newConceptDescription == null)
             {
                 return null;
             }
+
             if (conceptDescriptions != null)
             {
                 var existingCd = conceptDescriptions.Where(c => c.Id == newConceptDescription.Id).First();
@@ -122,6 +123,7 @@ namespace Extensions
 
             return newConceptDescription;
         }
+
         #endregion
 
         public static void Validate(this ConceptDescription conceptDescription, AasValidationRecordList results)
@@ -179,7 +181,9 @@ namespace Extensions
         {
             return new Key(KeyTypes.ConceptDescription, conceptDescription.Id);
         }
-        public static ConceptDescription ConvertFromV10(this ConceptDescription conceptDescription, AasxCompatibilityModels.AdminShellV10.ConceptDescription sourceConceptDescription)
+
+        public static ConceptDescription ConvertFromV10(this ConceptDescription conceptDescription,
+            AasxCompatibilityModels.AdminShellV10.ConceptDescription sourceConceptDescription)
         {
             if (sourceConceptDescription == null)
             {
@@ -202,18 +206,19 @@ namespace Extensions
 
             if (sourceConceptDescription.administration != null)
             {
-                conceptDescription.Administration = new AdministrativeInformation(version: sourceConceptDescription.administration.version, revision: sourceConceptDescription.administration.revision);
+                conceptDescription.Administration = new AdministrativeInformation(version: sourceConceptDescription.administration.version,
+                    revision: sourceConceptDescription.administration.revision);
             }
 
             if (sourceConceptDescription.IsCaseOf != null && sourceConceptDescription.IsCaseOf.Count != 0)
             {
-                if (conceptDescription.IsCaseOf == null)
-                {
-                    conceptDescription.IsCaseOf = new List<IReference>();
-                }
                 foreach (var caseOf in sourceConceptDescription.IsCaseOf)
                 {
-                    conceptDescription.IsCaseOf.Add(ExtensionsUtil.ConvertReferenceFromV10(caseOf, ReferenceTypes.ModelReference));
+                    if (!caseOf.IsEmpty)
+                    {
+                        conceptDescription.IsCaseOf ??= new List<IReference>();
+                        conceptDescription.IsCaseOf.Add(ExtensionsUtil.ConvertReferenceFromV10(caseOf, ReferenceTypes.ModelReference));
+                    }
                 }
             }
 
@@ -242,13 +247,13 @@ namespace Extensions
 
             if (srcCD.IsCaseOf != null && srcCD.IsCaseOf.Count != 0)
             {
-                if (cd.IsCaseOf == null)
-                {
-                    cd.IsCaseOf = new List<IReference>();
-                }
                 foreach (var caseOf in srcCD.IsCaseOf)
                 {
-                    cd.IsCaseOf.Add(ExtensionsUtil.ConvertReferenceFromV20(caseOf, ReferenceTypes.ModelReference));
+                    if (!caseOf.IsEmpty)
+                    {
+                        cd.IsCaseOf ??= new List<IReference>();
+                        cd.IsCaseOf.Add(ExtensionsUtil.ConvertReferenceFromV20(caseOf, ReferenceTypes.ModelReference));
+                    }
                 }
             }
 
@@ -280,7 +285,7 @@ namespace Extensions
         public static Reference GetCdReference(this ConceptDescription conceptDescription)
         {
             var key = new Key(KeyTypes.ConceptDescription, conceptDescription.Id);
-            return new Reference(ReferenceTypes.ModelReference, new List<IKey> { key });
+            return new Reference(ReferenceTypes.ModelReference, new List<IKey> {key});
         }
 
         public static void AddIsCaseOf(this ConceptDescription cd,

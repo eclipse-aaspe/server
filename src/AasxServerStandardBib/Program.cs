@@ -653,6 +653,7 @@ namespace AasxServer
         public static bool edit = false;
         public static string externalRest = "";
         public static string externalBlazor = "";
+        public static string externalRepository = "";
         public static bool readTemp = false;
         public static int saveTemp = 0;
         public static DateTime saveTempDt = new DateTime();
@@ -686,6 +687,8 @@ namespace AasxServer
         public static int startIndex = 0;
 
         public static bool withPolicy = false;
+
+        public static bool showWeight = false;
         private class CommandLineArguments
         {
             // ReSharper disable UnusedAutoPropertyAccessor.Local
@@ -732,7 +735,7 @@ namespace AasxServer
             }
 
             // Read environment variables
-            string[] evlist = { "PLCNEXTTARGET", "WITHPOLICY" };
+            string[] evlist = { "PLCNEXTTARGET", "WITHPOLICY", "SHOWWEIGHT", "AASREPOSITORY" };
             foreach (var ev in evlist)
             {
                 string v = System.Environment.GetEnvironmentVariable(ev);
@@ -747,7 +750,7 @@ namespace AasxServer
             string w;
             if (envVariables.TryGetValue("WITHPOLICY", out w))
             {
-                if (w.ToLower() == "true" || w.ToLower() =="on")
+                if (w.ToLower() == "true" || w.ToLower() == "on")
                 {
                     withPolicy = true;
                 }
@@ -757,6 +760,19 @@ namespace AasxServer
                 }
                 Console.WriteLine("withPolicy: " + withPolicy);
             }
+            if (envVariables.TryGetValue("SHOWWEIGHT", out w))
+            {
+                if (w.ToLower() == "true" || w.ToLower() == "on")
+                {
+                    showWeight = true;
+                }
+                if (w.ToLower() == "false" || w.ToLower() == "off")
+                {
+                    showWeight = false;
+                }
+                Console.WriteLine("showWeight: " + showWeight);
+            }
+            envVariables.TryGetValue("AASREPOSITORY", out externalRepository);
 
             if (a.Connect != null)
             {
@@ -928,6 +944,10 @@ namespace AasxServer
             {
                 externalBlazor = blazorHostPort;
             }
+            externalBlazor = externalBlazor.Replace("\r", "");
+            externalBlazor = externalBlazor.Replace("\n", "");
+            if (externalRepository == "")
+                externalRepository = externalBlazor;
 
             /*
             if (File.Exists("redirect.dat"))
@@ -1253,7 +1273,10 @@ namespace AasxServer
                                             {
                                                 Console.WriteLine("Copy " + AasxHttpContextHelper.DataPath + "/files/" + fcopyt + ".dat");
                                                 var fst = System.IO.File.Create(AasxHttpContextHelper.DataPath + "/files/" + fcopyt + ".dat");
-                                                st.CopyTo(fst);
+                                                if (st != null)
+                                                {
+                                                    st.CopyTo(fst);
+                                                }
                                             }
                                         }
                                         catch { }
@@ -1582,27 +1605,14 @@ namespace AasxServer
             var rootCommand = new RootCommand("serve AASX packages over different interfaces")
             {
                 new Option<string>(
-                    new[] {"--host", "-h"},
+                    new[] {"--host"},
                     () => "localhost",
                     "Host which the server listens on"),
-
-                new Option<string>(
-                    new[] {"--port", "-p"},
-                    ()=>"51310",
-                    "Port which the server listens on"),
-
-                new Option<bool>(
-                    new[] {"--https"},
-                    "If set, opens SSL connections. " +
-                    "Make sure you bind a certificate to the port before."),
 
                 new Option<string>(
                     new[] {"--data-path"},
                     "Path to where the AASXs reside"),
 
-                new Option<bool>(
-                    new[] {"--rest"},
-                    "If set, starts the REST server"),
 
                 new Option<bool>(
                     new[] {"--opc"},
@@ -1621,15 +1631,6 @@ namespace AasxServer
                     "If set, starts an OPC client and refreshes on the given period " +
                     "(in milliseconds)"),
 
-                new Option<string[]>(
-                    new[] {"--connect"},
-                    "If set, connects to AAS connect server. " +
-                    "Given as a comma-separated-values (server, node name, period in milliseconds) or " +
-                    "as a flag (in which case it connects to a default server).")
-                {
-                    Argument = new Argument<string[]>{ Arity = ArgumentArity.ZeroOrOne }
-                },
-
                 new Option<string>(
                     new[] {"--proxy-file"},
                     "If set, parses the proxy information from the given proxy file"),
@@ -1645,10 +1646,6 @@ namespace AasxServer
                 new Option<string>(
                     new[] {"--name"},
                     "Name of the server"),
-
-                new Option<string>(
-                    new[] {"--external-rest"},
-                    "external name of the server"),
 
                 new Option<string>(
                     new[] {"--external-blazor"},

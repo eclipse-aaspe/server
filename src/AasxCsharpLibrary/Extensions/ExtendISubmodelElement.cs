@@ -11,8 +11,10 @@ namespace Extensions
     public static class ExtendISubmodelElement
     {
         // constants
-        public static Type[] PROP_MLP = new Type[] {
-            typeof(MultiLanguageProperty), typeof(Property) };
+        public static Type[] PROP_MLP = new Type[]
+        {
+            typeof(MultiLanguageProperty), typeof(Property)
+        };
 
         #region AasxPackageExplorer
 
@@ -67,35 +69,35 @@ namespace Extensions
             switch (submodelElement)
             {
                 case Property property:
-                    {
-                        property.ValueFromText(text);
-                        break;
-                    }
+                {
+                    property.ValueFromText(text);
+                    break;
+                }
                 case MultiLanguageProperty multiLanguageProperty:
-                    {
-                        multiLanguageProperty.ValueFromText(text, defaultLang);
-                        break;
-                    }
+                {
+                    multiLanguageProperty.ValueFromText(text, defaultLang);
+                    break;
+                }
                 default:
-                    {
-                        throw new Exception("Unhandled submodel element type");
-                    }
+                {
+                    throw new Exception("Unhandled submodel element type");
+                }
             }
         }
 
         #endregion
+
         public static IEnumerable<IReferable> FindAllParents(this ISubmodelElement submodelElement,
-                Predicate<IReferable> p,
-                bool includeThis = false, bool includeSubmodel = false,
-                bool passOverMiss = false)
+            Predicate<IReferable> p,
+            bool includeThis = false, bool includeSubmodel = false,
+            bool passOverMiss = false)
         {
             // call for this?
             if (includeThis)
             {
                 if (p == null || p.Invoke(submodelElement))
                     yield return submodelElement;
-                else
-                    if (!passOverMiss)
+                else if (!passOverMiss)
                     yield break;
             }
 
@@ -105,7 +107,7 @@ namespace Extensions
                 if (submodelElement.Parent is ISubmodelElement psme)
                 {
                     foreach (var q in psme.FindAllParents(p, includeThis: true,
-                        passOverMiss: passOverMiss))
+                                 passOverMiss: passOverMiss))
                         yield return q;
                 }
                 else if (includeSubmodel && submodelElement.Parent is Submodel psm)
@@ -117,8 +119,8 @@ namespace Extensions
         }
 
         public static IEnumerable<IReferable> FindAllParentsWithSemanticId(
-                this ISubmodelElement submodelElement, Reference semId,
-                bool includeThis = false, bool includeSubmodel = false, bool passOverMiss = false)
+            this ISubmodelElement submodelElement, Reference semId,
+            bool includeThis = false, bool includeSubmodel = false, bool passOverMiss = false)
         {
             return (FindAllParents(submodelElement,
                 (rf) => (true == (rf as IHasSemantics)?.SemanticId?.Matches(semId,
@@ -168,7 +170,6 @@ namespace Extensions
             }
 
             return null;
-
         }
 
         public static Reference GetModelReference(this ISubmodelElement sme, bool includeParents = true)
@@ -195,7 +196,6 @@ namespace Extensions
                     keyList.Insert(0, currentParentKey);
                     currentParent = referable.Parent;
                 }
-
             }
 
             var outputReference = new Reference(ReferenceTypes.ModelReference, keyList);
@@ -207,7 +207,7 @@ namespace Extensions
         {
             if (submodelElement is T)
             {
-                yield return (T)submodelElement;
+                yield return (T) submodelElement;
             }
 
             foreach (var x in submodelElement.Descend().OfType<T>())
@@ -290,7 +290,6 @@ namespace Extensions
                     var newOutputVariables = new List<IOperationVariable>();
                     if (!sourceOperation.valueIn.IsNullOrEmpty())
                     {
-
                         foreach (var inputVariable in sourceOperation.valueIn)
                         {
                             if (inputVariable.value.submodelElement != null)
@@ -302,6 +301,7 @@ namespace Extensions
                             }
                         }
                     }
+
                     if (!sourceOperation.valueOut.IsNullOrEmpty())
                     {
                         foreach (var outputVariable in sourceOperation.valueOut)
@@ -351,13 +351,14 @@ namespace Extensions
                     var keyType = Stringification.KeyTypesFromString(refKey.type);
                     if (keyType != null)
                     {
-                        keyList.Add(new Key((KeyTypes)keyType, refKey.value));
+                        keyList.Add(new Key((KeyTypes) keyType, refKey.value));
                     }
                     else
                     {
                         Console.WriteLine($"KeyType value {refKey.type} not found.");
                     }
                 }
+
                 submodelElement.SemanticId = new Reference(ReferenceTypes.ExternalReference, keyList);
             }
 
@@ -389,9 +390,9 @@ namespace Extensions
                     if (!dataSpecification.IsEmpty)
                     {
                         submodelElement.EmbeddedDataSpecifications.Add(
-                                        new EmbeddedDataSpecification(
-                                            ExtensionsUtil.ConvertReferenceFromV10(dataSpecification, ReferenceTypes.ExternalReference),
-                                            null));
+                            new EmbeddedDataSpecification(
+                                ExtensionsUtil.ConvertReferenceFromV10(dataSpecification, ReferenceTypes.ExternalReference),
+                                null));
                     }
                 }
             }
@@ -469,7 +470,6 @@ namespace Extensions
                     var newInOutVariables = new List<IOperationVariable>();
                     if (!sourceOperation.inputVariable.IsNullOrEmpty())
                     {
-
                         foreach (var inputVariable in sourceOperation.inputVariable)
                         {
                             if (inputVariable.value.submodelElement != null)
@@ -481,6 +481,7 @@ namespace Extensions
                             }
                         }
                     }
+
                     if (!sourceOperation.outputVariable.IsNullOrEmpty())
                     {
                         foreach (var outputVariable in sourceOperation.outputVariable)
@@ -511,8 +512,15 @@ namespace Extensions
 
                     outputSubmodelElement = new Operation(inputVariables: newInputVariables, outputVariables: newOutputVariables, inoutputVariables: newInOutVariables);
                 }
+                else if (sourceSubmodelElement is AdminShellV20.Capability)
+                {
+                    outputSubmodelElement = new Capability();
+                }
 
-                outputSubmodelElement.BasicConversionFromV20(sourceSubmodelElement);
+                if (outputSubmodelElement != null)
+                {
+                    outputSubmodelElement.BasicConversionFromV20(sourceSubmodelElement);
+                }
             }
 
             return outputSubmodelElement;
@@ -545,7 +553,7 @@ namespace Extensions
                             if (keyType == KeyTypes.ConceptDescription)
                                 keyType = KeyTypes.GlobalReference;
 
-                            keyList.Add(new Key((KeyTypes)keyType, refKey.value));
+                            keyList.Add(new Key((KeyTypes) keyType, refKey.value));
                         }
                         else
                         {
@@ -553,6 +561,7 @@ namespace Extensions
                         }
                     }
                 }
+
                 submodelElement.SemanticId = new Reference(ReferenceTypes.ExternalReference, keyList);
             }
 
@@ -591,7 +600,7 @@ namespace Extensions
         #region List<ISubmodelElement>
 
         public static IReferable FindReferableByReference(
-                this List<ISubmodelElement> submodelElements, Reference rf, int keyIndex)
+            this List<ISubmodelElement> submodelElements, Reference rf, int keyIndex)
         {
             return FindReferableByReference(submodelElements, rf?.Keys, keyIndex);
         }
@@ -606,7 +615,7 @@ namespace Extensions
 
             // over all wrappers
             foreach (var smw in submodelElements)
-                if (smw != null && smw.IdShort.Equals(keys[keyIndex].Value, StringComparison.OrdinalIgnoreCase))
+                if (smw != null && smw.IdShort.Equals(keys[ keyIndex ].Value, StringComparison.OrdinalIgnoreCase))
                 {
                     // match on this level. Did we find a leaf element?
                     if ((keyIndex + 1) >= keys.Count)
@@ -619,6 +628,7 @@ namespace Extensions
                         if (found != null)
                             return found;
                     }
+
                     // dive into SML?
                     if (smw is SubmodelElementList submodelElementList)
                     {
@@ -662,8 +672,8 @@ namespace Extensions
 
                 // call lambda for this element
                 if (current is T)
-                    if (match == null || match.Invoke((T)current))
-                        yield return (T)current;
+                    if (match == null || match.Invoke((T) current))
+                        yield return (T) current;
 
                 // dive into?
                 // TODO (MIHO, 2020-07-31): would be nice to use IEnumerateChildren for this ..
@@ -707,18 +717,18 @@ namespace Extensions
         }
 
         public static void CopyManySMEbyCopy<T>(this List<ISubmodelElement> submodelElements, ConceptDescription destCD,
-                List<ISubmodelElement> sourceSmc, ConceptDescription sourceCD,
-                bool createDefault = false, Action<T> setDefault = null,
-                MatchMode matchMode = MatchMode.Relaxed) where T : ISubmodelElement
+            List<ISubmodelElement> sourceSmc, ConceptDescription sourceCD,
+            bool createDefault = false, Action<T> setDefault = null,
+            MatchMode matchMode = MatchMode.Relaxed) where T : ISubmodelElement
         {
             submodelElements.CopyManySMEbyCopy(destCD.GetSingleKey(), sourceSmc, sourceCD.GetSingleKey(),
                 createDefault ? destCD : null, setDefault, matchMode);
         }
 
         public static void CopyManySMEbyCopy<T>(this List<ISubmodelElement> submodelElements, Key destSemanticId,
-                List<ISubmodelElement> sourceSmc, Key sourceSemanticId,
-                ConceptDescription createDefault = null, Action<T> setDefault = null,
-                MatchMode matchMode = MatchMode.Relaxed) where T : ISubmodelElement
+            List<ISubmodelElement> sourceSmc, Key sourceSemanticId,
+            ConceptDescription createDefault = null, Action<T> setDefault = null,
+            MatchMode matchMode = MatchMode.Relaxed) where T : ISubmodelElement
         {
             // bool find possible sources
             bool foundSrc = false;
@@ -727,7 +737,7 @@ namespace Extensions
             foreach (var src in sourceSmc.FindAllSemanticIdAs<T>(sourceSemanticId, matchMode))
             {
                 // type of found src?
-                AasSubmodelElements aeSrc = (AasSubmodelElements)Enum.Parse(typeof(AasSubmodelElements), src.GetType().Name);
+                AasSubmodelElements aeSrc = (AasSubmodelElements) Enum.Parse(typeof(AasSubmodelElements), src.GetType().Name);
 
                 // ok?
                 if (src == null || aeSrc == AasSubmodelElements.SubmodelElement)
@@ -741,7 +751,7 @@ namespace Extensions
                     // make same things sure
                     dst.IdShort = src.IdShort;
                     dst.Category = src.Category;
-                    dst.SemanticId = new Reference(ReferenceTypes.ModelReference, new List<IKey>() { destSemanticId });
+                    dst.SemanticId = new Reference(ReferenceTypes.ModelReference, new List<IKey>() {destSemanticId});
 
                     // instantanously add it?
                     submodelElements.Add(dst);
@@ -760,30 +770,30 @@ namespace Extensions
         }
 
         public static T CopyOneSMEbyCopy<T>(this List<ISubmodelElement> submodelElements, ConceptDescription destCD,
-                List<ISubmodelElement> sourceSmc, Key[] sourceKeys,
-                bool createDefault = false, Action<T> setDefault = null,
-                MatchMode matchMode = MatchMode.Relaxed,
-                string idShort = null, bool addSme = false) where T : ISubmodelElement
+            List<ISubmodelElement> sourceSmc, Key[] sourceKeys,
+            bool createDefault = false, Action<T> setDefault = null,
+            MatchMode matchMode = MatchMode.Relaxed,
+            string idShort = null, bool addSme = false) where T : ISubmodelElement
         {
             return submodelElements.CopyOneSMEbyCopy<T>(destCD?.GetSingleKey(), sourceSmc, sourceKeys,
                 createDefault ? destCD : null, setDefault, matchMode, idShort, addSme);
         }
 
         public static T CopyOneSMEbyCopy<T>(this List<ISubmodelElement> submodelELements, ConceptDescription destCD,
-                List<ISubmodelElement> sourceSmc, ConceptDescription sourceCD,
-                bool createDefault = false, Action<T> setDefault = null,
-                MatchMode matchMode = MatchMode.Relaxed,
-                string idShort = null, bool addSme = false) where T : ISubmodelElement
+            List<ISubmodelElement> sourceSmc, ConceptDescription sourceCD,
+            bool createDefault = false, Action<T> setDefault = null,
+            MatchMode matchMode = MatchMode.Relaxed,
+            string idShort = null, bool addSme = false) where T : ISubmodelElement
         {
-            return submodelELements.CopyOneSMEbyCopy<T>(destCD?.GetSingleKey(), sourceSmc, new[] { sourceCD?.GetSingleKey() },
+            return submodelELements.CopyOneSMEbyCopy<T>(destCD?.GetSingleKey(), sourceSmc, new[] {sourceCD?.GetSingleKey()},
                 createDefault ? destCD : null, setDefault, matchMode, idShort, addSme);
         }
 
         public static T CopyOneSMEbyCopy<T>(this List<ISubmodelElement> submodelElements, Key destSemanticId,
-                List<ISubmodelElement> sourceSmc, Key[] sourceSemanticId,
-                ConceptDescription createDefault = null, Action<T> setDefault = null,
-                MatchMode matchMode = MatchMode.Relaxed,
-                string idShort = null, bool addSme = false) where T : ISubmodelElement
+            List<ISubmodelElement> sourceSmc, Key[] sourceSemanticId,
+            ConceptDescription createDefault = null, Action<T> setDefault = null,
+            MatchMode matchMode = MatchMode.Relaxed,
+            string idShort = null, bool addSme = false) where T : ISubmodelElement
         {
             // get source
             var src = sourceSmc.FindFirstAnySemanticIdAs<T>(sourceSemanticId, matchMode);
@@ -793,11 +803,11 @@ namespace Extensions
             {
                 var anySrc = sourceSmc?.FindFirstAnySemanticId(sourceSemanticId, matchMode: matchMode);
                 src = submodelElements.AdaptiveConvertTo<T>(anySrc, createDefault,
-                            idShort: idShort, addSme: false);
+                    idShort: idShort, addSme: false);
             }
 
             // proceed
-            AasSubmodelElements aeSrc = (AasSubmodelElements)Enum.Parse(typeof(AasSubmodelElements), src?.GetType().Name);
+            AasSubmodelElements aeSrc = (AasSubmodelElements) Enum.Parse(typeof(AasSubmodelElements), src?.GetType().Name);
             if (src == null || aeSrc == AasSubmodelElements.SubmodelElement)
             {
                 // create a default?
@@ -822,35 +832,35 @@ namespace Extensions
             // make same things sure
             dst.IdShort = src.IdShort;
             dst.Category = src.Category;
-            dst.SemanticId = new Reference(ReferenceTypes.ModelReference, new List<IKey>() { destSemanticId });
+            dst.SemanticId = new Reference(ReferenceTypes.ModelReference, new List<IKey>() {destSemanticId});
 
             // instantanously add it?
             if (addSme)
                 submodelElements.Add(dst);
 
             // give back
-            return (T)dst;
+            return (T) dst;
         }
 
         public static T AdaptiveConvertTo<T>(this List<ISubmodelElement> submodelElements,
-                ISubmodelElement anySrc,
-                ConceptDescription createDefault = null,
-                string idShort = null, bool addSme = false) where T : ISubmodelElement
+            ISubmodelElement anySrc,
+            ConceptDescription createDefault = null,
+            string idShort = null, bool addSme = false) where T : ISubmodelElement
         {
             if (typeof(T) == typeof(MultiLanguageProperty)
-                    && anySrc is Property srcProp)
+                && anySrc is Property srcProp)
             {
                 var res = submodelElements.CreateSMEForCD<T>(createDefault, idShort: idShort, addSme: addSme);
                 if (res is MultiLanguageProperty mlp)
                 {
-                    mlp.Value = new List<ILangStringTextType>() { new LangStringTextType("EN?", srcProp.Value) };
+                    mlp.Value = new List<ILangStringTextType>() {new LangStringTextType("EN?", srcProp.Value)};
                     mlp.ValueId = srcProp.ValueId;
                     return res;
                 }
             }
 
             if (typeof(T) == typeof(Property)
-                    && anySrc is MultiLanguageProperty srcMlp)
+                && anySrc is MultiLanguageProperty srcMlp)
             {
                 var res = submodelElements.CreateSMEForCD<T>(createDefault, idShort: idShort, addSme: addSme);
                 if (res is Property prp)
@@ -896,22 +906,23 @@ namespace Extensions
 
 
         public static ISubmodelElement FindFirstAnySemanticId(this List<ISubmodelElement> submodelElements,
-                Key[] semId, Type[] allowedTypes = null, MatchMode matchMode = MatchMode.Strict)
+            Key[] semId, Type[] allowedTypes = null, MatchMode matchMode = MatchMode.Strict)
         {
             if (semId == null)
                 return null;
             foreach (var si in semId)
             {
                 var found = submodelElements.FindAllSemanticId(si, allowedTypes, matchMode)?
-                            .FirstOrDefault<ISubmodelElement>();
+                    .FirstOrDefault<ISubmodelElement>();
                 if (found != null)
                     return found;
             }
+
             return null;
         }
 
         public static T FindFirstAnySemanticIdAs<T>(this List<ISubmodelElement> submodelElements, Key[] semId, MatchMode matchMode = MatchMode.Strict)
-                where T : ISubmodelElement
+            where T : ISubmodelElement
         {
             if (semId == null)
                 return default(T);
@@ -921,11 +932,12 @@ namespace Extensions
                 if (found != null)
                     return found;
             }
+
             return default(T);
         }
 
         public static T CreateNew<T>(string idShort = null, string category = null, Reference semanticId = null)
-                where T : ISubmodelElement, new()
+            where T : ISubmodelElement, new()
         {
             var res = new T();
             if (idShort != null)
@@ -938,8 +950,8 @@ namespace Extensions
         }
 
         public static T CreateSMEForCD<T>(this List<ISubmodelElement> submodelELements, ConceptDescription conceptDescription, string category = null, string idShort = null,
-                string idxTemplate = null, int maxNum = 999, bool addSme = false, bool isTemplate = false)
-                where T : ISubmodelElement
+            string idxTemplate = null, int maxNum = 999, bool addSme = false, bool isTemplate = false)
+            where T : ISubmodelElement
         {
             // access
             if (conceptDescription == null)
@@ -987,28 +999,28 @@ namespace Extensions
                 submodelELements.Add(sme);
 
             // give back
-            return (T)sme;
+            return (T) sme;
         }
 
         public static IEnumerable<T> FindAllSemanticIdAs<T>(this List<ISubmodelElement> submodelELements, Key semId, MatchMode matchMode = MatchMode.Strict)
-                where T : ISubmodelElement
+            where T : ISubmodelElement
         {
             foreach (var submodelElement in submodelELements)
                 if (submodelElement != null && submodelElement is T
-                    && submodelElement.SemanticId != null)
+                                            && submodelElement.SemanticId != null)
                     if (submodelElement.SemanticId.MatchesExactlyOneKey(semId, matchMode))
-                        yield return (T)submodelElement;
+                        yield return (T) submodelElement;
         }
 
         public static IEnumerable<T> FindAllSemanticIdAs<T>(this List<ISubmodelElement> submodelELements,
             Reference semId, MatchMode matchMode = MatchMode.Strict)
-        where T : ISubmodelElement
+            where T : ISubmodelElement
         {
             foreach (var submodelElement in submodelELements)
                 if (submodelElement != null && submodelElement is T
-                    && submodelElement.SemanticId != null)
+                                            && submodelElement.SemanticId != null)
                     if (submodelElement.SemanticId.Matches(semId, matchMode))
-                        yield return (T)submodelElement;
+                        yield return (T) submodelElement;
         }
 
         public static T FindFirstSemanticIdAs<T>(this List<ISubmodelElement> submodelElements,
@@ -1026,7 +1038,7 @@ namespace Extensions
         }
 
         public static void RecurseOnReferables(this List<ISubmodelElement> submodelElements, object state, List<IReferable> parents,
-                Func<object, List<IReferable>, IReferable, bool> lambda)
+            Func<object, List<IReferable>, IReferable, bool> lambda)
         {
             if (lambda == null)
                 return;
@@ -1085,6 +1097,7 @@ namespace Extensions
                             {
                                 annotationElements.Add(annotation);
                             }
+
                         annotationElements.RecurseOnReferables(state, parents, lambda);
                     }
 
@@ -1094,7 +1107,8 @@ namespace Extensions
             }
         }
 
-        public static void RecurseOnSubmodelElements(this List<ISubmodelElement> submodelElements, object state, List<ISubmodelElement> parents, Action<object, List<ISubmodelElement>, ISubmodelElement> lambda)
+        public static void RecurseOnSubmodelElements(this List<ISubmodelElement> submodelElements, object state, List<ISubmodelElement> parents,
+            Action<object, List<ISubmodelElement>, ISubmodelElement> lambda)
         {
             // trivial
             if (lambda == null)
@@ -1150,6 +1164,7 @@ namespace Extensions
                     {
                         annotationElements.Add(annotation);
                     }
+
                     annotationElements.RecurseOnSubmodelElements(state, parents, lambda);
                 }
 
@@ -1166,7 +1181,7 @@ namespace Extensions
                 {
                     if (submodelElement.SemanticId.Matches(semanticId))
                     {
-                        yield return (T)submodelElement;
+                        yield return (T) submodelElement;
                     }
                 }
             }
@@ -1187,6 +1202,7 @@ namespace Extensions
                 if (found != null)
                     return found;
             }
+
             return default;
         }
 
@@ -1206,7 +1222,7 @@ namespace Extensions
                 if (sme.SemanticId == null || sme.SemanticId.Keys.Count < 1)
                 {
                     if (invertedAllowed)
-                        yield return (T)sme;
+                        yield return (T) sme;
                     continue;
                 }
 
@@ -1222,7 +1238,7 @@ namespace Extensions
                     found = !found;
 
                 if (found)
-                    yield return (T)sme;
+                    yield return (T) sme;
             }
         }
 
@@ -1247,7 +1263,7 @@ namespace Extensions
                 if (sme.SemanticId == null || sme.SemanticId.Keys.Count < 1)
                 {
                     if (invertedAllowed)
-                        yield return (T)sme;
+                        yield return (T) sme;
                     continue;
                 }
 
@@ -1263,7 +1279,7 @@ namespace Extensions
                     found = !found;
 
                 if (found)
-                    yield return (T)sme;
+                    yield return (T) sme;
             }
         }
 
@@ -1298,7 +1314,8 @@ namespace Extensions
                 }
         }
 
-        public static ISubmodelElement FindFirstSemanticId(this List<ISubmodelElement> submodelElements, Key semId, Type[] allowedTypes = null, MatchMode matchMode = MatchMode.Strict)
+        public static ISubmodelElement FindFirstSemanticId(this List<ISubmodelElement> submodelElements, Key semId, Type[] allowedTypes = null,
+            MatchMode matchMode = MatchMode.Strict)
         {
             return submodelElements.FindAllSemanticId(semId, allowedTypes, matchMode)?.FirstOrDefault<ISubmodelElement>();
         }
@@ -1306,7 +1323,7 @@ namespace Extensions
         public static IEnumerable<T> FindAllSemanticIdAs<T>(
             this List<ISubmodelElement> smes,
             ConceptDescription cd, MatchMode matchMode = MatchMode.Strict)
-                where T : ISubmodelElement
+            where T : ISubmodelElement
         {
             foreach (var x in FindAllSemanticIdAs<T>(smes, cd.GetReference(), matchMode))
                 yield return x;
@@ -1315,7 +1332,7 @@ namespace Extensions
         public static T FindFirstSemanticIdAs<T>(
             this List<ISubmodelElement> smes,
             ConceptDescription cd, MatchMode matchMode = MatchMode.Strict)
-                where T : ISubmodelElement
+            where T : ISubmodelElement
         {
             return smes.FindAllSemanticIdAs<T>(cd, matchMode).FirstOrDefault<T>();
         }
@@ -1393,23 +1410,23 @@ namespace Extensions
         private static readonly Dictionary<AasSubmodelElements, string> AasSubmodelElementsToAbbrev = (
             new Dictionary<AasSubmodelElements, string>()
             {
-                { AasSubmodelElements.AnnotatedRelationshipElement, "RelA" },
-                { AasSubmodelElements.BasicEventElement, "BEvt" },
-                { AasSubmodelElements.Blob, "Blob" },
-                { AasSubmodelElements.Capability, "Cap" },
-                { AasSubmodelElements.DataElement, "DE" },
-                { AasSubmodelElements.Entity, "Ent" },
-                { AasSubmodelElements.EventElement, "Evt" },
-                { AasSubmodelElements.File, "File" },
-                { AasSubmodelElements.MultiLanguageProperty, "MLP" },
-                { AasSubmodelElements.Operation, "Opr" },
-                { AasSubmodelElements.Property, "Prop" },
-                { AasSubmodelElements.Range, "Range" },
-                { AasSubmodelElements.ReferenceElement, "Ref" },
-                { AasSubmodelElements.RelationshipElement, "Rel" },
-                { AasSubmodelElements.SubmodelElement, "SME" },
-                { AasSubmodelElements.SubmodelElementList, "SML" },
-                { AasSubmodelElements.SubmodelElementCollection, "SMC" }
+                {AasSubmodelElements.AnnotatedRelationshipElement, "RelA"},
+                {AasSubmodelElements.BasicEventElement, "BEvt"},
+                {AasSubmodelElements.Blob, "Blob"},
+                {AasSubmodelElements.Capability, "Cap"},
+                {AasSubmodelElements.DataElement, "DE"},
+                {AasSubmodelElements.Entity, "Ent"},
+                {AasSubmodelElements.EventElement, "Evt"},
+                {AasSubmodelElements.File, "File"},
+                {AasSubmodelElements.MultiLanguageProperty, "MLP"},
+                {AasSubmodelElements.Operation, "Opr"},
+                {AasSubmodelElements.Property, "Prop"},
+                {AasSubmodelElements.Range, "Range"},
+                {AasSubmodelElements.ReferenceElement, "Ref"},
+                {AasSubmodelElements.RelationshipElement, "Rel"},
+                {AasSubmodelElements.SubmodelElement, "SME"},
+                {AasSubmodelElements.SubmodelElementList, "SML"},
+                {AasSubmodelElements.SubmodelElementCollection, "SMC"}
             });
 
         /// <summary>
@@ -1440,23 +1457,23 @@ namespace Extensions
         private static readonly Dictionary<string, AasSubmodelElements> _aasSubmodelElementsFromAbbrev = (
             new Dictionary<string, AasSubmodelElements>()
             {
-                { "RelA", AasSubmodelElements.AnnotatedRelationshipElement },
-                { "BEvt", AasSubmodelElements.BasicEventElement },
-                { "Blob", AasSubmodelElements.Blob },
-                { "Cap", AasSubmodelElements.Capability },
-                { "DE", AasSubmodelElements.DataElement },
-                { "Ent", AasSubmodelElements.Entity },
-                { "Evt", AasSubmodelElements.EventElement },
-                { "File", AasSubmodelElements.File },
-                { "MLP", AasSubmodelElements.MultiLanguageProperty },
-                { "Opr", AasSubmodelElements.Operation },
-                { "Prop", AasSubmodelElements.Property },
-                { "Range", AasSubmodelElements.Range },
-                { "Ref", AasSubmodelElements.ReferenceElement },
-                { "Rel", AasSubmodelElements.RelationshipElement },
-                { "SME", AasSubmodelElements.SubmodelElement },
-                { "SML", AasSubmodelElements.SubmodelElementList },
-                { "SMC", AasSubmodelElements.SubmodelElementCollection }
+                {"RelA", AasSubmodelElements.AnnotatedRelationshipElement},
+                {"BEvt", AasSubmodelElements.BasicEventElement},
+                {"Blob", AasSubmodelElements.Blob},
+                {"Cap", AasSubmodelElements.Capability},
+                {"DE", AasSubmodelElements.DataElement},
+                {"Ent", AasSubmodelElements.Entity},
+                {"Evt", AasSubmodelElements.EventElement},
+                {"File", AasSubmodelElements.File},
+                {"MLP", AasSubmodelElements.MultiLanguageProperty},
+                {"Opr", AasSubmodelElements.Operation},
+                {"Prop", AasSubmodelElements.Property},
+                {"Range", AasSubmodelElements.Range},
+                {"Ref", AasSubmodelElements.ReferenceElement},
+                {"Rel", AasSubmodelElements.RelationshipElement},
+                {"SME", AasSubmodelElements.SubmodelElement},
+                {"SML", AasSubmodelElements.SubmodelElementList},
+                {"SMC", AasSubmodelElements.SubmodelElementCollection}
             });
 
         /// <summary>
@@ -1495,6 +1512,5 @@ namespace Extensions
 
             return AasSubmodelElementsFromAbbrev(text);
         }
-
     }
 }

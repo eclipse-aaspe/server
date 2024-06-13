@@ -76,6 +76,11 @@
             }
             else
             {
+                string modelText = "PCF";
+                if (Program.showWeight)
+                {
+                    modelText = "weight";
+                }
                 <style>
                     input:checked ~ .dot {
                         transform: translateX(100%);
@@ -102,7 +107,11 @@
                         <div class="self-center">
                             <div class="flex items-stretch">
                                 <img src="zvei_2021_RZ_RGB.png" style="max-width: 100px; display: inline; object-fit: contain;" />
-                                <span hspace=20 style="padding-right:10px; font:xx-large;" class="self-center"><strong>Product Carbon Footprint Showcase</strong></span>
+                                <img src="Logo_IDTA.jpg" style="padding-left:10px; max-width: 100px; display: inline; object-fit: contain;" />
+                                @if (!Program.showWeight)
+                                {
+                                    <span hspace=20 style="padding-left:20px; padding-right:10px; font:xx-large;" class="self-center"><strong>Product Carbon Footprint Showcase</strong></span>
+                                }
                             </div>
                         </div>
                         <div>
@@ -149,6 +158,11 @@
                                             if (CurrentValue == "edit")
                                             {
                                                 edit = !edit;
+                                                AasxServer.Program.signalNewData(2);
+                                            }
+                                            else if (CurrentValue == "weight")
+                                            {
+                                                AasxServer.Program.showWeight = !AasxServer.Program.showWeight;
                                                 AasxServer.Program.signalNewData(2);
                                             }
                                             else if (CurrentValue == "count=0")
@@ -221,7 +235,7 @@
                         </div>
                         <div class="self-center text-right p-2" style="margin-top:8px;">
                             <label for="toggle" class="flex items-center cursor-pointer justify-end">
-                                Disclaimer: displayed PCF values are for demo purposes only
+                                Disclaimer: displayed @modelText values are for demo purposes only
                                 <div class="relative ml-2">
                                     <!-- input -->
                                     <input type="checkbox" id="toggle" class="sr-only"
@@ -287,26 +301,35 @@
         {
             if (env != null)
             {
-                var aas = env.AasEnv.AssetAdministrationShells[0];
-                if (aas.IdShort != "ZveiControlCabinetAas - EXTERNAL")
-                    continue;
-
-                link = "?aasUrl=" + getAasLink(aas);
-
-                // var registry = IO.Swagger.Registry.Controllers.RegistryAndDiscoveryInterfaceApiController.getRegistry;
-                // JUIJUI
-                var registry = AasRegistryService.GetRegistryList();
-                if (registry != null && registry.Count != 0)
-                {
-                    link += "&registryURL=" + registry[0];
-                }
-                // JUIJUI
-
                 var queryPara = "";
                 var userPW = "";
                 var urlEdcWrapper = "";
                 string replace = "";
-                if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper, out replace))
+
+                var aas = env.AasEnv.AssetAdministrationShells[0];
+                if (aas.IdShort != "ZveiControlCabinetAas - EXTERNAL")
+                    continue;
+
+                link = getAasLink(aas);
+
+                var registry = AasRegistryService.GetRegistryList();
+                if (registry != null && registry.Count != 0)
+                {
+                    string registryURL = registry[0];
+
+                    if (AasxCredentials.get(cs.credentials, registryURL, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
+                    {
+                        if (replace != "")
+                            registryURL = replace;
+                    }
+                    link += "&registryURL=" + registryURL;
+                }
+
+                queryPara = "";
+                userPW = "";
+                urlEdcWrapper = "";
+                replace = "";
+                if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
                 {
                     if (replace != "")
                         link = replace;
@@ -315,6 +338,7 @@
                     // Console.WriteLine("iframe:" + link);
                 }
 
+                link = "?aasUrl=" + link;
             }
         }
 

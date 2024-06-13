@@ -1,6 +1,7 @@
 ﻿using DataTransferObjects;
 using DataTransferObjects.CommonDTOs;
 using DataTransferObjects.ValueDTOs;
+using IO.Swagger.Lib.V3.Exceptions;
 using System.Collections.Generic;
 using static AasCore.Aas3_0.Visitation;
 
@@ -27,11 +28,11 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
                 annotations = new List<ISubmodelElementValue>();
                 foreach (var element in that.Annotations)
                 {
-                    annotations.Add((ISubmodelElementValue)Transform(element));
+                    annotations.Add((ISubmodelElementValue) Transform(element));
                 }
             }
 
-            return new AnnotatedRelationshipElementValue(that.IdShort, (ReferenceDTO)Transform(that.First), (ReferenceDTO)Transform(that.Second), annotations);
+            return new AnnotatedRelationshipElementValue(that.IdShort, (ReferenceDTO) Transform(that.First), (ReferenceDTO) Transform(that.Second), annotations);
         }
 
         public IDTO TransformAssetAdministrationShell(IAssetAdministrationShell that)
@@ -46,7 +47,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 
         public IDTO TransformBasicEventElement(IBasicEventElement that)
         {
-            return new BasicEventElementValue(that.IdShort, (ReferenceDTO)Transform(that.Observed));
+            return new BasicEventElementValue(that.IdShort, (ReferenceDTO) Transform(that.Observed));
         }
 
         public IDTO TransformBlob(IBlob that)
@@ -56,7 +57,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 
         public IDTO TransformCapability(ICapability that)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("ValueOnly", that.GetType().Name);
         }
 
         public IDTO TransformConceptDescription(IConceptDescription that)
@@ -82,11 +83,11 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
                 statements = new List<ISubmodelElementValue>();
                 foreach (var element in that.Statements)
                 {
-                    statements.Add((ISubmodelElementValue)Transform(element));
+                    statements.Add((ISubmodelElementValue) Transform(element));
                 }
             }
 
-            return new EntityValue(that.IdShort, statements, that.EntityType, that.GlobalAssetId);
+            return new EntityValue(that.IdShort, that.EntityType, statements, that.GlobalAssetId);
         }
 
         public IDTO TransformEnvironment(IEnvironment that)
@@ -118,7 +119,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
                 output = new List<KeyDTO>();
                 foreach (var key in keyList)
                 {
-                    output.Add((KeyDTO)Transform(key));
+                    output.Add((KeyDTO) Transform(key));
                 }
             }
 
@@ -167,6 +168,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             {
                 langStrings.Add(new KeyValuePair<string, string>(langString.Language, langString.Text));
             }
+
             return new MultiLanguagePropertyValue(that.IdShort, langStrings);
         }
 
@@ -180,7 +182,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
                 inputVariables = new List<ISubmodelElementValue>();
                 foreach (var inputVariable in that.InputVariables)
                 {
-                    inputVariables.Add((ISubmodelElementValue)Transform(inputVariable));
+                    inputVariables.Add((ISubmodelElementValue) Transform(inputVariable));
                 }
             }
 
@@ -189,7 +191,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
                 outputVariables = new List<ISubmodelElementValue>();
                 foreach (var outputVariable in that.OutputVariables)
                 {
-                    outputVariables.Add((ISubmodelElementValue)Transform(outputVariable));
+                    outputVariables.Add((ISubmodelElementValue) Transform(outputVariable));
                 }
             }
 
@@ -198,7 +200,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
                 inoutputVariables = new List<ISubmodelElementValue>();
                 foreach (var inoutputVariable in that.InoutputVariables)
                 {
-                    inoutputVariables.Add((ISubmodelElementValue)Transform(inoutputVariable));
+                    inoutputVariables.Add((ISubmodelElementValue) Transform(inoutputVariable));
                 }
             }
 
@@ -227,17 +229,17 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 
         public IDTO TransformReference(IReference that)
         {
-            return new ReferenceDTO(that.Type, TransformKeyList(that.Keys), (ReferenceDTO)Transform(that.ReferredSemanticId));
+            return new ReferenceDTO(that.Type, TransformKeyList(that.Keys), (ReferenceDTO) Transform(that.ReferredSemanticId));
         }
 
         public IDTO TransformReferenceElement(IReferenceElement that)
         {
-            return new ReferenceElementValue(that.IdShort, (ReferenceDTO)Transform(that.Value));
+            return new ReferenceElementValue(that.IdShort, (ReferenceDTO) Transform(that.Value));
         }
 
         public IDTO TransformRelationshipElement(IRelationshipElement that)
         {
-            return new RelationshipElementValue(that.IdShort, (ReferenceDTO)Transform(that.First), (ReferenceDTO)Transform(that.Second));
+            return new RelationshipElementValue(that.IdShort, (ReferenceDTO) Transform(that.First), (ReferenceDTO) Transform(that.Second));
         }
 
         public IDTO TransformResource(IResource that)
@@ -258,7 +260,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
                 submodelElements = new List<ISubmodelElementValue>();
                 foreach (var element in that.SubmodelElements)
                 {
-                    submodelElements.Add((ISubmodelElementValue)Transform(element));
+                    submodelElements.Add((ISubmodelElementValue) Transform(element));
                 }
             }
 
@@ -273,7 +275,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
                 value = new List<ISubmodelElementValue>();
                 foreach (var element in that.Value)
                 {
-                    value.Add((ISubmodelElementValue)Transform(element));
+                    value.Add((ISubmodelElementValue) Transform(element));
                 }
             }
 
@@ -288,7 +290,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
                 value = new List<ISubmodelElementValue>();
                 foreach (var element in that.Value)
                 {
-                    value.Add((ISubmodelElementValue)Transform(element));
+                    value.Add((ISubmodelElementValue) Transform(element));
                 }
             }
 

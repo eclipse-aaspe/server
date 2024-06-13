@@ -37,13 +37,17 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
         public virtual IActionResult GetDescription()
         {
-            var output = new ServiceDescription();
-            output.Profiles = new List<ProfilesEnum>
+            var output = new ServiceDescription
             {
-                ProfilesEnum.AssetAdministrationShellRepositoryServiceSpecificationV30Enum,
-                ProfilesEnum.SubmodelRepositoryServiceSpecificationV30Enum,
-                ProfilesEnum.AasxFileServerServiceSpecificationV30Enum,
-                ProfilesEnum.RegistryAndDiscoveryServiceSpecificationV30Enum
+                Profiles = new List<ProfilesEnum>
+            {
+                ProfilesEnum.AasxFileServerServiceSpecificationSSP001Enum,
+                ProfilesEnum.SubmodelRepositoryServiceSpecificationSSP001Enum,
+                ProfilesEnum.AssetAdministrationShellRepositoryServiceSpecificationSSP001Enum,
+                ProfilesEnum.AssetAdministrationShellRegistryServiceSpecificationSSP001Enum,
+                ProfilesEnum.DiscoveryServiceSpecificationSSP001Enum,
+                ProfilesEnum.ConceptDescriptionServiceSpecificationSSP001Enum
+            }
             };
             return new ObjectResult(output);
         }

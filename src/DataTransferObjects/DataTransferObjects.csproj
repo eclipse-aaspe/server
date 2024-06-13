@@ -1,17 +1,18 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Version>0.3.0-2-aasV3-alpha-develop</Version>
+    </PropertyGroup>
 
-	<PropertyGroup>
-		<ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
-	</PropertyGroup>
+    <PropertyGroup>
+        <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\AasCore.Aas3_0\AasCore.Aas3_0.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\AasCore.Aas3_0\AasCore.Aas3_0.csproj"/>
+    </ItemGroup>
 
 </Project>

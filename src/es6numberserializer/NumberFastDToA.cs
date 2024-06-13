@@ -69,11 +69,11 @@ namespace Org.Webpki.Es6NumberSerialization
         //    representable number to the input.
         //  Modifies the generated digits in the buffer to approach (round towards) w.
         private static bool RoundWeed(NumberFastDToABuilder buffer,
-                                      long distance_too_high_w,
-                                      long unsafe_interval,
-                                      long rest,
-                                      long ten_kappa,
-                                      long unit)
+            long distance_too_high_w,
+            long unsafe_interval,
+            long rest,
+            long ten_kappa,
+            long unit)
         {
             long small_distance = distance_too_high_w - unit;
             long big_distance = distance_too_high_w + unit;
@@ -146,10 +146,10 @@ namespace Org.Webpki.Es6NumberSerialization
             //              (buffer{-1} < w_high) && w_high - buffer{-1} > buffer - w_high
             // Instead of using the buffer directly we use its distance to too_high.
             // Conceptually rest ~= too_high - buffer
-            while (rest < small_distance &&  // Negated condition 1
-                    unsafe_interval - rest >= ten_kappa &&  // Negated condition 2
-                    (rest + ten_kappa < small_distance ||  // buffer{-1} > w_high
-                            small_distance - rest >= rest + ten_kappa - small_distance))
+            while (rest < small_distance && // Negated condition 1
+                   unsafe_interval - rest >= ten_kappa && // Negated condition 2
+                   (rest + ten_kappa < small_distance || // buffer{-1} > w_high
+                    small_distance - rest >= rest + ten_kappa - small_distance))
             {
                 buffer.DecreaseLast();
                 rest += ten_kappa;
@@ -159,9 +159,9 @@ namespace Org.Webpki.Es6NumberSerialization
             // would require changing the buffer. If yes, then we have two possible
             // representations close to w, but we cannot decide which one is closer.
             if (rest < big_distance &&
-                    unsafe_interval - rest >= ten_kappa &&
-                    (rest + ten_kappa < big_distance ||
-                            big_distance - rest > rest + ten_kappa - big_distance))
+                unsafe_interval - rest >= ten_kappa &&
+                (rest + ten_kappa < big_distance ||
+                 big_distance - rest > rest + ten_kappa - big_distance))
             {
                 return false;
             }
@@ -201,6 +201,7 @@ namespace Org.Webpki.Es6NumberSerialization
                         exponent = 9;
                         break;
                     }
+
                     // else fallthrough
                     goto case 29;
                 case 29:
@@ -212,6 +213,7 @@ namespace Org.Webpki.Es6NumberSerialization
                         exponent = 8;
                         break;
                     }
+
                     // else fallthrough
                     goto case 26;
                 case 26:
@@ -223,6 +225,7 @@ namespace Org.Webpki.Es6NumberSerialization
                         exponent = 7;
                         break;
                     }
+
                     // else fallthrough
                     goto case 23;
                 case 23:
@@ -235,6 +238,7 @@ namespace Org.Webpki.Es6NumberSerialization
                         exponent = 6;
                         break;
                     }
+
                     // else fallthrough
                     goto case 19;
                 case 19:
@@ -246,6 +250,7 @@ namespace Org.Webpki.Es6NumberSerialization
                         exponent = 5;
                         break;
                     }
+
                     // else fallthrough
                     goto case 16;
                 case 16:
@@ -256,7 +261,8 @@ namespace Org.Webpki.Es6NumberSerialization
                         power = kTen4;
                         exponent = 4;
                         break;
-                    }  // else fallthrough
+                    } // else fallthrough
+
                     goto case 13;
                 case 13:
                 case 12:
@@ -268,6 +274,7 @@ namespace Org.Webpki.Es6NumberSerialization
                         exponent = 3;
                         break;
                     }
+
                     // else fallthrough
                     goto case 9;
                 case 9:
@@ -279,6 +286,7 @@ namespace Org.Webpki.Es6NumberSerialization
                         exponent = 2;
                         break;
                     }
+
                     // else fallthrough
                     goto case 6;
                 case 6:
@@ -290,6 +298,7 @@ namespace Org.Webpki.Es6NumberSerialization
                         exponent = 1;
                         break;
                     }
+
                     // else fallthrough
                     goto case 3;
                 case 3:
@@ -301,6 +310,7 @@ namespace Org.Webpki.Es6NumberSerialization
                         exponent = 0;
                         break;
                     }
+
                     // else fallthrough
                     goto case 0;
                 case 0:
@@ -312,9 +322,10 @@ namespace Org.Webpki.Es6NumberSerialization
                     power = 0;
                     exponent = 0;
                     break;
-                    // UNREACHABLE();
+                // UNREACHABLE();
             }
-            return ((long)power << 32) | (0xffffffffL & exponent);
+
+            return ((long) power << 32) | (0xffffffffL & exponent);
         }
 
         private static bool Uint64_lte(long a, long b)
@@ -366,10 +377,10 @@ namespace Org.Webpki.Es6NumberSerialization
         // represents w. However we have to pay attention to low, high and w's
         // imprecision.
         private static bool DigitGen(NumberDiyFp low,
-                                     NumberDiyFp w,
-                                     NumberDiyFp high,
-                                     NumberFastDToABuilder buffer,
-                                     int mk)
+            NumberDiyFp w,
+            NumberDiyFp high,
+            NumberFastDToABuilder buffer,
+            int mk)
         {
             Debug.Assert(low.E() == w.E() && w.E() == high.E());
             Debug.Assert(Uint64_lte(low.F() + 1, high.F() - 1));
@@ -400,12 +411,12 @@ namespace Org.Webpki.Es6NumberSerialization
             // If we stop early we effectively round down.
             NumberDiyFp one = new NumberDiyFp(1L << -w.E(), w.E());
             // Division by one is a shift.
-            int integrals = (int)(((ulong)too_high.F() >> -one.E()) & 0xffffffffL);
+            int integrals = (int) (((ulong) too_high.F() >> -one.E()) & 0xffffffffL);
             // Modulo by one is an and.
             long fractionals = too_high.F() & (one.F() - 1);
             long result = BiggestPowerTen(integrals, NumberDiyFp.kSignificandSize - (-one.E()));
-            int divider = (int)(((ulong)result >> 32) & 0xffffffffL);
-            int divider_exponent = (int)(result & 0xffffffffL);
+            int divider = (int) (((ulong) result >> 32) & 0xffffffffL);
+            int divider_exponent = (int) (result & 0xffffffffL);
             int kappa = divider_exponent + 1;
             // Loop invariant: buffer = too_high / 10^kappa  (integer division)
             // The invariant holds for the first iteration: kappa has been initialized
@@ -414,13 +425,13 @@ namespace Org.Webpki.Es6NumberSerialization
             while (kappa > 0)
             {
                 int digit = integrals / divider;
-                buffer.Append((char)('0' + digit));
+                buffer.Append((char) ('0' + digit));
                 integrals %= divider;
                 kappa--;
                 // Note that kappa now equals the exponent of the divider and that the
                 // invariant thus holds again.
                 long rest =
-                        ((long)integrals << -one.E()) + fractionals;
+                    ((long) integrals << -one.E()) + fractionals;
                 // Invariant: too_high = buffer * 10^kappa + DiyFp(rest, one.E())
                 // Reminder: unsafe_interval.E() == one.E()
                 if (rest < unsafe_interval.F())
@@ -429,9 +440,10 @@ namespace Org.Webpki.Es6NumberSerialization
                     // that lies within the unsafe interval.
                     buffer.point = buffer.end - mk + kappa;
                     return RoundWeed(buffer, NumberDiyFp.Minus(too_high, w).F(),
-                            unsafe_interval.F(), rest,
-                            (long)divider << -one.E(), unit);
+                        unsafe_interval.F(), rest,
+                        (long) divider << -one.E(), unit);
                 }
+
                 divider /= 10;
             }
 
@@ -454,19 +466,19 @@ namespace Org.Webpki.Es6NumberSerialization
                 fractionals *= 5;
                 unit *= 5;
                 unsafe_interval.SetF(unsafe_interval.F() * 5);
-                unsafe_interval.SetE(unsafe_interval.E() + 1);  // Will be optimized out.
-                one.SetF((long)((ulong)one.F() >> 1));
+                unsafe_interval.SetE(unsafe_interval.E() + 1); // Will be optimized out.
+                one.SetF((long) ((ulong) one.F() >> 1));
                 one.SetE(one.E() + 1);
                 // Integer division by one.
-                int digit = (int)(((ulong)fractionals >> -one.E()) & 0xffffffffL);
-                buffer.Append((char)('0' + digit));
-                fractionals &= one.F() - 1;  // Modulo by one.
+                int digit = (int) (((ulong) fractionals >> -one.E()) & 0xffffffffL);
+                buffer.Append((char) ('0' + digit));
+                fractionals &= one.F() - 1; // Modulo by one.
                 kappa--;
                 if (fractionals < unsafe_interval.F())
                 {
                     buffer.point = buffer.end - mk + kappa;
                     return RoundWeed(buffer, NumberDiyFp.Minus(too_high, w).F() * unit,
-                            unsafe_interval.F(), fractionals, one.F(), unit);
+                        unsafe_interval.F(), fractionals, one.F(), unit);
                 }
             }
         }
@@ -494,13 +506,13 @@ namespace Org.Webpki.Es6NumberSerialization
             NumberDiyFp boundary_minus = new NumberDiyFp(), boundary_plus = new NumberDiyFp();
             NumberDoubleHelper.NormalizedBoundaries(bits, boundary_minus, boundary_plus);
             Debug.Assert(boundary_plus.E() == w.E());
-            NumberDiyFp ten_mk = new NumberDiyFp();  // Cached power of ten: 10^-k
+            NumberDiyFp ten_mk = new NumberDiyFp(); // Cached power of ten: 10^-k
             int mk = NumberCachedPowers.GetCachedPower(w.E() + NumberDiyFp.kSignificandSize,
-                    minimal_target_exponent, maximal_target_exponent, ten_mk);
+                minimal_target_exponent, maximal_target_exponent, ten_mk);
             Debug.Assert(minimal_target_exponent <= w.E() + ten_mk.E() +
-                    NumberDiyFp.kSignificandSize &&
-                    maximal_target_exponent >= w.E() + ten_mk.E() +
-                            NumberDiyFp.kSignificandSize);
+                         NumberDiyFp.kSignificandSize &&
+                         maximal_target_exponent >= w.E() + ten_mk.E() +
+                         NumberDiyFp.kSignificandSize);
             // Note that ten_mk is only an approximation of 10^-k. A DiyFp only contains a
             // 64 bit significand and ten_mk is thus only precise up to 64 bits.
 
@@ -512,7 +524,7 @@ namespace Org.Webpki.Es6NumberSerialization
             //           (f-1) * 2^e < w*10^k < (f+1) * 2^e
             NumberDiyFp scaled_w = NumberDiyFp.Times(w, ten_mk);
             Debug.Assert(scaled_w.E() ==
-                    boundary_plus.E() + ten_mk.E() + NumberDiyFp.kSignificandSize);
+                         boundary_plus.E() + ten_mk.E() + NumberDiyFp.kSignificandSize);
             // In theory it would be possible to avoid some recomputations by computing
             // the difference between w and boundary_minus/plus (a power of 2) and to
             // compute scaled_boundary_minus/plus by subtracting/adding from
@@ -554,6 +566,7 @@ namespace Org.Webpki.Es6NumberSerialization
                 buffer.Append('-');
                 v = -v;
             }
+
             return Dtoa(v, buffer);
         }
     }

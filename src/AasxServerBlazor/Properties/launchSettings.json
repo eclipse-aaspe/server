@@ -2,7 +2,7 @@
   "profiles": {
     "IIS Express": {
       "commandName": "IISExpress",
-      "commandLineArgs": "--rest --port 51710 --data-path C:\\MIHO\\Develop\\Aasx\\repo --edit --secret-string=123",
+      "commandLineArgs": "--port 51710 --data-path C:\\Develop\\Aasx\\repo --edit --secret-string=123",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
@@ -10,11 +10,11 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--no-security --aasx-in-memory 1000 --data-path \"C:\\Development\\PCF View\" --edit --external-blazor http://localhost:5001",
+      "commandLineArgs": "--no-security --secret-string-api 1234 --aasx-in-memory 1000 --data-path \"\\\\wsl.localhost\\Ubuntu\\home\\oze\\plugfest\\aasxs-view\" --edit --external-blazor http://localhost:5001",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "AASREGISTRY": "https://registry.dpp40-2-v2.industrialdigitaltwin.org",
+        "AASREGISTRY": "http://localhost:50001",
         "IFRAMEPATH": "https://dpp40-2-v2.industrialdigitaltwin.org/dashboard/submodelViewV3.html"
       },
       "applicationUrl": "http://localhost:5001",

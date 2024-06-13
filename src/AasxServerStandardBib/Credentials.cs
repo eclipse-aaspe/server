@@ -72,6 +72,7 @@ namespace AasxServer
                             line = sr.ReadLine();
                         }
                     }
+                    Console.WriteLine("CREDENTIALS " + fileName + ":" + cList.Count + " entries read");
                 }
                 catch (IOException e)
                 {
@@ -120,7 +121,7 @@ namespace AasxServer
         }
 
         public static bool get(List<AasxCredentialsEntry> cList, string urlPath, out string queryPara, out string userPW,
-            out string urlEdcWrapper, out string replace)
+            out string urlEdcWrapper, out string replace, bool blazor = false)
         {
             queryPara = "";
             userPW = "";
@@ -188,9 +189,12 @@ namespace AasxServer
                                 result = true;
                                 break;
                             case "replace":
-                                if (cList[i].parameters.Count == 1)
+                                if (cList[i].parameters.Count == 1 ||
+                                    (cList[i].parameters.Count == 2 && cList[i].parameters[1] == "blazor" && blazor))
+                                {
                                     replace = urlPath.Replace(u, cList[i].parameters[0]);
-                                result = true;
+                                    result = true;
+                                }
                                 break;
                         }
                     }
@@ -238,7 +242,10 @@ namespace AasxServer
                     if (valid) return;
                 }
 
-                var handler = new HttpClientHandler();
+                var handler = new HttpClientHandler()
+                {
+                    ServerCertificateCustomValidationCallback = delegate { return true; },
+                };
                 if (AasxServer.AasxTask.proxy != null)
                     handler.Proxy = AasxServer.AasxTask.proxy;
                 else

@@ -1,70 +1,91 @@
-name: Check-release-workflow
+name: Check Branch is Releasable
 
 on:
   pull_request:
     branches:
-      - master
-    types: [opened, synchronize, reopened, edited]
-
-  push:
+      - main
+      - release
+    types: [ opened, synchronize, reopened, edited ]
 
 jobs:
   Check-release:
     runs-on: windows-latest
-    if: contains(github.event.pull_request.body, 'The workflow check-release was intentionally skipped.') == false
+
     steps:
-      - uses: actions/checkout@master
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set execution policy
+        run: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+        shell: pwsh
 
       - name: Set timestamp
-        id: setTimestamp
+        id: set_timestamp
         run: |
-          $timestamp = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH-mm-ssZ")
-          if ($timestamp.Contains("'"))
-          {
-              throw "Unexpected timestamp containing a single quote: $timestamp"
-          }
-          if ($timestamp.Contains('"'))
-          {
-              throw "Unexpected timestamp containing a double quote: $timestamp"
-          }
-          if ($timestamp.Contains(':'))
-          {
-              throw "Unexpected timestamp containing a full colon: $timestamp"
-          }
+          $current_time = $(date +'%Y-%m-%d-T-%H-%M-%S')
+          echo "timestamp=$current_time" >> $GITHUB_ENV
+          Write-Host "The current timestamp is: $current_time"
 
-          Write-Output "::set-output name=timestamp::$timestamp"
 
-      - name: Install .NET core 6.0
-        uses: actions/setup-dotnet@v1
+      - name: Extract branch name
+        id: extract_branch
+        run: |
+          git fetch --all
+          $commitSHA = git rev-parse HEAD
+          $branch = git branch -r --contains $commitSHA | Select-String -Pattern 'origin/' | Select-Object -First 1 | ForEach-Object { $_.Line -replace '.*origin/', '' } | ForEach-Object { $_.Trim() }
+          echo "branch=$branch" >> $env:GITHUB_OUTPUT
+          Write-Host "The current branch is: $branch"
+        shell: pwsh
+
+      - name: Generate Version Number
+        working-directory: src
+        id: generate_version_number
+        run: |
+          $branch = '${{ steps.extract_branch.outputs.branch }}'
+          $version = .\BuildVersionNumber.ps1 -suffix alpha -branch $branch -githubRunNumber ${{ github.run_number }}
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "The version name to build is: $version"
+        shell: pwsh
+
+      - name: Update version numbers in project
+        working-directory: src
+        run: |
+          $version = '${{ steps.generate_version_number.outputs.version }}'
+          Write-Host "Updating project versions to: $version"
+          .\UpdateProjectVersions.ps1 -version $version
+        shell: pwsh
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '6.0.x'
 
-      - name: Build for release
+      - name: Build release
         working-directory: src
-        run: powershell .\BuildForRelease.ps1
+        run: .\BuildForRelease.ps1
+        shell: pwsh
 
-      - name: Check --help and Readme coincide
+      - name: Package release
         working-directory: src
-        run: powershell .\CheckHelpInReadme.ps1
-
-      - name: Package
-        working-directory: src
-        run: powershell .\PackageRelease.ps1 -version LATEST.alpha
+        run: |
+          $version = '${{ steps.generate_version_number.outputs.version }}'
+          mkdir -p artefacts/release/$version
+          Write-Host "Packaging for the release version: $version"
+          .\PackageRelease.ps1 -version $version
+        shell: pwsh
 
       - name: Upload AasxServerBlazor
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
-          name: AasxServerBlazor.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
-          path: artefacts/release/LATEST.alpha/AasxServerBlazor.zip
+          name: AasxServerBlazor.LATEST.${{ steps.generate_version_number.outputs.version }}.${{ steps.set_timestamp.outputs.timestamp }}
+          path: artefacts/release/${{ steps.generate_version_number.outputs.version }}/AasxServerBlazor.zip
+          if-no-files-found: error
 
       - name: Upload AasxServerAspNetCore
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
-          name: AasxServerAspNetCore.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
-          path: artefacts/release/LATEST.alpha/AasxServerAspNetCore.zip
-
-      # - name: Upload AasxServerWindows
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     name: AasxServerWindows.LATEST.alpha.${{ steps.setTimestamp.outputs.timestamp }}
-      #     path: artefacts/release/LATEST.alpha/AasxServerWindows.zip
+          name: AasxServerAspNetCore.LATEST.${{ steps.generate_version_number.outputs.version }}.${{ steps.set_timestamp.outputs.timestamp }}
+          path: artefacts/release/${{ steps.generate_version_number.outputs.version }}/AasxServerAspNetCore.zip
+          if-no-files-found: error

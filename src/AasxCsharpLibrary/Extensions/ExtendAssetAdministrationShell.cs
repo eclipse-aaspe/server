@@ -206,7 +206,7 @@ namespace Extensions
                 assetAdministrationShell.Administration = new AdministrativeInformation(version: sourceAas.administration.version, revision: sourceAas.administration.revision);
             }
 
-            if (sourceAas.derivedFrom != null)
+            if (sourceAas.derivedFrom != null && !sourceAas.derivedFrom.IsEmpty)
             {
                 var newKeyList = new List<IKey>();
 

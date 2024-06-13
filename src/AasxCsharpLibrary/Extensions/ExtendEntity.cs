@@ -46,6 +46,7 @@ namespace Extensions
         }
 
         #endregion
+
         public static Entity ConvertFromV20(this Entity entity, AasxCompatibilityModels.AdminShellV20.Entity sourceEntity)
         {
             if (sourceEntity == null)
@@ -64,6 +65,7 @@ namespace Extensions
                     {
                         outputSubmodelElement = outputSubmodelElement.ConvertFromV20(sourceSubmodelElement);
                     }
+
                     entity.Statements.Add(outputSubmodelElement);
                 }
             }
@@ -72,20 +74,22 @@ namespace Extensions
             {
                 // TODO (jtikekar, 2023-09-04):jtikekar whether to convert to Global or specific asset id
                 var assetRef = ExtensionsUtil.ConvertReferenceFromV20(sourceEntity.assetRef, ReferenceTypes.ExternalReference);
-                entity.GlobalAssetId = assetRef.GetAsIdentifier();
+                if (assetRef != null)
+                {
+                    entity.GlobalAssetId = assetRef.GetAsIdentifier();
+                }
             }
 
             return entity;
         }
 
-        public static T FindFirstIdShortAs<T>(this Entity entity, string idShort) where T : ISubmodelElement
+        public static T FindFirstIdShortAs<T>(this IEntity entity, string idShort) where T : ISubmodelElement
         {
-
             var submodelElements = entity.Statements.Where(sme => (sme != null) && (sme is T) && sme.IdShort.Equals(idShort, StringComparison.OrdinalIgnoreCase));
 
             if (submodelElements.Any())
             {
-                return (T)submodelElements.First();
+                return (T) submodelElements.First();
             }
 
             return default;
@@ -95,7 +99,7 @@ namespace Extensions
             this Entity ent,
             ConceptDescription conceptDescription, string category = null, string idShort = null,
             string idxTemplate = null, int maxNum = 999, bool addSme = false, bool isTemplate = false)
-                where T : ISubmodelElement
+            where T : ISubmodelElement
         {
             if (ent.Statements == null)
                 ent.Statements = new List<ISubmodelElement>();
