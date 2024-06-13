@@ -3,7 +3,10 @@
     {
       "title": "## ⚡️ Added",
       "labels": [
-        "feature"
+        "feature",
+        "enhancement",
+        "database",
+        "documentation"
       ]
     },
     {
@@ -14,12 +17,10 @@
       ]
     },
     {
-      "title": "## 🔄 Changed",
+      "title": "## 🔄 Refactoring",
       "labels": [
-        "changed",
-        "change",
-        "chore",
-        "adapted"
+        "cleanup",
+        "refactoring"
       ]
     },
     {
