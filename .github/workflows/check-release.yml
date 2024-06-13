@@ -6,9 +6,6 @@ on:
       - main
       - release
     types: [ opened, synchronize, reopened, edited ]
-  push:
-    branches:
-      - main
 
 jobs:
   Check-release:
