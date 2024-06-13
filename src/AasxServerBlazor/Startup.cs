@@ -95,13 +95,15 @@ namespace AasxServerBlazor
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<IRegistryInitializerService, RegistryInitializerService>();
             services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
-            services.AddTransient<IAssetAdministrationShellService, AssetAdministrationShellService>();
+            
             if (Program1.withMongodb)
             {
-                services.AddTransient<IAdminShellPackageEnvironmentService, AdminShellPackageEnvironmentServiceDB>();
+                services.AddTransient<IAssetAdministrationShellService, AssetAdministrationShellServiceDB>();
+                services.AddTransient<IAdminShellPackageEnvironmentService, AdminShellPackageEnvironmentServiceDB>();                
             }
             else
             {
+                services.AddTransient<IAssetAdministrationShellService, AssetAdministrationShellService>();
                 services.AddTransient<IAdminShellPackageEnvironmentService, AdminShellPackageEnvironmentService>();
             }
             services.AddTransient<IIdShortPathParserService, IdShortPathParserService>();
