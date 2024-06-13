@@ -1,17 +1,15 @@
 name: Nightly Prerelease build on Main
 
 on:
-  push:
-    branches:
-      - main
-  #Runs every morning at 1:00 AM Berlin Time
   schedule:
-    - cron: '0 23 * * *'
+    - cron: '0 23 * * *' # This is 1:00 AM Berlin time
 
 jobs:
   check-for-changes:
     runs-on: ubuntu-latest
-    name: Check for changes based on the latest nightly
+    name: Check for changes
+    outputs:
+      changes_detected: ${{ steps.check_changes.outputs.changes_detected }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -37,18 +35,19 @@ jobs:
         run: |
           if [ -z "${{ env.latest_tag }}" ]; then
             echo "No latest tag found, assuming there are changes."
-            echo "changes_detected=true" >> $GITHUB_ENV
+            echo "changes_detected=true" >> $GITHUB_OUTPUT
           else
             git fetch origin main
             latest_commit=$(git rev-parse HEAD)
-            git diff --quiet ${{ env.latest_tag }} $latest_commit || echo "changes_detected=true" >> $GITHUB_ENV
+            git diff --quiet ${{ env.latest_tag }} $latest_commit || echo "changes_detected=true" >> $GITHUB_OUTPUT
           fi
+        shell: bash
 
   create-new-prerelease:
     runs-on: windows-latest
     name: Create a new prerelease build and attach built packages to release
     needs: check-for-changes
-    if: env.changes_detected == 'true'
+    if: needs.check-for-changes.outputs.changes_detected == 'true'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -185,7 +184,6 @@ jobs:
     runs-on: ubuntu-latest
     name: Create new docker builds with latest prerelease and upload to DockerHub
     needs: create-new-prerelease
-    if: env.changes_detected == 'true'
     steps:
       - uses: actions/checkout@v4
 
