@@ -154,6 +154,7 @@ namespace AasxServerDB
                 bool withDate = searchLower.Split("-").Length == 3;
                 bool withTime = searchLower.Split(":").Length == 3;
                 bool withMSec = searchLower.Split(".").Length == 2;
+                // DateTime.Parse(diff).ToUniversalTime();
                 if (withDate && !withTime && !withMSec)
                     searchDateTime = DateTime.ParseExact(searchLower, "yy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
                 else if (withDate && withTime && !withMSec)
