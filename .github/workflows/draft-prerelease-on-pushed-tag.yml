@@ -141,4 +141,4 @@ jobs:
           files: "artefacts/release/${{ steps.generate_version_number.outputs.version }}/*.zip"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           release-tag: "v${{ steps.generate_version_number.outputs.version }}"
-    
+  

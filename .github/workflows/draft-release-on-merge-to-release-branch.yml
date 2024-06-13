@@ -8,7 +8,7 @@ on:
 jobs:
   create-new-release:
     runs-on: windows-latest
-
+    name: Build a new release and open a draft GitHub release with changelog
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
