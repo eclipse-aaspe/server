@@ -63,9 +63,6 @@ jobs:
           languages: csharp
           build-mode: manual
 
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
-      
       - name: Build release
         working-directory: src
         run: .\BuildForRelease.ps1
