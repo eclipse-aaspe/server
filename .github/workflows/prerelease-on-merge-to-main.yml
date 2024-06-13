@@ -1,4 +1,4 @@
-name: Create Prerelease on Merge to Main
+name: Nightly Prerelease build on Main
 
 on:
   push:
