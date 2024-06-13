@@ -658,7 +658,7 @@
         if (f.Value != "")
         {
             string[] split = f.Value.Split(new Char[] { '/' });
-            if (split.Length == 2 || (split.Length > 1 && split[1].ToLower() == "aasx"))
+            if (split.Length == 2 || (split.Length > 1 && (split[1].ToLower() == "aasx" || split[1].ToLower() == "tmp")))
             {
                 split = f.Value.Split(new Char[] { '.' });
                 switch (split.Last().ToLower())
