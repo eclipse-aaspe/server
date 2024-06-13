@@ -1,9 +1,9 @@
-name: Prerelease on Merge to Main
+name: Create Prerelease on Merge to Main
 
 on:
   push:
     branches:
-      - mainXXX
+      - main
 
 jobs:
   create-new-prerelease:

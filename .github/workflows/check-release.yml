@@ -1,4 +1,4 @@
-name: Check-release-workflow
+name: Check Branch is Releasable
 
 on:
   pull_request:

@@ -1,4 +1,4 @@
-name: Code Analysis
+name: Code Style & Security Analysis
 
 on:
   pull_request:
@@ -11,7 +11,9 @@ on:
     branches:
       - main
       - 'integration/**'
-
+  schedule:
+    - cron: '30 19 * * 5'
+      
 jobs:
   format-check:
     runs-on: windows-latest

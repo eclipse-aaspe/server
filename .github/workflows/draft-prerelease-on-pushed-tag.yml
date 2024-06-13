@@ -1,4 +1,4 @@
-name: Draft Prerelease on Tag Push
+name: Draft new Prerelease on Develop Tag Push
 
 on:
   push:
