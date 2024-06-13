@@ -6,7 +6,7 @@ on:
       - main
       - release
       - 'integration/**'
-    types: [ opened, synchronize, reopened, edited ]
+    types: [opened, synchronize, reopened, edited]
   push:
     branches:
       - main
@@ -63,6 +63,11 @@ jobs:
         with:
           languages: csharp
           build-mode: manual
+
+      - name: Finalize CodeQL Database
+        run: |
+          # Finalize the CodeQL database to include the built artifacts
+          "C:\hostedtoolcache\windows\CodeQL\2.17.4\x64\codeql\codeql.exe" database finalize --threads=4 --ram=14437 D:\a\_temp\codeql_databases\csharp
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
