@@ -122,45 +122,47 @@ We've transitioned to [semantic versioning](https://semver.org) for better versi
 <major>.<minor>.<patch>.<buildnumber>-<AAS Schema Version>-<alpha>-<stable|latest|develop>
 ```
 
-- **buildnumber**: An incremented value for each build, important for development or latest releases to distinguish builds even if there's no new version number.
+- **buildnumber**: An incremented value for each build, crucial for distinguishing between builds, particularly for development or latest releases without new version numbers.
 - **AAS Schema Version**: Indicates the AAS main schema used in this version.
-- **alpha**: Indicates this is still an alpha build, not a finished release.
-- **stable**: The latest stable release, where the main features are confirmed working.
-- **latest**: The most recent build on the main branch. It's relatively stable but may have some issues.
-- **develop**: A build from a branch other than main or develop. It's for testing and may be unstable.
+- **alpha**: Denotes an alpha build, indicating it's not yet a finished release.
+- **stable**: Represents the latest stable release, confirming that main features are working.
+- **latest**: Indicates the most recent build on the main branch, generally stable but may have minor issues.
+- **develop**: Refers to builds from branches other than main or develop, primarily for testing and potentially unstable.
 
 ### Release a New Version
 
-With the change to semantic versioning, the release process has been updated as well.
-
-To release a new version, follow these steps:
+With the switch to semantic versioning, our release process has been enhanced:
 
 1. **Update the Changelog**
-   - Move all current changes to the [Released] section in the [changelog](CHANGELOG.md).
-   - Determine the new version number based on semantic versioning and add the release date.
+   - Move all recent changes to the [Released] section in the [changelog](CHANGELOG.md).
+   - Determine the new version number based on semantic versioning and include the release date.
+   
 2. **Update the Version Configuration**
-   - Use the new version number to update the [current_version.cfg](src/current_version.cfg).
+   - Update the [current_version.cfg](src/current_version.cfg) with the new version number.
+
 3. **Push Changes**
-   - Push these changes to the branch you want to release from (main/develop/or your branch).
-4. **Create a New PR to Release branch**
-   - Create anew PR fill out all information. Make sure that this branch was started to main
+   - Push these changes to the new branch, you made from the `main` branch state you want to release.
+
+4. **Create a New PR to Release Branch**
+   - Submit a pull request targeting the release branch. Ensure all necessary details are provided.
+
 5. **Rebase to Main**
-   - After that branch was merged to release, rebase these changes to main branch, so that these branches are equal and changes to the  [current_version.cfg](src/current_version.cfg) and [changelog](CHANGELOG.md) are also reflected on the main.
+   - After the PR is merged into the release branch, rebase these changes onto the main branch. This ensures consistency across branches and updates [current_version.cfg](src/current_version.cfg) and [changelog](CHANGELOG.md) on the main branch.
 
-After that branch is merged to release, the GIthub Workflows will start and automatically create a new release, which will be in the draft status. Once created you have one last chance to check that release. If everything is in order that release can be published inside that release settings.
+Once the branch is merged into the release branch, GitHub Workflows will **automatically** initiate, creating a new draft release. Review the release to confirm everything is in order before publishing it in the release settings.
 
-All releases of dockerfiles will be done automatically by that state.
+Docker image releases are handled automatically at this stage.
 
 ### Nightly Releases
 
-We have a cron job that checks every night for changes and if there are changes on the main branch it creates a new prerelease latest alpha build. It automatically creates a new version number and a tag, and releases also on Docker. A changelog is also automatically created, based on the changes on that branch. But this changelog only contains changes from PRs and can **not** display any direct merges onto main.
-You can trigger this manually using the workflow [here](https://github.com/eclipse-aaspe/server/actions/workflows/prerelease-on-merge-to-main.yml).
+We employ a cron job to check nightly for changes on the main branch. If changes are detected, it creates a new prerelease `latest alpha` build. This process automatically assigns a new version number, creates a tag, and releases the corresponding Docker images. A changelog is also automatically generated based on PR changes; however, direct merges into main are not included in this changelog.
+
+You can manually trigger this process using the workflow [here](https://github.com/eclipse-aaspe/server/actions/workflows/prerelease-on-merge-to-main.yml).
 
 ### Example Version Tags
-- `v1.0.0.1-aasV3-alpha-develop`: An alpha build on a develop branch.
-- `v1.0.0.2-aasV3-alpha-stable`: A stable release.
-- `v1.0.0.3-aasV3-alpha-latest`: The latest build on the main branch.
-
+- `v1.0.0.1-aasV3-alpha-develop`: Alpha build on a develop branch.
+- `v1.0.0.2-aasV3-alpha-stable`: Stable release.
+- `v1.0.0.3-aasV3-alpha-latest`: Latest build on the main branch.
 
 ---
 
