@@ -4,7 +4,7 @@
         <TargetFramework>net6.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <Version>0.3.0-2-aasV3-alpha-develop</Version>
+        <Version>v0.3.0.1-aasV3-alpha-latest</Version>
     </PropertyGroup>
 
     <ItemGroup>
