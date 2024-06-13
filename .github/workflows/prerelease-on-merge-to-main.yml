@@ -1,6 +1,9 @@
 name: Nightly Prerelease build on Main
 
 on:
+  push:
+    branches:
+      - main
   schedule:
     - cron: '0 23 * * *' # This is 1:00 AM Berlin time
 
