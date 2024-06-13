@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+    mongodb:
+        image: mongo
+        hostname: "mongodb-server"
+        container_name: "mongodb-server"
+        restart: unless-stopped
+        volumes:
+          - ./mongo/data:/data/db
+        ports:
+          - '27017:27017'
+        environment:
+          - MONGO_INITDB_ROOT_USERNAME=mongo
+          - MONGO_INITDB_ROOT_PASSWORD=mongo
+    aasx-server:
+      container_name: aasx-server
+      hostname: aasx-server
+      image: aasx-server-blazor-for-demo:latest
+      restart: unless-stopped
+      ports:
+        - "5001:5001"
+      depends_on:
+      - mongodb
+      volumes:
+        - C:\GitClones\aasx-server\content-for-demo\aasxs:/AasxServerBlazor/aasxs
+      deploy:
+        resources:
+          limits:
+            memory: 3G
+      command: --start-index 0 --no-security --aasx-in-memory 1000 --data-path "./aasxs" --edit --external-blazor http://localhost:5001 --with-mongodb "mongodb://mongo:mongo@localhost:27017/"

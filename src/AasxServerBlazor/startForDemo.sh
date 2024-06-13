@@ -1,1 +1,1 @@
-dotnet AasxServerBlazor.dll --no-security --data-path ./aasxs --host 0.0.0.0 $OPTIONSAASXSERVER
+dotnet AasxServerBlazor.dll --no-security --aasx-in-memory 1000 --data-path ./aasxs --edit --external-blazor http://localhost:5001 --with-mongodb "mongodb://mongo:mongo@mongodb-server:27017/" $OPTIONSAASXSERVER

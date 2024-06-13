@@ -2,10 +2,14 @@ services:
   aasx-server:
     container_name: aasx-server
     hostname: aasx-server
-    image: adminshellio/aasx-server-blazor-for-demo:v3latest
+    image: adminshellio/aasx-server-blazor-for-demo:main
     restart: unless-stopped
     ports:
       - "5001:5001"
     volumes:
-      - ./aasxs:/usr/share/aasxs
-    command: --start-index 0 --no-security --edit --data-path /usr/share/aasxs --external-blazor http://localhost:5001
+      - C:\GitClones\aasx-server\content-for-demo\aasxs:/AasxServerBlazor/aasxs
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+    command: --start-index 0 --no-security --edit --data-path /AasxServerBlazor/aasxs --external-blazor http://localhost:5001
