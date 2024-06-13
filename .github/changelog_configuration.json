@@ -4,43 +4,26 @@
       "title": "## ⚡️ Added",
       "labels": [
         "feature",
-        "add",
-        "added"
+        "enhancement"
       ]
     },
     {
       "title": "## 🐛 Fixed",
       "labels": [
-        "fix",
-        "fixed",
         "bug",
-        "bugfix"
-      ]
-    },
-    {
-      "title": "## 🔄 Changed",
-      "labels": [
-        "changed",
-        "change",
-        "chore",
-        "adapted"
+        "cleanup"
       ]
     },
     {
       "title": "## 🕰 Deprecated",
       "labels": [
-        "deprecated",
-        "deprecate",
-        "obsolete",
-        "obsoleted"
+        "deprecated"
       ]
     },
     {
       "title": "## 🗑 Removed",
       "labels": [
-        "removed",
-        "deleted",
-        "delete"
+        "removed"
       ]
     },
     {
@@ -50,9 +33,15 @@
       ]
     },
     {
+      "title": "## 🚨 Security",
+      "labels": [
+        "security-issue"
+      ]
+    },
+    {
       "title": "## 🛑 Breaking Changes",
       "labels": [
-        "breaking"
+        "breaking-change"
       ]
     },
     {
@@ -60,6 +49,10 @@
       "labels": [
         "test"
       ]
+    },
+    {
+      "title": "## Other",
+      "labels": []
     }
   ],
   "ignore_labels": [
@@ -70,7 +63,7 @@
     "on_property": "mergedAt"
   },
   "template": "# 📦 Changelog\n\n<details>\n<summary>\n\n## Categories\n\n{{CATEGORIES}}\n</summary>\n\n# {{UNCATEGORIZED}}\n\n[🔗 Release Diff](RELEASE_DIFF)\n\n## 👥 Contributors\n\n{{CONTRIBUTORS}}\n</details>",
-  "pr_template": "- #{{TITLE}} (by {{AUTHOR}} in ##{{NUMBER}})",
+  "pr_template": "- #{{TITLE}} by {{AUTHOR}} in #{{URL}} (Labels: #{{LABELS}})",
   "empty_template": "- No changes. See the [Changelog](CHANGELOG.md) for more information.",
   "label_extractor": [
     {
