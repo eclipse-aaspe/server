@@ -112,7 +112,7 @@ An example GraphQL query is:
 ```
 
 If you want to create a registry and also automatically POST to it, please take a look at
-our [GitHub issues](https://github.com/admin-shell-io/aasx-server/issues/189) page.
+our [GitHub issues](https://github.com/admin-shell-io/aasx-server/issues) page.
 
 ## CREATE NEW RELEASES
 
