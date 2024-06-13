@@ -6,11 +6,13 @@ on:
       - main
       - release
       - 'integration/**'
-    types: [opened, synchronize, reopened, edited]
+    types: [ opened, synchronize, reopened, edited ]
   push:
     branches:
       - main
       - 'integration/**'
+  schedule:
+    - cron: '22 18 * * 5'
 
 jobs:
   format-check:
@@ -48,26 +50,29 @@ jobs:
 
   codeql-analysis:
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: csharp
+            build-mode: autobuild
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@v3
         with:
-          languages: csharp
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
 
-      - name: Analyze code with CodeQL
-        uses: github/codeql-action/analyze@v2
-
-      - name: Upload CodeQL analysis results
-        uses: github/codeql-action/upload-sarif@v2
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
         with:
-          sarif_file: codeql-results.sarif
-
-      - name: Check for CodeQL analysis errors
-        if: failure()
-        run: |
-          echo "CodeQL analysis found issues. Please review the CodeQL results."
-          exit 1
+          category: "/language:${{ matrix.language }}"
