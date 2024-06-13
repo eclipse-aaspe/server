@@ -1,0 +1,111 @@
+{
+  "categories": [
+    {
+      "title": "## ⚡️ Added",
+      "labels": [
+        "feature",
+        "add",
+        "added"
+      ]
+    },
+    {
+      "title": "## 🐛 Fixed",
+      "labels": [
+        "fix",
+        "fixed",
+        "bug",
+        "bugfix"
+      ]
+    },
+    {
+      "title": "## 🔄 Changed",
+      "labels": [
+        "changed",
+        "change",
+        "chore",
+        "adapted"
+      ]
+    },
+    {
+      "title": "## 🕰 Deprecated",
+      "labels": [
+        "deprecated",
+        "deprecate",
+        "obsolete",
+        "obsoleted"
+      ]
+    },
+    {
+      "title": "## 🗑 Removed",
+      "labels": [
+        "removed",
+        "deleted",
+        "delete"
+      ]
+    },
+    {
+      "title": "## 🚀 Dependencies",
+      "labels": [
+        "dependencies"
+      ]
+    },
+    {
+      "title": "## 🛑 Breaking Changes",
+      "labels": [
+        "breaking"
+      ]
+    },
+    {
+      "title": "## 🧪 Tests",
+      "labels": [
+        "test"
+      ]
+    }
+  ],
+  "ignore_labels": [
+    "ignore"
+  ],
+  "sort": {
+    "order": "ASC",
+    "on_property": "mergedAt"
+  },
+  "template": "# 📦 Changelog\n\n<details>\n<summary>\n\n## Categories\n\n{{CATEGORIES}}\n</summary>\n\n# {{UNCATEGORIZED}}\n\n[🔗 Release Diff](RELEASE_DIFF)\n\n## 👥 Contributors\n\n{{CONTRIBUTORS}}\n</details>",
+  "pr_template": "- #{{TITLE}} (by {{AUTHOR}} in ##{{NUMBER}})",
+  "empty_template": "- No changes. See the [Changelog](CHANGELOG.md) for more information.",
+  "label_extractor": [
+    {
+      "pattern": "(.*)",
+      "target": "$1",
+      "flags": "gu"
+    }
+  ],
+  "reference": {
+    "pattern": ".*\\#(.*).*",
+    "on_property": "body",
+    "method": "replace",
+    "target": "$1"
+  },
+  "transformers": [
+    {
+      "pattern": "[\\-\\*] (\\[(...|TEST|CI|SKIP)\\])( )?(.+?)\n(.+?[\\-\\*] )(.+)",
+      "target": "- $4\n  - $6"
+    }
+  ],
+  "trim_values": false,
+  "max_tags_to_fetch": 200,
+  "max_pull_requests": 200,
+  "max_back_track_time_days": 365,
+  "exclude_merge_branches": [
+    "Owner/qa"
+  ],
+  "tag_resolver": {
+    "method": "semver",
+    "filter": {
+      "pattern": "api-(.+)",
+      "flags": "gu"
+    }
+  },
+  "base_branches": [
+    "dev"
+  ]
+}
