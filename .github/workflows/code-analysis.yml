@@ -45,3 +45,29 @@ jobs:
         run: |
           echo "Code formatting issues detected. Please fix the issues and commit again."
           exit 1
+
+  codeql-analysis:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: csharp
+
+      - name: Analyze code with CodeQL
+        uses: github/codeql-action/analyze@v2
+
+      - name: Upload CodeQL analysis results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: codeql-results.sarif
+
+      - name: Check for CodeQL analysis errors
+        if: failure()
+        run: |
+          echo "CodeQL analysis found issues. Please review the CodeQL results."
+          exit 1
