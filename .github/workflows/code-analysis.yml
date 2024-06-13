@@ -29,9 +29,15 @@ jobs:
         run: dotnet tool install -g dotnet-format
 
       - name: Run dotnet format
-        run: dotnet format ./src/AasxServer.sln --verify-no-changes --verbosity diagnostic
+        run: dotnet format ./src/AasxServer.sln --verify-no-changes --verbosity diagnostic --report format-report.json
         env:
           PATH: ${{ env.PATH }}:/home/runner/.dotnet/tools
+
+      - name: Upload format report
+        uses: actions/upload-artifact@v4
+        with:
+          name: format-report
+          path: format-report.json
 
       - name: Check for formatting issues
         if: failure()
