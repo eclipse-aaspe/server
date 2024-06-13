@@ -34,6 +34,7 @@ using System.Timers;
 using System.Xml;
 using System.Xml.Serialization;
 using Formatting = Newtonsoft.Json.Formatting;
+using AasxServerDB.Context;
 
 /*
 Copyright (c) 2019-2020 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski

@@ -20,6 +20,10 @@ namespace AasxServerDB.Entities
         public string? SemanticId { get; set; }
         public string? IdShort { get; set; }
 
+        public DateTime TimeStampCreate { get; set; }
+        public DateTime TimeStamp { get; set; }
+        public DateTime TimeStampTree { get; set; }
+
         public virtual ICollection<IValueSet> IValueSets { get; } = new List<IValueSet>();
         public virtual ICollection<DValueSet> DValueSets { get; } = new List<DValueSet>();
         public virtual ICollection<SValueSet> SValueSets { get; } = new List<SValueSet>();
