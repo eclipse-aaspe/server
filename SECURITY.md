@@ -8,19 +8,20 @@ The following versions are supported with continuing security updates, until we 
 |---------|-----------|
 | none    | none      |
 
-> **NOTE:** At the moment we do not provide security support of any kind, as the AASX Server is still considered a prototype and is in alpha development.
+**NOTE:** At the moment, we do not provide security support of any kind, as the AASX Server is still considered a prototype and is in alpha development.
 
 ## Reporting a Vulnerability
 
-Nevertheless we want to help with fixing any security issues. We appreciate your efforts to responsibly disclose any security vulnerabilities you may find.
+We appreciate your efforts to responsibly disclose any security vulnerabilities you may find.
 
 ### Reporting Process
 
-To report a vulnerability, please email us directly at  info@idtwin.org or open an issue directly at [GitHub issues](https://github.com/admin-shell-io/aasx-server/issues). Provide detailed information about the vulnerability and steps to reproduce it if possible.
+To report a vulnerability, please email us directly at info@idtwin.org or open an issue directly at [GitHub issues](https://github.com/admin-shell-io/aasx-server/issues).
+Provide detailed information about the vulnerability and steps to reproduce it if possible.
 
 ### Response Timeline
 
-Once a vulnerability report is received, we will fix them as soon as we can, but we currently cannot determine a timeline for the fix.
+Once a vulnerability report is received, we will address it promptly. However, we currently cannot determine a specific timeline for the fix.
 
 ### Security Updates
 
