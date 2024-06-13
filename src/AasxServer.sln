@@ -12,11 +12,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\CONTRIBUTING.md = ..\CONTRIBUTING.md
 		..\LICENSE.TXT = ..\LICENSE.TXT
 		..\CONTRIBUTORS.md = ..\CONTRIBUTORS.md
-		current_build_number.cfg = current_build_number.cfg
 		current_version.cfg = current_version.cfg
 		global.json = global.json
 		..\.gitignore = ..\.gitignore
 		.editorconfig = .editorconfig
+		..\SECURITY.md = ..\SECURITY.md
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "jsoncanonicalizer", "jsoncanonicalizer\jsoncanonicalizer.csproj", "{A420D3A9-3725-4F4D-9185-2957F2F9F0A9}"
@@ -78,6 +78,18 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ProjectScripts", "ProjectSc
 		PackageRelease.ps1 = PackageRelease.ps1
 		BuildVersionNumber.ps1 = BuildVersionNumber.ps1
 		UpdateProjectVersions.ps1 = UpdateProjectVersions.ps1
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker", "Docker", "{9787F0F9-A50D-4E8E-8AEA-BC7242740BE9}"
+	ProjectSection(SolutionItems) = preProject
+		docker\docker-compose.yaml = docker\docker-compose.yaml
+		docker\docker-compose-demo.yaml = docker\docker-compose-demo.yaml
+		docker\Dockerfile-AasxServerAspNetCore = docker\Dockerfile-AasxServerAspNetCore
+		docker\Dockerfile-AasxServerAspNetCore-arm32 = docker\Dockerfile-AasxServerAspNetCore-arm32
+		docker\Dockerfile-AasxServerAspNetCore-arm64 = docker\Dockerfile-AasxServerAspNetCore-arm64
+		docker\Dockerfile-AasxServerBlazor = docker\Dockerfile-AasxServerBlazor
+		docker\Dockerfile-AasxServerBlazor-arm32 = docker\Dockerfile-AasxServerBlazor-arm32
+		docker\Dockerfile-AasxServerBlazor-arm64 = docker\Dockerfile-AasxServerBlazor-arm64
 	EndProjectSection
 EndProject
 Global
@@ -321,5 +333,6 @@ Global
 		{6F3BB70E-0095-4D58-AE5E-D7D02FD7BB01} = {F847719C-7CF2-40D5-BF7B-6F51E551E13F}
 		{01BD6F10-2DE0-4D88-8EB0-62705AE8F6FC} = {F847719C-7CF2-40D5-BF7B-6F51E551E13F}
 		{39F9287F-CBC6-4F56-AA55-81A013A89AAE} = {B8C116C4-932B-4071-9DCC-D4F64E3C4E6F}
+		{9787F0F9-A50D-4E8E-8AEA-BC7242740BE9} = {B8C116C4-932B-4071-9DCC-D4F64E3C4E6F}
 	EndGlobalSection
 EndGlobal

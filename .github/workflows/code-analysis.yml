@@ -11,9 +11,11 @@ on:
     branches:
       - main
       - 'integration/**'
+  # Runs every Friday evening
   schedule:
     - cron: '30 19 * * 5'
-      
+  workflow_dispatch:  # Allows manual triggering
+
 jobs:
   format-check:
     runs-on: windows-latest

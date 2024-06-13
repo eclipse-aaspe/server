@@ -1,14 +1,61 @@
-name: Create Prerelease on Merge to Main
+name: Nightly Prerelease build on Main
 
 on:
-  push:
-    branches:
-      - main
+  schedule:
+    - cron: '0 23 * * *' # This is 1:00 AM Berlin time
+  workflow_dispatch:  # Allows manual triggering
 
 jobs:
+  check-for-changes:
+    runs-on: ubuntu-latest
+    name: Check for changes
+    outputs:
+      changes_detected: ${{ steps.check_changes.outputs.changes_detected }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get the newest tag
+        id: get_latest_tag
+        run: |
+          git fetch --all
+          stableTags=$(git tag --list "*latest*" --sort=-v:refname)
+          if [ -n "$stableTags" ]; then
+            newestStableTag=$(echo "$stableTags" | head -n 1)
+            echo "latest_tag=$newestStableTag" >> $GITHUB_ENV
+            echo "Latest found tag is $newestStableTag"
+          else
+            echo "No stable tags found, assuming there are changes."
+            echo "latest_tag=" >> $GITHUB_ENV
+          fi
+        shell: bash
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if [ -z "${{ env.latest_tag }}" ]; then
+            echo "No latest tag found, assuming there are changes."
+            echo "changes_detected=true" >> $GITHUB_ENV
+          else
+            git fetch origin main
+            latest_commit=$(git rev-parse HEAD)
+            if git diff --quiet ${{ env.latest_tag }} $latest_commit; then
+              echo "No changes detected since tag '${{ env.latest_tag }}'."
+              echo "changes_detected=false" >> $GITHUB_ENV
+            else
+              echo "Changes detected since tag '${{ env.latest_tag }}'."
+              echo "changes_detected=true" >> $GITHUB_ENV
+            fi
+          fi
+        shell: bash
+  
   create-new-prerelease:
     runs-on: windows-latest
     name: Create a new prerelease build and attach built packages to release
+    needs: check-for-changes
+    if: needs.check-for-changes.outputs.changes_detected == 'true'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -140,7 +187,7 @@ jobs:
           files: "artefacts/release/${{ steps.generate_version_number.outputs.version }}/*.zip"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           release-tag: "v${{ steps.generate_version_number.outputs.version }}"
-  
+
   build-and-publish-docker-release-images:
     runs-on: ubuntu-latest
     name: Create new docker builds with latest prerelease and upload to DockerHub
