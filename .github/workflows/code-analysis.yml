@@ -49,14 +49,13 @@ jobs:
   codeql-analysis:
     runs-on: windows-latest
     
+    defaults:
+      run:
+        working-directory: src
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Build release
-        working-directory: src
-        run: .\BuildForRelease.ps1
-        shell: pwsh
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
@@ -64,11 +63,14 @@ jobs:
           languages: csharp
           build-mode: manual
 
-      - name: Finalize CodeQL Database
-        run: |
-          # Finalize the CodeQL database to include the built artifacts
-          "C:\hostedtoolcache\windows\CodeQL\2.17.4\x64\codeql\codeql.exe" database finalize --threads=4 --ram=14437 D:\a\_temp\codeql_databases\csharp
-
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+      
+      - name: Build release
+        working-directory: src
+        run: .\BuildForRelease.ps1
+        shell: pwsh
+       
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
