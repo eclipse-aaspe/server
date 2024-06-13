@@ -74,7 +74,7 @@ namespace AdminShell_V20
             foreach (var s in src)
                 if (!Char.IsLetterOrDigit(s) && s != '_')
                     res = false;
-            if (src.Length > 0 && !Char.IsLetter(src[0]))
+            if (src.Length > 0 && !Char.IsLetter(src[ 0 ]))
                 res = false;
             return res;
         }
@@ -83,16 +83,17 @@ namespace AdminShell_V20
         {
             // see: https://stackoverflow.com/questions/281640/
             // how-do-i-get-a-human-readable-file-size-in-bytes-abbreviation-using-net
-            string[] sizes = { "B", "KB", "MB", "GB", "TB" };
-            int order = 0;
+            string[] sizes = {"B", "KB", "MB", "GB", "TB"};
+            int      order = 0;
             while (len >= 1024 && order < sizes.Length - 1)
             {
                 order++;
                 len = len / 1024;
             }
+
             // Adjust the format string to your preferences. For example "{0:0.#}{1}" would
             // show a single decimal place, and no space.
-            string res = String.Format("{0:0.##} {1}", len, sizes[order]);
+            string res = String.Format("{0:0.##} {1}", len, sizes[ order ]);
             return res;
         }
 
@@ -125,7 +126,7 @@ namespace AdminShell_V20
                 return 0;
             int j;
             for (j = 0; j < line.Length; j++)
-                if (!Char.IsWhiteSpace(line[j]))
+                if (!Char.IsWhiteSpace(line[ j ]))
                     break;
             return j;
         }
@@ -152,9 +153,9 @@ namespace AdminShell_V20
 
             // the first line could be special
             string firstLine = null;
-            if (lines[0].Trim() != "")
+            if (lines[ 0 ].Trim() != "")
             {
-                firstLine = lines[0].Trim();
+                firstLine = lines[ 0 ].Trim();
                 lines.RemoveAt(0);
             }
 
@@ -167,8 +168,8 @@ namespace AdminShell_V20
             // multi line trim possible?
             if (headSpaces != int.MaxValue && headSpaces > 0)
                 for (int i = 0; i < lines.Count; i++)
-                    if (lines[i].Length > headSpaces)
-                        lines[i] = lines[i].Substring(headSpaces);
+                    if (lines[ i ].Length > headSpaces)
+                        lines[ i ] = lines[ i ].Substring(headSpaces);
 
             // re-compose again
             if (firstLine != null)
@@ -195,7 +196,7 @@ namespace AdminShell_V20
         {
             if (ex == null || ex.StackTrace == null)
                 return "";
-            string[] lines = ex.StackTrace.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            string[] lines = ex.StackTrace.Split(new[] {"\r\n", "\r", "\n"}, StringSplitOptions.None);
             if (lines.Length < 1)
                 return "";
             // search for " in "
@@ -210,25 +211,27 @@ namespace AdminShell_V20
                 // access current line
                 /* TODO (MIHO, 2020-11-12): replace with Regex for multi language. Ideally have Exception messages
                    always as English. */
-                var p = lines[currLine].IndexOf(" in ", StringComparison.Ordinal);
+                var p = lines[ currLine ].IndexOf(" in ", StringComparison.Ordinal);
                 if (p < 0)
-                    p = lines[currLine].IndexOf(" bei ", StringComparison.Ordinal);
+                    p = lines[ currLine ].IndexOf(" bei ", StringComparison.Ordinal);
                 if (p < 0)
                 {
                     // advance to next oldest line
                     currLine++;
                     continue;
                 }
+
                 // search last "\" or "/", to get only filename portion and position
-                p = lines[currLine].LastIndexOfAny(new[] { '\\', '/' });
+                p = lines[ currLine ].LastIndexOfAny(new[] {'\\', '/'});
                 if (p < 0)
                 {
                     // advance to next oldest line
                     currLine++;
                     continue;
                 }
+
                 // return this
-                return lines[currLine].Substring(p);
+                return lines[ currLine ].Substring(p);
             }
         }
 
@@ -239,13 +242,14 @@ namespace AdminShell_V20
             if (arr == null || str == null)
                 return ConstantFoundEnum.No;
 
-            bool anyCaseFound = false;
+            bool anyCaseFound   = false;
             bool exactCaseFound = false;
             foreach (var a in arr)
             {
-                anyCaseFound = anyCaseFound || str.ToLower() == a.ToLower();
+                anyCaseFound   = anyCaseFound || str.ToLower() == a.ToLower();
                 exactCaseFound = exactCaseFound || str == a;
             }
+
             if (exactCaseFound)
                 return ConstantFoundEnum.ExactCase;
             if (anyCaseFound)
@@ -274,13 +278,13 @@ namespace AdminShell_V20
         public static void PrintSearchableProperties(object obj, int indent)
         {
             if (obj == null) return;
-            string indentString = new string(' ', indent);
-            Type objType = obj.GetType();
-            PropertyInfo[] properties = objType.GetProperties();
+            string         indentString = new string(' ', indent);
+            Type           objType      = obj.GetType();
+            PropertyInfo[] properties   = objType.GetProperties();
             foreach (PropertyInfo property in properties)
             {
                 object propValue = property.GetValue(obj, null);
-                var elems = propValue as IList;
+                var    elems     = propValue as IList;
                 if (elems != null)
                 {
                     foreach (var item in elems)
@@ -339,6 +343,19 @@ namespace AdminShell_V20
                        this.foundText == other.foundText &&
                        this.foundHash == other.foundHash;
             }
+
+            public override bool Equals(object obj) => obj is SearchResultItem item && Equals(item);
+
+            public override int GetHashCode() =>
+                // Implement appropriate hash code calculation based on equality criteria
+                // Ensure it's consistent with Equals method implementation
+                HashCode.Combine(
+                                 qualifiedNameHead,
+                                 metaModelName,
+                                 businessObject,
+                                 containingObject,
+                                 foundText,
+                                 foundHash);
         }
 
         public class SearchResults
@@ -359,7 +376,7 @@ namespace AdminShell_V20
         {
             // try get a speaking name
             var metaModelName = "<unknown>";
-            var x1 = mi.GetCustomAttribute<AdminShell.MetaModelName>();
+            var x1            = mi.GetCustomAttribute<AdminShell.MetaModelName>();
             if (x1 != null && x1.name != null)
                 metaModelName = x1.name;
 
@@ -374,19 +391,19 @@ namespace AdminShell_V20
                 var found = true;
                 if (options.findText != null)
                     found = foundText.IndexOf(
-                        options.findText, options.isIgnoreCase ? StringComparison.CurrentCultureIgnoreCase : 0) >= 0;
+                                              options.findText, options.isIgnoreCase ? StringComparison.CurrentCultureIgnoreCase : 0) >= 0;
 
                 // add?
                 if (found)
                 {
                     var sri = new SearchResultItem();
-                    sri.searchOptions = options;
+                    sri.searchOptions     = options;
                     sri.qualifiedNameHead = qualifiedNameHead;
-                    sri.metaModelName = metaModelName;
-                    sri.businessObject = businessObject;
-                    sri.foundText = foundText;
-                    sri.foundObject = memberValue;
-                    sri.containingObject = containingObject;
+                    sri.metaModelName     = metaModelName;
+                    sri.businessObject    = businessObject;
+                    sri.foundText         = foundText;
+                    sri.foundObject       = memberValue;
+                    sri.containingObject  = containingObject;
                     if (getMemberHash != null)
                         sri.foundHash = getMemberHash();
 
@@ -414,7 +431,7 @@ namespace AdminShell_V20
             string elName = null;
             if (obj is AdminShell.Referable)
             {
-                elName = (obj as AdminShell.Referable).GetElementName();
+                elName         = (obj as AdminShell.Referable).GetElementName();
                 businessObject = obj;
             }
 
@@ -459,8 +476,8 @@ namespace AdminShell_V20
                 {
                     // field is a single entity .. check it
                     CheckSearchable(
-                        results, options, qualifiedName, businessObject, fi, fieldValue, obj,
-                        () => { return fieldValue.GetHashCode(); });
+                                    results, options, qualifiedName, businessObject, fi, fieldValue, obj,
+                                    () => { return fieldValue.GetHashCode(); });
 
                     // dive deeper ..
                     EnumerateSearchable(results, fieldValue, qualifiedName, depth + 1, options, businessObject);
@@ -500,8 +517,8 @@ namespace AdminShell_V20
                 {
                     // field is a single entity .. check it
                     CheckSearchable(
-                        results, options, qualifiedName, businessObject, pi, propValue, obj,
-                        () => { return propValue.GetHashCode(); });
+                                    results, options, qualifiedName, businessObject, pi, propValue, obj,
+                                    () => { return propValue.GetHashCode(); });
 
                     // dive deeper ..
                     EnumerateSearchable(results, propValue, qualifiedName, depth + 1, options, businessObject);
@@ -532,9 +549,9 @@ namespace AdminShell_V20
                     break;
 
                 // split
-                var left = input.Substring(0, p);
+                var left  = input.Substring(0, p);
                 var right = "";
-                var rp = p + searchFor.Length;
+                var rp    = p + searchFor.Length;
                 if (rp < input.Length)
                     right = input.Substring(rp);
 
@@ -583,20 +600,20 @@ namespace AdminShell_V20
             string hexamals = decii.ToString("X");
             // make an alphanumeric string out of this
             string alphamals = "";
-            var dii = decii;
+            var    dii       = decii;
             while (dii >= 1)
             {
                 var m = dii % 26;
                 alphamals += Convert.ToChar(65 + m);
-                dii = dii / 26;
+                dii       =  dii / 26;
             }
 
             // now, "salt" the strings
             for (int i = 0; i < 32; i++)
             {
                 var c = Convert.ToChar(48 + MyRnd.Next(10));
-                decimals += c;
-                hexamals += c;
+                decimals  += c;
+                hexamals  += c;
                 alphamals += c;
             }
 
@@ -606,20 +623,18 @@ namespace AdminShell_V20
             {
                 if (tpli == 'D' && decimals.Length > 0)
                 {
-                    id += decimals[0];
-                    decimals = decimals.Remove(0, 1);
+                    id       += decimals[ 0 ];
+                    decimals =  decimals.Remove(0, 1);
                 }
-                else
-                if (tpli == 'X' && hexamals.Length > 0)
+                else if (tpli == 'X' && hexamals.Length > 0)
                 {
-                    id += hexamals[0];
-                    hexamals = hexamals.Remove(0, 1);
+                    id       += hexamals[ 0 ];
+                    hexamals =  hexamals.Remove(0, 1);
                 }
-                else
-                if (tpli == 'A' && alphamals.Length > 0)
+                else if (tpli == 'A' && alphamals.Length > 0)
                 {
-                    id += alphamals[0];
-                    alphamals = alphamals.Remove(0, 1);
+                    id        += alphamals[ 0 ];
+                    alphamals =  alphamals.Remove(0, 1);
                 }
                 else
                     id += tpli;
@@ -628,6 +643,5 @@ namespace AdminShell_V20
             // ok
             return id;
         }
-
     }
 }
