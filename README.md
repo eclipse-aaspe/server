@@ -136,19 +136,33 @@ With the change to semantic versioning, the release process has been updated as 
 To release a new version, follow these steps:
 
 1. **Update the Changelog**
-  - Move all current changes to the [Released] section in the [changelog](CHANGELOG.md).
-  - Determine the new version number based on semantic versioning and add the release date.
+   - Move all current changes to the [Released] section in the [changelog](CHANGELOG.md).
+   - Determine the new version number based on semantic versioning and add the release date.
 2. **Update the Version Configuration**
-  - Use the new version number to update the [current_version.cfg](src/current_version.cfg).
+   - Use the new version number to update the [current_version.cfg](src/current_version.cfg).
 3. **Push Changes**
-  - Push these changes to the branch you want to release from (main/develop/or your branch).
-4. **Create a New Version Tag on GitHub**
-  - Go to GitHub and create a new version tag on the branch. This tag should be the full version string, such as "0.3.0-1-aasV3-alpha-develop". The build number can be omitted in the tag name.
+   - Push these changes to the branch you want to release from (main/develop/or your branch).
+4. **Create a New PR to Release branch**
+   - Create anew PR fill out all information. Make sure that this branch was started to main
+5. **Rebase to Main**
+   - After that branch was merged to release, rebase these changes to main branch, so that these branches are equal and changes to the  [current_version.cfg](src/current_version.cfg) and [changelog](CHANGELOG.md) are also reflected on the main.
+
+After that branch is merged to release, the GIthub Workflows will start and automatically create a new release, which will be in the draft status. Once created you have one last chance to check that release. If everything is in order that release can be published inside that release settings.
+
+All releases of dockerfiles will be done automatically by that state.
+
+### Nightly Releases
+
+We have a cron job that checks every night for changes and if there are changes on the main branch it creates a new prerelease latest alpha build. It automatically creates a new version number and a tag, and releases also on Docker. A changelog is also automatically created, based on the changes on that branch. But this changelog only contains changes from PRs and can **not** display any direct merges onto main.
+You can trigger this manually using the workflow [here](https://github.com/eclipse-aaspe/server/actions/workflows/prerelease-on-merge-to-main.yml).
 
 ### Example Version Tags
-- `1.0.0-1-aasV3-alpha-develop`: An alpha build on a develop branch with build number 1.
-- `1.0.0-2-aasV3-alpha-stable`: A stable release with build number 2.
-- `1.0.0-3-aasV3-alpha-latest`: The latest build on the main branch with build number 3.
+- `v1.0.0.1-aasV3-alpha-develop`: An alpha build on a develop branch.
+- `v1.0.0.2-aasV3-alpha-stable`: A stable release.
+- `v1.0.0.3-aasV3-alpha-latest`: The latest build on the main branch.
+
+
+---
 
 ## OLD DOCUMENTATION
 
