@@ -36,5 +36,5 @@ jobs:
       - name: Check for formatting issues
         if: failure()
         run: |
-          echo "Code formatting issues detected. Please run 'dotnet format' locally to fix them."
+          echo "Code formatting issues detected. Please fix the issues and commit again."
           exit 1
