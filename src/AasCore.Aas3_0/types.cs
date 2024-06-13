@@ -5,8 +5,9 @@
 
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic; // can't alias
-using Aas = AasCore.Aas3_0;       // renamed
+using System.Collections.Generic;
+using System.Linq;          // can't alias
+using Aas = AasCore.Aas3_0; // renamed
 using EnumMemberAttribute = System.Runtime.Serialization.EnumMemberAttribute;
 
 namespace AasCore.Aas3_0
@@ -615,7 +616,7 @@ namespace AasCore.Aas3_0
     ///   </li>
     /// </ul>
     /// </remarks>
-    public class AdministrativeInformation : IAdministrativeInformation
+    public class AdministrativeInformation : IAdministrativeInformation, IEquatable<AdministrativeInformation>
     {
         /// <summary>
         /// Embedded data specification.
@@ -768,6 +769,74 @@ namespace AasCore.Aas3_0
             Revision                   = revision;
             Creator                    = creator;
             TemplateId                 = templateId;
+        }
+
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null || !(obj is AdministrativeInformation))
+                return false;
+
+            return Equals((AdministrativeInformation) obj);
+        }
+
+        public bool Equals(AdministrativeInformation other)
+        {
+            if (other == null)
+                return false;
+
+            // Compare all relevant properties for equality
+            return EqualsLists(EmbeddedDataSpecifications, other.EmbeddedDataSpecifications) &&
+                   Version == other.Version &&
+                   Revision == other.Revision &&
+                   Equals(Creator, other.Creator) &&
+                   TemplateId == other.TemplateId;
+        }
+
+        private bool EqualsLists<T>(List<T>? list1, List<T>? list2)
+        {
+            if (list1 == null && list2 == null)
+                return true;
+            if (list1 == null || list2 == null)
+                return false;
+            if (list1.Count != list2.Count)
+                return false;
+            for (int i = 0; i < list1.Count; i++)
+            {
+                if (!EqualityComparer<T>.Default.Equals(list1[ i ], list2[ i ]))
+                    return false;
+            }
+
+            return true;
+        }
+
+        public override int GetHashCode()
+        {
+            // Calculate hash code based on all relevant properties
+            unchecked
+            {
+                int hashCode = 17;
+                hashCode = (hashCode * 23) + (EmbeddedDataSpecifications != null ? GetListHashCode(EmbeddedDataSpecifications) : 0);
+                hashCode = (hashCode * 23) + (Version != null ? Version.GetHashCode() : 0);
+                hashCode = (hashCode * 23) + (Revision != null ? Revision.GetHashCode() : 0);
+                hashCode = (hashCode * 23) + (Creator != null ? Creator.GetHashCode() : 0);
+                hashCode = (hashCode * 23) + (TemplateId != null ? TemplateId.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
+
+        private int GetListHashCode<T>(List<T> list)
+        {
+            unchecked
+            {
+                int hash = 17;
+                foreach (var item in list)
+                {
+                    hash = hash * 23 + (item?.GetHashCode() ?? 0);
+                }
+
+                return hash;
+            }
         }
     }
 
