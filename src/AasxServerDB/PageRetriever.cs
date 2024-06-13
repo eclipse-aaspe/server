@@ -151,23 +151,13 @@ namespace AasxServerDB
         {
             try
             {
-                bool withDate = searchLower.Split("-").Length == 3;
-                bool withTime = searchLower.Split(":").Length == 3;
-                bool withMSec = searchLower.Split(".").Length == 2;
-                // DateTime.Parse(diff).ToUniversalTime();
-                if (withDate && !withTime && !withMSec)
-                    searchDateTime = DateTime.ParseExact(searchLower, "yy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
-                else if (withDate && withTime && !withMSec)
-                    searchDateTime = DateTime.ParseExact(searchLower, "yy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
-                else
-                    searchDateTime = DateTime.ParseExact(searchLower, "yy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
+                searchDateTime = DateTime.Parse(searchLower).ToUniversalTime();
                 return true;
             }
             catch (Exception)
             {
-
+                return false;
             }
-            return false;
         }
     }
 }
