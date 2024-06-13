@@ -2,7 +2,7 @@
   "profiles": {
     "IIS Express": {
       "commandName": "IISExpress",
-      "commandLineArgs": "--port 51710 --data-path C:\\MIHO\\Develop\\Aasx\\repo --edit --secret-string=123",
+      "commandLineArgs": "--port 51710 --data-path C:\\Develop\\Aasx\\repo --edit --secret-string=123",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
@@ -14,10 +14,10 @@
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "AASREGISTRY": "https://registry.dpp40-2-v2.industrialdigitaltwin.org",
+        "AASREGISTRY": "http://localhost:50001",
         "IFRAMEPATH": "https://dpp40-2-v2.industrialdigitaltwin.org/dashboard/submodelViewV3.html"
       },
-      "applicationUrl": "http://127.0.0.1:5001",
+      "applicationUrl": "http://localhost:5001",
       "jsWebView2Debugging": true
     }
   },

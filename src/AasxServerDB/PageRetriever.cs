@@ -1,4 +1,6 @@
-﻿namespace AasxServerDB
+﻿using AasxServerDB.Entities;
+
+namespace AasxServerDB
 {
     public class PageRetriever
     {

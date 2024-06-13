@@ -1,6 +1,6 @@
 ﻿using IO.Swagger.Registry.Lib.V3.Models;
 using System.Collections.Generic;
-using AasxServerDB;
+using AasxServerDB.Entities;
 
 namespace IO.Swagger.Registry.Lib.V3.Interfaces
 {
