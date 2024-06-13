@@ -3,15 +3,23 @@
     {
       "title": "## ⚡️ Added",
       "labels": [
-        "feature",
-        "enhancement"
+        "feature"
       ]
     },
     {
       "title": "## 🐛 Fixed",
       "labels": [
         "bug",
-        "cleanup"
+        "bugfix"
+      ]
+    },
+    {
+      "title": "## 🔄 Changed",
+      "labels": [
+        "changed",
+        "change",
+        "chore",
+        "adapted"
       ]
     },
     {
@@ -62,7 +70,7 @@
     "order": "ASC",
     "on_property": "mergedAt"
   },
-  "template": "# 📦 Changelog\n\n<details>\n<summary>\n\n## Categories\n\n{{CATEGORIES}}\n</summary>\n\n# {{UNCATEGORIZED}}\n\n[🔗 Release Diff](RELEASE_DIFF)\n\n## 👥 Contributors\n\n{{CONTRIBUTORS}}\n</details>",
+  "template": "# 📦 Changelog\n\n<details>\n<summary>\n\n## Categories\n\n{{CATEGORIES}}\n</summary>\n\n# {{UNCATEGORIZED}}\n\n[🔗 Release Diff](RELEASE_DIFF)\n\n## 👥 Contributors\n\n{{CONTRIBUTORS}}\n## Latest Release\n\nClick [here](https://github.com/eclipse-aaspe/server/releases) to see the newest Pre-Releases.</details>",
   "pr_template": "- #{{TITLE}} by {{AUTHOR}} in #{{URL}} (Labels: #{{LABELS}})",
   "empty_template": "- No changes. See the [Changelog](CHANGELOG.md) for more information.",
   "label_extractor": [
