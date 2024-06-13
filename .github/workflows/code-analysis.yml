@@ -29,21 +29,19 @@ jobs:
         run: dotnet tool install -g dotnet-format
 
       - name: Run dotnet format
-        run: dotnet format ./src/AasxServer.sln --verify-no-changes --verbosity detailed --report format-report.json
+        run: dotnet format ./src/AasxServer.sln --verify-no-changes --report format-report.json
         env:
           PATH: ${{ env.PATH }}:/home/runner/.dotnet/tools
 
       - name: Upload format report
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: format-report
           path: format-report.json
 
       - name: Check for formatting issues
+        if: failure()
         run: |
-          if ($?) {
-            echo "No formatting issues detected."
-          } else {
-            echo "Code formatting issues detected. Please fix the issues and commit again."
-            exit 1
-          }
+          echo "Code formatting issues detected. Please fix the issues and commit again."
+          exit 1
