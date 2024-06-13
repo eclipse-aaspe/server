@@ -1,11 +1,9 @@
 name: Nightly Prerelease build on Main
 
 on:
-  push:
-    branches:
-      - main
   schedule:
     - cron: '0 23 * * *' # This is 1:00 AM Berlin time
+  workflow_dispatch:  # Allows manual triggering
 
 jobs:
   check-for-changes:
@@ -39,14 +37,20 @@ jobs:
         run: |
           if [ -z "${{ env.latest_tag }}" ]; then
             echo "No latest tag found, assuming there are changes."
-            echo "changes_detected=true" >> $GITHUB_OUTPUT
+            echo "changes_detected=true" >> $GITHUB_ENV
           else
             git fetch origin main
             latest_commit=$(git rev-parse HEAD)
-            git diff --quiet ${{ env.latest_tag }} $latest_commit || echo "changes_detected=true" >> $GITHUB_OUTPUT
+            if git diff --quiet ${{ env.latest_tag }} $latest_commit; then
+              echo "No changes detected since tag '${{ env.latest_tag }}'."
+              echo "changes_detected=false" >> $GITHUB_ENV
+            else
+              echo "Changes detected since tag '${{ env.latest_tag }}'."
+              echo "changes_detected=true" >> $GITHUB_ENV
+            fi
           fi
         shell: bash
-
+  
   create-new-prerelease:
     runs-on: windows-latest
     name: Create a new prerelease build and attach built packages to release
