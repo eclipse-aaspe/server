@@ -47,36 +47,24 @@ jobs:
           exit 1
 
   codeql-analysis:
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      packages: read
-      actions: read
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - language: csharp
-            build-mode: manual
-
+    runs-on: windows-latest
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build project for CodeQL analysis
-        if: matrix.build-mode == 'manual'
-        run: |
-          cd src
-          pwsh BuildForRelease.ps1
+      - name: Build release
+        working-directory: src
+        run: .\BuildForRelease.ps1
+        shell: pwsh
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          languages: ${{ matrix.language }}
-          build-mode: ${{ matrix.build-mode }}
+          languages: csharp
+          build-mode: manual
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
-          category: "/language:${{ matrix.language }}"
+          category: "/language:csharp"
