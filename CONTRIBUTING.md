@@ -12,7 +12,8 @@ Our development workflow follows these steps:
 3. Run checks locally
 4. Commit & push your changes
 5. Wait for the remote checks to pass
-6. Squash & merge
+6. Await review from one of the contributors 
+7. Squash & merge
 
 ## Building Locally
 
@@ -34,16 +35,24 @@ After building the solution, you can create local release bundles (compressed as
 ```
 
 Please note that these local release bundles are meant for testing purposes only. Our continuous integration system on GitHub automatically builds, packages,
-and publishes official releases.
+and publishes official releases. It also adds these packages for each PR in the pipeline so you and the reviewer can easily test your changes. you can find them in the Check Branch is Releasable workflow.
+https://github.com/eclipse-aaspe/server/actions/workflows/check-release.yml
+Just search for your branch and use the attached files here to attach to your PR if needed.
 
 ## Local Pre-commit Checks
 
 To ensure code quality (e.g., consistent code formatting), we run several checks. GitHub will automatically run these checks on every push, but it’s faster to
-run them locally first during development.
+run them locally first during development. We might prevent any PRs that bring new issues or violations to our codebase.
 
 ### Formatting Code
 
-Format your code with the following script:
+Use the supplied .editorconfig to align your code to our common styleguide.
+For more information on this topic and how to do it in the different IDE's check:
+- https://learn.microsoft.com/en-us/visualstudio/ide/create-portable-custom-editor-options?view=vs-2022
+- https://marketplace.visualstudio.com/items?itemName=EditorConfig.EditorConfig
+- https://www.jetbrains.com/help/rider/Using_EditorConfig.html
+
+You can also Format your code with the following script (be aware that this might change files you didn't touch):
 
 ```powershell
 .\src\FormatCode.ps1
