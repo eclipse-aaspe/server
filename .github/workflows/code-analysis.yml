@@ -11,6 +11,7 @@ on:
     branches:
       - main
       - 'integration/**'
+  # Runs every Friday evening
   schedule:
     - cron: '30 19 * * 5'
       
