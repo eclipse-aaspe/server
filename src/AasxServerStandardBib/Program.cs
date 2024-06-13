@@ -3869,7 +3869,7 @@ public static class Program
                 split = split[ 1 ].Split(';');
                 var ns = Convert.ToUInt16(split[ 0 ]);
                 clientNodeId = new NodeId(i, ns);
-                Console.WriteLine("New node id: ", clientNodeId.ToString());
+                Console.WriteLine("New node id: {0}", clientNodeId.ToString());
             }
 
             Console.WriteLine("{0} <= {1}", serverNodeId, value);
