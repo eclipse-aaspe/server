@@ -3,14 +3,7 @@ name: Check-style-workflow
 on:
   pull_request:
     branches:
-      - main
-      - release
-      - 'integration/**'
-    types: [ opened, synchronize, reopened, edited ]
-  push:
-    branches:
-      - main
-      - 'integration/**'
+      - mainXXXXX
 
 jobs:
   Check-style:

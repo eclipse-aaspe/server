@@ -31,7 +31,7 @@ function Main
     Write-Host "Report path: $reportPath"
 
     Write-Host "Running dotnet format..."
-    dotnet format --verify-no-changes --report $reportPath --exclude "**/DocTest*.cs"
+    dotnet format --verify-no-changes --report $reportPath --exclude "**/DocTest*.cs" --editorconfig ./src/.editorconfig
     $formatReport = Get-Content $reportPath | ConvertFrom-Json
     if ($formatReport.Count -ge 1)
     {
