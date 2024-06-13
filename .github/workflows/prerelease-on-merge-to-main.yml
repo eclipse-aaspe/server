@@ -23,15 +23,16 @@ jobs:
         id: get_latest_tag
         run: |
           git fetch --all
-          $stableTags = git tag --list "*latest*" --sort=-v:refname
-          if ($stableTags) {
-            $newestStableTag = $stableTags | Select-Object -First 1
+          stableTags=$(git tag --list "*latest*" --sort=-v:refname)
+          if [ -n "$stableTags" ]; then
+            newestStableTag=$(echo "$stableTags" | head -n 1)
             echo "latest_tag=$newestStableTag" >> $GITHUB_ENV
-            Write-Host "Latest found tag is $newestStableTag"
-          } else {
-            Write-Host "No stable tags found, assuming there are changes."
+            echo "Latest found tag is $newestStableTag"
+          else
+            echo "No stable tags found, assuming there are changes."
             echo "latest_tag=" >> $GITHUB_ENV
-          }
+          fi
+        shell: bash
 
       - name: Check for changes
         id: check_changes
