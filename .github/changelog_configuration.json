@@ -71,7 +71,7 @@
     "order": "ASC",
     "on_property": "mergedAt"
   },
-  "template": "# 📦 Changelog\n\n<details>\n\n#{{CATEGORIES}}\n\n#{{UNCATEGORIZED}}\n\nFull Changelog:[🔗 Release Diff](#{{RELEASE_DIFF}})\n\n## 👥 Contributors\n\n#{{CONTRIBUTORS}}</details>",
+  "template": "# 📦 Changelog\n\n#{{CHANGELOG}}\n\n#{{UNCATEGORIZED}}\n\nFull Changelog:[🔗 Release Diff](#{{RELEASE_DIFF}})\n\n## 👥 Contributors\n\n#{{CONTRIBUTORS}}",
   "pr_template": "- #{{TITLE}} by #{{AUTHOR}} in #{{URL}} (Labels: #{{LABELS}})",
   "empty_template": "No changes detected. See the [Changelog](CHANGELOG.md) for more information.",
   "label_extractor": [
