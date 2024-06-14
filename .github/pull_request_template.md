@@ -1,8 +1,10 @@
 # Description
 
-Please include a summary of the changes and the related issue. Please also include relevant motivation and context. List any dependencies that are required for this change.
+Please include a summary of the changes and the related issue. Please also include relevant motivation and context. List
+any dependencies that are required for this change.
 
 ## Motivation and Context
+
 <!--- Why is this change required? What problem does it solve? -->
 <!--- If it fixes an open issue, please link to the issue here. -->
 
@@ -18,6 +20,7 @@ Please delete options that are not relevant.
 - [ ] This change requires a documentation update
 
 ## How Has This Been Tested?
+
 <!--- Please describe in detail how you tested your changes. -->
 <!--- Include details of your testing environment, and the tests you ran to -->
 <!--- see how your change affects other areas of the code, etc. -->

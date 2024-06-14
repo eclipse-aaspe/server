@@ -1976,7 +1976,6 @@ namespace Opc.Ua.Sample
             bool unsubscribe)
         {
             ServerSystemContext systemContext = m_systemContext.Copy(context);
-            IDictionary<NodeId, NodeState> operationCache = new NodeIdDictionary<NodeState>();
 
             lock (Lock)
             {
@@ -2041,7 +2040,6 @@ namespace Opc.Ua.Sample
             bool unsubscribe)
         {
             ServerSystemContext systemContext = m_systemContext.Copy(context);
-            IDictionary<NodeId, NodeState> operationCache = new NodeIdDictionary<NodeState>();
 
             lock (Lock)
             {

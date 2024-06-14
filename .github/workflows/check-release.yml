@@ -1,4 +1,4 @@
-name: Check-release-workflow
+name: Check Branch is Releasable
 
 on:
   pull_request:
@@ -7,65 +7,85 @@ on:
       - release
     types: [ opened, synchronize, reopened, edited ]
 
-  push:
-    branches:
-      - main
-      - release
-
 jobs:
   Check-release:
     runs-on: windows-latest
-    if: "!contains(github.event.pull_request.body, 'The workflow check-release was intentionally skipped.')"
-    steps:
-      - uses: actions/checkout@v3
 
-      - name: Set timestamp
-        id: setTimestamp
-        run: |
-          $timestamp = (Get-Date).ToString("yyyy-MM-ddTHH-mm-ssZ")
-          if ($timestamp -match "'|\"|:")
-          {
-              throw "Unexpected characters in timestamp: $timestamp"
-          }
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set execution policy
+        run: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
         shell: pwsh
 
-      - name: Install .NET Core 6.0
-        uses: actions/setup-dotnet@v3
+      - name: Set timestamp
+        id: set_timestamp
+        run: |
+          $current_time = $(date +'%Y-%m-%d-T-%H-%M-%S')
+          echo "timestamp=$current_time" >> $GITHUB_ENV
+          Write-Host "The current timestamp is: $current_time"
+
+
+      - name: Extract branch name
+        id: extract_branch
+        run: |
+          git fetch --all
+          $commitSHA = git rev-parse HEAD
+          $branch = git branch -r --contains $commitSHA | Select-String -Pattern 'origin/' | Select-Object -First 1 | ForEach-Object { $_.Line -replace '.*origin/', '' } | ForEach-Object { $_.Trim() }
+          echo "branch=$branch" >> $env:GITHUB_OUTPUT
+          Write-Host "The current branch is: $branch"
+        shell: pwsh
+
+      - name: Generate Version Number
+        working-directory: src
+        id: generate_version_number
+        run: |
+          $branch = '${{ steps.extract_branch.outputs.branch }}'
+          $version = .\BuildVersionNumber.ps1 -suffix alpha -branch $branch -githubRunNumber ${{ github.run_number }}
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "The version name to build is: $version"
+        shell: pwsh
+
+      - name: Update version numbers in project
+        working-directory: src
+        run: |
+          $version = '${{ steps.generate_version_number.outputs.version }}'
+          Write-Host "Updating project versions to: $version"
+          .\UpdateProjectVersions.ps1 -version $version
+        shell: pwsh
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '6.0.x'
 
-      - name: Infer the version
-        id: inferVersion
-        run: |
-          $version = .\BuildVersionNumber.ps1 -suffix alpha
-          Write-Output "::set-output name=version::$version"
-        shell: pwsh
-
-      - name: Build for release
+      - name: Build release
         working-directory: src
         run: .\BuildForRelease.ps1
         shell: pwsh
 
-      - name: Package
+      - name: Package release
         working-directory: src
-        run: .\PackageRelease.ps1 -version ${{ steps.inferVersion.outputs.version }}
+        run: |
+          $version = '${{ steps.generate_version_number.outputs.version }}'
+          mkdir -p artefacts/release/$version
+          Write-Host "Packaging for the release version: $version"
+          .\PackageRelease.ps1 -version $version
         shell: pwsh
 
       - name: Upload AasxServerBlazor
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: AasxServerBlazor.LATEST.${{ steps.inferVersion.outputs.version }}.${{ steps.setTimestamp.outputs.timestamp }}
-          path: artefacts/release/LATEST.alpha/AasxServerBlazor.zip
+          name: AasxServerBlazor.LATEST.${{ steps.generate_version_number.outputs.version }}.${{ steps.set_timestamp.outputs.timestamp }}
+          path: artefacts/release/${{ steps.generate_version_number.outputs.version }}/AasxServerBlazor.zip
+          if-no-files-found: error
 
       - name: Upload AasxServerAspNetCore
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: AasxServerAspNetCore.LATEST.${{ steps.inferVersion.outputs.version }}.${{ steps.setTimestamp.outputs.timestamp }}
-          path: artefacts/release/LATEST.alpha/AasxServerAspNetCore.zip
-
-      # Uncomment the following steps if you need to upload the AasxServerWindows artifact
-      # - name: Upload AasxServerWindows
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: AasxServerWindows.LATEST.${{ steps.inferVersion.outputs.version }}.${{ steps.setTimestamp.outputs.timestamp }}
-      #     path: artefacts/release/LATEST.alpha/AasxServerWindows.zip
+          name: AasxServerAspNetCore.LATEST.${{ steps.generate_version_number.outputs.version }}.${{ steps.set_timestamp.outputs.timestamp }}
+          path: artefacts/release/${{ steps.generate_version_number.outputs.version }}/AasxServerAspNetCore.zip
+          if-no-files-found: error

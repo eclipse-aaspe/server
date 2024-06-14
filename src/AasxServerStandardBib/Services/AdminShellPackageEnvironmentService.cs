@@ -198,7 +198,7 @@ namespace AasxServerStandardBib.Services
 
         public void UpdateAssetInformationThumbnail(IResource defaultThumbnail, Stream fileContent, int packageIndex)
         {
-            _packages[ packageIndex ].EmbeddAssetInformationThumbnail(defaultThumbnail, fileContent);
+            _packages[packageIndex].EmbedAssetInformationThumbnail(defaultThumbnail, fileContent);
             Program.signalNewData(0);
         }
 
