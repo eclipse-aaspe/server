@@ -107,24 +107,33 @@ namespace AasSecurity
                                                                      policy));
         }
 
-        private Task<bool> AuthorizeAas(IAssetAdministrationShell aas, string accessRole, string httpRoute, AccessRights neededRights)
+        private async Task<bool> AuthorizeAas(IAssetAdministrationShell aas, string accessRole, string httpRoute, AccessRights neededRights)
         {
-            var header = _httpContextAccessor.HttpContext!.Request.Headers[ "IsGetAllPackagesApi" ];
+            var header = _httpContextAccessor.HttpContext!.Request.Headers["IsGetAllPackagesApi"];
             if (!string.IsNullOrEmpty(header) && bool.TryParse(header, out var isGetAllPackagesApi) && isGetAllPackagesApi)
             {
                 httpRoute = "/packages";
-                return Task.FromResult(_securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out _, out _, out _));
+                return await AuthorizePackagesApi(accessRole, httpRoute, neededRights);
             }
 
             if (!httpRoute.Contains("/packages/"))
             {
-                return Task.FromResult(_securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out _, out _, out _, string.Empty, AasResourceTypeAas, aas));
+                return _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out _, out _, out _, string.Empty, AasResourceTypeAas, aas);
             }
 
-            var isAuthorisedApi = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out _, out _, out _);
+            // For routes containing "/packages/", ensure both API and AAS authorization
+            var isAuthorisedApi = await AuthorizePackagesApi(accessRole, httpRoute, neededRights);
             var isAuthorisedAas = _securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out _, out _, out _, string.Empty, AasResourceTypeAas, aas);
-            return Task.FromResult(isAuthorisedApi && isAuthorisedAas);
+
+            return isAuthorisedApi && isAuthorisedAas;
         }
+
+        private Task<bool> AuthorizePackagesApi(string accessRole, string httpRoute, AccessRights neededRights)
+        {
+            httpRoute = "/packages";
+            return  Task.FromResult(_securityService.AuthorizeRequest(accessRole, httpRoute, neededRights, out _, out _, out _));
+        }
+
 
         private void SetPolicyHeaders(string? policy, string httpRoute)
         {
