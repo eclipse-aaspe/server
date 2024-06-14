@@ -37,16 +37,16 @@ jobs:
         run: |
           if [ -z "${{ env.latest_tag }}" ]; then
             echo "No latest tag found, assuming there are changes."
-            echo "changes_detected=true" >> $GITHUB_ENV
+            echo "changes_detected=true" >> $GITHUB_OUTPUT
           else
             git fetch origin main
             latest_commit=$(git rev-parse HEAD)
             if git diff --quiet ${{ env.latest_tag }} $latest_commit; then
               echo "No changes detected since tag '${{ env.latest_tag }}'."
-              echo "changes_detected=false" >> $GITHUB_ENV
+              echo "changes_detected=false" >> $GITHUB_OUTPUT
             else
               echo "Changes detected since tag '${{ env.latest_tag }}'."
-              echo "changes_detected=true" >> $GITHUB_ENV
+              echo "changes_detected=true" >> $GITHUB_OUTPUT
             fi
           fi
         shell: bash
