@@ -1,6 +1,7 @@
 ﻿using AasSecurity.Models;
 using AasxServer;
 using AasxServerStandardBib.Logging;
+using AasxServerStandardBib.Services;
 using Extensions;
 using Jose;
 using Microsoft.AspNetCore.Authentication;
@@ -19,9 +20,9 @@ namespace AasSecurity
 {
     public class SecurityService : ISecurityService
     {
-        private static ILogger _logger = ApplicationLogging.CreateLogger("SecurityService");
+        private static readonly ILogger Logger = ApplicationLogging.CreateLogger("SecurityService");
 
-        public AuthenticationTicket AuthenticateRequest(HttpContext context, string route, string httpOperation, string authenticationSchemeName)
+        public AuthenticationTicket? AuthenticateRequest(HttpContext context, string route, string httpOperation, string authenticationSchemeName)
         {
             if (!GlobalSecurityVariables.WithAuthentication)
             {
@@ -36,44 +37,46 @@ namespace AasSecurity
             foreach (var header in context.Request.Headers)
             {
                 headers.Add(header.Key, header.Value.FirstOrDefault());
-                if (header.Key == "FORCE-POLICY")
+                if (!header.Key.Equals("FORCE-POLICY"))
                 {
-                    Program.withPolicy = !(header.Value.FirstOrDefault() == "OFF");
-                    _logger.LogDebug("FORCE-POLICY " + header.Value.FirstOrDefault());
+                    continue;
                 }
+
+                Program.withPolicy = header.Value.FirstOrDefault() != "OFF";
+                Logger.LogDebug("FORCE-POLICY {Sanitize}" ,LogSanitizer.Sanitize(header.Value.FirstOrDefault()));
             }
 
             var accessRole = GetAccessRole(queries, headers, out string policy, out string policyRequestedResource);
             if (accessRole == null)
             {
-                _logger.LogDebug($"Access Role found null. Hence setting the access role as isNotAuthenticated.");
+                Logger.LogDebug($"Access Role found null. Hence setting the access role as isNotAuthenticated.");
                 accessRole = "isNotAuthenticated";
             }
 
-            _logger.LogInformation($"Access role in authentication: {accessRole}, policy: {policy}, policyRequestedResource: {policyRequestedResource}");
+            Logger.LogInformation("Access role in authentication: {AccessRole}, policy: {Policy}, policyRequestedResource: {PolicyRequestedResource}", accessRole, policy, policyRequestedResource);
             var aasSecurityContext = new AasSecurityContext(accessRole, route, httpOperation);
             //Create claims
             var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Role, aasSecurityContext.AccessRole),
-                new Claim("NeededRights", aasSecurityContext.NeededRights.ToString()),
-                new Claim("Policy", policy)
-            };
+                         {
+                             new(ClaimTypes.Role, aasSecurityContext.AccessRole),
+                             new("NeededRights", aasSecurityContext.NeededRights.ToString()),
+                             new("Policy", policy)
+                         };
 
-            var identity = new ClaimsIdentity(claims, authenticationSchemeName);
+            var identity  = new ClaimsIdentity(claims, authenticationSchemeName);
             var principal = new System.Security.Principal.GenericPrincipal(identity, null);
             return new AuthenticationTicket(principal, authenticationSchemeName);
         }
 
         private string? GetAccessRole(NameValueCollection queries, NameValueCollection headers, out string policy, out string policyRequestedResource)
         {
-            _logger.LogDebug("Getting the access rights.");
-            string? accessRole = null;
-            string? user = null;
-            bool error = false;
+            Logger.LogDebug("Getting the access rights");
+            string? accessRole  = null;
+            string? user        = null;
+            var    error       = false;
             string? bearerToken = null;
-            policy = "";
-            policyRequestedResource = "";
+            policy                  = string.Empty;
+            policyRequestedResource = string.Empty;
 
             ParseBearerToken(queries, headers, ref bearerToken, ref error, ref user, ref accessRole);
             if (accessRole != null)
@@ -141,14 +144,14 @@ namespace AasSecurity
 
         private string? HandleBearerToken(string? bearerToken, ref string? user, ref bool error, out string policy, out string policyRequestedResource)
         {
-            policy = "";
+            policy                  = "";
             policyRequestedResource = "";
             if (bearerToken == null)
                 return null;
 
             try
             {
-                var handler = new JwtSecurityTokenHandler();
+                var handler          = new JwtSecurityTokenHandler();
                 var jwtSecurityToken = handler.ReadJwtToken(bearerToken);
                 if (jwtSecurityToken != null)
                 {
@@ -176,10 +179,10 @@ namespace AasSecurity
                                 StringBuilder builder = new StringBuilder();
                                 builder.AppendLine("-----BEGIN CERTIFICATE-----");
                                 builder.AppendLine(
-                                    Convert.ToBase64String(cert.RawData, Base64FormattingOptions.InsertLineBreaks));
+                                                   Convert.ToBase64String(cert.RawData, Base64FormattingOptions.InsertLineBreaks));
                                 builder.AppendLine("-----END CERTIFICATE-----");
-                                _logger.LogDebug("Token Server Certificate: " + serverName);
-                                _logger.LogDebug(builder.ToString());
+                                Logger.LogDebug("Token Server Certificate: " + serverName);
+                                Logger.LogDebug(builder.ToString());
                                 //check if server cert is correctly signed
                                 try
                                 {
@@ -223,8 +226,8 @@ namespace AasSecurity
             catch (Exception ex)
             {
                 error = true;
-                _logger.LogError($"Exception occurred while parsing the bearer token.{ex.Message}");
-                _logger.LogDebug(ex.StackTrace);
+                Logger.LogError($"Exception occurred while parsing the bearer token.{ex.Message}");
+                Logger.LogDebug(ex.StackTrace);
             }
 
             // TODO (jtikekar, 2023-09-04): refactor
@@ -232,10 +235,8 @@ namespace AasSecurity
         }
 
         private AccessRights? ParseBearerToken(NameValueCollection queries, NameValueCollection headers, ref string? bearerToken, ref bool error, ref string? user,
-            ref string? accessRights)
-        {
-            //Check the token in header
-            foreach (string key in headers.Keys)
+                                               ref string? accessRights)
+        {   foreach (string key in headers.Keys)
             {
                 switch (key.ToLower())
                 {
@@ -244,47 +245,47 @@ namespace AasSecurity
                         var token = headers[ key ];
                         if (token != null)
                         {
-                            string[] split = token.Split(new Char[] {' ', '\t'});
-                            if (split[ 0 ].ToLower().Equals("bearer"))
+                            var split = token.Split(' ', '\t');
+                            switch (split[ 0 ].ToLower())
                             {
-                                _logger.LogDebug($"Received bearer token {split[ 1 ]}");
-                                bearerToken = split[ 1 ];
-                            }
-                            else if (split[ 0 ].ToLower().Equals("basic") && bearerToken == null)
-                            {
-                                try
-                                {
-                                    if (Program.secretStringAPI != null)
+                                case "bearer":
+                                    Logger.LogDebug("Received bearer token {Sanitize}", LogSanitizer.Sanitize(split[ 1 ]));
+                                    bearerToken = split[ 1 ];
+                                    break;
+                                case "basic" when bearerToken == null:
+                                    try
                                     {
-                                        var credentialBytes = Convert.FromBase64String(split[ 1 ]);
-                                        var credentials = Encoding.UTF8.GetString(credentialBytes).Split(new[] {':'}, 2);
-                                        string u = credentials[ 0 ];
-                                        string p = credentials[ 1 ];
-                                        Console.WriteLine("Received username+password http header = " + u + " : " + p);
-
-                                        if (u == "secret")
+                                        if (Program.secretStringAPI != null)
                                         {
-                                            accessRights = "READ";
+                                            var credentialBytes = Convert.FromBase64String(split[ 1 ]);
+                                            var credentials     = Encoding.UTF8.GetString(credentialBytes).Split(new[] {':'}, 2);
+                                            var u               = credentials[ 0 ];
+                                            var p               = credentials[ 1 ];
+                                            Console.WriteLine($"Received username+password http header = {LogSanitizer.Sanitize(u)} : {LogSanitizer.Sanitize(p)}");
+
+                                            if (u == "secret")
                                             {
-                                                if (p == Program.secretStringAPI)
-                                                    accessRights = "CREATE";
+                                                accessRights = "READ";
+                                                {
+                                                    if (p == Program.secretStringAPI)
+                                                        accessRights = "CREATE";
+                                                }
+                                                Logger.LogDebug("access-rights " + LogSanitizer.Sanitize(accessRights));
+                                                AccessRights output = (AccessRights) Enum.Parse(typeof(AccessRights), accessRights);
+                                                return output;
                                             }
-                                            _logger.LogDebug("accessrights " + accessRights);
-                                            AccessRights output = (AccessRights) Enum.Parse(typeof(AccessRights), accessRights);
-                                            return output;
                                         }
+
+                                        var username = CheckUserPW(split[ 1 ]);
+                                        user = username;
+                                        Console.WriteLine("Received username+password http header = " + LogSanitizer.Sanitize(user));
+                                    }
+                                    catch( Exception exception)
+                                    {
+                                        Console.WriteLine($"Unexpected exception in {nameof(ParseBearerToken)} : {exception.Message}");
                                     }
 
-                                    string username = CheckUserPW(split[ 1 ]);
-                                    if (username != null)
-                                    {
-                                        user = username;
-                                        Console.WriteLine("Received username+password http header = " + user);
-                                    }
-                                }
-                                catch
-                                {
-                                }
+                                    break;
                             }
                         }
 
@@ -295,8 +296,8 @@ namespace AasSecurity
                         var token = headers[ key ];
                         if (token != null)
                         {
-                            _logger.LogDebug($"Received email token from header: {token}");
-                            user = token;
+                            Logger.LogDebug("Received email token from header: {Sanitize}", LogSanitizer.Sanitize(token));
+                            user  = token;
                             error = false;
                         }
 
@@ -305,17 +306,17 @@ namespace AasSecurity
                 }
             }
 
-            //Check the token in queries
+            // Check the token in queries
             foreach (string key in queries.Keys)
             {
                 switch (key.ToLower())
                 {
                     case "s":
                     {
-                        string secretQuery = queries[ "s" ]!;
+                        var secretQuery = queries[ "s" ]!;
                         if (!secretQuery.IsNullOrEmpty())
                         {
-                            _logger.LogDebug($"Received token of type s: {secretQuery}");
+                            Logger.LogDebug("Received token of type s: {Sanitize}", LogSanitizer.Sanitize(secretQuery));
                             if (Program.secretStringAPI != null)
                             {
                                 if (secretQuery.Equals(Program.secretStringAPI))
@@ -332,7 +333,7 @@ namespace AasSecurity
                         var token = queries[ key ];
                         if (token != null)
                         {
-                            _logger.LogDebug($"Received token of type bear {token}");
+                            Logger.LogDebug("Received token of type bearer {Sanitize}", LogSanitizer.Sanitize(token));
                             bearerToken = token;
                         }
 
@@ -343,8 +344,8 @@ namespace AasSecurity
                         var token = queries[ key ];
                         if (token != null)
                         {
-                            _logger.LogDebug($"Received token of type email {token}");
-                            user = token;
+                            Logger.LogDebug("Received token of type email {Sanitize}", LogSanitizer.Sanitize(token));
+                            user  = token;
                             error = false;
                         }
 
@@ -355,18 +356,16 @@ namespace AasSecurity
                         var token = queries[ key ];
                         if (token != null)
                         {
-                            _logger.LogDebug($"Received token of type username-password {token}");
+                            Logger.LogDebug("Received token of type username-password {Sanitize}", LogSanitizer.Sanitize(token));
                             try
                             {
-                                string username = CheckUserPW(token);
-                                if (username != null)
-                                {
-                                    user = username;
-                                    _logger.LogDebug("Received username+password query string = " + user);
-                                }
+                                var username = CheckUserPW(token);
+                                user = username;
+                                Logger.LogDebug("Received username+password query string = {Sanitize}",LogSanitizer.Sanitize(user));
                             }
-                            catch
+                            catch( Exception exception)
                             {
+                                Console.WriteLine($"Unexpected exception in {nameof(ParseBearerToken)} : {exception.Message}");
                             }
                         }
 
@@ -378,12 +377,13 @@ namespace AasSecurity
             return null;
         }
 
+
         private string CheckUserPW(string userPW64)
         {
-            var credentialBytes = Convert.FromBase64String(userPW64);
-            var credentials = Encoding.UTF8.GetString(credentialBytes).Split(new[] {':'}, 2);
-            string username = credentials[ 0 ];
-            string password = credentials[ 1 ];
+            var    credentialBytes = Convert.FromBase64String(userPW64);
+            var    credentials     = Encoding.UTF8.GetString(credentialBytes).Split(new[] {':'}, 2);
+            string username        = credentials[ 0 ];
+            string password        = credentials[ 1 ];
 
             var found = GlobalSecurityVariables.SecurityUsernamePassword.TryGetValue(username, out string storedPassword);
             if (found)
@@ -398,24 +398,24 @@ namespace AasSecurity
         }
 
         public bool AuthorizeRequest(string accessRole, string httpRoute, AccessRights neededRights,
-            out string error, out bool withAllow, out string getPolicy, string objPath = null, string aasResourceType = null,
-            IClass aasResource = null, string policy = null)
+                                     out string error, out bool withAllow, out string getPolicy, string objPath = null, string aasResourceType = null,
+                                     IClass aasResource = null, string policy = null)
         {
             return CheckAccessRights(accessRole, httpRoute, neededRights, out error, out withAllow, out getPolicy, objPath, aasResourceType, aasResource, policy: policy);
         }
 
         private static bool CheckAccessRights(string currentRole, string operation, AccessRights neededRights, out string error, out bool withAllow, out string getPolicy,
-            string objPath = "", string aasResourceType = null, IClass aasResource = null, bool testOnly = false, string policy = null)
+                                              string objPath = "", string aasResourceType = null, IClass aasResource = null, bool testOnly = false, string policy = null)
         {
             withAllow = false;
             return CheckAccessRightsWithAllow(currentRole, operation, neededRights, out error, out withAllow, out getPolicy,
-                objPath, aasResourceType, aasResource, testOnly, policy);
+                                              objPath, aasResourceType, aasResource, testOnly, policy);
         }
 
         private static bool CheckAccessRightsWithAllow(string currentRole, string operation, AccessRights neededRights, out string error, out bool withAllow, out string getPolicy,
-            string objPath = "", string aasResourceType = null, IClass aasResource = null, bool testOnly = false, string policy = null)
+                                                       string objPath = "", string aasResourceType = null, IClass aasResource = null, bool testOnly = false, string policy = null)
         {
-            error = "Access not allowed";
+            error     = "Access not allowed";
             withAllow = false;
             getPolicy = "";
 
@@ -427,8 +427,8 @@ namespace AasSecurity
             {
                 // TODO (jtikekar, 2023-09-04): uncomment
                 if (CheckAccessLevelWithError(
-                        out error, currentRole, operation, neededRights, out withAllow, out getPolicy,
-                        objPath, aasResourceType, aasResource, policy))
+                                              out error, currentRole, operation, neededRights, out withAllow, out getPolicy,
+                                              objPath, aasResourceType, aasResource, policy))
                     return true;
             }
 
@@ -443,7 +443,7 @@ namespace AasSecurity
         }
 
         private static bool CheckAccessLevelWithError(out string error, string currentRole, string operation, AccessRights neededRights, out bool withAllow, out string getPolicy,
-            string objPath, string aasResourceType, IClass aasResource, string policy = null)
+                                                      string objPath, string aasResourceType, IClass aasResource, string policy = null)
         {
             withAllow = false;
             getPolicy = "";
@@ -453,12 +453,12 @@ namespace AasSecurity
                 currentRole = "isNotAuthenticated";
             }
 
-            _logger.LogDebug("checkAccessLevel: " +
+            Logger.LogDebug("checkAccessLevel: " +
                              " currentRole = " + currentRole +
                              " operation = " + operation +
                              " neededRights = " + neededRights +
                              " objPath = " + objPath
-            );
+                            );
 
             if (aasResource == null)
             {
@@ -508,9 +508,9 @@ namespace AasSecurity
 
         private static bool CheckPolicy(out string error, SecurityRole securityRole, out string getPolicy, string policy = null)
         {
-            error = "";
+            error     = "";
             getPolicy = "";
-            Property pPolicy = null;
+            Property            pPolicy = null;
             AasCore.Aas3_0.File fPolicy = null;
 
             if (securityRole.Usage == null)
@@ -523,10 +523,10 @@ namespace AasSecurity
                     case "accessPerDuration":
                         if (sme is SubmodelElementCollection smc)
                         {
-                            Property maxCount = null;
+                            Property maxCount    = null;
                             Property actualCount = null;
-                            Property duration = null;
-                            Property actualTime = null;
+                            Property duration    = null;
+                            Property actualTime  = null;
                             foreach (var sme2 in smc.Value)
                             {
                                 switch (sme2.IdShort)
@@ -573,7 +573,7 @@ namespace AasSecurity
 
                             if (actualTime.Value == null || actualTime.Value == "")
                             {
-                                actualTime.Value = DateTime.UtcNow.ToString();
+                                actualTime.Value  = DateTime.UtcNow.ToString();
                                 actualCount.Value = null;
                             }
 
@@ -654,12 +654,12 @@ namespace AasSecurity
         }
 
         private static bool CheckAccessLevelForOperation(string currentRole, string operation, string aasResourceType, IClass aasResource, AccessRights neededRights,
-            string objPath, out bool withAllow, out string getPolicy, out string error, string policy = null)
+                                                         string objPath, out bool withAllow, out string getPolicy, out string error, string policy = null)
         {
-            error = "";
+            error     = "";
             withAllow = false;
-            string deepestDeny = "";
-            string deepestAllow = "";
+            string       deepestDeny      = "";
+            string       deepestAllow     = "";
             SecurityRole deepestAllowRole = null;
             getPolicy = "";
             foreach (var securityRole in GlobalSecurityVariables.SecurityRoles)
@@ -681,8 +681,8 @@ namespace AasSecurity
                                     {
                                         if (deepestAllow == "")
                                         {
-                                            deepestAllow = submodel.IdShort!;
-                                            withAllow = true;
+                                            deepestAllow     = submodel.IdShort!;
+                                            withAllow        = true;
                                             deepestAllowRole = securityRole;
                                         }
                                     }
@@ -725,8 +725,8 @@ namespace AasSecurity
                         {
                             if (securityRole.ObjectPath == objPath.Substring(0, securityRole.ObjectPath.Length))
                             {
-                                deepestAllow = securityRole.ObjectPath;
-                                withAllow = true;
+                                deepestAllow     = securityRole.ObjectPath;
+                                withAllow        = true;
                                 deepestAllowRole = securityRole;
                             }
                         }
@@ -751,7 +751,7 @@ namespace AasSecurity
         }
 
         private static bool CheckAccessLevelEmptyObjPath(string currentRole, string operation, string aasResourceType, IClass aasResource, AccessRights neededRights,
-            out string error)
+                                                         out string error)
         {
             //error = string.Empty;
             if (GlobalSecurityVariables.SecurityRoles != null)
@@ -807,9 +807,9 @@ namespace AasSecurity
             if (apiOperation == operation)
                 return true;
 
-            var apiOpSplit = apiOperation.Split('/');
-            var opSplit = operation.Split('/');
-            bool match = false;
+            var  apiOpSplit = apiOperation.Split('/');
+            var  opSplit    = operation.Split('/');
+            bool match      = false;
             if (apiOpSplit.Length == opSplit.Length)
             {
                 for (int i = 0; i < apiOpSplit.Length; i++)
@@ -849,10 +849,10 @@ namespace AasSecurity
                     case "accessPerDuration":
                         if (sme is SubmodelElementCollection smc)
                         {
-                            Property maxCount = null;
+                            Property maxCount    = null;
                             Property actualCount = null;
-                            Property duration = null;
-                            Property actualTime = null;
+                            Property duration    = null;
+                            Property actualTime  = null;
                             foreach (var sme2 in smc.Value)
                             {
                                 switch (sme2.IdShort)
@@ -899,7 +899,7 @@ namespace AasSecurity
 
                             if (actualTime.Value == null || actualTime.Value == "")
                             {
-                                actualTime.Value = DateTime.UtcNow.ToString();
+                                actualTime.Value  = DateTime.UtcNow.ToString();
                                 actualCount.Value = null;
                             }
 
