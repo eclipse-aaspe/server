@@ -244,47 +244,47 @@ namespace AasSecurity
                         var token = headers[ key ];
                         if (token != null)
                         {
-                            string[] split = token.Split(new Char[] {' ', '\t'});
-                            if (split[ 0 ].ToLower().Equals("bearer"))
+                            var split = token.Split(' ', '\t');
+                            switch (split[ 0 ].ToLower())
                             {
-                                _logger.LogDebug($"Received bearer token {LogSanitizer.Sanitize(split[ 1 ])}");
-                                bearerToken = split[ 1 ];
-                            }
-                            else if (split[ 0 ].ToLower().Equals("basic") && bearerToken == null)
-                            {
-                                try
-                                {
-                                    if (Program.secretStringAPI != null)
+                                case "bearer":
+                                    _logger.LogDebug("Received bearer token {Sanitize}", LogSanitizer.Sanitize(split[ 1 ]));
+                                    bearerToken = split[ 1 ];
+                                    break;
+                                case "basic" when bearerToken == null:
+                                    try
                                     {
-                                        var    credentialBytes = Convert.FromBase64String(split[ 1 ]);
-                                        var    credentials     = Encoding.UTF8.GetString(credentialBytes).Split(new[] {':'}, 2);
-                                        string u               = credentials[ 0 ];
-                                        string p               = credentials[ 1 ];
-                                        Console.WriteLine("Received username+password http header = " + LogSanitizer.Sanitize(u) + " : " + LogSanitizer.Sanitize(p));
-
-                                        if (u == "secret")
+                                        if (Program.secretStringAPI != null)
                                         {
-                                            accessRights = "READ";
-                                            {
-                                                if (p == Program.secretStringAPI)
-                                                    accessRights = "CREATE";
-                                            }
-                                            _logger.LogDebug("accessrights " + LogSanitizer.Sanitize(accessRights));
-                                            AccessRights output = (AccessRights) Enum.Parse(typeof(AccessRights), accessRights);
-                                            return output;
-                                        }
-                                    }
+                                            var credentialBytes = Convert.FromBase64String(split[ 1 ]);
+                                            var credentials     = Encoding.UTF8.GetString(credentialBytes).Split(new[] {':'}, 2);
+                                            var u               = credentials[ 0 ];
+                                            var p               = credentials[ 1 ];
+                                            Console.WriteLine($"Received username+password http header = {LogSanitizer.Sanitize(u)} : {LogSanitizer.Sanitize(p)}");
 
-                                    string username = CheckUserPW(split[ 1 ]);
-                                    if (username != null)
-                                    {
+                                            if (u == "secret")
+                                            {
+                                                accessRights = "READ";
+                                                {
+                                                    if (p == Program.secretStringAPI)
+                                                        accessRights = "CREATE";
+                                                }
+                                                _logger.LogDebug("access-rights " + LogSanitizer.Sanitize(accessRights));
+                                                AccessRights output = (AccessRights) Enum.Parse(typeof(AccessRights), accessRights);
+                                                return output;
+                                            }
+                                        }
+
+                                        var username = CheckUserPW(split[ 1 ]);
                                         user = username;
                                         Console.WriteLine("Received username+password http header = " + LogSanitizer.Sanitize(user));
                                     }
-                                }
-                                catch
-                                {
-                                }
+                                    catch( Exception exception)
+                                    {
+                                        Console.WriteLine($"Unexpected exception in {nameof(ParseBearerToken)} : {exception.Message}");
+                                    }
+
+                                    break;
                             }
                         }
 
@@ -295,7 +295,7 @@ namespace AasSecurity
                         var token = headers[ key ];
                         if (token != null)
                         {
-                            _logger.LogDebug($"Received email token from header: {LogSanitizer.Sanitize(token)}");
+                            _logger.LogDebug("Received email token from header: {Sanitize}", LogSanitizer.Sanitize(token));
                             user  = token;
                             error = false;
                         }
@@ -312,10 +312,10 @@ namespace AasSecurity
                 {
                     case "s":
                     {
-                        string secretQuery = queries[ "s" ]!;
+                        var secretQuery = queries[ "s" ]!;
                         if (!secretQuery.IsNullOrEmpty())
                         {
-                            _logger.LogDebug($"Received token of type s: {LogSanitizer.Sanitize(secretQuery)}");
+                            _logger.LogDebug("Received token of type s: {Sanitize}", LogSanitizer.Sanitize(secretQuery));
                             if (Program.secretStringAPI != null)
                             {
                                 if (secretQuery.Equals(Program.secretStringAPI))
@@ -332,7 +332,7 @@ namespace AasSecurity
                         var token = queries[ key ];
                         if (token != null)
                         {
-                            _logger.LogDebug($"Received token of type bearer {LogSanitizer.Sanitize(token)}");
+                            _logger.LogDebug("Received token of type bearer {Sanitize}", LogSanitizer.Sanitize(token));
                             bearerToken = token;
                         }
 
@@ -343,7 +343,7 @@ namespace AasSecurity
                         var token = queries[ key ];
                         if (token != null)
                         {
-                            _logger.LogDebug($"Received token of type email {LogSanitizer.Sanitize(token)}");
+                            _logger.LogDebug("Received token of type email {Sanitize}", LogSanitizer.Sanitize(token));
                             user  = token;
                             error = false;
                         }
@@ -355,18 +355,16 @@ namespace AasSecurity
                         var token = queries[ key ];
                         if (token != null)
                         {
-                            _logger.LogDebug($"Received token of type username-password {LogSanitizer.Sanitize(token)}");
+                            _logger.LogDebug("Received token of type username-password {Sanitize}", LogSanitizer.Sanitize(token));
                             try
                             {
-                                string username = CheckUserPW(token);
-                                if (username != null)
-                                {
-                                    user = username;
-                                    _logger.LogDebug("Received username+password query string = " + LogSanitizer.Sanitize(user));
-                                }
+                                var username = CheckUserPW(token);
+                                user = username;
+                                _logger.LogDebug("Received username+password query string = {Sanitize}",LogSanitizer.Sanitize(user));
                             }
-                            catch
+                            catch( Exception exception)
                             {
+                                Console.WriteLine($"Unexpected exception in {nameof(ParseBearerToken)} : {exception.Message}");
                             }
                         }
 
