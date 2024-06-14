@@ -321,7 +321,8 @@ namespace AasxServerDB
                     return new SMResult()
                     {
                         smId = identifier,
-                        url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(identifier)}"
+                        url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(identifier)}",
+                        timeStamp = PageRetriever.GetDateTimeString(sm.TimeStamp)
                     };
                 }
             );
@@ -495,7 +496,8 @@ namespace AasxServerDB
                         smId = identifier,
                         value = sme.value,
                         idShortPath = path,
-                        url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(identifier)}/submodel-elements/{path}"
+                        url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(identifier)}/submodel-elements/{path}",
+                        timeStamp = PageRetriever.GetDateTimeString(sme.sme.TimeStamp)
                     };
                 }
             );

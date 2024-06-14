@@ -159,5 +159,10 @@ namespace AasxServerDB
                 return false;
             }
         }
+
+        static public string GetDateTimeString(DateTime dateTime)
+        {
+            return dateTime.ToString("yy-MM-dd HH:mm:ss.fff");
+        }
     }
 }
