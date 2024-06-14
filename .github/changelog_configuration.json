@@ -71,7 +71,7 @@
     "order": "ASC",
     "on_property": "mergedAt"
   },
-  "template": "# 📦 Changelog\n\n<details>\n<summary>\n\n## Categories\n\n{{CATEGORIES}}\n</summary>\n\n# {{UNCATEGORIZED}}\n\n[🔗 Release Diff](RELEASE_DIFF)\n\n## 👥 Contributors\n\n{{CONTRIBUTORS}}\n## Latest Release\n\nClick [here](https://github.com/eclipse-aaspe/server/releases) to see the newest Pre-Releases.</details>",
+  "template": "# 📦 Changelog\n\n<details>\n<summary>\n\n## Categories\n\n#{{CATEGORIES}}\n</summary>\n\n#{{UNCATEGORIZED}}\n\n[🔗 Release Diff](#{{RELEASE_DIFF}})\n\n## 👥 Contributors\n\n#{{CONTRIBUTORS}}\n## Latest Release\n\nClick [here](https://github.com/eclipse-aaspe/server/releases) to see the newest Pre-Releases.</details>",
   "pr_template": "- #{{TITLE}} by {{AUTHOR}} in #{{URL}} (Labels: #{{LABELS}})",
   "empty_template": "No changes detected. See the [Changelog](CHANGELOG.md) for more information.",
   "label_extractor": [
