@@ -18,11 +18,8 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Xml;
 using System.Xml.Serialization;
 
-//namespace AdminShellNS
-//namespace AdminShell_V20
 namespace AasxCompatibilityModels
 {
     /// <summary>
@@ -2441,17 +2438,22 @@ namespace AasxCompatibilityModels
                 return mems.ToArray();
             }
 
-            private static System.Security.Cryptography.SHA256 HashProvider =
-                System.Security.Cryptography.SHA256.Create();
+            private static System.Security.Cryptography.SHA256 CreateHashProvider ()
+            {
+                return System.Security.Cryptography.SHA256.Create();
+            }
 
             public string ComputeHashcode()
             {
                 var dataBytes = this.ComputeByteArray();
-                var hashBytes = Referable.HashProvider.ComputeHash(dataBytes);
+
+                using var hashProvider = CreateHashProvider();
+                var       hashBytes    = hashProvider.ComputeHash(dataBytes);
 
                 StringBuilder sb = new StringBuilder();
                 foreach (var hb in hashBytes)
                     sb.Append(hb.ToString("X2"));
+
                 return sb.ToString();
             }
 
