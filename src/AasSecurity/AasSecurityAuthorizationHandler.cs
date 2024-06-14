@@ -59,11 +59,15 @@ namespace AasSecurity
             }
         }
 
-        private (string accessRole, string? idShortPath, AccessRights neededRights, string? policy, string error) GetUserClaims(ClaimsPrincipal claims)
+        private (string accessRole, string? idShortPath, AccessRights neededRights, string policy, string error) GetUserClaims(ClaimsPrincipal claims)
         {
             var accessRole = claims.FindFirst(ClaimTypes.Role)!.Value;
-            var right      = claims.FindFirst("NeededRights")!.Value;
-            Enum.TryParse(right, out AccessRights neededRights);
+
+            var rightClaim = claims.FindFirst("NeededRights");
+            if (rightClaim == null || !Enum.TryParse(rightClaim.Value, out AccessRights neededRights))
+            {
+                neededRights = AccessRights.READ;
+            }
 
             var idShortPath = claims.HasClaim(c => c.Type.Equals("IdShortPath")) ? claims.FindFirst("IdShortPath")!.Value : null;
 
@@ -72,6 +76,7 @@ namespace AasSecurity
 
             return (accessRole, idShortPath, neededRights, policy, string.Empty);
         }
+
 
         private async Task<bool> AuthorizeResource(object resource, string accessRole, string httpRoute, AccessRights neededRights, string? policy)
         {
