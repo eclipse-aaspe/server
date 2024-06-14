@@ -38,11 +38,13 @@ namespace AasSecurity
             foreach (var header in context.Request.Headers)
             {
                 headers.Add(header.Key, header.Value.FirstOrDefault());
-                if (header.Key == "FORCE-POLICY")
+                if (!header.Key.Equals("FORCE-POLICY"))
                 {
-                    Program.withPolicy = !(header.Value.FirstOrDefault() == "OFF");
-                    _logger.LogDebug("FORCE-POLICY " + header.Value.FirstOrDefault());
+                    continue;
                 }
+
+                Program.withPolicy = !(header.Value.FirstOrDefault() == "OFF");
+                _logger.LogDebug("FORCE-POLICY {Sanitize}" ,LogSanitizer.Sanitize(header.Value.FirstOrDefault()));
             }
 
             var accessRole = GetAccessRole(queries, headers, out string policy, out string policyRequestedResource);
