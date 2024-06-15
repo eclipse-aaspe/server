@@ -5,6 +5,12 @@ on:
     - cron: '0 23 * * *' # This is 1:00 AM Berlin time
   workflow_dispatch:  # Allows manual triggering
 
+env:
+  BRANCH_SUFFIX: latest
+  VERSION_SUFFIX: alpha
+  CREATE_RELEASE_AS_DRAFT: false
+  CREATE_RELEASE_AS_PRERELEASE: true
+
 jobs:
   check-for-changes:
     runs-on: ubuntu-latest
@@ -22,7 +28,7 @@ jobs:
         id: get_latest_tag
         run: |
           git fetch --all
-          stableTags=$(git tag --list "*latest*" --sort=-v:refname)
+          stableTags=$(git tag --list "*$BRANCH_SUFFIX*" --sort=-v:refname)
           if [ -n "$stableTags" ]; then
             newestStableTag=$(echo "$stableTags" | head -n 1)
             echo "latest_tag=$newestStableTag" >> $GITHUB_ENV
@@ -80,17 +86,17 @@ jobs:
       - name: Get the newest tag
         id: get_latest_tag
         run: |
-          $stableTags = git tag --list "*latest*" --sort=-v:refname
+          $stableTags = git tag --list "*$BRANCH_SUFFIX*" --sort=-v:refname
           if ($stableTags) {
             $newestStableTag = $stableTags | Select-Object -First 1
             echo "from_tag=$newestStableTag" >> $env:GITHUB_OUTPUT
-            Write-Host "Latest found tag is $from_tag"
+            Write-Host "Latest found tag is $newestStableTag"
           } else {
             Write-Host "No stable tags found, fetching the latest tag."
             $latestTag = git tag --list --sort=-v:refname | Select-Object -First 1
             if ($latestTag) {
               echo "from_tag=$latestTag" >> $env:GITHUB_OUTPUT
-              Write-Host "Latest found tag is $from_tag"
+              Write-Host "Latest found tag is $latestTag"
             } else {
               Write-Host "No tags found at all."
             }
@@ -102,7 +108,7 @@ jobs:
         id: generate_version_number
         run: |
           $branch = '${{ steps.extract_branch.outputs.branch }}'
-          $version = .\BuildVersionNumber.ps1 -suffix alpha -branch $branch -githubRunNumber ${{ github.run_number }}
+          $version = .\BuildVersionNumber.ps1 -suffix $VERSION_SUFFIX -branch $branch -githubRunNumber ${{ github.run_number }}
           echo "version=$version" >> $env:GITHUB_OUTPUT
           Write-Host "The version name to build is: $version"
         shell: pwsh
@@ -185,15 +191,16 @@ jobs:
 
       - name: Create GitHub release
         id: create_release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: "v${{ steps.generate_version_number.outputs.version }}"
-          release_name: "v${{ steps.generate_version_number.outputs.version }}"
-          draft: false
-          prerelease: true
+          name: "v${{ steps.generate_version_number.outputs.version }}"
+          draft: $CREATE_RELEASE_AS_DRAFT
+          prerelease: $CREATE_RELEASE_AS_PRERELEASE
           body: ${{ steps.generate_release_notes.outputs.changelog }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload the release assets
         uses: AButler/upload-release-assets@v3.0
