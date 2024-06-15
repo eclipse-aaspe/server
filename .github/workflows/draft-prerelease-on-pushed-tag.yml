@@ -6,9 +6,9 @@ on:
       - 'v*'
 
 env:
-  BRANCH_SUFFIX: latest
+  BRANCH_SUFFIX: develop
   VERSION_SUFFIX: alpha
-  CREATE_RELEASE_AS_DRAFT: false
+  CREATE_RELEASE_AS_DRAFT: true
   CREATE_RELEASE_AS_PRERELEASE: true
 
 jobs:
