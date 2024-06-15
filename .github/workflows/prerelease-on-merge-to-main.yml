@@ -9,7 +9,6 @@ jobs:
   check-for-changes:
     runs-on: ubuntu-latest
     name: Check for changes
-    if: github.repository == 'eclipse-aaspe/server'
     outputs:
       changes_detected: ${{ steps.check_changes.outputs.changes_detected }}
     steps:
