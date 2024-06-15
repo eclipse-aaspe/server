@@ -9,6 +9,7 @@ jobs:
   check-for-changes:
     runs-on: ubuntu-latest
     name: Check for changes
+    if: github.repository == 'eclipse-aaspe/server'
     outputs:
       changes_detected: ${{ steps.check_changes.outputs.changes_detected }}
     steps:
@@ -164,6 +165,7 @@ jobs:
         with:
           configuration: ".github/changelog_configuration.json"
           token: ${{ secrets.GITHUB_TOKEN }}
+          fromTag: "${{ steps.get_latest_tag.outputs.from_tag }}"
           fetchReviewers: true
           fetchReleaseInformation: true
         env:
