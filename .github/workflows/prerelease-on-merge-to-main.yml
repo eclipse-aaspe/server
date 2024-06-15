@@ -9,6 +9,7 @@ jobs:
   check-for-changes:
     runs-on: ubuntu-latest
     name: Check for changes
+    # if: github.repository == 'eclipse-aaspe/server'
     outputs:
       changes_detected: ${{ steps.check_changes.outputs.changes_detected }}
     steps:
@@ -157,15 +158,28 @@ jobs:
               Move-Item -Path $path -Destination $target
           }
         shell: pwsh
-
+        
+      - name: Create Git tag
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git tag ${{ steps.generate_version_number.outputs.version }}
+          git push origin ${{ steps.generate_version_number.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
       - name: Generate release notes
         id: generate_release_notes
         uses: mikepenz/release-changelog-builder-action@v4
         with:
           configuration: ".github/changelog_configuration.json"
           token: ${{ secrets.GITHUB_TOKEN }}
-          fetchReviewers: true
-          fetchReleaseInformation: true
+          fromTag: "${{ steps.get_latest_tag.outputs.from_tag }}"
+          toTag: "${{ steps.generate_version_number.outputs.version }}"
+          fetchViaCommits: "true"
+          ignorePreReleases: "false"
+          fetchReleaseInformation: "true"
+          failOnError: "true"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
