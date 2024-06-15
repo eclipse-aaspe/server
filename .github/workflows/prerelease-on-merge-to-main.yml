@@ -165,7 +165,6 @@ jobs:
         with:
           configuration: ".github/changelog_configuration.json"
           token: ${{ secrets.GITHUB_TOKEN }}
-          fromTag: "${{ steps.get_latest_tag.outputs.from_tag }}"
           fetchReviewers: true
           fetchReleaseInformation: true
         env:
