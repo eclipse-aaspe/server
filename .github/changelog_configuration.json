@@ -103,7 +103,7 @@
   "tag_resolver": {
     "method": "semver",
     "filter": {
-      "pattern": "api-(.+)",
+      "pattern": "^v\\d+\\.\\d+\\.\\d+\\.\\d+-aasV3-alpha-(latest|stable|develop)$\n",
       "flags": "gu"
     }
   },
