@@ -51,8 +51,9 @@ jobs:
               exit 1
             }
           }
-          echo "Checking changes since tag: $latestTag"
-          changes=$(git log --oneline $latestTag..HEAD)
+          Write-Host "Checking changes since tag: $latestTag"
+          $changes=$(git log --oneline $latestTag..HEAD)
+          Write-Host "Found changes $changes"
           if [ -z "$changes" ]; then
             echo "No changes detected since $latestTag."
             echo "changes_detected=false" >> "$GITHUB_OUTPUT"
