@@ -30,7 +30,7 @@ jobs:
           git fetch --all
           $commitSHA = git rev-parse HEAD
           $branch = git branch -r --contains $commitSHA | Select-String -Pattern 'origin/' | Select-Object -First 1 | ForEach-Object { $_.Line -replace '.*origin/', '' } | ForEach-Object { $_.Trim() }
-          echo "branch=$branch" >> $env:GITHUB_ENV
+          echo "branch=$branch" >> $env:GITHUB_OUTPUT
           Write-Host "The current branch is: $branch"
         shell: pwsh
 
@@ -69,7 +69,7 @@ jobs:
         run: |
           $branch = '${{ steps.extract_branch.outputs.branch }}'
           $version = .\BuildVersionNumber.ps1 -suffix ${VERSION_SUFFIX} -branch $branch -githubRunNumber ${{ github.run_number }}
-          echo "version=$version" >> $env:GITHUB_ENV
+          echo "version=$version" >> $env:GITHUB_OUTPUT
           Write-Host "The version name to build is: $version"
         shell: pwsh
 
