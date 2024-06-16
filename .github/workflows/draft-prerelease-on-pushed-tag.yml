@@ -1,9 +1,7 @@
 name: Draft new Prerelease on Develop Tag Push
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch: # Allows manual triggering
 
 env:
   BRANCH_SUFFIX: develop
