@@ -40,7 +40,7 @@ jobs:
           if ($potentialTags.Count -gt 0) {
             $newestStableTag = $potentialTags[0]
             echo "from_tag=$newestStableTag" >> $GITHUB_OUTPUT
-            Write-Host "Latest found matching tag is $newestStableTag"
+            Write-Host "Latest found matching tag is $from_tag"
           } else {
             Write-Host "No matching tags found, fetching the latest tag."
             $latestTag = $tags | Select-Object -First 1
@@ -56,7 +56,7 @@ jobs:
       - name: Check for changes
         id: check_changes
         run: |
-          from_tag="${{ steps.get_latest_tag.outputs.from_tag }}"
+          from_tag=${{ steps.get_latest_tag.outputs.from_tag }}
           echo "Checking changes since tag: $from_tag"
           changes=$(git log --oneline "$from_tag"..HEAD)
           if [ -z "$changes" ]; then
