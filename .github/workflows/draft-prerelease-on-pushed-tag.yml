@@ -1,4 +1,4 @@
-name: Draft new Prerelease on Develop Tag Push
+name: Draft new developer Prerelease
 
 on:
   workflow_dispatch: # Allows manual triggering
@@ -152,7 +152,7 @@ jobs:
         with:
           tag_name: "v${{ steps.generate_version_number.outputs.version }}"
           name: "v${{ steps.generate_version_number.outputs.version }}"
-          draft: true
+          draft: false # Cannot upload artifacts on draft. Well-known bug
           prerelease: true
           body: ${{ steps.generate_release_notes.outputs.changelog }}
           token: ${{ secrets.GITHUB_TOKEN }}
