@@ -40,7 +40,7 @@ jobs:
           if ($potentialTags.Count -gt 0) {
             $newestStableTag = $potentialTags[0]
             echo "from_tag=$newestStableTag" >> $GITHUB_ENV
-            Write-Host "Latest found tag is $newestStableTag"
+            Write-Host "Latest found matching tag is $newestStableTag"
           } else {
             Write-Host "No matching tags found, fetching the latest tag."
             $latestTag = $tags | Select-Object -First 1
