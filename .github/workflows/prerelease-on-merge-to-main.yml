@@ -40,7 +40,6 @@ jobs:
           if ($potentialTags.Count -gt 0) {
             $newestStableTag = $potentialTags[0]
             echo "from_tag=$newestStableTag" >> $GITHUB_ENV
-            echo "from_tag=$newestStableTag" >> $GITHUB_OUTPUT
             Write-Host "Latest found tag is $newestStableTag"
           } else {
             Write-Host "No matching tags found, fetching the latest tag."
@@ -57,26 +56,20 @@ jobs:
       - name: Check for changes
         id: check_changes
         run: |
-          $from_tag= "v0.3.0.48-aasV3-alpha-latest"
           echo "Checking changes since tag: $from_tag"
-          if [ -z "$from_tag" ]; then
-            echo "No previous tag found."
-            echo "changes_detected=false" >> $env:GITHUB_ENV
-            exit 0
-          fi
-          commits=$(git log --oneline "$from_tag"..HEAD)
-          if [ -z "$commits" ]; then
+          changes=$(git log --oneline "$from_tag"..HEAD)
+          if [ -z "$changes" ]; then
             echo "No changes detected since $from_tag."
-            echo "changes_detected=false" >> $env:GITHUB_ENV
+            echo "changes_detected=false" >> $GITHUB_ENV
           else
             echo "Changes detected since $from_tag:"
-            echo "$commits"
-            echo "changes_detected=true" >> $env:GITHUB_ENV
-          fi
+            echo "$changes"
+            echo "changes_detected=true" >> $GITHUB_ENV
+          }
 
       - name: Output changes detected
-        if: steps.get_commit_range.outputs.changes_detected == 'true'
-        run: echo "changes_detected=true" >> $GITHUB_ENV
+        if: steps.check_changes.outputs.changes_detected == 'true'
+        run: echo "changes_detected=true" >> $GITHUB_OUTPUT
 
   create-new-prerelease:
     runs-on: windows-latest
