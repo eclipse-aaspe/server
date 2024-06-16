@@ -24,8 +24,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get the newest tag
-        id: get_latest_tag
+      - name: Check changes since last tag
+        id: check_changes
         run: |
           git fetch --tags
           $tags = git tag --sort=-creatordate
@@ -38,9 +38,8 @@ jobs:
           }
 
           if ($potentialTags.Count -gt 0) {
-            $newestStableTag = $potentialTags[0]
-            echo "from_tag=$newestStableTag" >> $GITHUB_OUTPUT
-            Write-Host "Latest found matching tag is $newestStableTag"
+            $latestTag = $potentialTags[0]
+            Write-Host "Latest found matching tag is $latestTag"
           } else {
             Write-Host "No matching tags found, fetching the latest tag."
             $latestTag = $tags | Select-Object -First 1
@@ -49,24 +48,20 @@ jobs:
               Write-Host "Latest found tag is $latestTag"
             } else {
               Write-Host "No tags found at all."
+              exit 1
             }
           }
-        shell: pwsh
-
-      - name: Check for changes
-        id: check_changes
-        run: |
-          from_tag="${{ steps.get_latest_tag.outputs.from_tag }}"
-          echo "Checking changes since tag: $from_tag"
-          changes=$(git log --oneline "$from_tag"..HEAD)
+          echo "Checking changes since tag: $latestTag"
+          changes=$(git log --oneline $latestTag..HEAD)
           if [ -z "$changes" ]; then
-            echo "No changes detected since $from_tag."
+            echo "No changes detected since $latestTag."
             echo "changes_detected=false" >> "$GITHUB_OUTPUT"
           else
-            echo "Changes detected since $from_tag:"
+            echo "Changes detected since $latestTag:"
             echo "$changes"
             echo "changes_detected=true" >> "$GITHUB_OUTPUT"
           fi
+        shell: pwsh
 
       - name: Output changes detected
         if: steps.check_changes.outputs.changes_detected == 'true'
@@ -122,6 +117,7 @@ jobs:
               Write-Host "Latest found tag is $latestTag"
             } else {
               Write-Host "No tags found at all."
+              exit 1
             }
           }
         shell: pwsh
