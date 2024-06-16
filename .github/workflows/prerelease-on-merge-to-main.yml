@@ -62,7 +62,7 @@ jobs:
           else
             git fetch origin main
             latest_commit=$(git rev-parse HEAD)
-            if git diff --quiet ${{ esteps.get_latest_tag.outputs.from_tag  }} $latest_commit; then
+            if git diff --quiet ${{ steps.get_latest_tag.outputs.from_tag  }} $latest_commit; then
               echo "No changes detected since tag '${{ steps.get_latest_tag.outputs.from_tag  }}'."
               echo "changes_detected=false" >> $GITHUB_OUTPUT
             else
