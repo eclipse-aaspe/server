@@ -13,7 +13,7 @@ env:
 
 jobs:
   check-for-changes:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     name: Check for changes between HEAD and last created tag
     outputs:
       branch_changed: ${{ steps.check_changes.outputs.changes_detected }}
@@ -35,7 +35,7 @@ jobs:
               $potentialTags += $tag
             }
           }
-
+          
           if ($potentialTags.Count -gt 0) {
             $latestTag = $potentialTags[0]
             Write-Host "Latest found matching tag is $latestTag"
@@ -60,7 +60,6 @@ jobs:
           } else {
             Write-Host "No changes detected since $latestTag."
             echo "changes_detected=false" >> $env:GITHUB_OUTPUT
-          }
           }
         shell: pwsh
 
