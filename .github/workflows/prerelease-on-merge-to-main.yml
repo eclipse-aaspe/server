@@ -12,10 +12,28 @@ env:
   CREATE_RELEASE_AS_PRERELEASE: true
 
 jobs:
+  job1:
+    runs-on: ubuntu-latest
+    # Map a step output to a job output
+    outputs:
+      output1: ${{ steps.step1.outputs.test }}
+      output2: ${{ steps.step2.outputs.test }}
+    steps:
+      - id: step1
+        run: echo "test=hello" >> "$GITHUB_OUTPUT"
+      - id: step2
+        run: echo "test=world" >> "$GITHUB_OUTPUT"
+    job2:
+      runs-on: ubuntu-latest
+      needs: job1
+      steps:
+        - env:
+            OUTPUT1: ${{needs.job1.outputs.output1}}
+            OUTPUT2: ${{needs.job1.outputs.output2}}
+          run: echo "$OUTPUT1 $OUTPUT2"
   check-for-changes:
     runs-on: ubuntu-latest
     name: Check for changes between HEAD and last created tag
-    #if: github.repository == 'eclipse-aaspe/server'
     outputs:
       branch_changed: ${{ steps.check_changes.outputs.changes_detected }}
     steps:
@@ -63,19 +81,19 @@ jobs:
             echo "changes_detected=false" >> "$GITHUB_OUTPUT"
           }
         shell: pwsh
+
   create-new-prerelease:
     runs-on: windows-latest
     name: Create a new prerelease build and attach built packages to release
     needs: check-for-changes
-    # if: needs.check-for-changes.outputs.changes_detected == 'true'
+    if: needs.check-for-changes.outputs.branch_changed == 'true'
     steps:
       - name: Changes happened
         env:
-          CHANGES_HAPPENED: ${{ needs.check-for-changes.outputs.branch_changed }}
+          CHANGES_HAPPENED: ${{needs.check-for-changes.outputs.branch_changed}}
         run: |
           Write-Host "Changes happened = $CHANGES_HAPPENED"
           exit 1
-        
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
