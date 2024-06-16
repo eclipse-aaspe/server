@@ -67,7 +67,7 @@ jobs:
     runs-on: windows-latest
     name: Create a new prerelease build and attach built packages to release
     needs: check-for-changes
-    if: needs.check-for-changes.outputs.changes_detected == 'true'
+    if: needs.check-for-changes.outputs.branch_changed == 'true'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
