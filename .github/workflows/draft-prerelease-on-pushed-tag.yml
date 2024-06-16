@@ -1,15 +1,11 @@
-name: Draft new Prerelease on Develop Tag Push
+name: Draft new developer Prerelease
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch: # Allows manual triggering
 
 env:
   BRANCH_SUFFIX: develop
   VERSION_SUFFIX: alpha
-  CREATE_RELEASE_AS_DRAFT: true
-  CREATE_RELEASE_AS_PRERELEASE: true
 
 jobs:
   draft_develop_release:
@@ -27,9 +23,7 @@ jobs:
       - name: Extract branch name
         id: extract_branch
         run: |
-          git fetch --all
-          $commitSHA = git rev-parse HEAD
-          $branch = git branch -r --contains $commitSHA | Select-String -Pattern 'origin/' | Select-Object -First 1 | ForEach-Object { $_.Line -replace '.*origin/', '' } | ForEach-Object { $_.Trim() }
+          $branch = '${{ github.ref }}' -replace 'refs/heads/', ''
           echo "branch=$branch" >> $env:GITHUB_OUTPUT
           Write-Host "The current branch is: $branch"
         shell: pwsh
@@ -37,19 +31,29 @@ jobs:
       - name: Get the newest tag
         id: get_latest_tag
         run: |
-          $stableTags = git tag --list "*$BRANCH_SUFFIX*" --sort=-v:refname
-          if ($stableTags) {
-            $newestStableTag = $stableTags | Select-Object -First 1
+          git fetch --tags
+          $tags = git tag --sort=-creatordate
+          $branchSuffix = "${{ env.BRANCH_SUFFIX }}"
+          $potentialTags = @()
+          foreach ($tag in $tags) {
+            if ($tag -match ".*-$branchSuffix$") {
+              $potentialTags += $tag
+            }
+          }
+
+          if ($potentialTags.Count -gt 0) {
+            $newestStableTag = $potentialTags[0]
             echo "from_tag=$newestStableTag" >> $env:GITHUB_OUTPUT
             Write-Host "Latest found tag is $newestStableTag"
           } else {
-            Write-Host "No stable tags found, fetching the latest tag."
-            $latestTag = git tag --list --sort=-v:refname | Select-Object -First 1
+            Write-Host "No matching tags found, fetching the latest tag."
+            $latestTag = $tags | Select-Object -First 1
             if ($latestTag) {
               echo "from_tag=$latestTag" >> $env:GITHUB_OUTPUT
               Write-Host "Latest found tag is $latestTag"
             } else {
               Write-Host "No tags found at all."
+              exit 1
             }
           }
         shell: pwsh
@@ -85,7 +89,7 @@ jobs:
       - name: Package release
         working-directory: src
         run: |
-          $version = '${{ steps.generate_version_number.outputs.version }}'
+          $version = 'v${{ steps.generate_version_number.outputs.version }}'
           mkdir -p artefacts/release/$version
           Write-Host "Packaging for the release version: $version"
           .\PackageRelease.ps1 -version $version
@@ -94,7 +98,7 @@ jobs:
       - name: Rename the release assets
         working-directory: .
         run: |
-          $version = '${{ steps.generate_version_number.outputs.version }}'
+          $version = 'v${{ steps.generate_version_number.outputs.version }}'
           $releaseDir = Join-Path $(Get-Location) "artefacts/release/$version"
           Write-Host "Release directory: $releaseDir"
 
@@ -120,8 +124,8 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git tag ${{ steps.generate_version_number.outputs.version }}
-          git push origin ${{ steps.generate_version_number.outputs.version }}
+          git tag v${{ steps.generate_version_number.outputs.version }}
+          git push origin v${{ steps.generate_version_number.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -132,7 +136,7 @@ jobs:
           configuration: ".github/changelog_configuration.json"
           token: ${{ secrets.GITHUB_TOKEN }}
           fromTag: "${{ steps.get_latest_tag.outputs.from_tag }}"
-          toTag: "${{ steps.generate_version_number.outputs.version }}"
+          toTag: "v${{ steps.generate_version_number.outputs.version }}"
           fetchViaCommits: "true"
           ignorePreReleases: "false"
           fetchReleaseInformation: "true"
@@ -148,15 +152,14 @@ jobs:
         with:
           tag_name: "v${{ steps.generate_version_number.outputs.version }}"
           name: "v${{ steps.generate_version_number.outputs.version }}"
-          draft: $CREATE_RELEASE_AS_DRAFT
-          prerelease: $CREATE_RELEASE_AS_PRERELEASE
+          draft: false # Cannot upload artifacts on draft. Well-known bug
+          prerelease: true
           body: ${{ steps.generate_release_notes.outputs.changelog }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload the release assets
         uses: AButler/upload-release-assets@v3.0
         with:
-          files: "artefacts/release/${{ steps.generate_version_number.outputs.version }}/*.zip"
+          files: "artefacts/release/v${{ steps.generate_version_number.outputs.version }}/*.zip"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           release-tag: "v${{ steps.generate_version_number.outputs.version }}"
-  

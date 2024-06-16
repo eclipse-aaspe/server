@@ -52,6 +52,10 @@ function GetVersion {
 
     $aasmodel = "aasV3"
 
+    if ([string]::IsNullOrEmpty($suffix)) {
+        $suffix = "alpha"
+    }
+    
     # Construct the semantic version.
     $semanticVersion = "$versionCore.$buildNumber-$aasmodel-$suffix-$buildSuffix"
 
