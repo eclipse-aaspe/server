@@ -184,8 +184,8 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git tag ${{ steps.generate_version_number.outputs.version }}
-          git push origin ${{ steps.generate_version_number.outputs.version }}
+          git tag v${{ steps.generate_version_number.outputs.version }}
+          git push origin v${{ steps.generate_version_number.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
