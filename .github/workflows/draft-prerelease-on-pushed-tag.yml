@@ -37,14 +37,14 @@ jobs:
       - name: Get the newest tag
         id: get_latest_tag
         run: |
-          $stableTags = git tag --list "*$BRANCH_SUFFIX*" --sort=-v:refname
+          $stableTags = git tag --list "*${BRANCH_SUFFIX}*" --sort=-creatordate
           if ($stableTags) {
             $newestStableTag = $stableTags | Select-Object -First 1
             echo "from_tag=$newestStableTag" >> $env:GITHUB_OUTPUT
             Write-Host "Latest found tag is $newestStableTag"
           } else {
             Write-Host "No stable tags found, fetching the latest tag."
-            $latestTag = git tag --list --sort=-v:refname | Select-Object -First 1
+            $latestTag = git tag --list --sort=-creatordate | Select-Object -First 1
             if ($latestTag) {
               echo "from_tag=$latestTag" >> $env:GITHUB_OUTPUT
               Write-Host "Latest found tag is $latestTag"
@@ -59,7 +59,7 @@ jobs:
         id: generate_version_number
         run: |
           $branch = '${{ steps.extract_branch.outputs.branch }}'
-          $version = .\BuildVersionNumber.ps1 -suffix $VERSION_SUFFIX -branch $branch -githubRunNumber ${{ github.run_number }}
+          $version = .\BuildVersionNumber.ps1 -suffix ${VERSION_SUFFIX} -branch $branch -githubRunNumber ${{ github.run_number }}
           echo "version=$version" >> $env:GITHUB_OUTPUT
           Write-Host "The version name to build is: $version"
         shell: pwsh
