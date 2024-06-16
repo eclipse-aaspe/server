@@ -8,8 +8,6 @@ on:
 env:
   BRANCH_SUFFIX: latest
   VERSION_SUFFIX: alpha
-  CREATE_RELEASE_AS_DRAFT: false
-  CREATE_RELEASE_AS_PRERELEASE: true
 
 jobs:
   check-for-changes:
@@ -212,8 +210,8 @@ jobs:
         with:
           tag_name: "v${{ steps.generate_version_number.outputs.version }}"
           name: "v${{ steps.generate_version_number.outputs.version }}"
-          draft: $CREATE_RELEASE_AS_DRAFT
-          prerelease: $CREATE_RELEASE_AS_PRERELEASE
+          draft: false
+          prerelease: true
           body: ${{ steps.generate_release_notes.outputs.changelog }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
