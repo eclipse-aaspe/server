@@ -17,7 +17,7 @@ jobs:
     name: Check for changes between HEAD and last created tag
     #if: github.repository == 'eclipse-aaspe/server'
     outputs:
-      changes_detected: ${{ steps.check_changes.outputs.changes_detected }}
+      branch_changed: ${{ steps.check_changes.outputs.changes_detected }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -63,17 +63,15 @@ jobs:
             echo "changes_detected=false" >> "$GITHUB_OUTPUT"
           }
         shell: pwsh
-      
-
   create-new-prerelease:
     runs-on: windows-latest
     name: Create a new prerelease build and attach built packages to release
-    needs: [check-for-changes]
+    needs: check-for-changes
     # if: needs.check-for-changes.outputs.changes_detected == 'true'
     steps:
       - name: Changes happened
         env:
-          $CHANGES_HAPPENED: ${{ needs.check-for-changes.outputs.changes_detected }}
+          CHANGES_HAPPENED: ${{ needs.check-for-changes.outputs.branch_changed }}
         run: |
           Write-Host "Changes happened = $CHANGES_HAPPENED"
           exit 1
