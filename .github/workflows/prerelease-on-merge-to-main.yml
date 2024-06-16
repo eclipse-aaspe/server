@@ -88,9 +88,9 @@ jobs:
     needs: check-for-changes
     #if: needs.check-for-changes.outputs.branch_changed == 'true'
     steps:
-      - env:
-        CHANGES_HAPPENED: ${{needs.check-for-changes.outputs.branch_changed}}
-      - name: Changes happened
+      - name: Changes happened       
+        env:
+          CHANGES_HAPPENED: ${{needs.check-for-changes.outputs.branch_changed}}
         run: |
           Write-Host "Changes happened = $CHANGES_HAPPENED"
           exit 1
