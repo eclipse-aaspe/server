@@ -1,7 +1,7 @@
 name: Draft Release on Merge to Release Branch
 
 on:
-  pull_request:
+  push:
     branches:
       - release
 
