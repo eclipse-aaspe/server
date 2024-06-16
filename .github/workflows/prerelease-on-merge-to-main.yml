@@ -57,7 +57,7 @@ jobs:
       - name: Check for changes
         id: check_changes
         run: |
-          from_tag= "v0.3.0.48-aasV3-alpha-latest"
+          $from_tag= "v0.3.0.48-aasV3-alpha-latest"
           echo "Checking changes since tag: $from_tag"
           if [ -z "$from_tag" ]; then
             echo "No previous tag found."
