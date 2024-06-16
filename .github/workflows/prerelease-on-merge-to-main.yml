@@ -57,7 +57,6 @@ jobs:
             Write-Host "Changes detected since $latestTag"
             Write-Host "$changes"
             echo "changes_detected=true" >> $GITHUB_OUTPUT
-            exit 1
           } else {
             Write-Host "No changes detected since $latestTag."
             echo "changes_detected=false" >> $GITHUB_OUTPUT
