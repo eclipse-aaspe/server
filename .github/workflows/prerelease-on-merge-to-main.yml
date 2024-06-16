@@ -64,10 +64,6 @@ jobs:
           }
         shell: pwsh
       
-      
-      - name: Output changes detected
-        if: steps.check_changes.outputs.changes_detected == 'true'
-        run: echo "changes_detected=true" >> "$GITHUB_OUTPUT"
 
   create-new-prerelease:
     runs-on: windows-latest
