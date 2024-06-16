@@ -58,21 +58,26 @@ jobs:
       - name: Check for changes
         id: check_changes
         run: |
-          if [ -z "${{ env.from_tag }}" ]; then
-            echo "No latest tag found, assuming there are changes."
-            echo "changes_detected=true" >> $GITHUB_OUTPUT
-          else
-            git fetch origin main
-            latest_commit=$(git rev-parse HEAD)
-            if git diff --quiet ${{ env.from_tag }} $latest_commit; then
-              echo "No changes detected since tag '${{ env.from_tag }}'."
-              echo "changes_detected=false" >> $GITHUB_OUTPUT
-            else
-              echo "Changes detected since tag '${{ env.from_tag }}'."
-              echo "changes_detected=true" >> $GITHUB_OUTPUT
-            fi
+          from_tag="${{ steps.get_latest_tag.outputs.from_tag }}"
+          echo "Checking changes since tag: $from_tag"
+          if [ -z "$from_tag" ]; then
+            echo "No previous tag found."
+            echo "changes_detected=false" >> $GITHUB_ENV
+            exit 0
           fi
-        shell: bash
+          commits=$(git log --oneline "$from_tag"..HEAD)
+          if [ -z "$commits" ]; then
+            echo "No changes detected since $from_tag."
+            echo "changes_detected=false" >> $GITHUB_ENV
+          else
+            echo "Changes detected since $from_tag:"
+            echo "$commits"
+            echo "changes_detected=true" >> $GITHUB_ENV
+          fi
+
+      - name: Output changes detected
+        if: steps.get_commit_range.outputs.changes_detected == 'true'
+        run: echo "changes_detected=true" >> $GITHUB_ENV
 
   create-new-prerelease:
     runs-on: windows-latest
@@ -189,7 +194,7 @@ jobs:
               Move-Item -Path $path -Destination $target
           }
         shell: pwsh
-        
+
       - name: Create Git tag
         run: |
           git config --global user.name "github-actions[bot]"
@@ -198,7 +203,7 @@ jobs:
           git push origin ${{ steps.generate_version_number.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
+
       - name: Generate release notes
         id: generate_release_notes
         uses: mikepenz/release-changelog-builder-action@v4
