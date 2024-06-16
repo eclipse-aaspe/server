@@ -14,10 +14,10 @@ env:
 jobs:
   check-for-changes:
     runs-on: ubuntu-latest
-    name: Check for changes
+    name: Check for changes between HEAD and last created tag
+    #if: github.repository == 'eclipse-aaspe/server'
     outputs:
       changes_detected: ${{ steps.check_changes.outputs.changes_detected }}
-      from_tag: ${{ steps.get_latest_tag.outputs.from_tag }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -69,7 +69,7 @@ jobs:
     runs-on: windows-latest
     name: Create a new prerelease build and attach built packages to release
     needs: check-for-changes
-    if: needs.check-for-changes.outputs.changes_detected == 'true'
+    if: needs.check-for-changes.outputs.changes_detected == true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
