@@ -52,18 +52,19 @@ jobs:
             }
           }
           Write-Host "Checking changes since tag: $latestTag"
-          $changes=$(git log --oneline $latestTag..HEAD)
+          $changes = git log --oneline $latestTag..HEAD
           Write-Host "Found changes $changes"
-          if [ -z "$changes" ]; then
-            echo "No changes detected since $latestTag."
-            echo "changes_detected=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "Changes detected since $latestTag:"
-            echo "$changes"
-            echo "changes_detected=true" >> "$GITHUB_OUTPUT"
-          fi
+          if (-not [string]::IsNullOrEmpty($changes)) {
+            Write-Host "Changes detected since $latestTag:"
+            Write-Host "$changes"
+            echo "changes_detected=true" >> $GITHUB_ENV
+          } else {
+            Write-Host "No changes detected since $latestTag."
+            echo "changes_detected=false" >> $GITHUB_ENV
+          }
         shell: pwsh
-
+      
+      
       - name: Output changes detected
         if: steps.check_changes.outputs.changes_detected == 'true'
         run: echo "changes_detected=true" >> "$GITHUB_OUTPUT"
