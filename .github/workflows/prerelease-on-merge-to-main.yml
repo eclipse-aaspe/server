@@ -62,7 +62,7 @@ jobs:
             Write-Host "No matching tags found, fetching the latest tag."
             $latestTag = $tags | Select-Object -First 1
             if ($latestTag) {
-              echo "from_tag=$latestTag" >> "$GITHUB_OUTPUT"
+              echo "from_tag=$latestTag" >> $GITHUB_OUTPUT
               Write-Host "Latest found tag is $latestTag"
             } else {
               Write-Host "No tags found at all."
@@ -75,10 +75,10 @@ jobs:
           if (-not [string]::IsNullOrEmpty($changes)) {
             Write-Host "Changes detected since $latestTag"
             Write-Host "$changes"
-            echo "changes_detected=true" >> "$GITHUB_OUTPUT"
+            echo "changes_detected=true" >> $GITHUB_OUTPUT
           } else {
             Write-Host "No changes detected since $latestTag."
-            echo "changes_detected=false" >> "$GITHUB_OUTPUT"
+            echo "changes_detected=false" >> $GITHUB_OUTPUT
           }
         shell: pwsh
 
@@ -109,7 +109,7 @@ jobs:
           git fetch --all
           $commitSHA = git rev-parse HEAD
           $branch = git branch -r --contains $commitSHA | Select-String -Pattern 'origin/' | Select-Object -First 1 | ForEach-Object { $_.Line -replace '.*origin/', '' } | ForEach-Object { $_.Trim() }
-          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          echo "branch=$branch" >> $GITHUB_OUTPUT
           Write-Host "The current branch is: $branch"
         shell: pwsh
 
@@ -128,13 +128,13 @@ jobs:
 
           if ($potentialTags.Count -gt 0) {
             $newestStableTag = $potentialTags[0]
-            echo "from_tag=$newestStableTag" >> "$GITHUB_OUTPUT"
+            echo "from_tag=$newestStableTag" >> $GITHUB_OUTPUT
             Write-Host "Latest found tag is $newestStableTag"
           } else {
             Write-Host "No matching tags found, fetching the latest tag."
             $latestTag = $tags | Select-Object -First 1
             if ($latestTag) {
-              echo "from_tag=$latestTag" >> "$GITHUB_OUTPUT"
+              echo "from_tag=$latestTag" >> $GITHUB_OUTPUT
               Write-Host "Latest found tag is $latestTag"
             } else {
               Write-Host "No tags found at all."
@@ -149,7 +149,7 @@ jobs:
         run: |
           $branch = '${{ steps.extract_branch.outputs.branch }}'
           $version = .\BuildVersionNumber.ps1 -suffix ${VERSION_SUFFIX} -branch $branch -githubRunNumber ${{ github.run_number }}
-          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> $GITHUB_OUTPUT
           Write-Host "The version name to build is: $version"
         shell: pwsh
 
