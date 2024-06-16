@@ -39,13 +39,13 @@ jobs:
 
           if ($potentialTags.Count -gt 0) {
             $newestStableTag = $potentialTags[0]
-            echo "from_tag=$newestStableTag" >> $GITHUB_OUTPUT
-            Write-Host "Latest found matching tag is $from_tag"
+            echo "from_tag=$newestStableTag" >> "$GITHUB_OUTPUT"
+            Write-Host "Latest found matching tag is $newestStableTag"
           } else {
             Write-Host "No matching tags found, fetching the latest tag."
             $latestTag = $tags | Select-Object -First 1
             if ($latestTag) {
-              echo "from_tag=$latestTag" >> $GITHUB_OUTPUT
+              echo "from_tag=$latestTag" >> "$GITHUB_OUTPUT"
               Write-Host "Latest found tag is $latestTag"
             } else {
               Write-Host "No tags found at all."
@@ -61,11 +61,11 @@ jobs:
           changes=$(git log --oneline "$from_tag"..HEAD)
           if [ -z "$changes" ]; then
             echo "No changes detected since $from_tag."
-            echo "changes_detected=false" >> $GITHUB_OUTPUT
+            echo "changes_detected=false" >> "$GITHUB_OUTPUT"
           else
             echo "Changes detected since $from_tag:"
             echo "$changes"
-            echo "changes_detected=true" >> $GITHUB_OUTPUT
+            echo "changes_detected=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Output changes detected
