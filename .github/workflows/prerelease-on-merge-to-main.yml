@@ -46,8 +46,7 @@ jobs:
             Write-Host "No matching tags found, fetching the latest tag."
             $latestTag = $tags | Select-Object -First 1
             if ($latestTag) {
-              echo "from_tag=$latestTag" >> $GITHUB_ENV
-              echo "from_tag=$latestTag" >> $GITHUB_OUTPUT
+              echo "from_tag=$latestTag" >> $env:GITHUB_OUTPUT
               Write-Host "Latest found tag is $latestTag"
             } else {
               Write-Host "No tags found at all."
@@ -62,17 +61,17 @@ jobs:
           echo "Checking changes since tag: $from_tag"
           if [ -z "$from_tag" ]; then
             echo "No previous tag found."
-            echo "changes_detected=false" >> $GITHUB_ENV
+            echo "changes_detected=false" >> $env:GITHUB_ENV
             exit 0
           fi
           commits=$(git log --oneline "$from_tag"..HEAD)
           if [ -z "$commits" ]; then
             echo "No changes detected since $from_tag."
-            echo "changes_detected=false" >> $GITHUB_ENV
+            echo "changes_detected=false" >> $env:GITHUB_ENV
           else
             echo "Changes detected since $from_tag:"
             echo "$commits"
-            echo "changes_detected=true" >> $GITHUB_ENV
+            echo "changes_detected=true" >> $env:GITHUB_ENV
           fi
 
       - name: Output changes detected
