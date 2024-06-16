@@ -2,18 +2,19 @@
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-env
 WORKDIR /repo/src
 
-# Copy everything else and build
+# Copy the source code and build
 COPY ./src/ /repo/src/
 COPY ./LICENSE.TXT /repo/LICENSE.txt
 
 RUN dotnet restore -r linux-arm
-
 RUN dotnet publish -c Release -o /out/AasxServerBlazor AasxServerBlazor -r linux-arm --self-contained false --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:6.0-bullseye-slim-arm32v7 as base
-# RUN apt-get update && apt-get install -y libgdiplus
+RUN apt update && apt upgrade --yes
+RUN apt install -y curl nano libgdiplus
 EXPOSE 5001
 COPY --from=build-env /out/AasxServerBlazor/ /AasxServerBlazor/
 COPY ./content-for-demo/ /AasxServerBlazor/
 WORKDIR /AasxServerBlazor
+RUN chmod +x ./startForDemo.sh
 ENTRYPOINT ["/bin/bash", "-c", "./startForDemo.sh"]
