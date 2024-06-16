@@ -79,9 +79,7 @@ jobs:
       - name: Extract branch name
         id: extract_branch
         run: |
-          git fetch --all
-          $commitSHA = git rev-parse HEAD
-          $branch = git branch -r --contains $commitSHA | Select-String -Pattern 'origin/' | Select-Object -First 1 | ForEach-Object { $_.Line -replace '.*origin/', '' } | ForEach-Object { $_.Trim() }
+          $branch = '${{ github.ref }}' -replace 'refs/heads/', ''
           echo "branch=$branch" >> $env:GITHUB_OUTPUT
           Write-Host "The current branch is: $branch"
         shell: pwsh
