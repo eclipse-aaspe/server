@@ -57,7 +57,7 @@ jobs:
       - name: Check for changes
         id: check_changes
         run: |
-          from_tag="${{ steps.get_latest_tag.outputs.from_tag }}"
+          from_tag= "v0.3.0.48-aasV3-alpha-latest"
           echo "Checking changes since tag: $from_tag"
           if [ -z "$from_tag" ]; then
             echo "No previous tag found."
@@ -172,7 +172,7 @@ jobs:
       - name: Rename the release assets
         working-directory: .
         run: |
-          $version = "v0.3.0.48-aasV3-alpha-latest"
+          $version = '${{ steps.generate_version_number.outputs.version }}'
           $releaseDir = Join-Path $(Get-Location) "artefacts/release/$version"
           Write-Host "Release directory: $releaseDir"
 
