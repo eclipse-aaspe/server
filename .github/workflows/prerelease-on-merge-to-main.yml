@@ -75,7 +75,7 @@ jobs:
         env:
           $CHANGES_HAPPENED: ${{ needs.check-for-changes.outputs.changes_detected }}
         run: |
-          Write-Host: "changes happened = $CHANGES_HAPPENED"
+          Write-Host "Changes happened = $CHANGES_HAPPENED"
           if(!$CHANGES_HAPPENED)
           {
             exit 1
