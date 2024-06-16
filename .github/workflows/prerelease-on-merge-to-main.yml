@@ -71,6 +71,16 @@ jobs:
     needs: [check-for-changes]
     if: needs.check-for-changes.outputs.changes_detected == 'true'
     steps:
+      - name: Changes happened
+        env:
+          $CHANGES_HAPPENED: ${{ needs.check-for-changes.outputs.changes_detected }}
+        run: |
+          Write-Host: "changes happened = $CHANGES_HAPPENED"
+          if(!$CHANGES_HAPPENED)
+          {
+            exit 1
+          }
+        
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
