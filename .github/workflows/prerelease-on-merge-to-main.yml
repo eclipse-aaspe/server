@@ -149,7 +149,7 @@ jobs:
       - name: Package release
         working-directory: src
         run: |
-          $version = '${{ steps.generate_version_number.outputs.version }}'
+          $version = 'v${{ steps.generate_version_number.outputs.version }}'
           mkdir -p artefacts/release/$version
           Write-Host "Packaging for the release version: $version"
           .\PackageRelease.ps1 -version $version
@@ -158,7 +158,7 @@ jobs:
       - name: Rename the release assets
         working-directory: .
         run: |
-          $version = '${{ steps.generate_version_number.outputs.version }}'
+          $version = 'v${{ steps.generate_version_number.outputs.version }}'
           $releaseDir = Join-Path $(Get-Location) "artefacts/release/$version"
           Write-Host "Release directory: $releaseDir"
 
@@ -184,8 +184,8 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git tag ${{ steps.generate_version_number.outputs.version }}
-          git push origin ${{ steps.generate_version_number.outputs.version }}
+          git tag v${{ steps.generate_version_number.outputs.version }}
+          git push origin v${{ steps.generate_version_number.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -196,7 +196,7 @@ jobs:
           configuration: ".github/changelog_configuration.json"
           token: ${{ secrets.GITHUB_TOKEN }}
           fromTag: "${{ steps.get_latest_tag.outputs.from_tag }}"
-          toTag: "${{ steps.generate_version_number.outputs.version }}"
+          toTag: "v${{ steps.generate_version_number.outputs.version }}"
           fetchViaCommits: "true"
           ignorePreReleases: "false"
           fetchReleaseInformation: "true"
@@ -220,7 +220,7 @@ jobs:
       - name: Upload the release assets
         uses: AButler/upload-release-assets@v3.0
         with:
-          files: "artefacts/release/${{ steps.generate_version_number.outputs.version }}/*.zip"
+          files: "artefacts/release/v${{ steps.generate_version_number.outputs.version }}/*.zip"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           release-tag: "v${{ steps.generate_version_number.outputs.version }}"
 
