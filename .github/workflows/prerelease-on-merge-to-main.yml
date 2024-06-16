@@ -55,12 +55,12 @@ jobs:
           $changes = git log --oneline $latestTag..HEAD
           Write-Host "Found changes $changes"
           if (-not [string]::IsNullOrEmpty($changes)) {
-            Write-Host "Changes detected since $latestTag:"
+            Write-Host "Changes detected since $latestTag"
             Write-Host "$changes"
-            echo "changes_detected=true" >> $GITHUB_ENV
+            echo "changes_detected=true" >> $GITHUB_OUTPUT
           } else {
             Write-Host "No changes detected since $latestTag."
-            echo "changes_detected=false" >> $GITHUB_ENV
+            echo "changes_detected=false" >> $GITHUB_OUTPUT
           }
         shell: pwsh
       
