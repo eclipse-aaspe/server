@@ -65,7 +65,6 @@ jobs:
             echo "Changes detected since $from_tag:"
             echo "$changes"
             echo "changes_detected=true" >> $GITHUB_ENV
-          }
 
       - name: Output changes detected
         if: steps.check_changes.outputs.changes_detected == 'true'
