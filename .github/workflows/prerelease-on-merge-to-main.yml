@@ -39,13 +39,13 @@ jobs:
 
           if ($potentialTags.Count -gt 0) {
             $newestStableTag = $potentialTags[0]
-            echo "from_tag=$newestStableTag" >> $env:GITHUB_OUTPUT
+            echo "from_tag=$newestStableTag" >> $env:GITHUB_ENV
             Write-Host "Latest found tag is $newestStableTag"
           } else {
             Write-Host "No matching tags found, fetching the latest tag."
             $latestTag = $tags | Select-Object -First 1
             if ($latestTag) {
-              echo "from_tag=$latestTag" >> $env:GITHUB_OUTPUT
+              echo "from_tag=$latestTag" >> $env:GITHUB_ENV
               Write-Host "Latest found tag is $latestTag"
             } else {
               Write-Host "No tags found at all."
@@ -56,17 +56,17 @@ jobs:
       - name: Check for changes
         id: check_changes
         run: |
-          if [ -z "${{ env.latest_tag }}" ]; then
+          if [ -z "${{ steps.get_latest_tag.outputs.from_tag }}" ]; then
             echo "No latest tag found, assuming there are changes."
             echo "changes_detected=true" >> $GITHUB_OUTPUT
           else
             git fetch origin main
             latest_commit=$(git rev-parse HEAD)
-            if git diff --quiet ${{ env.latest_tag }} $latest_commit; then
-              echo "No changes detected since tag '${{ env.latest_tag }}'."
+            if git diff --quiet ${{ esteps.get_latest_tag.outputs.from_tag  }} $latest_commit; then
+              echo "No changes detected since tag '${{ steps.get_latest_tag.outputs.from_tag  }}'."
               echo "changes_detected=false" >> $GITHUB_OUTPUT
             else
-              echo "Changes detected since tag '${{ env.latest_tag }}'."
+              echo "Changes detected since tag '${{ steps.get_latest_tag.outputs.from_tag  }}'."
               echo "changes_detected=true" >> $GITHUB_OUTPUT
             fi
           fi
@@ -93,7 +93,7 @@ jobs:
           git fetch --all
           $commitSHA = git rev-parse HEAD
           $branch = git branch -r --contains $commitSHA | Select-String -Pattern 'origin/' | Select-Object -First 1 | ForEach-Object { $_.Line -replace '.*origin/', '' } | ForEach-Object { $_.Trim() }
-          echo "branch=$branch" >> $env:GITHUB_OUTPUT
+          echo "branch=$branch" >> $env:GITHUB_ENV
           Write-Host "The current branch is: $branch"
         shell: pwsh
 
@@ -132,7 +132,7 @@ jobs:
         run: |
           $branch = '${{ steps.extract_branch.outputs.branch }}'
           $version = .\BuildVersionNumber.ps1 -suffix ${VERSION_SUFFIX} -branch $branch -githubRunNumber ${{ github.run_number }}
-          echo "version=$version" >> $env:GITHUB_OUTPUT
+          echo "version=$version" >> $env:GITHUB_ENV
           Write-Host "The version name to build is: $version"
         shell: pwsh
 
