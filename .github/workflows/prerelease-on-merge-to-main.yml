@@ -86,14 +86,23 @@ jobs:
       - name: Get the newest tag
         id: get_latest_tag
         run: |
-          $stableTags = git tag --list "*${BRANCH_SUFFIX}*" --sort=creatordate
-          if ($stableTags) {
-            $newestStableTag = $stableTags | Select-Object -First 1
+          git fetch --tags
+          $tags = git tag --sort=-creatordate
+          $branchSuffix = "${{ env.BRANCH_SUFFIX }}"
+          $potentialTags = @()
+          foreach ($tag in $tags) {
+            if ($tag -match ".*-$branchSuffix$") {
+              $potentialTags += $tag
+            }
+          }
+
+          if ($potentialTags.Count -gt 0) {
+            $newestStableTag = $potentialTags[0]
             echo "from_tag=$newestStableTag" >> $env:GITHUB_OUTPUT
             Write-Host "Latest found tag is $newestStableTag"
           } else {
-            Write-Host "No stable tags found, fetching the latest tag."
-            $latestTag = git tag --list --sort=-creatordate | Select-Object -First 1
+            Write-Host "No matching tags found, fetching the latest tag."
+            $latestTag = $tags | Select-Object -First 1
             if ($latestTag) {
               echo "from_tag=$latestTag" >> $env:GITHUB_OUTPUT
               Write-Host "Latest found tag is $latestTag"
