@@ -16,7 +16,7 @@ namespace IO.Swagger.Lib.V3.Services
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger)); ;
         }
-        public List<Reference> GetAllAssetAdministrationShellReference(List<AssetAdministrationShell> aasList)
+        public List<Reference>? GetAllAssetAdministrationShellReference(List<AssetAdministrationShell> aasList)
         {
             if (aasList.IsNullOrEmpty())
             {
@@ -33,7 +33,7 @@ namespace IO.Swagger.Lib.V3.Services
             return result;
         }
 
-        public Reference GetAssetAdministrationShellReference(AssetAdministrationShell aas)
+        public Reference? GetAssetAdministrationShellReference(AssetAdministrationShell aas)
         {
             if (aas == null)
             {
@@ -44,7 +44,7 @@ namespace IO.Swagger.Lib.V3.Services
             return aas.GetReference();
         }
 
-        public List<Reference> GetAllReferences(List<IReferable> referables)
+        public List<Reference?>? GetAllReferences(List<IReferable> referables)
         {
             if (referables.IsNullOrEmpty())
             {
@@ -52,7 +52,7 @@ namespace IO.Swagger.Lib.V3.Services
                 return null;
             }
 
-            var result = new List<Reference>();
+            var result = new List<Reference?>();
             foreach (var referable in referables)
             {
                 result.Add(GetReference(referable));
@@ -62,7 +62,7 @@ namespace IO.Swagger.Lib.V3.Services
         }
 
 
-        public Reference GetReference(IReferable referable)
+        public Reference? GetReference(IReferable referable)
         {
             if (referable == null)
             {

@@ -818,23 +818,6 @@ namespace AasxRestServerLibrary
         public void EvalGetAasAndAsset(IHttpContext context, string aasid, bool deep = false, bool complete = false)
         {
             dynamic res = new ExpandoObject();
-            int index = -1;
-
-            // check authentication
-            if (false && withAuthentification)
-            {
-                string accessrights = SecurityCheck(context, ref index);
-
-                if (accessrights == null)
-                {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
-                    return;
-                }
-
-                res.confirm = "Authorization = " + accessrights;
-            }
-
             // access the first AAS
             var findAasReturn = this.FindAAS(aasid, context.Request.QueryString, context.Request.RawUrl);
             if (findAasReturn.aas == null)
@@ -2271,9 +2254,9 @@ namespace AasxRestServerLibrary
             // try to apply a little bit voodo
             double dblval = 0.0;
             string strval = smep.Value;
-            if (smep.FindQualifierOfType("DEMO") != null && smep.Value != null && smep.ValueType != null
-                && smep.ValueType == DataTypeDefXsd.Double
-                && double.TryParse(smep.Value, NumberStyles.Any, CultureInfo.InvariantCulture, out dblval))
+            if (smep.FindQualifierOfType("DEMO") != null && smep.Value != null
+                                                         && smep.ValueType == DataTypeDefXsd.Double
+                                                         && double.TryParse(smep.Value, NumberStyles.Any, CultureInfo.InvariantCulture, out dblval))
             {
                 // add noise
                 dblval += Math.Sin((0.001 * DateTime.UtcNow.Millisecond) * 6.28);
@@ -2969,24 +2952,6 @@ namespace AasxRestServerLibrary
 
         public void EvalGetServerProfile(IHttpContext context)
         {
-            dynamic res1 = new ExpandoObject();
-            int index = -1;
-
-            // check authentication
-            if (false && withAuthentification)
-            {
-                string accessrights = SecurityCheck(context, ref index);
-
-                if (accessrights == null)
-                {
-                    res1.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res1);
-                    return;
-                }
-
-                res1.confirm = "Authorization = " + accessrights;
-            }
-
             // get the list
             dynamic res = new ExpandoObject();
             var capabilities = new List<ulong>(new ulong[]
@@ -4513,24 +4478,8 @@ namespace AasxRestServerLibrary
 
         public void EvalGetFile(IHttpContext context, int envIndex, string filePath)
         {
-            dynamic res = new ExpandoObject();
-            int index = -1;
-
-            // check authentication
-            if (false && withAuthentification)
-            {
-                string accessrights = SecurityCheck(context, ref index);
-
-                if (!checkAccessRights(context, accessrights, "/aasx", "READ"))
-                {
-                    return;
-                }
-
-                res.confirm = "Authorization = " + accessrights;
-            }
-
             context.Response.StatusCode = HttpStatusCode.Ok;
-            string fname = Path.GetFileName(filePath);
+            var fname = Path.GetFileName(filePath);
             var s = Program.env[ envIndex ].GetLocalStreamFromPackage(filePath);
             SendStreamResponse(context, s, fname);
         }
@@ -4915,24 +4864,6 @@ namespace AasxRestServerLibrary
                             }
                         }
                     }
-                }
-            }
-        }
-
-        public static void serverCertsInit()
-        {
-            return;
-
-            if (Directory.Exists("./authservercerts"))
-            {
-                serverCertfileNames = Directory.GetFiles("./authservercerts", "*.cer");
-
-                serverCerts = new X509Certificate2[serverCertfileNames.Length];
-
-                for (int i = 0; i < serverCertfileNames.Length; i++)
-                {
-                    serverCerts[ i ] = new X509Certificate2(serverCertfileNames[ i ]);
-                    Console.WriteLine("Loaded auth server certifcate: " + Path.GetFileName(serverCertfileNames[ i ]));
                 }
             }
         }

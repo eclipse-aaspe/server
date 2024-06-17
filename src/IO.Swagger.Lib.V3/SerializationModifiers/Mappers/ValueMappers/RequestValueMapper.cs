@@ -190,14 +190,14 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new Property(DataTypeDefXsd.String, idShort: valueDTO.idShort, value: valueDTO.value);
         }
 
-        private static IReference TransformReference(ReferenceDTO referenceDTO)
+        private static IReference? TransformReference(ReferenceDTO referenceDTO)
         {
             if (referenceDTO == null)
                 return null;
             return new Reference(referenceDTO.type, TransformKeys(referenceDTO.keys), TransformReference(referenceDTO.referredSemanticId));
         }
 
-        private static List<IKey> TransformKeys(List<KeyDTO> keys)
+        private static List<IKey>? TransformKeys(List<KeyDTO>? keys)
         {
             if (keys == null) return null;
 

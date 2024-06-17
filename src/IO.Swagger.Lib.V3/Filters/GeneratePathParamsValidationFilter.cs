@@ -53,21 +53,21 @@ namespace IO.Swagger.Filters
                     {
                         if (stringLengthAttr.NamedArguments.Count == 1)
                         {
-                            minLenght = (int)stringLengthAttr.NamedArguments.Single(p => p.MemberName == "MinimumLength").TypedValue.Value;
+                            minLenght = (int)(stringLengthAttr.NamedArguments.Single(p => p.MemberName == "MinimumLength").TypedValue.Value ?? 0);
                         }
-                        maxLength = (int)stringLengthAttr.ConstructorArguments[0].Value;
+                        maxLength = (int)(stringLengthAttr.ConstructorArguments[0].Value ?? 1);
                     }
 
                     var minLengthAttr = attributes.FirstOrDefault(p => p.AttributeType == typeof(MinLengthAttribute));
                     if (minLengthAttr != null)
                     {
-                        minLenght = (int)minLengthAttr.ConstructorArguments[0].Value;
+                        minLenght = (int)(minLengthAttr.ConstructorArguments[0].Value ?? 0);
                     }
 
                     var maxLengthAttr = attributes.FirstOrDefault(p => p.AttributeType == typeof(MaxLengthAttribute));
                     if (maxLengthAttr != null)
                     {
-                        maxLength = (int)maxLengthAttr.ConstructorArguments[0].Value;
+                        maxLength = (int)(maxLengthAttr.ConstructorArguments[0].Value ?? 1);
                     }
 
                     if (swaggerParam is OpenApiParameter)
@@ -80,8 +80,8 @@ namespace IO.Swagger.Filters
                     var rangeAttr = attributes.FirstOrDefault(p => p.AttributeType == typeof(RangeAttribute));
                     if (rangeAttr != null)
                     {
-                        int rangeMin = (int)rangeAttr.ConstructorArguments[0].Value;
-                        int rangeMax = (int)rangeAttr.ConstructorArguments[1].Value;
+                        var rangeMin = (int)(rangeAttr.ConstructorArguments[0].Value ?? 0);
+                        var rangeMax = (int)(rangeAttr.ConstructorArguments[1].Value ?? 1);
 
                         if (swaggerParam is OpenApiParameter)
                         {

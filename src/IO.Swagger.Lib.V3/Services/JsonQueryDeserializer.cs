@@ -21,9 +21,9 @@ namespace IO.Swagger.Lib.V3.Services
             _decoderService = decoderService;
         }
 
-        public Reference DeserializeReference(string fieldName, string referenceString)
+        public Reference? DeserializeReference(string fieldName, string referenceString)
         {
-            Reference output = null;
+            Reference? output = null;
             try
             {
                 if (!string.IsNullOrEmpty(referenceString))
@@ -37,10 +37,6 @@ namespace IO.Swagger.Lib.V3.Services
             catch (JsonException ex)
             {
                 throw new JsonDeserializationException(fieldName, ex.Message);
-            }
-            catch (Exception)
-            {
-                throw;
             }
 
             return output;

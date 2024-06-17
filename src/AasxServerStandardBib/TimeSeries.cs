@@ -1553,7 +1553,7 @@ namespace AasxTimeSeries
                         for (int i = 0; i < dataValuesCount; i++)
                         {
                             var sourceTimeStamp = historyDatas[0].DataValues[i].SourceTimestamp;
-                            if (sourceTimeStamp != null && sourceTimeStamp >= startTime)
+                            if (sourceTimeStamp >= startTime)
                             {
                                 bool isValid = true;
                                 var row = new List<object>();

@@ -270,7 +270,7 @@ namespace AasSecurity
             }
         }
 
-        private static PermissionsPerObject ParsePermissionPerObject(AdminShellPackageEnv? env, ISubmodelElement permPerObjColl)
+        private static PermissionsPerObject? ParsePermissionPerObject(AdminShellPackageEnv? env, ISubmodelElement permPerObjColl)
         {
             if (permPerObjColl == null) return null;
 

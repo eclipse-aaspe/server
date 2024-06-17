@@ -14760,7 +14760,7 @@ namespace AasCore.Aas3_0
             /// Thrown when <paramref name="node" /> is not a valid JSON
             /// representation of AssetAdministrationShell.
             /// </exception>
-            public static Aas.AssetAdministrationShell AssetAdministrationShellFrom(
+            public static AssetAdministrationShell? AssetAdministrationShellFrom(
                 Nodes.JsonNode node)
             {
                 Aas.AssetAdministrationShell? result = DeserializeImplementation.AssetAdministrationShellFrom(
@@ -14785,7 +14785,7 @@ namespace AasCore.Aas3_0
             /// Thrown when <paramref name="node" /> is not a valid JSON
             /// representation of AssetInformation.
             /// </exception>
-            public static Aas.AssetInformation AssetInformationFrom(
+            public static AssetInformation? AssetInformationFrom(
                 Nodes.JsonNode node)
             {
                 Aas.AssetInformation? result = DeserializeImplementation.AssetInformationFrom(
@@ -14860,7 +14860,7 @@ namespace AasCore.Aas3_0
             /// Thrown when <paramref name="node" /> is not a valid JSON
             /// representation of SpecificAssetId.
             /// </exception>
-            public static Aas.SpecificAssetId SpecificAssetIdFrom(
+            public static SpecificAssetId? SpecificAssetIdFrom(
                 Nodes.JsonNode node)
             {
                 Aas.SpecificAssetId? result = DeserializeImplementation.SpecificAssetIdFrom(
@@ -14885,7 +14885,7 @@ namespace AasCore.Aas3_0
             /// Thrown when <paramref name="node" /> is not a valid JSON
             /// representation of Submodel.
             /// </exception>
-            public static Aas.Submodel SubmodelFrom(
+            public static Submodel? SubmodelFrom(
                 Nodes.JsonNode node)
             {
                 Aas.Submodel? result = DeserializeImplementation.SubmodelFrom(
@@ -14911,7 +14911,7 @@ namespace AasCore.Aas3_0
             /// representation of ISubmodelElement.
             /// </exception>
             [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
-            public static Aas.ISubmodelElement ISubmodelElementFrom(
+            public static ISubmodelElement? ISubmodelElementFrom(
                 Nodes.JsonNode node)
             {
                 Aas.ISubmodelElement? result = DeserializeImplementation.ISubmodelElementFrom(
@@ -15514,7 +15514,7 @@ namespace AasCore.Aas3_0
             /// Thrown when <paramref name="node" /> is not a valid JSON
             /// representation of ConceptDescription.
             /// </exception>
-            public static Aas.ConceptDescription ConceptDescriptionFrom(
+            public static ConceptDescription? ConceptDescriptionFrom(
                 Nodes.JsonNode node)
             {
                 Aas.ConceptDescription? result = DeserializeImplementation.ConceptDescriptionFrom(
@@ -15564,7 +15564,7 @@ namespace AasCore.Aas3_0
             /// Thrown when <paramref name="node" /> is not a valid JSON
             /// representation of Reference.
             /// </exception>
-            public static Aas.Reference ReferenceFrom(
+            public static Reference? ReferenceFrom(
                 Nodes.JsonNode node)
             {
                 Aas.Reference? result = DeserializeImplementation.ReferenceFrom(

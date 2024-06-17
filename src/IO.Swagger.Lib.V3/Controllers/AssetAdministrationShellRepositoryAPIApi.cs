@@ -123,7 +123,7 @@ namespace IO.Swagger.Controllers
             _logger.LogInformation($"Received request to delete a file from AAS");
 
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
-            var decodedSmIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+            var decodedSmIdentifier  = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             if (!Program.noSecurity)
             {
@@ -174,7 +174,7 @@ namespace IO.Swagger.Controllers
             _logger.LogInformation($"Received request to delete a submodel from AAS");
 
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
-            var decodedSmIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+            var decodedSmIdentifier  = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _aasService.DeleteSubmodelById(decodedAasIdentifier, decodedSmIdentifier);
 
@@ -208,7 +208,7 @@ namespace IO.Swagger.Controllers
         {
             _logger.LogInformation($"Received request to delete a SubmodelElement from AAS");
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
-            var decodedSmIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+            var decodedSmIdentifier  = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             if (!Program.noSecurity)
             {
@@ -256,7 +256,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult DeleteSubmodelReferenceByIdAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier)
         {
-            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to delete submodel reference with id {submodelIdentifier} from the AAS with id {aasIdentifier}.");
@@ -400,7 +400,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAllSubmodelElementsAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
         {
-            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to get all the submodel elements from submodel with id {submodelIdentifier} and the AAS with id {aasIdentifier}.");
@@ -454,7 +454,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAllSubmodelElementsMetadataAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level)
         {
-            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to get metadata of all the submodel elements from the submodel with id {decodedSubmodelIdentifier} and AAS with id {decodedAasIdentifier}");
@@ -510,7 +510,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAllSubmodelElementsPathAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
         {
-            var decodedAasIdentifier = _decoderService.Decode($"aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode($"aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode($"submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received a request to get path for all the submodel elements from the submodel with id {decodedSubmodelIdentifier} and aas with id {decodedAasIdentifier}");
@@ -565,7 +565,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAllSubmodelElementsReferenceAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level)
         {
-            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to get references of all the submodel elements from submodel with id {submodelIdentifier} and the AAS with id {aasIdentifier}.");
@@ -620,7 +620,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAllSubmodelElementsValueOnlyAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level)
         {
-            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to get the value of all the submodel elements from the submodel with id {decodedSubmodelIdentifier} and aas with id {decodedAasIdentifier}");
@@ -821,7 +821,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetFileByPathAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath)
         {
-            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to get file by path at the submodel element {idShortPath} from submodel with id {submodelIdentifier} and the AAS with id {aasIdentifier}.");
@@ -1035,7 +1035,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetSubmodelByIdAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
         {
-            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to get the submodel with id {submodelIdentifier} from the AAS with id {aasIdentifier}.");
@@ -1080,7 +1080,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetSubmodelByIdMetadataAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level)
         {
-            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to get metadat of the submodel with id {decodedSubmodelIdentifier} from the AAS with id {decodedAasIdentifier}");
@@ -1127,7 +1127,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetSubmodelByIdPathAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level)
         {
-            var decodedAasIdentifier = _decoderService.Decode($"aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode($"aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode($"submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to get path of a submodel with is {decodedSubmodelIdentifier} and AAS with id {decodedAasIdentifier}");
@@ -1173,7 +1173,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetSubmodelByIdReferenceAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier)
         {
-            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to get the submodel with id {submodelIdentifier} from the AAS with id {aasIdentifier}.");
@@ -1220,7 +1220,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetSubmodelByIdValueOnlyAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
         {
-            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to get the value of submodel with id {decodedSubmodelIdentifier} from the aas with id {decodedAasIdentifier}");
@@ -1269,7 +1269,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetSubmodelElementByPathAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
         {
-            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to get the submodel element at {idShortPath} from the submodel with id {submodelIdentifier} and the AAS with id {aasIdentifier}.");
@@ -1324,7 +1324,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetSubmodelElementByPathMetadataAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level)
         {
-            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to get metadata of the submodel element at {idShortPath} from the submodel with id {submodelIdentifier} and the AAS with id {aasIdentifier}.");
@@ -1379,7 +1379,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetSubmodelElementByPathPathAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level)
         {
-            var decodedAasIdentifier = _decoderService.Decode($"aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode($"aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode($"submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received a request to get a path of a submodel element at {idShortPath} from a submodel with id {decodedSubmodelIdentifier} and aas with id {decodedAasIdentifier}");
@@ -1434,7 +1434,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetSubmodelElementByPathReferenceAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level)
         {
-            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to get the submodel element at {idShortPath} from the submodel with id {submodelIdentifier} and the AAS with id {aasIdentifier}.");
@@ -1491,7 +1491,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetSubmodelElementByPathValueOnlyAasRepository([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
         {
-            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to get the value of the submodel element at {idShortPath} from the submodel with id {decodedSubmodelIdentifier} and the aas with id {decodedAasIdentifier}");
@@ -1801,7 +1801,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult PatchSubmodelAasRepository([FromBody] Submodel body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
         {
-            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to update the submodel with id {decodedSubmodelIdentifier} from the AAS with id {decodedAasIdentifier}");
@@ -1836,7 +1836,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult PatchSubmodelByIdMetadataAasRepository([FromBody] SubmodelMetadata body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
         {
-            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received Request to update for submodel with id {decodedSubmodelIdentifier} from the aas with id {decodedAasIdentifier}");
@@ -1875,7 +1875,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult PatchSubmodelByIdValueOnlyAasRepository([FromBody] SubmodelValue body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromQuery] LevelEnum level)
         {
-            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to update the sumodel with id {decodedSubmodelIdentifier} from the aas with tid {decodedAasIdentifier} by value.");
@@ -1914,7 +1914,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult PatchSubmodelElementValueByPathAasRepository([FromBody] ISubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level)
         {
-            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to update the submodel element at {idShortPath} from submodel with id {decodedSubmodelIdentifier} from the AAS with id {decodedAasIdentifier}");
@@ -1950,7 +1950,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult PatchSubmodelElementValueByPathMetadata([FromBody] ISubmodelElementMetadata body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level)
         {
-            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to update the submodel element at {idShortPath} in the submodel with id {decodedSubmodelIdentifier} and the AAS with id {decodedAasIdentifier}");
@@ -1991,7 +1991,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult PatchSubmodelElementValueByPathValueOnly([FromBody] ISubmodelElementValue body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] LevelEnum level)
         {
-            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to update the submodel element at {idShortPath} in the submodel with id {decodedSubmodelIdentifier} and the AAS with id {decodedAasIdentifier} by value.");
@@ -2062,7 +2062,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult PostSubmodelElementAasRepository([FromBody] ISubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, bool first)
         {
-            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to create a new submodel element in the submodel {decodedSubmodelIdentifier} and AAS {decodedAasIdentifier}");
@@ -2117,7 +2117,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult PostSubmodelElementByPathAasRepository([FromBody] ISubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, bool first)
         {
-            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to create a new submodel element in the submodel {decodedSubmodelIdentifier} and AAS {decodedAasIdentifier}");
@@ -2271,7 +2271,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult PutSubmodelByIdAasRepository([FromBody] Submodel body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier)
         {
-            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to replace a a submodel {decodedSubmodelIdentifier} from the AAS {decodedAasIdentifier}");
@@ -2307,7 +2307,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult PutSubmodelElementByPathAasRepository([FromBody] ISubmodelElement body, [FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath)
         {
-            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to replace a submodel element at {idShortPath} deom the submodel with id {decodedSubmodelIdentifier} from the AAS {decodedAasIdentifier}");
@@ -2338,7 +2338,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult PutFileByPath([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute] string idShortPath, IFormFile file)
         {
-            var decodedAasId = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedAasId      = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             var stream = new MemoryStream();

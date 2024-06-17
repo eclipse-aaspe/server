@@ -377,7 +377,6 @@ namespace AasxServer
             client.Timeout = TimeSpan.FromSeconds(20);
             Task task;
 
-            var serverCert = new X509Certificate2();
             Stream s = null;
             try
             {
@@ -397,7 +396,7 @@ namespace AasxServer
             {
                 s.CopyTo(m);
                 var b = m.GetBuffer();
-                serverCert = new X509Certificate2(b);
+                var serverCert = new X509Certificate2(b);
                 Console.WriteLine("Auth server certificate: " + authServerCertificate.Value);
                 s.Close();
             }

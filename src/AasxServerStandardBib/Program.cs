@@ -1193,23 +1193,12 @@ namespace AasxServer
                 return;
             }
 
-            rootCommand.Handler = System.CommandLine.Invocation.CommandHandler.Create(
-                                                                                      async (CommandLineArguments a) =>
+            rootCommand.Handler = System.CommandLine.Invocation.CommandHandler.Create((CommandLineArguments a) =>
                                                                                       {
-                                                                                          /*
-                                                                                          if (!(a.Rest || a.Opc || a.Mqtt))
-                                                                                          {
-                                                                                              Console.Error.WriteLine($"Please specify --rest and/or --opc and/or --mqtt{nl}");
-                                                                                              new HelpBuilder(new SystemConsole()).Write(rootCommand);
-                                                                                              return 1;
-                                                                                          }
-                                                                                          */
-
-                                                                                          //return Run(a);
                                                                                           var task = Run(a);
                                                                                           task.Wait();
                                                                                           var op = task.Result;
-                                                                                          return op;
+                                                                                          return Task.FromResult(op);
                                                                                       });
 
             int exitCode = rootCommand.InvokeAsync(args).Result;
@@ -1999,26 +1988,18 @@ namespace AasxServer
             }
         }
 
-        private static System.Timers.Timer OPCClientTimer;
         static bool timerSet = false;
 
         private static void SetOPCClientTimer(double value)
         {
-            if (!timerSet)
+            if (timerSet)
             {
-                /*
-                // Create a timer with an specified interval.
-                OPCClientTimer = new System.Timers.Timer(value);
-                // Hook up the Elapsed event for the timer.
-                OPCClientTimer.Elapsed += OnOPCClientNextTimedEvent;
-                OPCClientTimer.AutoReset = true;
-                OPCClientTimer.Enabled = true;
-                */
-
-                timerSet = true;
-
-                AasxTimeSeries.TimeSeries.SetOPCClientThread(value);
+                return;
             }
+
+            timerSet = true;
+
+            AasxTimeSeries.TimeSeries.SetOPCClientThread(value);
         }
 
         public static event EventHandler NewDataAvailable;
@@ -2098,12 +2079,12 @@ namespace AasxServer
             restTimer.Enabled   =  true;
         }
 
-        static bool RESTalreadyRunning = false;
+        static bool _resTalreadyRunning = false;
         static long countGetPut = 0;
 
         private static void OnRestTimedEvent(Object source, ElapsedEventArgs e)
         {
-            RESTalreadyRunning = true;
+            _resTalreadyRunning = true;
 
             string GETSUBMODEL = "";
             string GETURL      = "";
@@ -2239,7 +2220,7 @@ namespace AasxServer
                 }
             }
 
-            RESTalreadyRunning = false;
+            _resTalreadyRunning = false;
 
             // start MQTT Client as a worker (will start in the background)
             var worker = new BackgroundWorker();

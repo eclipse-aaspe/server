@@ -70,8 +70,8 @@ if (!string.IsNullOrEmpty(json))
                                     json = response.Content.ReadAsStringAsync().Result;
                                     if (!string.IsNullOrEmpty(json))
                                     {
-                                        var mStrm2 = new MemoryStream(Encoding.UTF8.GetBytes(json));
-                                        var node2 = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm2).Result;
+                                        var       mStrm2   = new MemoryStream(Encoding.UTF8.GetBytes(json));
+                                        var       node2    = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm2).Result;
                                         var submodel = Jsonization.Deserialize.SubmodelFrom(node2);
                                         Console.WriteLine("Received Submodel: " + submodel.IdShort);
                                         // Iterate submodel here
