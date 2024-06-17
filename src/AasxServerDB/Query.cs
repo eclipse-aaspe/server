@@ -315,7 +315,9 @@ namespace AasxServerDB
         {
             if (semanticId.IsNullOrEmpty())
                 return new List<SMSet>();
-            return new AasContext().SMSets.Where(s => s.SemanticId != null && s.SemanticId.Equals(semanticId)).ToList();
+            return new AasContext().SMSets
+                .Where(s => s.SemanticId != null && s.SemanticId.Equals(semanticId))
+                .ToList();
         }
 
         private List<SMResult> GetSMResult(List<SMSet> smList)
@@ -323,7 +325,7 @@ namespace AasxServerDB
             return smList.ConvertAll(
                 sm =>
                 {
-                    string identifier = (sm != null && sm.Identifier != null) ? sm.Identifier : "";
+                    string identifier = (sm != null && !sm.Identifier.IsNullOrEmpty()) ? sm.Identifier : string.Empty;
                     return new SMResult()
                     {
                         smId = identifier,
