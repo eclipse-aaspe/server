@@ -13,6 +13,7 @@
 @using System.Drawing;
 @using System.IO;
 @using AasxServerBlazor.Data
+@using TimeStampConverter
 @*@using static AdminShellNS.AdminShellV30;*@
 @using static AasxServerStandardBib.TimeSeriesPlotting;
 
@@ -211,10 +212,10 @@
                 }
                 if (selectedNode != null && selectedNode.Tag is IReferable r)
                 {
-                    <span style="color:lightgray;">UPDATE @r.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                    <span style="color:lightgray;">UPDATE @TimeStampConverter.DateTimeToString(r.TimeStamp)</span><br />
                     <button style="border-width: 1px; border-color: black; background-color: lightgray" @onclick="setTimeStamp">TIMESTAMP</button><br />
-                    <span style="color:lightgray;">CREATE @r.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
-                    <span style="color:lightgray;">TREE @r.TimeStampTree.ToString("yy-MM-dd HH:mm:ss.fff")</span>
+                    <span style="color:lightgray;">CREATE @TimeStampConverter.DateTimeToString(r.TimeStampCreate)</span><br />
+                    <span style="color:lightgray;">TREE @TimeStampConverter.DateTimeToString(r.TimeStampTree)</span>
 
                     <br />
                     @code {
@@ -492,7 +493,7 @@
                             <div class="d-flex flex-column">
                                 <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series" style="max-width:950px;cursor:zoom-in;" />
                                 <span class="text-muted" style="font-size:14px;">
-                                    Image processing took @elapsedMsToProcessImage ms (Last update: @timeStampPlot.ToString("yy-MM-dd HH:mm:ss.fff"))
+                                    Image processing took @elapsedMsToProcessImage ms (Last update: @TimeStampConverter.DateTimeToString(timeStampPlot))
                                 </span>
                             </div>
 
@@ -576,8 +577,8 @@
                         var refsme = Program.env[0].AasEnv.FindReferableByReference(be.Observed);
                         if (refsme != null)
                         {
-                            <span style="color:lightgray;">UPDATE @refsme.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
-                            <span style="color:lightgray;">CREATE @refsme.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span><br />
+                            <span style="color:lightgray;">UPDATE @TimeStampConverter.DateTimeToString(refsme.TimeStamp)</span><br />
+                            <span style="color:lightgray;">CREATE @TimeStampConverter.DateTimeToString(refsme.TimeStampCreate)</span><br />
                         }
                         else
                         {
@@ -1524,7 +1525,7 @@
 
         if (o is IReferable r)
             // ret += " (" + r.TimeStamp.Ticks + ") ";
-            ret += " (" + r.TimeStampTree.ToString("yy-MM-dd HH:mm:ss.fff") + ") ";
+            ret += " (" + TimeStampConverter.DateTimeToString(r.TimeStampTree) + ") ";
 
         return ret;
     }

@@ -2,6 +2,7 @@
 using AasxServerDB.Result;
 using Extensions;
 using Microsoft.IdentityModel.Tokens;
+using TimeStampConverter;
 
 namespace AasxServerDB
 {
@@ -300,8 +301,8 @@ namespace AasxServerDB
         private List<SMSet> GetSMSet(string semanticId = "", string diffString = "")
         {
             bool withSME = !semanticId.IsNullOrEmpty();
-            DateTime diff = new();
-            bool withDiff = PageRetriever.GetDateTime(ref diff, diffString);
+            DateTime diff = TimeStampConverter.TimeStampConverter.StringToDateTime(diffString);
+            bool withDiff = !diff.Equals(DateTime.MinValue);
 
             if (semanticId.IsNullOrEmpty() && !withDiff)
                 return new List<SMSet>();
@@ -322,7 +323,7 @@ namespace AasxServerDB
                     {
                         smId = identifier,
                         url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(identifier)}",
-                        timeStamp = PageRetriever.GetDateTimeString(sm.TimeStamp)
+                        timeStamp = TimeStampConverter.TimeStampConverter.DateTimeToString(sm.TimeStamp)
                     };
                 }
             );
@@ -340,8 +341,8 @@ namespace AasxServerDB
         {
             var result = new List<SMEWithValue>();
 
-            DateTime dateTime = new();
-            bool withDiff = PageRetriever.GetDateTime(ref dateTime, diff);
+            DateTime dateTime = TimeStampConverter.TimeStampConverter.StringToDateTime(diff);
+            bool withDiff = !diff.Equals(DateTime.MinValue);
 
             int parameter = 0;
             if (!contains.IsNullOrEmpty())
@@ -497,7 +498,7 @@ namespace AasxServerDB
                         value = sme.value,
                         idShortPath = path,
                         url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(identifier)}/submodel-elements/{path}",
-                        timeStamp = PageRetriever.GetDateTimeString(sme.sme.TimeStamp)
+                        timeStamp = TimeStampConverter.TimeStampConverter.DateTimeToString(sme.sme.TimeStamp)
                     };
                 }
             );
