@@ -10,6 +10,9 @@ env:
 jobs:
   draft_develop_release:
     runs-on: windows-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

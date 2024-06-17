@@ -13,6 +13,9 @@ jobs:
   create-new-release:
     runs-on: windows-latest
     name: Build a new release and open a draft GitHub release with changelog
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
