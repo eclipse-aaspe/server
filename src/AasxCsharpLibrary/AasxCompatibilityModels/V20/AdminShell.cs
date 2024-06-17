@@ -2450,7 +2450,7 @@ namespace AasxCompatibilityModels
 
                 StringBuilder sb = new StringBuilder();
                 foreach (var hb in hashBytes)
-                    sb.Append((string) hb.ToString("X2"));
+                    sb.Append(hb.ToString("X2"));
 
                 return sb.ToString();
             }
