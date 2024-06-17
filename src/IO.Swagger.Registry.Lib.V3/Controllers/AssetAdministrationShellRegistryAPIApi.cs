@@ -9,6 +9,7 @@
  */
 
 using AasxServer;
+using AasxServerDB;
 using AasxServerStandardBib.Logging;
 using IO.Swagger.Lib.V3.Interfaces;
 using IO.Swagger.Registry.Lib.V3.Attributes;
@@ -147,7 +148,7 @@ namespace IO.Swagger.Controllers
         public virtual IActionResult GetAllAssetAdministrationShellDescriptors([ FromQuery ] int? limit, [ FromQuery ] string cursor, [ FromQuery ] string assetKind,
             [ FromQuery ] string assetType)
         {
-            // TODO (jtikekar, 2023-09-04): AssetType resembles AssetId from old Implementation
+            // TODO (jtikekar, 2023-09-04): AssetType resembles GlobalAssetId from old Implementation
             List<string> assetList = new List<string>();
             if (!string.IsNullOrEmpty(assetType))
             {
@@ -170,9 +171,9 @@ namespace IO.Swagger.Controllers
                 aasDescriptors = new List<AssetAdministrationShellDescriptor>();
                 using (AasContext db = new AasContext())
                 {
-                    foreach (var aasDB in db.AasSets)
+                    foreach (var aasDB in db.AASSets)
                     {
-                        if (assetList.Count == 0 || assetList.Contains(aasDB.AssetId))
+                        if (assetList.Count == 0 || assetList.Contains(aasDB.GlobalAssetId))
                         {
                             var aasDesc = _aasRegistryService.CreateAasDescriptorFromDB(aasDB);
                             aasDescriptors.Add(aasDesc);
@@ -270,9 +271,9 @@ namespace IO.Swagger.Controllers
                 // from database
                 using (AasContext db = new AasContext())
                 {
-                    foreach (var aasDB in db.AasSets)
+                    foreach (var aasDB in db.AASSets)
                     {
-                        if (decodedAasIdentifier.Equals(aasDB.AasId))
+                        if (decodedAasIdentifier.Equals(aasDB.Identifier))
                         {
                             var aasDesc = _aasRegistryService.CreateAasDescriptorFromDB(aasDB);
                             return new ObjectResult(aasDesc);
@@ -582,10 +583,10 @@ namespace IO.Swagger.Controllers
                     // from database
                     using (AasContext db = new AasContext())
                     {
-                        foreach (var aasDB in db.AasSets)
+                        foreach (var aasDB in db.AASSets)
                         {
-                            if (assetList.Contains(aasDB.AssetId))
-                                aasList.Add(aasDB.AasId);
+                            if (assetList.Contains(aasDB.GlobalAssetId))
+                                aasList.Add(aasDB.Identifier);
                         }
                     }
                 }

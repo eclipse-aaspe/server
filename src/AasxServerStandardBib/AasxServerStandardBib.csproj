@@ -52,6 +52,7 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <ProjectReference Include="..\AasxCsharpLibrary\AasxCsharpLibrary.csproj"/>
+        <ProjectReference Include="..\AasxServerDB\AasxServerDB.csproj" />
         <ProjectReference Include="..\jsoncanonicalizer\jsoncanonicalizer.csproj"/>
         <None Update="Andreas_Orzelski_Chain.pfx">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

@@ -47,6 +47,7 @@ namespace AasxServerStandardBib.Services
 
                 _packages[packageIndex] = null;
                 _envFileNames[packageIndex] = null;
+                //_packages[packageIndex].setWrite(true);
                 Program.signalNewData(2);
             }
             else

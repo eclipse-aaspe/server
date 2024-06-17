@@ -2,7 +2,7 @@
 //var app = builder.Build();
 
 using AasSecurity;
-using AasxServer;
+using AasxServerDB;
 using AasxServerStandardBib.Extensions;
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;

@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright (c) 2018-2021 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>
 Author: Michael Hoffmeister
 
@@ -6,6 +6,7 @@ This source code is licensed under the Apache License 2.0 (see LICENSE.txt).
 
 This source code may use other Open Source software components (see LICENSE.txt).
 */
+
 
 
 using Extensions;
@@ -33,18 +34,9 @@ namespace AdminShellNS
     {
         public delegate byte[] SourceGetByteChunk();
 
-        public enum LocationType
-        {
-            InPackage,
-            AddPending,
-            DeletePending
-        }
+        public enum LocationType { InPackage, AddPending, DeletePending }
 
-        public enum SpecialHandlingType
-        {
-            None,
-            EmbedAsThumbnail
-        }
+        public enum SpecialHandlingType { None, EmbedAsThumbnail }
 
         public readonly Uri Uri = null;
 
@@ -74,6 +66,7 @@ namespace AdminShellNS
         {
             return "File";
         }
+
     }
 
     public class ListOfAasSupplementaryFile : List<AdminShellPackageSupplementaryFile>
@@ -93,6 +86,7 @@ namespace AdminShellNS
     /// </summary>
     public static class AdminShellSerializationHelper
     {
+
         public static string TryReadXmlFirstElementNamespaceURI(Stream s)
         {
             string res = null;
@@ -115,7 +109,6 @@ namespace AdminShellNS
                         break;
                     }
                 }
-
                 xr.Close();
             }
             catch (Exception ex)
@@ -230,7 +223,7 @@ namespace AdminShellNS
             var node = System.Text.Json.Nodes.JsonNode.Parse(data);
             var rf = Jsonization.Deserialize.IReferableFrom(node);
 
-            return (T) rf;
+            return (T)rf;
             //}
         }
 
@@ -275,9 +268,7 @@ namespace AdminShellNS
 
         private bool write = false;
 
-        public AdminShellPackageEnv()
-        {
-        }
+        public AdminShellPackageEnv() { }
 
         public bool getWrite()
         {
@@ -308,7 +299,10 @@ namespace AdminShellNS
 
         public bool IsOpen
         {
-            get { return _openPackage != null; }
+            get
+            {
+                return _openPackage != null;
+            }
         }
 
         public void SetFilename(string fileName)
@@ -318,12 +312,18 @@ namespace AdminShellNS
 
         public string Filename
         {
-            get { return _fn; }
+            get
+            {
+                return _fn;
+            }
         }
 
         public AasCore.Aas3_0.Environment AasEnv
         {
-            get { return _aasEnv; }
+            get
+            {
+                return _aasEnv;
+            }
         }
 
         private static AasCore.Aas3_0.Environment LoadXml(string fn)
@@ -413,7 +413,6 @@ namespace AdminShellNS
                         {
                             originPart = package.GetPart(absoluteURI);
                         }
-
                         break;
                     }
 
@@ -430,7 +429,6 @@ namespace AdminShellNS
                             {
                                 originPart = package.GetPart(absoluteURI);
                             }
-
                             break;
                         }
                 }
@@ -449,7 +447,6 @@ namespace AdminShellNS
                     {
                         specPart = package.GetPart(absoluteURI);
                     }
-
                     break;
                 }
 
@@ -464,7 +461,6 @@ namespace AdminShellNS
                         {
                             specPart = package.GetPart(absoluteURI);
                         }
-
                         break;
                     }
                 }
@@ -556,42 +552,43 @@ namespace AdminShellNS
             switch (extension)
             {
                 case ".xml":
-                {
-                    _aasEnv = LoadXml(fn);
-                    break;
-                }
-                case ".json":
-                {
-                    _aasEnv = LoadJson(fn);
-                    break;
-                }
-                case ".aasx":
-                {
-                    var fnToLoad = fn;
-                    _tempFn = null;
-                    if (indirectLoadSave)
                     {
-                        try
-                        {
-                            _tempFn = System.IO.Path.GetTempFileName().Replace(".tmp", ".aasx");
-                            System.IO.File.Copy(fn, _tempFn);
-                            fnToLoad = _tempFn;
-                        }
-                        catch (Exception ex)
-                        {
-                            throw new Exception(
-                                $"While copying AASX {fn} for indirect load to {fnToLoad} " +
-                                $"at {AdminShellUtil.ShortLocation(ex)} gave: {ex.Message}");
-                        }
+                        _aasEnv = LoadXml(fn);
+                        break;
                     }
+                case ".json":
+                    {
+                        _aasEnv = LoadJson(fn);
+                        break;
+                    }
+                case ".aasx":
+                    {
+                        var fnToLoad = fn;
+                        _tempFn = null;
+                        if (indirectLoadSave)
+                        {
+                            try
+                            {
+                                _tempFn = System.IO.Path.GetTempFileName().Replace(".tmp", ".aasx");
+                                System.IO.File.Copy(fn, _tempFn);
+                                fnToLoad = _tempFn;
 
-                    // load package AASX
-                    (_aasEnv, _openPackage, _envXml) = LoadPackageAasx(fn, fnToLoad, loadXml);
+                            }
+                            catch (Exception ex)
+                            {
+                                throw new Exception(
+                                    $"While copying AASX {fn} for indirect load to {fnToLoad} " +
+                                    $"at {AdminShellUtil.ShortLocation(ex)} gave: {ex.Message}");
+                            }
+                        }
 
-                    //Assign default thumbnail path
-                    AssignDefaultThumbnailPath();
-                    break;
-                }
+                        // load package AASX
+                        (_aasEnv, _openPackage, _envXml) = LoadPackageAasx(fn, fnToLoad, loadXml);
+
+                        //Assign default thumbnail path
+                        AssignDefaultThumbnailPath();
+                        break;
+                    }
                 default:
                     throw new Exception(
                         $"Does not know how to handle the extension {extension} of the file: {fn}");
@@ -617,16 +614,14 @@ namespace AdminShellNS
                     {
                         thumbPart = _openPackage.GetPart(absoluteURI);
                     }
-
                     thumbUri = x.TargetUri;
                     break;
                 }
-
             if (thumbUri != null && !string.IsNullOrEmpty(thumbUri.OriginalString))
             {
                 if (_aasEnv.AssetAdministrationShells.Count > 0)
                 {
-                    _aasEnv.AssetAdministrationShells[ 0 ].AssetInformation.DefaultThumbnail = new Resource(thumbUri.OriginalString);
+                    _aasEnv.AssetAdministrationShells[0].AssetInformation.DefaultThumbnail = new Resource(thumbUri.OriginalString); 
                 }
             }
         }
@@ -637,6 +632,7 @@ namespace AdminShellNS
             {
                 _tempFn = System.IO.Path.GetTempFileName().Replace(".tmp", ".aasx");
                 System.IO.File.Copy(fn, _tempFn);
+
             }
             catch (Exception ex)
             {
@@ -670,12 +666,7 @@ namespace AdminShellNS
             }
         }
 
-        public enum SerializationFormat
-        {
-            None,
-            Xml,
-            Json
-        };
+        public enum SerializationFormat { None, Xml, Json };
 
         //public static XmlSerializerNamespaces GetXmlDefaultNamespaces()
         //{
@@ -688,7 +679,7 @@ namespace AdminShellNS
         //}
 
         public bool SaveAs(string fn, bool writeFreshly = false, SerializationFormat prefFmt = SerializationFormat.None,
-            MemoryStream useMemoryStream = null, bool saveOnlyCopy = false)
+                MemoryStream useMemoryStream = null, bool saveOnlyCopy = false)
         {
             if (fn.ToLower().EndsWith(".xml"))
             {
@@ -698,7 +689,7 @@ namespace AdminShellNS
                 try
                 {
                     Stream s = (useMemoryStream != null)
-                        ? (Stream) useMemoryStream
+                        ? (Stream)useMemoryStream
                         : System.IO.File.Open(fn, FileMode.Create, FileAccess.Write);
 
                     try
@@ -732,7 +723,6 @@ namespace AdminShellNS
                         string.Format("While writing AAS {0} at {1} gave: {2}",
                             fn, AdminShellUtil.ShortLocation(ex), ex.Message)));
                 }
-
                 return true;
             }
 
@@ -744,8 +734,7 @@ namespace AdminShellNS
                     _fn = fn;
                 try
                 {
-                    Stream s = (useMemoryStream != null)
-                        ? (Stream) useMemoryStream
+                    Stream s = (useMemoryStream != null) ? (Stream)useMemoryStream
                         : System.IO.File.Open(fn, FileMode.Create, FileAccess.Write);
 
                     try
@@ -796,7 +785,6 @@ namespace AdminShellNS
                         string.Format("While writing AAS {0} at {1} gave: {2}",
                             fn, AdminShellUtil.ShortLocation(ex), ex.Message)));
                 }
-
                 return true;
             }
 
@@ -832,7 +820,6 @@ namespace AdminShellNS
                         {
                             LogInternally.That.SilentlyIgnoredError(ex);
                         }
-
                         _openPackage = null;
                     }
 
@@ -849,7 +836,6 @@ namespace AdminShellNS
                             (_tempFn != null) ? _tempFn : fn,
                             (writeFreshly) ? FileMode.Create : FileMode.OpenOrCreate);
                     }
-
                     _fn = fn;
 
                     // get the origin from the package
@@ -866,7 +852,6 @@ namespace AdminShellNS
                             {
                                 originPart = package.GetPart(absoluteURI);
                             }
-
                             //delete old type, because its not according to spec or something
                             //then replace with the current type
                             package.DeleteRelationship(x.Id);
@@ -876,7 +861,6 @@ namespace AdminShellNS
                             originPart = null;
                             break;
                         }
-
                     xs = package.GetRelationshipsByType("http://admin-shell.io/aasx/relationships/aasx-origin");
                     foreach (var x in xs)
                         if (x.SourceUri.ToString() == "/")
@@ -887,10 +871,8 @@ namespace AdminShellNS
                             {
                                 originPart = package.GetPart(absoluteURI);
                             }
-
                             break;
                         }
-
                     if (originPart == null)
                     {
                         // create, as not existing
@@ -902,7 +884,6 @@ namespace AdminShellNS
                             var bytes = System.Text.Encoding.ASCII.GetBytes("Intentionally empty.");
                             s.Write(bytes, 0, bytes.Length);
                         }
-
                         package.CreateRelationship(
                             originPart.Uri, TargetMode.Internal,
                             "http://admin-shell.io/aasx/relationships/aasx-origin");
@@ -921,7 +902,6 @@ namespace AdminShellNS
                         {
                             specPart = package.GetPart(absoluteURI);
                         }
-
                         //delete old type, because its not according to spec or something
                         //then replace with the current type
                         originPart.DeleteRelationship(x.Id);
@@ -932,7 +912,6 @@ namespace AdminShellNS
                         specRel = null;
                         break;
                     }
-
                     xs = originPart.GetRelationshipsByType("http://admin-shell.io/aasx/relationships/aas-spec");
                     foreach (var x in xs)
                     {
@@ -954,8 +933,8 @@ namespace AdminShellNS
                             specPart.Uri.ToString()).ToLower().Trim();
                         var ext = System.IO.Path.GetExtension(specPart.Uri.ToString()).ToLower().Trim();
                         if ((ext == ".json" && prefFmt == SerializationFormat.Xml)
-                            || (ext == ".xml" && prefFmt == SerializationFormat.Json)
-                            || (name.StartsWith("aasenv-with-no-id")))
+                             || (ext == ".xml" && prefFmt == SerializationFormat.Json)
+                             || (name.StartsWith("aasenv-with-no-id")))
                         {
                             // try kill specpart
                             try
@@ -967,11 +946,7 @@ namespace AdminShellNS
                             {
                                 LogInternally.That.SilentlyIgnoredError(ex);
                             }
-                            finally
-                            {
-                                specPart = null;
-                                specRel = null;
-                            }
+                            finally { specPart = null; specRel = null; }
                         }
                     }
 
@@ -980,7 +955,7 @@ namespace AdminShellNS
                         // create, as not existing
                         var frn = "aasenv-with-no-id";
                         if (_aasEnv.AssetAdministrationShells.Count > 0)
-                            frn = _aasEnv.AssetAdministrationShells[ 0 ].GetFriendlyName() ?? frn;
+                            frn = _aasEnv.AssetAdministrationShells[0].GetFriendlyName() ?? frn;
                         var aas_spec_fn = "/aasx/#/#.aas";
                         if (prefFmt == SerializationFormat.Json)
                             aas_spec_fn += ".json";
@@ -1038,6 +1013,7 @@ namespace AdminShellNS
                     //Need to check/test in detail, with thumbnails as well
                     if (specPart != null)
                     {
+
                         xs = specPart.GetRelationshipsByType("http://www.admin-shell.io/aasx/relationships/aas-suppl");
                         if (xs != null)
                         {
@@ -1050,7 +1026,6 @@ namespace AdminShellNS
                                 {
                                     filePart = package.GetPart(absoluteURI);
                                 }
-
                                 //delete old type, because its not according to spec or something
                                 //then replace with the current type
                                 specPart.DeleteRelationship(x.Id);
@@ -1113,8 +1088,9 @@ namespace AdminShellNS
                         // normal file?
                         if (psfAdd.SpecialHandling == AdminShellPackageSupplementaryFile.SpecialHandlingType.None ||
                             psfAdd.SpecialHandling ==
-                            AdminShellPackageSupplementaryFile.SpecialHandlingType.EmbedAsThumbnail)
+                                AdminShellPackageSupplementaryFile.SpecialHandlingType.EmbedAsThumbnail)
                         {
+
                             // try find an existing part for that file ..
                             PackagePart filePart = null;
                             if (psfAdd.SpecialHandling == AdminShellPackageSupplementaryFile.SpecialHandlingType.None)
@@ -1130,11 +1106,9 @@ namespace AdminShellNS
                                         {
                                             filePart = package.GetPart(absoluteURI);
                                         }
-
                                         break;
                                     }
                             }
-
                             if (psfAdd.SpecialHandling ==
                                 AdminShellPackageSupplementaryFile.SpecialHandlingType.EmbedAsThumbnail)
                             {
@@ -1149,7 +1123,6 @@ namespace AdminShellNS
                                         {
                                             filePart = package.GetPart(absoluteURI);
                                         }
-
                                         break;
                                     }
                             }
@@ -1220,16 +1193,15 @@ namespace AdminShellNS
                         {
                             throw (new Exception(
                                 string.Format("While write AASX {0} indirectly at {1} gave: {2}",
-                                    fn, AdminShellUtil.ShortLocation(ex), ex.Message)));
+                                fn, AdminShellUtil.ShortLocation(ex), ex.Message)));
                         }
                 }
                 catch (Exception ex)
                 {
                     throw (new Exception(
                         string.Format("While write AASX {0} at {1} gave: {2}",
-                            fn, AdminShellUtil.ShortLocation(ex), ex.Message)));
+                        fn, AdminShellUtil.ShortLocation(ex), ex.Message)));
                 }
-
                 return true;
             }
 
@@ -1251,7 +1223,7 @@ namespace AdminShellNS
             if (!this.IsOpen)
                 throw (new Exception(
                     string.Format("Could not temporarily close and re-open AASX {0}, because package" +
-                                  "not open as expected!", Filename)));
+                    "not open as expected!", Filename)));
 
             try
             {
@@ -1269,7 +1241,7 @@ namespace AdminShellNS
             {
                 throw (new Exception(
                     string.Format("While temporarily close and re-open AASX {0} at {1} gave: {2}",
-                        Filename, AdminShellUtil.ShortLocation(ex), ex.Message)));
+                    Filename, AdminShellUtil.ShortLocation(ex), ex.Message)));
             }
             finally
             {
@@ -1296,7 +1268,6 @@ namespace AdminShellNS
                     var rnd = new Random();
                     BackupIndex = rnd.Next(maxFiles);
                 }
-
                 var ndx = BackupIndex % maxFiles;
                 BackupIndex += 1;
 
@@ -1379,7 +1350,6 @@ namespace AdminShellNS
         public static bool withDb = false;
         public static bool withDbFiles = false;
         public static string dataPath = "";
-
         public static void setGlobalOptions(bool _withDb, bool _withDbFiles, string _dataPath)
         {
             withDb = _withDb;
@@ -1430,8 +1400,8 @@ namespace AdminShellNS
             if (!string.IsNullOrEmpty(sourceUri))
             {
                 _openPackage.DeletePart(new Uri(sourceUri, UriKind.RelativeOrAbsolute));
-            }
 
+            }
             var targetUri = PackUriHelper.CreatePartUri(new Uri(targetFile, UriKind.RelativeOrAbsolute));
             PackagePart packagePart = _openPackage.CreatePart(targetUri, targetContentType);
             fileContent.Position = 0;
@@ -1455,7 +1425,6 @@ namespace AdminShellNS
                 {
                     part = _openPackage.GetPart(uri);
                 }
-
                 if (part != null)
                 {
                     using (var s = part.GetStream(FileMode.Open))
@@ -1469,7 +1438,6 @@ namespace AdminShellNS
                 LogInternally.That.SilentlyIgnoredError(ex);
                 return 0;
             }
-
             return res;
         }
 
@@ -1505,11 +1473,9 @@ namespace AdminShellNS
                     {
                         thumbPart = _openPackage.GetPart(absoluteURI);
                     }
-
                     thumbUri = x.TargetUri;
                     break;
                 }
-
             if (thumbPart == null)
                 // throw (new Exception("Unable to find AASX thumbnail. Aborting!"));
                 return null;
@@ -1553,6 +1519,7 @@ namespace AdminShellNS
             // access
             if (_openPackage != null)
             {
+
                 // get the thumbnail(s) from the package
                 var xs = _openPackage.GetRelationshipsByType(
                     "http://schemas.openxmlformats.org/package/2006/relationships/metadata/thumbnail");
@@ -1578,14 +1545,12 @@ namespace AdminShellNS
                         {
                             originPart = _openPackage.GetPart(absoluteURI);
                         }
-
                         break;
                     }
-
-                if (xs == null)
+                if(xs == null)
                 {
                     xs = _openPackage.GetRelationshipsByType(
-                        "http://www.admin-shell.io/aasx/relationships/aasx-origin");
+                            "http://www.admin-shell.io/aasx/relationships/aasx-origin");
                     foreach (var x in xs)
                         if (x.SourceUri.ToString() == "/")
                         {
@@ -1595,7 +1560,6 @@ namespace AdminShellNS
                             {
                                 originPart = _openPackage.GetPart(absoluteURI);
                             }
-
                             break;
                         }
                 }
@@ -1613,11 +1577,9 @@ namespace AdminShellNS
                         {
                             specPart = _openPackage.GetPart(absoluteURI);
                         }
-
                         break;
                     }
-
-                    if (xs == null)
+                    if(xs == null)
                     {
                         xs = originPart.GetRelationshipsByType("http://www.admin-shell.io/aasx/relationships/aas-spec");
                         foreach (var x in xs)
@@ -1628,7 +1590,6 @@ namespace AdminShellNS
                             {
                                 specPart = _openPackage.GetPart(absoluteURI);
                             }
-
                             break;
                         }
                     }
@@ -1643,8 +1604,7 @@ namespace AdminShellNS
                                 new AdminShellPackageSupplementaryFile(
                                     x.TargetUri, location: AdminShellPackageSupplementaryFile.LocationType.InPackage));
                         }
-
-                        if (xs == null)
+                        if(xs == null)
                         {
                             xs = specPart.GetRelationshipsByType("http://www.admin-shell.io/aasx/relationships/aas-suppl");
                             foreach (var x in xs)
@@ -1770,7 +1730,8 @@ namespace AdminShellNS
                         : AdminShellPackageSupplementaryFile.SpecialHandlingType.None),
                     sourceGetBytesDel: sourceGetBytesDel,
                     useMimeType: useMimeType)
-            );
+                );
+
         }
 
         public void DeleteSupplementaryFile(AdminShellPackageSupplementaryFile psf)
@@ -1854,16 +1815,16 @@ namespace AdminShellNS
                 {
                     var sourceUri = defaultThumbnail.Path.Replace(Path.DirectorySeparatorChar, '/');
                     _openPackage.DeletePart(new Uri(sourceUri, UriKind.RelativeOrAbsolute));
-                }
 
+                }
                 var targetUri = PackUriHelper.CreatePartUri(new Uri(defaultThumbnail.Path, UriKind.RelativeOrAbsolute));
 
                 defaultThumbnail.ContentType ??= "image/png";
                 PackagePart packagePart = _openPackage.CreatePart(targetUri, defaultThumbnail.ContentType, compressionOption: CompressionOption.Maximum);
 
                 _openPackage.CreateRelationship(packagePart.Uri, TargetMode.Internal,
-                    "http://schemas.openxmlformats.org/package/2006/" +
-                    "relationships/metadata/thumbnail");
+                                            "http://schemas.openxmlformats.org/package/2006/" +
+                                            "relationships/metadata/thumbnail");
 
                 //Write to the part
                 fileContent.Position = 0;
@@ -1900,6 +1861,7 @@ namespace AdminShellNS
             {
                 var sourceUri = defaultThumbnail.Path.Replace(Path.DirectorySeparatorChar, '/');
                 _openPackage.DeletePart(new Uri(sourceUri, UriKind.RelativeOrAbsolute));
+
             }
         }
     }
