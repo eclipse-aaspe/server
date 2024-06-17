@@ -2438,16 +2438,14 @@ namespace AasxCompatibilityModels
                 return mems.ToArray();
             }
 
-            private static System.Security.Cryptography.SHA256 CreateHashProvider ()
-            {
-                return System.Security.Cryptography.SHA256.Create();
-            }
+            
+            private static readonly System.Security.Cryptography.SHA256 CreateHashProvider = System.Security.Cryptography.SHA256.Create();
 
             public string ComputeHashcode()
             {
                 var dataBytes = this.ComputeByteArray();
 
-                using var hashProvider = CreateHashProvider();
+                using var hashProvider = CreateHashProvider;
                 var       hashBytes    = hashProvider.ComputeHash(dataBytes);
 
                 StringBuilder sb = new StringBuilder();
