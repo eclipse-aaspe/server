@@ -37,16 +37,20 @@ jobs:
             }
           }
 
-          if ($potentialTags.Count -gt 0) {
+          if ($potentialTags.Count -gt 0) 
+          {
             $latestTag = $potentialTags[0]
             Write-Host "Latest found matching tag is $latestTag"
-          } else {
+          } else 
+          {
             Write-Host "No matching tags found, fetching the latest tag."
             $latestTag = $tags | Select-Object -First 1
-            if ($latestTag) {
+            if ($latestTag) 
+            {
               echo "from_tag=$latestTag" >> $env:GITHUB_OUTPUT
               Write-Host "Latest found tag is $latestTag"
-            } else {
+            } else 
+            {
               Write-Host "No tags found at all."
               exit 1
             }
@@ -55,13 +59,16 @@ jobs:
           Write-Host "Checking changes since tag: $latestTag"
           $changes = git log --oneline $latestTag..HEAD
           Write-Host "Found changes: $changes"
-          if (-not [string]::IsNullOrEmpty($changes)) {
+          if (-not [string]::IsNullOrEmpty($changes)) 
+          {
             Write-Host "Changes detected since $latestTag"
             Write-Host "$changes"
             echo "changes_detected=true" >> $env:GITHUB_OUTPUT
-          } else {
+          } else 
+          {
             Write-Host "No changes detected since $latestTag."
             echo "changes_detected=false" >> $env:GITHUB_OUTPUT
+          }
         shell: pwsh
 
   create-new-prerelease:
