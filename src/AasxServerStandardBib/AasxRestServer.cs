@@ -24,7 +24,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using HttpMethod = Grapevine.Shared.HttpMethod;
-using TimeStampConverter;
+using TimeStamp;
 
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
 
@@ -2781,20 +2781,20 @@ namespace AasxRestServerLibrary
                             if (type == "")
                             {
                                 diffText += "<tr><td>DELETE</td><td><b>***Deleted_items_before***</b></td><td>ERROR</td><td>" +
-                                    TimeStampConverter.TimeStampConverter.DateTimeToString(timeStamp) + "</td></tr>";
+                                    TimeStamp.TimeStamp.DateTimeToString(timeStamp) + "</td></tr>";
 
                             }
                             else
                             {
                                 diffText += "<tr><td>DELETE</td><td><b>" + path + "</b></td><td>" + type + "</td><td>" +
-                                    TimeStampConverter.TimeStampConverter.DateTimeToString(timeStamp) + "</td></tr>";
+                                    TimeStamp.TimeStamp.DateTimeToString(timeStamp) + "</td></tr>";
                             }
                             break;
                         case "CREATE":
                         case "UPDATE":
                             diffText += "<tr><td>" + mode + "</td><td><b>" + path +
                                 "</b></td><td>" + type + "</td><td>" +
-                                TimeStampConverter.TimeStampConverter.DateTimeToString(timeStamp) + "</td>";
+                                TimeStamp.TimeStamp.DateTimeToString(timeStamp) + "</td>";
                             if (value != "")
                                 diffText += "<td>" + value + "</td>";
                             diffText += "</tr>";

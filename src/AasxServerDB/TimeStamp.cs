@@ -1,6 +1,6 @@
-﻿namespace TimeStampConverter
+﻿namespace TimeStamp
 {
-    static public class TimeStampConverter
+    static public class TimeStamp
     {
         static public DateTime StringToDateTime(string stringDateTime)
         {

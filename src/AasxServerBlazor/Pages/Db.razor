@@ -13,7 +13,7 @@
 @using AasxRestServerLibrary;
 @using Microsoft.IdentityModel.Tokens;
 @using AasxServerDB.Entities;
-@using TimeStampConverter;
+@using TimeStamp;
 @inject NavigationManager NavMan
 
 <div>
@@ -234,7 +234,7 @@
 
                 if (url.EndsWith("/aas"))
                 {
-                    List<AASSet> data = PageRetriever.GetPageAASData(size, TimeStampConverter.StringToDateTime(searchLower), searchLower, aasxid, aasid);
+                    List<AASSet> data = PageRetriever.GetPageAASData(size, TimeStamp.StringToDateTime(searchLower), searchLower, aasxid, aasid);
                     <span>&nbsp&nbsp@($"AAS#: {data.Count}/{db.AASSets.Count()} size={size} search={search} aasxid={aasxid} aasid={aasid}")</span>
                     <br />
                     <br />
@@ -271,9 +271,9 @@
                                     <td>@aasDB.AssetKind</td>
                                     <td>@aasDB.GlobalAssetId</td>
                                     <td style="word-break:keep-all;color:lightgray;font-size:x-small">
-                                        @($"UPDATE {TimeStampConverter.DateTimeToString(aasDB.TimeStamp)}")<br/>
-                                        @($"CREATE {TimeStampConverter.DateTimeToString(aasDB.TimeStampCreate)}")<br/>
-                                        @($"TREE {TimeStampConverter.DateTimeToString(aasDB.TimeStampTree)}")
+                                        @($"UPDATE {TimeStamp.DateTimeToString(aasDB.TimeStamp)}")<br/>
+                                        @($"CREATE {TimeStamp.DateTimeToString(aasDB.TimeStampCreate)}")<br/>
+                                        @($"TREE {TimeStamp.DateTimeToString(aasDB.TimeStampTree)}")
                                     </td>
                                     <td style="word-break:keep-all">
                                         <a href="@($"{shorturl}/aasx?aasxid={aasDB.AASXId}")" target="_blank">aasx </a>
@@ -306,9 +306,9 @@
                             <span smDB="background-color:blue;">&nbsp</span>
                             <span>@aasDB.GlobalAssetId</span>
                             <span style="background-color:blue;">&nbsp</span>
-                            <span>@($"UPDATE {TimeStampConverter.DateTimeToString(aasDB.TimeStamp)}")</span>
-                            <span>@($"CREATE {TimeStampConverter.DateTimeToString(aasDB.TimeStampCreate)}")</span>
-                            <span>@($"TREE {TimeStampConverter.DateTimeToString(aasDB.TimeStampTree)}")</span>
+                            <span>@($"UPDATE {TimeStamp.DateTimeToString(aasDB.TimeStamp)}")</span>
+                            <span>@($"CREATE {TimeStamp.DateTimeToString(aasDB.TimeStampCreate)}")</span>
+                            <span>@($"TREE {TimeStamp.DateTimeToString(aasDB.TimeStampTree)}")</span>
                             <span style="background-color:blue;">&nbsp</span>
                             <a href="@($"{shorturl}/aasx?aasxid={aasDB.AASXId}")" target="_blank">aasx </a>
                             <a href="@($"{shorturl}/sm?aasid={aasDB.Id}")" target="_blank">sm</a>
@@ -324,7 +324,7 @@
 
                 if (url.EndsWith("/sm"))
                 {
-                    List<SMSet> data = PageRetriever.GetPageSMData(size, TimeStampConverter.StringToDateTime(searchLower), searchLower, aasxid, aasid, smid);
+                    List<SMSet> data = PageRetriever.GetPageSMData(size, TimeStamp.StringToDateTime(searchLower), searchLower, aasxid, aasid, smid);
                     <span>
                         &nbsp&nbsp@($"SM#: {data.Count}/{db.SMSets.Count()} size={size} search={search} aasxid={aasxid} aasid={aasid} smid={smid}")
                     </span>
@@ -365,9 +365,9 @@
                                     <td>@smDB.IdShort</td>
                                     <td>@smDB.SemanticId</td>
                                     <td style="word-break:keep-all;color:lightgray;font-size:x-small">
-                                        @($"UPDATE {TimeStampConverter.DateTimeToString(smDB.TimeStamp)}")<br/>
-                                        @($"CREATE {TimeStampConverter.DateTimeToString(smDB.TimeStampCreate)}")<br/>
-                                        @($"TREE {TimeStampConverter.DateTimeToString(smDB.TimeStampTree)}")
+                                        @($"UPDATE {TimeStamp.DateTimeToString(smDB.TimeStamp)}")<br/>
+                                        @($"CREATE {TimeStamp.DateTimeToString(smDB.TimeStampCreate)}")<br/>
+                                        @($"TREE {TimeStamp.DateTimeToString(smDB.TimeStampTree)}")
                                     </td>
                                     <td style="word-break:keep-all">
                                         <a href="@($"{shorturl}/aasx?aasxid={smDB.AASXId}")" target="_blank">aasx </a>
@@ -402,9 +402,9 @@
                             <span smDB="background-color:blue;">&nbsp</span>
                             <span>@smDB.SemanticId</span>
                             <span style="background-color:blue;">&nbsp</span>
-                            <span>@($"UPDATE {TimeStampConverter.DateTimeToString(smDB.TimeStamp)}")</span>
-                            <span>@($"CREATE {TimeStampConverter.DateTimeToString(smDB.TimeStampCreate)}")</span>
-                            <span>@($"TREE {TimeStampConverter.DateTimeToString(smDB.TimeStampTree)}")</span>
+                            <span>@($"UPDATE {TimeStamp.DateTimeToString(smDB.TimeStamp)}")</span>
+                            <span>@($"CREATE {TimeStamp.DateTimeToString(smDB.TimeStampCreate)}")</span>
+                            <span>@($"TREE {TimeStamp.DateTimeToString(smDB.TimeStampTree)}")</span>
                             <span style="background-color:blue;">&nbsp</span>
                             <a href="@($"{shorturl}/aasx?aasxid={smDB.AASXId}")" target="_blank">aasx </a>
                             <a href="@($"{shorturl}/aas?aasid={smDB.AASId}")" target="_blank">aas </a>
@@ -441,7 +441,7 @@
 
                 if (url.EndsWith("/sme"))
                 {
-                    List<SMESet> data = PageRetriever.GetPageSMEData(size, TimeStampConverter.StringToDateTime(searchLower), searchLower, smid, smeid);
+                    List<SMESet> data = PageRetriever.GetPageSMEData(size, TimeStamp.StringToDateTime(searchLower), searchLower, smid, smeid);
                     <span>
                         &nbsp&nbsp@($"SME#: {data.Count}/{db.SMESets.Count()} size={size} search={search} smid={smid} smeid={smeid}")
                     </span>
@@ -511,9 +511,9 @@
                                     </td>
                                     <td style="word-break:keep-all">@smeDB.ValueType</td>
                                     <td style="word-break:keep-all;color:lightgray;font-size:x-small">
-                                        @($"UPDATE {TimeStampConverter.DateTimeToString(smeDB.TimeStamp)}")<br/>
-                                        @($"CREATE {TimeStampConverter.DateTimeToString(smeDB.TimeStampCreate)}")<br/>
-                                        @($"TREE {TimeStampConverter.DateTimeToString(smeDB.TimeStampTree)}")
+                                        @($"UPDATE {TimeStamp.DateTimeToString(smeDB.TimeStamp)}")<br/>
+                                        @($"CREATE {TimeStamp.DateTimeToString(smeDB.TimeStampCreate)}")<br/>
+                                        @($"TREE {TimeStamp.DateTimeToString(smeDB.TimeStampTree)}")
                                     </td>
                                     <td style="word-break:keep-all">
                                         <a href="@($"{shorturl}/sm?smid={smeDB.SMId}")" target="_blank">sm </a>
@@ -594,9 +594,9 @@
                             <span style="background-color:blue;">&nbsp</span>
                             <span>@smeDB.ValueType</span>
                             <span style="background-color:blue;">&nbsp</span>
-                            <span>@($"UPDATE {TimeStampConverter.DateTimeToString(smeDB.TimeStamp)}")</span>
-                            <span>@($"CREATE {TimeStampConverter.DateTimeToString(smeDB.TimeStampCreate)}")</span>
-                            <span>@($"TREE {TimeStampConverter.DateTimeToString(smeDB.TimeStampTree)}")</span>
+                            <span>@($"UPDATE {TimeStamp.DateTimeToString(smeDB.TimeStamp)}")</span>
+                            <span>@($"CREATE {TimeStamp.DateTimeToString(smeDB.TimeStampCreate)}")</span>
+                            <span>@($"TREE {TimeStamp.DateTimeToString(smeDB.TimeStampTree)}")</span>
                             <span style="background-color:blue;">&nbsp</span>
                             <a href="@($"{shorturl}/sm?smid={smeDB.SMId}")" target="_blank">sm </a>
                             @if (smeDB.ParentSMEId != null)

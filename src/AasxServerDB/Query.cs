@@ -2,7 +2,7 @@
 using AasxServerDB.Result;
 using Extensions;
 using Microsoft.IdentityModel.Tokens;
-using TimeStampConverter;
+using TimeStamp;
 
 namespace AasxServerDB
 {
@@ -301,7 +301,7 @@ namespace AasxServerDB
         private List<SMSet> GetSMSet(string semanticId = "", string diffString = "")
         {
             bool withSME = !semanticId.IsNullOrEmpty();
-            DateTime diff = TimeStampConverter.TimeStampConverter.StringToDateTime(diffString);
+            DateTime diff = TimeStamp.TimeStamp.StringToDateTime(diffString);
             bool withDiff = !diff.Equals(DateTime.MinValue);
 
             if (semanticId.IsNullOrEmpty() && !withDiff)
@@ -323,7 +323,7 @@ namespace AasxServerDB
                     {
                         smId = identifier,
                         url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(identifier)}",
-                        timeStamp = TimeStampConverter.TimeStampConverter.DateTimeToString(sm.TimeStamp)
+                        timeStamp = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStamp)
                     };
                 }
             );
@@ -341,7 +341,7 @@ namespace AasxServerDB
         {
             var result = new List<SMEWithValue>();
 
-            DateTime dateTime = TimeStampConverter.TimeStampConverter.StringToDateTime(diff);
+            DateTime dateTime = TimeStamp.TimeStamp.StringToDateTime(diff);
             bool withDiff = !diff.Equals(DateTime.MinValue);
 
             int parameter = 0;
@@ -498,7 +498,7 @@ namespace AasxServerDB
                         value = sme.value,
                         idShortPath = path,
                         url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(identifier)}/submodel-elements/{path}",
-                        timeStamp = TimeStampConverter.TimeStampConverter.DateTimeToString(sme.sme.TimeStamp)
+                        timeStamp = TimeStamp.TimeStamp.DateTimeToString(sme.sme.TimeStamp)
                     };
                 }
             );

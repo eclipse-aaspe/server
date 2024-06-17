@@ -772,7 +772,7 @@ namespace AasxTimeSeries
                             {
                                 if (tsb.samplesTimeStamp == "")
                                 {
-                                    latestTimeStamp = TimeStampConverter.TimeStampConverter.DateTimeToString(dt);
+                                    latestTimeStamp = TimeStamp.TimeStamp.DateTimeToString(dt);
                                     tsb.samplesTimeStamp += latestTimeStamp;
                                 }
                                 else
@@ -829,7 +829,7 @@ namespace AasxTimeSeries
                                 latestDataProperty.TimeStampCreate = timeStamp;
                                 tsb.latestData.Value.Add(latestDataProperty);
                             }
-                            (latestDataProperty as Property).Value = TimeStampConverter.TimeStampConverter.DateTimeToString(dt);
+                            (latestDataProperty as Property).Value = TimeStamp.TimeStamp.DateTimeToString(dt);
                             latestDataProperty.SetTimeStamp(timeStamp);
 
                             updateMode = 1;
