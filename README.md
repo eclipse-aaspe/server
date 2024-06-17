@@ -6,10 +6,18 @@
 
 # Eclipse AASX Server
 
-[![Create Prerelease on Merge to Main](https://github.com/eclipse-aaspe/server/actions/workflows/prerelease-on-merge-to-main.yml/badge.svg)](https://github.com/eclipse-aaspe/server/actions/workflows/prerelease-on-merge-to-main.yml)<br>
-[![Draft Release on Merge to Release Branch](https://github.com/eclipse-aaspe/server/actions/workflows/draft-release-on-merge-to-release-branch.yml/badge.svg?branch=release)](https://github.com/eclipse-aaspe/server/actions/workflows/draft-release-on-merge-to-release-branch.yml)<br>
-[![Build and publish docker images when release is published](https://github.com/eclipse-aaspe/server/actions/workflows/build-and-publish-docker-images.yml/badge.svg)](https://github.com/eclipse-aaspe/server/actions/workflows/build-and-publish-docker-images.yml)<br>
-[![Code Style & Security Analysis](https://github.com/eclipse-aaspe/server/actions/workflows/code-analysis.yml/badge.svg)](https://github.com/eclipse-aaspe/server/actions/workflows/code-analysis.yml)<br>
+> ### Status
+> [![Create Prerelease on Merge to Main](https://github.com/eclipse-aaspe/server/actions/workflows/prerelease-on-merge-to-main.yml/badge.svg)](https://github.com/eclipse-aaspe/server/actions/workflows/prerelease-on-merge-to-main.yml)<br>
+> [![Draft Release on Merge to Release Branch](https://github.com/eclipse-aaspe/server/actions/workflows/draft-release-on-merge-to-release-branch.yml/badge.svg?branch=release)](https://github.com/eclipse-aaspe/server/actions/workflows/draft-release-on-merge-to-release-branch.yml)<br>
+> [![Build and publish docker images when release is published](https://github.com/eclipse-aaspe/server/actions/workflows/build-and-publish-docker-images.yml/badge.svg)](https://github.com/eclipse-aaspe/server/actions/workflows/build-and-publish-docker-images.yml)<br>
+> [![Code Style & Security Analysis](https://github.com/eclipse-aaspe/server/actions/workflows/code-analysis.yml/badge.svg)](https://github.com/eclipse-aaspe/server/actions/workflows/code-analysis.yml)<br>
+> 
+> ![GitHub repo size](https://img.shields.io/github/repo-size/eclipse-aaspe/server) ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/eclipse-aaspe/server)
+> ### Docker Images
+> ![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-aspnetcore-for-demo-arm32?label=aasx-server-aspnetcore-for-demo-arm32)<br>
+> [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo-arm64?label=aasx-server-blazor-for-demo-arm64)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm64)<br>
+> [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo-arm32?label=aasx-server-blazor-for-demo-arm32)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm32)<br>
+> [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo?label=aasx-server-blazor-for-demo)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo)<br>
 
 AASX Server is a companion app for the [AASX Package Explorer](). It provides a local service to host and serve Industrie 4.0 AASX packages. The Core version
 exposes endpoints for REST, OPC UA, and MQTT protocols. The GUI version offers the same functionality and additionally uses the Blazor Framework to provide a
