@@ -1,11 +1,9 @@
 ﻿@inherits LayoutComponentBase
-@inject NavigationManager NavMan
-@inject Data.AASService SubmodelService
-@* @inject Data.CredentialService cs *@
+@inject NavigationManager           NavMan
+@inject Data.AASService             SubmodelService
 @using AasCore.Aas3_0;
 @using AasxServer
 @inject IRegistryInitializerService AasRegistryService
-@using System
 @using IO.Swagger.Registry.Lib.V3.Interfaces;
 @using Microsoft.IdentityModel.Tokens;
 
@@ -25,89 +23,89 @@
 
 <div class="main h-screen">
     @{
-    if (Program.isLoading)
-    {
-    <span style="color:white;background-color:blue;">Loading...</span>
-    System.Threading.Thread.Sleep(1000);
-    StateHasChanged();
-    }
-    else
-    {
-    if (string.IsNullOrEmpty(_input))
-    {
-    _input = "anonymous";
-    AasxCredentials.initAnonymous(cs.credentials);
-    AasRegistryService.InitRegistry(cs.credentials, DateTime.UtcNow);
-    AasxTask.resetTimeStamp();
-    }
+        if (Program.isLoading)
+        {
+            <span style="color:white;background-color:blue;">Loading...</span>
+            System.Threading.Thread.Sleep(1000);
+            StateHasChanged();
+        }
+        else
+        {
+            if (string.IsNullOrEmpty(_input))
+            {
+                _input = "anonymous";
+                AasxCredentials.initAnonymous(cs.credentials);
+                AasRegistryService.InitRegistry(cs.credentials, DateTime.UtcNow);
+                AasxTask.resetTimeStamp();
+            }
 
-    var isPcf = NavMan.Uri.EndsWith("/pcf") || NavMan.Uri.EndsWith("/pcf/")
-    || NavMan.Uri.EndsWith("/pcf2") || NavMan.Uri.EndsWith("/pcf2/")
-    || NavMan.Uri.EndsWith("/pcf2edc") || NavMan.Uri.EndsWith("/pcf2edc/");
+            var isPcf = NavMan.Uri.EndsWith("/pcf") || NavMan.Uri.EndsWith("/pcf/")
+                                                    || NavMan.Uri.EndsWith("/pcf2") || NavMan.Uri.EndsWith("/pcf2/")
+                                                    || NavMan.Uri.EndsWith("/pcf2edc") || NavMan.Uri.EndsWith("/pcf2edc/");
 
-    if (!isPcf)
-    {
-    <div class="top-row px-4">
+            if (!isPcf)
+            {
+                <div class="top-row px-4">
                     <span align=left hspace=20 style="color:blue; font-size: xx-large; vertical-align: middle; margin-right: 20px;">
                         <strong>AASX Browser</strong>
                     </span>
-        <img src="2022-02-15_IDTA_AAS-Logo_Final_RGB.png" height="55" width="60" style="vertical-align: middle; margin-right: 20px;">
-        <img src="Logo_IDTA.jpg" height="30" width="140" style="vertical-align: middle; margin-right: 20px;">
-        <img src="SpecPI40_t.png" height="22" width="250" style="vertical-align: middle; margin-right: 20px;">
-        <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-            <span class="oi oi-list-rich" aria-hidden="true"></span> AASX Model
-        </NavLink>
-        <NavLink class="nav-link" href="About" Match="NavLinkMatch.All">
-            <span class="oi oi-list-rich" aria-hidden="true"></span> LICENSE.TXT
-        </NavLink>
-    </div>
-    <div class="content px-4">
-        @Body
-    </div>
-    }
-    else
-    {
-    var modelText = "PCF";
-    if (Program.showWeight)
-    {
-    modelText = "weight";
-    }
+                    <img src="2022-02-15_IDTA_AAS-Logo_Final_RGB.png" height="55" width="60" style="vertical-align: middle; margin-right: 20px;">
+                    <img src="Logo_IDTA.jpg" height="30" width="140" style="vertical-align: middle; margin-right: 20px;">
+                    <img src="SpecPI40_t.png" height="22" width="250" style="vertical-align: middle; margin-right: 20px;">
+                    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                        <span class="oi oi-list-rich" aria-hidden="true"></span> AASX Model
+                    </NavLink>
+                    <NavLink class="nav-link" href="About" Match="NavLinkMatch.All">
+                        <span class="oi oi-list-rich" aria-hidden="true"></span> LICENSE.TXT
+                    </NavLink>
+                </div>
+                <div class="content px-4">
+                    @Body
+                </div>
+            }
+            else
+            {
+                var modelText = "PCF";
+                if (Program.showWeight)
+                {
+                    modelText = "weight";
+                }
 
-    <style>
+                <style>
         input:checked ~ .dot {
             transform: translateX(100%);
             background-color: #174a87 !important; /* zvei blau */
         }
     </style>
-    <div style="height:100%; display: flex; padding:0px !important; overflow-y: visible;">
-        <div class="top-row flex justify-between" style="justify-content: space-between; padding: 0px; min-height: 8%;">
-            <div class="self-center">
-                <div class="flex items-stretch">
-                    <img src="zvei_2021_RZ_RGB.png" style="max-width: 100px; display: inline; object-fit: contain;" alt="zvei logo"/>
-                    <img src="Logo_IDTA.jpg" style="padding-left:10px; max-width: 100px; display: inline; object-fit: contain;" alt="Logo of IDTA"/>
-                    @if (!Program.showWeight)
-                    {
-                    <span hspace=20 style="padding-left:20px; padding-right:10px; font-size:xx-large;" class="self-center">
+                <div style="height:100%; display: flex; padding:0px !important; overflow-y: visible;">
+                    <div class="top-row flex justify-between" style="justify-content: space-between; padding: 0px; min-height: 8%;">
+                        <div class="self-center">
+                            <div class="flex items-stretch">
+                                <img src="zvei_2021_RZ_RGB.png" style="max-width: 100px; display: inline; object-fit: contain;" alt="zvei logo"/>
+                                <img src="Logo_IDTA.jpg" style="padding-left:10px; max-width: 100px; display: inline; object-fit: contain;" alt="Logo of IDTA"/>
+                                @if (!Program.showWeight)
+                                {
+                                    <span hspace=20 style="padding-left:20px; padding-right:10px; font-size:xx-large;" class="self-center">
                                         <strong>Product Carbon Footprint Showcase</strong>
                                     </span>
-                    }
-                </div>
-            </div>
-            <div>
-                <!-- toggle -->
-                <!-- label -->
-                <span class="ml-3 text-gray-700 font-medium">
+                                }
+                            </div>
+                        </div>
+                        <div>
+                            <!-- toggle -->
+                            <!-- label -->
+                            <span class="ml-3 text-gray-700 font-medium">
                                 @if (_loading)
-                    {
-                    <span class="loader align-middle"></span>
+                                {
+                                    <span class="loader align-middle"></span>
                                     <span style="">Loading submodels...</span>
-                    }
-                    else
-                    {
-                    <span style="">Loaded @Program.submodelAPIcount submodels @_watchText</span>
-                    }
+                                }
+                                else
+                                {
+                                    <span style="">Loaded @Program.submodelAPIcount submodels @_watchText</span>
+                                }
                                 Role:
-                    <!--Curr: <span style="border-width: 1px; color: blue;">@input</span>-->
+                                <!--Curr: <span style="border-width: 1px; color: blue;">@input</span>-->
 
                                 <select @bind="_role"
                                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
@@ -115,7 +113,7 @@
 
                                     @foreach (var t in roleList)
                                     {
-                                    <option value="@t">@t</option>
+                                        <option value="@t">@t</option>
                                     }
                                 </select>
                                 <input
@@ -126,168 +124,170 @@
                                     Authenticate
                                 </button>
 
-                    @code {
-                    private string CurrentValue { get; set; }
-                    }
+                                @code {
+                                    private string CurrentValue { get; set; }
+                                }
 
-                    @{
-                    if (_edit)
-                    {
-                    <span style="color:red;">edit</span>
-                    }
+                                @{
+                                    if (_edit)
+                                    {
+                                        <span style="color:red;">edit</span>
+                                    }
 
-                    async Task update()
-                    {
-                    if (!string.IsNullOrEmpty(CurrentValue))
-                    {
-                    Program.submodelAPIcount = 0;
-                    switch (CurrentValue)
-                    {
-                    case "edit":
-                    _edit = !_edit;
-                    Program.signalNewData(2);
-                    break;
-                    case "weight":
-                    Program.showWeight = !Program.showWeight;
-                    Program.signalNewData(2);
-                    break;
-                    case "count=0":
-                    Program.submodelAPIcount = 0;
-                    break;
-                    default:
-                    {
-                    if (CurrentValue.Contains("FORCE-POLICY"))
-                    {
-                    Program.withPolicy = CurrentValue.Contains("ON");
-                    }
-                    else {if (CurrentValue.Contains("get="))
-                    {
-                    CurrentValue = CurrentValue.Replace("get=", "");
-                    Program.getUrl = CurrentValue;
-                    Program.signalNewData(2);
-                    }
-                    else if (CurrentValue.Contains("secret="))
-                    {
-                    CurrentValue = CurrentValue.Replace("secret=", "");
-                    Program.getUrl = CurrentValue;
-                    Program.signalNewData(2);
-                    }
-                    else
-                    {
-                    if (string.IsNullOrEmpty(_role))
-                    _role = roleList[0];
-                    if (CurrentValue.Contains("Email=") || CurrentValue.Contains("@"))
-                    {
-                    CurrentValue = CurrentValue.Replace("Email=", "");
-                    AasxCredentials.initByEmail(cs.credentials, CurrentValue);
-                    _input = CurrentValue;
-                    _role = string.Empty;
-                    }
-                    else if (CurrentValue.Contains("CREDENTIALS-") && CurrentValue.Contains(".DAT"))
-                    {
-                    AasxCredentials.initByFile(cs.credentials, CurrentValue);
-                    _input = CurrentValue;
-                    _role = string.Empty;
-                    }
-                    else if (CurrentValue.Contains("edc="))
-                    {
-                    CurrentValue = CurrentValue.Replace("edc=", "");
-                    AasxCredentials.initByEdc(cs.credentials, "someuser", "somepassword", CurrentValue);
-                    _input = CurrentValue;
-                    _role = string.Empty;
-                    }
-                    else
-                    {
-                    AasxCredentials.initByUserPW(cs.credentials, _role, CurrentValue);
-                    _input = _role;
-                    }
+                                    async Task update()
+                                    {
+                                        if (!string.IsNullOrEmpty(CurrentValue))
+                                        {
+                                            Program.submodelAPIcount = 0;
+                                            switch (CurrentValue)
+                                            {
+                                                case "edit":
+                                                    _edit = !_edit;
+                                                    Program.signalNewData(2);
+                                                    break;
+                                                case "weight":
+                                                    Program.showWeight = !Program.showWeight;
+                                                    Program.signalNewData(2);
+                                                    break;
+                                                case "count=0":
+                                                    Program.submodelAPIcount = 0;
+                                                    break;
+                                                default:
+                                                {
+                                                    if (CurrentValue.Contains("FORCE-POLICY"))
+                                                    {
+                                                        Program.withPolicy = CurrentValue.Contains("ON");
+                                                    }
+                                                    else
+                                                    {
+                                                        if (CurrentValue.Contains("get="))
+                                                        {
+                                                            CurrentValue   = CurrentValue.Replace("get=", "");
+                                                            Program.getUrl = CurrentValue;
+                                                            Program.signalNewData(2);
+                                                        }
+                                                        else if (CurrentValue.Contains("secret="))
+                                                        {
+                                                            CurrentValue   = CurrentValue.Replace("secret=", "");
+                                                            Program.getUrl = CurrentValue;
+                                                            Program.signalNewData(2);
+                                                        }
+                                                        else
+                                                        {
+                                                            if (string.IsNullOrEmpty(_role))
+                                                                _role = roleList[ 0 ];
+                                                            if (CurrentValue.Contains("Email=") || CurrentValue.Contains("@"))
+                                                            {
+                                                                CurrentValue = CurrentValue.Replace("Email=", "");
+                                                                AasxCredentials.initByEmail(cs.credentials, CurrentValue);
+                                                                _input = CurrentValue;
+                                                                _role  = string.Empty;
+                                                            }
+                                                            else if (CurrentValue.Contains("CREDENTIALS-") && CurrentValue.Contains(".DAT"))
+                                                            {
+                                                                AasxCredentials.initByFile(cs.credentials, CurrentValue);
+                                                                _input = CurrentValue;
+                                                                _role  = string.Empty;
+                                                            }
+                                                            else if (CurrentValue.Contains("edc="))
+                                                            {
+                                                                CurrentValue = CurrentValue.Replace("edc=", "");
+                                                                AasxCredentials.initByEdc(cs.credentials, "someuser", "somepassword", CurrentValue);
+                                                                _input = CurrentValue;
+                                                                _role  = string.Empty;
+                                                            }
+                                                            else
+                                                            {
+                                                                AasxCredentials.initByUserPW(cs.credentials, _role, CurrentValue);
+                                                                _input = _role;
+                                                            }
 
-                    _loading = true;
-                    StateHasChanged();
-                    await Task.Delay(1); //hack to let frontend update
-                    var watch = System.Diagnostics.Stopwatch.StartNew();
-                    AasRegistryService.InitRegistry(cs.credentials, DateTime.UtcNow, true);
-                    watch.Stop();
-                    Console.WriteLine(watch.ElapsedMilliseconds + " ms");
-                    _watchText = $"in {((watch.ElapsedMilliseconds + 500) / 1000)}s";
-                    AasxTask.resetTimeStamp();
-                    _loading = false;
-                    }
-                    }
+                                                            _loading = true;
+                                                            StateHasChanged();
+                                                            await Task.Delay(1); //hack to let frontend update
+                                                            var watch = System.Diagnostics.Stopwatch.StartNew();
+                                                            AasRegistryService.InitRegistry(cs.credentials, DateTime.UtcNow, true);
+                                                            watch.Stop();
+                                                            Console.WriteLine(watch.ElapsedMilliseconds + " ms");
+                                                            _watchText = $"in {((watch.ElapsedMilliseconds + 500) / 1000)}s";
+                                                            AasxTask.resetTimeStamp();
+                                                            _loading = false;
+                                                        }
+                                                    }
 
-                    break;
-                    }
-                    }
+                                                    break;
+                                                }
+                                            }
 
-                    CurrentValue = "";
-                    StateHasChanged();
-                    }
-                    }
-                    }
+                                            CurrentValue = "";
+                                            StateHasChanged();
+                                        }
+                                    }
+                                }
                             </span>
-            </div>
-            <div class="self-center text-right p-2" style="margin-top:8px;">
-                <label for="toggle" class="flex items-center cursor-pointer justify-end">
-                    Disclaimer: displayed @modelText values are for demo purposes only
-                    <div class="relative ml-2">
-                        <!-- input -->
-                        <input type="checkbox" id="toggle" class="sr-only"
-                               onclick="Array.from(document.getElementsByClassName('hidden')).forEach(function (item)
+                        </div>
+                        <div class="self-center text-right p-2" style="margin-top:8px;">
+                            <label for="toggle" class="flex items-center cursor-pointer justify-end">
+                                Disclaimer: displayed @modelText values are for demo purposes only
+                                <div class="relative ml-2">
+                                    <!-- input -->
+                                    <input type="checkbox" id="toggle" class="sr-only"
+                                           onclick="Array.from(document.getElementsByClassName('hidden')).forEach(function (item)
                                             { item.style.display = item.style.display != 'block' ? 'block' : 'none'; })">
-                        <!-- line -->
-                        <div class="block bg-gray-200 w-10 h-6 rounded-full"></div>
-                        <!-- dot -->
-                        <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"></div>
+                                    <!-- line -->
+                                    <div class="block bg-gray-200 w-10 h-6 rounded-full"></div>
+                                    <!-- dot -->
+                                    <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"></div>
+                                </div>
+                            </label>
+                        </div>
                     </div>
-                </label>
-            </div>
-        </div>
-        <div class="flex flex-row" style="height:92%;">
-            <div class="content px-4 basis-1/3 expand-slim" style="height:100%; padding: 0px !important; overflow-y: scroll;">
-                @Body
-            </div>
-            <div class="content px-4 basis-2/3 hide-slim" style="padding: 0px !important;">
-                <iframe src="@getIframePath()"
-                        id="iframe" style="width: 100%; height: 100%;">
-                </iframe>
-            </div>
-        </div>
-    </div>
-    }
-    }
+                    <div class="flex flex-row" style="height:92%;">
+                        <div class="content px-4 basis-1/3 expand-slim" style="height:100%; padding: 0px !important; overflow-y: scroll;">
+                            @Body
+                        </div>
+                        <div class="content px-4 basis-2/3 hide-slim" style="padding: 0px !important;">
+                            <iframe src="@getIframePath()"
+                                    id="iframe" style="width: 100%; height: 100%;">
+                            </iframe>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
     }
 </div>
 
 @code{
 
-static List<string> roleList = new()
-{
-"Anonym", "Isabelle", "Steven", "Albert"
-};
+    static List<string> roleList = new()
+                                   {
+                                       "Anonym", "Isabelle", "Steven", "Albert"
+                                   };
 
-static string _role = roleList[0];
-static string _input = string.Empty;
-static string _watchText = string.Empty;
-static string _path = string.Empty;
-static bool _loading;
-static bool _edit;
+    static string _role = roleList[ 0 ];
+    static string _input = string.Empty;
+    static string _watchText = string.Empty;
+    static string _path = string.Empty;
+    static bool _loading;
+    static bool _edit;
 
 //TODO: code duplication with Pcf2.razor
-static string getAasLink(IIdentifiable aas)
-{
-string endpoint = null;
-var idEncoded = Base64UrlEncoder.Encode(aas.Id);
-if (aas.Extensions != null)
-{
-endpoint = aas.Extensions[0].Value;
-}
-else
-{
-endpoint = Program.externalBlazor + "/shells/" + idEncoded;
-}
+    static string getAasLink(IIdentifiable aas)
+    {
+        string endpoint  = null;
+        var    idEncoded = Base64UrlEncoder.Encode(aas.Id);
+        if (aas.Extensions != null)
+        {
+            endpoint = aas.Extensions[ 0 ].Value;
+        }
+        else
+        {
+            endpoint = Program.externalBlazor + "/shells/" + idEncoded;
+        }
 
-return endpoint;
-}
+        return endpoint;
+    }
 
     string getIframePath()
     {
@@ -297,12 +297,12 @@ return endpoint;
         {
             if (env != null)
             {
-                var queryPara = "";
-                var userPW = "";
-                var urlEdcWrapper = "";
-                string replace = "";
+                var    queryPara     = "";
+                var    userPW        = "";
+                var    urlEdcWrapper = "";
+                string replace       = "";
 
-                var aas = env.AasEnv.AssetAdministrationShells[0];
+                var aas = env.AasEnv.AssetAdministrationShells[ 0 ];
                 if (aas.IdShort != "ZveiControlCabinetAas - EXTERNAL")
                     continue;
 
@@ -311,26 +311,27 @@ return endpoint;
                 var registry = AasRegistryService.GetRegistryList();
                 if (registry != null && registry.Count != 0)
                 {
-                    string registryURL = registry[0];
+                    string registryURL = registry[ 0 ];
 
                     if (AasxCredentials.get(cs.credentials, registryURL, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
                     {
                         if (replace != "")
                             registryURL = replace;
                     }
+
                     link += "&registryURL=" + registryURL;
                 }
 
-                queryPara = "";
-                userPW = "";
+                queryPara     = "";
+                userPW        = "";
                 urlEdcWrapper = "";
-                replace = "";
+                replace       = "";
                 if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
                 {
                     if (replace != "")
                         link = replace;
-                    queryPara = Base64UrlEncoder.Encode(queryPara);
-                    link += "&query=" + queryPara;
+                    queryPara =  Base64UrlEncoder.Encode(queryPara);
+                    link      += "&query=" + queryPara;
                     // Console.WriteLine("iframe:" + link);
                 }
 
@@ -339,45 +340,45 @@ return endpoint;
         }
 
 //TODO: not passing credentials
-var p = System.Environment.GetEnvironmentVariable("IFRAMEPATH");
-if (p != null)
-{
-p = p.Replace("\r", "");
-p = p.Replace("\n", "");
-_path = p;
-}
+        var p = System.Environment.GetEnvironmentVariable("IFRAMEPATH");
+        if (p != null)
+        {
+            p     = p.Replace("\r", "");
+            p     = p.Replace("\n", "");
+            _path = p;
+        }
 
-_path += link;
+        _path += link;
 
 
-return _path;
-}
+        return _path;
+    }
 
-protected override void OnInitialized()
-{
-SubmodelService.NewDataAvailable += NewData;
-}
+    protected override void OnInitialized()
+    {
+        SubmodelService.NewDataAvailable += NewData;
+    }
 
-public void Dispose()
-{
-SubmodelService.NewDataAvailable -= NewData;
-}
+    public void Dispose()
+    {
+        SubmodelService.NewDataAvailable -= NewData;
+    }
 
-void NewData(object source, EventArgs args)
-{
-if (Program.isLoading)
-return;
+    void NewData(object source, EventArgs args)
+    {
+        if (Program.isLoading)
+            return;
 
-if (args is not Program.NewDataAvailableArgs newArgs)
-{
-return;
-}
+        if (args is not Program.NewDataAvailableArgs newArgs)
+        {
+            return;
+        }
 
-var newDataMode = newArgs.signalNewDataMode;
-if (newDataMode != 0)
-{
-InvokeAsync(this.StateHasChanged);
-}
-}
+        var newDataMode = newArgs.signalNewDataMode;
+        if (newDataMode != 0)
+        {
+            InvokeAsync(this.StateHasChanged);
+        }
+    }
 
 }
