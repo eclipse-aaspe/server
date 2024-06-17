@@ -58,10 +58,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 	ProjectSection(SolutionItems) = preProject
 		..\.github\workflows\build-and-publish-docker-images.yml = ..\.github\workflows\build-and-publish-docker-images.yml
 		..\.github\workflows\check-release.yml = ..\.github\workflows\check-release.yml
-		..\.github\workflows\draft-prerelease-on-pushed-tag.yml = ..\.github\workflows\draft-prerelease-on-pushed-tag.yml
 		..\.github\workflows\draft-release-on-merge-to-release-branch.yml = ..\.github\workflows\draft-release-on-merge-to-release-branch.yml
 		..\.github\workflows\prerelease-on-merge-to-main.yml = ..\.github\workflows\prerelease-on-merge-to-main.yml
 		..\.github\workflows\code-analysis.yml = ..\.github\workflows\code-analysis.yml
+		..\.github\workflows\create-developer-prerelease.yml = ..\.github\workflows\create-developer-prerelease.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ProjectScripts", "ProjectScripts", "{39F9287F-CBC6-4F56-AA55-81A013A89AAE}"

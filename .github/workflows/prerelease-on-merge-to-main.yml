@@ -2,7 +2,7 @@ name: Nightly Prerelease build on Main
 
 on:
   schedule:
-    - cron: '0 23 * * *' # This is 1:00 AM Berlin time
+    - cron: '0 23 * * 1-5' # This is 1:00 AM Berlin time from Monday to Friday
   workflow_dispatch:  # Allows manual triggering
 
 env:
@@ -13,6 +13,7 @@ jobs:
   check-for-changes:
     runs-on: windows-latest
     name: Check for changes between HEAD and last created tag
+    if: github.event_name != 'schedule' || github.repository == 'eclipse-aaspe/server'
     outputs:
       branch_changed: ${{ steps.check_changes.outputs.changes_detected }}
     steps:
@@ -24,38 +25,47 @@ jobs:
       - name: Check changes since last tag
         id: check_changes
         run: |
-          git fetch --tags
+          git fetch --tags -v
           $tags = git tag --sort=-creatordate
+          Write-Host "Tags: $tags"
           $branchSuffix = "${{ env.BRANCH_SUFFIX }}"
+          Write-Host "Branch Suffix: $branchSuffix"
           $potentialTags = @()
           foreach ($tag in $tags) {
             if ($tag -match ".*-$branchSuffix$") {
               $potentialTags += $tag
             }
           }
-          
-          if ($potentialTags.Count -gt 0) {
+
+          if ($potentialTags.Count -gt 0) 
+          {
             $latestTag = $potentialTags[0]
             Write-Host "Latest found matching tag is $latestTag"
-          } else {
+          } else 
+          {
             Write-Host "No matching tags found, fetching the latest tag."
             $latestTag = $tags | Select-Object -First 1
-            if ($latestTag) {
+            if ($latestTag) 
+            {
               echo "from_tag=$latestTag" >> $env:GITHUB_OUTPUT
               Write-Host "Latest found tag is $latestTag"
-            } else {
+            } else 
+            {
               Write-Host "No tags found at all."
               exit 1
             }
           }
+
           Write-Host "Checking changes since tag: $latestTag"
-          $changes = git log --oneline $latestTag..HEAD
-          Write-Host "Found changes $changes"
-          if (-not [string]::IsNullOrEmpty($changes)) {
+          $changes = git log --oneline "$latestTag"..HEAD
+          Write-Host "Found changes: $changes"
+          if (-not [string]::IsNullOrEmpty($changes)) 
+          {
             Write-Host "Changes detected since $latestTag"
             Write-Host "$changes"
             echo "changes_detected=true" >> $env:GITHUB_OUTPUT
-          } else {
+          } else 
+          {
             Write-Host "No changes detected since $latestTag."
             echo "changes_detected=false" >> $env:GITHUB_OUTPUT
           }
@@ -65,6 +75,9 @@ jobs:
     runs-on: windows-latest
     name: Create a new prerelease build and attach built packages to release
     needs: check-for-changes
+    permissions:
+      contents: write
+      pull-requests: write
     if: needs.check-for-changes.outputs.branch_changed == 'true'
     steps:
       - name: Checkout repository
@@ -224,6 +237,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Create new docker builds with latest prerelease and upload to DockerHub
     needs: create-new-prerelease
+    if: github.repository == 'eclipse-aaspe/server'
     steps:
       - uses: actions/checkout@v4
 
