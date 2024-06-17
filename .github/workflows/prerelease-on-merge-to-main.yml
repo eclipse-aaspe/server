@@ -2,7 +2,7 @@ name: Nightly Prerelease build on Main
 
 on:
   schedule:
-    - cron: '0 23 * * *' # This is 1:00 AM Berlin time
+    - cron: '0 23 * * 1-5' # This is 1:00 AM Berlin time from Monday to Friday
   workflow_dispatch:  # Allows manual triggering
 
 env:
@@ -13,6 +13,7 @@ jobs:
   check-for-changes:
     runs-on: windows-latest
     name: Check for changes between HEAD and last created tag
+    if: github.repository == 'eclipse-aaspe/server'
     outputs:
       branch_changed: ${{ steps.check_changes.outputs.changes_detected }}
     steps:
@@ -48,6 +49,7 @@ jobs:
               exit 1
             }
           }
+          
           Write-Host "Checking changes since tag: $latestTag"
           $changes = git log --oneline $latestTag..HEAD
           Write-Host "Found changes $changes"
