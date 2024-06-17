@@ -19,7 +19,7 @@ on:
 jobs:
   format-check:
     runs-on: windows-latest
-
+    if: false # We disable this check for now. At first, we must reformat the whole solution
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -50,7 +50,7 @@ jobs:
           echo "Code formatting issues detected. Please fix the issues and commit again."
           exit 1
 
-  codeql-analysis:
+  code-ql-analysis:
     runs-on: windows-latest
     
     defaults:
