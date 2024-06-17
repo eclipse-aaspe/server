@@ -5,10 +5,6 @@ on:
     - cron: '0 23 * * 1-5' # This is 1:00 AM Berlin time from Monday to Friday
   workflow_dispatch:  # Allows manual triggering
 
-permissions:
-  contents: write
-  workflows: write
-
 env:
   BRANCH_SUFFIX: latest
   VERSION_SUFFIX: alpha
@@ -79,6 +75,10 @@ jobs:
     runs-on: windows-latest
     name: Create a new prerelease build and attach built packages to release
     needs: check-for-changes
+    permissions:
+      contents: write
+      pull-requests: write
+      workflows: write
     if: needs.check-for-changes.outputs.branch_changed == 'true'
     steps:
       - name: Checkout repository
