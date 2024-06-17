@@ -284,7 +284,7 @@ namespace AasxServer
         public static string[] envSymbols = null;
 
         public static string[] envSubjectIssuer = null;
-       
+
 
         public static string hostPort = "";
         public static string blazorPort = "";
@@ -640,20 +640,27 @@ namespace AasxServer
             Console.WriteLine("Security 1 Startup - Server");
             Console.WriteLine("Security 1.1 Load X509 Root Certificates into X509 Store Root");
 
-            X509Store root = new X509Store("Root", StoreLocation.CurrentUser);
-            root.Open(OpenFlags.ReadWrite);
-
-            System.IO.DirectoryInfo ParentDirectory = new System.IO.DirectoryInfo(".");
-
-            if (Directory.Exists("./root"))
+            try
             {
-                foreach (System.IO.FileInfo f in ParentDirectory.GetFiles("./root/*.cer"))
-                {
-                    X509Certificate2 cert = new X509Certificate2("./root/" + f.Name);
+                X509Store root = new X509Store("Root", StoreLocation.CurrentUser);
+                root.Open(OpenFlags.ReadWrite);
 
-                    root.Add(cert);
-                    Console.WriteLine("Security 1.1 Add " + f.Name);
+                DirectoryInfo ParentDirectory = new DirectoryInfo(".");
+
+                if (Directory.Exists("./root"))
+                {
+                    foreach (FileInfo f in ParentDirectory.GetFiles("./root/*.cer"))
+                    {
+                        X509Certificate2 cert = new X509Certificate2("./root/" + f.Name);
+
+                        root.Add(cert);
+                        Console.WriteLine("Security 1.1 Add " + f.Name);
+                    }
                 }
+            }
+            catch (AggregateException aggregateException)
+            {
+                Console.WriteLine($"Cannot initialise cryptography: {aggregateException.Message}");
             }
 
             if (!Directory.Exists("./temp"))

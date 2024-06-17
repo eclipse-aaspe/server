@@ -107,7 +107,7 @@
                                             @* @DesignationOfCertificateOrApproval[i] *@
                                             @{
                                                 svg = false;
-                                                // detailsImage = createDetailsImage(envIndex[i], PreviewFile[i], out svg);
+                                                // detailsImage = CreateDetailsImage(envIndex[i], PreviewFile[i], out svg);
                                                 detailsImage = "";
 
                                                 if (PreviewFileUrl[i] != "")
@@ -971,39 +971,36 @@
                                             }
                                         }
                                     }
-                                    if (sm.SubmodelElements != null)
+                                    foreach (var se in sm.SubmodelElements)
                                     {
-                                        foreach (var se in sm.SubmodelElements)
+                                        if (se is SubmodelElementCollection smc)
                                         {
-                                            if (se is SubmodelElementCollection smc)
+                                            var sme = findeSME(smc: smc,
+                                                        idShortPath: "DocumentVersion.PreviewFile",
+                                                        ignore: true, contains: true);
+                                            if (sme != null)
                                             {
-                                                var sme = findeSME(smc: smc,
-                                                            idShortPath: "DocumentVersion.PreviewFile",
-                                                            ignore: true, contains: true);
-                                                if (sme != null)
+                                                if (sme is File f)
                                                 {
-                                                    if (sme is File f)
+                                                    if (f.Value.ToLower().Contains("atex"))
                                                     {
-                                                        if (f.Value.ToLower().Contains("atex"))
+                                                        PreviewFile[count] = f.Value;
+                                                        var path = getPath(f);
+                                                        if (path != null)
                                                         {
-                                                            PreviewFile[count] = f.Value;
-                                                            var path = getPath(f);
-                                                            if (path != null)
-                                                            {
-                                                                PreviewFileUrl[count] = path.Replace("PreviewFile", "DigitalFile");
-                                                            }
-                                                            TypeOfApproval[count] = "ATEX";
+                                                            PreviewFileUrl[count] = path.Replace("PreviewFile", "DigitalFile");
                                                         }
-                                                        if (f.Value.ToLower().Contains("iecex") && TypeOfApproval[count] != "ATEX")
+                                                        TypeOfApproval[count] = "ATEX";
+                                                    }
+                                                    if (f.Value.ToLower().Contains("iecex") && TypeOfApproval[count] != "ATEX")
+                                                    {
+                                                        PreviewFile[count] = f.Value;
+                                                        var path = getPath(f);
+                                                        if (path != null)
                                                         {
-                                                            PreviewFile[count] = f.Value;
-                                                            var path = getPath(f);
-                                                            if (path != null)
-                                                            {
-                                                                PreviewFileUrl[count] = path.Replace("PreviewFile", "DigitalFile");
-                                                            }
-                                                            TypeOfApproval[count] = "IECEX";
+                                                            PreviewFileUrl[count] = path.Replace("PreviewFile", "DigitalFile");
                                                         }
+                                                        TypeOfApproval[count] = "IECEX";
                                                     }
                                                 }
                                             }
