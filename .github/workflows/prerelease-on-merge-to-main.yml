@@ -78,7 +78,6 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-      workflows: write
     if: needs.check-for-changes.outputs.branch_changed == 'true'
     steps:
       - name: Checkout repository
