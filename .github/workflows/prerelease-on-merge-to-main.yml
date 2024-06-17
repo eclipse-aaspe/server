@@ -57,7 +57,7 @@ jobs:
           }
 
           Write-Host "Checking changes since tag: $latestTag"
-          $changes = git log --oneline '{$latestTag}'..HEAD -v
+          $changes = git log --oneline {$latestTag}..HEAD -v
           Write-Host "Found changes: $changes"
           if (-not [string]::IsNullOrEmpty($changes)) 
           {
@@ -234,6 +234,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Create new docker builds with latest prerelease and upload to DockerHub
     needs: create-new-prerelease
+    if: github.repository == 'eclipse-aaspe/server'
     steps:
       - uses: actions/checkout@v4
 
