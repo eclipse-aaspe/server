@@ -1,4 +1,4 @@
-﻿using AasxServerDB.Entities;
+using AasxServerDB.Entities;
 using Microsoft.IdentityModel.Tokens;
 
 namespace AasxServerDB
@@ -43,11 +43,11 @@ namespace AasxServerDB
                 data = db.SMESets
                     .OrderBy(sme => sme.Id)
                     .Where(sme => (smid == 0 || sme.SMId == smid) && (smeid == 0 || sme.Id == smeid) &&
-                        (searchLower.IsNullOrEmpty() || sme.IdShort.ToLower().Contains(searchLower) || sme.SemanticId.ToLower().Contains(searchLower) || sme.SMEType.ToLower().Contains(searchLower) || sme.ValueType.ToLower().Contains(searchLower)
-                        || (sme.ValueType == "S" && db.SValueSets.Any(sv => sv.SMEId == sme.Id && sv.Annotation.ToLower().Contains(searchLower) && sv.Value.ToLower().Contains(searchLower)))
-                        || (sme.ValueType == "I" && db.IValueSets.Any(sv => sv.SMEId == sme.Id && sv.Annotation.ToLower().Contains(searchLower) && sv.Value.ToString().ToLower().Contains(searchLower)))
-                        || (sme.ValueType == "F" && db.DValueSets.Any(sv => sv.SMEId == sme.Id && sv.Annotation.ToLower().Contains(searchLower) && sv.Value.ToString().ToLower().Contains(searchLower)))
-                        ))
+                        (searchLower.IsNullOrEmpty() || sme.IdShort.ToLower().Contains(searchLower) || sme.SemanticId.ToLower().Contains(searchLower) || sme.SMEType.ToLower().Contains(searchLower) || sme.ValueType.ToLower().Contains(searchLower) ||
+                        (sme.ValueType != null && (
+                            (sme.ValueType.Equals("S") && db.SValueSets.Any(sv => sv.SMEId == sme.Id && ((sv.Annotation != null && sv.Annotation.ToLower().Contains(searchLower)) || (sv.Value != null && sv.Value.ToLower().Contains(searchLower))))) ||
+                            (sme.ValueType.Equals("I") && db.IValueSets.Any(sv => sv.SMEId == sme.Id && ((sv.Annotation != null && sv.Annotation.ToLower().Contains(searchLower)) || (sv.Value != null && sv.Value.ToString().ToLower().Contains(searchLower))))) ||
+                            (sme.ValueType.Equals("F") && db.DValueSets.Any(sv => sv.SMEId == sme.Id && ((sv.Annotation != null && sv.Annotation.ToLower().Contains(searchLower)) || (sv.Value != null && sv.Value.ToString().ToLower().Contains(searchLower)))))))))
                     .Take(size)
                     .ToList();
             }
