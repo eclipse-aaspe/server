@@ -6,7 +6,7 @@ WORKDIR /repo/src
 COPY ./src/ /repo/src/
 COPY ./LICENSE.TXT /repo/LICENSE.txt
 
-RUN dotnet restore AasxServerBlazor
+RUN dotnet restore
 RUN dotnet publish -c Release -o /out/AasxServerBlazor AasxServerBlazor -v diag
 
 FROM mcr.microsoft.com/dotnet/aspnet:6.0 as base

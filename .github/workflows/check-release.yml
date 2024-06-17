@@ -19,6 +19,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Validate Razor Files
+        run: dotnet build ./src/AasxServerBlazor/AasxServerBlazor.csproj
       
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
