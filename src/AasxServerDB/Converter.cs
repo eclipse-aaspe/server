@@ -8,7 +8,7 @@ namespace AasxServerDB
 {
     public class Converter
     {
-        static public AdminShellPackageEnv GetPackageEnv(string path, AASSet aasDB) 
+        static public AdminShellPackageEnv? GetPackageEnv(string path, AASSet? aasDB) 
         {
             using (AasContext db = new AasContext())
             {
@@ -21,26 +21,25 @@ namespace AasxServerDB
                     assetInformation: new AssetInformation(AssetKind.Type, aasDB.GlobalAssetId),
                     submodels: new List<AasCore.Aas3_0.IReference>());
 
-                AdminShellPackageEnv aasEnv = new AdminShellPackageEnv();
+                AdminShellPackageEnv? aasEnv = new AdminShellPackageEnv();
                 aasEnv.SetFilename(path);
-                aasEnv.AasEnv.AssetAdministrationShells.Add(aas);
+                aasEnv.AasEnv.AssetAdministrationShells?.Add(aas);
 
                 var submodelDBList = db.SMSets
                     .OrderBy(sm => sm.Id)
                     .Where(sm => sm.AASId == aasDB.Id)
                     .ToList();
-                foreach (var submodelDB in submodelDBList)
+                foreach (var sm in submodelDBList.Select(submodelDB => Converter.GetSubmodel(smDB:submodelDB)))
                 {
-                    Submodel sm = Converter.GetSubmodel(smDB:submodelDB);
-                    aas.Submodels.Add(sm.GetReference());
-                    aasEnv.AasEnv.Submodels.Add(sm);
+                    aas.Submodels?.Add(sm.GetReference());
+                    aasEnv.AasEnv.Submodels?.Add(sm);
                 }
 
                 return aasEnv;
             }
         }
 
-        static public Submodel GetSubmodel(SMSet? smDB = null, string smIdentifier = "")
+        static public Submodel? GetSubmodel(SMSet? smDB = null, string smIdentifier = "")
         {
             using (AasContext db = new AasContext())
             {

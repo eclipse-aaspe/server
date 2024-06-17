@@ -363,7 +363,7 @@ namespace IO.Swagger.Controllers
             var aasList = _aasService.GetAllAssetAdministrationShells(assetIds, idShort);
             var aasPaginatedList = _paginationService.GetPaginatedList(aasList, new PaginationParameters(cursor, limit));
             var references = _referenceModifierService.GetReferenceResult(aasPaginatedList.result.ConvertAll(a => (IReferable)a));
-            var output = new ReferencPagedResult
+            var output = new ReferencePagedResult
             {
                 result = references,
                 paging_metadata = aasPaginatedList.paging_metadata
@@ -556,7 +556,7 @@ namespace IO.Swagger.Controllers
         [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/$reference")]
         [ValidateModelState]
         [SwaggerOperation("GetAllSubmodelElementsReferenceAasRepository")]
-        [SwaggerResponse(statusCode: 200, type: typeof(ReferencPagedResult), description: "List of References of the found submodel elements")]
+        [SwaggerResponse(statusCode: 200, type: typeof(ReferencePagedResult), description: "List of References of the found submodel elements")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
         [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
@@ -584,7 +584,7 @@ namespace IO.Swagger.Controllers
             // TODO (jtikekar, 2023-09-04): check performace imapct due to ConvertAll
             var smePaginated = _paginationService.GetPaginatedList(smeList, new PaginationParameters(cursor, limit));
             var smeReferenceList = _referenceModifierService.GetReferenceResult(smePaginated.result.ConvertAll(sme => (IReferable)sme));
-            var output = new ReferencPagedResult
+            var output = new ReferencePagedResult
             {
                 result = smeReferenceList,
                 paging_metadata = smePaginated.paging_metadata

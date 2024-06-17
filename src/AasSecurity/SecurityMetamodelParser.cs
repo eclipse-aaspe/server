@@ -8,12 +8,12 @@ namespace AasSecurity
     internal class SecurityMetamodelParser
     {
         //private static ILogger _logger = ApplicationLogging.CreateLogger("SecurityMetamodelParser");
-        internal static void ParserSecurityMetamodel(AdminShellPackageEnv env, ISubmodel submodel)
+        internal static void ParserSecurityMetamodel(AdminShellPackageEnv? env, ISubmodel submodel)
         {
             var accessControlPolicyPoints = ParseAccessControlPolicyPoint(env, submodel);
         }
 
-        private static AccessControlPolicyPoints ParseAccessControlPolicyPoint(AdminShellPackageEnv env, ISubmodel submodel)
+        private static AccessControlPolicyPoints ParseAccessControlPolicyPoint(AdminShellPackageEnv? env, ISubmodel submodel)
         {
             AccessControlPolicyPoints output = new AccessControlPolicyPoints();
 
@@ -48,9 +48,9 @@ namespace AasSecurity
             return output;
         }
 
-        private static PolicyAdministrationPoint ParsePolicyAdminPoint(AdminShellPackageEnv env, SubmodelElementCollection policyAdminPointColl)
+        private static PolicyAdministrationPoint? ParsePolicyAdminPoint(AdminShellPackageEnv? env, SubmodelElementCollection policyAdminPointColl)
         {
-            PolicyAdministrationPoint output = new PolicyAdministrationPoint();
+            PolicyAdministrationPoint? output = new PolicyAdministrationPoint();
             foreach (var submodelElement in policyAdminPointColl.Value!)
             {
                 if (submodelElement.IdShort != null)
@@ -93,9 +93,9 @@ namespace AasSecurity
             return output;
         }
 
-        private static AccessPermissionRule ParseAccessPermissionRule(AdminShellPackageEnv env, ISubmodelElement ruleElement)
+        private static AccessPermissionRule? ParseAccessPermissionRule(AdminShellPackageEnv? env, ISubmodelElement ruleElement)
         {
-            AccessPermissionRule output = null;
+            AccessPermissionRule? output = null;
             if (ruleElement is SubmodelElementCollection rule && rule.Value != null)
             {
                 output = new AccessPermissionRule();
@@ -145,7 +145,7 @@ namespace AasSecurity
             return output;
         }
 
-        private static void CreateSecurityRule(AdminShellPackageEnv env, AccessPermissionRule accPermRule)
+        private static void CreateSecurityRule(AdminShellPackageEnv? env, AccessPermissionRule? accPermRule)
         {
             if (accPermRule.TargetSubjectAttributes != null && accPermRule.PermissionsPerObject != null)
             {
@@ -270,7 +270,7 @@ namespace AasSecurity
             }
         }
 
-        private static PermissionsPerObject ParsePermissionPerObject(AdminShellPackageEnv env, ISubmodelElement permPerObjColl)
+        private static PermissionsPerObject ParsePermissionPerObject(AdminShellPackageEnv? env, ISubmodelElement permPerObjColl)
         {
             if (permPerObjColl == null) return null;
 

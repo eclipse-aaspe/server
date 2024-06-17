@@ -9,8 +9,8 @@ namespace AasxServerDB.Entities
         public int Id { get; set; }
 
         [ForeignKey("SMSet")]
-        public int SMId { get; set; }
-        public virtual SMSet SMSet { get; set; }
+        public int SMId { get;             set; }
+        public virtual SMSet? SMSet { get; set; }
 
         public int? ParentSMEId { get; set; }
         public virtual SMESet? ParentSME { get; set; }
@@ -24,7 +24,7 @@ namespace AasxServerDB.Entities
         public virtual ICollection<DValueSet> DValueSets { get; } = new List<DValueSet>();
         public virtual ICollection<SValueSet> SValueSets { get; } = new List<SValueSet>();
 
-        public string getValue()
+        public string? getValue()
         {
             using (AasContext db = new AasContext())
             {
@@ -33,7 +33,7 @@ namespace AasxServerDB.Entities
                     case "S":
                         var ls = db.SValueSets.Where(s => s.SMEId == Id).Select(s => s.Value).ToList();
                         if (ls.Count != 0)
-                            return ls.First().ToString();
+                            return ls.First();
                         break;
                     case "I":
                         var li = db.IValueSets.Where(s => s.SMEId == Id).Select(s => s.Value).ToList();
@@ -69,12 +69,12 @@ namespace AasxServerDB.Entities
             return new List<string>();
         }
 
-        public static List<SValueSet> getValueList(List<SMESet> smesets)
+        public static List<SValueSet>? getValueList(List<SMESet> smesets)
         {
-            var smeIds = smesets.OrderBy(s => s.Id).Select(s => s.Id).ToList();
-            long first = smeIds.First();
-            long last = smeIds.Last();
-            List<SValueSet> valueList = null;
+            var              smeIds    = smesets.OrderBy(s => s.Id).Select(s => s.Id).ToList();
+            long             first     = smeIds.First();
+            long             last      = smeIds.Last();
+            List<SValueSet>? valueList = null;
             using (AasContext db = new AasContext())
             {
                 var watch = System.Diagnostics.Stopwatch.StartNew();

@@ -1435,23 +1435,14 @@ namespace Extensions
         /// <remarks>
         /// If <paramref name="that" /> is not a valid literal, return <c>null</c>.
         /// </remarks>
-        public static string? ToString(AasSubmodelElements? that)
+        public static string ToString(AasSubmodelElements? that)
         {
             if (!that.HasValue)
             {
                 return null;
             }
-            else
-            {
-                if (AasSubmodelElementsToAbbrev.TryGetValue(that.Value, out string? value))
-                {
-                    return value;
-                }
-                else
-                {
-                    return null;
-                }
-            }
+
+            return AasSubmodelElementsToAbbrev.TryGetValue(that.Value, out var value) ? value : null;
         }
 
         private static readonly Dictionary<string, AasSubmodelElements> _aasSubmodelElementsFromAbbrev = (

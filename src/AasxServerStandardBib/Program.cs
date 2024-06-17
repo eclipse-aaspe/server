@@ -445,8 +445,8 @@ namespace AasxServer
                 if (a.Connect.Length == 0)
                 {
                     Program.connectServer = "http://admin-shell-io.com:52000";
-                    Byte[]                   barray = new byte[10];
-                    RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
+                    Byte[]                barray = new byte[10];
+                    RandomNumberGenerator rngCsp = RandomNumberGenerator.Create();
                     rngCsp.GetBytes(barray);
                     Program.connectNodeName   = "AasxServer_" + Convert.ToBase64String(barray);
                     Program.connectUpdateRate = 2000;
@@ -658,9 +658,9 @@ namespace AasxServer
                     }
                 }
             }
-            catch (AggregateException aggregateException)
+            catch (CryptographicException cryptographicException)
             {
-                Console.WriteLine($"Cannot initialise cryptography: {aggregateException.Message}");
+                Console.WriteLine($"Cannot initialise cryptography: {cryptographicException.Message}");
             }
 
             if (!Directory.Exists("./temp"))
@@ -707,7 +707,7 @@ namespace AasxServer
             // Migrate always
             if (withDb)
             {
-                if (AasContext.isPostgres)
+                if (AasContext.IsPostgres)
                 {
                     Console.WriteLine("Use POSTGRES");
                     using (PostgreAasContext db = new PostgreAasContext())
@@ -746,11 +746,7 @@ namespace AasxServer
                 fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx");
                 Array.Sort(fileNames);
 
-                List<Task> saveTasks = new List<Task>();
-                int        maxTasks  = 1;
-                int        taskIndex = 0;
-
-                int fi = 0;
+                var fi = 0;
                 while (fi < fileNames.Length)
                 {
                     // try
@@ -1111,7 +1107,7 @@ namespace AasxServer
             {
                 if (con[ "DatabaseConnection:ConnectionString" ] != null)
                 {
-                    AasContext.isPostgres = con[ "DatabaseConnection:ConnectionString" ].ToLower().Contains("host");
+                    AasContext.IsPostgres = con[ "DatabaseConnection:ConnectionString" ].ToLower().Contains("host");
                 }
             }
 
@@ -2474,8 +2470,6 @@ namespace AasxServer
 
             return true;
         }
-
-        static int countRunScript = 0;
 
         static void RunScript(bool init)
         {

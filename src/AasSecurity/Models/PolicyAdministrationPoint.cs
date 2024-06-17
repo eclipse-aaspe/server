@@ -5,6 +5,6 @@ namespace AasSecurity.Models
     {
         internal bool? ExternalAccessControl { get; set; }
 
-        internal AccessControl LocalAccessControl { get; set; }
+        internal AccessControl? LocalAccessControl { get; set; }
     }
 }

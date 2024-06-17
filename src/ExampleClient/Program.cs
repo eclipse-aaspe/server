@@ -35,7 +35,7 @@ var json = response.Content.ReadAsStringAsync().Result;
 if (!string.IsNullOrEmpty(json))
 {
     MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(json));
-    JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+    JsonNode? node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
     if (node is JsonObject jo)
     {
         if (jo.ContainsKey("result"))

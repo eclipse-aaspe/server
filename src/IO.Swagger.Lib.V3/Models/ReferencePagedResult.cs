@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace IO.Swagger.Lib.V3.Models
 {
-    public class ReferencPagedResult : PagedResult
+    public class ReferencePagedResult : PagedResult
     {
         public List<IReference> result { get; set; }
 

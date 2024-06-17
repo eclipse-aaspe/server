@@ -12,9 +12,9 @@ namespace AasxServerDB
 {
     public class VisitorAASX : VisitorThrough
     {
-        AASXSet _aasxDB;
-        SMSet _smDB;
-        SMESet _parSME = null;
+        AASXSet? _aasxDB;
+        SMSet? _smDB;
+        SMESet? _parSME = null;
 
         public VisitorAASX(AASXSet? aasxDB = null)
         {
@@ -46,7 +46,7 @@ namespace AasxServerDB
                         string temporaryFileName = name + "__thumbnail";
                         temporaryFileName = temporaryFileName.Replace("/", "_");
                         temporaryFileName = temporaryFileName.Replace(".", "_");
-                        Uri dummy = null;
+                        Uri? dummy = null;
                         using (var st = asp.GetLocalThumbnailStream(ref dummy, init: true))
                         {
                             Console.WriteLine("Copy " + AasContext._dataPath + "/files/" + temporaryFileName + ".dat");
@@ -121,42 +121,28 @@ namespace AasxServerDB
                         new VisitorAASX(aasxDB: aasxDB).Visit(cd);
         }
 
-        private string shortType(ISubmodelElement sme)
+        private string? shortType(ISubmodelElement sme)
         {
-            switch (sme)
-            {
-                case Capability:
-                    return "Cap";
-                case Property:
-                    return "Prop";
-                case MultiLanguageProperty:
-                    return "MLP";
-                case AasCore.Aas3_0.Range:
-                    return "Range";
-                case Entity:
-                    return "Ent";
-                case AasCore.Aas3_0.File:
-                    return "File";
-                case Blob:
-                    return "Blob";
-                case Operation:
-                    return "Opr";
-                case ReferenceElement:
-                    return "Ref";
-                case RelationshipElement:
-                    return "Rel";
-                case AnnotatedRelationshipElement:
-                    return "RelA";
-                case SubmodelElementCollection:
-                    return "SMC";
-                case SubmodelElementList:
-                    return "SML";
-                default:
-                    return null;
-            }
+            return sme switch
+                   {
+                       Capability                   => "Cap",
+                       Property                     => "Prop",
+                       MultiLanguageProperty        => "MLP",
+                       AasCore.Aas3_0.Range         => "Range",
+                       Entity                       => "Ent",
+                       AasCore.Aas3_0.File          => "File",
+                       Blob                         => "Blob",
+                       Operation                    => "Opr",
+                       ReferenceElement             => "Ref",
+                       RelationshipElement          => "Rel",
+                       AnnotatedRelationshipElement => "RelA",
+                       SubmodelElementCollection    => "SMC",
+                       SubmodelElementList          => "SML",
+                       _                            => null
+                   };
         }
 
-        private string getValueAndType(string v, out string sValue, out long iValue, out double fValue)
+        private string getValueAndType(string? v, out string? sValue, out long iValue, out double fValue)
         {
             sValue = "";
             iValue = 0;
@@ -208,13 +194,13 @@ namespace AasxServerDB
             return "S";
         }
 
-        private void getValue(ISubmodelElement sme, out string vt, out string sValue, out long iValue, out double fValue)
+        private void getValue(ISubmodelElement sme, out string vt, out string? sValue, out long iValue, out double fValue)
         {
             sValue = "";
             iValue = 0;
             fValue = 0;
             vt = "";
-            string v = "";
+            string? v = "";
 
             if (sme is Property p)
             {
@@ -240,23 +226,25 @@ namespace AasxServerDB
                 }
             }
 
-            if (sme is AasCore.Aas3_0.Range r)
+            if (sme is not AasCore.Aas3_0.Range r)
             {
-                v = r.Min;
-                var v2 = r.Max;
-                v += "$$" + v2;
-                vt = "S";
-                sValue = v;
+                return;
             }
+
+            v = r.Min;
+            var v2 = r.Max;
+            v      += "$$" + v2;
+            vt     =  "S";
+            sValue =  v;
         }
 
         private SMESet collectSMEData(ISubmodelElement sme)
         {
-            string st = shortType(sme);
+            var st = shortType(sme);
             var semanticId = sme.SemanticId.GetAsIdentifier();
             if (semanticId == null)
                 semanticId = "";
-            getValue(sme, out string vt, out string sValue, out long iValue, out double fValue);
+            getValue(sme, out string vt, out string? sValue, out long iValue, out double fValue);
             var smeDB = new SMESet
             {
                 ParentSME = _parSME,
@@ -265,7 +253,7 @@ namespace AasxServerDB
                 SemanticId = semanticId,
                 IdShort = sme.IdShort
             };
-            _smDB.SMESets.Add(smeDB);
+            _smDB?.SMESets.Add(smeDB);
 
             if (vt == "S" && st == "MLP")
             {

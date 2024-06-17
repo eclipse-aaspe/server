@@ -552,11 +552,9 @@ namespace AasxServer
 
                 if (userName != "" && expires != "")
                 {
-                    var credential = new X509SigningCredentials(certificate);
-                    string clientId = "client.jwt";
-                    string email = "";
-                    string subject = certificate.Subject;
-                    var now = DateTime.UtcNow;
+                    var          credential = new X509SigningCredentials(certificate);
+                    const string clientId   = "client.jwt";
+                    var          now        = DateTime.UtcNow;
                     var claimList =
                         new List<Claim>()
                         {

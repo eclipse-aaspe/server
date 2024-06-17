@@ -507,7 +507,7 @@ namespace IO.Swagger.Controllers
 
             var smePagedList = _paginationService.GetPaginatedList(smeList, new PaginationParameters(cursor, limit));
             var smeReferences = _referenceModifierService.GetReferenceResult(smePagedList.result.ConvertAll(sme => (IReferable)sme));
-            var output = new ReferencPagedResult()
+            var output = new ReferencePagedResult()
             {
                 result = smeReferences,
                 paging_metadata = smePagedList.paging_metadata,
@@ -746,7 +746,7 @@ namespace IO.Swagger.Controllers
 
             var submodelsPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
             var smReferences = _referenceModifierService.GetReferenceResult(submodelsPagedList.result.ConvertAll(sm => (IReferable)sm));
-            var output = new ReferencPagedResult()
+            var output = new ReferencePagedResult()
             {
                 result = smReferences,
                 paging_metadata = submodelsPagedList.paging_metadata
@@ -1131,77 +1131,6 @@ namespace IO.Swagger.Controllers
                     }
                 }
             }
-
-            //string policy = "";
-            //string policyRequestedResource = "";
-
-            //int index = -1;
-            //NameValueCollection query = HttpUtility.ParseQueryString(Request.QueryString.ToString());
-            //NameValueCollection headers = new NameValueCollection();
-            //foreach (var kvp in Request.Headers)
-            //{
-            //    headers.Add(kvp.Key, kvp.Value);
-            //    if (kvp.Key == "FORCE-POLICY")
-            //    {
-            //        Program.withPolicy = !(kvp.Value == "OFF");
-            //        Console.WriteLine("FORCE-POLICY " + kvp.Value);
-            //    }
-            //}
-
-            //string accessRights = null;
-            //if (!Program.noSecurity)
-            //{
-            //    accessRights = AasxRestServerLibrary.AasxHttpContextHelper.SecurityCheckWithPolicy(query, headers, ref index,
-            //        out policy, out policyRequestedResource);
-            //    string ar = "";
-            //    if (accessRights != null)
-            //        ar = accessRights;
-            //    Console.WriteLine(ar + " " + policy + " " + policyRequestedResource);
-            //}
-
-            ///*
-            //if (accessRights == null)
-            //{
-            //    // Look for policies in header instead of token
-            //    foreach (var kvp in Request.Headers)
-            //    {
-            //        if (kvp.Key == "policy")
-            //            policy = kvp.Value;
-            //        if (kvp.Key == "policyRequestedResource")
-            //            policyRequestedResource = kvp.Value;
-            //    }
-            //}
-
-            //string path = Request.Path.Value;
-            //if (accessRights != null && (policyRequestedResource == "" || !path.Contains(policyRequestedResource)))
-            //{
-            //    Console.WriteLine("Path: " + path);
-            //    Console.WriteLine("policyRequestedResource: " + policyRequestedResource);
-            //    throw new NotAllowed("Policy URL incorrect!");
-            //}
-            //*/
-
-            //string error = "";
-            //var access = false;
-            //bool withAllow = false;
-            //string getPolicy = null;
-            //// check, if access to submodel is allowed
-            ///*
-            //access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithAllow(
-            //    null, "/submodels", "READ", out withAllow,
-            //        submodel.IdShort, "sm", submodel, policy);
-            //*/
-            //if (!Program.noSecurity)
-            //{
-            //    access = AasxRestServerLibrary.AasxHttpContextHelper.checkAccessLevelWithError(out error, accessRights, "/submodels", "READ", out withAllow, out getPolicy,
-            //    submodel.IdShort, "sm", submodel, policy);
-            //    if (!access)
-            //    {
-            //        if (error != "")
-            //            throw new NotAllowed(error);
-            //        throw new NotAllowed("Policy incorrect!");
-            //    }
-            //}
 
             var output = _levelExtentModifierService.ApplyLevelExtent(submodel, level, extent);
 

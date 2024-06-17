@@ -3007,7 +3007,8 @@ namespace AasxRestServerLibrary
 
         public static string secretString = "Industrie4.0-Asset-Administration-Shell";
 
-        private static RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
+        private static RandomNumberGenerator randomNumberGenerator = RandomNumberGenerator.Create();
+
 
         public int sessionCount = 0;
         public static char[] sessionUserType = new char[100];
@@ -3023,7 +3024,7 @@ namespace AasxRestServerLibrary
 
             // string with real random numbers
             Byte[] barray = new byte[100];
-            rngCsp.GetBytes(barray);
+            randomNumberGenerator.GetBytes(barray);
             sessionRandom[ sessionCount ] = Convert.ToBase64String(barray);
 
             dynamic res = new ExpandoObject();
@@ -3103,7 +3104,7 @@ namespace AasxRestServerLibrary
 
             // string with real random numbers
             Byte[] barray = new byte[100];
-            rngCsp.GetBytes(barray);
+            randomNumberGenerator.GetBytes(barray);
             sessionRandom[ sessionCount ] = Convert.ToBase64String(barray);
 
             var payload = new Dictionary<string, object>()
@@ -3278,7 +3279,7 @@ namespace AasxRestServerLibrary
 
                 // string with real random numbers
                 Byte[] barray = new byte[100];
-                rngCsp.GetBytes(barray);
+                randomNumberGenerator.GetBytes(barray);
 
                 Console.WriteLine("Security 2.3 Server: Create session unique challenge by real random");
                 sessionChallenge[ sessionCount ] = Convert.ToBase64String(barray);
@@ -3360,7 +3361,7 @@ namespace AasxRestServerLibrary
 
                 // string with real random numbers
                 Byte[] barray = new byte[100];
-                rngCsp.GetBytes(barray);
+                randomNumberGenerator.GetBytes(barray);
                 Console.WriteLine("Security 3.2 Server: Create session unique bearerToken signed by real random");
                 sessionRandom[ sessionCount ] = Convert.ToBase64String(barray);
 

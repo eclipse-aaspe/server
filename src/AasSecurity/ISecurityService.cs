@@ -6,7 +6,7 @@ namespace AasSecurity
 {
     public interface ISecurityService
     {
-        AuthenticationTicket AuthenticateRequest(HttpContext context, string route, string httpOperation, string authenticationSchemeName = null);
+        AuthenticationTicket? AuthenticateRequest(HttpContext context, string route, string httpOperation, string? authenticationSchemeName = null);
 
         bool AuthorizeRequest(string accessRole,
                               string httpRoute,
