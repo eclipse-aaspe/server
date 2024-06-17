@@ -31,7 +31,7 @@ jobs:
       - name: Get the newest tag
         id: get_latest_tag
         run: |
-          git fetch --tags
+          git fetch --tags -v
           $tags = git tag --sort=-creatordate
           $branchSuffix = "${{ env.BRANCH_SUFFIX }}"
           $potentialTags = @()

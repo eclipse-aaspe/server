@@ -25,16 +25,18 @@ jobs:
       - name: Check changes since last tag
         id: check_changes
         run: |
-          git fetch --tags
+          git fetch --tags -v
           $tags = git tag --sort=-creatordate
+          Write-Host "Tags: $tags"
           $branchSuffix = "${{ env.BRANCH_SUFFIX }}"
+          Write-Host "Branch Suffix: $branchSuffix"
           $potentialTags = @()
           foreach ($tag in $tags) {
             if ($tag -match ".*-$branchSuffix$") {
               $potentialTags += $tag
             }
           }
-          
+
           if ($potentialTags.Count -gt 0) {
             $latestTag = $potentialTags[0]
             Write-Host "Latest found matching tag is $latestTag"
@@ -49,10 +51,10 @@ jobs:
               exit 1
             }
           }
-          
+
           Write-Host "Checking changes since tag: $latestTag"
           $changes = git log --oneline $latestTag..HEAD
-          Write-Host "Found changes $changes"
+          Write-Host "Found changes: $changes"
           if (-not [string]::IsNullOrEmpty($changes)) {
             Write-Host "Changes detected since $latestTag"
             Write-Host "$changes"
@@ -60,7 +62,6 @@ jobs:
           } else {
             Write-Host "No changes detected since $latestTag."
             echo "changes_detected=false" >> $env:GITHUB_OUTPUT
-          }
         shell: pwsh
 
   create-new-prerelease:
