@@ -39,7 +39,7 @@ namespace AasSecurity
             var httpRequest = _httpContextAccessor.HttpContext!.Request;
             var httpRoute   = httpRequest.Path.Value!;
 
-            var (accessRole, idShortPath, neededRights, policy, error) = GetUserClaims(context.User);
+            var (accessRole, _, neededRights, policy, error) = GetUserClaims(context.User);
 
             var isAuthorized = await AuthorizeResource(resource, accessRole, httpRoute, neededRights, policy);
 
