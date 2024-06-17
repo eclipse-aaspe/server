@@ -318,7 +318,7 @@ namespace AasxServerDB
             return smList.ConvertAll(
                 sm =>
                 {
-                    string identifier = (sm != null && sm.Identifier != null) ? sm.Identifier : "";
+                    string identifier = (sm != null && !sm.Identifier.IsNullOrEmpty()) ? sm.Identifier : string.Empty;
                     return new SMResult()
                     {
                         smId = identifier,
