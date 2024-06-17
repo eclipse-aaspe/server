@@ -477,6 +477,7 @@
                                             <td class="atex-border atex-blue">
                                                 @{
                                                     int iProductOut = iOut;
+                                                    int pProductOut = p;
                                                     List<string> optionsProductOut = new List<string>();
                                                     for (int loopProductOut = 0; loopProductOut < ManufacturerProductType.Count; loopProductOut++)
                                                     {
@@ -488,7 +489,7 @@
                                                     }
                                                     <b>
                                                         <select class="atex-blue" style="width:100%;height:100%"
-                                                            value="@ManufacturerProductType[iProductOut]" @onchange="@((ChangeEventArgs args) => OnChangeProductOut(args, iOut))">
+                                                            value="@ManufacturerProductType[iProductOut]" @onchange="@((ChangeEventArgs args) => OnChangeProductOut(args, iOut, pProductOut))">
                                                             @foreach (var t in optionsProductOut)
                                                             {
                                                                 <option value="@t">@t</option>
@@ -500,9 +501,10 @@
                                             <td class="atex-border atex-blue">
                                                 @{
                                                     int iSerialNumberOut = iOut;
+                                                    int pSerialNumberOut = p;
                                                     <b>
                                                         <select class="atex-blue" style="width:100%;height:100%"
-                                                            value="@SerialNumber[iSerialNumberOut]" @onchange="@((ChangeEventArgs args) => OnChangeSerialNumberOut(args, iOut))">
+                                                            value="@SerialNumber[iSerialNumberOut]" @onchange="@((ChangeEventArgs args) => OnChangeSerialNumberOut(args, iOut, pSerialNumberOut))">
                                                             @for (int loopSerialNumberOut = 0; loopSerialNumberOut < SerialNumber.Count; loopSerialNumberOut++)
                                                             {
                                                                 var sSerialNumberOut = SerialNumber[loopSerialNumberOut];
@@ -615,6 +617,7 @@
                                             <td class="atex-border atex-pink">
                                                 @{
                                                     var iProductIn = iIn;
+                                                    var pProductIn = p;
                                                     List<string> optionsProductIn = new List<string>();
                                                     for (int loopProductIn = 0; loopProductIn < ManufacturerProductType.Count; loopProductIn++)
                                                     {
@@ -626,7 +629,7 @@
                                                     }
                                                     <b>
                                                         <select class="atex-pink" style="width:100%;height:100%"
-                                                            value="@ManufacturerProductType[iProductIn]" @onchange="@((ChangeEventArgs args) => OnChangeProductIn(args, iIn))">
+                                                            value="@ManufacturerProductType[iProductIn]" @onchange="@((ChangeEventArgs args) => OnChangeProductIn(args, iIn, pProductIn))">
                                                             @foreach (var t in optionsProductIn)
                                                             {
                                                                 <option value="@t">@t</option>
@@ -638,9 +641,10 @@
                                             <td class="atex-border atex-pink">
                                                 @{
                                                     int iSerialNumberIn = iIn;
+                                                    int pSerialNumberIn = p;
                                                     <b>
                                                         <select class="atex-pink" style="width:100%;height:100%"
-                                                            value="@SerialNumber[iSerialNumberIn]" @onchange="@((ChangeEventArgs args) => OnChangeSerialNumberIn(args, iIn))">
+                                                            value="@SerialNumber[iSerialNumberIn]" @onchange="@((ChangeEventArgs args) => OnChangeSerialNumberIn(args, iIn, pSerialNumberIn))">
                                                             @for (int loopSerialNumberIn = 0; loopSerialNumberIn < SerialNumber.Count; loopSerialNumberIn++)
                                                             {
                                                                 var sSerialNumberIn = SerialNumber[loopSerialNumberIn];
@@ -1060,106 +1064,82 @@
 
 @code
 {
-    void OnChangeProductOut(ChangeEventArgs args, int iOut)
+    void OnChangeProductOut(ChangeEventArgs args, int iOut, int loop)
     {
         if (args.Value != null)
         {
             var a = args.Value.ToString();
-            for (int i = 0; i < zugehoerigesbetriebsmittel.Count; i++)
+
+            zugehoerigesbetriebsmittel[loop] = a;
+            pZugehoerigesbetriebsmittel[loop].Value = a;
+            for (int j = 0; j < ManufacturerProductType.Count; j++)
             {
-                if (zugehoerigesbetriebsmittel[i] == ManufacturerProductType[iOut])
+                if (a == ManufacturerProductType[j])
                 {
-                    zugehoerigesbetriebsmittel[i] = a;
-                    pZugehoerigesbetriebsmittel[i].Value = a;
-                    for (int j = 0; j < ManufacturerProductType.Count; j++)
+                    zugehoerigesbetriebsmittelSeriennummer[loop] = SerialNumber[j];
+                    if (pZugehoerigesbetriebsmittelSeriennummer[loop] != null)
                     {
-                        if (a == ManufacturerProductType[j])
-                        {
-                            zugehoerigesbetriebsmittelSeriennummer[i] = SerialNumber[j];
-                            if (pZugehoerigesbetriebsmittelSeriennummer[i] != null)
-                            {
-                                pZugehoerigesbetriebsmittelSeriennummer[i].Value = SerialNumber[j];
-                            }
-                            break;
-                        }
+                        pZugehoerigesbetriebsmittelSeriennummer[loop].Value = SerialNumber[j];
                     }
                     break;
                 }
             }
+
             Program.signalNewData(0);
         }
     }
 
-    void OnChangeProductIn(ChangeEventArgs args, int iIn)
+    void OnChangeProductIn(ChangeEventArgs args, int iIn, int loop)
     {
         if (args.Value != null)
         {
             var a = args.Value.ToString();
-            for (int i = 0; i < eigensicheresbetriebsmittel.Count; i++)
+
+            eigensicheresbetriebsmittel[loop] = a;
+            pEigensicheresbetriebsmittel[loop].Value = a;
+            for (int j = 0; j < ManufacturerProductType.Count; j++)
             {
-                if (eigensicheresbetriebsmittel[i] == ManufacturerProductType[iIn])
+                if (a == ManufacturerProductType[j])
                 {
-                    eigensicheresbetriebsmittel[i] = a;
-                    pEigensicheresbetriebsmittel[i].Value = a;
-                    for (int j = 0; j < ManufacturerProductType.Count; j++)
+                    eigensicheresbetriebsmittelSeriennummer[loop] = SerialNumber[j];
+                    if (pEigensicheresbetriebsmittelSeriennummer[loop] != null)
                     {
-                        if (a == ManufacturerProductType[j])
-                        {
-                            eigensicheresbetriebsmittelSeriennummer[i] = SerialNumber[j];
-                            if (pEigensicheresbetriebsmittelSeriennummer[i] != null)
-                            {
-                                pEigensicheresbetriebsmittelSeriennummer[i].Value = SerialNumber[j];
-                            }
-                            break;
-                        }
+                        pEigensicheresbetriebsmittelSeriennummer[loop].Value = SerialNumber[j];
                     }
                     break;
                 }
             }
+
             Program.signalNewData(0);
         }
     }
 
-    void OnChangeSerialNumberOut(ChangeEventArgs args, int iOut)
+    void OnChangeSerialNumberOut(ChangeEventArgs args, int iOut, int loop)
     {
         if (args.Value != null)
         {
             var a = args.Value.ToString();
-            for (int i = 0; i < zugehoerigesbetriebsmittel.Count; i++)
+            zugehoerigesbetriebsmittelSeriennummer[loop] = a;
+            if (pZugehoerigesbetriebsmittelSeriennummer[loop] != null)
             {
-                if (zugehoerigesbetriebsmittel[i] == ManufacturerProductType[iOut]
-                    && zugehoerigesbetriebsmittelSeriennummer[i] == SerialNumber[iOut])
-                {
-                    zugehoerigesbetriebsmittelSeriennummer[i] = a;
-                    if (pZugehoerigesbetriebsmittelSeriennummer[i] != null)
-                    {
-                        pZugehoerigesbetriebsmittelSeriennummer[i].Value = a;
-                    }
-                    break;
-                }
+                pZugehoerigesbetriebsmittelSeriennummer[loop].Value = a;
             }
+
             Program.signalNewData(0);
         }
     }
 
-    void OnChangeSerialNumberIn(ChangeEventArgs args, int iIn)
+    void OnChangeSerialNumberIn(ChangeEventArgs args, int iIn, int loop)
     {
         if (args.Value != null)
         {
             var a = args.Value.ToString();
-            for (int i = 0; i < eigensicheresbetriebsmittel.Count; i++)
+            eigensicheresbetriebsmittelSeriennummer[loop] = a;
+            if (pEigensicheresbetriebsmittelSeriennummer[loop] != null)
             {
-                if (eigensicheresbetriebsmittel[i] == ManufacturerProductType[iIn]
-                    && eigensicheresbetriebsmittelSeriennummer[i] == SerialNumber[iIn])
-                {
-                    eigensicheresbetriebsmittelSeriennummer[i] = a;
-                    if (pEigensicheresbetriebsmittelSeriennummer[i] != null)
-                    {
-                        pEigensicheresbetriebsmittelSeriennummer[i].Value = a;
-                    }
-                    break;
-                }
+                pEigensicheresbetriebsmittelSeriennummer[loop].Value = a;
             }
+
             Program.signalNewData(0);
         }
     }
@@ -1769,9 +1749,10 @@
                                                         {
                                                             PreviewFileUrl[count] = path.Replace("PreviewFile", "DigitalFile");
                                                         }
-                                                        TypeOfApproval[count] = "ATEX";
+                                                        if (TypeOfApproval[count] == "")
+                                                            TypeOfApproval[count] = "ATEX";
                                                     }
-                                                    if (f.Value.ToLower().Contains("iecex") && TypeOfApproval[count] != "ATEX")
+                                                    if (f.Value.ToLower().Contains("iecex") && TypeOfApproval[count] == "")
                                                     {
                                                         PreviewFile[count] = f.Value;
                                                         var path = getPath(f);
@@ -1779,7 +1760,8 @@
                                                         {
                                                             PreviewFileUrl[count] = path.Replace("PreviewFile", "DigitalFile");
                                                         }
-                                                        TypeOfApproval[count] = "IECEX";
+                                                        if (TypeOfApproval[count] == "")
+                                                            TypeOfApproval[count] = "IECEX";
                                                     }
                                                 }
                                             }

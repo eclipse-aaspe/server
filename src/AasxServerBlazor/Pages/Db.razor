@@ -1,956 +1,804 @@
 ﻿@page "/db";
 @page "/db/aasx";
 @page "/db/aas";
-@page "/db/submodel";
-@page "/db/subjson";
+@page "/db/sm";
+@page "/db/smjson";
 @page "/db/sme";
 @page "/db/svalue";
 @page "/db/ivalue";
 @page "/db/dvalue";
-@using AasxServer;
+@using AasxServer
+@using AasxServerDB
+@using Microsoft.AspNetCore.Html;
+@using AasxRestServerLibrary;
 @using Microsoft.IdentityModel.Tokens;
+@using AasxServerDB.Entities;
 @inject NavigationManager NavMan
 
 <div>
-@{
-    if (!Program.withDb)
-    {
-        <span>This is an in memory server!</span>
-    }
-    else
-    {
-        var url = NavMan.Uri;
-        var s = url.Split("?");
-        url = s[0].ToLower();
-        if (s.Length == 2)
+    @{
+        if (!Program.withDb)
         {
-            var query = System.Web.HttpUtility.ParseQueryString(s[1]);
-            var list = query.Get("size");
-            if (list != null)
-                size = Convert.ToInt32(list);
-            list = query.Get("search");
-            if (list != null)
-                search = list;
-            list = query.Get("aasxnum");
-            if (list != null)
-                aasxnum = Convert.ToInt32(list);
-            list = query.Get("aasnum");
-            if (list != null)
-                aasnum = Convert.ToInt32(list);
-            list = query.Get("submodelnum");
-            if (list != null)
-                submodelnum = Convert.ToInt32(list);
-            list = query.Get("smenum");
-            if (list != null)
-                smenum = Convert.ToInt32(list);
-            list = query.Get("submodelid");
-            if (list != null)
-                submodelid = list;
+            <span>This is a in memory server!</span>
         }
-
-        using (var db = new AasContext())
+        else
         {
-            if (url.EndsWith("/aasx") || url.EndsWith("/aas") || url.EndsWith("/submodel") || url.EndsWith("/sme")
-                || url.EndsWith("/svalue") || url.EndsWith("/ivalue") || url.EndsWith("/dvalue"))
+            // get parameters
+            string url = NavMan.Uri;
+            var splitUrl = url.Split("?");
+            url = splitUrl[0].ToLower();
+            var sUrl = url.Split("/");
+            string shorturl = url.Substring(0, url.Length - ($"/{sUrl[sUrl.Length - 1]}").Length);
+            if (splitUrl.Length == 2)
             {
-                <input @bind="CurrentValue" style="width:200px; border-width: 1px; border-color: black;"/>
-                    @code {
-                        private string CurrentValue { get; set; }
-                    }
-                    if (!string.IsNullOrEmpty(CurrentValue))
+                var query = System.Web.HttpUtility.ParseQueryString(splitUrl[1]);
+                var list = query.Get("size");
+                if (!list.IsNullOrEmpty())
+                    size = Convert.ToInt32(list);
+                list = query.Get("search");
+                if (!list.IsNullOrEmpty())
+                    search = list;
+                list = query.Get("aasxid");
+                if (!list.IsNullOrEmpty())
+                    aasxid = Convert.ToInt32(list);
+                list = query.Get("aasid");
+                if (!list.IsNullOrEmpty())
+                    aasid = Convert.ToInt32(list);
+                list = query.Get("smid");
+                if (!list.IsNullOrEmpty())
+                    smid = Convert.ToInt32(list);
+                list = query.Get("smeid");
+                if (!list.IsNullOrEmpty())
+                    smeid = Convert.ToInt32(list);
+                list = query.Get("smidentifier"); 
+                if (!list.IsNullOrEmpty())
+                    smidentifier = list;
+            }
+
+            // change parameters to input window
+            if (url.EndsWith("/aasx") || url.EndsWith("/aas") || url.EndsWith("/sm")
+            || url.EndsWith("/sme") || url.EndsWith("/svalue") || url.EndsWith("/ivalue") || url.EndsWith("/dvalue"))
+            {
+                <input @bind="CurrentValue" style="width:200px; border-width: 1px; border-color: black;" />
+                @code {
+                    private string CurrentValue { get; set; }
+                }
+                if (!CurrentValue.IsNullOrEmpty())
                 {
-                    // Syntax: index=xxx, size=xxx, search=xxx
-                    s = CurrentValue.Split("=");
-                    if (s.Count() == 2)
+                    var splitCur = CurrentValue.Split("=");
+                    if (splitCur.Count() == 2)
                     {
-                        switch (s[0])
+                        switch (splitCur[0])
                         {
                             case "size":
                                 size = 1000;
-                                if (s[1] != "")
-                                    size = Convert.ToInt32(s[1]);
+                                if (!splitCur[1].IsNullOrEmpty())
+                                    size = Convert.ToInt32(splitCur[1]);
                                 break;
                             case "search":
-                                search = s[1];
+                                search = splitCur[1];
                                 break;
-                            case "aasxnum":
-                                aasxnum = 0;
-                                if (s[1] != "")
-                                    aasxnum = Convert.ToInt32(s[1]);
+                            case "aasxid":
+                                aasxid = 0;
+                                if (!splitCur[1].IsNullOrEmpty())
+                                    aasxid = Convert.ToInt32(splitCur[1]);
                                 break;
-                            case "aasnum":
-                                aasnum = 0;
-                                if (s[1] != "")
-                                    aasnum = Convert.ToInt32(s[1]);
+                            case "aasid":
+                                aasid = 0;
+                                if (!splitCur[1].IsNullOrEmpty())
+                                    aasid = Convert.ToInt32(splitCur[1]);
                                 break;
-                            case "submodelnum":
-                                submodelnum = 0;
-                                if (s[1] != "")
-                                    submodelnum = Convert.ToInt32(s[1]);
+                            case "smid":
+                                smid = 0;
+                                if (!splitCur[1].IsNullOrEmpty())
+                                    smid = Convert.ToInt32(splitCur[1]);
                                 break;
-                            case "smenum":
-                                smenum = 0;
-                                if (s[1] != "")
-                                    smenum = Convert.ToInt32(s[1]);
+                            case "smeid":
+                                smeid = 0;
+                                if (!splitCur[1].IsNullOrEmpty())
+                                    smeid = Convert.ToInt32(splitCur[1]);
                                 break;
                         }
                     }
-
-                    CurrentValue = string.Empty;
+                    CurrentValue = "";
                 }
             }
 
-            var aasFileName = search.ToLower();
-            var count = 0;
-            var watch1 = System.Diagnostics.Stopwatch.StartNew();
-            var configDBList = db.DbConfigSets.Where(d => true);
-            var dbConfig = configDBList.FirstOrDefault();
+            string searchLower = search.ToLower();
+            var watch = System.Diagnostics.Stopwatch.StartNew();
 
-            if (!url.EndsWith("/aasx") && !url.EndsWith("/aas") && !url.EndsWith("/submodel") && !url.EndsWith("/subjson") && !url.EndsWith("/sme")
-                && !url.EndsWith("/ivalue") && !url.EndsWith("/dvalue") && !url.EndsWith("/svalue"))
+            using (AasContext db = new AasContext())
             {
-                if (Program.isPostgres)
+                if (!(url.EndsWith("/aasx") || url.EndsWith("/aas") || url.EndsWith("/sm") || url.EndsWith("/smjson") 
+                || url.EndsWith("/sme") || url.EndsWith("/svalue") || url.EndsWith("/ivalue") || url.EndsWith("/dvalue")))
                 {
-                    <span>PostgreSQL database</span>
-
-                    <br/>
-                }
-                else
-                {
-                    <span>SQLite database</span>
-
-                    <br/>
-                }
-
-                <br/>
-                <table class="table table-bordered table-sm" style="word-wrap:break-word;word-break:break-all;">
-                    <tr>
-                        <td>
-                            <span>AASX#:</span>
-                        </td>
-                        <td>
-                            <span>@db.AASXSets.Count()</span>
-                        </td>
-                        <td>
-                            <a href="@(url + "/aasx")" target="_blank">aasx</a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <span>AAS#:</span>
-                        </td>
-                        <td>
-                            <span>@db.AasSets.Count()</span>
-                        </td>
-                        <td>
-                            <a href="@(url + "/aas")" target="_blank">aas</a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <span>Submodel#:</span>
-                        </td>
-                        <td>
-                            <span>@db.SubmodelSets.Count()</span>
-                        </td>
-                        <td>
-                            <a href="@(url + "/submodel")" target="_blank">submodel</a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <span>SME#:</span>
-                        </td>
-                        <td>
-                            <span>@db.SMESets.Count()</span>
-                        </td>
-                        <td>
-                            <a href="@(url + "/sme")" target="_blank">sme</a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <span>IntValues#:</span>
-                        </td>
-                        <td>
-                            <span>@db.IValueSets.Count()</span>
-                        </td>
-                        <td>
-                            <a href="@(url + "/ivalue")" target="_blank">ivalue</a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <span>StringValues#:</span>
-                        </td>
-                        <td>
-                            <span>@db.SValueSets.Count()</span>
-                        </td>
-                        <td>
-                            <a href="@(url + "/svalue")" target="_blank">svalue</a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <span>DoubleValues#:</span>
-                        </td>
-                        <td>
-                            <span>@db.DValueSets.Count()</span>
-                        </td>
-                        <td>
-                            <a href="@(url + "/dvalue")" target="_blank">dvalue</a>
-                        </td>
-                    </tr>
-                </table>
-                <br/>
-                <b>Database structure:</b>
-                <br/>
-                <img src="db-schema.jpg"/>
-            }
-
-            if (url.EndsWith("/aasx"))
-            {
-                total = db.AASXSets.Count();
-                var found = string.Empty;
-                if (aasFileName != "")
-                {
-                    found = db.AASXSets.Count(a => a.AASX.ToLower().Contains(aasFileName))
-                            + "/";
-                }
-
-                <span>@("AASX#: " + found + total + " size=" + size + " search=" + search + " aasxnum=" + aasxnum)</span>
-                <br/>
-                <br/>
-                <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
-                    <thead>
-                    <tr>
-                        <th style="word-break:keep-all">AASX#</th>
-                        <th style="word-break:keep-all">AASX</th>
-                        <th style="word-break:keep-all">links</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    @{
-                        List<AASXSet> nextPage;
-                        if (aasxnum == 0 && aasFileName == "")
-                        {
-                            nextPage = db.AASXSets
-                                .OrderBy(a => a.AASXNum)
-                                .Take(size)
-                                .ToList();
-                        }
-                        else
-                        {
-                            nextPage = db.AASXSets
-                                .OrderBy(a => a.AASXNum)
-                                .Where(a => a.AASXNum >= aasxnum &&
-                                            a.AASX.ToLower().Contains(aasFileName))
-                                .Take(size)
-                                .ToList();
-                        }
-                    }
-                    @foreach (var aasxDB in nextPage)
+                    if (AasContext.isPostgres)
                     {
-                        count++;
-                        var shorturl = url[..^"/aasx".Length];
-                        <tr>
-                            <td style="word-break:keep-all">
-                                <b>@aasxDB.AASXNum</b>
-                            </td>
-                            <td>@aasxDB.AASX</td>
-                            <td style="word-break:keep-all">
-                                <a href="@(shorturl + "/aas?aasxnum=" + aasxDB.AASXNum + "&size=999")" target="_blank">aas</a>
-                                <a href="@(shorturl + "/submodel?aasxnum=" + aasxDB.AASXNum + "&size=999")" target="_blank">sub</a>
-                            </td>
-                        </tr>
+                        <span>PostgreSQL database</span>
+                        <br />
                     }
-                    </tbody>
-                </table>
-                <span>@("Count: " + count)</span>
-                <br/>
-            }
-
-            if (url.EndsWith("/aas"))
-            {
-                total = db.AasSets.Count();
-                var found = string.Empty;
-                if (aasFileName != "")
-                {
-                    found = db.AasSets.Count(a =>
-                                a.Idshort.ToLower().Contains(aasFileName) || a.AasId.ToLower().Contains(aasFileName) || a.AssetId.ToLower().Contains(aasFileName))
-                            + "/";
+                    else
+                    {
+                        <span>SQLite database</span>
+                        <br />
+                    }
+                    <br />
+                    <table class="table table-bordered table-sm" style="word-wrap:break-word;word-break:break-all;">
+                        <thead>
+                            <tr>
+                                <th style="word-break:keep-all">Tabel</th>
+                                <th style="word-break:keep-all">Count</th>
+                                <th style="word-break:keep-all">Links</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span>AASX#:</span></td>
+                                <td><span>@db.AASXSets.Count()</span></td>
+                                <td><a href="@($"{url}/aasx")" target="_blank">aasx</a></td>
+                            </tr>
+                            <tr>
+                                <td><span>AAS#:</span></td>
+                                <td><span>@db.AASSets.Count()</span></td>
+                                <td><a href="@($"{url}/aas")" target="_blank">aas</a></td>
+                            </tr>
+                            <tr>
+                                <td><span>SM#:</span></td>
+                                <td><span>@db.SMSets.Count()</span></td>
+                                <td><a href="@($"{url}/sm")" target="_blank">sm</a></td>
+                            </tr>
+                            <tr>
+                                <td><span>SME#:</span></td>
+                                <td><span>@db.SMESets.Count()</span></td>
+                                <td><a href="@($"{url}/sme")" target="_blank">sme</a></td>
+                            </tr>
+                            <tr>
+                                <td><span>IValue#:</span></td>
+                                <td><span>@db.IValueSets.Count()</span></td>
+                                <td><a href="@($"{url}/ivalue")" target="_blank">ivalue</a></td>
+                            </tr>
+                            <tr>
+                                <td><span>SValue#:</span></td>
+                                <td><span>@db.SValueSets.Count()</span></td>
+                                <td><a href="@($"{url}/svalue")" target="_blank">svalue</a></td>
+                            </tr>
+                            <tr>
+                                <td><span>DValue#:</span></td>
+                                <td><span>@db.DValueSets.Count()</span></td>
+                                <td><a href="@($"{url}/dvalue")" target="_blank">dvalue</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <br />
+                    <b>Database structure:</b>
+                    <br />
+                    <img src="db-schema.jpg" />
                 }
 
-                <span>@("Aas#: " + found + total + " size=" + size + " search=" + search + " aasxnum=" + aasxnum + " aasnum=" + aasnum)</span>
-                <br/>
-                <br/>
-                <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
-                    <thead>
-                    <tr>
-                        <th style="word-break:keep-all">AASX#</th>
-                        <th style="word-break:keep-all">AAS#</th>
-                        <th style="word-break:keep-all">AasId</th>
-                        <th style="word-break:keep-all">IdShort</th>
-                        <th style="word-break:keep-all">AssetId</th>
-                        <th style="word-break:keep-all">links</th>
-                        <th style="word-break:keep-all">API</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    @{
-                        List<AasSet> nextPage;
-                        if (aasxnum == 0 && aasnum == 0 && string.IsNullOrEmpty(aasFileName))
-                        {
-                            nextPage = db.AasSets
-                                .OrderBy(a => a.AasNum)
-                                .Take(size)
-                                .ToList();
-                        }
-                        else
-                        {
-                            nextPage = db.AasSets
-                                .OrderBy(a => a.AasNum)
-                                .Where(a => a.AasNum >= aasnum && (aasxnum == 0 || a.AASXNum == aasxnum) &&
-                                            (a.Idshort.ToLower().Contains(aasFileName) || a.AasId.ToLower().Contains(aasFileName) || a.AssetId.ToLower().Contains(aasFileName)))
-                                .Take(size)
-                                .ToList();
-                        }
-                    }
-                    @foreach (var aasDB in nextPage)
-                    {
-                        count++;
-                        var aas64 = Base64UrlEncoder.Encode((aasDB.AasId));
-                        var link = Program.externalBlazor + "/shells/" + aas64;
-                        var shorturl = url[..^"/aas".Length];
-                        <tr>
-                            <td style="word-break:keep-all">@aasDB.AASXNum</td>
-                            <td style="word-break:keep-all">
-                                <b>@aasDB.AasNum</b>
-                            </td>
-                            <td>@aasDB.AasId</td>
-                            <td>@aasDB.Idshort</td>
-                            <td>@aasDB.AssetId</td>
-                            <td style="word-break:keep-all">
-                                <a href="@(shorturl + "/aasx?aasxnum=" + aasDB.AASXNum + "&size=999")" target="_blank">aasx</a>
-                                <a href="@(shorturl + "/submodel?aasnum=" + aasDB.AasNum + "&size=999")" target="_blank">sub</a>
-                            </td>
-                            <td>
-                                <a href="@link" target="_blank">@link</a>
-                            </td>
-                        </tr>
-                    }
-                    </tbody>
-                </table>
-                <span>@("Count: " + count)</span>
-                <br/>
-            }
-
-            if (url.EndsWith("/submodel"))
-            {
-                total = db.SubmodelSets.Count();
-                var found = string.Empty;
-                if (!string.IsNullOrEmpty(aasFileName))
+                if (url.EndsWith("/aasx"))
                 {
-                    found = db.SubmodelSets.Count(s =>
-                                s.SubmodelId.ToLower().Contains(aasFileName)
-                                || s.Idshort.ToLower().Contains(aasFileName) || s.SemanticId.ToLower().Contains(aasFileName))
-                            + "/";
+                    List<AASXSet> data = PageRetriever.GetPageAASXData(size, searchLower, aasxid);
+                    <span>&nbsp&nbsp@($"AASX#: {data.Count}/{db.AASXSets.Count()} size={size} search={search} aasxid={aasxid}")</span>
+                    <br />
+                    <br />
+                    @if (size > 1000 && data.Count > 1000)
+                    {
+                        <b><span style="color:red;">First 1000 as TABLE</span></b>
+                        <br />
+                    }
+                    <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
+                        <thead>
+                            <tr>
+                                <th style="word-break:keep-all">AASX#</th>
+                                <th style="word-break:keep-all">AASX</th>
+                                <th style="word-break:keep-all">Links</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < data.Count && i < 1000; i++)
+                            {
+                                var aasxDB = data[i];
+                                <tr>
+                                    <td style="word-break:keep-all"><b>@aasxDB.Id</b></td>
+                                    <td>@aasxDB.AASX</td>
+                                    <td style="word-break:keep-all">
+                                        <a href="@($"{shorturl}/aas?aasxid={aasxDB.Id}")" target="_blank">aas </a>
+                                        <a href="@($"{shorturl}/sm?aasxid={aasxDB.Id}")" target="_blank">sm</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    @if (size > 1000 && data.Count > 1000)
+                    {
+                        <b><span style="color:red;">All other as text</span></b>
+                        <br />
+                        @for (int i = 1000; i < data.Count; i++)
+                        {
+                            var aasxDB = data[i];
+                            <span style="background-color:blue;">&nbsp</span>
+                            <span><b>@aasxDB.Id</b></span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            <span>@aasxDB.AASX</span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            <a href="@($"{shorturl}/aas?aasxid={aasxDB.Id}")" target="_blank">aas </a>
+                            <a href="@($"{shorturl}/sm?aasxid={aasxDB.Id}")" target="_blank">sm</a>
+                            <br />
+                        }
+                        <br />
+                    }
+                    <span>@($"Count: {data.Count}")</span>
+                    <br />
                 }
 
-                <span>
-                    @("Submodel#: " + found + total + " size=" + size + " search=" + search
-                      + " aasxnum=" + aasxnum + " aasnum=" + aasnum + " submodelnum=" + submodelnum)
-                </span>
-                <br/>
-                <br/>
-                <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
-                    <thead>
-                    <tr>
-                        <th style="word-break:keep-all">AASX#</th>
-                        <th style="word-break:keep-all">AAS#</th>
-                        <th style="word-break:keep-all">Sub#</th>
-                        <th style="word-break:keep-all">SubId</th>
-                        <th style="word-break:keep-all">Idshort</th>
-                        <th style="word-break:keep-all">SemanticId</th>
-                        <th style="word-break:keep-all">links</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    @{
-                        List<SubmodelSet> nextPage;
-                        if (submodelnum == 0 && aasxnum == 0 && aasnum == 0 && aasFileName == "")
-                        {
-                            nextPage = db.SubmodelSets
-                                .OrderBy(submodelSet => submodelSet.SubmodelNum)
-                                .Take(size)
-                                .ToList();
-                        }
-                        else
-                        {
-                            nextPage = db.SubmodelSets
-                                .OrderBy(submodelSet => submodelSet.SubmodelNum)
-                                .Where(submodelSet => submodelSet.SubmodelNum >= submodelnum &&
-                                                      (aasxnum == 0 || submodelSet.AASXNum == aasxnum) && (aasnum == 0 || submodelSet.AasNum == aasnum) &&
-                                                      (string.IsNullOrEmpty(aasFileName) || submodelSet.SubmodelId.ToLower().Contains(aasFileName)
-                                                                                         || submodelSet.Idshort.ToLower().Contains(aasFileName) || submodelSet.SemanticId.ToLower().Contains(aasFileName)))
-                                .Take(size)
-                                .ToList();
-                        }
-                    }
-                    @foreach (var submodelDB in nextPage)
-                    {
-                        count++;
-                        var submodel64 = Base64UrlEncoder.Encode((submodelDB.SubmodelId));
-                        var link = Program.externalBlazor + "/submodels/" + submodel64;
-                        var shorturl = url?[..^"/submodel".Length];
-                        var smeCount = db.SMESets
-                            .OrderBy(sme => sme.SMENum)
-                            .Count(sme => sme.SubmodelNum == submodelDB.SubmodelNum);
-
-                        <tr>
-                            <td style="word-break:keep-all">@submodelDB.AASXNum</td>
-                            <td style="word-break:keep-all">@submodelDB.AasNum</td>
-                            <td style="word-break:keep-all">
-                                <b>@submodelDB.SubmodelNum</b>
-                            </td>
-                            <td>@submodelDB.SubmodelId</td>
-                            <td>@submodelDB.Idshort</td>
-                            <td>@submodelDB.SemanticId</td>
-                            <td style="word-break:keep-all">
-                                <a href="@(shorturl + "/aasx?aasxnum=" + submodelDB.AASXNum + "&size=999")" target="_blank">aasx</a>
-                                <a href="@(shorturl + "/aas?aasnum=" + submodelDB.AasNum + "&size=999")" target="_blank">aas</a>
-                                <a href="@(shorturl + "/sme?submodelnum=" + submodelDB.SubmodelNum + "&size=999999")" target="_blank">sme:@(smeCount)</a>
-                                <a href="@link" target="_blank">json</a>
-                            </td>
-                        </tr>
-                    }
-                    </tbody>
-                </table>
-                <span>@("Count: " + count)</span>
-                <br/>
-            }
-
-            if (url.EndsWith("/subjson"))
-            {
-                if (!string.IsNullOrEmpty(submodelid))
+                if (url.EndsWith("/aas"))
                 {
-                    var smDB = db.SubmodelSets.Where(submodelSet => submodelSet.SubmodelId == submodelid).ToList().First();
-                    if (smDB != null)
+                    List<AASSet> data = PageRetriever.GetPageAASData(size, searchLower, aasxid, aasid);
+                    <span>&nbsp&nbsp@($"AAS#: {data.Count}/{db.AASSets.Count()} size={size} search={search} aasxid={aasxid} aasid={aasid}")</span>
+                    <br />
+                    <br />
+                    @if (size > 1000 && data.Count > 1000)
                     {
-                        var json = DBRead.getSubmodelJson(smDB.SubmodelId);
+                        <b><span style="color:red;">First 1000 as TABLE</span></b>
+                        <br />
+                    }
+                    <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
+                        <thead>
+                            <tr>
+                                <th style="word-break:keep-all">AASX#</th>
+                                <th style="word-break:keep-all">AAS#</th>
+                                <th style="word-break:keep-all">Id</th>
+                                <th style="word-break:keep-all">IdShort</th>
+                                <th style="word-break:keep-all">AssetKind</th>
+                                <th style="word-break:keep-all">GlobalAssetId</th>
+                                <th style="word-break:keep-all">Links</th>
+                                <th style="word-break:keep-all">API</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < data.Count && i < 1000; i++)
+                            {
+                                var aasDB = data[i];
+                                string aas64 = Base64UrlEncoder.Encode(aasDB.Identifier);
+                                string link = $"{AasxServer.Program.externalBlazor}/shells/{aas64}";
+                                <tr>
+                                    <td style="word-break:keep-all">@aasDB.AASXId</td>
+                                    <td style="word-break:keep-all"><b>@aasDB.Id</b></td>
+                                    <td>@aasDB.Identifier</td>
+                                    <td>@aasDB.IdShort</td>
+                                    <td>@aasDB.AssetKind</td>
+                                    <td>@aasDB.GlobalAssetId</td>
+                                    <td style="word-break:keep-all">
+                                        <a href="@($"{shorturl}/aasx?aasxid={aasDB.AASXId}")" target="_blank">aasx </a>
+                                        <a href="@($"{shorturl}/sm?aasid={aasDB.Id}")" target="_blank">sm</a>
+                                    </td>
+                                    <td><a href="@link" target="_blank">@link</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    @if (size > 1000 && data.Count > 1000)
+                    {
+                        <b><span style="color:red;">All other as text</span></b>
+                        <br />
+                        @for (int i = 1000; i < data.Count; i++)
+                        {
+                            var aasDB = data[i];
+                            string aas64 = Base64UrlEncoder.Encode(aasDB.Identifier);
+                            string link = $"{AasxServer.Program.externalBlazor}/shells/{aas64}";
+                            <span style="background-color:blue;">&nbsp</span>
+                            <span>@aasDB.AASXId</span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            <span><b>@aasDB.Id</b></span>
+                            <span smDB="background-color:blue;">&nbsp</span>
+                            <span>@aasDB.Identifier</span>
+                            <span smDB="background-color:blue;">&nbsp</span>
+                            <span>@aasDB.IdShort</span>
+                            <span smDB="background-color:blue;">&nbsp</span>
+                            <span>@aasDB.AssetKind</span>
+                            <span smDB="background-color:blue;">&nbsp</span>
+                            <span>@aasDB.GlobalAssetId</span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            <a href="@($"{shorturl}/aasx?aasxid={aasDB.AASXId}")" target="_blank">aasx </a>
+                            <a href="@($"{shorturl}/sm?aasid={aasDB.Id}")" target="_blank">sm</a>
+                            <span style="background-color:blue;">&nbsp</span>
+                            <a href="@link" target="_blank">@link</a>
+                            <br />
+                        }
+                        <br />
+                    }
+                    <span>@($"Count: {data.Count}")</span>
+                    <br />
+                }
+
+                if (url.EndsWith("/sm"))
+                {
+                    List<SMSet> data = PageRetriever.GetPageSMData(size, searchLower, aasxid, aasid, smid);
+                    <span>
+                        &nbsp&nbsp@($"SM#: {data.Count}/{db.SMSets.Count()} size={size} search={search} aasxid={aasxid} aasid={aasid} smid={smid}")
+                    </span>
+                    <br />
+                    <br />
+                    @if (size > 1000 && data.Count > 1000)
+                    {
+                        <b><span style="color:red;">First 1000 as TABLE</span></b>
+                        <br />
+                    }
+                    <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
+                        <thead>
+                            <tr>
+                                <th style="word-break:keep-all">AASX#</th>
+                                <th style="word-break:keep-all">AAS#</th>
+                                <th style="word-break:keep-all">SM#</th>
+                                <th style="word-break:keep-all">Id</th>
+                                <th style="word-break:keep-all">IdShort</th>
+                                <th style="word-break:keep-all">SemanticId</th>
+                                <th style="word-break:keep-all">Links</th>
+                                <th style="word-break:keep-all">API</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < data.Count && i < 1000; i++)
+                            {
+                                var smDB = data[i];
+                                string submodel64 = Base64UrlEncoder.Encode(smDB.Identifier);
+                                string link = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}";
+                                int smeCount = db.SMESets.Where(sme => sme.SMId == smDB.Id).Count();
+
+                                <tr>
+                                    <td style="word-break:keep-all">@smDB.AASXId</td>
+                                    <td style="word-break:keep-all">@smDB.AASId</td>
+                                    <td style="word-break:keep-all"><b>@smDB.Id</b></td>
+                                    <td>@smDB.Identifier</td>
+                                    <td>@smDB.IdShort</td>
+                                    <td>@smDB.SemanticId</td>
+                                    <td style="word-break:keep-all">
+                                        <a href="@($"{shorturl}/aasx?aasxid={smDB.AASXId}")" target="_blank">aasx </a>
+                                        <a href="@($"{shorturl}/aas?aasid={smDB.AASId}")" target="_blank">aas </a>
+                                        <a href="@($"{shorturl}/sme?smid={smDB.Id}")" target="_blank">sme:@(smeCount)</a>
+                                    </td>
+                                    <td><a href="@link" target="_blank">@link</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    @if (size > 1000 && data.Count > 1000)
+                    {
+                        <b><span style="color:red;">All other as text</span></b>
+                        <br />
+                        @for (int i = 1000; i < data.Count; i++)
+                        {
+                            var smDB = data[i];
+                            string submodel64 = Base64UrlEncoder.Encode(smDB.Identifier);
+                            string link = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}";
+                            int smeCount = db.SMESets.Where(sme => sme.SMId == smDB.Id).Count();
+                            <span style="background-color:blue;">&nbsp</span>
+                            <span>@smDB.AASXId</span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            <span>@smDB.AASId</span>
+                            <span smDB="background-color:blue;">&nbsp</span>
+                            <span><b>@smDB.Id</b></span>
+                            <span smDB="background-color:blue;">&nbsp</span>
+                            <span>@smDB.Identifier</span>
+                            <span smDB="background-color:blue;">&nbsp</span>
+                            <span>@smDB.IdShort</span>
+                            <span smDB="background-color:blue;">&nbsp</span>
+                            <span>@smDB.SemanticId</span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            <a href="@($"{shorturl}/aasx?aasxid={smDB.AASXId}")" target="_blank">aasx </a>
+                            <a href="@($"{shorturl}/aas?aasid={smDB.AASId}")" target="_blank">aas </a>
+                            <a href="@($"{shorturl}/sme?smid={smDB.Id}")" target="_blank">sme:@(smeCount)</a>
+                            <span style="background-color:blue;">&nbsp</span>
+                            <a href="@link" target="_blank">@link</a>
+                            <br />
+                        }
+                        <br />
+                    }
+                    <span>@($"Count: {data.Count}")</span>
+                    <br />
+                }
+
+                if (url.EndsWith("/smjson") && !smidentifier.IsNullOrEmpty())
+                {
+                    var smDBList = db.SMSets.Where(s => s.Identifier.Equals(smidentifier)).ToList();
+                    if (smDBList.Any())
+                    {
+                        var smDB = smDBList.First();
+                        var submodel = Converter.GetSubmodel(smDB: smDB);
+
+                        string json = string.Empty;
+                        if (submodel != null)
+                        {
+                            var j = Jsonization.Serialize.ToJsonObject(submodel);
+                            json = j.ToJsonString();
+                        }
+
                         <span>@json</span>
+                        <br />
                     }
                 }
-            }
 
-            if (url.EndsWith("/sme"))
-            {
-                total = db.SMESets.Count();
-                var found = string.Empty;
-                if (!string.IsNullOrEmpty(aasFileName))
+                if (url.EndsWith("/sme"))
                 {
-                    found = db.SMESets
-                        .OrderBy(sme => sme.SMENum).Count(sme => sme.SMENum >= smenum && (submodelnum == 0 || sme.SubmodelNum == submodelnum) &&
-                                                                 (string.IsNullOrEmpty(aasFileName) || sme.Idshort.ToLower().Contains(aasFileName) || sme.SemanticId.ToLower().Contains(aasFileName)
-                                                                  || (sme.ValueType == "S" && db.SValueSets.Any(sv => sv.ParentSMENum == sme.SMENum && sv.Value.ToLower().Contains(aasFileName)))
-                                                                  || (sme.ValueType == "I" && db.IValueSets.Any(sv => sv.ParentSMENum == sme.SMENum && sv.Value.ToString().ToLower().Contains(aasFileName)))
-                                                                  || (sme.ValueType == "F" && db.DValueSets.Any(sv => sv.ParentSMENum == sme.SMENum && sv.Value.ToString().ToLower().Contains(aasFileName)))
-                                                                 )) + "/";
-                }
-
-                <span>
-                    @("SubmodelElements#: " + found + total + " size=" + size + " search=" + search
-                      + " submodelnum=" + submodelnum + " smenum=" + smenum)
-                </span>
-                <br/>
-                <br/>
-                List<SMESet> nextPage = null;
-                if (submodelnum == 0 && smenum == 0 && aasFileName == "")
-                {
-                    nextPage = db.SMESets
-                        .OrderBy(sme => sme.SMENum)
-                        .Take(size)
-                        .ToList();
-                }
-                else
-                {
-                    nextPage = db.SMESets
-                        .OrderBy(sme => sme.SMENum)
-                        .Where(sme => sme.SMENum >= smenum && (submodelnum == 0 || sme.SubmodelNum == submodelnum) &&
-                                      (string.IsNullOrEmpty(aasFileName) || sme.Idshort.ToLower().Contains(aasFileName) || sme.SemanticId.ToLower().Contains(aasFileName)
-                                       || (sme.ValueType == "S" && db.SValueSets.Any(sv => sv.ParentSMENum == sme.SMENum && sv.Value.ToLower().Contains(aasFileName)))
-                                       || (sme.ValueType == "I" && db.IValueSets.Any(sv => sv.ParentSMENum == sme.SMENum && sv.Value.ToString().ToLower().Contains(aasFileName)))
-                                       || (sme.ValueType == "F" && db.DValueSets.Any(sv => sv.ParentSMENum == sme.SMENum && sv.Value.ToString().ToLower().Contains(aasFileName)))
-                                      ))
-                        .Take(size)
-                        .ToList();
-                }
-
-                <b>
-                    <span style="color:red;">First 1000 as TABLE</span>
-                </b>
-                <br/>
-                <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
-                    <thead>
-                    <tr>
-                        <th style="word-break:keep-all">Sub#</th>
-                        <th style="word-break:keep-all">Par#</th>
-                        <th style="word-break:keep-all">SME#</th>
-                        <th style="word-break:keep-all">Typ</th>
-                        <th style="word-break:keep-all">Idshort</th>
-                        <th style="word-break:keep-all">SemanticId</th>
-                        <th style="word-break:keep-all">Value</th>
-                        <th style="word-break:keep-all">ValueTyp</th>
-                        <th style="word-break:keep-all">links</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    @for (var i = 0; i < nextPage.Count && i < 1000; i++)
+                    List<SMESet> data = PageRetriever.GetPageSMEData(size, searchLower, smid, smeid);
+                    <span>
+                        &nbsp&nbsp@($"SME#: {data.Count}/{db.SMESets.Count()} size={size} search={search} smid={smid} smeid={smeid}")
+                    </span>
+                    <br />
+                    <br />
+                    @if (size > 1000 && data.Count > 1000)
                     {
-                        count++;
-                        var smeDB = nextPage[i];
-                        var shorturl = url?[..^"/sme".Length];
-                        <tr>
-                            <td style="word-break:keep-all">
-                                <b>@smeDB.SubmodelNum</b>
-                            </td>
-                            <td style="word-break:keep-all">@smeDB.ParentSMENum</td>
-                            <td style="word-break:keep-all">
-                                <b>@smeDB.SMENum</b>
-                            </td>
-                            <td style="word-break:keep-all">@smeDB.SMEType</td>
-                            <td>@smeDB.Idshort</td>
-                            <td>@smeDB.SemanticId</td>
-                            <td>
-                                @if (smeDB.SMEType == "MLP")
+                        <b><span style="color:red;">First 1000 as TABLE</span></b>
+                        <br />
+                    }
+                    <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
+                        <thead>
+                            <tr>
+                                <th style="word-break:keep-all">SM#</th>
+                                <th style="word-break:keep-all">Par#</th>
+                                <th style="word-break:keep-all">SME#</th>
+                                <th style="word-break:keep-all">Type</th>
+                                <th style="word-break:keep-all">IdShort</th>
+                                <th style="word-break:keep-all">SemanticId</th>
+                                <th style="word-break:keep-all">Value</th>
+                                <th style="word-break:keep-all">ValueType</th>
+                                <th style="word-break:keep-all">Links</th>
+                                <th style="word-break:keep-all">API</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < data.Count && i < 1000; i++)
+                            {
+                                var smeDB = data[i];
+                                string path = smeDB.IdShort;
+                                int? pnum = smeDB.ParentSMEId;
+                                while (pnum != null)
                                 {
-                                    var list = smeDB.getMLPValue();
-                                    <ul>
-                                        @for (var z = 0; z + 1 < list.Count; z++)
+                                    var smeDBP = db.SMESets.Where(s => s.Id == pnum).First();
+                                    path = $"{smeDBP.IdShort}.{path}";
+                                    pnum = smeDBP.ParentSMEId;
+                                }
+                                var smDB = db.SMSets.Where(s => s.Id == smeDB.SMId).First();
+                                string submodel64 = Base64UrlEncoder.Encode(smDB.Identifier);
+                                string link = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}/submodel-elements/{path}";
+                                <tr>
+                                    <td style="word-break:keep-all">@smeDB.SMId</td>
+                                    <td style="word-break:keep-all">@smeDB.ParentSMEId</td>
+                                    <td style="word-break:keep-all"><b>@smeDB.Id</b></td>
+                                    <td style="word-break:keep-all">@smeDB.SMEType</td>
+                                    <td>@smeDB.IdShort</td>
+                                    <td>@smeDB.SemanticId</td>
+                                    <td>
+                                        @if (smeDB.SMEType.Equals("MLP"))
                                         {
-                                            <li>
-                                                [@list[z]] @list[z + 1]
-                                            </li>
+                                            List<string> list = smeDB.getMLPValue();
+                                            <ul>
+                                                @for (int z = 0; z + 1 < list.Count; z++)
+                                                {
+                                                    <li>
+                                                        [@list[z]] @list[z+1]
+                                                    </li>
+                                                    z++;
+                                                }
+                                            </ul>
+                                        }
+                                        else
+                                        {
+                                            @smeDB.getValue()
+                                        }
+                                    </td>
+                                    <td style="word-break:keep-all">@smeDB.ValueType</td>
+                                    <td style="word-break:keep-all">
+                                        <a href="@($"{shorturl}/sm?smid={smeDB.SMId}")" target="_blank">sm </a>
+                                        @if (smeDB.ParentSMEId != null)
+                                        {
+                                            <a href="@($"{shorturl}/sme?smid={smeDB.SMId}&smeid={smeDB.ParentSMEId}")" target="_blank">par </a>
+                                        }
+                                        @if (smeDB.ValueType.Equals("S"))
+                                        {
+                                            <a href="@($"{shorturl}/svalue?smeid={smeDB.Id}")" target="_blank">svalue</a>
+                                        }
+                                        @if (smeDB.ValueType.Equals("I"))
+                                        {
+                                            <a href="@($"{shorturl}/ivalue?smeid={smeDB.Id}")" target="_blank">ivalue</a>
+                                        }
+                                        @if (smeDB.ValueType.Equals("F"))
+                                        {
+                                            <a href="@($"{shorturl}/dvalue?smeid={smeDB.Id}")" target="_blank">fvalue</a>
+                                        }
+                                    </td>
+                                    <td><a href="@link" target="_blank">@link</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    @if (size > 1000 && data.Count > 1000)
+                    {
+                        <b><span style="color:red;">All other as text</span></b>
+                        <br />
+                        @for (int i = 1000; i < data.Count; i++)
+                        {
+                            var smeDB = data[i];
+                            string path = smeDB.IdShort;
+                            int? pnum = smeDB.ParentSMEId;
+                            while (pnum != null)
+                            {
+                                var smeDBP = db.SMESets.Where(s => s.Id == pnum).First();
+                                path = $"{smeDBP.IdShort}.{path}";
+                                pnum = smeDBP.ParentSMEId;
+                            }
+                            var smDB = db.SMSets.Where(s => s.Id == smeDB.SMId).First();
+                            string submodel64 = Base64UrlEncoder.Encode(smDB.Identifier);
+                            string link = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}/submodel-elements/{path}";
+
+                            <span>@smeDB.SMId</span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            <span>@smeDB.ParentSMEId</span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            <span><b>@smeDB.Id</b></span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            <span>@smeDB.SMEType</span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            <span>@smeDB.IdShort</span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            <span>@smeDB.SemanticId</span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            <span>
+                                @if (smeDB.SMEType.Equals("MLP"))
+                                {
+                                    List<string> list = smeDB.getMLPValue();
+                                    if (list.Count > 0)
+                                    {
+                                        string mlp = string.Empty;
+                                        string seperateString = " | ";
+                                        @for (int z = 0; z + 1 < list.Count; z++)
+                                        {
+                                            mlp += $"[{list[z]}] {list[z + 1]}{seperateString}";
                                             z++;
                                         }
-                                    </ul>
+                                        @mlp.Substring(0, mlp.Length - seperateString.Length)
+                                    }
                                 }
                                 else
                                 {
                                     @smeDB.getValue()
                                 }
-                            </td>
-                            <td style="word-break:keep-all">@smeDB.ValueType</td>
-                            <td style="word-break:keep-all">
-                                <a href="@(shorturl + "/submodel?submodelnum=" + smeDB.SubmodelNum + "&size=1")" target="_blank">sub</a>
-                                @if (smeDB.ParentSMENum != 0)
-                                {
-                                    <a href="@(shorturl + "/sme?submodelnum=" + smeDB.SubmodelNum + "&smenum=" + smeDB.ParentSMENum + "&size=1")" target="_blank">&nbsp par</a>
-                                }
-                                @if (smeDB.SMEType == "MLP")
-                                {
-                                    <br>
-                                    <a href="@(shorturl + "/svalue?smenum=" + smeDB.SMENum)" target="_blank">mlp</a>
-                                }
-                            </td>
-                        </tr>
+                            </span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            <span>@smeDB.ValueType</span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            <a href="@($"{shorturl}/sm?smid={smeDB.SMId}")" target="_blank">sm </a>
+                            @if (smeDB.ParentSMEId != null)
+                            {
+                                <a href="@($"{shorturl}/sme?smid={smeDB.SMId}&smeid={smeDB.ParentSMEId}")" target="_blank">par </a>
+                            }
+                            @if (smeDB.SMEType.Equals("MLP"))
+                            {
+                                <a href="@($"{shorturl}/svalue?smeid={smeDB.Id}")" target="_blank">mlp</a>
+                            }
+                            <span style="background-color:blue;">&nbsp</span>
+                            <a href="@link" target="_blank">@link</a>
+                            <br />
+                        }
+                        <br />
                     }
-                    </tbody>
-                </table>
-                <b>
-                    <span style="color:red;">All other as text</span>
-                </b>
-                <br/>
-                @for (var i = 1000; i < nextPage.Count; i++)
-                {
-                    count++;
-                    var smeDB = nextPage[i];
-                    var shorturl = url[..^"/sme".Length];
-                    <span>
-                        <b>@smeDB.SubmodelNum</b>
-                    </span>
-                    <span style="background-color:blue;">&nbsp</span>
-                    <span>@smeDB.ParentSMENum</span>
-                    <span style="background-color:blue;">&nbsp</span>
-                    <span>
-                        <b>@smeDB.SMENum</b>
-                    </span>
-                    <span style="background-color:blue;">&nbsp</span>
-                    <span>@smeDB.SMEType</span>
-                    <span style="background-color:blue;">&nbsp</span>
-                    <span>@smeDB.Idshort</span>
-                    <span style="background-color:blue;">&nbsp</span>
-                    <span>@smeDB.SemanticId</span>
-                    <span style="background-color:blue;">&nbsp</span>
-                    <span>@smeDB.getValue()</span>
-                    <span style="background-color:blue;">&nbsp</span>
-                    <span>@smeDB.ValueType</span>
-                    <span style="background-color:blue;">&nbsp</span>
-                    <a href="@(shorturl + "/submodel?submodelnum=" + smeDB.SubmodelNum + "&size=1")" target="_blank">sub</a>
-                    @if (smeDB.ParentSMENum != 0)
-                    {
-                        <a href="@(shorturl + "/sme?submodelnum=" + smeDB.SubmodelNum + "&smenum=" + smeDB.ParentSMENum + "&size=1")" target="_blank">&nbsp par</a>
-                    }
-
-                    <br/>
+                    <span>@($"Count: {data.Count}")</span>
+                    <br />
                 }
 
-                <br/>
-                <span>@("Count: " + count)</span>
-                <br/>
+                if (url.EndsWith("/svalue"))
+                {
+                    List<SValueSet> data = PageRetriever.GetPageSValueData(size, searchLower, smeid);
+                    <span>
+                        &nbsp&nbsp@($"SValue#: {data.Count}/{db.SValueSets.Count()} size={size} search={search} smeid={smeid}")
+                    </span>
+                    <br />
+                    <br />
+                    @if (size > 1000 && data.Count > 1000)
+                    {
+                        <b><span style="color:red;">First 1000 as TABLE</span></b>
+                        <br />
+                    }
+                    <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
+                        <thead>
+                            <tr>
+                                <th style="word-break:keep-all">Par#</th>
+                                <th style="word-break:keep-all">Value</th>
+                                <th style="word-break:keep-all">Annotation</th>
+                                <th style="word-break:keep-all">Links</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < data.Count && i < 1000; i++)
+                            {
+                                var smeDB = data[i];
+                                <tr>
+                                    <td style="word-break:keep-all">@smeDB.SMEId</td>
+                                    <td style="word-break:keep-all">@smeDB.Value</td>
+                                    <td style="word-break:keep-all">@smeDB.Annotation</td>
+                                    <td style="word-break:keep-all">
+                                        @if (smeDB.SMEId != null)
+                                        {
+                                            <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    @if (size > 1000 && data.Count > 1000)
+                    {
+                        <b><span style="color:red;">All other as text</span></b>
+                        <br />
+                        @for (int i = 1000; i < data.Count; i++)
+                        {
+                            var smeDB = data[i];
+                            <span style="background-color:blue;">&nbsp</span>
+                            <span>@smeDB.SMEId</span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            <span>@smeDB.Value</span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            <span>@smeDB.Annotation</span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            @if (smeDB.SMEId != null)
+                            {
+                                <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
+                            }
+                            <br />
+                        }
+                        <br />
+                    }
+                    <span>@($"Count: {data.Count}")</span>
+                    <br />
+                }
+
+                if (url.EndsWith("/ivalue"))
+                {
+                    List<IValueSet> data = PageRetriever.GetPageIValueData(size, searchLower, smeid);
+                    <span>
+                        &nbsp&nbsp@($"IValue#: {data.Count}/{db.IValueSets.Count()} size={size} search={search} smeid={smeid}")
+                    </span>
+                    <br />
+                    <br />
+                    @if (size > 1000 && data.Count > 1000)
+                    {
+                        <b><span style="color:red;">First 1000 as TABLE</span></b>
+                        <br />
+                    }
+                    <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
+                        <thead>
+                            <tr>
+                                <th style="word-break:keep-all">Par#</th>
+                                <th style="word-break:keep-all">Value</th>
+                                <th style="word-break:keep-all">Annotation</th>
+                                <th style="word-break:keep-all">Links</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < data.Count && i < 1000; i++)
+                            {
+                                var smeDB = data[i];
+                                <tr>
+                                    <td style="word-break:keep-all">@smeDB.SMEId</td>
+                                    <td style="word-break:keep-all">@smeDB.Value</td>
+                                    <td style="word-break:keep-all">@smeDB.Annotation</td>
+                                    <td style="word-break:keep-all">
+                                        @if (smeDB.SMEId != null)
+                                        {
+                                            <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    @if (size > 1000 && data.Count > 1000)
+                    {
+                        <b><span style="color:red;">All other as text</span></b>
+                        <br />
+                        @for (int i = 1000; i < data.Count; i++)
+                        {
+                            var smeDB = data[i];
+                            <span style="background-color:blue;">&nbsp</span>
+                            <span>@smeDB.SMEId</span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            <span>@smeDB.Value</span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            <span>@smeDB.Annotation</span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            @if (smeDB.SMEId != null)
+                            {
+                                <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
+                            }
+                            <br />
+                        }
+                        <br />
+                    }
+                    <span>@($"Count: {data.Count}")</span>
+                    <br />
+                }
+
+                if (url.EndsWith("/dvalue"))
+                {
+                    List<DValueSet> data = PageRetriever.GetPageDValueData(size, searchLower, smeid);
+                    <span>
+                        &nbsp&nbsp@($"DValue#: {data.Count}/{db.DValueSets.Count()} size={size} search={search} smeid={smeid}")
+                    </span>
+                    <br />
+                    <br />
+                    @if (size > 1000 && data.Count > 1000)
+                    {
+                        <b><span style="color:red;">First 1000 as TABLE</span></b>
+                        <br />
+                    }
+                    <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
+                        <thead>
+                            <tr>
+                                <th style="word-break:keep-all">Par#</th>
+                                <th style="word-break:keep-all">Value</th>
+                                <th style="word-break:keep-all">Annotation</th>
+                                <th style="word-break:keep-all">Links</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < data.Count && i < 1000; i++)
+                            {
+                                var smeDB = data[i];
+                                <tr>
+                                    <td style="word-break:keep-all">@smeDB.SMEId</td>
+                                    <td style="word-break:keep-all">@smeDB.Value</td>
+                                    <td style="word-break:keep-all">@smeDB.Annotation</td>
+                                    <td style="word-break:keep-all">
+                                        @if (smeDB.SMEId != null)
+                                        {
+                                            <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    @if (size > 1000 && data.Count > 1000)
+                    {
+                        <b><span style="color:red;">All other as text</span></b>
+                        <br />
+                        @for (int i = 1000; i < data.Count; i++)
+                        {
+                            var smeDB = data[i];
+                            <span style="background-color:blue;">&nbsp</span>
+                            <span>@smeDB.SMEId</span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            <span>@smeDB.Value</span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            <span>@smeDB.Annotation</span>
+                            <span style="background-color:blue;">&nbsp</span>
+                            @if (smeDB.SMEId != null)
+                            {
+                                <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par </a>
+                            }
+                            <br />
+                        }
+                        <br />
+                    }
+                    <span>@($"Count: {data.Count}")</span>
+                    <br />
+                }
+                
+                watch.Stop();
+                <span>@($"Elapsed ms: {watch.ElapsedMilliseconds}")</span>
             }
-
-            if (url.EndsWith("/svalue"))
-            {
-                total = db.SValueSets.Count();
-                var found = string.Empty;
-                if (!string.IsNullOrEmpty(aasFileName))
-                {
-                    found = db.SValueSets
-                        .OrderBy(p => p.ParentSMENum)
-                        .Count(v => (smenum == 0 || v.ParentSMENum == smenum) && (string.IsNullOrEmpty(aasFileName) || v.Value.ToLower().Contains(aasFileName))) + "/";
-                }
-
-                <span>
-                    @("SValues#: " + found + total + " size=" + size + " search=" + search
-                      + " smenum=" + smenum)
-                </span>
-                <br/>
-                <br/>
-
-                List<StringValue> nextPage;
-                if (smenum == 0 && string.IsNullOrEmpty(aasFileName))
-                {
-                    nextPage = db.SValueSets
-                        .OrderBy(v => v.ParentSMENum)
-                        .Take(size)
-                        .ToList();
-                }
-                else
-                {
-                    nextPage = db.SValueSets
-                        .OrderBy(v => v.ParentSMENum)
-                        .Where(v => (smenum == 0 || v.ParentSMENum == smenum) && (string.IsNullOrEmpty(aasFileName) || v.Value.ToLower().Contains(aasFileName)))
-                        .Take(size)
-                        .ToList();
-                }
-
-                <b>
-                    <span style="color:red;">First 1000 as TABLE</span>
-                </b>
-                <br/>
-                <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
-                    <thead>
-                    <tr>
-                        <th style="word-break:keep-all">Par#</th>
-                        <th style="word-break:keep-all">Value</th>
-                        <th style="word-break:keep-all">Annotation</th>
-                        <th style="word-break:keep-all">links</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    @for (var i = 0; i < nextPage.Count && i < 1000; i++)
-                    {
-                        count++;
-                        var smeDB = nextPage[i];
-                        var shorturl = url?[..^"/svalue".Length];
-                        <tr>
-                            <td style="word-break:keep-all">@smeDB.ParentSMENum</td>
-                            <td style="word-break:keep-all">@smeDB.Value</td>
-                            <td style="word-break:keep-all">
-                                <b>@smeDB.Annotation</b>
-                            </td>
-                            <td style="word-break:keep-all">
-                                @if (smeDB.ParentSMENum != 0)
-                                {
-                                    <a href="@(shorturl + "/sme?smenum=" + smeDB.ParentSMENum + "&size=1")" target="_blank">&nbsp par</a>
-                                }
-                            </td>
-                        </tr>
-                    }
-                    </tbody>
-                </table>
-                <b>
-                    <span style="color:red;">All other as text</span>
-                </b>
-                <br/>
-                @for (var i = 1000; i < nextPage.Count; i++)
-                {
-                    count++;
-                    var smeDB = nextPage[i];
-                    var shorturl = url?[..^"/svalue".Length];
-                    <span style="background-color:blue;">&nbsp</span>
-                    <span>@smeDB.ParentSMENum</span>
-                    <span style="background-color:blue;">&nbsp</span>
-                    <span>@smeDB.Value</span>
-                    <span style="background-color:blue;">&nbsp</span>
-                    <span>
-                        <b>@smeDB.Annotation</b>
-                    </span>
-                    <span style="background-color:blue;">&nbsp</span>
-                    @if (smeDB.ParentSMENum != 0)
-                    {
-                        <a href="@(shorturl + "/sme?smenum=" + smeDB.ParentSMENum + "&size=1")" target="_blank">&nbsp par</a>
-                    }
-
-                    <br/>
-                }
-
-                <br/>
-                <span>@("Count: " + count)</span>
-                <br/>
-            }
-
-            if (url.EndsWith("/ivalue"))
-            {
-                var withI = false;
-                long iEqual = 0;
-                try
-                {
-                    if (!string.IsNullOrEmpty(aasFileName))
-                    {
-                        iEqual = Convert.ToInt64(aasFileName);
-                        withI = true;
-                    }
-                }
-                catch
-                {
-                    // ignored
-                }
-
-                total = db.IValueSets.Count();
-                var found = string.Empty;
-                if (!string.IsNullOrEmpty(aasFileName))
-                {
-                    found = db.IValueSets
-                        .OrderBy(p => p.ParentSMENum)
-                        .Count(v => (smenum == 0 || v.ParentSMENum == smenum) && withI && (aasFileName == "" || v.Value == iEqual)) + "/";
-                }
-
-                <span>
-                    @("IValues#: " + found + total + " size=" + size + " search=" + search
-                      + " smenum=" + smenum)
-                </span>
-                <br/>
-                <br/>
-
-                List<IntValue> nextPage;
-                if (submodelnum == 0 && smenum == 0 && aasFileName == "")
-                {
-                    nextPage = db.IValueSets
-                        .OrderBy(v => v.Id)
-                        .Take(size)
-                        .ToList();
-                }
-                else
-                {
-                    nextPage = db.IValueSets
-                        .OrderBy(v => v.ParentSMENum)
-                        .Where(v => (smenum == 0 || v.ParentSMENum == smenum) && withI && (aasFileName == "" || v.Value == iEqual))
-                        .Take(size)
-                        .ToList();
-                }
-
-                <b>
-                    <span style="color:red;">First 1000 as TABLE</span>
-                </b>
-                <br/>
-                <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
-                    <thead>
-                    <tr>
-                        <th style="word-break:keep-all">Par#</th>
-                        <th style="word-break:keep-all">Value</th>
-                        <th style="word-break:keep-all">Annotation#</th>
-                        <th style="word-break:keep-all">links</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    @for (var i = 0; i < nextPage.Count && i < 1000; i++)
-                    {
-                        count++;
-                        var smeDB = nextPage[i];
-                        var shorturl = url?[..^"/ivalue".Length];
-                        <tr>
-                            <td style="word-break:keep-all">@smeDB.ParentSMENum</td>
-                            <td style="word-break:keep-all">@smeDB.Value</td>
-                            <td style="word-break:keep-all">
-                                <b>@smeDB.Annotation</b>
-                            </td>
-                            <td style="word-break:keep-all">
-                                @if (smeDB.ParentSMENum != 0)
-                                {
-                                    <a href="@(shorturl + "/sme?smenum=" + smeDB.ParentSMENum + "&size=1")" target="_blank">&nbsp par</a>
-                                }
-                            </td>
-                        </tr>
-                    }
-                    </tbody>
-                </table>
-                <b>
-                    <span style="color:red;">All other as text</span>
-                </b>
-                <br/>
-                @for (var i = 1000; i < nextPage.Count; i++)
-                {
-                    count++;
-                    var smeDB = nextPage[i];
-                    var shorturl = url?[..^"/ivalue".Length];
-                    <span style="background-color:blue;">&nbsp</span>
-                    <span>@smeDB.ParentSMENum</span>
-                    <span style="background-color:blue;">&nbsp</span>
-                    <span>@smeDB.Value</span>
-                    <span style="background-color:blue;">&nbsp</span>
-                    <span>
-                        <b>@smeDB.Annotation</b>
-                    </span>
-                    <span style="background-color:blue;">&nbsp</span>
-                    @if (smeDB.ParentSMENum != 0)
-                    {
-                        <a href="@(shorturl + "/sme?smenum=" + smeDB.ParentSMENum + "&size=1")" target="_blank">par</a>
-                    }
-
-                    <br/>
-                }
-
-                <br/>
-                <span>@("Count: " + count)</span>
-                <br/>
-            }
-
-            if (url.EndsWith("/dvalue"))
-            {
-                var withF = false;
-                double fEqual = 0;
-                try
-                {
-                    if (!string.IsNullOrEmpty(aasFileName))
-                    {
-                        fEqual = Convert.ToDouble(aasFileName);
-                        withF = true;
-                    }
-                }
-                catch
-                {
-                }
-
-                total = db.DValueSets.Count();
-                var found = string.Empty;
-                if (!string.IsNullOrEmpty(aasFileName))
-                {
-                    found = db.DValueSets
-                        .OrderBy(p => p.ParentSMENum)
-                        .Count(v => (smenum == 0 || v.ParentSMENum == smenum) && withF && (aasFileName == "" || v.Value == fEqual)) + "/";
-                }
-
-                <span>
-                    @("DValues#: " + found + total + " size=" + size + " search=" + search
-                      + " smenum=" + smenum)
-                </span>
-                <br/>
-                <br/>
-
-                List<DoubleValue> nextPage;
-                if (submodelnum == 0 && smenum == 0 && string.IsNullOrEmpty(aasFileName))
-                {
-                    nextPage = db.DValueSets
-                        .OrderBy(v => v.ParentSMENum)
-                        .Take(size)
-                        .ToList();
-                }
-                else
-                {
-                    nextPage = db.DValueSets
-                        .OrderBy(v => v.ParentSMENum)
-                        .Where(v => (smenum == 0 || v.ParentSMENum == smenum) && withF && (aasFileName == "" || v.Value == fEqual))
-                        .Take(size)
-                        .ToList();
-                }
-
-                <b>
-                    <span style="color:red;">First 1000 as TABLE</span>
-                </b>
-                <br/>
-                <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
-                    <thead>
-                    <tr>
-                        <th style="word-break:keep-all">Par#</th>
-                        <th style="word-break:keep-all">Value</th>
-                        <th style="word-break:keep-all">Annotation</th>
-                        <th style="word-break:keep-all">links</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    @for (var i = 0; i < nextPage.Count && i < 1000; i++)
-                    {
-                        count++;
-                        var smeDB = nextPage[i];
-                        var shorturl = url?[..^"/dvalue".Length];
-                        <tr>
-                            <td style="word-break:keep-all">@smeDB.ParentSMENum</td>
-                            <td style="word-break:keep-all">@smeDB.Value</td>
-                            <td style="word-break:keep-all">
-                                <b>@smeDB.Annotation</b>
-                            </td>
-                            <td style="word-break:keep-all">
-                                @if (smeDB.ParentSMENum != 0)
-                                {
-                                    <a href="@(shorturl + "/sme?smenum=" + smeDB.ParentSMENum + "&size=1")" target="_blank"> par</a>
-                                }
-                            </td>
-                        </tr>
-                    }
-                    </tbody>
-                </table>
-                <b>
-                    <span style="color:red;">All other as text</span>
-                </b>
-                <br/>
-                @for (var i = 1000; i < nextPage.Count; i++)
-                {
-                    count++;
-                    var smeDB = nextPage[i];
-                    var shorturl = url?[..^"/dvalue".Length];
-                    <span style="background-color:blue;">&nbsp</span>
-                    <span>@smeDB.ParentSMENum</span>
-                    <span style="background-color:blue;">&nbsp</span>
-                    <span>@smeDB.Value</span>
-                    <span style="background-color:blue;">&nbsp</span>
-                    <span>
-                        <b>@smeDB.Annotation</b>
-                    </span>
-                    <span style="background-color:blue;">&nbsp</span>
-                    @if (smeDB.ParentSMENum != 0)
-                    {
-                        <a href="@(shorturl + "/sme?smenum=" + smeDB.ParentSMENum + "&size=1")" target="_blank">&nbsp par</a>
-                    }
-
-                    <br/>
-                }
-
-                <br/>
-                <span>@("Count: " + count)</span>
-                <br/>
-            }
-
-            watch1.Stop();
-            <span>@("Elapsed ms: " + watch1.ElapsedMilliseconds)</span>
+            <br />
+            <br />
         }
-
-        <br/>
-        <br/>
     }
-}
 </div>
 
-@code{
-    long total = 0;
+@code {
     int size = 1000;
     string search = "";
-    long aasxnum = 0;
-    long aasnum = 0;
-    long submodelnum = 0;
-    long smenum = 0;
-    string submodelid = "";
-
-    long w1, w2, w3 = 0;
+    long aasxid = 0;
+    long aasid = 0;
+    long smid = 0;
+    long smeid = 0;
+    string smidentifier = "";
 }

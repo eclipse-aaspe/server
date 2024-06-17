@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,7 +14,7 @@ public class Startup
     }
 
     private IConfiguration Configuration { get; }
-    
+
     /// <summary>
     /// Configures the services for the application's dependency injection container.
     /// This method is called by the runtime. Use it to add services required by the application.
@@ -30,7 +30,7 @@ public class Startup
 
         ServerConfiguration.AddFrameworkServices(services);
     }
-        
+
     /// <summary>
     /// Configures the HTTP request pipeline for the application.
     /// This method is called by the runtime. Use it to define how incoming requests are handled.

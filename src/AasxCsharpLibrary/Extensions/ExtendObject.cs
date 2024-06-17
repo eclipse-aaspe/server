@@ -11,9 +11,16 @@ namespace Extensions
 
         public static bool IsPrimitive(this Type type)
         {
-            if (type == typeof(String)) return true;
-            return (type.IsValueType & type.IsPrimitive);
+            // Check for string directly
+            if (type == typeof(string))
+            {
+                return true;
+            }
+
+            // Use short circuit AND for IsValueType and IsPrimitive check
+            return type.IsValueType && type.IsPrimitive;
         }
+
 
         public static Object Copy(this Object originalObject)
         {

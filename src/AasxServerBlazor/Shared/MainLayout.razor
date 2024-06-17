@@ -1,9 +1,11 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager NavMan
 @inject Data.AASService SubmodelService
+@* @inject Data.CredentialService cs *@
 @using AasCore.Aas3_0;
 @using AasxServer
 @inject IRegistryInitializerService AasRegistryService
+@using System
 @using IO.Swagger.Registry.Lib.V3.Interfaces;
 @using Microsoft.IdentityModel.Tokens;
 
@@ -115,7 +117,6 @@
                                     {
                                     <option value="@t">@t</option>
                                     }
-
                                 </select>
                                 <input
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
@@ -288,37 +289,54 @@ endpoint = Program.externalBlazor + "/shells/" + idEncoded;
 return endpoint;
 }
 
-string getIframePath()
-{
-var link = string.Empty;
-foreach (var env in Program.env)
-{
-if (env == null)
-{
-continue;
-}
-var aas = env.AasEnv.AssetAdministrationShells[0];
-if (aas.IdShort != "ZveiControlCabinetAas - EXTERNAL")
-continue;
+    string getIframePath()
+    {
+        var link = "";
+        //get the admin shell of the cabinet
+        foreach (var env in AasxServer.Program.env)
+        {
+            if (env != null)
+            {
+                var queryPara = "";
+                var userPW = "";
+                var urlEdcWrapper = "";
+                string replace = "";
 
-link = "?aasUrl=" + getAasLink(aas);
+                var aas = env.AasEnv.AssetAdministrationShells[0];
+                if (aas.IdShort != "ZveiControlCabinetAas - EXTERNAL")
+                    continue;
 
-var registry = AasRegistryService.GetRegistryList();
-if (registry != null && registry.Count != 0)
-{
-link += "&registryURL=" + registry[0];
-}
+                link = getAasLink(aas);
 
-if (!AasxCredentials.get(cs.credentials, link, out var queryPara, out _, out _, out var replace))
-{
-continue;
-}
+                var registry = AasRegistryService.GetRegistryList();
+                if (registry != null && registry.Count != 0)
+                {
+                    string registryURL = registry[0];
 
-if (replace != "")
-link = replace;
-queryPara = Base64UrlEncoder.Encode(queryPara);
-link += "&query=" + queryPara;
-}
+                    if (AasxCredentials.get(cs.credentials, registryURL, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
+                    {
+                        if (replace != "")
+                            registryURL = replace;
+                    }
+                    link += "&registryURL=" + registryURL;
+                }
+
+                queryPara = "";
+                userPW = "";
+                urlEdcWrapper = "";
+                replace = "";
+                if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
+                {
+                    if (replace != "")
+                        link = replace;
+                    queryPara = Base64UrlEncoder.Encode(queryPara);
+                    link += "&query=" + queryPara;
+                    // Console.WriteLine("iframe:" + link);
+                }
+
+                link = "?aasUrl=" + link;
+            }
+        }
 
 //TODO: not passing credentials
 var p = System.Environment.GetEnvironmentVariable("IFRAMEPATH");
