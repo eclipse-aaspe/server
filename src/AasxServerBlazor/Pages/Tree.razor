@@ -12,10 +12,10 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
     {
         var nodeExpanded = ExpandedNodes.Contains(node);
         var nodeSelected = node.Equals(SelectedNode);
-        var hasChilds = HasChildNodes(node);
-        var it = node as Item;
-        var itIsAas = it.Tag is AssetAdministrationShell;
-        var itMargin = "margin: 0px";
+        var hasChilds    = HasChildNodes(node);
+        var it           = node as Item;
+        var itIsAas      = it is {Tag: AssetAdministrationShell};
+        var itMargin     = "margin: 0px";
         if (itIsAas)
             itMargin = "margin: 0px; margin-bottom: 3px";
 
@@ -26,7 +26,7 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
                     <div class="col" style="max-width:50px;padding:1px;display:flex;justify-content:center;">
                         @{
                             var border = string.Empty;
-                            var env = AasxServer.Program.env[it.envIndex];
+                            var env    = AasxServer.Program.env[ it.envIndex ];
                             if (env != null && env.getWrite())
                             {
                                 border = "border:dotted;border-color:blue;";
@@ -96,25 +96,25 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
 
 @code {
 
-    [Parameter] public IEnumerable<TNode> Nodes { get; set; }
+    [ Parameter ] public IEnumerable<TNode> Nodes { get; set; }
 
-    [Parameter] public RenderFragment<TNode> TitleTemplate { get; set; }
+    [ Parameter ] public RenderFragment<TNode> TitleTemplate { get; set; }
 
-    [Parameter] public TNode SelectedNode { get; set; }
-    [Parameter] public EventCallback<TNode> SelectedNodeChanged { get; set; }
+    [ Parameter ] public TNode                SelectedNode        { get; set; }
+    [ Parameter ] public EventCallback<TNode> SelectedNodeChanged { get; set; }
 
-    [Parameter] public Func<TNode, IEnumerable<TNode>> ChildSelector { get; set; }
+    [ Parameter ] public Func<TNode, IEnumerable<TNode>> ChildSelector { get; set; }
 
-    [Parameter] public IList<TNode> ExpandedNodes { get; set; } = new List<TNode>();
-    [Parameter] public EventCallback<IList<TNode>> ExpandedNodesChanged { get; set; }
+    [ Parameter ] public IList<TNode>                ExpandedNodes        { get; set; } = new List<TNode>();
+    [ Parameter ] public EventCallback<IList<TNode>> ExpandedNodesChanged { get; set; }
 
-    [Parameter] public TreeStyle Style { get; set; } = TreeStyle.Bootstrap;
+    [ Parameter ] public TreeStyle Style { get; set; } = TreeStyle.Bootstrap;
 
-    [Parameter] public bool Visible { get; set; } = true;
+    [ Parameter ] public bool Visible { get; set; } = true;
 
-    [Parameter] public Func<TNode, bool> HasChildNodes { get; set; } = _ => true;
+    [ Parameter ] public Func<TNode, bool> HasChildNodes { get; set; } = _ => true;
 
-    [Parameter] public Func<Item, string> HtmlId { get; set; } = _ => string.Empty;
+    [ Parameter ] public Func<Item, string> HtmlId { get; set; } = _ => string.Empty;
 
     private void OnToggleNode(TNode node, bool expand)
     {
