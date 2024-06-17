@@ -2,60 +2,83 @@ name: Nightly Prerelease build on Main
 
 on:
   schedule:
-    - cron: '0 23 * * *' # This is 1:00 AM Berlin time
+    - cron: '0 23 * * 1-5' # This is 1:00 AM Berlin time from Monday to Friday
   workflow_dispatch:  # Allows manual triggering
+
+env:
+  BRANCH_SUFFIX: latest
+  VERSION_SUFFIX: alpha
 
 jobs:
   check-for-changes:
-    runs-on: ubuntu-latest
-    name: Check for changes
+    runs-on: windows-latest
+    name: Check for changes between HEAD and last created tag
+    if: github.event_name != 'schedule' || github.repository == 'eclipse-aaspe/server'
     outputs:
-      changes_detected: ${{ steps.check_changes.outputs.changes_detected }}
+      branch_changed: ${{ steps.check_changes.outputs.changes_detected }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Get the newest tag
-        id: get_latest_tag
-        run: |
-          git fetch --all
-          stableTags=$(git tag --list "*latest*" --sort=-v:refname)
-          if [ -n "$stableTags" ]; then
-            newestStableTag=$(echo "$stableTags" | head -n 1)
-            echo "latest_tag=$newestStableTag" >> $GITHUB_ENV
-            echo "Latest found tag is $newestStableTag"
-          else
-            echo "No stable tags found, assuming there are changes."
-            echo "latest_tag=" >> $GITHUB_ENV
-          fi
-        shell: bash
-
-      - name: Check for changes
+      - name: Check changes since last tag
         id: check_changes
         run: |
-          if [ -z "${{ env.latest_tag }}" ]; then
-            echo "No latest tag found, assuming there are changes."
-            echo "changes_detected=true" >> $GITHUB_OUTPUT
-          else
-            git fetch origin main
-            latest_commit=$(git rev-parse HEAD)
-            if git diff --quiet ${{ env.latest_tag }} $latest_commit; then
-              echo "No changes detected since tag '${{ env.latest_tag }}'."
-              echo "changes_detected=false" >> $GITHUB_OUTPUT
-            else
-              echo "Changes detected since tag '${{ env.latest_tag }}'."
-              echo "changes_detected=true" >> $GITHUB_OUTPUT
-            fi
-          fi
-        shell: bash
-  
+          git fetch --tags -v
+          $tags = git tag --sort=-creatordate
+          Write-Host "Tags: $tags"
+          $branchSuffix = "${{ env.BRANCH_SUFFIX }}"
+          Write-Host "Branch Suffix: $branchSuffix"
+          $potentialTags = @()
+          foreach ($tag in $tags) {
+            if ($tag -match ".*-$branchSuffix$") {
+              $potentialTags += $tag
+            }
+          }
+
+          if ($potentialTags.Count -gt 0) 
+          {
+            $latestTag = $potentialTags[0]
+            Write-Host "Latest found matching tag is $latestTag"
+          } else 
+          {
+            Write-Host "No matching tags found, fetching the latest tag."
+            $latestTag = $tags | Select-Object -First 1
+            if ($latestTag) 
+            {
+              echo "from_tag=$latestTag" >> $env:GITHUB_OUTPUT
+              Write-Host "Latest found tag is $latestTag"
+            } else 
+            {
+              Write-Host "No tags found at all."
+              exit 1
+            }
+          }
+
+          Write-Host "Checking changes since tag: $latestTag"
+          $changes = git log --oneline "$latestTag"..HEAD
+          Write-Host "Found changes: $changes"
+          if (-not [string]::IsNullOrEmpty($changes)) 
+          {
+            Write-Host "Changes detected since $latestTag"
+            Write-Host "$changes"
+            echo "changes_detected=true" >> $env:GITHUB_OUTPUT
+          } else 
+          {
+            Write-Host "No changes detected since $latestTag."
+            echo "changes_detected=false" >> $env:GITHUB_OUTPUT
+          }
+        shell: pwsh
+
   create-new-prerelease:
     runs-on: windows-latest
     name: Create a new prerelease build and attach built packages to release
     needs: check-for-changes
-    if: needs.check-for-changes.outputs.changes_detected == 'true'
+    permissions:
+      contents: write
+      pull-requests: write
+    if: needs.check-for-changes.outputs.branch_changed == 'true'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -69,9 +92,7 @@ jobs:
       - name: Extract branch name
         id: extract_branch
         run: |
-          git fetch --all
-          $commitSHA = git rev-parse HEAD
-          $branch = git branch -r --contains $commitSHA | Select-String -Pattern 'origin/' | Select-Object -First 1 | ForEach-Object { $_.Line -replace '.*origin/', '' } | ForEach-Object { $_.Trim() }
+          $branch = '${{ github.ref }}' -replace 'refs/heads/', ''
           echo "branch=$branch" >> $env:GITHUB_OUTPUT
           Write-Host "The current branch is: $branch"
         shell: pwsh
@@ -79,19 +100,29 @@ jobs:
       - name: Get the newest tag
         id: get_latest_tag
         run: |
-          $stableTags = git tag --list "*latest*" --sort=-v:refname
-          if ($stableTags) {
-            $newestStableTag = $stableTags | Select-Object -First 1
+          git fetch --tags
+          $tags = git tag --sort=-creatordate
+          $branchSuffix = "${{ env.BRANCH_SUFFIX }}"
+          $potentialTags = @()
+          foreach ($tag in $tags) {
+            if ($tag -match ".*-$branchSuffix$") {
+              $potentialTags += $tag
+            }
+          }
+
+          if ($potentialTags.Count -gt 0) {
+            $newestStableTag = $potentialTags[0]
             echo "from_tag=$newestStableTag" >> $env:GITHUB_OUTPUT
-            Write-Host "Latest found tag is $from_tag"
+            Write-Host "Latest found tag is $newestStableTag"
           } else {
-            Write-Host "No stable tags found, fetching the latest tag."
-            $latestTag = git tag --list --sort=-v:refname | Select-Object -First 1
+            Write-Host "No matching tags found, fetching the latest tag."
+            $latestTag = $tags | Select-Object -First 1
             if ($latestTag) {
               echo "from_tag=$latestTag" >> $env:GITHUB_OUTPUT
-              Write-Host "Latest found tag is $from_tag"
+              Write-Host "Latest found tag is $latestTag"
             } else {
               Write-Host "No tags found at all."
+              exit 1
             }
           }
         shell: pwsh
@@ -101,7 +132,7 @@ jobs:
         id: generate_version_number
         run: |
           $branch = '${{ steps.extract_branch.outputs.branch }}'
-          $version = .\BuildVersionNumber.ps1 -suffix alpha -branch $branch -githubRunNumber ${{ github.run_number }}
+          $version = .\BuildVersionNumber.ps1 -suffix $VERSION_SUFFIX -branch $branch -githubRunNumber ${{ github.run_number }}
           echo "version=$version" >> $env:GITHUB_OUTPUT
           Write-Host "The version name to build is: $version"
         shell: pwsh
@@ -127,7 +158,7 @@ jobs:
       - name: Package release
         working-directory: src
         run: |
-          $version = '${{ steps.generate_version_number.outputs.version }}'
+          $version = 'v${{ steps.generate_version_number.outputs.version }}'
           mkdir -p artefacts/release/$version
           Write-Host "Packaging for the release version: $version"
           .\PackageRelease.ps1 -version $version
@@ -136,7 +167,7 @@ jobs:
       - name: Rename the release assets
         working-directory: .
         run: |
-          $version = '${{ steps.generate_version_number.outputs.version }}'
+          $version = 'v${{ steps.generate_version_number.outputs.version }}'
           $releaseDir = Join-Path $(Get-Location) "artefacts/release/$version"
           Write-Host "Release directory: $releaseDir"
 
@@ -158,33 +189,47 @@ jobs:
           }
         shell: pwsh
 
+      - name: Create Git tag
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git tag v${{ steps.generate_version_number.outputs.version }}
+          git push origin v${{ steps.generate_version_number.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Generate release notes
         id: generate_release_notes
         uses: mikepenz/release-changelog-builder-action@v4
         with:
           configuration: ".github/changelog_configuration.json"
           token: ${{ secrets.GITHUB_TOKEN }}
-          fetchReviewers: true
-          fetchReleaseInformation: true
+          fromTag: "${{ steps.get_latest_tag.outputs.from_tag }}"
+          toTag: "v${{ steps.generate_version_number.outputs.version }}"
+          fetchViaCommits: "true"
+          ignorePreReleases: "false"
+          fetchReleaseInformation: "true"
+          failOnError: "true"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub release
         id: create_release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: "v${{ steps.generate_version_number.outputs.version }}"
-          release_name: "v${{ steps.generate_version_number.outputs.version }}"
+          name: "v${{ steps.generate_version_number.outputs.version }}"
           draft: false
           prerelease: true
           body: ${{ steps.generate_release_notes.outputs.changelog }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload the release assets
         uses: AButler/upload-release-assets@v3.0
         with:
-          files: "artefacts/release/${{ steps.generate_version_number.outputs.version }}/*.zip"
+          files: "artefacts/release/v${{ steps.generate_version_number.outputs.version }}/*.zip"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           release-tag: "v${{ steps.generate_version_number.outputs.version }}"
 
@@ -192,11 +237,12 @@ jobs:
     runs-on: ubuntu-latest
     name: Create new docker builds with latest prerelease and upload to DockerHub
     needs: create-new-prerelease
+    if: github.repository == 'eclipse-aaspe/server'
     steps:
       - uses: actions/checkout@v4
 
       - name: Build and publish AasxServerBlazor
-        uses: docker/build-push-action@v1
+        uses: docker/build-push-action@v2
         with:
           username: adminshellio
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
@@ -205,7 +251,7 @@ jobs:
           dockerfile: src/docker/Dockerfile-AasxServerBlazor
 
       - name: Build and publish AasxServerBlazor-arm32
-        uses: docker/build-push-action@v1
+        uses: docker/build-push-action@v2
         with:
           username: adminshellio
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
@@ -214,7 +260,7 @@ jobs:
           dockerfile: src/docker/Dockerfile-AasxServerBlazor-arm32
 
       - name: Build and publish AasxServerBlazor-arm64
-        uses: docker/build-push-action@v1
+        uses: docker/build-push-action@v2
         with:
           username: adminshellio
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
@@ -223,7 +269,7 @@ jobs:
           dockerfile: src/docker/Dockerfile-AasxServerBlazor-arm64
 
       - name: Build and publish AasxServerCore
-        uses: docker/build-push-action@v1
+        uses: docker/build-push-action@v2
         with:
           username: adminshellio
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
@@ -232,7 +278,7 @@ jobs:
           dockerfile: src/docker/Dockerfile-AasxServerAspNetCore
 
       - name: Build and publish AasxServerCore-arm32
-        uses: docker/build-push-action@v1
+        uses: docker/build-push-action@v2
         with:
           username: adminshellio
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
@@ -241,7 +287,7 @@ jobs:
           dockerfile: src/docker/Dockerfile-AasxServerAspNetCore-arm32
 
       - name: Build and publish AasxServerCore-arm64
-        uses: docker/build-push-action@v1
+        uses: docker/build-push-action@v2
         with:
           username: adminshellio
           password: ${{ secrets.DOCKERHUB_PASSWORD }}

@@ -71,7 +71,7 @@
     "order": "ASC",
     "on_property": "mergedAt"
   },
-  "template": "# 📦 Changelog\n\n#{{CHANGELOG}}\n\n#{{UNCATEGORIZED}}\n\nFull Changelog:[🔗 Release Diff](#{{RELEASE_DIFF}})\n\n# 👥 New Contributors\n\nMust be added manually.",
+  "template": "# 📦 Changelog\n\n#{{CHANGELOG}}\n\n#{{UNCATEGORIZED}}\n\n# Full Changelog\n[🔗 Release Diff](#{{RELEASE_DIFF}})\n\n# 👥 New Contributors\n\nMust be added manually.",
   "pr_template": "- #{{TITLE}} by #{{AUTHOR}} in #{{URL}}",
   "empty_template": "No changes detected. See the [Changelog](CHANGELOG.md) for more information.",
   "label_extractor": [
@@ -95,7 +95,7 @@
   ],
   "trim_values": false,
   "max_tags_to_fetch": 200,
-  "max_pull_requests": 200,
+  "max_pull_requests": 300,
   "max_back_track_time_days": 365,
   "exclude_merge_branches": [
     "Owner/qa"
@@ -103,7 +103,7 @@
   "tag_resolver": {
     "method": "semver",
     "filter": {
-      "pattern": "api-(.+)",
+      "pattern": "^v\\d+\\.\\d+\\.\\d+\\.\\d+-aasV3-alpha-(latest|stable|develop)$",
       "flags": "gu"
     }
   },
