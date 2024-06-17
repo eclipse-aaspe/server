@@ -57,7 +57,7 @@ jobs:
           }
 
           Write-Host "Checking changes since tag: $latestTag"
-          $changes = git log --oneline {$latestTag}..HEAD -v
+          $changes = git log --oneline "$latestTag"..HEAD -v
           Write-Host "Found changes: $changes"
           if (-not [string]::IsNullOrEmpty($changes)) 
           {
