@@ -38,7 +38,6 @@ using System.Diagnostics;
 
 namespace Org.Webpki.Es6NumberSerialization
 {
-
     // Helper functions for doubles.
     class NumberDoubleHelper
     {
@@ -67,6 +66,7 @@ namespace Org.Webpki.Es6NumberSerialization
                 f <<= 1;
                 e--;
             }
+
             // Do the final shifts in one go. Don't forget the hidden bit (the '-1').
             f <<= NumberDiyFp.kSignificandSize - kSignificandSize - 1;
             e -= NumberDiyFp.kSignificandSize - kSignificandSize - 1;
@@ -77,7 +77,7 @@ namespace Org.Webpki.Es6NumberSerialization
         {
             if (IsDenormal(d64)) return kDenormalExponent;
 
-            int biased_e = (int)(((d64 & kExponentMask) >> kSignificandSize) & 0xffffffffL);
+            int biased_e = (int) (((d64 & kExponentMask) >> kSignificandSize) & 0xffffffffL);
             return biased_e - kExponentBias;
         }
 
@@ -110,14 +110,14 @@ namespace Org.Webpki.Es6NumberSerialization
         public static bool IsNan(long d64)
         {
             return ((d64 & kExponentMask) == kExponentMask) &&
-                    ((d64 & kSignificandMask) != 0L);
+                   ((d64 & kSignificandMask) != 0L);
         }
 
 
         public static bool IsInfinite(long d64)
         {
             return ((d64 & kExponentMask) == kExponentMask) &&
-                    ((d64 & kSignificandMask) == 0L);
+                   ((d64 & kSignificandMask) == 0L);
         }
 
 
@@ -153,11 +153,12 @@ namespace Org.Webpki.Es6NumberSerialization
                 m_minus.SetF((v.F() << 1) - 1);
                 m_minus.SetE(v.E() - 1);
             }
+
             m_minus.SetF(m_minus.F() << (m_minus.E() - m_plus.E()));
             m_minus.SetE(m_plus.E());
         }
 
-        private const int kSignificandSize = 52;  // Excludes the hidden bit.
+        private const int kSignificandSize = 52; // Excludes the hidden bit.
         private const int kExponentBias = 0x3FF + kSignificandSize;
         private const int kDenormalExponent = -kExponentBias + 1;
     }

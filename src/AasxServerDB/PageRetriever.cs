@@ -1,4 +1,4 @@
-﻿using AasxServerDB.Entities;
+using AasxServerDB.Entities;
 using Microsoft.IdentityModel.Tokens;
 
 namespace AasxServerDB
@@ -10,8 +10,7 @@ namespace AasxServerDB
             return new AasContext().AASXSets
                 .OrderBy(a => a.Id)
                 .Where(a => (aasxid == 0 || a.Id == aasxid) &&
-                    (searchLower.IsNullOrEmpty() || 
-                    a.AASX.ToLower().Contains(searchLower)))
+                (searchLower.IsNullOrEmpty() || a.AASX.ToLower().Contains(searchLower)))
                 .Take(size)
                 .ToList();
         }

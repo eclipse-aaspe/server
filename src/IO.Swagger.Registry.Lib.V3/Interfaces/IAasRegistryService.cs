@@ -1,4 +1,4 @@
-﻿using IO.Swagger.Registry.Lib.V3.Models;
+using IO.Swagger.Registry.Lib.V3.Models;
 using System.Collections.Generic;
 using AasxServerDB.Entities;
 

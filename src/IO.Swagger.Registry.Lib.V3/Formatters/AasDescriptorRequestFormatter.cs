@@ -53,6 +53,7 @@ namespace IO.Swagger.Registry.Lib.V3.Formatters
                 {
                     aasDescList.Add(DescriptorDeserializer.AssetAdministrationShellDescriptorFrom(item));
                 }
+
                 result = aasDescList;
             }
             else

@@ -16,8 +16,15 @@ function LogAndExecute($Expression)
 
 function Main
 {
-    LogAndExecute "$(Join-Path $PSScriptRoot "CheckFormat.ps1")"
-    LogAndExecute "$(Join-Path $PSScriptRoot "CheckHelpInReadme.ps1")"
+    LogAndExecute "$( Join-Path $PSScriptRoot "CheckFormat.ps1" )"
+    LogAndExecute "$( Join-Path $PSScriptRoot "CheckHelpInReadme.ps1" )"
 }
 
-$previousLocation = Get-Location; try { Main } finally { Set-Location $previousLocation }
+$previousLocation = Get-Location; try
+{
+    Main
+}
+finally
+{
+    Set-Location $previousLocation
+}

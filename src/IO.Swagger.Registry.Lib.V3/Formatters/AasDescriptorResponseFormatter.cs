@@ -24,8 +24,8 @@ namespace IO.Swagger.Registry.Lib.V3.Formatters
         {
             var oType = o.GetType();
             return oType.IsGenericType &&
-                (oType.GetGenericTypeDefinition() == typeof(List<>) &&
-                (typeof(AssetAdministrationShellDescriptor).IsAssignableFrom(oType.GetGenericArguments()[0])));
+                   (oType.GetGenericTypeDefinition() == typeof(List<>) &&
+                    (typeof(AssetAdministrationShellDescriptor).IsAssignableFrom(oType.GetGenericArguments()[ 0 ])));
         }
 
         public override bool CanWriteResult(OutputFormatterCanWriteContext context)
@@ -71,27 +71,28 @@ namespace IO.Swagger.Registry.Lib.V3.Formatters
                         jsonArray.Add(json);
                     }
                 }
+
                 JsonObject jsonNode = new JsonObject();
-                jsonNode["result"] = jsonArray;
+                jsonNode[ "result" ] = jsonArray;
                 var pagingMetadata = new JsonObject();
                 if (cursor != null)
                 {
-                    pagingMetadata["cursor"] = cursor;
+                    pagingMetadata[ "cursor" ] = cursor;
                 }
-                jsonNode["paging_metadata"] = pagingMetadata;
+
+                jsonNode[ "paging_metadata" ] = pagingMetadata;
                 var writer = new Utf8JsonWriter(response.Body);
                 jsonNode.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();
             }
             else if (IsGenericListOfAasDesc(context.Object))
             {
-
                 var jsonArray = new JsonArray();
-                IList genericList = (IList)context.Object;
+                IList genericList = (IList) context.Object;
                 List<AssetAdministrationShellDescriptor> contextObjectType = new List<AssetAdministrationShellDescriptor>();
                 foreach (var generic in genericList)
                 {
-                    contextObjectType.Add((AssetAdministrationShellDescriptor)generic);
+                    contextObjectType.Add((AssetAdministrationShellDescriptor) generic);
                 }
 
                 foreach (var item in contextObjectType)
@@ -99,6 +100,7 @@ namespace IO.Swagger.Registry.Lib.V3.Formatters
                     var json = DescriptorSerializer.ToJsonObject(item);
                     jsonArray.Add(json);
                 }
+
                 var writer = new Utf8JsonWriter(response.Body);
                 jsonArray.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();

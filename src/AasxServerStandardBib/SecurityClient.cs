@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using AasxServerDB;
@@ -14,27 +13,15 @@ using System.Text.Json.Nodes;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using AasCore.Aas3_0;
 using AasxRestServerLibrary;
-using AasxServer;
 using AdminShellNS;
 using Extensions;
 using IdentityModel;
 using IdentityModel.Client;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Security.Cryptography;
-using MimeKit.Cryptography;
-using Org.BouncyCastle.Crypto;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Linq;
-using Org.BouncyCastle.Asn1.Ocsp;
-using System.Threading.Channels;
-using System.CommandLine.Parsing;
-using Microsoft.EntityFrameworkCore;
-using static QRCoder.PayloadGenerator;
-using Microsoft.AspNetCore.Components;
 
 namespace AasxServer
 {

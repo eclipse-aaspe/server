@@ -1,1 +1,1 @@
-dotnet AasxServerBlazor.dll --no-security --data-path ./aasxs --host 0.0.0.0 $OPTIONSAASXSERVER
+dotnet AasxServerBlazor.dll --no-security --data-path ./aasxs --external-blazor http://localhost:5001

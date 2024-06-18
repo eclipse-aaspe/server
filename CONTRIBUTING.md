@@ -1,145 +1,117 @@
-# Contributing
+# Contributing Guidelines
 
-This document describes how you can build the solution from scratch, submit 
-your code contributions and make releases.
+Thank you for considering contributing to our project! This document provides an overview of our development process and best practices for contributing code and making releases.
 
-In a nutshell, our development workflow is:
+## Development Workflow
 
-* Create a feature branch
-* Make your changes locally
-* Run checks locally
-* Commit & push your changes
-* Wait for the remote checks to pass
-* Squash & merge
+Our development workflow is structured as follows:
+
+1. **Create a Feature Branch:** Start by creating a new branch for your feature or fix.
+2. **Make Local Changes:** Develop and test your changes locally.
+3. **Run Local Checks:** Ensure your code passes all checks locally before pushing.
+4. **Commit & Push:** Commit changes to your branch and push them to the remote repository.
+5. **Remote Checks:** Wait for automated checks on the remote repository to pass.
+6. **Create Pull Request:** Create a new PR and fill out the template to give good information on your changes.
+7. **Await Review:** Request a review from one of the project maintainers.
+8. **Merge:** Once approved, squash and merge your changes into the main branch.
 
 ## Building Locally
 
-We provide a powershell script to build the solution:
+To build the project locally, execute the following PowerShell script:
 
+```powershell
+.\src\BuildForRelease.ps1
 ```
-.\src\BuildForRelease.s1
-```
 
-This script will install all the solution dependencies before the build. Please
-inspect the script if you would like to build only parts of the solution.
+This script installs dependencies and builds the solution. Modify the script for specific build targets if needed.
 
-## Locally Packaging for Release
+## Packaging for Release Locally
 
-Once the solution has been built, you can build your own local release bundles
-(compressed as zip archives) with:
+After building, create local release bundles using:
 
-```
+```powershell
 .\src\PackageForRelease.ps1
 ```
 
-Note that these local release bundles are only meant for testing.
-We set up our continuous integration on GitHub to remotely build, package and
-publish the releases in automatic manner.
+These bundles are for testing purposes. Official releases are automated through our CI system.
+
+For accessing release bundles created by the CI pipeline, check [here](https://github.com/eclipse-aaspe/server/actions/workflows/check-release.yml).
 
 ## Local Pre-commit Checks
 
-We run a couple of checks to ensure the quality of the code (*e.g.*, checking
-that the code format is consistent).
+Ensure code quality locally with these checks:
 
-GitHub will run these checks automatically on every push. However, this can take
-some time, so you usually run these checks locally first to speed up the 
-development.
+### Code Formatting
 
-Please format your code before running the checks with the following script:
+Align your code using our .editorconfig. Learn more about configuring your IDE:
+* [Visual Studio](https://learn.microsoft.com/en-us/visualstudio/ide/create-portable-custom-editor-options?view=vs-2022).
+* [VSCode](https://marketplace.visualstudio.com/items?itemName=EditorConfig.EditorConfig)
+* [Rider](https://www.jetbrains.com/help/rider/Using_EditorConfig.html)
 
-```
+Format code using:
+>**!WARNING:** this will format the whole solution and may include changes to files you did not touch yet.
+```powershell
 .\src\FormatCode.ps1
 ```
 
-Run the checks:
+### Running Checks
 
-```
+Run additional checks using:
+
+```powershell
 .\src\Check.ps1
 ```
 
 ## Submitting Your Code
 
-### Branching
+### Branching Strategy
 
-**If you are part of admin-shell-io GitHub organization:**
-create a branch prefixed with your Github username using dashes to 
-describe the change (*e.g.*, `mristin/Add-a-shiny-new-feature-B`).
+#### For Eclipse AASX Package Explorer and Server Committers
 
-**Otherwise:** Since only members of the organization can create branches,
-you need to fork the repository and create your feature branch on the fork (see 
-[GitHub documentation about forking][github-fork]).
+1. **Integration Branch:** Create a new integration branch in the main repository, e.g., "integration/freezor".
+   - Merge unique PRs here after consultation and regular updates from the main branch.
+2. **Feature Branch:** Use your GitHub username as a prefix, followed by a descriptive branch name (e.g., `mristin/Add-a-shiny-new-feature-B`).
+   - Keep these branches in the repository or your fork.
 
-[github-fork]: https://docs.github.com/en/github/getting-started-with-github/fork-a-repo
+#### For Community Contributors
+
+1. **Forking Repository:** If not part of the organization, fork the repository and create feature branches there.
+   - Refer to GitHub's [fork documentation](https://docs.github.com/en/github/getting-started-with-github/fork-a-repo).
 
 ### Commit and Pull Request
 
-Commit your local changes and push them to the remote. Make sure the commit 
-message complies to https://chris.beams.io/posts/git-commit/ guidelines:
+Commit changes adhering to [Chris Beams' Git Commit Guidelines](https://chris.beams.io/posts/git-commit/).
+Use special hints in messages to disable specific workflows:
 
-* Separate subject from body with a blank line
-* Limit the subject line to 50 characters
-* Capitalize the subject line
-* Do not end the subject line with a period
-* Use the imperative mood in the subject line
-* Wrap the body at 72 characters
-* Use the body to explain what and why (instead of how)
+- `The workflow build-and-publish-docker-images was intentionally skipped.`
+- `The workflow check-release was intentionally skipped.`
+- `The workflow check-style was intentionally skipped.`
 
-You can use special hints in the commit messages to disable checks or building
-of a docker image:
+#### Example Commit Message
 
-* `The workflow build-and-publish-docker-images was intentionally skipped.` 
-  (no docker images will be created)
-  
-* `The workflow check-release was intentionally skipped.`
-  (no release check, in particular no build)
-  
-* `The workflow check-style was intentionally skipped.`
-  (no checks for code style)
-  
-Here is an example commit message:
-  
 ```
 Add a shiny new feature B
 
-Previously, the solution could not perform A and it was confusing for
-the users how to use `SomeModule`. This change introduces a
-new feature B which solves A as well as the problem with C.
+This change adds feature B, improving performance and clarity for users, especially in use cases E and F.
 
-This is important because D now runs much faster and has a clearer 
-structure. Moreover, feature B is particularly practical for use cases 
-such as E and F.
- 
-Finally, we update the documentation to reflect how to manage G
-in these concrete use cases E and F.
+- Update documentation for managing G in use cases E and F.
 
 The workflow build-and-publish-docker-images was intentionally skipped.
 ```
 
-Once all the checks pass, push your commit and create a pull request (see 
-[this GitHub documentation page about pull requests][pull-request]).
-
-[pull-request]: https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request
-
 ### Merging
 
-We usually squash & merge the pull requests into master.
+We squash and merge pull requests into the main branch.
 
 ### Releasing
 
-We publish a new version using [GitHub Releases][release] in the web 
-browser. The workflow `./github/workflows/build-and-package-release.yml` will 
-automatically build and package the release bundles and attach them to the 
-GitHub release.
+We use [GitHub Releases](https://docs.github.com/en/github/administering-a-repository/managing-releases-in-a-repository) to publish new versions.
 
-[release]: https://docs.github.com/en/github/administering-a-repository/managing-releases-in-a-repository
+### Contributors
+
+For a complete list, see our [CONTRIBUTORS](CONTRIBUTORS.md) page.
 
 ### Appendix: GitHub Workflows
 
-We use [GitHub Workflows][workflows] to automatically perform tasks such as 
-pre-commit checks, building, packaging and publishing the release bundles 
-as well as building and publishing docker images for demonstration.
+We automate tasks using [GitHub Workflows](https://docs.github.com/en/actions/configuring-and-managing-workflows). View them in `./.github/workflows`.
 
-Please see the directory `./.github/workflows` for the source code of 
-the work flows.
-
-[workflows]: https://docs.github.com/en/actions/configuring-and-managing-workflows

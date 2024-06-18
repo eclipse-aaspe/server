@@ -1,4 +1,4 @@
-﻿using AasxServer;
+using AasxServer;
 using AasxServerStandardBib.Logging;
 using IO.Swagger.Registry.Lib.V3.Interfaces;
 using IO.Swagger.Registry.Lib.V3.Models;

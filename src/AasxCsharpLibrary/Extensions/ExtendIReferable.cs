@@ -11,8 +11,8 @@ namespace Extensions
         #region AasxPackageExplorer
 
         public static void RecurseOnReferables(this IReferable referable,
-                object state, Func<object, List<IReferable>, IReferable, bool> lambda,
-                bool includeThis = false)
+            object state, Func<object, List<IReferable>, IReferable, bool> lambda,
+            bool includeThis = false)
         {
             if (referable is Submodel submodel)
             {
@@ -101,12 +101,14 @@ namespace Extensions
                     return curri;
                 curr = curr.Parent as IReferable;
             }
+
             return null;
         }
 
         #endregion
 
         #region ListOfReferables
+
         public static Reference GetReference(this List<IReferable> referables)
         {
             return new Reference(ReferenceTypes.ExternalReference, referables.ToKeyList());
@@ -119,6 +121,7 @@ namespace Extensions
                 res.Add(new Key(rf.GetSelfDescription()?.KeyType ?? KeyTypes.GlobalReference, rf.IdShort));
             return res;
         }
+
         #endregion
 
         public static string ToIdShortString(this IReferable rf)
@@ -141,6 +144,7 @@ namespace Extensions
             else
                 return null;
         }
+
         public static void Validate(this IReferable referable, AasValidationRecordList results)
         {
             referable.BaseValidation(results);
@@ -170,19 +174,13 @@ namespace Extensions
                 results.Add(new AasValidationRecord(
                     AasValidationSeverity.SpecViolation, referable,
                     "Referable: missing idShort",
-                    () =>
-                    {
-                        referable.IdShort = "TO_FIX";
-                    }));
+                    () => { referable.IdShort = "TO_FIX"; }));
 
             if (referable.Description != null && (referable.Description.Count < 1))
                 results.Add(new AasValidationRecord(
                     AasValidationSeverity.SchemaViolation, referable,
                     "Referable: existing description with missing langString",
-                    () =>
-                    {
-                        referable.Description = null;
-                    }));
+                    () => { referable.Description = null; }));
         }
 
         /// <summary>
@@ -278,7 +276,6 @@ namespace Extensions
             else if (referable is BasicEventElement)
             {
                 return new AasElementSelfDescription("BasicEventElement", "Evt",
-
                     KeyTypes.BasicEventElement, AasSubmodelElements.BasicEventElement);
             }
             else if (referable is IDataElement)
@@ -297,6 +294,7 @@ namespace Extensions
                     KeyTypes.Referable, null);
             }
         }
+
         public static void CollectReferencesByParent(this IReferable referable, List<Key> refs)
         {
             // access
@@ -312,20 +310,21 @@ namespace Extensions
                     //var k = Key.CreateNew(
                     //    idf.GetElementName(), true, idf.identification?.idType, idf.identification?.id);
 
-                    var key = new Key((KeyTypes)Stringification.KeyTypesFromString(idf.GetType().Name), idf.Id);
+                    var key = new Key((KeyTypes) Stringification.KeyTypesFromString(idf.GetType().Name), idf.Id);
                     refs.Insert(0, key);
                 }
             }
             else
             {
                 //var k = Key.CreateNew(this.GetElementName(), true, "IdShort", referable.IdShort);
-                var key = new Key((KeyTypes)Stringification.KeyTypesFromString(referable.GetType().Name), referable.IdShort);
+                var key = new Key((KeyTypes) Stringification.KeyTypesFromString(referable.GetType().Name), referable.IdShort);
                 refs.Insert(0, key);
                 // recurse upwards!
                 if (referable.Parent is IReferable prf)
                     prf.CollectReferencesByParent(refs);
             }
         }
+
         public static void SetTimeStamp(this IReferable referable, DateTime timeStamp)
         {
             IReferable newReferable = referable;
@@ -335,12 +334,11 @@ namespace Extensions
                 newReferable.TimeStampTree = timeStamp;
                 if (newReferable != newReferable.Parent)
                 {
-                    newReferable = (IReferable)newReferable.Parent;
+                    newReferable = (IReferable) newReferable.Parent;
                 }
                 else
                     newReferable = null;
-            }
-            while (newReferable != null);
+            } while (newReferable != null);
         }
 
         public static bool EnumeratesChildren(this ISubmodelElement elem)
@@ -448,7 +446,7 @@ namespace Extensions
         {
             IReferable parent = referable;
             while (parent is not Submodel && parent != null)
-                parent = (IReferable)parent.Parent;
+                parent = (IReferable) parent.Parent;
             return parent as Submodel;
         }
 
@@ -475,7 +473,7 @@ namespace Extensions
         }
 
         public static List<IReferable> ListOfIReferableFrom(
-                System.Text.Json.Nodes.JsonNode node)
+            System.Text.Json.Nodes.JsonNode node)
         {
             var res = new List<IReferable>();
             if (node == null)
@@ -486,6 +484,7 @@ namespace Extensions
                 var ir = Jsonization.Deserialize.IReferableFrom(it);
                 res.Add(ir);
             }
+
             return res;
         }
 
@@ -572,20 +571,21 @@ namespace Extensions
                 return;
 
             // Qualifiers to migrate
-            var toMigrate = new[] {
+            var toMigrate = new[]
+            {
                 "Animate.Args", "Plotting.Args", "TimeSeries.Args", "BOM.Args", "ImageMap.Args"
             };
 
             List<IQualifier> toMove = new List<IQualifier>();
             foreach (var q in iq.Qualifiers)
-                foreach (var tm in toMigrate)
-                    if (q?.Type?.Equals(tm, StringComparison.InvariantCultureIgnoreCase) == true)
-                        toMove.Add(q);
+            foreach (var tm in toMigrate)
+                if (q?.Type?.Equals(tm, StringComparison.InvariantCultureIgnoreCase) == true)
+                    toMove.Add(q);
 
             // now move these 
             for (int i = 0; i < toMove.Count; i++)
             {
-                var q = toMove[i];
+                var q = toMove[ i ];
                 var ext = new Extension(
                     name: q.Type, semanticId: q.SemanticId,
                     valueType: q.ValueType, value: q.Value);
@@ -596,35 +596,35 @@ namespace Extensions
 
         public static ISubmodelElement FindSubmodelElementByIdShort(this IReferable referable, string idShort)
         {
-            if(string.IsNullOrEmpty(idShort))
+            if (string.IsNullOrEmpty(idShort))
             {
                 throw new ArgumentNullException(nameof(idShort));
             }
 
-            if(referable == null)
+            if (referable == null)
             {
                 throw new ArgumentNullException(nameof(referable));
             }
 
-            if(referable is Submodel submodel)
+            if (referable is Submodel submodel)
             {
                 return submodel.FindFirstIdShortAs<ISubmodelElement>(idShort);
             }
-            else if(referable is ISubmodelElementCollection smColl)
+            else if (referable is ISubmodelElementCollection smColl)
             {
                 return smColl.FindFirstIdShortAs<ISubmodelElement>(idShort);
             }
-            else if(referable is ISubmodelElementList smList)
+            else if (referable is ISubmodelElementList smList)
             {
                 return smList.FindFirstIdShortAs<ISubmodelElement>(idShort);
             }
-            else if(referable is IEntity entity)
+            else if (referable is IEntity entity)
             {
                 return entity.FindFirstIdShortAs<ISubmodelElement>(idShort);
             }
-            else if(referable is IAnnotatedRelationshipElement annotatedRelationshipElement)
+            else if (referable is IAnnotatedRelationshipElement annotatedRelationshipElement)
             {
-                return annotatedRelationshipElement.FindFirstIdShortAs<ISubmodelElement>(idShort) ;
+                return annotatedRelationshipElement.FindFirstIdShortAs<ISubmodelElement>(idShort);
             }
             else
             {
