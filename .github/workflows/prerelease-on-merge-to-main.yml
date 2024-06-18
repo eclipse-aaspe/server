@@ -83,7 +83,8 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    if: needs.check-for-changes.outputs.branch_changed == 'true'
+    # if: needs.check-for-changes.outputs.branch_changed == 'true'
+    if: false
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -241,7 +242,7 @@ jobs:
   build-and-publish-docker-release-images:
     runs-on: ubuntu-latest
     name: Create new docker builds with latest prerelease and upload to DockerHub
-    needs: create-new-prerelease
+    # needs: create-new-prerelease
     if: github.repository == 'eclipse-aaspe/server'
     steps:
       - uses: actions/checkout@v4
