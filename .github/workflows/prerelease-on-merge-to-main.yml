@@ -13,8 +13,7 @@ jobs:
   check-for-changes:
     runs-on: windows-latest
     name: Check for changes between HEAD and last created tag
-    #if: github.event_name != 'schedule' || github.repository == 'eclipse-aaspe/server'
-    if: false
+    if: github.event_name != 'schedule' || github.repository == 'eclipse-aaspe/server'
     outputs:
       branch_changed: ${{ steps.check_changes.outputs.changes_detected }}
     steps:
@@ -83,8 +82,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    # if: needs.check-for-changes.outputs.branch_changed == 'true'
-    if: false
+    if: needs.check-for-changes.outputs.branch_changed == 'true'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -242,7 +240,7 @@ jobs:
   build-and-publish-docker-release-images:
     runs-on: ubuntu-latest
     name: Create new docker builds with latest prerelease and upload to DockerHub
-    # needs: create-new-prerelease
+    needs: create-new-prerelease
     if: github.repository == 'eclipse-aaspe/server'
     steps:
       - name: Checkout
@@ -254,17 +252,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and publish AasxServerBlazor
-        uses: docker/build-push-action@v6
-        with:
-          username: adminshellio
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          push: true
-          platforms: linux/amd64
-          context: .
-          load: true
-          tags: adminshellio/aasx-server-blazor-for-demo:latest
-          file: src/docker/Dockerfile-AasxServerBlazor
 
       - name: Build and publish AasxServerBlazor-arm32
         uses: docker/build-push-action@v6
@@ -290,6 +277,18 @@ jobs:
           repository: adminshellio/aasx-server-blazor-for-demo-arm64
           dockerfile: src/docker/Dockerfile-AasxServerBlazor-arm64
 
+      - name: Build and publish AasxServerBlazor
+        uses: docker/build-push-action@v6
+        with:
+          username: adminshellio
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          push: true
+          platforms: linux/amd64
+          context: .
+          load: true
+          tags: adminshellio/aasx-server-blazor-for-demo:latest
+          file: src/docker/Dockerfile-AasxServerBlazor
+          
       - name: Build and publish AasxServerCore
         uses: docker/build-push-action@v6
         with:
