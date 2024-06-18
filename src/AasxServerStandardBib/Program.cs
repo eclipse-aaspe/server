@@ -614,7 +614,15 @@ namespace AasxServer
             {
                 externalBlazor = "http://" + blazorHostPort;
             }
-
+            
+            externalBlazor = externalBlazor.Replace("\r", "");
+            externalBlazor = externalBlazor.Replace("\n", "");
+            
+            if (string.IsNullOrEmpty(externalRepository))
+            {
+                externalRepository = externalBlazor;
+            }
+            
             Query.ExternalBlazor = externalBlazor;
 
             /*
