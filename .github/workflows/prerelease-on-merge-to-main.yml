@@ -250,12 +250,11 @@ jobs:
       - name: Build and publish AasxServerBlazor
         uses: docker/build-push-action@v6
         with:
+          username: adminshellio
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
           push: true
           tags: adminshellio/aasx-server-blazor-for-demo:latest
           file: src/docker/Dockerfile-AasxServerBlazor
-          secrets:
-            DOCKERHUB_USERNAME: adminshellio
-            DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       - name: Build and publish AasxServerBlazor-arm32
         uses: docker/build-push-action@v1
