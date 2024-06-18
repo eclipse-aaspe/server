@@ -445,8 +445,8 @@ namespace AasxServer
                 if (a.Connect.Length == 0)
                 {
                     Program.connectServer = "http://admin-shell-io.com:52000";
-                    Byte[]                   barray = new byte[10];
-                    RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
+                    Byte[]                barray = new byte[10];
+                    RandomNumberGenerator rngCsp = RandomNumberGenerator.Create();
                     rngCsp.GetBytes(barray);
                     Program.connectNodeName   = "AasxServer_" + Convert.ToBase64String(barray);
                     Program.connectUpdateRate = 2000;
@@ -658,9 +658,9 @@ namespace AasxServer
                     }
                 }
             }
-            catch (AggregateException aggregateException)
+            catch (CryptographicException cryptographicException)
             {
-                Console.WriteLine($"Cannot initialise cryptography: {aggregateException.Message}");
+                Console.WriteLine($"Cannot initialise cryptography: {cryptographicException.Message}");
             }
 
             if (!Directory.Exists("./temp"))
@@ -707,7 +707,7 @@ namespace AasxServer
             // Migrate always
             if (withDb)
             {
-                if (AasContext.isPostgres)
+                if (AasContext.IsPostgres)
                 {
                     Console.WriteLine("Use POSTGRES");
                     using (PostgreAasContext db = new PostgreAasContext())
@@ -746,11 +746,7 @@ namespace AasxServer
                 fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx");
                 Array.Sort(fileNames);
 
-                List<Task> saveTasks = new List<Task>();
-                int        maxTasks  = 1;
-                int        taskIndex = 0;
-
-                int fi = 0;
+                var fi = 0;
                 while (fi < fileNames.Length)
                 {
                     // try
@@ -1111,7 +1107,7 @@ namespace AasxServer
             {
                 if (con[ "DatabaseConnection:ConnectionString" ] != null)
                 {
-                    AasContext.isPostgres = con[ "DatabaseConnection:ConnectionString" ].ToLower().Contains("host");
+                    AasContext.IsPostgres = con[ "DatabaseConnection:ConnectionString" ].ToLower().Contains("host");
                 }
             }
 
@@ -1197,23 +1193,12 @@ namespace AasxServer
                 return;
             }
 
-            rootCommand.Handler = System.CommandLine.Invocation.CommandHandler.Create(
-                                                                                      async (CommandLineArguments a) =>
+            rootCommand.Handler = System.CommandLine.Invocation.CommandHandler.Create((CommandLineArguments a) =>
                                                                                       {
-                                                                                          /*
-                                                                                          if (!(a.Rest || a.Opc || a.Mqtt))
-                                                                                          {
-                                                                                              Console.Error.WriteLine($"Please specify --rest and/or --opc and/or --mqtt{nl}");
-                                                                                              new HelpBuilder(new SystemConsole()).Write(rootCommand);
-                                                                                              return 1;
-                                                                                          }
-                                                                                          */
-
-                                                                                          //return Run(a);
                                                                                           var task = Run(a);
                                                                                           task.Wait();
                                                                                           var op = task.Result;
-                                                                                          return op;
+                                                                                          return Task.FromResult(op);
                                                                                       });
 
             int exitCode = rootCommand.InvokeAsync(args).Result;
@@ -1955,26 +1940,18 @@ namespace AasxServer
             }
         }
 
-        private static System.Timers.Timer OPCClientTimer;
         static bool timerSet = false;
 
         private static void SetOPCClientTimer(double value)
         {
-            if (!timerSet)
+            if (timerSet)
             {
-                /*
-                // Create a timer with an specified interval.
-                OPCClientTimer = new System.Timers.Timer(value);
-                // Hook up the Elapsed event for the timer.
-                OPCClientTimer.Elapsed += OnOPCClientNextTimedEvent;
-                OPCClientTimer.AutoReset = true;
-                OPCClientTimer.Enabled = true;
-                */
-
-                timerSet = true;
-
-                AasxTimeSeries.TimeSeries.SetOPCClientThread(value);
+                return;
             }
+
+            timerSet = true;
+
+            AasxTimeSeries.TimeSeries.SetOPCClientThread(value);
         }
 
         public static event EventHandler NewDataAvailable;
@@ -2054,12 +2031,12 @@ namespace AasxServer
             restTimer.Enabled   =  true;
         }
 
-        static bool RESTalreadyRunning = false;
+        static bool _resTalreadyRunning = false;
         static long countGetPut = 0;
 
         private static void OnRestTimedEvent(Object source, ElapsedEventArgs e)
         {
-            RESTalreadyRunning = true;
+            _resTalreadyRunning = true;
 
             string GETSUBMODEL = "";
             string GETURL      = "";
@@ -2195,7 +2172,7 @@ namespace AasxServer
                 }
             }
 
-            RESTalreadyRunning = false;
+            _resTalreadyRunning = false;
 
             // start MQTT Client as a worker (will start in the background)
             var worker = new BackgroundWorker();
@@ -2426,8 +2403,6 @@ namespace AasxServer
 
             return true;
         }
-
-        static int countRunScript = 0;
 
         static void RunScript(bool init)
         {

@@ -16813,33 +16813,25 @@ namespace AasCore.Aas3_0
                     }
                 }
 
-                //if (theDataSpecification == null)
-                //{
-                //    error = new Reporting.Error(
-                //        "The required property DataSpecification has not been given " +
-                //        "in the XML representation of an instance of class EmbeddedDataSpecification");
-                //    return null;
-                //}
+                if (theDataSpecification == null)
+                {
+                    error = new Reporting.Error(
+                        "The required property DataSpecification has not been given " +
+                        "in the XML representation of an instance of class EmbeddedDataSpecification");
+                    return null;
+                }
 
-                //if (theDataSpecificationContent == null)
-                //{
-                //    error = new Reporting.Error(
-                //        "The required property DataSpecificationContent has not been given " +
-                //        "in the XML representation of an instance of class EmbeddedDataSpecification");
-                //    return null;
-                //}
-
-                //return new Aas.EmbeddedDataSpecification(
-                //    theDataSpecification
-                //         ?? throw new System.InvalidOperationException(
-                //            "Unexpected null, had to be handled before"),
-                //    theDataSpecificationContent
-                //         ?? throw new System.InvalidOperationException(
-                //            "Unexpected null, had to be handled before"));
-
+                if (theDataSpecificationContent == null)
+                {
+                    error = new Reporting.Error(
+                        "The required property DataSpecificationContent has not been given " +
+                        "in the XML representation of an instance of class EmbeddedDataSpecification");
+                    return null;
+                }
+                
                 return new EmbeddedDataSpecification(theDataSpecification, theDataSpecificationContent);
-            }  // internal static Aas.EmbeddedDataSpecification? EmbeddedDataSpecificationFromSequence
-
+            }  
+            
             /// <summary>
             /// Deserialize an instance of class EmbeddedDataSpecification from an XML element.
             /// </summary>

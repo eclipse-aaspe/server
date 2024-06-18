@@ -9,7 +9,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 {
     internal class ResponseValueTransformer : ITransformer<IDTO>
     {
-        public IDTO Transform(IClass that)
+        public IDTO? Transform(IClass that)
         {
             if (that == null) return null;
             return that.Transform(this);
@@ -110,9 +110,9 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new FileValue(that.IdShort, that.ContentType, that.Value);
         }
 
-        internal List<KeyDTO> TransformKeyList(List<IKey> keyList)
+        internal List<KeyDTO>? TransformKeyList(List<IKey> keyList)
         {
-            List<KeyDTO> output = null;
+            List<KeyDTO>? output = null;
 
             if (keyList != null)
             {
@@ -207,7 +207,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new OperationValue(that.IdShort, inputVariables, outputVariables, inoutputVariables);
         }
 
-        public IDTO TransformOperationVariable(IOperationVariable that)
+        public IDTO? TransformOperationVariable(IOperationVariable that)
         {
             return Transform(that.Value);
         }

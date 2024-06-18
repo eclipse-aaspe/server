@@ -2,7 +2,7 @@
 
 @using AasCore.Aas3_0
 @using Data
-@inject AASService SubmodelService
+@inject AASService                  SubmodelService
 @inject IRegistryInitializerService AasRegistryService
 @using AasxServer;
 @using Extensions;
@@ -11,7 +11,7 @@
 @using System.Drawing;
 @using System.Globalization;
 @using static AasxServer.AasxTask;
-@inject NavigationManager NavMan
+@inject NavigationManager           NavMan
 @implements IDisposable
 
 @{
@@ -23,21 +23,24 @@
     {
         try
         {
-            total = (float)Convert.ToDouble(AasxTask.root.cradleToGateCombination.Value, CultureInfo.InvariantCulture);
-            total = (float)Math.Round(total, 1);
-
+            total = (float) Convert.ToDouble(AasxTask.root.cradleToGateCombination.Value, CultureInfo.InvariantCulture);
+            total = (float) Math.Round(total, 1);
         }
-        catch { }
+        catch
+        {
+        }
     }
+
     if (Program.showWeight && AasxTask.root != null && AasxTask.root.weightCombination != null)
     {
         try
         {
-            total = (float)Convert.ToDouble(AasxTask.root.weightCombination.Value, CultureInfo.InvariantCulture);
-            total = (float)Math.Round(total, 1);
-
+            total = (float) Convert.ToDouble(AasxTask.root.weightCombination.Value, CultureInfo.InvariantCulture);
+            total = (float) Math.Round(total, 1);
         }
-        catch { }
+        catch
+        {
+        }
     }
 
     float h_total = 0.0f;
@@ -45,17 +48,18 @@
     {
         try
         {
-            h_total = (float)Convert.ToDouble(AasxTask.asbuilt_total, CultureInfo.InvariantCulture);
-            h_total = (float)Math.Round(h_total, 1);
+            h_total = (float) Convert.ToDouble(AasxTask.asbuilt_total, CultureInfo.InvariantCulture);
+            h_total = (float) Math.Round(h_total, 1);
         }
-        catch { }                          
+        catch
+        {
+        }
     }
-                        
 }
 <div class="relative flex min-h-screen flex-col overflow-hidden bg-gray-50 break-all">
-    <img src="https://play.tailwindcss.com/img/beams.jpg" alt="" class="absolute top-1/2 left-1/2 max-w-none -translate-x-1/2 -translate-y-1/2" width="1308" />
+    <img src="https://play.tailwindcss.com/img/beams.jpg" alt="" class="absolute top-1/2 left-1/2 max-w-none -translate-x-1/2 -translate-y-1/2" width="1308"/>
     <div style="background-color: #174a87; margin-left:1px; margin-top:2px;" class="node w-full mb-2 relative px-6 pt-4 pb-2 shadow-xl ring-1 ring-gray-900/5 sm:mx-auto sm:rounded-lg sm:px-8">
-        <div  class="node mb-2 flex flex-row space-x-2">
+        <div class="node mb-2 flex flex-row space-x-2">
             <div class="self-center grow">
                 <div class="font-bold text-slate-700 dark:text-slate-500 text-center">
                     <font>
@@ -75,12 +79,6 @@
                             <span style="color: white; font-size:100%;" class="absolute left-2 top-2">@h_total kg as-built</span>
                         }
 
-                        @{
-                            if (false && !AasxTask.cfpValid)
-                            {
-                                <div style="color: red; margin-bottom: -8px;">incomplete due to insufficient access rights</div>
-                            }
-                        }
                     </font>
                 </div>
             </div>
@@ -91,10 +89,10 @@
     }
 </div>
 
-    @{
-        void nextLevel(AasxTask.cfpNode nextNode, float total, DateTime timeStamp, bool moduleOnly = false)
-        {
-            <div class="node w-full mb-2 relative bg-white px-6 pt-4 pb-2 shadow-xl ring-1 ring-gray-900/5 sm:mx-auto sm:rounded-lg sm:px-8">
+@{
+    void nextLevel(AasxTask.cfpNode nextNode, float total, DateTime timeStamp, bool moduleOnly = false)
+    {
+        <div class="node w-full mb-2 relative bg-white px-6 pt-4 pb-2 shadow-xl ring-1 ring-gray-900/5 sm:mx-auto sm:rounded-lg sm:px-8">
 
             @{
                 AasxTask.cfpNode node = nextNode;
@@ -102,21 +100,21 @@
                 {
                     if (node.iChild == 0)
                     {
-
-                        bool view = false;
-                        bool viewCombination = false;
-                        string value = "";
+                        bool   view            = false;
+                        bool   viewCombination = false;
+                        string value           = "";
                         if (moduleOnly)
                         {
                             if (!Program.showWeight && node.cradleToGateModule != null)
                             {
                                 value = node.cradleToGateModule.Value;
-                                view = true;
+                                view  = true;
                             }
+
                             if (Program.showWeight && node.weightModule != null)
                             {
                                 value = node.weightModule.Value;
-                                view = true;
+                                view  = true;
                             }
                         }
                         else
@@ -128,14 +126,15 @@
                                     value = node.cradleToGateCombination.Value;
                                     //if (node != AasxTask.root)
                                     viewCombination = true;
-                                    view = true;
+                                    view            = true;
                                 }
+
                                 if (Program.showWeight && node.weightCombination != null)
                                 {
                                     value = node.weightCombination.Value;
                                     //if (node != AasxTask.root)
                                     viewCombination = true;
-                                    view = true;
+                                    view            = true;
                                 }
                             }
                             else
@@ -143,21 +142,25 @@
                                 if (!Program.showWeight && node.cradleToGateModule != null)
                                 {
                                     value = node.cradleToGateModule.Value;
-                                    view = true;
+                                    view  = true;
                                 }
+
                                 if (Program.showWeight && node.weightModule != null)
                                 {
                                     value = node.weightModule.Value;
-                                    view = true;
+                                    view  = true;
                                 }
                             }
                         }
+
                         float actual = 0.0f;
                         try
                         {
-                            actual = (float)Convert.ToDouble(value, CultureInfo.InvariantCulture);
+                            actual = (float) Convert.ToDouble(value, CultureInfo.InvariantCulture);
                         }
-                        catch { }
+                        catch
+                        {
+                        }
 
                         if (!view)
                         {
@@ -171,180 +174,172 @@
                                 <span align=left style="color:red;font-size:80%;">@text</span>
                             }
                         }
+
                         if (view)
+                        {
+                            string email2 = "";
+                            // string productImage = getImage(node.productImage, node.envIndex);
+                            // string manufacturerLogo = getImage(node.manufacturerLogo, node.envIndex);
+                            string productImage     = null;
+                            string manufacturerLogo = null;
+                            float  p                = actual / total * 100;
+                            if (p < 1)
+                                p = 1;
+                            string percent = "0";
+                            try
                             {
-                                string email2 = "";
-                                // string productImage = getImage(node.productImage, node.envIndex);
-                                // string manufacturerLogo = getImage(node.manufacturerLogo, node.envIndex);
-                                string productImage = null;
-                                string manufacturerLogo = null;
-                                float p = actual / total * 100;
-                                if (p < 1)
-                                    p = 1;
-                                string percent = "0";
-                                try
+                                percent = Convert.ToInt32(p).ToString();
+                            }
+                            catch
+                            {
+                            }
+
+                            value = Math.Round(actual, 2).ToString(CultureInfo.InvariantCulture);
+
+                            //hide all pcf values except for root
+                            var    hideClass   = "hidden";
+                            var    hideCircle  = hideClass; //always hide circle
+                            var    hideElement = hideClass; //decide hiding of elements
+                            string buttonText  = "+";
+
+                            <div class="node mb-2 flex flex-row space-x-2">
+                                @if (viewCombination && node != null && node != AasxTask.root)
                                 {
-                                    percent = Convert.ToInt32(p).ToString();
-                                }
-                                catch { }
-                                value = Math.Round(actual, 2).ToString(CultureInfo.InvariantCulture);
-
-                                //hide all pcf values except for root
-                                var hideClass = "hidden";
-                                var hideCircle = hideClass; //always hide circle
-                                var hideElement = hideClass; //decide hiding of elements
-                                string buttonText = "+";
-
-                                <div class="node mb-2 flex flex-row space-x-2">
-                                    @if (viewCombination && node != null && node != AasxTask.root)
+                                    if (!closedNode.Contains(node.aas.Id))
                                     {
-                                        if (!closedNode.Contains(node.aas.Id))
-                                        {
-                                            buttonText = "-";
-                                        }
-                                        var n = node;
-                                        <div class="grid place-items-center self-center">
-                                            <div class="ring-3 ring-gray-900/5 font-bold text-slate-700 dark:text-slate-500">
-                                                <button class="btn btn-primary btn-sm" style="background-color: #174a87" @onclick="() => toggle(n)">@buttonText</button>
-                                            </div>
-                                        </div/>
-                                        @code {
-                                            // void toggle(int clickIndex)
-                                            void toggle(AasxTask.cfpNode n)
-                                            {
-                                                if (closedNode.Contains(n.aas.Id))
-                                                {
-                                                    closedNode.Remove(n.aas.Id);
-                                                }
-                                                else
-                                                {
-                                                    closedNode.Add(n.aas.Id);
-                                                }
-                                                StateHasChanged();
-                                            }
-                                        }
+                                        buttonText = "-";
                                     }
-                                    <div class="grid place-items-center self-center @hideElement">
-                                        <div class="w-10 mx-auto @hideCircle">
-                                            <svg height="35" width="35" viewBox="0 0 20 20">
-                                                <circle r="5" cx="10" cy="10" fill="white"
-                                                        stroke="#174a87"
-                                                        stroke-width="10"
-                                                        stroke-dasharray="calc(@percent * 31.42px / 100) 31.42"
-                                                        transform="rotate(-90) translate(-20)" />
-                                                <circle r="9.5" cx="10" cy="10" fill="white"
-                                                        stroke-width="0.5"
-                                                        fill-opacity="0"
-                                                        stroke="#174a87"
-                                                        transform="rotate(-90) translate(-20)" />
-                                            </svg>
-                                        </div>
-                                        <div class="self-center text-center @hideElement">
-                                            @{
-                                                //if (node == AasxTask.root)
-                                                //{
-                                                //    <font size="+2"><span style="color:#174a87">@value</span></font>
-                                                //}
-                                                //else
-                                                //{
-                                                <span style="color:#174a87">@value</span>
-                                                //}
-                                            }
+
+                                    var n = node;
+                                    <div class="grid place-items-center self-center">
+                                        <div class="ring-3 ring-gray-900/5 font-bold text-slate-700 dark:text-slate-500">
+                                            <button class="btn btn-primary btn-sm" style="background-color: #174a87" @onclick="() => toggle(n)">@buttonText</button>
                                         </div>
                                     </div>
-                                    @if (!viewCombination && productImage != null)
-                                    {
-                                        var bytes = Convert.FromBase64String(productImage);
-                                        using (var stream = new System.IO.MemoryStream(bytes))
-                                        {
-                                            using (System.Drawing.Image img = System.Drawing.Image.FromStream(stream))
-                                            {
-                                                double idealArea = 2000;
-                                                var maxWidth = Math.Round(img.Width * Math.Sqrt(idealArea / ((double)img.Width * (double)img.Height)));
-                                                var maxWidthPx = maxWidth + "px";
-
-                                                // <img src=data:image;base64,@productImage class="h-16" style="max-width: @maxWidthPx; object-fit: contain;" />
-                                                productImage = getImageLink(cs.credentials, node.productImage, node.envIndex);
-                                                if (productImage != null)
-                                                {
-                                                    <img src=@productImage class="h-16" style="max-width: @maxWidthPx; object-fit: contain;" />
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    @{
-                                        productImage = getImageLink(cs.credentials, node.productImage, node.envIndex);
-                                        if (productImage != null)
-                                        {
-                                        <img src=@productImage class="h-16" style="max-width: 50px; object-fit: contain;"
-                                            onload="this.style.maxWidth=Math.round(this.width * Math.sqrt(2000.0 / (this.width*this.height))) + 'px';" />
-                                            /*
-                                            <img src
-                                            onerror="fetch('@productImage',{headers: {hello:'World!'}}).then(r=>r.blob()).then(d=> this.src=window.URL.createObjectURL(d));"
-                                            onload="this.style.maxWidth=Math.round(this.width * Math.sqrt(2000.0 / (this.width*this.height))) + 'px';" style="max-width: 50px; object-fit: contain;" class="self-center"
-                                            />
-                                        */
-                                        }
-                                    }
-
-                                    @if (manufacturerLogo != null)
-                                    {
-                                        var bytes = Convert.FromBase64String(manufacturerLogo);
-                                        using (var stream = new System.IO.MemoryStream(bytes))
-                                        {
-                                            using (System.Drawing.Image img = System.Drawing.Image.FromStream(stream))
-                                            {
-                                                double idealArea = 1800;
-                                                var maxWidth = Math.Round(img.Width * Math.Sqrt(idealArea / ((double)img.Width * (double)img.Height)));
-                                                var maxWidthPx = maxWidth + "px";
-
-                                                // <img src=data:image;base64,@manufacturerLogo style="max-width: @maxWidthPx; object-fit: contain;" class="self-center" />
-                                                manufacturerLogo = getImageLink(cs.credentials, node.manufacturerLogo, node.envIndex);
-                                                if (manufacturerLogo != null)
-                                                {
-                                                    <img src=@manufacturerLogo style="max-width: @maxWidthPx; object-fit: contain;" class="self-center" />
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    @{
-                                        manufacturerLogo = getImageLink(cs.credentials, node.manufacturerLogo, node.envIndex);
-                                        if (manufacturerLogo != null)
-                                        {
-                                        <img src=@manufacturerLogo style="max-width: 50px; object-fit: contain;" class="self-center"
-                                            onload="this.style.maxWidth=Math.round(this.width * Math.sqrt(1800.0 / (this.width*this.height))) + 'px';" />
-                                            /*
-                                            <img src
-                                            onerror="fetch('@manufacturerLogo',{headers: {hello:'World!'}}).then(r=>r.blob()).then(d=> this.src=window.URL.createObjectURL(d));"
-                                            onload="this.style.maxWidth=Math.round(this.width * Math.sqrt(1800.0 / (this.width*this.height))) + 'px';" style="max-width: 50px; object-fit: contain;" class="self-center"
-                                            />
-                                            */
-                                        }
-                                    }
-
-                                    @{
-                                        string text = node.productDesignation;
-                                        if (text.Contains(" - EXTERNAL"))
-                                        {
-                                            text = text.Replace(" - EXTERNAL", "");
-                                        }
-                                        if (viewCombination)
-                                            {
-                                                text = "Combination - " + text;
-                                            }
-                                            <div class="self-center grow">
-                                            <div class="font-bold text-slate-700 dark:text-slate-500">@text</div>
+                                }
+                                <div class="grid place-items-center self-center @hideElement">
+                                    <div class="w-10 mx-auto @hideCircle">
+                                        <svg height="35" width="35" viewBox="0 0 20 20">
+                                            <circle r="5" cx="10" cy="10" fill="white"
+                                                    stroke="#174a87"
+                                                    stroke-width="10"
+                                                    stroke-dasharray="calc(@percent * 31.42px / 100) 31.42"
+                                                    transform="rotate(-90) translate(-20)"/>
+                                            <circle r="9.5" cx="10" cy="10" fill="white"
+                                                    stroke-width="0.5"
+                                                    fill-opacity="0"
+                                                    stroke="#174a87"
+                                                    transform="rotate(-90) translate(-20)"/>
+                                        </svg>
+                                    </div>
+                                    <div class="self-center text-center @hideElement">
                                         @{
-                                            string link = "";
-                                            string smlink = "";
-                                            string queryPara = "";
-                                            string userPW = "";
-                                            string urlEdcWrapper = "";
-                                            string replace = "";
-                                            bool moreDotsToPrint = false;
-                                            string iframePath = getIframePath();
+                                            //if (node == AasxTask.root)
+                                            //{
+                                            //    <font size="+2"><span style="color:#174a87">@value</span></font>
+                                            //}
+                                            //else
+                                            //{
+                                            <span style="color:#174a87">@value</span>
+                                            //}
+                                        }
+                                    </div>
+                                </div>
+                                @if (!viewCombination && productImage != null)
+                                {
+                                    var bytes = Convert.FromBase64String(productImage);
+                                    using (var stream = new System.IO.MemoryStream(bytes))
+                                    {
+                                        using (System.Drawing.Image img = System.Drawing.Image.FromStream(stream))
+                                        {
+                                            double idealArea  = 2000;
+                                            var    maxWidth   = Math.Round(img.Width * Math.Sqrt(idealArea / ((double) img.Width * (double) img.Height)));
+                                            var    maxWidthPx = maxWidth + "px";
+
+                                            // <img src=data:image;base64,@productImage class="h-16" style="max-width: @maxWidthPx; object-fit: contain;" />
+                                            productImage = getImageLink(cs.credentials, node.productImage, node.envIndex);
+                                            if (productImage != null)
+                                            {
+                                                <img src=@productImage class="h-16" style="max-width: @maxWidthPx; object-fit: contain;"/>
+                                            }
+                                        }
+                                    }
+                                }
+
+                                @{
+                                    productImage = getImageLink(cs.credentials, node.productImage, node.envIndex);
+                                    if (productImage != null)
+                                    {
+                                        <img src=@productImage class="h-16" style="max-width: 50px; object-fit: contain;"
+                                             onload="this.style.maxWidth=Math.round(this.width * Math.sqrt(2000.0 / (this.width*this.height))) + 'px';"/>
+                                        /*
+                                        <img src
+                                        onerror="fetch('@productImage',{headers: {hello:'World!'}}).then(r=>r.blob()).then(d=> this.src=window.URL.createObjectURL(d));"
+                                        onload="this.style.maxWidth=Math.round(this.width * Math.sqrt(2000.0 / (this.width*this.height))) + 'px';" style="max-width: 50px; object-fit: contain;" class="self-center"
+                                        />
+                                    */
+                                    }
+                                }
+
+                                @if (manufacturerLogo != null)
+                                {
+                                    var bytes = Convert.FromBase64String(manufacturerLogo);
+                                    using (var stream = new System.IO.MemoryStream(bytes))
+                                    {
+                                        using (System.Drawing.Image img = System.Drawing.Image.FromStream(stream))
+                                        {
+                                            double idealArea  = 1800;
+                                            var    maxWidth   = Math.Round(img.Width * Math.Sqrt(idealArea / ((double) img.Width * (double) img.Height)));
+                                            var    maxWidthPx = maxWidth + "px";
+
+                                            // <img src=data:image;base64,@manufacturerLogo style="max-width: @maxWidthPx; object-fit: contain;" class="self-center" />
+                                            manufacturerLogo = getImageLink(cs.credentials, node.manufacturerLogo, node.envIndex);
+                                            if (manufacturerLogo != null)
+                                            {
+                                                <img src=@manufacturerLogo style="max-width: @maxWidthPx; object-fit: contain;" class="self-center"/>
+                                            }
+                                        }
+                                    }
+                                }
+
+                                @{
+                                    manufacturerLogo = getImageLink(cs.credentials, node.manufacturerLogo, node.envIndex);
+                                    if (manufacturerLogo != null)
+                                    {
+                                        <img src=@manufacturerLogo style="max-width: 50px; object-fit: contain;" class="self-center"
+                                             onload="this.style.maxWidth=Math.round(this.width * Math.sqrt(1800.0 / (this.width*this.height))) + 'px';"/>
+                                        /*
+                                        <img src
+                                        onerror="fetch('@manufacturerLogo',{headers: {hello:'World!'}}).then(r=>r.blob()).then(d=> this.src=window.URL.createObjectURL(d));"
+                                        onload="this.style.maxWidth=Math.round(this.width * Math.sqrt(1800.0 / (this.width*this.height))) + 'px';" style="max-width: 50px; object-fit: contain;" class="self-center"
+                                        />
+                                        */
+                                    }
+                                }
+
+                                @{
+                                    string text = node.productDesignation;
+                                    if (text.Contains(" - EXTERNAL"))
+                                    {
+                                        text = text.Replace(" - EXTERNAL", "");
+                                    }
+
+                                    if (viewCombination)
+                                    {
+                                        text = "Combination - " + text;
+                                    }
+
+                                    <div class="self-center grow">
+                                        <div class="font-bold text-slate-700 dark:text-slate-500">@text</div>
+                                        @{
+                                            string link            = "";
+                                            string smlink          = "";
+                                            string queryPara       = "";
+                                            string userPW          = "";
+                                            string urlEdcWrapper   = "";
+                                            string replace         = "";
+                                            bool   moreDotsToPrint = false;
+                                            string iframePath      = getIframePath();
                                             link = getAasLink(@node.aas);
                                             // JUIJUI
 
@@ -352,7 +347,7 @@
                                             var registry = AasRegistryService.GetRegistryList();
                                             if (registry.Count != 0)
                                             {
-                                                string registryURL = registry[0];
+                                                string registryURL = registry[ 0 ];
 
                                                 // check for buffered shell descriptors from getregistry() for basyx
                                                 var aasDescriptors = AasRegistryService.GetAasDescriptorsForSubmodelView();
@@ -371,19 +366,19 @@
 
                                                 link += "&registryURL=" + registryURL;
                                             }
-                                           
-                                            queryPara = "";
-                                            userPW = "";
+
+                                            queryPara     = "";
+                                            userPW        = "";
                                             urlEdcWrapper = "";
-                                            replace = "";
+                                            replace       = "";
                                             if (AasxCredentials.get(cs.credentials, link, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
                                             {
                                                 if (replace != "")
                                                     link = replace;
                                                 if (queryPara != "")
                                                 {
-                                                    queryPara = Base64UrlEncoder.Encode(queryPara);
-                                                    link += "&query=" + queryPara;
+                                                    queryPara =  Base64UrlEncoder.Encode(queryPara);
+                                                    link      += "&query=" + queryPara;
                                                 }
                                             }
 
@@ -391,27 +386,29 @@
                                             {
                                                 // List<string> textList = new List<string>();
                                                 // List<string> colorList = new List<string>();
-                                                string id = null;
-                                                string color = null;
+                                                string id     = null;
+                                                string color  = null;
                                                 string filter = "";
+
                                                 //custom ordering of references to achieve same rendering of all AASs
                                                 int order(String IdShort)
                                                 {
                                                     switch (IdShort)
                                                     {
-                                                        case "Nameplate": return 1;
-                                                        case "BillOfMaterial": return 2;
+                                                        case "Nameplate":              return 1;
+                                                        case "BillOfMaterial":         return 2;
                                                         case "ProductCarbonFootprint": return 3;
-                                                        case "CarbonFootprint": return 4;
-                                                        case "Documentation": return 5;
-                                                        case "HandoverDocumentation": return 6;
-                                                        case "TechnicalData": return 7;
-                                                        default: return int.MaxValue;
+                                                        case "CarbonFootprint":        return 4;
+                                                        case "Documentation":          return 5;
+                                                        case "HandoverDocumentation":  return 6;
+                                                        case "TechnicalData":          return 7;
+                                                        default:                       return int.MaxValue;
                                                     }
                                                 }
+
                                                 String cleanupIdShort(String text)
                                                 {
-                                                    if(text.Contains(" - EXTERNAL"))
+                                                    if (text.Contains(" - EXTERNAL"))
                                                         text = text.Replace(" - EXTERNAL", "");
                                                     if (text.Contains(" - NO ACCESS"))
                                                         text = text.Replace(" - NO ACCESS", "");
@@ -419,20 +416,21 @@
                                                         text = text.Replace(" - COPY", "");
                                                     return text;
                                                 }
+
                                                 node.aas.Submodels.Sort(delegate(IReference a, IReference b)
-                                                 {
-                                                     var idA = new string(Program.env?[node.envIndex].AasEnv.FindSubmodel(a)?.IdShort);
-                                                     idA = cleanupIdShort(idA);
-                                                     var idB = new string(Program.env?[node.envIndex].AasEnv.FindSubmodel(b)?.IdShort);
-                                                     idB = cleanupIdShort(idB);
-                                                     return order(idA).CompareTo(order(idB));
-                                                 });
+                                                                        {
+                                                                            var idA = new string(Program.env?[ node.envIndex ].AasEnv.FindSubmodel(a)?.IdShort);
+                                                                            idA = cleanupIdShort(idA);
+                                                                            var idB = new string(Program.env?[ node.envIndex ].AasEnv.FindSubmodel(b)?.IdShort);
+                                                                            idB = cleanupIdShort(idB);
+                                                                            return order(idA).CompareTo(order(idB));
+                                                                        });
                                                 foreach (var smr in node.aas.Submodels) //foreach (var smr in node.aas.Submodels)
                                                 {
                                                     if (Program.env == null)
                                                         continue;
 
-                                                    var sm = Program.env[node.envIndex].AasEnv.FindSubmodel(smr);
+                                                    var sm = Program.env[ node.envIndex ].AasEnv.FindSubmodel(smr);
                                                     if (sm != null)
                                                     {
                                                         if (sm.IdShort == "tasks")
@@ -450,19 +448,22 @@
                                                             {
                                                                 id = id.Replace(" - EXTERNAL", "");
                                                             }
+
                                                             if (id.Contains(" - COPY"))
                                                             {
                                                                 id = id.Replace(" - COPY", "");
                                                             }
+
                                                             // colorList.Add("green");
                                                             color = "green";
                                                         }
+
                                                         // textList.Add(id);
                                                         if (id != null && color != null)
                                                         {
-                                                            smlink = getSmLink(sm);
-                                                            queryPara = "";
-                                                            userPW = "";
+                                                            smlink        = getSmLink(sm);
+                                                            queryPara     = "";
+                                                            userPW        = "";
                                                             urlEdcWrapper = "";
                                                             switch (id)
                                                             {
@@ -491,7 +492,7 @@
                                                                     moreDotsToPrint = true;
                                                                     continue;
                                                             }
-                                                        
+
                                                             var icon = id;
                                                             if (AasxCredentials.get(cs.credentials, smlink, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
                                                             {
@@ -502,23 +503,28 @@
                                                                 {
                                                                     smlink += "?" + queryPara;
                                                                 }
+
                                                                 if (userPW != "")
                                                                 {
                                                                     smlink = smlink.Replace("https://", "https://" + userPW + "@");
                                                                     smlink = smlink.Replace("http://", "http://" + userPW + "@");
                                                                 }
                                                             }
-                                                            if(color == "red")
+
+                                                            if (color == "red")
                                                             {
                                                                 filter = "invert(0.5) sepia(1) saturate(100) hue-rotate(0deg)";
                                                             }
+
                                                             if (color == "green")
                                                             {
                                                                 filter = "invert(0.5) sepia(1) saturate(100) hue-rotate(120deg)";
                                                             }
+
                                                             <a href="@link" target="_blank" onclick="document.getElementById('iframe').src='@iframePath?aasUrl=@link&smUrl=@System.Net.WebUtility.UrlEncode(sm.Id)'; return false;" style="margin-right: 2px;">
-                                                                <img src="/sm_icons/@(icon.ToLower()).svg" style="height:22px; display: inline; filter: @filter;" /><span style="font-size:8pt; color:@color;">@(id)</span></a>
-                                                            if (sm.Extensions.Count > 1 && sm.Extensions[1].Value != "")
+                                                                <img src="/sm_icons/@(icon.ToLower()).svg" style="height:22px; display: inline; filter: @filter;"/><span style="font-size:8pt; color:@color;">@(id)</span>
+                                                            </a>
+                                                            if (sm.Extensions.Count > 1 && sm.Extensions[ 1 ].Value != "")
                                                             {
                                                                 <span style="font-size:8pt; color:white; background-color:@color">P</span>
                                                             }
@@ -536,40 +542,56 @@
 
                                     <div class="flex-none self-center hide-slim">
                                         <button class="btn px-3 text-white"
-                                            onclick="document.getElementById('iframe').src='@iframePath?aasUrl=@link'"
+                                                onclick="document.getElementById('iframe').src='@iframePath?aasUrl=@link'"
                                                 style="background-color: #174a87; padding: 0.1rem 0.4rem 0.1rem 0.4rem !important;">
                                             <i class="fas fa-arrow-right" aria-hidden="true"></i>
                                         </button>
                                     </div>
                                 }
-                                </div>
-                                if (!moduleOnly && node.children.Count != 0 && node.cradleToGateModule != null)
-                                {
-                                    nextLevel(node, total, timeStamp, true);
-                                }
+                            </div>
+                            if (!moduleOnly && node.children.Count != 0 && node.cradleToGateModule != null)
+                            {
+                                nextLevel(node, total, timeStamp, true);
                             }
                         }
+                    }
 
-                        // move up, if all children iterated
-                        if (moduleOnly || node.iChild == node.children.Count || closedNode.Contains(node.aas.Id))
-                        {
-                            node.iChild = 0;
-                            node = null;
-                        }
-                        else
-                        {
-                            // Iterate children
-                            nextLevel(node.children[node.iChild], total, timeStamp);
-                            node.iChild++;
-                        }
+                    // move up, if all children iterated
+                    if (moduleOnly || node.iChild == node.children.Count || closedNode.Contains(node.aas.Id))
+                    {
+                        node.iChild = 0;
+                        node        = null;
+                    }
+                    else
+                    {
+                        // Iterate children
+                        nextLevel(node.children[ node.iChild ], total, timeStamp);
+                        node.iChild++;
                     }
                 }
+            }
 
         </div>
     }
 }
 
 @code {
+
+// void toggle(int clickIndex)
+    void toggle(AasxTask.cfpNode n)
+    {
+        if (closedNode.Contains(n.aas.Id))
+        {
+            closedNode.Remove(n.aas.Id);
+        }
+        else
+        {
+            closedNode.Add(n.aas.Id);
+        }
+
+        StateHasChanged();
+    }
+
     static string path = "";
     static bool pathIntit = true;
     static List<string> closedNode = new List<String>();
@@ -589,19 +611,20 @@
 
     static string getSmLink(ISubmodel sm)
     {
-        string endpoint = null;
-        var idEncoded = Base64UrlEncoder.Encode(sm.Id);
+        string endpoint  = null;
+        var    idEncoded = Base64UrlEncoder.Encode(sm.Id);
         if (sm.Extensions != null)
         {
-            endpoint = sm.Extensions[0].Value;
+            endpoint = sm.Extensions[ 0 ].Value;
             var s1 = endpoint.Split("/shells/");
             if (s1.Length == 2)
             {
-                var s2 = s1[1].Split("/submodels/");
+                var s2 = s1[ 1 ].Split("/submodels/");
                 if (s2.Length == 2)
                 {
-                    idEncoded = s2[1].Replace("/submodel/", ""); ;
-                    endpoint = s1[0] + "/submodels/" + idEncoded;
+                    idEncoded = s2[ 1 ].Replace("/submodel/", "");
+                    ;
+                    endpoint = s1[ 0 ] + "/submodels/" + idEncoded;
                 }
             }
             // endpoint = endpoint.Replace("/submodel/", "");
@@ -620,26 +643,28 @@
             return queryPara;
 
         string clientToken = "";
-        if (sm.Extensions != null && sm.Extensions.Count > 1 && sm.Extensions[1].Value == "clientToken")
-            clientToken = sm.Extensions[1].Value;
+        if (sm.Extensions != null && sm.Extensions.Count > 1 && sm.Extensions[ 1 ].Value == "clientToken")
+            clientToken = sm.Extensions[ 1 ].Value;
         if (clientToken != "")
         {
             if (queryPara == "")
             {
                 return clientToken;
             }
+
             return queryPara + "&" + clientToken;
         }
-        return queryPara;        
+
+        return queryPara;
     }
 
     static string getAasLink(AssetAdministrationShell aas)
     {
-        string endpoint = null;
-        var idEncoded = Base64UrlEncoder.Encode(aas.Id);
+        string endpoint  = null;
+        var    idEncoded = Base64UrlEncoder.Encode(aas.Id);
         if (aas.Extensions != null)
         {
-            endpoint = aas.Extensions[0].Value;
+            endpoint = aas.Extensions[ 0 ].Value;
         }
         else
         {
@@ -656,10 +681,10 @@
 
         if (f.Value != "")
         {
-            string[] split = f.Value.Split(new Char[] { '/' });
-            if (split.Length == 2 || (split.Length > 1 && (split[1].ToLower() == "aasx" || split[1].ToLower() == "tmp")))
+            string[] split = f.Value.Split(new Char[] {'/'});
+            if (split.Length == 2 || (split.Length > 1 && (split[ 1 ].ToLower() == "aasx" || split[ 1 ].ToLower() == "tmp")))
             {
-                split = f.Value.Split(new Char[] { '.' });
+                split = f.Value.Split(new Char[] {'.'});
                 switch (split.Last().ToLower())
                 {
                     case "jpg":
@@ -669,27 +694,28 @@
                         try
                         {
                             // return Program.externalRest + "/server/getfile/" + envIndex + f.Value;
-                            var sme = f;
+                            var    sme  = f;
                             string path = sme.IdShort;
-                            var p = sme.Parent;
+                            var    p    = sme.Parent;
                             while (p != null && !(p is Submodel))
                             {
                                 path = (p as ISubmodelElement).IdShort + "." + path;
-                                p = (p as ISubmodelElement).Parent;
+                                p    = (p as ISubmodelElement).Parent;
                             }
+
                             if (p == null)
                                 return path;
 
                             var sm = p as Submodel;
                             // path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodelelements/" + path;
                             string endpoint = getSmLink(sm);
-                            path = endpoint + "/submodel-elements/" + path;
+                            path =  endpoint + "/submodel-elements/" + path;
                             path += "/attachment";
 
-                            string queryPara = "";
-                            string userPW = "";
+                            string queryPara     = "";
+                            string userPW        = "";
                             string urlEdcWrapper = "";
-                            string replace = "";
+                            string replace       = "";
                             if (AasxCredentials.get(credentials, path, out queryPara, out userPW, out urlEdcWrapper, out replace, true))
                             {
                                 if (replace != "")
@@ -699,6 +725,7 @@
                                 {
                                     path += "?" + queryPara;
                                 }
+
                                 if (userPW != "")
                                 {
                                     path = path.Replace("https://", "https://" + userPW + "@");
@@ -708,11 +735,15 @@
 
                             return path;
                         }
-                        catch { }
+                        catch
+                        {
+                        }
+
                         break;
                 }
             }
         }
+
         return null;
     }
 
@@ -723,10 +754,10 @@
 
         if (f.Value != "")
         {
-            string[] split = f.Value.Split(new Char[] { '/' });
-            if (split.Length == 2 || split.Length > 1 && split[1].ToLower() == "aasx")
+            string[] split = f.Value.Split(new Char[] {'/'});
+            if (split.Length == 2 || split.Length > 1 && split[ 1 ].ToLower() == "aasx")
             {
-                split = f.Value.Split(new Char[] { '.' });
+                split = f.Value.Split(new Char[] {'.'});
                 switch (split.Last().ToLower())
                 {
                     case "jpg":
@@ -734,7 +765,7 @@
                     case "png":
                         try
                         {
-                            using (System.IO.Stream s = Program.env[envIndex].GetLocalStreamFromPackage(f.Value))
+                            using (System.IO.Stream s = Program.env[ envIndex ].GetLocalStreamFromPackage(f.Value))
                             {
                                 if (s != null)
                                 {
@@ -746,11 +777,15 @@
                                 }
                             }
                         }
-                        catch { }
+                        catch
+                        {
+                        }
+
                         break;
                 }
             }
         }
+
         return null;
     }
 
@@ -778,4 +813,5 @@
             }
         }
     }
+
 }

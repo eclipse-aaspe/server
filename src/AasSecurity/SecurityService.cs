@@ -15,6 +15,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Web;
+using File = AasCore.Aas3_0.File;
 
 namespace AasSecurity
 {
@@ -22,7 +23,7 @@ namespace AasSecurity
     {
         private static readonly ILogger _logger = ApplicationLogging.CreateLogger("SecurityService");
 
-        public AuthenticationTicket AuthenticateRequest(HttpContext context, string route, string httpOperation, string authenticationSchemeName)
+        public AuthenticationTicket? AuthenticateRequest(HttpContext context, string route, string httpOperation, string? authenticationSchemeName)
         {
             if (!GlobalSecurityVariables.WithAuthentication)
             {
@@ -116,10 +117,10 @@ namespace AasSecurity
                     {
                         if (!securityRight.Name.Contains('@'))
                         {
-                            string domain = null;
+                            string? domain = null;
                             if (user.Contains('@'))
                             {
-                                string[] split = user.Split('@');
+                                string?[] split = user.Split('@');
                                 domain = split[ 1 ];
                             }
 
@@ -385,8 +386,8 @@ namespace AasSecurity
             var       username        = credentials[ 0 ];
             var       password        = credentials[ 1 ];
 
-            var found = GlobalSecurityVariables.SecurityUsernamePassword.TryGetValue(username, out string storedPassword);
-            return found ? password.Equals(storedPassword) ? username : null : null;
+            var found = GlobalSecurityVariables.SecurityUsernamePassword.TryGetValue(username, out string? storedPassword);
+            return found ? password != null && password.Equals(storedPassword) ? username : null : null;
         }
 
         public bool AuthorizeRequest(string accessRole, string httpRoute, AccessRights neededRights,
@@ -494,8 +495,8 @@ namespace AasSecurity
         {
             error     = "";
             getPolicy = "";
-            Property            pPolicy = null;
-            AasCore.Aas3_0.File fPolicy = null;
+            Property? pPolicy = null;
+            File?     fPolicy = null;
 
             if (securityRole.Usage == null)
                 return true;

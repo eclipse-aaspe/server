@@ -6,6 +6,6 @@
         public string AASX { get; set; }
 
         public virtual ICollection<AASSet> AASSets { get; } = new List<AASSet>();
-        public virtual ICollection<SMSet> SMSets { get; } = new List<SMSet>();
+        public virtual ICollection<SMSet?> SMSets  { get; } = new List<SMSet?>();
     }
 }

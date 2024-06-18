@@ -377,7 +377,6 @@ namespace AasxServer
             client.Timeout = TimeSpan.FromSeconds(20);
             Task task;
 
-            var serverCert = new X509Certificate2();
             Stream s = null;
             try
             {
@@ -397,7 +396,7 @@ namespace AasxServer
             {
                 s.CopyTo(m);
                 var b = m.GetBuffer();
-                serverCert = new X509Certificate2(b);
+                var serverCert = new X509Certificate2(b);
                 Console.WriteLine("Auth server certificate: " + authServerCertificate.Value);
                 s.Close();
             }
@@ -552,11 +551,9 @@ namespace AasxServer
 
                 if (userName != "" && expires != "")
                 {
-                    var credential = new X509SigningCredentials(certificate);
-                    string clientId = "client.jwt";
-                    string email = "";
-                    string subject = certificate.Subject;
-                    var now = DateTime.UtcNow;
+                    var          credential = new X509SigningCredentials(certificate);
+                    const string clientId   = "client.jwt";
+                    var          now        = DateTime.UtcNow;
                     var claimList =
                         new List<Claim>()
                         {
