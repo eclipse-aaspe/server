@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using AasxServerDB;
@@ -344,6 +344,7 @@ namespace AasxServer
                                 if ((jwtToken == null) || (jwtToken.ValidFrom > DateTime.UtcNow) || (jwtToken.ValidTo < DateTime.UtcNow))
                                     valid = false;
                                 if (valid) return;
+                                accessToken.Value = "";
                             }
 
                             if (createAccessToken(envIndex, authServerEndPoint, authServerCertificate,
