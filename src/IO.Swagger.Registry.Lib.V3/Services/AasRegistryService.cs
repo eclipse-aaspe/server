@@ -31,53 +31,55 @@ namespace IO.Swagger.Registry.Lib.V3.Services
             //string asset = aas.assetRef?[0].Value;
             var globalAssetId = aasDB.GlobalAssetId;
 
-            using AasContext db = new AasContext();
-            // ad.Administration.Version = aas.administration.version;
-            // ad.Administration.Revision = aas.administration.revision;
-            ad.IdShort = aasDB.IdShort;
-            ad.Id      = aasDB.Identifier;
-            var e = new Models.Endpoint();
-            e.ProtocolInformation = new ProtocolInformation();
-            e.ProtocolInformation.Href =
-                AasxServer.Program.externalBlazor + "/shells/" +
-                Base64UrlEncoder.Encode(ad.Id);
-            _logger.LogDebug("AAS " + ad.IdShort + " " + e.ProtocolInformation.Href);
-            e.Interface = "AAS-1.0";
-            ad.Endpoints = new List<Endpoint>
-                           {
-                               e
-                           };
-            ad.GlobalAssetId = globalAssetId;
-            //
-            ad.SpecificAssetIds = new List<SpecificAssetId>();
-            var specificAssetId = new SpecificAssetId("AssetKind", aasDB.AssetKind, externalSubjectId: new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, "assetKind") }));
-            ad.SpecificAssetIds.Add(specificAssetId);
-
-            // Submodels
-            var submodelDBList = db.SMSets.Where(s => s.AASId == aasDB.Id);
-            if (submodelDBList.Any())
+            using (AasContext db = new AasContext())
             {
-                ad.SubmodelDescriptors = new List<SubmodelDescriptor>();
-                foreach (var submodelDB in submodelDBList)
+                // ad.Administration.Version = aas.administration.version;
+                // ad.Administration.Revision = aas.administration.revision;
+                ad.IdShort = aasDB.IdShort;
+                ad.Id = aasDB.Identifier;
+                var e = new Models.Endpoint();
+                e.ProtocolInformation = new ProtocolInformation();
+                e.ProtocolInformation.Href =
+                    AasxServer.Program.externalRepository + "/shells/" +
+                    Base64UrlEncoder.Encode(ad.Id);
+                _logger.LogDebug("AAS " + ad.IdShort + " " + e.ProtocolInformation.Href);
+                e.Interface = "AAS-1.0";
+                ad.Endpoints = new List<Models.Endpoint>
                 {
-                    SubmodelDescriptor sd = new SubmodelDescriptor();
-                    sd.IdShort = submodelDB.IdShort;
-                    sd.Id      = submodelDB.Identifier;
-                    var esm = new Models.Endpoint();
-                    esm.ProtocolInformation = new ProtocolInformation();
-                    esm.ProtocolInformation.Href =
-                        AasxServer.Program.externalBlazor + "/shells/" +
-                        Base64UrlEncoder.Encode(ad.Id) + "/submodels/" +
-                        Base64UrlEncoder.Encode(sd.Id);
-                    // Base64UrlEncoder.Encode(sd.Identification) + "/submodel/";
-                    // Console.WriteLine("SM " + sd.IdShort + " " + esm.ProtocolInformation.EndpointAddress);
-                    esm.Interface = "SUBMODEL-1.0";
-                    sd.Endpoints = new List<Models.Endpoint>
-                                   {
-                                       esm
-                                   };
-                    sd.SemanticId = new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, submodelDB.SemanticId) });
-                    ad.SubmodelDescriptors.Add(sd);
+                    e
+                };
+                ad.GlobalAssetId = globalAssetId;
+                //
+                ad.SpecificAssetIds = new List<SpecificAssetId>();
+                var specificAssetId = new SpecificAssetId("AssetKind", aasDB.AssetKind, externalSubjectId: new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, "assetKind") }));
+                ad.SpecificAssetIds.Add(specificAssetId);
+
+                // Submodels
+                var submodelDBList = db.SMSets.Where(s => s.AASId == aasDB.Id);
+                if (submodelDBList.Any())
+                {
+                    ad.SubmodelDescriptors = new List<SubmodelDescriptor>();
+                    foreach (var submodelDB in submodelDBList)
+                    {
+                        SubmodelDescriptor sd = new SubmodelDescriptor();
+                        sd.IdShort = submodelDB.IdShort;
+                        sd.Id = submodelDB.Identifier;
+                        var esm = new Models.Endpoint();
+                        esm.ProtocolInformation = new ProtocolInformation();
+                        esm.ProtocolInformation.Href =
+                            AasxServer.Program.externalRepository + "/shells/" +
+                            Base64UrlEncoder.Encode(ad.Id) + "/submodels/" +
+                            Base64UrlEncoder.Encode(sd.Id);
+                        // Base64UrlEncoder.Encode(sd.Identification) + "/submodel/";
+                        // Console.WriteLine("SM " + sd.IdShort + " " + esm.ProtocolInformation.EndpointAddress);
+                        esm.Interface = "SUBMODEL-1.0";
+                        sd.Endpoints = new List<Models.Endpoint>
+                        {
+                            esm
+                        };
+                        sd.SemanticId = new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, submodelDB.SemanticId) });
+                        ad.SubmodelDescriptors.Add(sd);
+                    }
                 }
             }
 
