@@ -13,7 +13,8 @@ jobs:
   check-for-changes:
     runs-on: windows-latest
     name: Check for changes between HEAD and last created tag
-    if: github.event_name != 'schedule' || github.repository == 'eclipse-aaspe/server'
+    #if: github.event_name != 'schedule' || github.repository == 'eclipse-aaspe/server'
+    if: false
     outputs:
       branch_changed: ${{ steps.check_changes.outputs.changes_detected }}
     steps:
@@ -246,13 +247,14 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build and publish AasxServerBlazor
-        uses: docker/build-push-action@v1
+        uses: docker/build-push-action@v6
         with:
-          username: adminshellio
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          repository: adminshellio/aasx-server-blazor-for-demo
-          tag_with_ref: true
-          dockerfile: src/docker/Dockerfile-AasxServerBlazor
+          push: true
+          tags: adminshellio/aasx-server-blazor-for-demo:latest
+          file: src/docker/Dockerfile-AasxServerBlazor
+          secrets:
+            DOCKERHUB_USERNAME: adminshellio
+            DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       - name: Build and publish AasxServerBlazor-arm32
         uses: docker/build-push-action@v1
