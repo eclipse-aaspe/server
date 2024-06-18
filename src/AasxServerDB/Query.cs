@@ -305,7 +305,7 @@ namespace AasxServerDB
             DateTime diff = TimeStamp.TimeStamp.StringToDateTime(diffString);
             bool withDiff = !diff.Equals(DateTime.MinValue);
 
-            if (!withSemanticId && !withDiff)
+            if (!withSemanticId && !withIdentifier && !withDiff)
                 return new List<SMSet>();
 
             return new AasContext().SMSets
