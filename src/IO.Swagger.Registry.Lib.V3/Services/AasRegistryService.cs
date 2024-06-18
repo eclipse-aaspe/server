@@ -29,7 +29,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
         {
             AssetAdministrationShellDescriptor ad = new AssetAdministrationShellDescriptor();
             //string asset = aas.assetRef?[0].Value;
-            string globalAssetId = aasDB.GlobalAssetId;
+            var globalAssetId = aasDB.GlobalAssetId;
 
             using (AasContext db = new AasContext())
             {

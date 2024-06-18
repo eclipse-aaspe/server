@@ -144,7 +144,7 @@ namespace IO.Swagger.Lib.V3.Formatters
             }
             else if (typeof(IValueDTO).IsAssignableFrom(context.ObjectType))
             {
-                JsonNode json = ValueOnlyJsonSerializer.ToJsonObject((IValueDTO)context.Object);
+                JsonNode? json = ValueOnlyJsonSerializer.ToJsonObject((IValueDTO)context.Object);
                 var writer = new Utf8JsonWriter(response.Body);
                 json.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();

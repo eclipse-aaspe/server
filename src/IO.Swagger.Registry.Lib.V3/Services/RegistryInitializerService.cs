@@ -65,7 +65,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
             init = true;
             if (initAgain)
             {
-                aasRegistry = null;
+                aasRegistry      = null;
                 submodelRegistry = null;
 
                 int i = initiallyEmpty;
@@ -166,7 +166,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                 if (aas.IdShort == "PcfViewTask")
                                 {
                                     string certificatePassword = "i40";
-                                    Stream s2 = null;
+                                    Stream s2                  = null;
                                     try
                                     {
                                         s2 = env.GetLocalStreamFromPackage("/aasx/files/Andreas_Orzelski_Chain.pfx", access: FileAccess.Read);
@@ -199,22 +199,22 @@ namespace IO.Swagger.Registry.Lib.V3.Services
 
                 if (getRegistry.Count != 0)
                 {
-                    var submodelDescriptors = new List<SubmodelDescriptor>();
+                    var    submodelDescriptors = new List<SubmodelDescriptor>();
                     string submodelRegistryUrl = System.Environment.GetEnvironmentVariable("SUBMODELREGISTRY");
                     if (submodelRegistryUrl != null)
                     {
-                        string json = null;
+                        string json        = null;
                         string accessToken = null;
 
                         submodelRegistryUrl = submodelRegistryUrl.Replace("\r", "");
                         submodelRegistryUrl = submodelRegistryUrl.Replace("\n", "");
 
                         // basyx with Submodel Registry: read submodel descriptors
-                        string requestPath = submodelRegistryUrl + "/submodel-descriptors";
-                        string queryPara = "";
-                        string userPW = "";
+                        string requestPath   = submodelRegistryUrl + "/submodel-descriptors";
+                        string queryPara     = "";
+                        string userPW        = "";
                         string urlEdcWrapper = "";
-                        string replace = "";
+                        string replace       = "";
 
                         if (AasxCredentials.get(cs.credentials, requestPath, out queryPara, out userPW, out urlEdcWrapper, out replace))
                         {
@@ -222,10 +222,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                 requestPath = replace;
                         }
 
-                        var handler = new HttpClientHandler()
-                        {
-                            ServerCertificateCustomValidationCallback = delegate { return true; },
-                        };
+                        var handler = new HttpClientHandler() {ServerCertificateCustomValidationCallback = delegate { return true; }};
 
                         if (!requestPath.Contains("localhost"))
                         {
@@ -240,7 +237,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                         if (accessToken != null)
                             client.SetBearerToken(accessToken);
 
-                        bool error = false;
+                        bool                error    = false;
                         HttpResponseMessage response = new HttpResponseMessage();
                         try
                         {
@@ -253,7 +250,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                             if (!string.IsNullOrEmpty(json))
                             {
                                 MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(json));
-                                JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                                JsonNode     node  = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
                                 if (node is JsonObject jo)
                                 {
                                     if (jo.ContainsKey("result"))
@@ -295,14 +292,14 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                     {
                         List<AssetAdministrationShellDescriptor> aasDescriptors = new List<AssetAdministrationShellDescriptor>();
 
-                        string json = null;
+                        string json        = null;
                         string accessToken = null;
                         //string requestPath = greg + "/" + "registry/shell-descriptors";
-                        string requestPath = greg + "/shell-descriptors";
-                        string queryPara = "";
-                        string userPW = "";
+                        string requestPath   = greg + "/shell-descriptors";
+                        string queryPara     = "";
+                        string userPW        = "";
                         string urlEdcWrapper = "";
-                        string replace = "";
+                        string replace       = "";
 
                         if (AasxCredentials.get(cs.credentials, requestPath, out queryPara, out userPW, out urlEdcWrapper, out replace))
                         {
@@ -310,10 +307,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                 requestPath = replace;
                         }
 
-                        var handler = new HttpClientHandler()
-                        {
-                            ServerCertificateCustomValidationCallback = delegate { return true; },
-                        };
+                        var handler = new HttpClientHandler() {ServerCertificateCustomValidationCallback = delegate { return true; }};
 
                         if (!requestPath.Contains("localhost"))
                         {
@@ -328,7 +322,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                         if (accessToken != null)
                             client.SetBearerToken(accessToken);
 
-                        bool error = false;
+                        bool                error    = false;
                         HttpResponseMessage response = new HttpResponseMessage();
                         try
                         {
@@ -341,7 +335,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                             if (!string.IsNullOrEmpty(json))
                             {
                                 MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(json));
-                                JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                                JsonNode     node  = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
                                 if (node is JsonObject jo)
                                 {
                                     if (jo.ContainsKey("result"))
@@ -363,9 +357,9 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                                         Console.WriteLine("GET " + requestPath);
                                                         task = Task.Run(async () => { response = await client.GetAsync(requestPath); });
                                                         task.Wait();
-                                                        json = response.Content.ReadAsStringAsync().Result;
+                                                        json  = response.Content.ReadAsStringAsync().Result;
                                                         mStrm = new MemoryStream(Encoding.UTF8.GetBytes(json));
-                                                        node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                                                        node  = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
                                                         var aas = Jsonization.Deserialize.AssetAdministrationShellFrom(node);
 
                                                         var ids = new List<string>();
@@ -430,8 +424,8 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                 // check, if AAS is exisiting and must be replaced
                                 var extensions = new List<IExtension> {new Extension("endpoint", value: ad.Endpoints[ 0 ].ProtocolInformation.Href)};
                                 var aas = new AssetAdministrationShell(ad.Id, new AssetInformation(AssetKind.Instance, ad.GlobalAssetId), extensions,
-                                    idShort: ad.IdShort + " - EXTERNAL");
-                                aas.TimeStamp = timestamp;
+                                                                       idShort: ad.IdShort + " - EXTERNAL");
+                                aas.TimeStamp       = timestamp;
                                 aas.TimeStampCreate = timestamp;
                                 var newEnv = new AdminShellNS.AdminShellPackageEnv();
                                 newEnv.AasEnv.AssetAdministrationShells.Add(aas);
@@ -441,11 +435,11 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                     if (sd.IdShort == "NameplateVC")
                                         continue;
 
-                                    bool success = false;
-                                    bool external = false;
+                                    bool   success   = false;
+                                    bool   external  = false;
                                     string idEncoded = "";
-                                    string endpoint = sd.Endpoints[ 0 ].ProtocolInformation.Href;
-                                    var s1 = endpoint.Split("/shells/");
+                                    string endpoint  = sd.Endpoints[ 0 ].ProtocolInformation.Href;
+                                    var    s1        = endpoint.Split("/shells/");
                                     if (s1.Length == 2)
                                     {
                                         var s2 = s1[ 1 ].Split("/submodels/");
@@ -457,11 +451,11 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                         }
                                     }
 
-                                    requestPath = endpoint;
-                                    queryPara = "";
-                                    userPW = "";
+                                    requestPath   = endpoint;
+                                    queryPara     = "";
+                                    userPW        = "";
                                     urlEdcWrapper = "";
-                                    replace = "";
+                                    replace       = "";
                                     client.DefaultRequestHeaders.Clear();
                                     if (AasxCredentials.get(cList, requestPath, out queryPara, out userPW, out urlEdcWrapper, out replace))
                                     {
@@ -498,8 +492,8 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                                     var task = Task.Run(async () => { response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Head, requestPath)); });
                                                     task.Wait();
 
-                                                    string userName = "aorzelski@phoenixcontact.com";
-                                                    string policy = "";
+                                                    string userName                = "aorzelski@phoenixcontact.com";
+                                                    string policy                  = "";
                                                     string policyRequestedResource = "";
                                                     foreach (var kvp in response.Headers)
                                                     {
@@ -511,30 +505,29 @@ namespace IO.Swagger.Registry.Lib.V3.Services
 
                                                     if (policy != "")
                                                     {
-                                                        var credential = new X509SigningCredentials(certificate);
-                                                        string clientId = "client.jwt";
-                                                        string subject = certificate.Subject;
-                                                        var now = DateTime.UtcNow;
+                                                        var    credential = new X509SigningCredentials(certificate);
+                                                        string clientId   = "client.jwt";
+                                                        string subject    = certificate.Subject;
+                                                        var    now        = DateTime.UtcNow;
                                                         var claimList =
                                                             new List<Claim>()
                                                             {
                                                                 new Claim(JwtClaimTypes.JwtId, Guid.NewGuid().ToString()),
                                                                 new Claim(JwtClaimTypes.Subject, clientId),
                                                                 new Claim(JwtClaimTypes.IssuedAt, now.ToEpochTime().ToString(), ClaimValueTypes.Integer64),
-
-                                                                new Claim("userName", userName),
+                                                                new Claim("userName", userName)
                                                             };
                                                         if (policy != "")
                                                             claimList.Add(new Claim("policy", policy, ClaimValueTypes.String));
                                                         if (policyRequestedResource != "")
                                                             claimList.Add(new Claim("policyRequestedResource", policyRequestedResource, ClaimValueTypes.String));
                                                         var token = new JwtSecurityToken(
-                                                                clientId,
-                                                                policyRequestedResource,
-                                                                claimList,
-                                                                now,
-                                                                now.AddDays(1),
-                                                                credential)
+                                                                                         clientId,
+                                                                                         policyRequestedResource,
+                                                                                         claimList,
+                                                                                         now,
+                                                                                         now.AddDays(1),
+                                                                                         credential)
                                                             ;
                                                         var tokenHandler = new JwtSecurityTokenHandler();
                                                         clientToken = tokenHandler.WriteToken(token);
@@ -552,15 +545,15 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                                     try
                                                     {
                                                         MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(json));
-                                                        JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                                                        JsonNode     node  = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
                                                         sm = Jsonization.Deserialize.SubmodelFrom(node);
 
                                                         sm.IdShort += " - COPY";
                                                         sm.Extensions = new List<IExtension>
-                                                        {
-                                                            new Extension("endpoint", value: sd.Endpoints[ 0 ].ProtocolInformation.Href),
-                                                            new Extension("clientToken", value: clientToken)
-                                                        };
+                                                                        {
+                                                                            new Extension("endpoint", value: sd.Endpoints[ 0 ].ProtocolInformation.Href),
+                                                                            new Extension("clientToken", value: clientToken)
+                                                                        };
                                                         sm.SetAllParentsAndTimestamps(null, timestamp, timestamp);
                                                         aas.AddSubmodelReference(sm.GetReference());
                                                         newEnv.AasEnv.Submodels.Add(sm);
@@ -602,7 +595,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                                 task2.Wait();
                                                 if (response.IsSuccessStatusCode)
                                                 {
-                                                    success = true;
+                                                    success  = true;
                                                     external = true;
                                                 }
                                             }
@@ -628,10 +621,10 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                         }
 
                                         sm.Extensions = new List<IExtension>
-                                        {
-                                            new Extension("endpoint", value: sd.Endpoints[ 0 ].ProtocolInformation.Href),
-                                            new Extension("clientToken", value: clientToken)
-                                        };
+                                                        {
+                                                            new Extension("endpoint", value: sd.Endpoints[ 0 ].ProtocolInformation.Href),
+                                                            new Extension("clientToken", value: clientToken)
+                                                        };
                                         sm.SetAllParentsAndTimestamps(null, timestamp, timestamp);
                                         aas.AddSubmodelReference(sm.GetReference());
                                         newEnv.AasEnv.Submodels.Add(sm);
@@ -684,30 +677,27 @@ namespace IO.Swagger.Registry.Lib.V3.Services
         {
             var aas = env.AasEnv.AssetAdministrationShells[ 0 ];
 
-            AssetAdministrationShellDescriptor ad = new AssetAdministrationShellDescriptor();
-            string globalAssetId = aas.AssetInformation.GlobalAssetId!;
+            AssetAdministrationShellDescriptor ad            = new AssetAdministrationShellDescriptor();
+            string                             globalAssetId = aas.AssetInformation.GlobalAssetId!;
 
             // ad.Administration.Version = aas.administration.version;
             // ad.Administration.Revision = aas.administration.revision;
             ad.IdShort = aas.IdShort!;
-            ad.Id = aas.Id;
+            ad.Id      = aas.Id;
             var e = new Endpoint();
             e.ProtocolInformation = new ProtocolInformation();
             e.ProtocolInformation.Href =
                 Program.externalRepository + "/shells/" +
                 Base64UrlEncoder.Encode(ad.Id);
             Console.WriteLine("AAS " + ad.IdShort + " " + e.ProtocolInformation.Href);
-            e.Interface = "AAS-1.0";
+            e.Interface  = "AAS-1.0";
             ad.Endpoints = new List<Endpoint>();
             ad.Endpoints.Add(e);
             ad.GlobalAssetId = globalAssetId;
             //
-            var extSubjId = new Reference(ReferenceTypes.ExternalReference, new List<IKey>() {new Key(KeyTypes.GlobalReference, "assetKind")});
+            var extSubjId       = new Reference(ReferenceTypes.ExternalReference, new List<IKey>() {new Key(KeyTypes.GlobalReference, "assetKind")});
             var specificAssetId = new SpecificAssetId("assetKind", aas.AssetInformation.AssetKind.ToString(), externalSubjectId: extSubjId);
-            ad.SpecificAssetIds = new List<SpecificAssetId>
-            {
-                specificAssetId
-            };
+            ad.SpecificAssetIds = new List<SpecificAssetId> {specificAssetId};
 
             // Submodels
             if (aas.Submodels != null && aas.Submodels.Count > 0)
@@ -720,7 +710,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                     {
                         SubmodelDescriptor sd = new SubmodelDescriptor();
                         sd.IdShort = sm.IdShort;
-                        sd.Id = sm.Id;
+                        sd.Id      = sm.Id;
                         var esm = new Models.Endpoint();
                         esm.ProtocolInformation = new ProtocolInformation();
                         esm.ProtocolInformation.Href =
@@ -729,7 +719,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                             Base64UrlEncoder.Encode(sd.Id);
                         // Console.WriteLine("SM " + sd.IdShort + " " + esm.ProtocolInformation.EndpointAddress);
                         esm.Interface = "SUBMODEL-1.0";
-                        sd.Endpoints = new List<Models.Endpoint>();
+                        sd.Endpoints  = new List<Models.Endpoint>();
                         sd.Endpoints.Add(esm);
                         if (sm.SemanticId != null)
                         {
@@ -745,7 +735,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                         if (sm.SubmodelElements != null)
                             foreach (var se in sm.SubmodelElements)
                             {
-                                var sme = se;
+                                var  sme      = se;
                                 bool federate = false;
                                 if (sme.SemanticId != null && sme.SemanticId.Keys != null && sme.SemanticId.Keys.Count != 0 && sme.SemanticId.Keys[ 0 ] != null)
                                 {
@@ -758,58 +748,16 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                     if (sme.Qualifiers[ 0 ].Type == "federatedElement")
                                         federate = true;
                                 }
-
-                                if (false && federate)
-                                {
-                                    // TODO (jtikekar, 2023-09-04): @Andreas No Federated elements in sm Descriptor as per spec
-                                    if (sd.FederatedElements == null)
-                                        sd.FederatedElements = new List<string>();
-                                    string json = null;
-                                    // TODO (jtikekar, 2023-09-04): @Andreas why two serializations 
-                                    //json = JsonConvert.SerializeObject(sme, Newtonsoft.Json.Formatting.Indented,
-                                    //    new JsonSerializerSettings
-                                    //    {
-                                    //        NullValueHandling = NullValueHandling.Ignore
-                                    //    });
-                                    var j = Jsonization.Serialize.ToJsonObject(sme);
-                                    json = j.ToJsonString();
-                                    /*
-                                    if (sme is Property p)
-                                    {
-                                        json = JsonConvert.SerializeObject(p, Newtonsoft.Json.Formatting.Indented,
-                                            new JsonSerializerSettings
-                                            {
-                                                NullValueHandling = NullValueHandling.Ignore
-                                            });
-                                    }
-                                    if (sme is SubmodelElementCollection sec)
-                                    {
-                                        json = JsonConvert.SerializeObject(sec, Newtonsoft.Json.Formatting.Indented,
-                                            new JsonSerializerSettings
-                                            {
-                                                NullValueHandling = NullValueHandling.Ignore
-                                            });
-                                    }
-                                    */
-                                    /*
-                                    string tag = sme.idShort;
-                                    if (sme is AdminShell.Property p)
-                                        if (p.value != "")
-                                            tag += "=" + p.value;
-                                    */
-                                    if (json != null)
-                                        sd.FederatedElements.Add(json);
-                                }
                             }
 
                         ad.SubmodelDescriptors.Add(sd);
                         if (sm.IdShort.ToLower() == "nameplate")
                         {
                             // Add special entry for verifiable credentials
-                            sd = new SubmodelDescriptor();
-                            sd.IdShort = "NameplateVC";
-                            sd.Id = sm.Id + "_VC";
-                            esm = new Models.Endpoint();
+                            sd                      = new SubmodelDescriptor();
+                            sd.IdShort              = "NameplateVC";
+                            sd.Id                   = sm.Id + "_VC";
+                            esm                     = new Models.Endpoint();
                             esm.ProtocolInformation = new ProtocolInformation();
                             // TODO (jtikekar, 2023-09-04): @Andreas why hardcoded=> Verifiable creditentials
                             esm.ProtocolInformation.Href =
@@ -817,7 +765,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                 "aHR0cHM6Ly9yZWdpc3RyeS5oMjg5NDE2NC5zdHJhdG9zZXJ2ZXIubmV0/" +
                                 Base64UrlEncoder.Encode(ad.Id);
                             esm.Interface = "VC-1.0";
-                            sd.Endpoints = new List<Models.Endpoint>();
+                            sd.Endpoints  = new List<Models.Endpoint>();
                             sd.Endpoints.Add(esm);
                             if (sm.SemanticId != null)
                             {
@@ -857,7 +805,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                     continue;
                 }
 
-                var watch = System.Diagnostics.Stopwatch.StartNew();
+                var    watch       = System.Diagnostics.Stopwatch.StartNew();
                 string accessToken = null;
                 string requestPath = pr;
                 if (!requestPath.Contains("?"))
@@ -869,10 +817,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                 //string json = JsonConvert.SerializeObject(ad);
                 string json = DescriptorSerializer.ToJsonObject(ad).ToJsonString();
 
-                var handler = new HttpClientHandler()
-                {
-                    ServerCertificateCustomValidationCallback = delegate { return true; },
-                };
+                var handler = new HttpClientHandler() {ServerCertificateCustomValidationCallback = delegate { return true; }};
 
                 if (AasxServer.AasxTask.proxy != null)
                     handler.Proxy = AasxServer.AasxTask.proxy;
@@ -886,17 +831,17 @@ namespace IO.Swagger.Registry.Lib.V3.Services
 
                 if (json != "")
                 {
-                    bool error = false;
+                    bool                error    = false;
                     HttpResponseMessage response = new HttpResponseMessage();
                     try
                     {
                         Console.WriteLine("POST " + requestPath);
                         var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
                         var task = Task.Run(async () =>
-                        {
-                            response = await client.PostAsync(
-                                requestPath, content);
-                        });
+                                            {
+                                                response = await client.PostAsync(
+                                                                                  requestPath, content);
+                                            });
                         task.Wait();
                         error = !response.IsSuccessStatusCode;
                     }
@@ -928,8 +873,8 @@ namespace IO.Swagger.Registry.Lib.V3.Services
 
         static void AddAasDescriptorToRegistry(AssetAdministrationShellDescriptor ad, DateTime timestamp, bool initial = false)
         {
-            string aasID = ad.Id;
-            string assetID = ad.GlobalAssetId;
+            string aasID    = ad.Id;
+            string assetID  = ad.GlobalAssetId;
             string endpoint = "";
             if (ad.Endpoints != null && ad.Endpoints.Count != 0)
             {
@@ -943,9 +888,9 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                 {
                     if (e is SubmodelElementCollection ec)
                     {
-                        int found = 0;
+                        int      found = 0;
                         Property pjson = null;
-                        Property pep = null;
+                        Property pep   = null;
                         foreach (var e2 in ec.Value)
                         {
                             if (e2 is Property ep)
@@ -968,11 +913,11 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                             // if (s != pjson.Value)
                             {
                                 pjson.TimeStampCreate = timestamp;
-                                pjson.TimeStamp = timestamp;
-                                pjson.Value = s;
-                                pep.TimeStampCreate = timestamp;
-                                pep.TimeStamp = timestamp;
-                                pep.Value = endpoint;
+                                pjson.TimeStamp       = timestamp;
+                                pjson.Value           = s;
+                                pep.TimeStampCreate   = timestamp;
+                                pep.TimeStamp         = timestamp;
+                                pep.Value             = endpoint;
                                 Console.WriteLine("Replace Descriptor:");
                                 Console.WriteLine(s);
                             }
@@ -984,38 +929,38 @@ namespace IO.Swagger.Registry.Lib.V3.Services
 
             // add new entry
             SubmodelElementCollection c = new SubmodelElementCollection(
-                idShort: "ShellDescriptor_" + aasRegistry.SubmodelElements.Count,
-                value: new List<ISubmodelElement>());
+                                                                        idShort: "ShellDescriptor_" + aasRegistry.SubmodelElements.Count,
+                                                                        value: new List<ISubmodelElement>());
             c.TimeStampCreate = timestamp;
-            c.TimeStamp = timestamp;
+            c.TimeStamp       = timestamp;
             var p = new Property(DataTypeDefXsd.String, idShort: "idShort");
             p.TimeStampCreate = timestamp;
-            p.TimeStamp = timestamp;
-            p.Value = ad.IdShort;
+            p.TimeStamp       = timestamp;
+            p.Value           = ad.IdShort;
             c.Value.Add(p);
-            p = new Property(DataTypeDefXsd.String, idShort: "aasID");
+            p                 = new Property(DataTypeDefXsd.String, idShort: "aasID");
             p.TimeStampCreate = timestamp;
-            p.TimeStamp = timestamp;
-            p.Value = aasID;
+            p.TimeStamp       = timestamp;
+            p.Value           = aasID;
             c.Value.Add(p);
-            p = new Property(DataTypeDefXsd.String, idShort: "assetID");
+            p                 = new Property(DataTypeDefXsd.String, idShort: "assetID");
             p.TimeStampCreate = timestamp;
-            p.TimeStamp = timestamp;
+            p.TimeStamp       = timestamp;
             if (assetID != "")
             {
                 p.Value = assetID;
             }
 
             c.Value.Add(p);
-            p = new Property(DataTypeDefXsd.String, idShort: "endpoint");
+            p                 = new Property(DataTypeDefXsd.String, idShort: "endpoint");
             p.TimeStampCreate = timestamp;
-            p.TimeStamp = timestamp;
-            p.Value = endpoint;
+            p.TimeStamp       = timestamp;
+            p.Value           = endpoint;
             c.Value.Add(p);
-            p = new Property(DataTypeDefXsd.String, idShort: "descriptorJSON");
+            p                 = new Property(DataTypeDefXsd.String, idShort: "descriptorJSON");
             p.TimeStampCreate = timestamp;
-            p.TimeStamp = timestamp;
-            p.Value = DescriptorSerializer.ToJsonObject(ad).ToJsonString();
+            p.TimeStamp       = timestamp;
+            p.Value           = DescriptorSerializer.ToJsonObject(ad).ToJsonString();
             c.Value.Add(p);
             aasRegistry?.SubmodelElements.Add(c);
             /*
@@ -1033,23 +978,23 @@ namespace IO.Swagger.Registry.Lib.V3.Services
             {
                 // add new entry
                 SubmodelElementCollection cs = new SubmodelElementCollection(
-                    idShort: "SubmodelDescriptor_" + submodelRegistryCount++,
-                    value: new List<ISubmodelElement>());
+                                                                             idShort: "SubmodelDescriptor_" + submodelRegistryCount++,
+                                                                             value: new List<ISubmodelElement>());
                 cs.TimeStampCreate = timestamp;
-                cs.TimeStamp = timestamp;
+                cs.TimeStamp       = timestamp;
                 var ps = new Property(DataTypeDefXsd.String, idShort: "idShort");
                 ps.TimeStampCreate = timestamp;
-                ps.TimeStamp = timestamp;
-                ps.Value = sd.IdShort;
+                ps.TimeStamp       = timestamp;
+                ps.Value           = sd.IdShort;
                 cs.Value.Add(ps);
-                ps = new Property(DataTypeDefXsd.String, idShort: "submodelID");
+                ps                 = new Property(DataTypeDefXsd.String, idShort: "submodelID");
                 ps.TimeStampCreate = timestamp;
-                ps.TimeStamp = timestamp;
-                ps.Value = sd.Id;
+                ps.TimeStamp       = timestamp;
+                ps.Value           = sd.Id;
                 cs.Value.Add(ps);
-                ps = new Property(DataTypeDefXsd.String, idShort: "semanticID");
+                ps                 = new Property(DataTypeDefXsd.String, idShort: "semanticID");
                 ps.TimeStampCreate = timestamp;
-                ps.TimeStamp = timestamp;
+                ps.TimeStamp       = timestamp;
                 if (sd.SemanticId != null && sd.SemanticId.GetAsExactlyOneKey().Value != null)
                     ps.Value = sd.SemanticId.GetAsExactlyOneKey().Value;
                 cs.Value.Add(ps);
@@ -1058,24 +1003,24 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                     endpoint = sd.Endpoints[ 0 ].ProtocolInformation.Href;
                 }
 
-                ps = new Property(DataTypeDefXsd.String, idShort: "endpoint");
+                ps                 = new Property(DataTypeDefXsd.String, idShort: "endpoint");
                 ps.TimeStampCreate = timestamp;
-                ps.TimeStamp = timestamp;
-                ps.Value = endpoint;
+                ps.TimeStamp       = timestamp;
+                ps.Value           = endpoint;
                 cs.Value.Add(ps);
-                ps = new Property(DataTypeDefXsd.String, idShort: "descriptorJSON");
+                ps                 = new Property(DataTypeDefXsd.String, idShort: "descriptorJSON");
                 ps.TimeStampCreate = timestamp;
-                ps.TimeStamp = timestamp;
+                ps.TimeStamp       = timestamp;
                 //ps.Value = JsonConvert.SerializeObject(sd);
                 ps.Value = DescriptorSerializer.ToJsonObject(sd).ToJsonString();
                 cs.Value.Add(ps);
                 // iterate submodels
                 int federatedElementsCount = 0;
                 var smc = new SubmodelElementCollection(
-                    idShort: "federatedElements",
-                    value: new List<ISubmodelElement>());
+                                                        idShort: "federatedElements",
+                                                        value: new List<ISubmodelElement>());
                 smc.TimeStampCreate = timestamp;
-                smc.TimeStamp = timestamp;
+                smc.TimeStamp       = timestamp;
                 cs.Value.Add(smc);
                 if (submodelRegistry.SubmodelElements == null)
                     submodelRegistry.SubmodelElements = new List<ISubmodelElement>();
@@ -1083,17 +1028,17 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                 submodelRegistry?.SetAllParents(timestamp);
                 var r = new ReferenceElement(idShort: "ref_Submodel_" + iSubmodel++);
                 r.TimeStampCreate = timestamp;
-                r.TimeStamp = timestamp;
+                r.TimeStamp       = timestamp;
                 var mr = cs.GetModelReference(true);
                 r.Value = mr;
                 // revert order in references
                 int first = 0;
-                int last = r.Value.Keys.Count - 1;
+                int last  = r.Value.Keys.Count - 1;
                 while (first < last)
                 {
                     var temp = r.Value.Keys[ first ];
                     r.Value.Keys[ first ] = r.Value.Keys[ last ];
-                    r.Value.Keys[ last ] = temp;
+                    r.Value.Keys[ last ]  = temp;
                     first++;
                     last--;
                 }
@@ -1105,10 +1050,10 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                     if (sd.Endpoints != null && sd.Endpoints.Count > 0)
                     {
                         var ep = sd.Endpoints[ 0 ].ProtocolInformation.Href;
-                        p = new Property(DataTypeDefXsd.String, idShort: "NameplateVC");
+                        p                 = new Property(DataTypeDefXsd.String, idShort: "NameplateVC");
                         p.TimeStampCreate = timestamp;
-                        p.TimeStamp = timestamp;
-                        p.Value = ep;
+                        p.TimeStamp       = timestamp;
+                        p.Value           = ep;
                         cs.Value.Add(p);
                     }
                 }
@@ -1126,12 +1071,12 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                 fe, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
                             */
                             MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(fe));
-                            JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
-                            var sme = Jsonization.Deserialize.ISubmodelElementFrom(node);
+                            JsonNode     node  = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                            var          sme   = Jsonization.Deserialize.ISubmodelElementFrom(node);
 
                             // p = AdminShell.Property.CreateNew("federatedElement" + federatedElementsCount);
                             sme.TimeStampCreate = timestamp;
-                            sme.TimeStamp = timestamp;
+                            sme.TimeStamp       = timestamp;
                             // p.value = fe;
                             smc.Value.Add(sme);
                         }

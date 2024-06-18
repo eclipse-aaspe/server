@@ -200,9 +200,8 @@ namespace IO.Swagger.Controllers
         /// <summary>
         /// Creates an AASX package at the server
         /// </summary>
-        /// <param name="fileName">Filename of the AASX package</param>
         /// <param name="aasIds">Included AAS Ids</param>
-        /// <param name="file">AASX PAckage</param>
+        /// <param name="file">AASX Package</param>
         /// <returns></returns>
         [HttpPost]
         [Route("/packages")]
@@ -238,7 +237,6 @@ namespace IO.Swagger.Controllers
         /// Updates the AASX package at the server
         /// </summary>
         /// <param name="packageId">Package ID from the package list (BASE64-URL-encoded)</param>
-        /// <param name="fileName">AASX Package Name</param>
         /// <param name="file">AASX Package</param>
         /// <param name="aasIds">Included AAS Identifiers</param>
         /// <returns></returns>

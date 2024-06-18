@@ -5,7 +5,7 @@ namespace IO.Swagger.Lib.V3.Interfaces
 {
     public interface IAasRepositoryApiHelperService
     {
-        List<Reference> GetAllReferences(List<IReferable> referables);
-        Reference GetReference(IReferable referable);
+        List<Reference?>?     GetAllReferences(List<IReferable> referables);
+        Reference? GetReference(IReferable referable);
     }
 }

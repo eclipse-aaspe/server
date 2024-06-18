@@ -7,7 +7,7 @@ namespace IO.Swagger.Lib.V3.Services
 {
     public class Base64UrlDecoderService : IBase64UrlDecoderService
     {
-        public string Decode(string fieldName, string encodedString)
+        public string? Decode(string fieldName, string encodedString)
         {
             try
             {
@@ -15,10 +15,8 @@ namespace IO.Swagger.Lib.V3.Services
                 {
                     return Base64UrlEncoder.Decode(encodedString);
                 }
-                else
-                {
-                    return null;
-                }
+
+                return null;
             }
             catch (FormatException)
             {

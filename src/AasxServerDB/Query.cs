@@ -309,7 +309,7 @@ namespace AasxServerDB
             return smList.ConvertAll(
                 sm =>
                 {
-                    string identifier = (sm != null && sm.Identifier != null) ? sm.Identifier : "";
+                    var identifier = (sm != null && sm.Identifier != null) ? sm.Identifier : "";
                     return new SMResult()
                     {
                         smId = identifier,
@@ -329,10 +329,10 @@ namespace AasxServerDB
 
         private List<SMEWithValue> GetSMEWithValue( string smSemanticId = "", string semanticId = "", string contains = "", string equal = "", string lower = "", string upper = "")
         {
-            bool withContains = !contains.IsNullOrEmpty();
-            bool withEquals = !equal.IsNullOrEmpty();
-            bool withCompare = !(lower.IsNullOrEmpty() && upper.IsNullOrEmpty());
-            bool withOneOperation =
+            var withContains = !contains.IsNullOrEmpty();
+            var withEquals = !equal.IsNullOrEmpty();
+            var withCompare = !(lower.IsNullOrEmpty() && upper.IsNullOrEmpty());
+            var withOneOperation =
                 (withContains && !withEquals && !withCompare) ||
                 (!withContains && withEquals && !withCompare) ||
                 (!withContains && !withEquals && withCompare);
@@ -349,9 +349,9 @@ namespace AasxServerDB
 
         private void GetSValue(ref List<SMEWithValue> smeValue, string semanticId = "", string contains = "", string equal = "")
         {
-            bool withSME = !semanticId.IsNullOrEmpty();
-            bool withContains = !contains.IsNullOrEmpty();
-            bool withEqual = !equal.IsNullOrEmpty();
+            var withSME = !semanticId.IsNullOrEmpty();
+            var withContains = !contains.IsNullOrEmpty();
+            var withEqual = !equal.IsNullOrEmpty();
             if (!withContains && !withEqual)
                 return;
 
@@ -368,9 +368,9 @@ namespace AasxServerDB
 
         private void GetIValue(ref List<SMEWithValue> smeValue, string semanticId = "", string equal = "", string lower = "", string upper = "")
         {
-            bool withSME = !semanticId.IsNullOrEmpty();
-            bool withEqual = !equal.IsNullOrEmpty();
-            bool withCompare = !(lower.IsNullOrEmpty() && upper.IsNullOrEmpty());
+            var withSME = !semanticId.IsNullOrEmpty();
+            var withEqual = !equal.IsNullOrEmpty();
+            var withCompare = !(lower.IsNullOrEmpty() && upper.IsNullOrEmpty());
             if (!withEqual && !withCompare)
                 return;
 
@@ -407,9 +407,9 @@ namespace AasxServerDB
         
         private void GetDValue(ref List<SMEWithValue> smeValue, string semanticId = "", string equal = "", string lower = "", string upper = "")
         {
-            bool withSME = !semanticId.IsNullOrEmpty();
-            bool withEqual = !equal.IsNullOrEmpty();
-            bool withCompare = !(lower.IsNullOrEmpty() && upper.IsNullOrEmpty());
+            var withSME = !semanticId.IsNullOrEmpty();
+            var withEqual = !equal.IsNullOrEmpty();
+            var withCompare = !(lower.IsNullOrEmpty() && upper.IsNullOrEmpty());
             if (!withEqual && !withCompare)
                 return;
 
@@ -446,7 +446,7 @@ namespace AasxServerDB
 
         private void SelectSM(ref List<SMEWithValue> smeValue, string semanticId = "")
         {
-            bool withSM = !semanticId.IsNullOrEmpty();
+            var withSM = !semanticId.IsNullOrEmpty();
             using AasContext db = new();
             smeValue = smeValue
                 .Join((db.SMSets.Where(sm => !withSM || (sm.SemanticId != null && sm.SemanticId.Equals(semanticId)))),
@@ -461,9 +461,9 @@ namespace AasxServerDB
             return smeList.ConvertAll(
                 sme =>
                 {
-                    string identifier = (sme != null && sme.sm.Identifier != null) ? sme.sm.Identifier : "";
-                    string path = sme.sme.IdShort;
-                    int? pId = sme.sme.ParentSMEId;
+                    var identifier = (sme != null && sme.sm.Identifier != null) ? sme.sm.Identifier : "";
+                    var path = sme.sme.IdShort;
+                    var pId = sme.sme.ParentSMEId;
                     while (pId != null)
                     {
                         var smeDB = db.SMESets.Where(s => s.Id == pId).First();

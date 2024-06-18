@@ -29,8 +29,8 @@ namespace AasxServerDB
         {
             return new AasContext().SMSets
                 .OrderBy(s => s.Id)
-                .Where(s => (aasxid == 0 || s.AASXId == aasxid) && (aasid == 0 || s.AASId == aasid) && (smid == 0 || s.Id == smid) &&
-                    (searchLower.IsNullOrEmpty() || s.Identifier.ToLower().Contains(searchLower) || s.IdShort.ToLower().Contains(searchLower) || s.SemanticId.ToLower().Contains(searchLower)))
+                .Where(s => s.SemanticId != null && s.IdShort != null && s.Identifier != null && (aasxid == 0 || s.AASXId == aasxid) && (aasid == 0 || s.AASId == aasid) && (smid == 0 || s.Id == smid) &&
+                            (searchLower.IsNullOrEmpty() || s.Identifier.ToLower().Contains(searchLower) || s.IdShort.ToLower().Contains(searchLower) || s.SemanticId.ToLower().Contains(searchLower)))
                 .Take(size)
                 .ToList();
         }

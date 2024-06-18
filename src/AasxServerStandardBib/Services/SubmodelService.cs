@@ -85,7 +85,7 @@ namespace AasxServerStandardBib.Services
                         {
                             output = smeList.Value?[ idShortInt ];
                         }
-                        catch (ArgumentOutOfRangeException ex)
+                        catch (ArgumentOutOfRangeException)
                         {
                             throw new InvalidIdShortPathException(smeList.IdShort + "[" + idShortInt + "]");
                         }

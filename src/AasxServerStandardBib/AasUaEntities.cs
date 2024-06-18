@@ -1527,7 +1527,7 @@ namespace AasOpcUaServer
                         // currenty, only accept properties as in/out arguments. 
                         // Only these have an XSD value type!!
                         var prop = opvar.Value as Property;
-                        if (prop != null && prop.ValueType != null)
+                        if (prop != null)
                         {
                             // TODO (MIHO, 2020-08-06): this any better?
                             if (prop.IdShort != null && prop.IdShort.Trim() != "")

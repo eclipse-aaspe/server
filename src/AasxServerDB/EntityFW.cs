@@ -21,9 +21,9 @@ namespace AasxServerDB
 {
     public class AasContext : DbContext
     {
-        public static IConfiguration _con { get; set; }
-        public static string _dataPath { get; set; }
-        public static bool isPostgres { get; set; }
+        public static IConfiguration? _con       { get; set; }
+        public static string?         _dataPath  { get; set; }
+        public static bool            IsPostgres { get; set; }
 
         public DbSet<AASXSet> AASXSets { get; set; }
         public DbSet<AASSet> AASSets { get; set; }
@@ -42,17 +42,17 @@ namespace AasxServerDB
             if (connectionString.IsNullOrEmpty())
                 throw new Exception("No connectionString in appsettings");
 
-            if (connectionString.Contains("$DATAPATH"))
+            if (connectionString != null && connectionString.Contains("$DATAPATH"))
                 connectionString = connectionString.Replace("$DATAPATH", _dataPath);
 
-            if (connectionString.ToLower().Contains("host")) // PostgreSQL
+            if (connectionString != null && connectionString.ToLower().Contains("host")) // PostgreSQL
             {
-                isPostgres = true;
+                IsPostgres = true;
                 options.UseNpgsql(connectionString);
             }
             else // SQLite
             {
-                isPostgres = false;
+                IsPostgres = false;
                 options.UseSqlite(connectionString);
             }
         }

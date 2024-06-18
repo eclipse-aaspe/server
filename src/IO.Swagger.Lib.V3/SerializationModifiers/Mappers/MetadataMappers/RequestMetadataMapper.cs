@@ -216,7 +216,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
             return new Reference(referenceDTO.type, TransformKeys(referenceDTO.keys), TransformReference(referenceDTO.referredSemanticId));
         }
 
-        private static List<IKey> TransformKeys(List<KeyDTO> keys)
+        private static List<IKey> TransformKeys(List<KeyDTO>? keys)
         {
             if (keys == null) return null;
 

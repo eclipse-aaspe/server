@@ -12,8 +12,8 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 {
     public interface IValueOnlyJsonDeserializer
     {
-        IValueDTO DeserializeSubmodelElementValue(JsonNode node, string encodedSubmodelIdentifier = null, string idShortPath = null);
-        SubmodelValue DeserializeSubmodelValue(JsonNode node, string encodedSubmodelIdentifier);
+        IValueDTO?      DeserializeSubmodelElementValue(JsonNode node, string encodedSubmodelIdentifier = null, string idShortPath = null);
+        SubmodelValue? DeserializeSubmodelValue(JsonNode node, string encodedSubmodelIdentifier);
     }
     public class ValueOnlyJsonDeserializer : IValueOnlyJsonDeserializer
     {
@@ -25,11 +25,11 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             _submodelService = submodelService ?? throw new ArgumentNullException(nameof(submodelService));
             _decoderService = decoderService ?? throw new ArgumentNullException(nameof(submodelService));
         }
-        public IValueDTO DeserializeSubmodelElementValue(JsonNode node, string encodedSubmodelIdentifier = null, string idShortPath = null)
+        public IValueDTO? DeserializeSubmodelElementValue(JsonNode node, string encodedSubmodelIdentifier = null, string idShortPath = null)
         {
             if (node == null) throw new ArgumentNullException(nameof(node));
 
-            IValueDTO output = null;
+            IValueDTO? output = null;
 
             if (node is JsonObject jsonObject)
             {
@@ -44,9 +44,9 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return output;
         }
 
-        private IValueDTO Deserialize(string idShort, JsonNode value, string encodedSubmodelIdentifier, string idShortPath)
+        private IValueDTO? Deserialize(string idShort, JsonNode value, string encodedSubmodelIdentifier, string idShortPath)
         {
-            IValueDTO output = null;
+            IValueDTO? output = null;
             switch (value)
             {
                 case JsonValue jsonValue:
@@ -75,7 +75,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return output;
         }
 
-        private IValueDTO ParseJsonValueArray(string idShort, JsonArray valueArray, string encodedSubmodelIdentifier, string idShortPath)
+        private IValueDTO? ParseJsonValueArray(string idShort, JsonArray valueArray, string encodedSubmodelIdentifier, string idShortPath)
         {
             //This is Multilingual Property or SMEList
             var decodedSubmodelId = _decoderService.Decode("submodelId", encodedSubmodelIdentifier);
@@ -98,7 +98,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return null;
         }
 
-        private IValueDTO CreateSubmodelElementList(string idShort, JsonArray valueArray, SubmodelElementList smeList, string encodedSubmodelIdentifier, string idShortPath)
+        private IValueDTO? CreateSubmodelElementList(string idShort, JsonArray valueArray, SubmodelElementList smeList, string encodedSubmodelIdentifier, string idShortPath)
         {
             var value = new List<ISubmodelElementValue>();
             foreach (var element in valueArray)
@@ -110,23 +110,23 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new SubmodelElementListValue(idShort, value);
         }
 
-        private IValueDTO CreateMultilanguagePropertyValue(string idShort, JsonArray valueArray)
+        private IValueDTO? CreateMultilanguagePropertyValue(string idShort, JsonArray valueArray)
         {
-            var langStrings = new List<KeyValuePair<string, string>>();
+            var langStrings = new List<KeyValuePair<string, string?>>();
 
             foreach (var item in valueArray)
             {
                 if (item is JsonObject jsonObject)
                 {
-                    GetPropertyFromJsonObject(jsonObject, out string propertyName, out string propertyValue);
-                    langStrings.Add(new KeyValuePair<string, string>(propertyName, propertyValue));
+                    GetPropertyFromJsonObject(jsonObject, out string propertyName, out string? propertyValue);
+                    langStrings.Add(new KeyValuePair<string, string?>(propertyName, propertyValue));
                 }
             }
 
             return new MultiLanguagePropertyValue(idShort, langStrings);
         }
 
-        private void GetPropertyFromJsonObject(JsonObject jsonObject, out string propertyName, out string propertyValue)
+        private void GetPropertyFromJsonObject(JsonObject jsonObject, out string propertyName, out string? propertyValue)
         {
             propertyName = null; propertyValue = null;
             foreach (var item in jsonObject)
@@ -137,7 +137,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             }
         }
 
-        private IValueDTO ParseJsonValueObject(string idShort, JsonObject valueObject, string encodedSubmodelIdentifier = null, string idShortPath = null)
+        private IValueDTO? ParseJsonValueObject(string idShort, JsonObject valueObject, string encodedSubmodelIdentifier = null, string idShortPath = null)
         {
             if (valueObject == null) throw new ArgumentNullException();
             if (valueObject.ContainsKey("min") && valueObject.ContainsKey("max"))
@@ -197,7 +197,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return null;
         }
 
-        private IValueDTO CreateSubmodelElementCollectionValue(string idShort, JsonObject valueObject, string encodedSubmodelIdentifier, string idShortPath)
+        private IValueDTO? CreateSubmodelElementCollectionValue(string idShort, JsonObject valueObject, string encodedSubmodelIdentifier, string idShortPath)
         {
             var submodelElements = new List<ISubmodelElementValue>();
 
@@ -206,7 +206,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
                 var newNode = new JsonObject(new[] { KeyValuePair.Create<string, JsonNode>(item.Key, JsonNode.Parse(item.Value.ToJsonString())) });
                 if (idShortPath == null)
                     idShortPath = idShort;
-                var newIdShortPath = idShortPath + "." + item.Key;
+                var        newIdShortPath  = idShortPath + "." + item.Key;
                 var submodelElement = DeserializeSubmodelElementValue(newNode, encodedSubmodelIdentifier, newIdShortPath);
                 submodelElements.Add((ISubmodelElementValue)submodelElement);
             }
@@ -214,7 +214,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new SubmodelElementCollectionValue(idShort, submodelElements);
         }
 
-        private IValueDTO CreateBasicEventElement(string idShort, JsonObject valueObject)
+        private IValueDTO? CreateBasicEventElement(string idShort, JsonObject valueObject)
         {
             ReferenceDTO observed = null;
             var observedNode = valueObject["observed"] as JsonNode;
@@ -225,7 +225,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new BasicEventElementValue(idShort, observed);
         }
 
-        private IValueDTO CreateEntityValue(string idShort, JsonObject valueObject, string encodedSubmodelIdentifier, string idShortPath)
+        private IValueDTO? CreateEntityValue(string idShort, JsonObject valueObject, string encodedSubmodelIdentifier, string idShortPath)
         {
             string entityType = null;
             string globalAssetId = null;
@@ -243,22 +243,22 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
                 statements = new List<ISubmodelElementValue>();
                 foreach (var item in statementsNode)
                 {
-                    var newNode = new JsonObject(new[] { KeyValuePair.Create<string, JsonNode>(item.Key, JsonNode.Parse(item.Value.ToJsonString())) });
-                    var newIdShortPath = idShortPath + "." + item.Key;
-                    var statement = DeserializeSubmodelElementValue(newNode, encodedSubmodelIdentifier, newIdShortPath);
+                    var        newNode        = new JsonObject(new[] { KeyValuePair.Create<string, JsonNode>(item.Key, JsonNode.Parse(item.Value.ToJsonString())) });
+                    var        newIdShortPath = idShortPath + "." + item.Key;
+                    var statement      = DeserializeSubmodelElementValue(newNode, encodedSubmodelIdentifier, newIdShortPath);
                     statements.Add((ISubmodelElementValue)statement);
                 }
             }
             return new EntityValue(idShort, (EntityType)Stringification.EntityTypeFromString(entityType), statements, globalAssetId);
         }
 
-        private IValueDTO CreateReferenceElementValue(string idShort, JsonObject valueObject)
+        private IValueDTO? CreateReferenceElementValue(string idShort, JsonObject valueObject)
         {
             ReferenceDTO referenceDTO = JsonConvert.DeserializeObject<ReferenceDTO>(valueObject.ToString());
             return new ReferenceElementValue(idShort, referenceDTO);
         }
 
-        private IValueDTO CreateRelationshipElementValue(string idShort, JsonObject valueObject)
+        private IValueDTO? CreateRelationshipElementValue(string idShort, JsonObject valueObject)
         {
             ReferenceDTO firstDTO = null, secondDTO = null;
             JsonNode firstNode = valueObject["first"];
@@ -275,7 +275,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new RelationshipElementValue(idShort, firstDTO, secondDTO);
         }
 
-        private IValueDTO CreateAnnotedRelationshipElementValue(string idShort, JsonObject valueObject, string encodedSubmodelIdentifier, string idShortPath)
+        private IValueDTO? CreateAnnotedRelationshipElementValue(string idShort, JsonObject valueObject, string encodedSubmodelIdentifier, string idShortPath)
         {
             ReferenceDTO firstDTO = null, secondDTO = null;
             JsonNode firstNode = valueObject["first"];
@@ -304,7 +304,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new AnnotatedRelationshipElementValue(idShort, firstDTO, secondDTO);
         }
 
-        private IValueDTO CreateBlobValue(string idShort, JsonObject valueObject)
+        private IValueDTO? CreateBlobValue(string idShort, JsonObject valueObject)
         {
             string contentType = null;
             var contentTypeNode = valueObject["contentType"] as JsonValue;
@@ -320,7 +320,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new BlobValue(idShort, contentType);
         }
 
-        private IValueDTO CreateFileValue(string idShort, JsonObject valueObject)
+        private IValueDTO? CreateFileValue(string idShort, JsonObject valueObject)
         {
             string contentType = null, value = null;
             var contentTypeNode = valueObject["contentType"] as JsonValue;
@@ -330,7 +330,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new FileValue(idShort, contentType, value);
         }
 
-        private static IValueDTO CreateRangeValue(string idShort, JsonObject valueObject)
+        private static IValueDTO? CreateRangeValue(string idShort, JsonObject valueObject)
         {
             string min = null, max = null;
             var minNode = valueObject["min"] as JsonValue;
@@ -341,13 +341,13 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new RangeValue(idShort, min, max);
         }
 
-        public SubmodelValue DeserializeSubmodelValue(JsonNode node, string encodedSubmodelIdentifier)
+        public SubmodelValue? DeserializeSubmodelValue(JsonNode node, string encodedSubmodelIdentifier)
         {
             var submodelElements = new List<ISubmodelElementValue>();
             var jsonObject = node as JsonObject;
             foreach (var item in jsonObject)
             {
-                var newNode = new JsonObject(new[] { KeyValuePair.Create<string, JsonNode>(item.Key, JsonNode.Parse(item.Value.ToJsonString())) });
+                var        newNode         = new JsonObject(new[] { KeyValuePair.Create<string, JsonNode>(item.Key, JsonNode.Parse(item.Value.ToJsonString())) });
                 var submodelElement = DeserializeSubmodelElementValue(newNode, encodedSubmodelIdentifier);
                 submodelElements.Add((ISubmodelElementValue)submodelElement);
             }
