@@ -72,7 +72,7 @@
     "on_property": "mergedAt"
   },
   "template": "# 📦 Changelog\n\n#{{CHANGELOG}}\n\n#{{UNCATEGORIZED}}\n\n# Full Changelog\n[🔗 Release Diff](#{{RELEASE_DIFF}})\n\n# 👥 New Contributors\n\nMust be added manually.",
-  "pr_template": "- #{{TITLE}} by #{{AUTHOR}} in #{{URL}}",
+  "pr_template": "- #{{TITLE}} by @#{{AUTHOR}} in #{{URL}}",
   "empty_template": "No changes detected. See the [Changelog](CHANGELOG.md) for more information.",
   "label_extractor": [
     {
