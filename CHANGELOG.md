@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Applied general fixes in naming, layout, and applied Resharper suggestions across the AasxServerBlazor project to adhere to best practices and enhance future
   maintainability. (@Freezor)
 
+### Removed
+
+- I40Languages.cs and I40Messages.cs removed (@Freezor)
+
 ### Updated
 
 - Microsoft.IdentityModel.Tokens from **6.13.1** to **6.34.0** because of a package vulnerability. (@Freezor)

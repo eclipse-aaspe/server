@@ -1601,37 +1601,6 @@ namespace AasxServer
                     envi++;
                 }
 
-                // i40language
-                if (i40LanguageRuntime.isRequester && i40LanguageRuntime.sendFrameJSONRequester.Count != 0)
-                {
-                    foreach (string s in i40LanguageRuntime.sendFrameJSONRequester)
-                    {
-                        td = new TransmitData {source = connectNodeName};
-
-                        td.type = "i40LanguageRuntime.sendFrameJSONRequester";
-                        var json = JsonConvert.SerializeObject(s, Newtonsoft.Json.Formatting.Indented);
-                        td.publish.Add(json);
-                        tf.data.Add(td);
-                    }
-
-                    i40LanguageRuntime.sendFrameJSONRequester.Clear();
-                }
-
-                if (i40LanguageRuntime.isProvider && i40LanguageRuntime.sendFrameJSONProvider.Count != 0)
-                {
-                    td = new TransmitData {source = connectNodeName};
-
-                    foreach (string s in i40LanguageRuntime.sendFrameJSONProvider)
-                    {
-                        td.type = "i40LanguageRuntime.sendFrameJSONProvider";
-                        var json = JsonConvert.SerializeObject(s, Newtonsoft.Json.Formatting.Indented);
-                        td.publish.Add(json);
-                        tf.data.Add(td);
-                    }
-
-                    i40LanguageRuntime.sendFrameJSONProvider.Clear();
-                }
-
                 string publish = JsonConvert.SerializeObject(tf, Formatting.Indented);
 
                 HttpClient httpClient;
@@ -1963,23 +1932,6 @@ namespace AasxServer
                                             }
                                         }
                                     }
-                                }
-                            }
-
-                            // i40language
-                            if (i40LanguageRuntime.isRequester && td2.type == "i40LanguageRuntime.sendFrameJSONProvider")
-                            {
-                                foreach (string s in td2.publish)
-                                {
-                                    i40LanguageRuntime.receivedFrameJSONRequester.Add(JsonConvert.DeserializeObject<string>(s));
-                                }
-                            }
-
-                            if (i40LanguageRuntime.isProvider && td2.type == "i40LanguageRuntime.sendFrameJSONRequester")
-                            {
-                                foreach (string s in td2.publish)
-                                {
-                                    i40LanguageRuntime.receivedFrameJSONProvider.Add(JsonConvert.DeserializeObject<string>(s));
                                 }
                             }
                         }
