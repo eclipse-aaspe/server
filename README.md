@@ -6,10 +6,18 @@
 
 # Eclipse AASX Server
 
-![Check-release-workflow](https://github.com/admin-shell-io/aasx-server/workflows/Check-release-workflow/badge.svg)<br>
-![Check-style-workflow](https://github.com/admin-shell-io/aasx-server/workflows/Check-style-workflow/badge.svg)<br>
-![Build-and-package-release-workflow](https://github.com/admin-shell-io/aasx-server/workflows/Build-and-package-release-workflow/badge.svg)<br>
-![Build-and-publish-docker-images-workflow](https://github.com/admin-shell-io/aasx-server/workflows/Build-and-publish-docker-images-workflow/badge.svg)<br>
+> ### Status
+> [![Create Prerelease on Merge to Main](https://github.com/eclipse-aaspe/server/actions/workflows/prerelease-on-merge-to-main.yml/badge.svg)](https://github.com/eclipse-aaspe/server/actions/workflows/prerelease-on-merge-to-main.yml)<br>
+> [![Draft Release on Merge to Release Branch](https://github.com/eclipse-aaspe/server/actions/workflows/draft-release-on-merge-to-release-branch.yml/badge.svg?branch=release)](https://github.com/eclipse-aaspe/server/actions/workflows/draft-release-on-merge-to-release-branch.yml)<br>
+> [![Build and publish docker images when release is published](https://github.com/eclipse-aaspe/server/actions/workflows/build-and-publish-docker-images.yml/badge.svg)](https://github.com/eclipse-aaspe/server/actions/workflows/build-and-publish-docker-images.yml)<br>
+> [![Code Style & Security Analysis](https://github.com/eclipse-aaspe/server/actions/workflows/code-analysis.yml/badge.svg)](https://github.com/eclipse-aaspe/server/actions/workflows/code-analysis.yml)<br>
+> 
+> ![GitHub repo size](https://img.shields.io/github/repo-size/eclipse-aaspe/server) ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/eclipse-aaspe/server)
+> ### Docker Images
+> ![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-aspnetcore-for-demo-arm32?label=aasx-server-aspnetcore-for-demo-arm32)<br>
+> [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo-arm64?label=aasx-server-blazor-for-demo-arm64)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm64)<br>
+> [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo-arm32?label=aasx-server-blazor-for-demo-arm32)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm32)<br>
+> [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo?label=aasx-server-blazor-for-demo)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo)<br>
 
 AASX Server is a companion app for the [AASX Package Explorer](). It provides a local service to host and serve Industrie 4.0 AASX packages. The Core version
 exposes endpoints for REST, OPC UA, and MQTT protocols. The GUI version offers the same functionality and additionally uses the Blazor Framework to provide a
@@ -112,7 +120,59 @@ An example GraphQL query is:
 ```
 
 If you want to create a registry and also automatically POST to it, please take a look at
-our [GitHub issues](https://github.com/admin-shell-io/aasx-server/issues/189) page.
+our [GitHub issues](https://github.com/admin-shell-io/aasx-server/issues) page.
+
+## CREATE NEW RELEASES
+
+We've transitioned to [semantic versioning](https://semver.org) for better version distinctness. All versions follow this schema:
+
+```
+<major>.<minor>.<patch>.<buildnumber>-<AAS Schema Version>-<alpha>-<stable|latest|develop>
+```
+
+- **buildnumber**: An incremented value for each build, crucial for distinguishing between builds, particularly for development or latest releases without new version numbers.
+- **AAS Schema Version**: Indicates the AAS main schema used in this version.
+- **alpha**: Denotes an alpha build, indicating it's not yet a finished release.
+- **stable**: Represents the latest stable release, confirming that main features are working.
+- **latest**: Indicates the most recent build on the main branch, generally stable but may have minor issues.
+- **develop**: Refers to builds from branches other than main or develop, primarily for testing and potentially unstable.
+
+### Release a New Version
+
+With the switch to semantic versioning, our release process has been enhanced:
+
+1. **Update the Changelog**
+   - Move all recent changes to the [Released] section in the [changelog](CHANGELOG.md).
+   - Determine the new version number based on semantic versioning and include the release date.
+   
+2. **Update the Version Configuration**
+   - Update the [current_version.cfg](src/current_version.cfg) with the new version number.
+
+3. **Push Changes**
+   - Push these changes to the new branch, you made from the `main` branch state you want to release.
+
+4. **Create a New PR to Release Branch**
+   - Submit a pull request targeting the release branch. Ensure all necessary details are provided.
+
+5. **Rebase to Main**
+   - After the PR is merged into the release branch, rebase these changes onto the main branch. This ensures consistency across branches and updates [current_version.cfg](src/current_version.cfg) and [changelog](CHANGELOG.md) on the main branch.
+
+Once the branch is merged into the release branch, GitHub Workflows will **automatically** initiate, creating a new draft release. Review the release to confirm everything is in order before publishing it in the release settings.
+
+Docker image releases are handled automatically at this stage.
+
+### Nightly Releases
+
+We employ a cron job to check nightly for changes on the main branch. If changes are detected, it creates a new prerelease `latest alpha` build. This process automatically assigns a new version number, creates a tag, and releases the corresponding Docker images. A changelog is also automatically generated based on PR changes; however, direct merges into main are not included in this changelog.
+
+You can manually trigger this process using the workflow [here](https://github.com/eclipse-aaspe/server/actions/workflows/prerelease-on-merge-to-main.yml).
+
+### Example Version Tags
+- `v1.0.0.1-aasV3-alpha-develop`: Alpha build on a develop branch.
+- `v1.0.0.2-aasV3-alpha-stable`: Stable release.
+- `v1.0.0.3-aasV3-alpha-latest`: Latest build on the main branch.
+
+---
 
 ## OLD DOCUMENTATION
 
@@ -478,5 +538,6 @@ https://github.com/admin-shell-io/aasx-server/issues/new).
 
 ## Contributing
 
-Code contributions are very welcome! Please see
-[CONTRIBUTING.md](CONTRIBUTING.md) for more information.
+Please see [CONTRIBUTING](CONTRIBUTING.md) for instructions on joining the development and general contribution guidelines.
+For a complete list of all contributing individuals and companies, please visit our [CONTRIBUTORS](CONTRIBUTORS.md) page.
+

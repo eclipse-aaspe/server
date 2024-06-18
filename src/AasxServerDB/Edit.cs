@@ -1,15 +1,16 @@
 ﻿using AdminShellNS;
 using Microsoft.EntityFrameworkCore;
+using AasxServerDB.Entities;
 
 namespace AasxServerDB
 {
-    public class EditDB
+    public class Edit
     {
-        static public void EditAAS(AdminShellPackageEnv env)
+        static public void Update(AdminShellPackageEnv env)
         {
             using (AasContext db = new AasContext())
             {
-                // Delets automtically from DB
+                // Deletes automatically from DB
                 db.AASXSets.Where(a => a.AASX == env.Filename).ExecuteDelete();
 
                 // Load Everything back in
@@ -19,7 +20,17 @@ namespace AasxServerDB
                 };
                 VisitorAASX.LoadAASInDB(env, aasxDB);
                 db.Add(aasxDB);
-                db.SaveChanges();
+                try
+                {
+                    db.SaveChanges();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                }
+                finally { 
+                    db.Dispose();
+                }
             }
             env.setWrite(false);
         }

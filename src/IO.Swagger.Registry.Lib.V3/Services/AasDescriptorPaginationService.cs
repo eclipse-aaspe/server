@@ -57,7 +57,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
 
             for (int i = startIndex; i <= endIndex; i++)
             {
-                outputList.Add(sourceList[i]);
+                outputList.Add(sourceList[ i ]);
             }
 
             return outputList;

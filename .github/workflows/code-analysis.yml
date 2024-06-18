@@ -1,0 +1,79 @@
+name: Code Style & Security Analysis
+
+on:
+  pull_request:
+    branches:
+      - main
+      - release
+      - 'integration/**'
+    types: [opened, synchronize, reopened, edited]
+  push:
+    branches:
+      - main
+      - 'integration/**'
+  # Runs every Friday evening
+  schedule:
+    - cron: '30 19 * * 5'
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  format-check:
+    runs-on: windows-latest
+    if: false # We disable this check for now. At first, we must reformat the whole solution
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '6.0.x' # Specify the version of the .NET SDK
+
+      - name: Install dotnet format tool
+        run: dotnet tool install -g dotnet-format
+
+      - name: Run dotnet format
+        run: dotnet format ./src/AasxServer.sln --verify-no-changes --report format-report.json
+        env:
+          PATH: ${{ env.PATH }}:/home/runner/.dotnet/tools
+
+      - name: Upload format report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: format-report
+          path: format-report.json
+
+      - name: Check for formatting issues
+        if: failure()
+        run: |
+          echo "Code formatting issues detected. Please fix the issues and commit again."
+          exit 1
+
+  code-ql-analysis:
+    runs-on: windows-latest
+    
+    defaults:
+      run:
+        working-directory: src
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: csharp
+          build-mode: manual
+          queries: security-and-quality
+
+      - name: Build release
+        working-directory: src
+        run: .\BuildForRelease.ps1
+        shell: pwsh
+       
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:csharp"

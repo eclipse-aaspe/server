@@ -17,13 +17,14 @@ function AssertDotnet
         }
         else
         {
-            throw "dotnet could not be found in the PATH. Look if you could find it, e.g., in " + `
-               "$( Join-Path $env:LOCALAPPDATA "Microsoft\dotnet" ) and add it to PATH."
+            throw "dotnet could not be found in the PATH. Look if you could find it, e.g., in " +  `
+                "$( Join-Path $env:LOCALAPPDATA "Microsoft\dotnet" ) and add it to PATH."
         }
     }
 }
 
-function FindDotnetToolVersion($PackageID) {
+function FindDotnetToolVersion($PackageID)
+{
     AssertDotnet
 
     $version = ''
@@ -55,23 +56,24 @@ function FindDotnetToolVersion($PackageID) {
 .SYNOPSIS
 Check the version of the given dotnet tool.
  #>
-function AssertDotnetToolVersion($PackageID, $ExpectedVersion) {
+function AssertDotnetToolVersion($PackageID, $ExpectedVersion)
+{
     AssertDotnet
 
     $version = FindDotnetToolVersion -PackageID $PackageID
     if ($version -eq '')
     {
-        throw "No $PackageID could be found. Have you installed it? " + `
-               "Check the list of the installed dotnet tools with: " + `
-               "`dotnet tool list` and `dotnet tool list -g`."
+        throw "No $PackageID could be found. Have you installed it? " +  `
+                "Check the list of the installed dotnet tools with: " +  `
+                "`dotnet tool list` and `dotnet tool list -g`."
     }
     else
     {
         if ($version -ne $ExpectedVersion)
         {
-            throw "Expected $PackageID version $ExpectedVersion, but got: $version;" + `
-                   "Check the list of the installed dotnet tools with: " + `
-                   "`dotnet tool list` and `dotnet tool list -g`."
+            throw "Expected $PackageID version $ExpectedVersion, but got: $version;" +  `
+                    "Check the list of the installed dotnet tools with: " +  `
+                    "`dotnet tool list` and `dotnet tool list -g`."
         }
         # else: the version is correct.
     }
@@ -95,5 +97,5 @@ function GetArtefactsDir
 
 Export-ModuleMember -Function `
     AssertDotnet, `
-    AssertDotnetFormatVersion, `
-    GetArtefactsDir
+     AssertDotnetFormatVersion, `
+     GetArtefactsDir

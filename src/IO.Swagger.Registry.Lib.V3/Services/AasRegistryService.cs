@@ -1,4 +1,4 @@
-﻿using AasxServer;
+using AasxServer;
 using AasxServerStandardBib.Logging;
 using IO.Swagger.Registry.Lib.V3.Interfaces;
 using IO.Swagger.Registry.Lib.V3.Models;
@@ -10,6 +10,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using static AasxServer.Program;
 using AasxServerDB;
+using AasxServerDB.Entities;
 
 namespace IO.Swagger.Registry.Lib.V3.Services
 {
