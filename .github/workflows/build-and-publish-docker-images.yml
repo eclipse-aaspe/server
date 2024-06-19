@@ -3,7 +3,7 @@ name: Build and publish docker images when release is published
 on:
   release:
     types: [ published ]
-
+  workflow_dispatch: 
 jobs:
   Build-and-publish-docker-images:
     runs-on: ubuntu-latest
@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@master
 
       - name: Build and publish AasxServerBlazor
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v1
         with:
           username: adminshellio
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
@@ -22,7 +22,7 @@ jobs:
           dockerfile: src/docker/Dockerfile-AasxServerBlazor
 
       - name: Build and publish AasxServerBlazor-arm32
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v1
         with:
           username: adminshellio
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
@@ -31,7 +31,7 @@ jobs:
           dockerfile: src/docker/Dockerfile-AasxServerBlazor-arm32
 
       - name: Build and publish AasxServerBlazor-arm64
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v1
         with:
           username: adminshellio
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
@@ -40,7 +40,7 @@ jobs:
           dockerfile: src/docker/Dockerfile-AasxServerBlazor-arm64
 
       - name: Build and publish AasxServerCore
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v1
         with:
           username: adminshellio
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
@@ -49,7 +49,7 @@ jobs:
           dockerfile: src/docker/Dockerfile-AasxServerAspNetCore
 
       - name: Build and publish AasxServerCore-arm32
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v1
         with:
           username: adminshellio
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
@@ -58,7 +58,7 @@ jobs:
           dockerfile: src/docker/Dockerfile-AasxServerAspNetCore-arm32
 
       - name: Build and publish AasxServerCore-arm64
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v1
         with:
           username: adminshellio
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
