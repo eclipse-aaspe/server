@@ -1,4 +1,4 @@
-name: Check Branch is Releasable
+name: Check Branch is Working & Releasable
 
 on:
   pull_request:
@@ -6,8 +6,38 @@ on:
       - main
       - release
     types: [ opened, synchronize, reopened, edited ]
+  push:
+    branches:
+      - main
 
 jobs:
+  test-docker-images:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+
+      - name: Build and publish AasxServerBlazor-arm32
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          load: true
+          platforms: linux/arm32
+          context: ./src/docker/
+          file: Dockerfile-AasxServerBlazor-arm32
+          tags: adminshellio/aasx-server-blazor-arm32:test
+
+      - name: AasxServerBlazor-arm32
+        run: |
+          docker run --rm adminshellio/aasx-server-blazor-arm32:test 
+
   Check-release:
     runs-on: windows-latest
 
@@ -25,7 +55,7 @@ jobs:
         id: set_timestamp
         run: |
           $current_time = $(date +'%Y-%m-%d-T-%H-%M-%S')
-          echo "timestamp=$current_time" >> $GITHUB_ENV
+          echo "timestamp=$current_time" >> $env:GITHUB_OUTPUT
           Write-Host "The current timestamp is: $current_time"
 
 
@@ -89,3 +119,4 @@ jobs:
           name: AasxServerAspNetCore.LATEST.${{ steps.generate_version_number.outputs.version }}.${{ steps.set_timestamp.outputs.timestamp }}
           path: artefacts/release/${{ steps.generate_version_number.outputs.version }}/AasxServerAspNetCore.zip
           if-no-files-found: error
+  
