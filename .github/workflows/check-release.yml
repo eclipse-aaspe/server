@@ -16,7 +16,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
+        with:
+          fetch-depth: 0
+          
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -30,8 +32,7 @@ jobs:
           push: false
           load: true
           platforms: linux/arm32
-          context: ./src/docker/
-          file: Dockerfile-AasxServerBlazor-arm32
+          file: ./src/docker/Dockerfile-AasxServerBlazor-arm32
           tags: adminshellio/aasx-server-blazor-arm32:test
 
       - name: AasxServerBlazor-arm32
