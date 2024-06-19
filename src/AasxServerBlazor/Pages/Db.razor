@@ -58,7 +58,7 @@
 
         // change parameters to input window
         if (url.EndsWith("/aasx") || url.EndsWith("/aas") || url.EndsWith("/sm")
-        || url.EndsWith("/sme") || url.EndsWith("/svalue") || url.EndsWith("/ivalue") || url.EndsWith("/dvalue"))
+            || url.EndsWith("/sme") || url.EndsWith("/svalue") || url.EndsWith("/ivalue") || url.EndsWith("/dvalue"))
         {
             <input @bind="CurrentValue" style="width:200px; border-width: 1px; border-color: black;"/>
                 @code {
@@ -289,7 +289,7 @@
 
             if (url.EndsWith("/aas"))
             {
-                    List<AASSet> data = PageRetriever.GetPageAASData(size, TimeStamp.StringToDateTime(searchLower), searchLower, aasxid, aasid);
+                List<AASSet> data = PageRetriever.GetPageAASData(size, TimeStamp.StringToDateTime(searchLower), searchLower, aasxid, aasid);
                 <span>&nbsp&nbsp@($"AAS#: {data.Count}/{db.AASSets.Count()} size={size} search={search} aasxid={aasxid} aasid={aasid}")</span>
                 <br/>
                 <br/>
@@ -303,17 +303,17 @@
 
                 <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
                     <thead>
-                        <tr>
-                            <th style="word-break:keep-all">AASX#</th>
-                            <th style="word-break:keep-all">AAS#</th>
-                            <th style="word-break:keep-all">Id</th>
-                            <th style="word-break:keep-all">IdShort</th>
-                            <th style="word-break:keep-all">AssetKind</th>
-                            <th style="word-break:keep-all">GlobalAssetId</th>
-                            <th style="word-break:keep-all">TimeStamp</th>
-                            <th style="word-break:keep-all">Links</th>
-                            <th style="word-break:keep-all">API</th>
-                        </tr>
+                    <tr>
+                        <th style="word-break:keep-all">AASX#</th>
+                        <th style="word-break:keep-all">AAS#</th>
+                        <th style="word-break:keep-all">Id</th>
+                        <th style="word-break:keep-all">IdShort</th>
+                        <th style="word-break:keep-all">AssetKind</th>
+                        <th style="word-break:keep-all">GlobalAssetId</th>
+                        <th style="word-break:keep-all">TimeStamp</th>
+                        <th style="word-break:keep-all">Links</th>
+                        <th style="word-break:keep-all">API</th>
+                    </tr>
                     </thead>
                     <tbody>
                     @for (int i = 0; i < data.Count && i < 1000; i++)
@@ -392,7 +392,7 @@
 
             if (url.EndsWith("/sm"))
             {
-                    List<SMSet> data = PageRetriever.GetPageSMData(size, TimeStamp.StringToDateTime(searchLower), searchLower, aasxid, aasid, smid);
+                List<SMSet> data = PageRetriever.GetPageSMData(size, TimeStamp.StringToDateTime(searchLower), searchLower, aasxid, aasid, smid);
                 <span>
                     &nbsp&nbsp@($"SM#: {data.Count}/{db.SMSets.Count()} size={size} search={search} aasxid={aasxid} aasid={aasid} smid={smid}")
                 </span>
@@ -408,17 +408,17 @@
 
                 <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
                     <thead>
-                        <tr>
-                            <th style="word-break:keep-all">AASX#</th>
-                            <th style="word-break:keep-all">AAS#</th>
-                            <th style="word-break:keep-all">SM#</th>
-                            <th style="word-break:keep-all">Id</th>
-                            <th style="word-break:keep-all">IdShort</th>
-                            <th style="word-break:keep-all">SemanticId</th>
-                            <th style="word-break:keep-all">TimeStamp</th>
-                            <th style="word-break:keep-all">Links</th>
-                            <th style="word-break:keep-all">API</th>
-                        </tr>
+                    <tr>
+                        <th style="word-break:keep-all">AASX#</th>
+                        <th style="word-break:keep-all">AAS#</th>
+                        <th style="word-break:keep-all">SM#</th>
+                        <th style="word-break:keep-all">Id</th>
+                        <th style="word-break:keep-all">IdShort</th>
+                        <th style="word-break:keep-all">SemanticId</th>
+                        <th style="word-break:keep-all">TimeStamp</th>
+                        <th style="word-break:keep-all">Links</th>
+                        <th style="word-break:keep-all">API</th>
+                    </tr>
                     </thead>
                     <tbody>
                     @for (int i = 0; i < data.Count && i < 1000; i++)
@@ -522,7 +522,7 @@
 
             if (url.EndsWith("/sme"))
             {
-                    List<SMESet> data = PageRetriever.GetPageSMEData(size, TimeStamp.StringToDateTime(searchLower), searchLower, smid, smeid);
+                List<SMESet> data = PageRetriever.GetPageSMEData(size, TimeStamp.StringToDateTime(searchLower), searchLower, smid, smeid);
                 <span>
                     &nbsp&nbsp@($"SME#: {data.Count}/{db.SMESets.Count()} size={size} search={search} smid={smid} smeid={smeid}")
                 </span>
@@ -538,17 +538,17 @@
 
                 <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
                     <thead>
-                        <tr>
-                            <th style="word-break:keep-all">SM#</th>
-                            <th style="word-break:keep-all">Par#</th>
-                            <th style="word-break:keep-all">SME#</th>
-                            <th style="word-break:keep-all">Type</th>
-                            <th style="word-break:keep-all">IdShort</th>
-                            <th style="word-break:keep-all">SemanticId</th>
-                            <th style="word-break:keep-all">Value</th>
-                            <th style="word-break:keep-all">ValueType</th>
-                            <th style="word-break:keep-all">TimeStamp</th>
-                            <th style="word-break:keep-all">Links</th>
+                    <tr>
+                        <th style="word-break:keep-all">SM#</th>
+                        <th style="word-break:keep-all">Par#</th>
+                        <th style="word-break:keep-all">SME#</th>
+                        <th style="word-break:keep-all">Type</th>
+                        <th style="word-break:keep-all">IdShort</th>
+                        <th style="word-break:keep-all">SemanticId</th>
+                        <th style="word-break:keep-all">Value</th>
+                        <th style="word-break:keep-all">ValueType</th>
+                        <th style="word-break:keep-all">TimeStamp</th>
+                        <th style="word-break:keep-all">Links</th>
                         <th style="word-break:keep-all">API</th>
                     </tr>
                     </thead>

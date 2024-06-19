@@ -1024,8 +1024,7 @@ namespace AasxServer
             {
                 server.Run(); // wait for CTRL-C
             }
-
-            if (a.Mqtt)
+            else
             {
                 // no OPC UA: wait only for CTRL-C
                 Console.WriteLine("Servers successfully started. Press Ctrl-C to exit...");
@@ -1952,7 +1951,7 @@ namespace AasxServer
                 return;
             }
 
-                timerSet = true;
+            timerSet = true;
 
             AasxTimeSeries.TimeSeries.SetOPCClientThread(value);
         }
@@ -2705,7 +2704,7 @@ namespace AasxServer
 
                         foreach (JObject el in jp1.Value)
                         {
-                            ok |= parseJson(c2, el, filter);
+                            ok |= parseJson(c2, el, filter, envaas: envaas);
                         }
 
                         break;

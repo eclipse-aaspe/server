@@ -19,15 +19,14 @@ namespace AasxServerDB
                     id: aasDB.Identifier,
                     idShort: aasDB.IdShort,
                     assetInformation: new AssetInformation(AssetKind.Type, aasDB.GlobalAssetId),
-                    submodels: new List<AasCore.Aas3_0.IReference>()
-                );
+                    submodels: new List<AasCore.Aas3_0.IReference>());
                 aas.TimeStampCreate = aasDB.TimeStampCreate;
                 aas.TimeStamp = aasDB.TimeStamp;
                 aas.TimeStampTree = aasDB.TimeStampTree;
 
                 AdminShellPackageEnv? aasEnv = new AdminShellPackageEnv();
                 aasEnv.SetFilename(path);
-                aasEnv.AasEnv.AssetAdministrationShells.Add(aas);
+                aasEnv.AasEnv.AssetAdministrationShells?.Add(aas);
 
                 var submodelDBList = db.SMSets
                     .OrderBy(sm => sm.Id)
@@ -139,7 +138,6 @@ namespace AasxServerDB
                             (sme as SubmodelElementCollection).Value.Add(nextSME);
                             break;
                     }
-                    nextSME.Parent = sme;
                 }
 
                 if (smel.SMEType.Equals("SMC"))

@@ -1,4 +1,4 @@
-﻿using AasCore.Aas3_0;
+using AasCore.Aas3_0;
 using AdminShellNS;
 using System.Globalization;
 using static AasCore.Aas3_0.Visitation;
@@ -191,7 +191,7 @@ namespace AasxServerDB
             return "S";
         }
 
-        private void getValue(ISubmodelElement sme, out string vt, out string sValue, out long iValue, out double fValue)
+        private void getValue(ISubmodelElement sme, out string vt, out string? sValue, out long iValue, out double fValue)
         {
             sValue = string.Empty;
             iValue = 0;
@@ -243,7 +243,7 @@ namespace AasxServerDB
             var semanticId = sme.SemanticId.GetAsIdentifier();
             if (semanticId.IsNullOrEmpty())
                 semanticId = string.Empty;
-            getValue(sme, out string vt, out string sValue, out long iValue, out double fValue);
+            getValue(sme, out var vt, out var sValue, out var iValue, out var fValue);
             var smeDB = new SMESet
             {
                 ParentSME = _parSME,
