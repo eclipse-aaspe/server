@@ -140,24 +140,28 @@ namespace AasxServer
                                                     {
                                                         nextTask.taskType = sme2 as Property;
                                                     }
+
                                                     break;
                                                 case "cycletime":
                                                     if (sme2 is Property)
                                                     {
                                                         nextTask.cycleTime = sme2 as Property;
                                                     }
+
                                                     break;
                                                 case "cyclecount":
                                                     if (sme2 is Property)
                                                     {
                                                         nextTask.cycleCount = sme2 as Property;
                                                     }
+
                                                     break;
                                                 case "nextcycle":
                                                     if (sme2 is Property)
                                                     {
                                                         nextTask.nextCycle = sme2 as Property;
                                                     }
+
                                                     break;
                                             }
                                         }
@@ -210,6 +214,7 @@ namespace AasxServer
                             {
                                 operation_get_put(op, envIndex, timeStamp);
                             }
+
                             break;
                     }
                 }
@@ -259,54 +264,63 @@ namespace AasxServer
                         {
                             authType = sme2 as Property;
                         }
+
                         break;
                     case "authserverendpoint":
                         if (sme2 is Property)
                         {
                             authServerEndPoint = sme2 as Property;
                         }
+
                         break;
                     case "accesstoken":
                         if (sme2 is Property)
                         {
                             accessToken = sme2 as Property;
                         }
+
                         break;
                     case "clienttoken":
                         if (sme2 is Property)
                         {
                             clientToken = sme2 as Property;
                         }
+
                         break;
                     case "username":
                         if (sme2 is Property)
                         {
                             userName = sme2 as Property;
                         }
+
                         break;
                     case "password":
                         if (sme2 is Property)
                         {
                             passWord = sme2 as Property;
                         }
+
                         break;
                     case "authservercertificate":
                         if (sme2 is AasCore.Aas3_0.File)
                         {
                             authServerCertificate = sme2 as AasCore.Aas3_0.File;
                         }
+
                         break;
                     case "clientcertificate":
                         if (sme2 is AasCore.Aas3_0.File)
                         {
                             clientCertificate = sme2 as AasCore.Aas3_0.File;
                         }
+
                         break;
                     case "clientcertificatepassword":
                         if (sme2 is Property)
                         {
                             clientCertificatePassWord = sme2 as Property;
                         }
+
                         break;
                 }
             }
@@ -452,6 +466,7 @@ namespace AasxServer
                         email = split2[ 1 ];
                     }
                 }
+
                 Console.WriteLine("email: " + email);
 
                 var now = DateTime.UtcNow;
@@ -684,6 +699,7 @@ namespace AasxServer
                 {
                     p = (outputRef as Property);
                 }
+
                 if (outputRef is ReferenceElement)
                 {
                     var refElement = Program.env[ envIndex ].AasEnv.FindReferableByReference((outputRef as ReferenceElement).Value);
@@ -692,6 +708,7 @@ namespace AasxServer
                     if (refElement is Submodel)
                         sm = refElement as Submodel;
                 }
+
                 switch (outputRef.IdShort.ToLower())
                 {
                     case "lastdiff":
@@ -725,6 +742,7 @@ namespace AasxServer
                             {
                                 authType = sme2 as Property;
                             }
+
                             break;
 
                         case "accesstoken":
@@ -732,6 +750,7 @@ namespace AasxServer
                             {
                                 accessToken = sme2 as Property;
                             }
+
                             break;
 
                         case "clienttoken":
@@ -739,6 +758,7 @@ namespace AasxServer
                             {
                                 clientToken = sme2 as Property;
                             }
+
                             break;
 
                         case "username":
@@ -746,6 +766,7 @@ namespace AasxServer
                             {
                                 userName = sme2 as Property;
                             }
+
                             break;
 
                         case "password":
@@ -753,6 +774,7 @@ namespace AasxServer
                             {
                                 passWord = sme2 as Property;
                             }
+
                             break;
 
                         case "authservercertificate":
@@ -760,6 +782,7 @@ namespace AasxServer
                             {
                                 authServerCertificate = sme2 as AasCore.Aas3_0.File;
                             }
+
                             break;
 
                         case "authserverendpoint":
@@ -767,6 +790,7 @@ namespace AasxServer
                             {
                                 authServerEndPoint = sme2 as Property;
                             }
+
                             break;
 
                         case "clientcertificate":
@@ -774,6 +798,7 @@ namespace AasxServer
                             {
                                 clientCertificate = sme2 as AasCore.Aas3_0.File;
                             }
+
                             break;
 
                         case "clientcertificatepassword":
@@ -781,6 +806,7 @@ namespace AasxServer
                             {
                                 clientCertificatePassWord = sme2 as Property;
                             }
+
                             break;
                     }
                 }
@@ -851,7 +877,7 @@ namespace AasxServer
                         {
                             opName = "get";
                             requestPath = endPoint.Value + "/aas/" + aasPath +
-                                "/submodels/" + splitPath[ 1 ] + "/elements";
+                                          "/submodels/" + splitPath[ 1 ] + "/elements";
                             i = 2;
                             while (i < splitPath.Length)
                             {
@@ -864,8 +890,8 @@ namespace AasxServer
                         {
                             last = DateTime.Parse(lastDiff.Value).ToUniversalTime();
                             requestPath = endPoint.Value +
-                                        "/diffjson/aas/" + splitPath[ 0 ] +
-                                        "?path=" + subPath;
+                                          "/diffjson/aas/" + splitPath[ 0 ] +
+                                          "?path=" + subPath;
                             requestPath += "."; // to avoid wrong data by prefix only
                             requestPath += "&time=" + lastDiff.Value;
                         }
@@ -918,8 +944,8 @@ namespace AasxServer
                                     if (status != null)
                                     {
                                         status.Value = response.StatusCode.ToString() + " ; " +
-                                                        response.Content.ReadAsStringAsync().Result + " ; " +
-                                                        "HEAD " + requestPath;
+                                                       response.Content.ReadAsStringAsync().Result + " ; " +
+                                                       "HEAD " + requestPath;
                                         status.TimeStamp = timeStamp;
                                         Program.signalNewData(0);
                                     }
@@ -958,6 +984,7 @@ namespace AasxServer
                             clientToken.TimeStamp = timeStamp;
                             Console.WriteLine("Create Token2");
                         }
+
                         if (steps.Value.Contains("2"))
                         {
                             client.SetBearerToken(clientToken.Value);
@@ -982,6 +1009,7 @@ namespace AasxServer
                                         status.TimeStamp = timeStamp;
                                         Program.signalNewData(0);
                                     }
+
                                     continue;
                                 }
                             }
@@ -1014,6 +1042,7 @@ namespace AasxServer
                                         }
                                     }
                                 }
+
                                 if (elementSubmodel != null)
                                 {
                                     // receiveSubmodel = Newtonsoft.Json.JsonConvert.DeserializeObject<Submodel>(
@@ -1082,6 +1111,7 @@ namespace AasxServer
                                                         requestPath += "/" + splitPath[ i ];
                                                         i++;
                                                     }
+
                                                     requestPath += "/complete";
                                                     try
                                                     {
@@ -1096,6 +1126,7 @@ namespace AasxServer
                                                                                "GET " + requestPath;
                                                                 Program.signalNewData(0);
                                                             }
+
                                                             continue;
                                                         }
                                                     }
@@ -1215,6 +1246,7 @@ namespace AasxServer
                                                        response.Content.ReadAsStringAsync().Result + " ; " +
                                                        "GET " + requestPath;
                                     }
+
                                     error = true;
                                 }
                             }
@@ -1253,12 +1285,14 @@ namespace AasxServer
                                                         highDataIndex = Convert.ToInt32(ep.Value);
                                                         lowDataIndex = highDataIndex + 1;
                                                     }
+
                                                     if (ep.IdShort == "totalSamples")
                                                     {
                                                         totalSamples = Convert.ToInt32(ep.Value);
                                                     }
                                                 }
                                             }
+
                                             if (elementCollection.Value.Count == 1)
                                             {
                                                 if (elementCollection.Value[ 0 ] is SubmodelElementCollection smc)
@@ -1354,6 +1388,7 @@ namespace AasxServer
                             Console.WriteLine(statusValue);
                             error = true;
                         }
+
                         if (json != "")
                         {
                             try
@@ -1411,11 +1446,13 @@ namespace AasxServer
                         lastDiff.Value = "" + timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
                 }
             }
+
             if (loop != null)
             {
                 loop.Value = loopCount + "";
                 loop.TimeStamp = timeStamp;
             }
+
             watch.Stop();
             if (duration != null)
             {
@@ -2025,7 +2062,7 @@ namespace AasxServer
                                             if (v is SubmodelElementCollection c)
                                             {
                                                 if (c.IdShort.Contains("WeightInformationModule")
-                                                        || c.IdShort.Contains("WeightInformationCombination"))
+                                                    || c.IdShort.Contains("WeightInformationCombination"))
                                                 {
                                                     foreach (var v2 in c.Value)
                                                     {
@@ -2055,6 +2092,7 @@ namespace AasxServer
                             }
                         }
                     }
+
                     if (!assetCfp.ContainsKey(assetId))
                     {
                         assetCfp.Add(assetId, cfp);
@@ -2069,7 +2107,7 @@ namespace AasxServer
                     if (aas.IdShort == "ZveiControlCabinetAas - EXTERNAL")
                     {
                         root = cfp;
-                        if(!Program.showWeight && root.cradleToGateCombination != null)
+                        if (!Program.showWeight && root.cradleToGateCombination != null)
                         {
                             //TODO: elements need proper deep clone method implemented within AAS metamodel classes
                             if (asbuilt_total == null)
@@ -2090,7 +2128,7 @@ namespace AasxServer
             foreach (var d in assetCfp)
             {
                 var cfp = d.Value;
-                if(cfp.bom.Count != 0)
+                if (cfp.bom.Count != 0)
                 {
                     foreach (var asset in cfp.bom)
                     {
@@ -2143,7 +2181,6 @@ namespace AasxServer
                     if (node.cradleToGateCombination != null)
                     {
                         node.cradleToGateCombination.Value = "0.0";
-
                         if (node.cradleToGateModule != null)
                         {
                             node.cradleToGateCombination.Value = node.cradleToGateModule.Value;
@@ -2155,7 +2192,6 @@ namespace AasxServer
                     if (node.productionCombination != null)
                     {
                         node.productionCombination.Value = "0.0";
-
                         if (node.productionModule != null)
                         {
                             node.productionCombination.Value = node.productionModule.Value;
@@ -2166,7 +2202,6 @@ namespace AasxServer
                     if (node.distributionCombination != null)
                     {
                         node.distributionCombination.Value = "0.0";
-
                         if (node.distributionModule != null)
                         {
                             node.distributionCombination.Value = node.distributionModule.Value;
@@ -2177,7 +2212,6 @@ namespace AasxServer
                     if (node.weightCombination != null)
                     {
                         node.weightCombination.Value = "0.0";
-
                         if (node.weightModule != null)
                         {
                             node.weightCombination.Value = node.weightModule.Value;
