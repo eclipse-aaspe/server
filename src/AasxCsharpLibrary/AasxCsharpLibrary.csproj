@@ -20,7 +20,8 @@
     </ItemGroup>
     <ItemGroup>
         <EmbeddedResource Include="LICENSE.txt">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+          <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+          <CopyToPublishDirectory>Never</CopyToPublishDirectory>
         </EmbeddedResource>
     </ItemGroup>
     <ItemGroup>
