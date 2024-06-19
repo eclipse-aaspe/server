@@ -23,11 +23,23 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
-     # - name: Set up Docker Buildx
-     #   uses: docker/setup-buildx-action@v3
-     #   with:
-     #     version: latest
-     #     install: true
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          version: latest
+          install: true
+         
+      - name: Build AasxServerBlazor
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          load: true
+          file: ./src/docker/Dockerfile-AasxServerBlazor
+          tags: adminshellio/aasx-server-blazor:test
+
+      - name: Test AasxServerBlazor
+        run: |
+          docker run --rm adminshellio/aasx-server-blazor:test 
 
       - name: Build AasxServerBlazor-arm32
         uses: docker/build-push-action@v6
@@ -52,18 +64,6 @@ jobs:
       - name: Test AasxServerBlazor-arm64
         run: |
           docker run --rm adminshellio/aasx-server-blazor-arm64:test 
-          
-      - name: Build AasxServerBlazor
-        uses: docker/build-push-action@v6
-        with:
-          push: false
-          load: true
-          file: ./src/docker/Dockerfile-AasxServerBlazor
-          tags: adminshellio/aasx-server-blazor:test
-
-      - name: Test AasxServerBlazor
-        run: |
-          docker run --rm adminshellio/aasx-server-blazor:test 
           
       - name: Build AasxServerCore
         uses: docker/build-push-action@v6
