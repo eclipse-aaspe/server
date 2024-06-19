@@ -7,7 +7,7 @@ COPY ./src/ /repo/src/
 COPY ./LICENSE.TXT /repo/LICENSE.txt
 
 RUN dotnet restore -r linux-arm
-
+RUN dotnet restore AasxServerBlazor
 RUN dotnet publish -c Release -o /out/AasxServerBlazor AasxServerBlazor -r linux-arm --self-contained false --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:6.0-bullseye-slim-arm32v7 as base

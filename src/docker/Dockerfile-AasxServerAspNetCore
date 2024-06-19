@@ -5,6 +5,8 @@ WORKDIR /repo/src
 # Copy the source code and build
 COPY ./src/ /repo/src/
 COPY ./LICENSE.TXT /repo/LICENSE.txt
+
+RUN dotnet restore AasxServerAspNetCore
 RUN dotnet publish -c Release -o /out/AasxServerAspNetCore AasxServerAspNetCore
 
 FROM mcr.microsoft.com/dotnet/aspnet:6.0

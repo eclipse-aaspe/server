@@ -5,7 +5,9 @@ WORKDIR /repo/src
 # Copy everything else and build
 COPY ./src/ /repo/src/
 COPY ./LICENSE.TXT /repo/LICENSE.txt
-RUN dotnet publish -c Release -o /out/AasxServerBlazor AasxServerBlazor
+
+RUN dotnet restore AasxServerBlazor
+RUN dotnet publish -c Release -o /out/AasxServerBlazor AasxServerBlazor -v diag
 
 FROM mcr.microsoft.com/dotnet/aspnet:6.0 as base
 RUN apt update && apt upgrade --yes

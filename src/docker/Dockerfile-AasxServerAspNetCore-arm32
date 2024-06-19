@@ -8,6 +8,7 @@ COPY ./LICENSE.TXT /repo/LICENSE.txt
 
 #RUN dotnet restore -r linux-arm
 
+RUN dotnet restore AasxServerAspNetCore
 RUN dotnet publish -c Release -o /out/AasxServerAspNetCore AasxServerAspNetCore -r linux-arm --self-contained false
 
 FROM mcr.microsoft.com/dotnet/aspnet:6.0-bullseye-slim-arm32v7
