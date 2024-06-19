@@ -97,9 +97,7 @@ namespace AasxServer
         {
             output       = null;
             packageIndex = -1;
-            if (!withDb)
-                return false;
-            if (Program.isLoading)
+            if (!withDb || Program.isLoading)
                 return false;
 
             int i = envimin;
