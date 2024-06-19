@@ -3,7 +3,7 @@ name: Build and publish docker images when release is published
 on:
   release:
     types: [ published ]
-  workflow_dispatch: 
+
 jobs:
   Build-and-publish-docker-images:
     runs-on: ubuntu-latest
