@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -26,7 +26,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
 
-      - name: Build and publish AasxServerBlazor-arm32
+      - name: Build AasxServerBlazor-arm32
         uses: docker/build-push-action@v6
         with:
           push: false
@@ -35,10 +35,75 @@ jobs:
           file: ./src/docker/Dockerfile-AasxServerBlazor-arm32
           tags: adminshellio/aasx-server-blazor-arm32:test
 
-      - name: AasxServerBlazor-arm32
+      - name: Test AasxServerBlazor-arm32
         run: |
           docker run --rm adminshellio/aasx-server-blazor-arm32:test 
+          
+      - name: Build AasxServerBlazor-arm64
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          load: true
+          platforms: linux/arm32
+          file: ./src/docker/Dockerfile-AasxServerBlazor-arm64
+          tags: adminshellio/aasx-server-blazor-arm64:test
 
+      - name: Test AasxServerBlazor-arm64
+        run: |
+          docker run --rm adminshellio/aasx-server-blazor-arm64:test 
+          
+      - name: Build AasxServerBlazor
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          load: true
+          platforms: linux/arm32
+          file: ./src/docker/Dockerfile-AasxServerBlazor
+          tags: adminshellio/aasx-server-blazor:test
+
+      - name: Test AasxServerBlazor
+        run: |
+          docker run --rm adminshellio/aasx-server-blazor:test 
+          
+      - name: Build AasxServerCore
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          load: true
+          platforms: linux/arm32
+          file: ./src/docker/Dockerfile-AasxServerAspNetCore
+          tags: adminshellio/aasx-server-core:test
+
+      - name: Test AasxServerAspNetCore
+        run: |
+          docker run --rm adminshellio/aasx-server-core:test    
+
+      - name: Build AasxServerCore-arm32
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          load: true
+          platforms: linux/arm32
+          file: ./src/docker/Dockerfile-AasxServerAspNetCore-arm32
+          tags: adminshellio/aasx-server-core-arm32:test
+
+      - name: Test AasxServerAspNetCore-arm32
+        run: |
+          docker run --rm adminshellio/aasx-server-core-arm32:test 
+          
+      - name: Build AasxServerCore-arm64
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          load: true
+          platforms: linux/arm64
+          file: ./src/docker/Dockerfile-AasxServerAspNetCore-arm64
+          tags: adminshellio/aasx-server-core-arm64:test
+
+      - name: Test AasxServerAspNetCore-arm64
+        run: |
+          docker run --rm adminshellio/aasx-server-core-arm64:test 
+          
   Check-release:
     runs-on: windows-latest
 
