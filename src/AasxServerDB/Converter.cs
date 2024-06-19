@@ -1,4 +1,4 @@
-﻿using AasCore.Aas3_0;
+using AasCore.Aas3_0;
 using AasxServerDB.Entities;
 using AdminShellNS;
 using Extensions;
@@ -43,7 +43,7 @@ namespace AasxServerDB
             }
         }
 
-        static public Submodel? GetSubmodel(SMSet? smDB = null, string smIdentifier = string.Empty)
+        static public Submodel? GetSubmodel(SMSet? smDB = null, string smIdentifier = "")
         {
             using (AasContext db = new AasContext())
             {
@@ -149,7 +149,7 @@ namespace AasxServerDB
             }
         }
 
-        static public string GetAASXPath(string aasId = string.Empty, string submodelId = string.Empty)
+        static public string GetAASXPath(string aasId = "", string submodelId = "")
         {
             using AasContext db = new AasContext();
             int? aasxId = null;

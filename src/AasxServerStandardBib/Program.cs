@@ -1604,10 +1604,6 @@ namespace AasxServer
                 {
                     httpClient = new HttpClient();
                 }
-                else
-                {
-                    httpClient = new HttpClient();
-                }
                 var contentJson = new StringContent(publish, System.Text.Encoding.UTF8, "application/json");
 
                 string content = "";
@@ -1932,13 +1928,6 @@ namespace AasxServer
                     {
                     }
 
-                    if (newConnectData)
-                    {
-                        NewDataAvailable?.Invoke(null, EventArgs.Empty);
-                    }
-                    catch
-                    {
-                    }
                     if (newConnectData)
                     {
                         NewDataAvailable?.Invoke(null, EventArgs.Empty);
@@ -2647,7 +2636,8 @@ namespace AasxServer
         }
 
         public static bool parseJson(SubmodelElementCollection c, JObject o, List<string> filter,
-                                     Property minDiffAbsolute = null, Property minDiffPercent = null)
+                                     Property minDiffAbsolute = null, Property minDiffPercent = null,
+                                     AdminShellPackageEnv envaas = null)
         {
             int      newMode   = 0;
             DateTime timeStamp = DateTime.UtcNow;
@@ -2698,7 +2688,7 @@ namespace AasxServer
                                 newMode = 1;
                             }
 
-                            ok |= parseJson(c3, el, filter);
+                            ok |= parseJson(c3, el, filter, envaas: envaas);
                         }
 
                         break;

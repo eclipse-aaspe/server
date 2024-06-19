@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 @inject AASService SubmodelService
 @inject NavigationManager NavigationManager
 @inject ISecurityService SecService
@@ -192,7 +192,7 @@
                 {
                     <span style="color:lightgray;">UPDATE @TimeStamp.DateTimeToString(r.TimeStamp)</span>
                     <br/>
-                    <button style="border-width: 1px; border-color: black; background-color: lightgray" @onclick="setTimeStamp">TIMESTAMP</button>
+                    <button style="border-width: 1px; border-color: black; background-color: lightgray" @onclick="SetTimeStamp">TIMESTAMP</button>
                     <br/>
                     <span style="color:lightgray;">CREATE @TimeStamp.DateTimeToString(r.TimeStampCreate)</span>
                     <br/>
@@ -561,22 +561,15 @@
                     var refsme = Program.env[0].AasEnv.FindReferableByReference(be.Observed);
                     if (refsme != null)
                     {
-                        string okey = be.Observed.GetAsExactlyOneKey().ToStringExtended();
-                        <span style="color:white;background-color:blue;">Observed</span>
-                        <span>@(" " + okey)</span><br />
-                        var refsme = Program.env[0].AasEnv.FindReferableByReference(be.Observed);
-                        if (refsme != null)
-                        {
-                            <span style="color:lightgray;">UPDATE @TimeStamp.DateTimeToString(refsme.TimeStamp)</span>
-                            <br/>
-                            <span style="color:lightgray;">CREATE @TimeStamp.DateTimeToString(refsme.TimeStampCreate)</span>
-                            <br/>
-                        }
-                        else
-                        {
-                            <span>Referenced element does not exist!</span>
-                            <br/>
-                        }
+                        <span style="color:lightgray;">UPDATE @TimeStamp.DateTimeToString(refsme.TimeStamp)</span>
+                        <br />
+                        <span style="color:lightgray;">CREATE @TimeStamp.DateTimeToString(refsme.TimeStampCreate)</span>
+                        <br />
+                    }
+                    else
+                    {
+                        <span>Referenced element does not exist!</span>
+                        <br />
                     }
                 }
             }

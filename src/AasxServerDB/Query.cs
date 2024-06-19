@@ -11,7 +11,7 @@ namespace AasxServerDB
         public static string ExternalBlazor { get; set; }
 
         // --------------- API ---------------
-        public List<SMResult> SearchSMs(string semanticId = string.Empty, string identifier = string.Empty, string diff = string.Empty)
+        public List<SMResult> SearchSMs(string semanticId = "", string identifier = "", string diff = "")
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
             Console.WriteLine();
@@ -29,7 +29,7 @@ namespace AasxServerDB
             return result;
         }
 
-        public int CountSMs(string semanticId = string.Empty, string identifier = string.Empty, string diff = string.Empty)
+        public int CountSMs(string semanticId = "", string identifier = "", string diff = "")
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
             Console.WriteLine();
@@ -45,8 +45,8 @@ namespace AasxServerDB
         }
 
         public List<SMEResult> SearchSMEs(
-            string smSemanticId = string.Empty, string smIdentifier = string.Empty, string semanticId = string.Empty, string diff = string.Empty,
-            string contains = string.Empty, string equal = string.Empty, string lower = string.Empty, string upper = string.Empty)
+            string smSemanticId = "", string smIdentifier = "", string semanticId = "", string diff = "",
+            string contains = "", string equal = "", string lower = "", string upper = "")
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
             Console.WriteLine();
@@ -65,8 +65,8 @@ namespace AasxServerDB
         }
         
         public int CountSMEs(
-            string smSemanticId = string.Empty, string smIdentifier = string.Empty, string semanticId = string.Empty, string diff = string.Empty,
-            string contains = string.Empty, string equal = string.Empty, string lower = string.Empty, string upper = string.Empty)
+            string smSemanticId = "", string smIdentifier = "", string semanticId = "", string diff = "",
+            string contains = "", string equal = "", string lower = "", string upper = "")
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
             Console.WriteLine();
@@ -82,10 +82,10 @@ namespace AasxServerDB
         }
 
         public List<SMEResult> SearchSMEsResult(
-            string smSemanticId = string.Empty, 
-            string searchSemanticId = string.Empty,  string searchIdShort = string.Empty,
-            string equal = string.Empty, string contains = string.Empty,
-            string resultSemanticId = string.Empty, string resultIdShort = string.Empty)
+            string smSemanticId = "", 
+            string searchSemanticId = "",  string searchIdShort = "",
+            string equal = "", string contains = "",
+            string resultSemanticId = "", string resultIdShort = "")
         {
             List<SMEResult> result = new List<SMEResult>();
             
@@ -298,7 +298,7 @@ namespace AasxServerDB
         }
 
         // --------------- SM Methodes ---------------
-        private List<SMSet> GetSMSet(string semanticId = string.Empty, string identifier = string.Empty, string diffString = string.Empty)
+        private List<SMSet> GetSMSet(string semanticId = "", string identifier = "", string diffString = "")
         {
             bool withSemanticId = !semanticId.IsNullOrEmpty();
             bool withIdentifier = !identifier.IsNullOrEmpty();
@@ -340,7 +340,7 @@ namespace AasxServerDB
             public string? value;
         }
 
-        private List<SMEWithValue> GetSMEWithValue( string smSemanticId = string.Empty, string smIdentifier = string.Empty, string semanticId = string.Empty, string diff = string.Empty, string contains = string.Empty, string equal = string.Empty, string lower = string.Empty, string upper = string.Empty)
+        private List<SMEWithValue> GetSMEWithValue( string smSemanticId = "", string smIdentifier = "", string semanticId = "", string diff = "", string contains = "", string equal = "", string lower = "", string upper = "")
         {
             var result = new List<SMEWithValue>();
 
@@ -364,7 +364,7 @@ namespace AasxServerDB
             return result;
         }
 
-        private void GetSValue(ref List<SMEWithValue> smeValue, string semanticId = string.Empty, DateTime diff = new(), string contains = string.Empty, string equal = string.Empty)
+        private void GetSValue(ref List<SMEWithValue> smeValue, string semanticId = "", DateTime diff = new(), string contains = "", string equal = "")
         {
             bool withSME = !semanticId.IsNullOrEmpty();
             bool withDiff = !diff.Equals(DateTime.MinValue);
@@ -387,7 +387,7 @@ namespace AasxServerDB
                 .ToList());
         }
 
-        private void GetIValue(ref List<SMEWithValue> smeValue, string semanticId = string.Empty, DateTime diff = new(), string equal = string.Empty, string lower = string.Empty, string upper = string.Empty)
+        private void GetIValue(ref List<SMEWithValue> smeValue, string semanticId = "", DateTime diff = new(), string equal = "", string lower = "", string upper = "")
         {
             bool withSME = !semanticId.IsNullOrEmpty();
             bool withDiff = !diff.Equals(DateTime.MinValue);
@@ -428,7 +428,7 @@ namespace AasxServerDB
                 .ToList());
         }
         
-        private void GetDValue(ref List<SMEWithValue> smeValue, string semanticId = string.Empty, DateTime diff = new(), string equal = string.Empty, string lower = string.Empty, string upper = string.Empty)
+        private void GetDValue(ref List<SMEWithValue> smeValue, string semanticId = "", DateTime diff = new(), string equal = "", string lower = "", string upper = "")
         {
             bool withSME = !semanticId.IsNullOrEmpty();
             bool withDiff = !diff.Equals(DateTime.MinValue);
@@ -469,7 +469,7 @@ namespace AasxServerDB
                 .ToList());
         }
 
-        private void SelectSM(ref List<SMEWithValue> smeValue, string semanticId = string.Empty, string identifier = string.Empty)
+        private void SelectSM(ref List<SMEWithValue> smeValue, string semanticId = "", string identifier = "")
         {
             bool withSemanticId = !semanticId.IsNullOrEmpty();
             bool withIdentifier = !identifier.IsNullOrEmpty();
