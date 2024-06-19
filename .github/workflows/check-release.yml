@@ -34,7 +34,6 @@ jobs:
         with:
           push: false
           load: true
-          platforms: linux/arm32
           file: ./src/docker/Dockerfile-AasxServerBlazor-arm32
           tags: adminshellio/aasx-server-blazor-arm32:test
 
