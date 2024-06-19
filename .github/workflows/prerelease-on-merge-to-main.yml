@@ -274,7 +274,7 @@ jobs:
           push: true
           platforms: linux/arm64
           context: .
-          file: /src/docker/Dockerfile-AasxServerBlazor-arm64
+          file: src/docker/Dockerfile-AasxServerBlazor-arm64
           tags: "${{ env.VERSION_NUMBER }}"
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -284,7 +284,7 @@ jobs:
           push: true
           platforms: linux/amd64
           context: .
-          file: /src/docker/Dockerfile-AasxServerBlazor
+          file: src/docker/Dockerfile-AasxServerBlazor
           tags: "${{ env.VERSION_NUMBER }}"
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -294,7 +294,7 @@ jobs:
           push: true
           platforms: linux/amd64
           context: .
-          file: /src/docker/Dockerfile-AasxServerAspNetCore
+          file: src/docker/Dockerfile-AasxServerAspNetCore
           tags: "${{ env.VERSION_NUMBER }}"
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -304,7 +304,7 @@ jobs:
           push: true
           platforms: linux/arm32
           context: .
-          file: /src/docker/Dockerfile-AasxServerAspNetCore-arm32
+          file: src/docker/Dockerfile-AasxServerAspNetCore-arm32
           tags: "${{ env.VERSION_NUMBER }}"
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -314,6 +314,6 @@ jobs:
           push: true
           platforms: linux/arm64
           context: .
-          file: /src/docker/Dockerfile-AasxServerAspNetCore-arm64
+          file: src/docker/Dockerfile-AasxServerAspNetCore-arm64
           tags: "${{ env.VERSION_NUMBER }}"
           github-token: ${{ secrets.GITHUB_TOKEN }}"
