@@ -263,9 +263,9 @@ jobs:
         with:
           push: true
           platforms: linux/arm32
-          context: .
-          file: /src/docker/Dockerfile-AasxServerBlazor-arm32
-          tags: "${{ env.VERSION_NUMBER }}"
+          context: ./src/docker/
+          file: Dockerfile-AasxServerBlazor-arm32
+          tags: adminshellio/AasxServerBlazor-arm32:${{ env.VERSION_NUMBER }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and publish AasxServerBlazor-arm64
