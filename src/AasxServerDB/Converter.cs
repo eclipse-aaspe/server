@@ -19,11 +19,15 @@ namespace AasxServerDB
                     id: aasDB.Identifier,
                     idShort: aasDB.IdShort,
                     assetInformation: new AssetInformation(AssetKind.Type, aasDB.GlobalAssetId),
-                    submodels: new List<AasCore.Aas3_0.IReference>());
+                    submodels: new List<AasCore.Aas3_0.IReference>()
+                );
+                aas.TimeStampCreate = aasDB.TimeStampCreate;
+                aas.TimeStamp = aasDB.TimeStamp;
+                aas.TimeStampTree = aasDB.TimeStampTree;
 
                 AdminShellPackageEnv? aasEnv = new AdminShellPackageEnv();
                 aasEnv.SetFilename(path);
-                aasEnv.AasEnv.AssetAdministrationShells?.Add(aas);
+                aasEnv.AasEnv.AssetAdministrationShells.Add(aas);
 
                 var submodelDBList = db.SMSets
                     .OrderBy(sm => sm.Id)
@@ -39,7 +43,7 @@ namespace AasxServerDB
             }
         }
 
-        static public Submodel? GetSubmodel(SMSet? smDB = null, string smIdentifier = "")
+        static public Submodel? GetSubmodel(SMSet? smDB = null, string smIdentifier = string.Empty)
         {
             using (AasContext db = new AasContext())
             {
@@ -65,10 +69,10 @@ namespace AasxServerDB
 
                 LoadSME(submodel, null, null, SMEList, null);
 
-                DateTime timeStamp = DateTime.Now;
-                submodel.TimeStampCreate = timeStamp;
-                submodel.SetTimeStamp(timeStamp);
-                submodel.SetAllParents(timeStamp);
+                submodel.TimeStampCreate = smDB.TimeStampCreate;
+                submodel.TimeStamp = smDB.TimeStamp;
+                submodel.TimeStampTree = smDB.TimeStampTree;
+                submodel.SetAllParents();
 
                 return submodel;
             }           
@@ -119,6 +123,9 @@ namespace AasxServerDB
                     nextSME.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
                         new List<IKey>() { new Key(KeyTypes.GlobalReference, smel.SemanticId) });
                 }
+                nextSME.TimeStamp = smel.TimeStamp;
+                nextSME.TimeStampCreate = smel.TimeStampCreate;
+                nextSME.TimeStampTree = smel.TimeStampTree;
 
                 if (sme == null)
                 {
@@ -132,16 +139,17 @@ namespace AasxServerDB
                             (sme as SubmodelElementCollection).Value.Add(nextSME);
                             break;
                     }
+                    nextSME.Parent = sme;
                 }
 
-                if (smel.SMEType == "SMC")
+                if (smel.SMEType.Equals("SMC"))
                 {
                     LoadSME(submodel, nextSME, smel.SMEType, SMEList, smel.Id);
                 }
             }
         }
 
-        static public string GetAASXPath(string aasId = "", string submodelId = "")
+        static public string GetAASXPath(string aasId = string.Empty, string submodelId = string.Empty)
         {
             using AasContext db = new AasContext();
             int? aasxId = null;

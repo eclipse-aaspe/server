@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
@@ -34,7 +35,10 @@ namespace AasxServerDB.Migrations.Postgres
                     Identifier = table.Column<string>(type: "text", nullable: true),
                     IdShort = table.Column<string>(type: "text", nullable: true),
                     AssetKind = table.Column<string>(type: "text", nullable: true),
-                    GlobalAssetId = table.Column<string>(type: "text", nullable: true)
+                    GlobalAssetId = table.Column<string>(type: "text", nullable: true),
+                    TimeStampCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStampTree = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -57,7 +61,10 @@ namespace AasxServerDB.Migrations.Postgres
                     AASId = table.Column<int>(type: "integer", nullable: true),
                     SemanticId = table.Column<string>(type: "text", nullable: true),
                     Identifier = table.Column<string>(type: "text", nullable: true),
-                    IdShort = table.Column<string>(type: "text", nullable: true)
+                    IdShort = table.Column<string>(type: "text", nullable: true),
+                    TimeStampCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStampTree = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -86,7 +93,10 @@ namespace AasxServerDB.Migrations.Postgres
                     SMEType = table.Column<string>(type: "text", nullable: true),
                     ValueType = table.Column<string>(type: "text", nullable: true),
                     SemanticId = table.Column<string>(type: "text", nullable: true),
-                    IdShort = table.Column<string>(type: "text", nullable: true)
+                    IdShort = table.Column<string>(type: "text", nullable: true),
+                    TimeStampCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStampTree = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {

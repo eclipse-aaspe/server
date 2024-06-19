@@ -65,7 +65,6 @@ namespace AasxServer
     public static class Program
     {
         public static IConfiguration con { get; set; }
-
         public static string getBetween(AdminShellPackageEnv env, string strStart, string strEnd)
         {
             string strSource = env.getEnvXml();
@@ -97,9 +96,7 @@ namespace AasxServer
         {
             output       = null;
             packageIndex = -1;
-            if (!withDb)
-                return false;
-            if (Program.isLoading)
+            if (!withDb || Program.isLoading)
                 return false;
 
             int i = envimin;
@@ -161,7 +158,6 @@ namespace AasxServer
                         submodel.SetTimeStamp(timeStamp);
                         submodel.SetAllParents(timeStamp);
                     }
-
                     output = a;
                 }
                 else
@@ -1028,7 +1024,8 @@ namespace AasxServer
             {
                 server.Run(); // wait for CTRL-C
             }
-            else
+
+            if (a.Mqtt)
             {
                 // no OPC UA: wait only for CTRL-C
                 Console.WriteLine("Servers successfully started. Press Ctrl-C to exit...");
@@ -1575,7 +1572,6 @@ namespace AasxServer
                                         {
                                             toPublish = true;
                                         }
-
                                         j++;
                                     }
                                 }
@@ -1608,7 +1604,10 @@ namespace AasxServer
                 {
                     httpClient = new HttpClient();
                 }
-
+                else
+                {
+                    httpClient = new HttpClient();
+                }
                 var contentJson = new StringContent(publish, System.Text.Encoding.UTF8, "application/json");
 
                 string content = "";
@@ -1732,7 +1731,6 @@ namespace AasxServer
                                             {
                                                 tsb.sampleStatus.Value = "stopped";
                                             }
-
                                             if (tsb.sampleStatus.Value != "start")
                                                 continue;
 
@@ -1758,13 +1756,11 @@ namespace AasxServer
                                                                     tsb.data.Value.Add(smcData);
                                                                     actualCollections++;
                                                                 }
-
                                                                 if (actualCollections > maxCollections)
                                                                 {
                                                                     tsb.data.Value.RemoveAt(0);
                                                                     actualCollections--;
                                                                 }
-
                                                                 tsb.actualCollections.Value = actualCollections.ToString();
                                                                 /*
                                                                 tsb.lowDataIndex =
@@ -1940,6 +1936,13 @@ namespace AasxServer
                     {
                         NewDataAvailable?.Invoke(null, EventArgs.Empty);
                     }
+                    catch
+                    {
+                    }
+                    if (newConnectData)
+                    {
+                        NewDataAvailable?.Invoke(null, EventArgs.Empty);
+                    }
                 }
 
                 if (getaasxFile_destination != "") // block transfer
@@ -1960,7 +1963,7 @@ namespace AasxServer
                 return;
             }
 
-            timerSet = true;
+                timerSet = true;
 
             AasxTimeSeries.TimeSeries.SetOPCClientThread(value);
         }
@@ -2379,7 +2382,6 @@ namespace AasxServer
                                         Console.WriteLine("Already connected to OPC UA Server at {0} with {1} ...", URL, sm.IdShort);
                                     }
                                 }
-
                                 Console.WriteLine("==================================================");
                                 Console.WriteLine("Read values for {0} from {1} ...", sm.IdShort, URL);
                                 Console.WriteLine("==================================================");
@@ -2637,7 +2639,6 @@ namespace AasxServer
                             }
                         }
                     }
-
                     i++;
                 }
             }
@@ -2768,11 +2769,12 @@ namespace AasxServer
                         catch
                         {
                         }
-
                         break;
                 }
             }
 
+            if (envaas != null)
+                envaas.setWrite(true);
             Program.signalNewData(newMode);
             return ok;
         }
@@ -2871,7 +2873,6 @@ namespace AasxServer
             {
                 Console.WriteLine(message);
             }
-
             if (ask)
             {
                 try
@@ -2885,7 +2886,6 @@ namespace AasxServer
                     // intentionally fall through
                 }
             }
-
             return await Task.FromResult(true);
         }
     }

@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -33,7 +34,10 @@ namespace AasxServerDB.Migrations.Sqlite
                     Identifier = table.Column<string>(type: "TEXT", nullable: true),
                     IdShort = table.Column<string>(type: "TEXT", nullable: true),
                     AssetKind = table.Column<string>(type: "TEXT", nullable: true),
-                    GlobalAssetId = table.Column<string>(type: "TEXT", nullable: true)
+                    GlobalAssetId = table.Column<string>(type: "TEXT", nullable: true),
+                    TimeStampCreate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    TimeStamp = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    TimeStampTree = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -56,7 +60,10 @@ namespace AasxServerDB.Migrations.Sqlite
                     AASId = table.Column<int>(type: "INTEGER", nullable: true),
                     SemanticId = table.Column<string>(type: "TEXT", nullable: true),
                     Identifier = table.Column<string>(type: "TEXT", nullable: true),
-                    IdShort = table.Column<string>(type: "TEXT", nullable: true)
+                    IdShort = table.Column<string>(type: "TEXT", nullable: true),
+                    TimeStampCreate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    TimeStamp = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    TimeStampTree = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -85,7 +92,10 @@ namespace AasxServerDB.Migrations.Sqlite
                     SMEType = table.Column<string>(type: "TEXT", nullable: true),
                     ValueType = table.Column<string>(type: "TEXT", nullable: true),
                     SemanticId = table.Column<string>(type: "TEXT", nullable: true),
-                    IdShort = table.Column<string>(type: "TEXT", nullable: true)
+                    IdShort = table.Column<string>(type: "TEXT", nullable: true),
+                    TimeStampCreate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    TimeStamp = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    TimeStampTree = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
