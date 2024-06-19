@@ -12,7 +12,7 @@ on:
 
 jobs:
   test-docker-images:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     name: Build all docker images and check if they do run
     steps:
       - name: Checkout
@@ -20,21 +20,20 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Build AasxServerBlazor
+        uses: docker/build-push-action@v1
         with:
-          version: latest
-          install: true
+          username: adminshellio
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: adminshellio/aasx-server-blazor-for-demo
+          tags: v3latest
+          dockerfile: src/docker/Dockerfile-AasxServerBlazor
          
       - name: Build AasxServerBlazor
         uses: docker/build-push-action@v6
         with:
           push: false
           load: true
-          platforms: linux/arm64
           file: ./src/docker/Dockerfile-AasxServerBlazor
           tags: adminshellio/aasx-server-blazor:test
 
