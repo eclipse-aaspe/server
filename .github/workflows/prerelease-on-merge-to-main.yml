@@ -278,7 +278,7 @@ jobs:
           push: true
           load: true
           file: ./src/docker/Dockerfile-AasxServerBlazor-arm32
-          tags: adminshellio/AasxServerBlazor-arm32:${{ env.VERSION_NUMBER }}
+          tags: adminshellio/aasx-server-blazor-for-demo-arm32:${{ env.VERSION_NUMBER }}
 
       - name: Build and publish AasxServerBlazor-arm64
         uses: docker/build-push-action@v6
@@ -286,7 +286,7 @@ jobs:
           push: true
           load: true
           file: ./src/docker/Dockerfile-AasxServerBlazor-arm64
-          tags: "${{ env.VERSION_NUMBER }}"
+          tags: adminshellio/aasx-server-blazor-for-demo-arm64:${{ env.VERSION_NUMBER }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
 
@@ -296,7 +296,7 @@ jobs:
           push: true
           load: true
           file: ./src/docker/Dockerfile-AasxServerAspNetCore
-          tags: "${{ env.VERSION_NUMBER }}"
+          tags: adminshellio/aasx-server-aspnetcore-for-demo:${{ env.VERSION_NUMBER }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and publish AasxServerCore-arm32
@@ -305,7 +305,7 @@ jobs:
           push: true
           load: true
           file: ./src/docker/Dockerfile-AasxServerAspNetCore-arm32
-          tags: "${{ env.VERSION_NUMBER }}"
+          tags: adminshellio/aasx-server-aspnetcore-for-demo-arm32:${{ env.VERSION_NUMBER }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and publish AasxServerCore-arm64
@@ -314,5 +314,5 @@ jobs:
           push: true
           load: true
           file: ./src/docker/Dockerfile-AasxServerAspNetCore-arm64
-          tags: "${{ env.VERSION_NUMBER }}"
+          tags: adminshellio/aasx-server-aspnetcore-for-demo-arm64:${{ env.VERSION_NUMBER }}
           github-token: ${{ secrets.GITHUB_TOKEN }}"
