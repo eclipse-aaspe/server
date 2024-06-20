@@ -1,7 +1,7 @@
 name: 'Test Report'
 on:
   workflow_run:
-    workflows: ['Check Branch is Working & Releasable']
+    workflows: [ 'Check Branch is Working & Releasable' ]
     types:
       - completed
 permissions:
