@@ -27,9 +27,11 @@ jobs:
 
         - name: Build
           run: dotnet build --configuration Release
+          working-directory: src
 
         - name: Run Tests
           run: dotnet test --logger "trx;LogFileName=test-results.trx" || true
+          working-directory: src
 
         - name: Test Report
           uses: dorny/test-reporter@v1
