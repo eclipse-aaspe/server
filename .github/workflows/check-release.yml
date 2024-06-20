@@ -36,7 +36,13 @@ jobs:
       - name: Test
         run: dotnet test --logger "trx;LogFileName=test-results.trx" || true
         working-directory: src
-        
+                             
+      - name: upload test report 
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: "**/test-results.trx"
+          
       - name: Test Report
         uses: dorny/test-reporter@v1.9.1
         if: always()
@@ -49,31 +55,6 @@ jobs:
           working-directory: src
           fail-on-error: true
 
-      #- name: Run Tests
-      #  run: dotnet test --logger "trx;LogFileName=test-results.trx" || true
-      #  working-directory: src
-#
-      #- uses: actions/upload-artifact@v4
-      #  with:
-      #    name: test-results
-      #    path: "**/test-results.trx"
-                
-  #report-test-result:
-  #  runs-on: ubuntu-latest
-  #  needs: run-unit-tests
-  #  name: Display the unit test reports
-  #  steps:
-#
-  #    - name: Create Test Report
-  #      uses: dorny/test-reporter@v1
-  #      with:
-  #        name: Test Report
-  #        path: "*.trx"
-  #        reporter: dotnet-trx
-  #        fail-on-error: true
-  #      env:
-  #        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
   test-docker-images:
     runs-on: ubuntu-latest
     name: Build all docker images and check if they do run
