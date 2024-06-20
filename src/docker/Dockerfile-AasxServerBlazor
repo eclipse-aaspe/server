@@ -7,7 +7,7 @@ COPY ./src/ /repo/src/
 COPY ./LICENSE.TXT /repo/LICENSE.txt
 
 RUN dotnet clean
-RUN dotnet restore AasxServerBlazor -v diag
+RUN dotnet restore
 RUN dotnet build -o /out/AasxServerBlazor AasxServerBlazor -v diag
 RUN dotnet publish -c Release -v diag --no-restore
 
