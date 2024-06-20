@@ -11,15 +11,15 @@ on:
       - main
       - release
 
-permissions:
-  contents: read
-  actions: read
-  checks: write
-
 jobs:
   run-unit-tests:
     runs-on: ubuntu-latest
     name: Run all project unit tests
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+      checks: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,13 +32,20 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release
         working-directory: src
-
-      - name: Build & test
-        run: >
-          dotnet test
-          --configuration Release
-          --logger "GitHubActions;summary.includePassedTests=true;summary.includeSkippedTests=true"
-
+        
+      - name: Test
+        run: dotnet test $SOLUTION --configuration $BUILD_CONFIG --logger "trx;LogFileName=test-results.trx" || true
+        
+      - name: Test Report
+        uses: dorny/test-reporter@v1.9.1
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          name: Test report
+          path: "**/test-results.trx"
+          reporter: dotnet-trx
+          fail-on-error: true
 
       #- name: Run Tests
       #  run: dotnet test --logger "trx;LogFileName=test-results.trx" || true
