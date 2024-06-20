@@ -1,7 +1,7 @@
 name: 'Test Report'
 on:
   workflow_run:
-    workflows: [ 'Test and verify branch' ]
+    workflows: [ check-release ]
     types:
       - completed
 permissions:
