@@ -1,7 +1,7 @@
 name: 'Test Report'
 on:
   workflow_run:
-    workflows: [ 'Check Branch is Working & Releasable' ]
+    workflows: [ 'Test and verify branch' ]
     types:
       - completed
 permissions:
@@ -12,6 +12,10 @@ jobs:
   report:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: test-results
+          
       - uses: dorny/test-reporter@v1
         with:
           artifact: test-results            # artifact name
