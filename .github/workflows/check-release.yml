@@ -29,43 +29,42 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Build
-        run: dotnet build --configuration Release
-        working-directory: src
+     # - name: Build
+     #   run: dotnet build --configuration Release
+     #   working-directory: src
 
-      - name: Run Tests
-        run: dotnet test --logger "trx;LogFileName=test-results.trx" || true
-        working-directory: src
+      - name: Build & test
+        run: >
+          dotnet test
+          --configuration Release
+          --logger "GitHubActions;summary.includePassedTests=true;summary.includeSkippedTests=true"
 
-      - name: Test reports
-        uses: bibipkins/dotnet-test-reporter@v1.4.0
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          comment-title: 'Unit Test Results'
-          results-path: ./*.trx
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: "**/test-results.trx"
+      #- name: Run Tests
+      #  run: dotnet test --logger "trx;LogFileName=test-results.trx" || true
+      #  working-directory: src
+#
+      #- uses: actions/upload-artifact@v4
+      #  with:
+      #    name: test-results
+      #    path: "**/test-results.trx"
                 
-  report-test-result:
-    runs-on: ubuntu-latest
-    needs: run-unit-tests
-    name: Display the unit test reports
-    steps:
-
-      - name: Create Test Report
-        uses: dorny/test-reporter@v1
-        with:
-          name: Test Report
-          path: "*.trx"
-          reporter: dotnet-trx
-          fail-on-error: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #report-test-result:
+  #  runs-on: ubuntu-latest
+  #  needs: run-unit-tests
+  #  name: Display the unit test reports
+  #  steps:
+#
+  #    - name: Create Test Report
+  #      uses: dorny/test-reporter@v1
+  #      with:
+  #        name: Test Report
+  #        path: "*.trx"
+  #        reporter: dotnet-trx
+  #        fail-on-error: true
+  #      env:
+  #        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   
-  #https://github.com/dorny/test-reporter/issues/343 either that should work or I need something different. Maybe I really need to upload them and in another process show the test results
   test-docker-images:
     runs-on: ubuntu-latest
     name: Build all docker images and check if they do run
