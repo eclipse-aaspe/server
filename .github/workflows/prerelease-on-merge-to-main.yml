@@ -270,7 +270,7 @@ jobs:
           push: true
           load: true
           file: ./src/docker/Dockerfile-AasxServerBlazor
-          tags: "${{ env.VERSION_NUMBER }}"
+          tags: adminshellio/aasx-server-blazor-for-demo:${{ env.VERSION_NUMBER }}
           
       - name: Build and publish AasxServerBlazor-arm32
         uses: docker/build-push-action@v6
