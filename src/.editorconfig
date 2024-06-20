@@ -140,7 +140,7 @@ csharp_space_within_array_access_brackets = false
 # If you use StyleCop, you'll need to disable SA1636: File header copyright text should match.
 # dotnet_diagnostic.SA1636.severity = none
 # Undocumented
-dotnet_style_operator_placement_when_wrapping = end_of_line:warning
+dotnet_style_operator_placement_when_wrapping = end_of_line
 csharp_style_prefer_null_check_over_type_check = true:warning
 
 # C# Style Rules

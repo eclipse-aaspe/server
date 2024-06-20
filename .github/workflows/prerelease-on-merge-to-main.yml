@@ -82,7 +82,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    if: needs.check-for-changes.outputs.branch_changed == 'true' 
+    if: needs.check-for-changes.outputs.branch_changed == 'true'
     outputs:
       VERSION_NUMBER: ${{ steps.generate_version_number.outputs.version }}
     steps:
@@ -254,82 +254,65 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:       
+          username: adminshellio
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          
+      - name: Set version number
+        id: set-version
+        run: echo "VERSION_NUMBER=$(echo ${{ needs.create-new-prerelease.outputs.VERSION_NUMBER }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
+      - name: Build and publish AasxServerBlazor
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          load: true
+          file: ./src/docker/Dockerfile-AasxServerBlazor
+          tags: adminshellio/aasx-server-blazor-for-demo:${{ env.VERSION_NUMBER }}
+          
       - name: Build and publish AasxServerBlazor-arm32
         uses: docker/build-push-action@v6
         with:
-          username: adminshellio
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
           push: true
-          platforms: linux/arm32
-          context: .
           load: true
-          repository: adminshellio/aasx-server-blazor-for-demo-arm32
-          dockerfile: src/docker/Dockerfile-AasxServerBlazor-arm32
-          tags: "${{ needs.create-new-prerelease.outputs.VERSION_NUMBER }}"
+          file: ./src/docker/Dockerfile-AasxServerBlazor-arm32
+          tags: adminshellio/aasx-server-blazor-for-demo-arm32:${{ env.VERSION_NUMBER }}
 
       - name: Build and publish AasxServerBlazor-arm64
         uses: docker/build-push-action@v6
         with:
-          username: adminshellio
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
           push: true
-          platforms: linux/arm64
-          context: .
           load: true
-          repository: adminshellio/aasx-server-blazor-for-demo-arm64
-          dockerfile: src/docker/Dockerfile-AasxServerBlazor-arm64
-          tags: "${{ needs.create-new-prerelease.outputs.VERSION_NUMBER }}"
+          file: ./src/docker/Dockerfile-AasxServerBlazor-arm64
+          tags: adminshellio/aasx-server-blazor-for-demo-arm64:${{ env.VERSION_NUMBER }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      # NO REPO??
-      #- name: Build and publish AasxServerBlazor
-      #  uses: docker/build-push-action@v6
-      #  with:
-      #    username: adminshellio
-      #    password: ${{ secrets.DOCKERHUB_PASSWORD }}
-      #    push: true
-      #    platforms: linux/amd64
-      #    context: .
-      #    load: true
-      #    file: src/docker/Dockerfile-AasxServerBlazor
-      #    repository: adminshellio/aasx-server-blazor-for-demo-arm64
-      #    tags: {{ needs.create-new-prerelease.outputs.VERSION_NUMBER }}
-          
+
       - name: Build and publish AasxServerCore
         uses: docker/build-push-action@v6
         with:
-          username: adminshellio
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
           push: true
-          platforms: linux/amd64
-          context: .
           load: true
-          repository: adminshellio/aasx-server-aspnetcore-for-demo
-          dockerfile: src/docker/Dockerfile-AasxServerAspNetCore
-          tags: "${{ needs.create-new-prerelease.outputs.VERSION_NUMBER }}"
+          file: ./src/docker/Dockerfile-AasxServerAspNetCore
+          tags: adminshellio/aasx-server-aspnetcore-for-demo:${{ env.VERSION_NUMBER }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and publish AasxServerCore-arm32
         uses: docker/build-push-action@v6
         with:
-          username: adminshellio
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
           push: true
-          platforms: linux/arm32
-          context: .
           load: true
-          repository: adminshellio/aasx-server-aspnetcore-for-demo-arm32
-          dockerfile: src/docker/Dockerfile-AasxServerAspNetCore-arm32
-          tags: "${{ needs.create-new-prerelease.outputs.VERSION_NUMBER }}"
+          file: ./src/docker/Dockerfile-AasxServerAspNetCore-arm32
+          tags: adminshellio/aasx-server-aspnetcore-for-demo-arm32:${{ env.VERSION_NUMBER }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and publish AasxServerCore-arm64
         uses: docker/build-push-action@v6
         with:
-          username: adminshellio
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
           push: true
-          platforms: linux/arm64
-          context: .
           load: true
-          repository: adminshellio/aasx-server-aspnetcore-for-demo-arm64
-          dockerfile: src/docker/Dockerfile-AasxServerAspNetCore-arm64
-          tags: "${{ needs.create-new-prerelease.outputs.VERSION_NUMBER }}"
+          file: ./src/docker/Dockerfile-AasxServerAspNetCore-arm64
+          tags: adminshellio/aasx-server-aspnetcore-for-demo-arm64:${{ env.VERSION_NUMBER }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}"

@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <OutputType>Library</OutputType>
         <RootNamespace>AdminShellNS</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
@@ -20,7 +20,8 @@
     </ItemGroup>
     <ItemGroup>
         <EmbeddedResource Include="LICENSE.txt">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+          <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+          <CopyToPublishDirectory>Never</CopyToPublishDirectory>
         </EmbeddedResource>
     </ItemGroup>
     <ItemGroup>

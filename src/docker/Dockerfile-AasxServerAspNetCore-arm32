@@ -1,5 +1,5 @@
 # Based on https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/Dockerfile.debian-arm32
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-env
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
 WORKDIR /repo/src
 
 # Copy everything else and build
@@ -8,9 +8,10 @@ COPY ./LICENSE.TXT /repo/LICENSE.txt
 
 #RUN dotnet restore -r linux-arm
 
+RUN dotnet restore AasxServerAspNetCore
 RUN dotnet publish -c Release -o /out/AasxServerAspNetCore AasxServerAspNetCore -r linux-arm --self-contained false
 
-FROM mcr.microsoft.com/dotnet/aspnet:6.0-bullseye-slim-arm32v7
+FROM mcr.microsoft.com/dotnet/aspnet:8.0.3-bookworm-slim-arm32v7 as base
 EXPOSE 5001
 COPY --from=build-env /out/AasxServerAspNetCore/ /AasxServerAspNetCore/
 COPY ./content-for-demo/ /AasxServerAspNetCore/
