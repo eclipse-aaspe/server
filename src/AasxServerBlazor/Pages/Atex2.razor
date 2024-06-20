@@ -1,4 +1,4 @@
-﻿@page "/atex2";
+@page "/atex2";
 @using AasxRestServerLibrary;
 @using AasxServer
 @using Microsoft.AspNetCore.Html;
@@ -68,7 +68,7 @@
         {
             filter = s[1];
         }
-
+        Program.loadAllPackage();
         collectData();
 
         for (int p = 0; p < countProject; p++)

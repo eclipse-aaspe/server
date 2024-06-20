@@ -93,6 +93,86 @@ namespace AasxServer
 
         static int oldest = 0;
 
+        public static bool loadAllPackage()
+        {
+            if (!withDb || Program.isLoading)
+                return false;
+
+            List<string> listAAS = new List<string>();
+            List<string> listSM = new List<string>();
+
+            int i = envimin;
+            while (i < env.Length)
+            {
+                if (env[i] == null)
+                    break;
+
+                listAAS.Add(env[i].AasEnv.AssetAdministrationShells.Select(aas => aas.Id).FirstOrDefault(string.Empty));
+                listSM.Add(env[i].AasEnv.Submodels.Select(sm => sm.Id).FirstOrDefault(string.Empty));
+
+                i++;
+            }
+
+            // not found in memory
+            if (i == env.Length)
+            {
+                i = oldest++;
+                if (oldest == env.Length)
+                    oldest = envimin;
+            }
+
+            lock (Program.changeAasxFile)
+            {
+                foreach(string aasIdentifier in listAAS)
+                {
+                    envFileName[i] = Converter.GetAASXPath(aasId: aasIdentifier);
+                    if (envFileName[i].Equals(""))
+                        continue;
+
+                    if (env[i] != null)
+                    {
+                        if (env[i].getWrite())
+                        {
+                            saveEnv(i);
+                            env[i].setWrite(false);
+                        }
+
+                        env[i].Close();
+                    }
+
+                    if (!withDbFiles)
+                    {
+                        env[i] = new AdminShellPackageEnv(envFileName[i]);
+
+                        DateTime timeStamp = DateTime.Now;
+                        var a = env[i].AasEnv.AssetAdministrationShells[0];
+                        a.TimeStampCreate = timeStamp;
+                        a.SetTimeStamp(timeStamp);
+                        foreach (var submodel in env[i].AasEnv.Submodels)
+                        {
+                            submodel.TimeStampCreate = timeStamp;
+                            submodel.SetTimeStamp(timeStamp);
+                            submodel.SetAllParents(timeStamp);
+                        }
+                    }
+                    else
+                    {
+                        using (AasContext db = new AasContext())
+                        {
+                            var aasDBList = db.AASSets.Where(a => a.Identifier == aasIdentifier);
+                            var aasDB = aasDBList.First();
+                            env[i] = Converter.GetPackageEnv(envFileName[i], aasDB);
+                        }
+                    }
+
+                    i++;
+                }
+
+                Program.signalNewData(2);
+                return true;
+            }
+        }
+
         public static bool loadPackageForAas(string aasIdentifier, out IAssetAdministrationShell output, out int packageIndex)
         {
             output       = null;

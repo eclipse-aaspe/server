@@ -1,4 +1,4 @@
-﻿using AasCore.Aas3_0;
+using AasCore.Aas3_0;
 using AasxServerDB.Entities;
 using AdminShellNS;
 using Extensions;
