@@ -52,7 +52,7 @@ jobs:
         uses: dorny/test-reporter@v1
         with:
           name: Test Report
-          path: "**/test-results.trx"
+          path: "*.trx"
           reporter: dotnet-trx
           fail-on-error: true
         env:
