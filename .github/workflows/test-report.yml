@@ -1,7 +1,7 @@
-name: 'Test Report'
+name: Test Report
 on:
   workflow_run:
-    workflows: [ check-release ]
+    workflows: [ 'Test and verify branch' ]
     types:
       - completed
 permissions:
@@ -15,10 +15,10 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: test-results
-          
+
       - uses: dorny/test-reporter@v1
         with:
-          artifact: test-results            # artifact name
-          name: Test Results                  # Name of the check run which will be created
-          path: '*.trx'                     # Path to test results (inside artifact .zip)
-          reporter: jest-junit              # Format of test results
+          artifact: test-results
+          name: Test Results
+          path: '*.trx'
+          reporter: jest-junit

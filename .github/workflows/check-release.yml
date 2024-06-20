@@ -1,4 +1,4 @@
-name: Test and verify branch
+name: 'Test and verify branch'
 
 on:
   pull_request:
@@ -42,149 +42,149 @@ jobs:
         with:
           name: test-results
           path: "**/test-results.trx"
-            
-  #test-docker-images:
-  #  runs-on: ubuntu-latest
-  #  name: Build all docker images and check if they do run
-  #  steps:
-  #    - name: Checkout
-  #      uses: actions/checkout@v4
-  #      with:
-  #        fetch-depth: 0
-#
-  #    - name: Set up QEMU
-  #      uses: docker/setup-qemu-action@v3
-#
-  #    - name: Set up Docker Buildx
-  #      uses: docker/setup-buildx-action@v3
-#
-  #    - name: Build AasxServerBlazor
-  #      uses: docker/build-push-action@v6
-  #      with:
-  #        push: false
-  #        load: true
-  #        file: ./src/docker/Dockerfile-AasxServerBlazor
-  #        tags: adminshellio/aasx-server-blazor:test
-#
-  #    - name: Build AasxServerBlazor-arm32
-  #      uses: docker/build-push-action@v6
-  #      with:
-  #        push: false
-  #        load: true
-  #        file: ./src/docker/Dockerfile-AasxServerBlazor-arm32
-  #        tags: adminshellio/aasx-server-blazor-arm32:test
-#
-  #    - name: Build AasxServerBlazor-arm64
-  #      uses: docker/build-push-action@v6
-  #      with:
-  #        push: false
-  #        load: true
-  #        file: ./src/docker/Dockerfile-AasxServerBlazor-arm64
-  #        tags: adminshellio/aasx-server-blazor-arm64:test
-#
-  #    - name: Build AasxServerCore
-  #      uses: docker/build-push-action@v6
-  #      with:
-  #        push: false
-  #        load: true
-  #        file: ./src/docker/Dockerfile-AasxServerAspNetCore
-  #        tags: adminshellio/aasx-server-core:test
-#
-  #    - name: Build AasxServerCore-arm32
-  #      uses: docker/build-push-action@v6
-  #      with:
-  #        push: false
-  #        load: true
-  #        file: ./src/docker/Dockerfile-AasxServerAspNetCore-arm32
-  #        tags: adminshellio/aasx-server-core-arm32:test
-#
-  #    - name: Build AasxServerCore-arm64
-  #      uses: docker/build-push-action@v6
-  #      with:
-  #        push: false
-  #        load: true
-  #        file: ./src/docker/Dockerfile-AasxServerAspNetCore-arm64
-  #        tags: adminshellio/aasx-server-core-arm64:test
-  #
-  #check-release:
-  #  runs-on: windows-latest
-  #  name: Check that the whole project is buildable and attach packages to process
-  #  steps:
-  #    - name: Checkout repository
-  #      uses: actions/checkout@v4
-  #      with:
-  #        fetch-depth: 0
-#
-  #    - name: Set execution policy
-  #      run: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
-  #      shell: pwsh
-#
-  #    - name: Set timestamp
-  #      id: set_timestamp
-  #      run: |
-  #        $current_time = $(date +'%Y-%m-%d-T-%H-%M-%S')
-  #        echo "timestamp=$current_time" >> $env:GITHUB_OUTPUT
-  #        Write-Host "The current timestamp is: $current_time"
-#
-#
-  #    - name: Extract branch name
-  #      id: extract_branch
-  #      run: |
-  #        git fetch --all
-  #        $commitSHA = git rev-parse HEAD
-  #        $branch = git branch -r --contains $commitSHA | Select-String -Pattern 'origin/' | Select-Object -First 1 | ForEach-Object { $_.Line -replace '.*origin/', '' } | ForEach-Object { $_.Trim() }
-  #        echo "branch=$branch" >> $env:GITHUB_OUTPUT
-  #        Write-Host "The current branch is: $branch"
-  #      shell: pwsh
-#
-  #    - name: Generate Version Number
-  #      working-directory: src
-  #      id: generate_version_number
-  #      run: |
-  #        $branch = '${{ steps.extract_branch.outputs.branch }}'
-  #        $version = .\BuildVersionNumber.ps1 -suffix alpha -branch $branch -githubRunNumber ${{ github.run_number }}
-  #        echo "version=$version" >> $env:GITHUB_OUTPUT
-  #        Write-Host "The version name to build is: $version"
-  #      shell: pwsh
-#
-  #    - name: Update version numbers in project
-  #      working-directory: src
-  #      run: |
-  #        $version = '${{ steps.generate_version_number.outputs.version }}'
-  #        Write-Host "Updating project versions to: $version"
-  #        .\UpdateProjectVersions.ps1 -version $version
-  #      shell: pwsh
-#
-  #    - name: Setup .NET Core
-  #      uses: actions/setup-dotnet@v4
-  #      with:
-  #        dotnet-version: '6.0.x'
-#
-  #    - name: Build release
-  #      working-directory: src
-  #      run: .\BuildForRelease.ps1
-  #      shell: pwsh
-#
-  #    - name: Package release
-  #      working-directory: src
-  #      run: |
-  #        $version = '${{ steps.generate_version_number.outputs.version }}'
-  #        mkdir -p artefacts/release/$version
-  #        Write-Host "Packaging for the release version: $version"
-  #        .\PackageRelease.ps1 -version $version
-  #      shell: pwsh
-#
-  #    - name: Upload AasxServerBlazor
-  #      uses: actions/upload-artifact@v4
-  #      with:
-  #        name: AasxServerBlazor.LATEST.${{ steps.generate_version_number.outputs.version }}.${{ steps.set_timestamp.outputs.timestamp }}
-  #        path: artefacts/release/${{ steps.generate_version_number.outputs.version }}/AasxServerBlazor.zip
-  #        if-no-files-found: error
-#
-  #    - name: Upload AasxServerAspNetCore
-  #      uses: actions/upload-artifact@v4
-  #      with:
-  #        name: AasxServerAspNetCore.LATEST.${{ steps.generate_version_number.outputs.version }}.${{ steps.set_timestamp.outputs.timestamp }}
-  #        path: artefacts/release/${{ steps.generate_version_number.outputs.version }}/AasxServerAspNetCore.zip
-  #        if-no-files-found: error
-  #
+  
+  test-docker-images:
+    runs-on: ubuntu-latest
+    name: Build all docker images and check if they do run
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build AasxServerBlazor
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          load: true
+          file: ./src/docker/Dockerfile-AasxServerBlazor
+          tags: adminshellio/aasx-server-blazor:test
+
+      - name: Build AasxServerBlazor-arm32
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          load: true
+          file: ./src/docker/Dockerfile-AasxServerBlazor-arm32
+          tags: adminshellio/aasx-server-blazor-arm32:test
+
+      - name: Build AasxServerBlazor-arm64
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          load: true
+          file: ./src/docker/Dockerfile-AasxServerBlazor-arm64
+          tags: adminshellio/aasx-server-blazor-arm64:test
+
+      - name: Build AasxServerCore
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          load: true
+          file: ./src/docker/Dockerfile-AasxServerAspNetCore
+          tags: adminshellio/aasx-server-core:test
+
+      - name: Build AasxServerCore-arm32
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          load: true
+          file: ./src/docker/Dockerfile-AasxServerAspNetCore-arm32
+          tags: adminshellio/aasx-server-core-arm32:test
+
+      - name: Build AasxServerCore-arm64
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          load: true
+          file: ./src/docker/Dockerfile-AasxServerAspNetCore-arm64
+          tags: adminshellio/aasx-server-core-arm64:test
+  
+  check-release:
+    runs-on: windows-latest
+    name: Check that the whole project is buildable and attach packages to process
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set execution policy
+        run: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+        shell: pwsh
+
+      - name: Set timestamp
+        id: set_timestamp
+        run: |
+          $current_time = $(date +'%Y-%m-%d-T-%H-%M-%S')
+          echo "timestamp=$current_time" >> $env:GITHUB_OUTPUT
+          Write-Host "The current timestamp is: $current_time"
+
+
+      - name: Extract branch name
+        id: extract_branch
+        run: |
+          git fetch --all
+          $commitSHA = git rev-parse HEAD
+          $branch = git branch -r --contains $commitSHA | Select-String -Pattern 'origin/' | Select-Object -First 1 | ForEach-Object { $_.Line -replace '.*origin/', '' } | ForEach-Object { $_.Trim() }
+          echo "branch=$branch" >> $env:GITHUB_OUTPUT
+          Write-Host "The current branch is: $branch"
+        shell: pwsh
+
+      - name: Generate Version Number
+        working-directory: src
+        id: generate_version_number
+        run: |
+          $branch = '${{ steps.extract_branch.outputs.branch }}'
+          $version = .\BuildVersionNumber.ps1 -suffix alpha -branch $branch -githubRunNumber ${{ github.run_number }}
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "The version name to build is: $version"
+        shell: pwsh
+
+      - name: Update version numbers in project
+        working-directory: src
+        run: |
+          $version = '${{ steps.generate_version_number.outputs.version }}'
+          Write-Host "Updating project versions to: $version"
+          .\UpdateProjectVersions.ps1 -version $version
+        shell: pwsh
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Build release
+        working-directory: src
+        run: .\BuildForRelease.ps1
+        shell: pwsh
+
+      - name: Package release
+        working-directory: src
+        run: |
+          $version = '${{ steps.generate_version_number.outputs.version }}'
+          mkdir -p artefacts/release/$version
+          Write-Host "Packaging for the release version: $version"
+          .\PackageRelease.ps1 -version $version
+        shell: pwsh
+
+      - name: Upload AasxServerBlazor
+        uses: actions/upload-artifact@v4
+        with:
+          name: AasxServerBlazor.LATEST.${{ steps.generate_version_number.outputs.version }}.${{ steps.set_timestamp.outputs.timestamp }}
+          path: artefacts/release/${{ steps.generate_version_number.outputs.version }}/AasxServerBlazor.zip
+          if-no-files-found: error
+
+      - name: Upload AasxServerAspNetCore
+        uses: actions/upload-artifact@v4
+        with:
+          name: AasxServerAspNetCore.LATEST.${{ steps.generate_version_number.outputs.version }}.${{ steps.set_timestamp.outputs.timestamp }}
+          path: artefacts/release/${{ steps.generate_version_number.outputs.version }}/AasxServerAspNetCore.zip
+          if-no-files-found: error
+  
