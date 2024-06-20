@@ -25,10 +25,8 @@ jobs:
           with:
             dotnet-version: '8.0.x'
 
-        - name: Build release
-          working-directory: src
-          run: .\BuildForRelease.ps1
-          shell: pwsh
+        - name: Build
+          run: dotnet build --configuration Release
 
         - name: Run Tests
           run: dotnet test --logger "trx;LogFileName=test-results.trx" || true
