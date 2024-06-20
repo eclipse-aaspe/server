@@ -12,14 +12,18 @@ on:
       - release
 
 permissions:
-  contents: read
-  actions: read
+  statuses: write
   checks: write
+  contents: write
+  pull-requests: write
+  actions: write
   
 jobs:
   run-unit-tests:
     runs-on: ubuntu-latest
     name: Run all project unit tests
+    permissions:
+      checks: write
     steps:
         - name: Checkout
           uses: actions/checkout@v4
@@ -45,7 +49,7 @@ jobs:
             reporter: dotnet-trx
             fail-on-error: true
           env:
-            GITHUB_TOKEN: ${{ secrets.PAT }}
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   
   test-docker-images:
     runs-on: ubuntu-latest
