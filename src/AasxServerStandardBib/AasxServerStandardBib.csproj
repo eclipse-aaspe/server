@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <!--<TargetFramework>netstandard2.0</TargetFramework>-->
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net7.0</TargetFramework>
         <SatelliteResourceLanguages>en-US;de-DE</SatelliteResourceLanguages>
         <UserSecretsId>ef550880-6a5f-4e0c-b634-8284f1dc5445</UserSecretsId>
         <Version>0.3.0.1-aasV3-alpha-latest</Version>
