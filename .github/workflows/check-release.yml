@@ -37,6 +37,13 @@ jobs:
         run: dotnet test --logger "trx;LogFileName=test-results.trx" || true
         working-directory: src
 
+      - name: Test reports
+        uses: bibipkins/dotnet-test-reporter@v1.4.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          comment-title: 'Unit Test Results'
+          results-path: ./*.trx
+
       - uses: actions/upload-artifact@v4
         with:
           name: test-results
