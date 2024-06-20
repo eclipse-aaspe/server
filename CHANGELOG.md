@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactored ServerConfiguration.cs into smaller parts and applying Clean code and SOLID principles. (@Freezor)
 - Applied general fixes in naming, layout, and applied Resharper suggestions across the AasxServerBlazor project to adhere to best practices and enhance future
   maintainability. (@Freezor)
+- Changed TargetFramework from Net6.0 to Net8.0 because of library issues and not runnable docker images. (@Freezor)
 
 ### Removed
 
