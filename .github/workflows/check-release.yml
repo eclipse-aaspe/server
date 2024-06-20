@@ -44,6 +44,8 @@ jobs:
             path: "**/test-results.trx"
             reporter: dotnet-trx
             fail-on-error: true
+          env:
+            GITHUB_TOKEN: ${{ secrets.PAT }}
   
   test-docker-images:
     runs-on: ubuntu-latest
