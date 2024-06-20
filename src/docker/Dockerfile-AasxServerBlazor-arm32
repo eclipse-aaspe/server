@@ -6,11 +6,12 @@ WORKDIR /repo/src
 COPY ./src/ /repo/src/
 COPY ./LICENSE.TXT /repo/LICENSE.txt
 
+RUN dotnet clean
 RUN dotnet restore -r linux-arm
 RUN dotnet restore AasxServerBlazor
 RUN dotnet publish -c Release -o /out/AasxServerBlazor AasxServerBlazor -r linux-arm --self-contained false --no-restore
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 as base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0.203-bookworm-slim-arm32v7 as base
 # RUN apt-get update && apt-get install -y libgdiplus
 EXPOSE 5001
 COPY --from=build-env /out/AasxServerBlazor/ /AasxServerBlazor/
