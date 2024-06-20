@@ -11,7 +11,7 @@ COPY ./LICENSE.TXT /repo/LICENSE.txt
 RUN dotnet restore AasxServerAspNetCore
 RUN dotnet publish -c Release -o /out/AasxServerAspNetCore AasxServerAspNetCore -r linux-arm --self-contained false
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 as base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0.3-bookworm-slim-arm32v7 as base
 EXPOSE 5001
 COPY --from=build-env /out/AasxServerAspNetCore/ /AasxServerAspNetCore/
 COPY ./content-for-demo/ /AasxServerAspNetCore/
