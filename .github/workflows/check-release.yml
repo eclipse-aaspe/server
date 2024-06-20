@@ -10,7 +10,6 @@ on:
     branches:
       - main
       - release
-      - "freezor/create-unit-test-project-and-process"
 
 jobs:
   run-unit-tests:
@@ -33,10 +32,10 @@ jobs:
           run: dotnet test --logger "trx;LogFileName=test-results.trx" || true
           working-directory: src
 
-        - name: Test Report
+        - name: Create Test Report
           uses: dorny/test-reporter@v1
           with:
-            name: DotNET Tests
+            name: Test Report
             path: "**/test-results.trx"
             reporter: dotnet-trx
             fail-on-error: true
