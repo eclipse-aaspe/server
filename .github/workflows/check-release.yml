@@ -36,7 +36,7 @@ jobs:
 
       - name: Test AasxServerBlazor
         run: |
-          docker run --rm adminshellio/aasx-server-blazor:test 
+          docker run --rm adminshellio/aasx-server-blazor:test sleep 5
 
       - name: Build AasxServerBlazor-arm32
         uses: docker/build-push-action@v6
@@ -48,7 +48,7 @@ jobs:
 
       - name: Test AasxServerBlazor-arm32
         run: |
-          docker run --rm adminshellio/aasx-server-blazor-arm32:test 
+          docker run --rm adminshellio/aasx-server-blazor-arm32:test sleep 5
           
       - name: Build AasxServerBlazor-arm64
         uses: docker/build-push-action@v6
@@ -60,7 +60,7 @@ jobs:
 
       - name: Test AasxServerBlazor-arm64
         run: |
-          docker run --rm adminshellio/aasx-server-blazor-arm64:test 
+          docker run --rm adminshellio/aasx-server-blazor-arm64:test sleep 5
           
       - name: Build AasxServerCore
         uses: docker/build-push-action@v6
@@ -72,7 +72,7 @@ jobs:
 
       - name: Test AasxServerAspNetCore
         run: |
-          docker run --rm adminshellio/aasx-server-core:test    
+          docker run --rm adminshellio/aasx-server-core:test sleep 5
 
       - name: Build AasxServerCore-arm32
         uses: docker/build-push-action@v6
@@ -84,7 +84,7 @@ jobs:
 
       - name: Test AasxServerAspNetCore-arm32
         run: |
-          docker run --rm adminshellio/aasx-server-core-arm32:test 
+          docker run --rm adminshellio/aasx-server-core-arm32:test sleep 5
           
       - name: Build AasxServerCore-arm64
         uses: docker/build-push-action@v6
@@ -96,7 +96,7 @@ jobs:
 
       - name: Test AasxServerAspNetCore-arm64
         run: |
-          docker run --rm adminshellio/aasx-server-core-arm64:test 
+          docker run --rm adminshellio/aasx-server-core-arm64:test sleep 5
           
   check-release:
     runs-on: windows-latest
