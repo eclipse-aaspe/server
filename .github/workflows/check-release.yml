@@ -45,7 +45,7 @@ jobs:
   
   test-docker-images:
     runs-on: ubuntu-latest
-    name: Build all docker images and check if they do run
+    name: Build all docker images
     steps:
       - name: Checkout
         uses: actions/checkout@v4
