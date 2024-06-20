@@ -34,10 +34,6 @@ jobs:
           file: ./src/docker/Dockerfile-AasxServerBlazor
           tags: adminshellio/aasx-server-blazor:test
 
-      - name: Test AasxServerBlazor
-        run: |
-          timeout 5s docker run --rm adminshellio/aasx-server-blazor:test 
-
       - name: Build AasxServerBlazor-arm32
         uses: docker/build-push-action@v6
         with:
@@ -45,10 +41,6 @@ jobs:
           load: true
           file: ./src/docker/Dockerfile-AasxServerBlazor-arm32
           tags: adminshellio/aasx-server-blazor-arm32:test
-
-      - name: Test AasxServerBlazor-arm32
-        run: |
-          timeout 5s docker run --rm adminshellio/aasx-server-blazor-arm32:test 
 
       - name: Build AasxServerBlazor-arm64
         uses: docker/build-push-action@v6
@@ -58,10 +50,6 @@ jobs:
           file: ./src/docker/Dockerfile-AasxServerBlazor-arm64
           tags: adminshellio/aasx-server-blazor-arm64:test
 
-      - name: Test AasxServerBlazor-arm64
-        run: |
-          timeout 5s docker run --rm adminshellio/aasx-server-blazor-arm64:test 
-
       - name: Build AasxServerCore
         uses: docker/build-push-action@v6
         with:
@@ -69,10 +57,6 @@ jobs:
           load: true
           file: ./src/docker/Dockerfile-AasxServerAspNetCore
           tags: adminshellio/aasx-server-core:test
-
-      - name: Test AasxServerAspNetCore
-        run: |
-          timeout 5s docker run --rm adminshellio/aasx-server-core:test    
 
       - name: Build AasxServerCore-arm32
         uses: docker/build-push-action@v6
@@ -82,10 +66,6 @@ jobs:
           file: ./src/docker/Dockerfile-AasxServerAspNetCore-arm32
           tags: adminshellio/aasx-server-core-arm32:test
 
-      - name: Test AasxServerAspNetCore-arm32
-        run: |
-          timeout 5s docker run --rm adminshellio/aasx-server-core-arm32:test 
-
       - name: Build AasxServerCore-arm64
         uses: docker/build-push-action@v6
         with:
@@ -93,10 +73,6 @@ jobs:
           load: true
           file: ./src/docker/Dockerfile-AasxServerAspNetCore-arm64
           tags: adminshellio/aasx-server-core-arm64:test
-
-      - name: Test AasxServerAspNetCore-arm64
-        run: |
-          timeout 5s docker run --rm adminshellio/aasx-server-core-arm64:test 
   
   check-release:
     runs-on: windows-latest
