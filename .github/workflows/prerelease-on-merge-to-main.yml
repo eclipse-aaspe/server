@@ -258,13 +258,21 @@ jobs:
         id: set-version
         run: echo "VERSION_NUMBER=$(echo ${{ needs.create-new-prerelease.outputs.VERSION_NUMBER }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
+      - name: Build and publish AasxServerBlazor
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          load: true
+          file: ./src/docker/Dockerfile-AasxServerBlazor
+          tags: "${{ env.VERSION_NUMBER }}"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          
       - name: Build and publish AasxServerBlazor-arm32
         uses: docker/build-push-action@v6
         with:
           push: true
-          platforms: linux/arm32
-          context: ./src/docker/
-          file: Dockerfile-AasxServerBlazor-arm32
+          load: true
+          file: ./src/docker/Dockerfile-AasxServerBlazor-arm32
           tags: adminshellio/AasxServerBlazor-arm32:${{ env.VERSION_NUMBER }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -272,25 +280,17 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          platforms: linux/arm64
+          load: true
           file: ./src/docker/Dockerfile-AasxServerBlazor-arm64
           tags: "${{ env.VERSION_NUMBER }}"
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and publish AasxServerBlazor
-        uses: docker/build-push-action@v6
-        with:
-          push: true
-          platforms: linux/amd64
-          file: ./src/docker/Dockerfile-AasxServerBlazor
-          tags: "${{ env.VERSION_NUMBER }}"
-          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and publish AasxServerCore
         uses: docker/build-push-action@v6
         with:
           push: true
-          platforms: linux/amd64
+          load: true
           file: ./src/docker/Dockerfile-AasxServerAspNetCore
           tags: "${{ env.VERSION_NUMBER }}"
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -299,7 +299,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          platforms: linux/arm32
+          load: true
           file: ./src/docker/Dockerfile-AasxServerAspNetCore-arm32
           tags: "${{ env.VERSION_NUMBER }}"
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -308,7 +308,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          platforms: linux/arm64
+          load: true
           file: ./src/docker/Dockerfile-AasxServerAspNetCore-arm64
           tags: "${{ env.VERSION_NUMBER }}"
           github-token: ${{ secrets.GITHUB_TOKEN }}"
