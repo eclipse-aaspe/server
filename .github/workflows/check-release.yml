@@ -1,4 +1,4 @@
-name: Check Branch is Working & Releasable
+name: 'Check Branch is Working & Releasable'
 
 on:
   pull_request:
