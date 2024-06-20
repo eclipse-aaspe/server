@@ -4,6 +4,7 @@
         <TargetFramework>net8.0</TargetFramework>
         <SatelliteResourceLanguages>en-US;de-DE</SatelliteResourceLanguages>
         <Version>0.3.0.1-aasV3-alpha-latest</Version>
+        <RuntimeIdentifiers>linux-arm;linux-arm64;win-x64;osx-x64</RuntimeIdentifiers>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
