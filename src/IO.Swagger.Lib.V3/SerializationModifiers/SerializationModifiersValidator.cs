@@ -10,7 +10,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers
     public static class SerializationModifiersValidator
     {
         //As per new APIs, content is not handled here
-        public static void Validate(object resource, LevelEnum level, ExtentEnum extent)
+        public static void Validate(object? resource, LevelEnum level, ExtentEnum extent)
         {
             switch (resource)
             {
@@ -71,9 +71,9 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers
             }
         }
 
-        public static void Validate(List<IClass> resources, LevelEnum level, ExtentEnum extent)
+        public static void Validate(List<IClass?> resources, LevelEnum level, ExtentEnum extent)
         {
-            foreach (IClass resource in resources)
+            foreach (IClass? resource in resources)
                 Validate(resource, level, extent);
         }
     }

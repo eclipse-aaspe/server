@@ -772,7 +772,7 @@ namespace AasCore.Aas3_0
         }
 
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (obj == null || !(obj is AdministrativeInformation))
                 return false;
@@ -780,7 +780,7 @@ namespace AasCore.Aas3_0
             return Equals((AdministrativeInformation) obj);
         }
 
-        public bool Equals(AdministrativeInformation other)
+        public bool Equals(AdministrativeInformation? other)
         {
             if (other == null)
                 return false;
@@ -11294,7 +11294,7 @@ namespace AasCore.Aas3_0
             ReferredSemanticId = referredSemanticId;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (obj == null || !(obj is Reference))
                 return false;
@@ -11302,7 +11302,7 @@ namespace AasCore.Aas3_0
             return Equals((Reference) obj);
         }
 
-        public bool Equals(Reference other)
+        public bool Equals(Reference? other)
         {
             if (other == null)
                 return false;

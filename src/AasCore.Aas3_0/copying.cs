@@ -3,6 +3,7 @@
  * Do NOT edit or append.
  */
 
+using System;
 using System.Collections.Generic; // can't alias
 using Aas = AasCore.Aas3_0; // renamed
 
@@ -2469,7 +2470,12 @@ namespace AasCore.Aas3_0
                     theDataSpecificationContent = Deep(that.DataSpecificationContent);
                 }
 
-                return new Aas.EmbeddedDataSpecification(theDataSpecification, theDataSpecificationContent);
+                if (theDataSpecification != null && theDataSpecificationContent != null)
+                {
+                    return new Aas.EmbeddedDataSpecification(theDataSpecification, theDataSpecificationContent);
+                }
+
+                throw new NullReferenceException($"{nameof(theDataSpecification)} or {nameof(theDataSpecificationContent)}");
             }
 
             public override Aas.IClass TransformLevelType(

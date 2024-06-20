@@ -1391,7 +1391,7 @@ namespace AdminShellNS
             return part.GetStream(mode, access);
         }
 
-        public async Task ReplaceSupplementaryFileInPackageAsync(string sourceUri, string targetFile, string targetContentType, Stream fileContent)
+        public Task ReplaceSupplementaryFileInPackageAsync(string sourceUri, string targetFile, string targetContentType, Stream fileContent)
         {
             // access
             if (_openPackage == null)
@@ -1409,6 +1409,8 @@ namespace AdminShellNS
             {
                 fileContent.CopyTo(dest);
             }
+
+            return Task.CompletedTask;
         }
 
         public long GetStreamSizeFromPackage(string uriString)
@@ -1836,7 +1838,6 @@ namespace AdminShellNS
             catch (Exception ex)
             {
                 throw new Exception(ex.Message);
-                throw new Exception(ex.StackTrace);
             }
         }
 

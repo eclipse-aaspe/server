@@ -96,7 +96,7 @@ namespace AasxServerDB
                 .OrderBy(v => v.SMEId)
                 .Where(v => (smeid == 0 || v.SMEId == smeid) &&
                        (searchLower.IsNullOrEmpty() ||
-                       (v.Annotation != null && v.Annotation.ToLower().Contains(searchLower))) &&
+                       (v.Annotation != null && v.Annotation.ToLower().Contains(searchLower))) ||
                        (iEqual == 0 || v.Value == iEqual))
                 .Take(size)
                 .ToList();
@@ -115,7 +115,7 @@ namespace AasxServerDB
                 .OrderBy(v => v.SMEId)
                 .Where(v => (smeid == 0 || v.SMEId == smeid) &&
                     (searchLower.IsNullOrEmpty() ||
-                    (v.Annotation != null && v.Annotation.ToLower().Contains(searchLower))) &&
+                    (v.Annotation != null && v.Annotation.ToLower().Contains(searchLower))) ||
                     (fEqual == 0 || v.Value == fEqual))
                 .Take(size)
                 .ToList();

@@ -57,7 +57,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
         /// <param name="obj">Object to be compared</param>
         /// <returns>Boolean</returns>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;

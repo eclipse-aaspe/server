@@ -4,6 +4,6 @@ namespace DataTransferObjects.CommonDTOs
 {
     public record class ReferenceDTO(
             ReferenceTypes type,
-            List<KeyDTO> keys,
+            List<KeyDTO>? keys,
             ReferenceDTO? referredSemanticId = null) : IDTO;
 }

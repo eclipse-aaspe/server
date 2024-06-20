@@ -25,50 +25,54 @@ jobs:
       - name: Check changes since last tag
         id: check_changes
         run: |
-          git fetch --tags -v
+          git fetch --tags
           $tags = git tag --sort=-creatordate
           Write-Host "Tags: $tags"
           $branchSuffix = "${{ env.BRANCH_SUFFIX }}"
-          Write-Host "Branch Suffix: $branchSuffix"
           $potentialTags = @()
-          foreach ($tag in $tags) {
-            if ($tag -match ".*-$branchSuffix$") {
+          foreach ($tag in $tags)
+          {
+            if ($tag -match ".*-$branchSuffix$")
+            {
               $potentialTags += $tag
             }
           }
-
-          if ($potentialTags.Count -gt 0) 
+          if ($potentialTags.Count -gt 0)
           {
             $latestTag = $potentialTags[0]
             Write-Host "Latest found matching tag is $latestTag"
-          } else 
+          }
+          else
           {
             Write-Host "No matching tags found, fetching the latest tag."
             $latestTag = $tags | Select-Object -First 1
-            if ($latestTag) 
+            if ($latestTag)
             {
               echo "from_tag=$latestTag" >> $env:GITHUB_OUTPUT
               Write-Host "Latest found tag is $latestTag"
-            } else 
+            }
+            else
             {
               Write-Host "No tags found at all."
               exit 1
             }
           }
-
           Write-Host "Checking changes since tag: $latestTag"
-          $changes = git log --oneline "$latestTag"..HEAD
+          $range = "$latestTag..@"
+          Write-Host "Check for changes in range: $range"
+          $changes = git log $range --oneline
           Write-Host "Found changes: $changes"
-          if (-not [string]::IsNullOrEmpty($changes)) 
-          {
-            Write-Host "Changes detected since $latestTag"
-            Write-Host "$changes"
-            echo "changes_detected=true" >> $env:GITHUB_OUTPUT
-          } else 
-          {
-            Write-Host "No changes detected since $latestTag."
-            echo "changes_detected=false" >> $env:GITHUB_OUTPUT
-          }
+            if (-not [string]::IsNullOrEmpty($changes))
+            {
+              Write-Host "Changes detected since $latestTag"
+              Write-Host "$changes"
+              echo "changes_detected=true" >> $env:GITHUB_OUTPUT
+            }
+            else
+            {
+              Write-Host "No changes detected since $latestTag."
+              echo "changes_detected=false" >> $env:GITHUB_OUTPUT
+            }
         shell: pwsh
 
   create-new-prerelease:
@@ -79,6 +83,8 @@ jobs:
       contents: write
       pull-requests: write
     if: needs.check-for-changes.outputs.branch_changed == 'true'
+    outputs:
+      VERSION_NUMBER: ${{ steps.generate_version_number.outputs.version }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -239,58 +245,74 @@ jobs:
     needs: create-new-prerelease
     if: github.repository == 'eclipse-aaspe/server'
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:       
+          username: adminshellio
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          
+      - name: Set version number
+        id: set-version
+        run: echo "VERSION_NUMBER=$(echo ${{ needs.create-new-prerelease.outputs.VERSION_NUMBER }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
       - name: Build and publish AasxServerBlazor
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v6
         with:
-          username: adminshellio
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          repository: adminshellio/aasx-server-blazor-for-demo
-          tag_with_ref: true
-          dockerfile: src/docker/Dockerfile-AasxServerBlazor
-
+          push: true
+          load: true
+          file: ./src/docker/Dockerfile-AasxServerBlazor
+          tags: adminshellio/aasx-server-blazor-for-demo:${{ env.VERSION_NUMBER }}
+          
       - name: Build and publish AasxServerBlazor-arm32
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v6
         with:
-          username: adminshellio
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          repository: adminshellio/aasx-server-blazor-for-demo-arm32
-          tag_with_ref: true
-          dockerfile: src/docker/Dockerfile-AasxServerBlazor-arm32
+          push: true
+          load: true
+          file: ./src/docker/Dockerfile-AasxServerBlazor-arm32
+          tags: adminshellio/aasx-server-blazor-for-demo-arm32:${{ env.VERSION_NUMBER }}
 
       - name: Build and publish AasxServerBlazor-arm64
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v6
         with:
-          username: adminshellio
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          repository: adminshellio/aasx-server-blazor-for-demo-arm64
-          tag_with_ref: true
-          dockerfile: src/docker/Dockerfile-AasxServerBlazor-arm64
+          push: true
+          load: true
+          file: ./src/docker/Dockerfile-AasxServerBlazor-arm64
+          tags: adminshellio/aasx-server-blazor-for-demo-arm64:${{ env.VERSION_NUMBER }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
 
       - name: Build and publish AasxServerCore
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v6
         with:
-          username: adminshellio
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          repository: adminshellio/aasx-server-aspnetcore-for-demo
-          tag_with_ref: true
-          dockerfile: src/docker/Dockerfile-AasxServerAspNetCore
+          push: true
+          load: true
+          file: ./src/docker/Dockerfile-AasxServerAspNetCore
+          tags: adminshellio/aasx-server-aspnetcore-for-demo:${{ env.VERSION_NUMBER }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and publish AasxServerCore-arm32
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v6
         with:
-          username: adminshellio
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          repository: adminshellio/aasx-server-aspnetcore-for-demo-arm32
-          tag_with_ref: true
-          dockerfile: src/docker/Dockerfile-AasxServerAspNetCore-arm32
+          push: true
+          load: true
+          file: ./src/docker/Dockerfile-AasxServerAspNetCore-arm32
+          tags: adminshellio/aasx-server-aspnetcore-for-demo-arm32:${{ env.VERSION_NUMBER }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and publish AasxServerCore-arm64
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v6
         with:
-          username: adminshellio
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          repository: adminshellio/aasx-server-aspnetcore-for-demo-arm64
-          tag_with_ref: true
-          dockerfile: src/docker/Dockerfile-AasxServerAspNetCore-arm64
+          push: true
+          load: true
+          file: ./src/docker/Dockerfile-AasxServerAspNetCore-arm64
+          tags: adminshellio/aasx-server-aspnetcore-for-demo-arm64:${{ env.VERSION_NUMBER }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}"

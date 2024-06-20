@@ -145,9 +145,9 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
             return new FileMetadata(TransformExtensionList(that.Extensions), that.Category, that.IdShort, TransformLangStringNameTypeList(that.DisplayName), TransformLangStringTextTypeList(that.Description), (ReferenceDTO)Transform(that.SemanticId), TransformReferenceList(that.SupplementalSemanticIds), TransformQualifierList(that.Qualifiers), TransformEmbeddedDataSpecList(that.EmbeddedDataSpecifications));
         }
 
-        internal List<KeyDTO> TransformKeyList(List<IKey> keyList)
+        internal List<KeyDTO>? TransformKeyList(List<IKey> keyList)
         {
-            List<KeyDTO> output = null;
+            List<KeyDTO>? output = null;
 
             if (keyList != null)
             {

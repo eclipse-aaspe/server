@@ -13,7 +13,7 @@ using AasxServerDB;
 using AasxServerDB.Entities;
 
 namespace IO.Swagger.Registry.Lib.V3.Services
-{
+{ 
     public class AasRegistryService : IAasRegistryService
     {
         private readonly IAppLogger<AasRegistryService> _logger;
@@ -29,7 +29,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
         {
             AssetAdministrationShellDescriptor ad = new AssetAdministrationShellDescriptor();
             //string asset = aas.assetRef?[0].Value;
-            string globalAssetId = aasDB.GlobalAssetId;
+            var globalAssetId = aasDB.GlobalAssetId;
 
             using (AasContext db = new AasContext())
             {
@@ -40,7 +40,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                 var e = new Models.Endpoint();
                 e.ProtocolInformation = new ProtocolInformation();
                 e.ProtocolInformation.Href =
-                    AasxServer.Program.externalBlazor + "/shells/" +
+                    AasxServer.Program.externalRepository + "/shells/" +
                     Base64UrlEncoder.Encode(ad.Id);
                 _logger.LogDebug("AAS " + ad.IdShort + " " + e.ProtocolInformation.Href);
                 e.Interface = "AAS-1.0";
@@ -67,7 +67,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                         var esm = new Models.Endpoint();
                         esm.ProtocolInformation = new ProtocolInformation();
                         esm.ProtocolInformation.Href =
-                            AasxServer.Program.externalBlazor + "/shells/" +
+                            AasxServer.Program.externalRepository + "/shells/" +
                             Base64UrlEncoder.Encode(ad.Id) + "/submodels/" +
                             Base64UrlEncoder.Encode(sd.Id);
                         // Base64UrlEncoder.Encode(sd.Identification) + "/submodel/";

@@ -14,7 +14,7 @@
 > 
 > ![GitHub repo size](https://img.shields.io/github/repo-size/eclipse-aaspe/server) ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/eclipse-aaspe/server)
 > ### Docker Images
-> ![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-aspnetcore-for-demo-arm32?label=aasx-server-aspnetcore-for-demo-arm32)<br>
+> [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-aspnetcore-for-demo-arm32?label=aasx-server-aspnetcore-for-demo-arm32)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm32)<br>
 > [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo-arm64?label=aasx-server-blazor-for-demo-arm64)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm64)<br>
 > [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo-arm32?label=aasx-server-blazor-for-demo-arm32)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm32)<br>
 > [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo?label=aasx-server-blazor-for-demo)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo)<br>

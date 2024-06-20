@@ -48,9 +48,9 @@ namespace IO.Swagger.Lib.V3.Formatters
 
         public override Task<InputFormatterResult> ReadRequestBodyAsync(InputFormatterContext context)
         {
-            Type type = context.ModelType;
-            var request = context.HttpContext.Request;
-            object result = null;
+            Type    type    = context.ModelType;
+            var     request = context.HttpContext.Request;
+            object? result  = null;
 
 
             JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(request.Body).Result;
@@ -139,9 +139,9 @@ namespace IO.Swagger.Lib.V3.Formatters
             }
         }
 
-        private SubmodelMetadata SubmodelMetadataFrom(JsonNode node)
+        private SubmodelMetadata? SubmodelMetadataFrom(JsonNode node)
         {
-            SubmodelMetadata output = null;
+            SubmodelMetadata? output = null;
             //Using newtonsoft json because of known "EnumMemberAttribute" issue (https://github.com/dotnet/runtime/issues/74385) in case of ValueType
             var serilizerSettings = new JsonSerializerSettings();
             serilizerSettings.Converters.Add(new StringEnumConverter());
@@ -184,9 +184,9 @@ namespace IO.Swagger.Lib.V3.Formatters
             return output;
         }
 
-        private ISubmodelElementMetadata ISubmodelElementMetadataFrom(JsonNode node)
+        private ISubmodelElementMetadata? ISubmodelElementMetadataFrom(JsonNode node)
         {
-            ISubmodelElementMetadata output = null;
+            ISubmodelElementMetadata? output = null;
             //Using newtonsoft json because of known "EnumMemberAttribute" issue (https://github.com/dotnet/runtime/issues/74385) in case of ValueType
             var serilizerSettings = new JsonSerializerSettings();
             serilizerSettings.Converters.Add(new StringEnumConverter());
@@ -311,7 +311,7 @@ namespace IO.Swagger.Lib.V3.Formatters
             return output;
         }
 
-        private List<ISubmodelElementMetadata> ISubmodelElementMetadatListFrom(JsonNode jsonNode)
+        private List<ISubmodelElementMetadata?> ISubmodelElementMetadatListFrom(JsonNode jsonNode)
         {
             if (jsonNode == null) return null;
 
@@ -321,8 +321,8 @@ namespace IO.Swagger.Lib.V3.Formatters
                 throw new Exception(
                     $"Expected a JsonArray, but got {jsonNode.GetType()}");
             }
-            var valueMetadata = new List<ISubmodelElementMetadata>(
-                valueArray.Count);
+            var valueMetadata = new List<ISubmodelElementMetadata?>(
+                                                                    valueArray.Count);
             foreach (JsonNode value in valueArray)
             {
                 valueMetadata.Add(ISubmodelElementMetadataFrom(value));

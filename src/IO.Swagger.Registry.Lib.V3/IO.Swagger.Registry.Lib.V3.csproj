@@ -2,12 +2,13 @@
     <PropertyGroup>
         <Description>IO.Swagger</Description>
         <Copyright>IO.Swagger</Copyright>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <PreserveCompilationContext>true</PreserveCompilationContext>
         <AssemblyName>IO.Swagger.Registry.Lib.V3</AssemblyName>
         <PackageId>IO.Swagger.Registry</PackageId>
         <OutputType>Library</OutputType>
+        <Nullable>enable</Nullable>
         <Version>0.3.0.1-aasV3-alpha-latest</Version>
     </PropertyGroup>
     <PropertyGroup>

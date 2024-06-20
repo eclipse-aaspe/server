@@ -7,7 +7,6 @@ using Extensions;
 using Jose;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Opc.Ua;
@@ -66,6 +65,7 @@ namespace AasxServer
     public static class Program
     {
         public static IConfiguration con { get; set; }
+
         public static string getBetween(AdminShellPackageEnv env, string strStart, string strEnd)
         {
             string strSource = env.getEnvXml();
@@ -239,6 +239,7 @@ namespace AasxServer
                         submodel.SetTimeStamp(timeStamp);
                         submodel.SetAllParents(timeStamp);
                     }
+
                     output = a;
                 }
                 else
@@ -361,7 +362,7 @@ namespace AasxServer
         public static string[] envSymbols = null;
 
         public static string[] envSubjectIssuer = null;
-       
+
 
         public static string hostPort = "";
         public static string blazorPort = "";
@@ -391,6 +392,7 @@ namespace AasxServer
         public static bool edit = false;
         public static string externalRest = "";
         public static string externalBlazor = "";
+        public static string externalRepository = "";
         public static bool readTemp = false;
         public static int saveTemp = 0;
         public static DateTime saveTempDt = new DateTime();
@@ -473,7 +475,7 @@ namespace AasxServer
             }
 
             // Read environment variables
-            string[] evlist = {"PLCNEXTTARGET", "WITHPOLICY", "SHOWWEIGHT"};
+            string[] evlist = {"PLCNEXTTARGET", "WITHPOLICY", "SHOWWEIGHT", "AASREPOSITORY"};
             foreach (var ev in evlist)
             {
                 string v = System.Environment.GetEnvironmentVariable(ev);
@@ -485,6 +487,7 @@ namespace AasxServer
                     envVariables.Add(ev, v);
                 }
             }
+
             string w;
             if (envVariables.TryGetValue("WITHPOLICY", out w))
             {
@@ -492,10 +495,12 @@ namespace AasxServer
                 {
                     withPolicy = true;
                 }
+
                 if (w.ToLower() == "false" || w.ToLower() == "off")
                 {
                     withPolicy = false;
                 }
+
                 Console.WriteLine("withPolicy: " + withPolicy);
             }
 
@@ -505,20 +510,24 @@ namespace AasxServer
                 {
                     showWeight = true;
                 }
+
                 if (w.ToLower() == "false" || w.ToLower() == "off")
                 {
                     showWeight = false;
                 }
+
                 Console.WriteLine("showWeight: " + showWeight);
             }
 
+            envVariables.TryGetValue("AASREPOSITORY", out externalRepository);
+            
             if (a.Connect != null)
             {
                 if (a.Connect.Length == 0)
                 {
                     Program.connectServer = "http://admin-shell-io.com:52000";
-                    Byte[]                   barray = new byte[10];
-                    RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
+                    Byte[]                barray = new byte[10];
+                    RandomNumberGenerator rngCsp = RandomNumberGenerator.Create();
                     rngCsp.GetBytes(barray);
                     Program.connectNodeName   = "AasxServer_" + Convert.ToBase64String(barray);
                     Program.connectUpdateRate = 2000;
@@ -674,6 +683,7 @@ namespace AasxServer
             {
                 externalRest = "http://" + hostPort;
             }
+
             if (a.ExternalBlazor != null)
             {
                 externalBlazor = a.ExternalBlazor;
@@ -682,6 +692,15 @@ namespace AasxServer
             {
                 externalBlazor = "http://" + blazorHostPort;
             }
+            
+            externalBlazor = externalBlazor.Replace("\r", "");
+            externalBlazor = externalBlazor.Replace("\n", "");
+            
+            if (string.IsNullOrEmpty(externalRepository))
+            {
+                externalRepository = externalBlazor;
+            }
+            
             Query.ExternalBlazor = externalBlazor;
 
             /*
@@ -710,20 +729,27 @@ namespace AasxServer
             Console.WriteLine("Security 1 Startup - Server");
             Console.WriteLine("Security 1.1 Load X509 Root Certificates into X509 Store Root");
 
-            X509Store root = new X509Store("Root", StoreLocation.CurrentUser);
-            root.Open(OpenFlags.ReadWrite);
-
-            System.IO.DirectoryInfo ParentDirectory = new System.IO.DirectoryInfo(".");
-
-            if (Directory.Exists("./root"))
+            try
             {
-                foreach (System.IO.FileInfo f in ParentDirectory.GetFiles("./root/*.cer"))
-                {
-                    X509Certificate2 cert = new X509Certificate2("./root/" + f.Name);
+                X509Store root = new X509Store("Root", StoreLocation.CurrentUser);
+                root.Open(OpenFlags.ReadWrite);
 
-                    root.Add(cert);
-                    Console.WriteLine("Security 1.1 Add " + f.Name);
+                DirectoryInfo ParentDirectory = new DirectoryInfo(".");
+
+                if (Directory.Exists("./root"))
+                {
+                    foreach (FileInfo f in ParentDirectory.GetFiles("./root/*.cer"))
+                    {
+                        X509Certificate2 cert = new X509Certificate2("./root/" + f.Name);
+
+                        root.Add(cert);
+                        Console.WriteLine("Security 1.1 Add " + f.Name);
+                    }
                 }
+            }
+            catch (CryptographicException cryptographicException)
+            {
+                Console.WriteLine($"Cannot initialise cryptography: {cryptographicException.Message}");
             }
 
             if (!Directory.Exists("./temp"))
@@ -770,7 +796,7 @@ namespace AasxServer
             // Migrate always
             if (withDb)
             {
-                if (AasContext.isPostgres)
+                if (AasContext.IsPostgres)
                 {
                     Console.WriteLine("Use POSTGRES");
                     using (PostgreAasContext db = new PostgreAasContext())
@@ -809,11 +835,7 @@ namespace AasxServer
                 fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx");
                 Array.Sort(fileNames);
 
-                List<Task> saveTasks = new List<Task>();
-                int        maxTasks  = 1;
-                int        taskIndex = 0;
-
-                int fi = 0;
+                var fi = 0;
                 while (fi < fileNames.Length)
                 {
                     // try
@@ -942,6 +964,7 @@ namespace AasxServer
                     System.GC.Collect();
                     */
                 }
+
                 watch.Stop();
                 Console.WriteLine(fi + " AASX loaded in " + watch.ElapsedMilliseconds / 1000 + "s");
 
@@ -1076,6 +1099,7 @@ namespace AasxServer
                     Console.WriteLine("********** Can not connect to: " + connectServer);
                 }
             }
+
             Program.signalNewData(3);
 
             if (a.Opc && server != null)
@@ -1159,6 +1183,7 @@ namespace AasxServer
             {
                 Console.WriteLine(a);
             }
+
             Console.WriteLine();
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
@@ -1171,7 +1196,7 @@ namespace AasxServer
             {
                 if (con[ "DatabaseConnection:ConnectionString" ] != null)
                 {
-                    AasContext.isPostgres = con[ "DatabaseConnection:ConnectionString" ].ToLower().Contains("host");
+                    AasContext.IsPostgres = con[ "DatabaseConnection:ConnectionString" ].ToLower().Contains("host");
                 }
             }
 
@@ -1257,23 +1282,12 @@ namespace AasxServer
                 return;
             }
 
-            rootCommand.Handler = System.CommandLine.Invocation.CommandHandler.Create(
-                                                                                      async (CommandLineArguments a) =>
+            rootCommand.Handler = System.CommandLine.Invocation.CommandHandler.Create((CommandLineArguments a) =>
                                                                                       {
-                                                                                          /*
-                                                                                          if (!(a.Rest || a.Opc || a.Mqtt))
-                                                                                          {
-                                                                                              Console.Error.WriteLine($"Please specify --rest and/or --opc and/or --mqtt{nl}");
-                                                                                              new HelpBuilder(new SystemConsole()).Write(rootCommand);
-                                                                                              return 1;
-                                                                                          }
-                                                                                          */
-
-                                                                                          //return Run(a);
                                                                                           var task = Run(a);
                                                                                           task.Wait();
                                                                                           var op = task.Result;
-                                                                                          return op;
+                                                                                          return Task.FromResult(op);
                                                                                       });
 
             int exitCode = rootCommand.InvokeAsync(args).Result;
@@ -1297,10 +1311,12 @@ namespace AasxServer
             public string humanEndPoint;
             public string restEndPoint;
         }
+
         public class aasDirectoryParameters
         {
             public string source;
             public List<aasListParameters> aasList;
+
             public aasDirectoryParameters()
             {
                 aasList = new List<aasListParameters> { };
@@ -1423,6 +1439,7 @@ namespace AasxServer
             {
                 httpClient = new HttpClient();
             }
+
             var descriptorJson = new StringContent(descriptorData, System.Text.Encoding.UTF8, "application/json");
             try
             {
@@ -1442,6 +1459,7 @@ namespace AasxServer
             public string encrypt;
             public string extensions;
             public List<string> publish;
+
             public TransmitData()
             {
                 publish = new List<string> { };
@@ -1452,6 +1470,7 @@ namespace AasxServer
         {
             public string source;
             public List<TransmitData> data;
+
             public TransmitFrame()
             {
                 data = new List<TransmitData> { };
@@ -1607,6 +1626,7 @@ namespace AasxServer
                     {
                         tf.data.Add(tdp);
                     }
+
                     tdPending.Clear();
                 }
 
@@ -1633,6 +1653,7 @@ namespace AasxServer
                                         {
                                             toPublish = true;
                                         }
+
                                         j++;
                                     }
                                 }
@@ -1650,37 +1671,8 @@ namespace AasxServer
                             }
                         }
                     }
+
                     envi++;
-                }
-
-                // i40language
-                if (i40LanguageRuntime.isRequester && i40LanguageRuntime.sendFrameJSONRequester.Count != 0)
-                {
-                    foreach (string s in i40LanguageRuntime.sendFrameJSONRequester)
-                    {
-                        td = new TransmitData {source = connectNodeName};
-
-                        td.type = "i40LanguageRuntime.sendFrameJSONRequester";
-                        var json = JsonConvert.SerializeObject(s, Newtonsoft.Json.Formatting.Indented);
-                        td.publish.Add(json);
-                        tf.data.Add(td);
-                    }
-
-                    i40LanguageRuntime.sendFrameJSONRequester.Clear();
-                }
-
-                if (i40LanguageRuntime.isProvider && i40LanguageRuntime.sendFrameJSONProvider.Count != 0)
-                {
-                    td = new TransmitData {source = connectNodeName};
-
-                    foreach (string s in i40LanguageRuntime.sendFrameJSONProvider)
-                    {
-                        td.type = "i40LanguageRuntime.sendFrameJSONProvider";
-                        var json = JsonConvert.SerializeObject(s, Newtonsoft.Json.Formatting.Indented);
-                        td.publish.Add(json);
-                        tf.data.Add(td);
-                    }
-                    i40LanguageRuntime.sendFrameJSONProvider.Clear();
                 }
 
                 string publish = JsonConvert.SerializeObject(tf, Formatting.Indented);
@@ -1694,6 +1686,7 @@ namespace AasxServer
                 {
                     httpClient = new HttpClient();
                 }
+
                 var contentJson = new StringContent(publish, System.Text.Encoding.UTF8, "application/json");
 
                 string content = "";
@@ -1817,6 +1810,7 @@ namespace AasxServer
                                             {
                                                 tsb.sampleStatus.Value = "stopped";
                                             }
+
                                             if (tsb.sampleStatus.Value != "start")
                                                 continue;
 
@@ -1842,11 +1836,13 @@ namespace AasxServer
                                                                     tsb.data.Value.Add(smcData);
                                                                     actualCollections++;
                                                                 }
+
                                                                 if (actualCollections > maxCollections)
                                                                 {
                                                                     tsb.data.Value.RemoveAt(0);
                                                                     actualCollections--;
                                                                 }
+
                                                                 tsb.actualCollections.Value = actualCollections.ToString();
                                                                 /*
                                                                 tsb.lowDataIndex =
@@ -1932,6 +1928,7 @@ namespace AasxServer
                                                             toSubscribe = true;
                                                             break;
                                                         }
+
                                                         j++;
                                                     }
                                                 }
@@ -2004,26 +2001,11 @@ namespace AasxServer
                                                         aas.Submodels.Add(newsmr);
                                                     }
                                                 }
+
                                                 newConnectData = true;
                                             }
                                         }
                                     }
-                                }
-                            }
-
-                            // i40language
-                            if (i40LanguageRuntime.isRequester && td2.type == "i40LanguageRuntime.sendFrameJSONProvider")
-                            {
-                                foreach (string s in td2.publish)
-                                {
-                                    i40LanguageRuntime.receivedFrameJSONRequester.Add(JsonConvert.DeserializeObject<string>(s));
-                                }
-                            }
-                            if (i40LanguageRuntime.isProvider && td2.type == "i40LanguageRuntime.sendFrameJSONRequester")
-                            {
-                                foreach (string s in td2.publish)
-                                {
-                                    i40LanguageRuntime.receivedFrameJSONProvider.Add(JsonConvert.DeserializeObject<string>(s));
                                 }
                             }
                         }
@@ -2031,6 +2013,7 @@ namespace AasxServer
                     catch
                     {
                     }
+
                     if (newConnectData)
                     {
                         NewDataAvailable?.Invoke(null, EventArgs.Empty);
@@ -2046,25 +2029,18 @@ namespace AasxServer
             }
         }
 
-        private static System.Timers.Timer OPCClientTimer;
         static bool timerSet = false;
+
         private static void SetOPCClientTimer(double value)
         {
-            if (!timerSet)
+            if (timerSet)
             {
-                /*
-                // Create a timer with an specified interval.
-                OPCClientTimer = new System.Timers.Timer(value);
-                // Hook up the Elapsed event for the timer.
-                OPCClientTimer.Elapsed += OnOPCClientNextTimedEvent;
-                OPCClientTimer.AutoReset = true;
-                OPCClientTimer.Enabled = true;
-                */
-
-                timerSet = true;
-
-                AasxTimeSeries.TimeSeries.SetOPCClientThread(value);
+                return;
             }
+
+            timerSet = true;
+
+            AasxTimeSeries.TimeSeries.SetOPCClientThread(value);
         }
 
         public static event EventHandler NewDataAvailable;
@@ -2106,6 +2082,7 @@ namespace AasxServer
             // RunScript(false);
             NewDataAvailable?.Invoke(null, EventArgs.Empty);
         }
+
         private static void OnOPCClientNextTimedEvent(Object source, ElapsedEventArgs e)
         {
             ReadOPCClient(false);
@@ -2114,6 +2091,7 @@ namespace AasxServer
         }
 
         private static System.Timers.Timer scriptTimer;
+
         private static void SetScriptTimer(double value)
         {
             // Create a timer with a two second interval.
@@ -2131,6 +2109,7 @@ namespace AasxServer
         }
 
         private static System.Timers.Timer restTimer;
+
         private static void SetRestTimer(double value)
         {
             // Create a timer with a two second interval.
@@ -2141,12 +2120,12 @@ namespace AasxServer
             restTimer.Enabled   =  true;
         }
 
-        static bool RESTalreadyRunning = false;
+        static bool _resTalreadyRunning = false;
         static long countGetPut = 0;
 
         private static void OnRestTimedEvent(Object source, ElapsedEventArgs e)
         {
-            RESTalreadyRunning = true;
+            _resTalreadyRunning = true;
 
             string GETSUBMODEL = "";
             string GETURL      = "";
@@ -2171,14 +2150,17 @@ namespace AasxServer
                             {
                                 GETSUBMODEL = p.Value;
                             }
+
                             if (p.Type == "GETURL")
                             {
                                 GETURL = p.Value;
                             }
+
                             if (p.Type == "PUTSUBMODEL")
                             {
                                 PUTSUBMODEL = p.Value;
                             }
+
                             if (p.Type == "PUTURL")
                             {
                                 PUTURL = p.Value;
@@ -2279,7 +2261,7 @@ namespace AasxServer
                 }
             }
 
-            RESTalreadyRunning = false;
+            _resTalreadyRunning = false;
 
             // start MQTT Client as a worker (will start in the background)
             var worker = new BackgroundWorker();
@@ -2326,6 +2308,7 @@ namespace AasxServer
                 Console.WriteLine("node {0} does not exist in server!", nodeId);
                 return false;
             }
+
             var convertedValue = Convert.ChangeType(value, bvs.Value.GetType());
             if (!object.Equals(bvs.Value, convertedValue))
             {
@@ -2334,6 +2317,7 @@ namespace AasxServer
                 bvs.Timestamp = DateTime.UtcNow;
                 bvs.ClearChangeMasks(null, false);
             }
+
             return true;
         }
 
@@ -2423,6 +2407,7 @@ namespace AasxServer
                                     Console.WriteLine("Incorrent or missing qualifier. Aborting ...");
                                     return false;
                                 }
+
                                 if (Username == "" && Password == "")
                                 {
                                     Console.WriteLine("Using Anonymous to login ...");
@@ -2472,6 +2457,7 @@ namespace AasxServer
                                         Console.WriteLine("Already connected to OPC UA Server at {0} with {1} ...", URL, sm.IdShort);
                                     }
                                 }
+
                                 Console.WriteLine("==================================================");
                                 Console.WriteLine("Read values for {0} from {1} ...", sm.IdShort, URL);
                                 Console.WriteLine("==================================================");
@@ -2503,10 +2489,9 @@ namespace AasxServer
             {
                 changeDataVersion();
             }
+
             return true;
         }
-
-        static int countRunScript = 0;
 
         static void RunScript(bool init)
         {
@@ -2660,10 +2645,11 @@ namespace AasxServer
                                                         {
                                                             // dynamic model = JObject.Parse(response);
                                                             JObject parsed = JObject.Parse(response);
-                                                            parseJson(c1, parsed, null, envaas: env[i]);
+                                                            parseJson(c1, parsed, null);
                                                         }
                                                     }
                                                 }
+
                                                 continue;
                                             }
 
@@ -2695,6 +2681,7 @@ namespace AasxServer
                                             {
                                                 break;
                                             }
+
                                             if (sme1 is ReferenceElement &&
                                                 sme2 is ReferenceElement &&
                                                 sme3 is ReferenceElement)
@@ -2736,14 +2723,15 @@ namespace AasxServer
         }
 
         public static bool parseJson(SubmodelElementCollection c, JObject o, List<string> filter,
-            Property minDiffAbsolute = null, Property minDiffPercent = null, AdminShellPackageEnv envaas = null)
+                                     Property minDiffAbsolute = null, Property minDiffPercent = null,
+                                     AdminShellPackageEnv envaas = null)
         {
-            int newMode = 0;
+            int      newMode   = 0;
             DateTime timeStamp = DateTime.UtcNow;
-            bool ok = false;
+            bool     ok        = false;
 
             int iMinDiffAbsolute = 1;
-            int iMinDiffPercent = 0;
+            int iMinDiffPercent  = 0;
             if (minDiffAbsolute != null)
                 iMinDiffAbsolute = Convert.ToInt32(minDiffAbsolute.Value);
             if (minDiffPercent != null)
@@ -2771,6 +2759,7 @@ namespace AasxServer
                             c2.SetTimeStamp(timeStamp);
                             newMode = 1;
                         }
+
                         int count = 1;
                         foreach (JObject el in jp1.Value)
                         {
@@ -2785,8 +2774,10 @@ namespace AasxServer
                                 c3.SetTimeStamp(timeStamp);
                                 newMode = 1;
                             }
+
                             ok |= parseJson(c3, el, filter, envaas: envaas);
                         }
+
                         break;
                     case JTokenType.Object:
                         c2 = c.FindFirstIdShortAs<SubmodelElementCollection>(jp1.Name);
@@ -2801,7 +2792,7 @@ namespace AasxServer
 
                         foreach (JObject el in jp1.Value)
                         {
-                            ok |= parseJson(c2, el, filter);
+                            ok |= parseJson(c2, el, filter, envaas: envaas);
                         }
 
                         break;
@@ -2815,6 +2806,7 @@ namespace AasxServer
                             p.SetTimeStamp(timeStamp);
                             newMode = 1;
                         }
+
                         // see https://github.com/JamesNK/Newtonsoft.Json/issues/874    
                         try
                         {
@@ -2958,6 +2950,7 @@ namespace AasxServer
             {
                 Console.WriteLine(message);
             }
+
             if (ask)
             {
                 try
@@ -2971,6 +2964,7 @@ namespace AasxServer
                     // intentionally fall through
                 }
             }
+
             return await Task.FromResult(true);
         }
     }
@@ -3130,6 +3124,7 @@ namespace AasxServer
                     {
                         item += String.Format(":{0,20}", session.Identity.DisplayName);
                     }
+
                     item += String.Format(":{0}", session.Id);
                 }
             }

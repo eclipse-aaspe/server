@@ -344,7 +344,7 @@ namespace AdminShell_V20
                        this.foundHash == other.foundHash;
             }
 
-            public override bool Equals(object obj) => obj is SearchResultItem item && Equals(item);
+            public override bool Equals(object? obj) => obj is SearchResultItem item && Equals(item);
 
             public override int GetHashCode() =>
                 // Implement appropriate hash code calculation based on equality criteria

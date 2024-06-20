@@ -25,7 +25,9 @@ namespace AasxCompatibilityModels
     /// <summary>
     /// This empty class derives always from the current version of the Administration Shell class hierarchy.
     /// </summary>
-    public class AdminShell : AdminShellV20 { }
+    public class AdminShell : AdminShellV20
+    {
+    }
 
     #region AdminShell_V2_0
 
@@ -36,16 +38,11 @@ namespace AasxCompatibilityModels
     {
         public class Identification
         {
-
             // members
 
-            [XmlAttribute]
-            [CountForHash]
-            public string idType = "";
+            [ XmlAttribute ] [ CountForHash ] public string idType = "";
 
-            [XmlText]
-            [CountForHash]
-            public string id = "";
+            [ XmlText ] [ CountForHash ] public string id = "";
 
             // some constants
 
@@ -60,7 +57,7 @@ namespace AasxCompatibilityModels
             public Identification(Identification src)
             {
                 this.idType = src.idType;
-                this.id = src.id;
+                this.id     = src.id;
             }
 
 #if !DoNotUseAasxCompatibilityModels
@@ -76,13 +73,13 @@ namespace AasxCompatibilityModels
             public Identification(string idType, string id)
             {
                 this.idType = idType;
-                this.id = id;
+                this.id     = id;
             }
 
             public Identification(Key key)
             {
                 this.idType = key.idType;
-                this.id = key.value;
+                this.id     = key.value;
             }
 
             // Creator with validation
@@ -104,13 +101,13 @@ namespace AasxCompatibilityModels
             public bool IsEqual(Identification other)
             {
                 return (this.idType.Trim().ToLower() == other.idType.Trim().ToLower()
-                    && this.id.Trim().ToLower() == other.id.Trim().ToLower());
+                        && this.id.Trim().ToLower() == other.id.Trim().ToLower());
             }
 
             public bool IsIRI()
             {
                 return idType?.Trim().ToUpper() == "URI"
-                    || idType?.Trim().ToUpper() == IRI;
+                       || idType?.Trim().ToUpper() == IRI;
             }
 
             public bool IsIRDI()
@@ -126,17 +123,12 @@ namespace AasxCompatibilityModels
 
         public class Administration
         {
-
             // members
 
-            [MetaModelName("Administration.version")]
-            [TextSearchable]
-            [CountForHash]
+            [ MetaModelName("Administration.version") ] [ TextSearchable ] [ CountForHash ]
             public string version = "";
 
-            [MetaModelName("Administration.revision")]
-            [TextSearchable]
-            [CountForHash]
+            [ MetaModelName("Administration.revision") ] [ TextSearchable ] [ CountForHash ]
             public string revision = "";
 
             // constructors
@@ -145,21 +137,21 @@ namespace AasxCompatibilityModels
 
             public Administration(Administration src)
             {
-                this.version = src.version;
+                this.version  = src.version;
                 this.revision = src.revision;
             }
 
 #if !DoNotUseAasxCompatibilityModels
             public Administration(AasxCompatibilityModels.AdminShellV10.Administration src)
             {
-                this.version = src.version;
+                this.version  = src.version;
                 this.revision = src.revision;
             }
 #endif
 
             public Administration(string version, string revision)
             {
-                this.version = version;
+                this.version  = version;
                 this.revision = revision;
             }
 
@@ -177,25 +169,16 @@ namespace AasxCompatibilityModels
 
             // Members
 
-            [MetaModelName("Key.type")]
-            [TextSearchable]
-            [XmlAttribute]
-            [CountForHash]
+            [ MetaModelName("Key.type") ] [ TextSearchable ] [ XmlAttribute ] [ CountForHash ]
             public string type = "";
 
-            [XmlAttribute]
-            [CountForHash]
-            public bool local = false;
+            [ XmlAttribute ] [ CountForHash ] public bool local = false;
 
-            [MetaModelName("Key.idType")]
-            [TextSearchable]
-            [XmlAttribute]
-            [JsonIgnore]
-            [CountForHash]
+            [ MetaModelName("Key.idType") ] [ TextSearchable ] [ XmlAttribute ] [ JsonIgnore ] [ CountForHash ]
             public string idType = "";
 
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "idType")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "idType") ]
             public string JsonIdType
             {
                 // adapt idShort <-> IdShort
@@ -203,15 +186,10 @@ namespace AasxCompatibilityModels
                 set => idType = (value == "idShort") ? "IdShort" : value;
             }
 
-            [MetaModelName("Key.value")]
-            [TextSearchable]
-            [XmlText]
-            [CountForHash]
+            [ MetaModelName("Key.value") ] [ TextSearchable ] [ XmlText ] [ CountForHash ]
             public string value = "";
 
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "index")]
-            [CountForHash]
+            [ XmlIgnore ] [ JsonProperty(PropertyName = "index") ] [ CountForHash ]
             public int index = 0;
 
             public Key()
@@ -220,17 +198,17 @@ namespace AasxCompatibilityModels
 
             public Key(Key src)
             {
-                this.type = src.type;
-                this.local = src.local;
+                this.type   = src.type;
+                this.local  = src.local;
                 this.idType = src.idType;
-                this.value = src.value;
+                this.value  = src.value;
             }
 
 #if !DoNotUseAasxCompatibilityModels
             public Key(AasxCompatibilityModels.AdminShellV10.Key src)
             {
-                this.type = src.type;
-                this.local = src.local;
+                this.type   = src.type;
+                this.local  = src.local;
                 this.idType = src.idType;
                 if (this.idType.Trim().ToLower() == "uri")
                     this.idType = Identification.IRI;
@@ -242,21 +220,15 @@ namespace AasxCompatibilityModels
 
             public Key(string type, bool local, string idType, string value)
             {
-                this.type = type;
-                this.local = local;
+                this.type   = type;
+                this.local  = local;
                 this.idType = idType;
-                this.value = value;
+                this.value  = value;
             }
 
             public static Key CreateNew(string type, bool local, string idType, string value)
             {
-                var k = new Key()
-                {
-                    type = type,
-                    local = local,
-                    idType = idType,
-                    value = value
-                };
+                var k = new Key() {type = type, local = local, idType = idType, value = value};
                 return (k);
             }
 
@@ -264,7 +236,7 @@ namespace AasxCompatibilityModels
             {
                 if (r == null || r.Count != 1)
                     return null;
-                return r[0];
+                return r[ 0 ];
             }
 
             public Identification ToId()
@@ -277,8 +249,9 @@ namespace AasxCompatibilityModels
                 if (format == 1)
                 {
                     return String.Format(
-                        "({0})({1})[{2}]{3}", this.type, this.local ? "local" : "no-local", this.idType, this.value);
+                                         "({0})({1})[{2}]{3}", this.type, this.local ? "local" : "no-local", this.idType, this.value);
                 }
+
                 if (format == 2)
                 {
                     return String.Format("[{0}]{1}", this.idType, this.value);
@@ -290,8 +263,8 @@ namespace AasxCompatibilityModels
             }
 
             public static Key Parse(string cell, string typeIfNotSet = null,
-                bool allowFmtAll = false, bool allowFmt0 = false,
-                bool allowFmt1 = false, bool allowFmt2 = false)
+                                    bool allowFmtAll = false, bool allowFmt0 = false,
+                                    bool allowFmt1 = false, bool allowFmt2 = false)
             {
                 // access and defaults?
                 if (cell == null || cell.Trim().Length < 1)
@@ -306,8 +279,8 @@ namespace AasxCompatibilityModels
                     if (m.Success)
                     {
                         return new AdminShell.Key(
-                                m.Groups[1].ToString(), m.Groups[2].ToString() == "local",
-                                m.Groups[3].ToString(), m.Groups[5].ToString());
+                                                  m.Groups[ 1 ].ToString(), m.Groups[ 2 ].ToString() == "local",
+                                                  m.Groups[ 3 ].ToString(), m.Groups[ 5 ].ToString());
                     }
                 }
 
@@ -318,8 +291,8 @@ namespace AasxCompatibilityModels
                     if (m.Success)
                     {
                         return new AdminShell.Key(
-                                typeIfNotSet, true,
-                                m.Groups[1].ToString(), m.Groups[3].ToString());
+                                                  typeIfNotSet, true,
+                                                  m.Groups[ 1 ].ToString(), m.Groups[ 3 ].ToString());
                     }
                 }
 
@@ -330,8 +303,8 @@ namespace AasxCompatibilityModels
                     if (m.Success)
                     {
                         return new AdminShell.Key(
-                                m.Groups[1].ToString(), !m.Groups[3].ToString().Contains("not"),
-                                m.Groups[5].ToString(), m.Groups[7].ToString());
+                                                  m.Groups[ 1 ].ToString(), !m.Groups[ 3 ].ToString().Contains("not"),
+                                                  m.Groups[ 5 ].ToString(), m.Groups[ 7 ].ToString());
                     }
                 }
 
@@ -345,7 +318,7 @@ namespace AasxCompatibilityModels
                     return "";
                 // normally, exactly one key
                 if (keys.Count == 1)
-                    return keys[0].ToString();
+                    return keys[ 0 ].ToString();
                 // multiple!
                 var s = "[ ";
                 foreach (var k in keys)
@@ -354,83 +327,34 @@ namespace AasxCompatibilityModels
                         s += ", ";
                     s += k.ToString();
                 }
+
                 return s + " ]";
             }
 
-            public static string[] KeyElements = new string[] {
-            "GlobalReference",
-            "FragmentReference",
-            "AccessPermissionRule",
-            "Asset",
-            "AssetAdministrationShell",
-            "ConceptDescription",
-            "Submodel",
-            "SubmodelRef", // not completely right, but used by Package Explorer
-            "Blob",
-            "ConceptDictionary",
-            "DataElement",
-            "File",
-            "Operation",
-            "OperationVariable",
-            "BasicEvent",
-            "Entity",
-            "Property",
-            "MultiLanguageProperty",
-            "Range",
-            "ReferenceElement",
-            "RelationshipElement",
-            "AnnotatedRelationshipElement",
-            "Capability",
-            "SubmodelElement",
-            "SubmodelElementCollection",
-            "View" };
+            public static string[] KeyElements = new string[]
+                                                 {
+                                                     "GlobalReference", "FragmentReference", "AccessPermissionRule", "Asset", "AssetAdministrationShell", "ConceptDescription",
+                                                     "Submodel", "SubmodelRef", // not completely right, but used by Package Explorer
+                                                     "Blob", "ConceptDictionary", "DataElement", "File", "Operation", "OperationVariable", "BasicEvent", "Entity", "Property",
+                                                     "MultiLanguageProperty", "Range", "ReferenceElement", "RelationshipElement", "AnnotatedRelationshipElement", "Capability",
+                                                     "SubmodelElement", "SubmodelElementCollection", "View"
+                                                 };
 
-            public static string[] ReferableElements = new string[] {
-            "AccessPermissionRule",
-            "Asset",
-            "AssetAdministrationShell",
-            "ConceptDescription",
-            "Submodel",
-            "Blob",
-            "ConceptDictionary",
-            "DataElement",
-            "File",
-            "Operation",
-            "OperationVariable",
-            "Entity",
-            "BasicEvent",
-            "Property",
-            "MultiLanguageProperty",
-            "Range",
-            "ReferenceElement",
-            "RelationshipElement",
-            "AnnotatedRelationshipElement",
-            "Capability",
-            "SubmodelElement",
-            "SubmodelElementCollection",
-            "View" };
+            public static string[] ReferableElements = new string[]
+                                                       {
+                                                           "AccessPermissionRule", "Asset", "AssetAdministrationShell", "ConceptDescription", "Submodel", "Blob",
+                                                           "ConceptDictionary", "DataElement", "File", "Operation", "OperationVariable", "Entity", "BasicEvent", "Property",
+                                                           "MultiLanguageProperty", "Range", "ReferenceElement", "RelationshipElement", "AnnotatedRelationshipElement",
+                                                           "Capability", "SubmodelElement", "SubmodelElementCollection", "View"
+                                                       };
 
-            public static string[] SubmodelElements = new string[] {
-            "DataElement",
-            "File",
-            "Event",
-            "Operation",
-            "Property",
-            "MultiLanguageProperty",
-            "Range",
-            "ReferenceElement",
-            "RelationshipElement",
-            "AnnotatedRelationshipElement",
-            "Capability",
-            "BasicEvent",
-            "Entity",
-            "SubmodelElementCollection"};
+            public static string[] SubmodelElements = new string[]
+                                                      {
+                                                          "DataElement", "File", "Event", "Operation", "Property", "MultiLanguageProperty", "Range", "ReferenceElement",
+                                                          "RelationshipElement", "AnnotatedRelationshipElement", "Capability", "BasicEvent", "Entity", "SubmodelElementCollection"
+                                                      };
 
-            public static string[] IdentifiableElements = new string[] {
-            "Asset",
-            "AssetAdministrationShell",
-            "ConceptDescription",
-            "Submodel" };
+            public static string[] IdentifiableElements = new string[] {"Asset", "AssetAdministrationShell", "ConceptDescription", "Submodel"};
 
             // use this in list to designate all of the above elements
             public static string AllElements = "All";
@@ -449,14 +373,13 @@ namespace AasxCompatibilityModels
             public static string View = "View";
             // Resharper enable MemberHidesStaticFromOuterClass
 
-            public static string[] IdentifierTypeNames = new string[] {
-                Identification.IdShort, "FragmentId", "Custom", Identification.IRDI, Identification.IRI };
+            public static string[] IdentifierTypeNames = new string[] {Identification.IdShort, "FragmentId", "Custom", Identification.IRDI, Identification.IRI};
 
             public enum IdentifierType { IdShort = 0, FragmentId, Custom, IRDI, IRI };
 
             public static string GetIdentifierTypeName(IdentifierType t)
             {
-                return IdentifierTypeNames[(int)t];
+                return IdentifierTypeNames[ (int) t ];
             }
 
             public static string IdShort = "IdShort";
@@ -498,9 +421,9 @@ namespace AasxCompatibilityModels
             public bool IsAbsolute()
             {
                 return IsType(Key.GlobalReference)
-                    || IsType(Key.AAS)
-                    || IsType(Key.Asset)
-                    || IsType(Key.Submodel);
+                       || IsType(Key.AAS)
+                       || IsType(Key.Asset)
+                       || IsType(Key.Submodel);
             }
 
             public bool Matches(
@@ -511,7 +434,7 @@ namespace AasxCompatibilityModels
 
                 if (matchMode == MatchMode.Relaxed)
                     return (this.type == type || this.type == Key.GlobalReference || type == Key.GlobalReference)
-                        && this.idType == idType && this.value == id;
+                           && this.idType == idType && this.value == id;
 
                 if (matchMode == MatchMode.Identification)
                     return this.idType == idType && this.value == id;
@@ -548,12 +471,12 @@ namespace AasxCompatibilityModels
                 {
                     // violation case
                     results.Add(new AasValidationRecord(
-                        AasValidationSeverity.SpecViolation, container,
-                        "Key: is null",
-                        () =>
-                        {
-                            res = AasValidationAction.ToBeDeleted;
-                        }));
+                                                        AasValidationSeverity.SpecViolation, container,
+                                                        "Key: is null",
+                                                        () =>
+                                                        {
+                                                            res = AasValidationAction.ToBeDeleted;
+                                                        }));
                 }
                 else
                 {
@@ -562,44 +485,44 @@ namespace AasxCompatibilityModels
                     if (idf == AdminShellUtilV20.ConstantFoundEnum.No)
                         // violation case
                         results.Add(new AasValidationRecord(
-                            AasValidationSeverity.SchemaViolation, container,
-                            "Key: idType is not in allowed enumeration values",
-                            () =>
-                            {
-                                k.idType = Custom;
-                            }));
+                                                            AasValidationSeverity.SchemaViolation, container,
+                                                            "Key: idType is not in allowed enumeration values",
+                                                            () =>
+                                                            {
+                                                                k.idType = Custom;
+                                                            }));
                     if (idf == AdminShellUtilV20.ConstantFoundEnum.AnyCase)
                         // violation case
                         results.Add(new AasValidationRecord(
-                            AasValidationSeverity.SchemaViolation, container,
-                            "Key: idType in wrong casing",
-                            () =>
-                            {
-                                k.idType = AdminShellUtilV20.CorrectCasingForConstantStringArray(
-                                    IdentifierTypeNames, k.idType);
-                            }));
+                                                            AasValidationSeverity.SchemaViolation, container,
+                                                            "Key: idType in wrong casing",
+                                                            () =>
+                                                            {
+                                                                k.idType = AdminShellUtilV20.CorrectCasingForConstantStringArray(
+                                                                 IdentifierTypeNames, k.idType);
+                                                            }));
 
                     // check type
                     var tf = AdminShellUtilV20.CheckIfInConstantStringArray(KeyElements, k.type);
                     if (tf == AdminShellUtilV20.ConstantFoundEnum.No)
                         // violation case
                         results.Add(new AasValidationRecord(
-                            AasValidationSeverity.SchemaViolation, container,
-                            "Key: type is not in allowed enumeration values",
-                            () =>
-                            {
-                                k.type = GlobalReference;
-                            }));
+                                                            AasValidationSeverity.SchemaViolation, container,
+                                                            "Key: type is not in allowed enumeration values",
+                                                            () =>
+                                                            {
+                                                                k.type = GlobalReference;
+                                                            }));
                     if (tf == AdminShellUtilV20.ConstantFoundEnum.AnyCase)
                         // violation case
                         results.Add(new AasValidationRecord(
-                            AasValidationSeverity.SchemaViolation, container,
-                            "Key: type in wrong casing",
-                            () =>
-                            {
-                                k.idType = AdminShellUtilV20.CorrectCasingForConstantStringArray(
-                                    KeyElements, k.type);
-                            }));
+                                                            AasValidationSeverity.SchemaViolation, container,
+                                                            "Key: type in wrong casing",
+                                                            () =>
+                                                            {
+                                                                k.idType = AdminShellUtilV20.CorrectCasingForConstantStringArray(
+                                                                 KeyElements, k.type);
+                                                            }));
                 }
 
                 // may give result "to be deleted"
@@ -611,8 +534,7 @@ namespace AasxCompatibilityModels
         {
             // getters / setters
 
-            [XmlIgnore]
-            public bool IsEmpty { get { return this.Count < 1; } }
+            [ XmlIgnore ] public bool IsEmpty { get { return this.Count < 1; } }
 
             // constructors / creators
 
@@ -627,15 +549,13 @@ namespace AasxCompatibilityModels
 
             public static KeyList CreateNew(Key k)
             {
-                var kl = new KeyList { k };
+                var kl = new KeyList {k};
                 return kl;
             }
 
             public static KeyList CreateNew(string type, bool local, string idType, string value)
             {
-                var kl = new KeyList() {
-                    Key.CreateNew(type, local, idType, value)
-                };
+                var kl = new KeyList() {Key.CreateNew(type, local, idType, value)};
                 return kl;
             }
 
@@ -661,7 +581,7 @@ namespace AasxCompatibilityModels
 
                 var same = true;
                 for (int i = 0; i < this.Count; i++)
-                    same = same && this[i].Matches(other[i], matchMode);
+                    same = same && this[ i ].Matches(other[ i ], matchMode);
 
                 return same;
             }
@@ -671,7 +591,7 @@ namespace AasxCompatibilityModels
             public void NumberIndices()
             {
                 for (int i = 0; i < this.Count; i++)
-                    this[i].index = i;
+                    this[ i ].index = i;
             }
 
             public string ToString(int format = 0, string delimiter = ",")
@@ -688,7 +608,7 @@ namespace AasxCompatibilityModels
 
                 // split
                 var parts = input.Split(',', ';');
-                var kl = new KeyList();
+                var kl    = new KeyList();
 
                 foreach (var p in parts)
                 {
@@ -704,17 +624,17 @@ namespace AasxCompatibilityModels
             {
                 if (this.Count < 1)
                     return "-";
-                var i = this.Count - 1;
-                var res = this[i].value;
-                if (this[i].IsIdType(new[] { Key.FragmentId }) && i > 0)
-                    res += this[i - 1].value;
+                var i   = this.Count - 1;
+                var res = this[ i ].value;
+                if (this[ i ].IsIdType(new[] {Key.FragmentId}) && i > 0)
+                    res += this[ i - 1 ].value;
                 return res;
             }
 
             // validation
 
             public static void Validate(AasValidationRecordList results, KeyList kl,
-                Referable container)
+                                        Referable container)
             {
                 // access
                 if (results == null || kl == null || container == null)
@@ -724,18 +644,19 @@ namespace AasxCompatibilityModels
                 var idx = 0;
                 while (idx < kl.Count)
                 {
-                    var act = Key.Validate(results, kl[idx], container);
+                    var act = Key.Validate(results, kl[ idx ], container);
                     if (act == AasValidationAction.ToBeDeleted)
                     {
                         kl.RemoveAt(idx);
                         continue;
                     }
+
                     idx++;
                 }
             }
 
             public bool StartsWith(KeyList head, bool emptyIsTrue = false,
-                Key.MatchMode matchMode = Key.MatchMode.Strict)
+                                   Key.MatchMode matchMode = Key.MatchMode.Strict)
             {
                 // access
                 if (head == null)
@@ -750,7 +671,7 @@ namespace AasxCompatibilityModels
                     if (i >= this.Count)
                         return false;
 
-                    if (!head[i].Matches(this[i], matchMode))
+                    if (!head[ i ].Matches(this[ i ], matchMode))
                         return false;
                 }
 
@@ -785,8 +706,9 @@ namespace AasxCompatibilityModels
                 for (int i = startPos; i < this.Count && nr < count; i++)
                 {
                     nr++;
-                    res.Add(this[i]);
+                    res.Add(this[ i ]);
                 }
+
                 return res;
             }
 
@@ -812,18 +734,19 @@ namespace AasxCompatibilityModels
             {
                 if (startPos >= this.Count)
                     return "";
-                int nr = 0;
+                int nr  = 0;
                 var res = "";
                 for (int i = startPos; i < this.Count && nr < count; i++)
                 {
                     nr++;
-                    if (this[i].idType.Trim().ToLower() == Key.IdShort.Trim().ToLower())
+                    if (this[ i ].idType.Trim().ToLower() == Key.IdShort.Trim().ToLower())
                     {
                         if (res != "")
                             res += "/";
-                        res += this[i].value;
+                        res += this[ i ].value;
                     }
                 }
+
                 return res;
             }
         }
@@ -832,6 +755,7 @@ namespace AasxCompatibilityModels
         {
             public string ElementName = "";
             public string ElementAbbreviation = "";
+
             public SubmodelElementWrapper.AdequateElementEnum ElementEnum =
                 SubmodelElementWrapper.AdequateElementEnum.Unknown;
 
@@ -842,9 +766,9 @@ namespace AasxCompatibilityModels
                 SubmodelElementWrapper.AdequateElementEnum elementEnum
                     = SubmodelElementWrapper.AdequateElementEnum.Unknown)
             {
-                this.ElementName = ElementName;
+                this.ElementName         = ElementName;
                 this.ElementAbbreviation = ElementAbbreviation;
-                this.ElementEnum = elementEnum;
+                this.ElementEnum         = elementEnum;
             }
         }
 
@@ -854,27 +778,27 @@ namespace AasxCompatibilityModels
         public interface IAasElement
         {
             AasElementSelfDescription GetSelfDescription();
-            string GetElementName();
+            string                    GetElementName();
         }
 
-        [XmlType(TypeName = "reference")]
+        [ XmlType(TypeName = "reference") ]
         public class Reference : IAasElement
         {
-
             // members
 
-            [XmlIgnore] // anyway, as it is private
-            [JsonIgnore]
+            [ XmlIgnore ] // anyway, as it is private
+            [ JsonIgnore ]
             private KeyList keys = new KeyList();
 
             // getters / setters
 
-            [XmlArray("keys")]
-            [XmlArrayItem("key")]
-            [JsonIgnore]
+            [ XmlArray("keys") ]
+            [ XmlArrayItem("key") ]
+            [ JsonIgnore ]
             public KeyList Keys { get { return keys; } }
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "keys")]
+
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "keys") ]
             public KeyList JsonKeys
             {
                 get
@@ -884,23 +808,24 @@ namespace AasxCompatibilityModels
                 }
             }
 
-            [XmlIgnore]
-            [JsonIgnore]
-            public bool IsEmpty { get { return keys == null || keys.Count < 1; } }
-            [XmlIgnore]
-            [JsonIgnore]
-            public int Count { get { if (keys == null) return 0; return keys.Count; } }
-            [XmlIgnore]
-            [JsonIgnore]
-            public Key this[int index] { get { return keys[index]; } }
+            [ XmlIgnore ] [ JsonIgnore ] public bool IsEmpty { get { return keys == null || keys.Count < 1; } }
 
-            [XmlIgnore]
-            [JsonIgnore]
-            public Key First { get { return this.Count < 1 ? null : this.keys[0]; } }
+            [ XmlIgnore ]
+            [ JsonIgnore ]
+            public int Count
+            {
+                get
+                {
+                    if (keys == null) return 0;
+                    return keys.Count;
+                }
+            }
 
-            [XmlIgnore]
-            [JsonIgnore]
-            public Key Last { get { return this.Count < 1 ? null : this.keys[this.keys.Count - 1]; } }
+            [ XmlIgnore ] [ JsonIgnore ] public Key this[int index] { get { return keys[ index ]; } }
+
+            [ XmlIgnore ] [ JsonIgnore ] public Key First { get { return this.Count < 1 ? null : this.keys[ 0 ]; } }
+
+            [ XmlIgnore ] [ JsonIgnore ] public Key Last { get { return this.Count < 1 ? null : this.keys[ this.keys.Count - 1 ]; } }
 
             // constructors / creators
 
@@ -1003,7 +928,7 @@ namespace AasxCompatibilityModels
             {
                 if (keys == null || keys.Count != 1)
                     return null;
-                var k = keys[0];
+                var k = keys[ 0 ];
                 return new Key(k.type, k.local, k.idType, k.value);
             }
 
@@ -1012,7 +937,7 @@ namespace AasxCompatibilityModels
             {
                 if (keys == null || keys.Count != 1)
                     return false;
-                var k = keys[0];
+                var k = keys[ 0 ];
                 return k.Matches(type, local, idType, id, matchMode);
             }
 
@@ -1028,9 +953,10 @@ namespace AasxCompatibilityModels
             {
                 if (this.Count == 1)
                 {
-                    var k = keys[0];
+                    var k = keys[ 0 ];
                     return k.Matches(type, local, idType, id, matchMode);
                 }
+
                 return false;
             }
 
@@ -1038,9 +964,10 @@ namespace AasxCompatibilityModels
             {
                 if (this.Count == 1)
                 {
-                    var k = keys[0];
+                    var k = keys[ 0 ];
                     return k.Matches(key, matchMode);
                 }
+
                 return false;
             }
 
@@ -1050,9 +977,10 @@ namespace AasxCompatibilityModels
                     return false;
                 if (this.Count == 1)
                 {
-                    var k = keys[0];
+                    var k = keys[ 0 ];
                     return k.Matches(Key.GlobalReference, false, other.idType, other.id, Key.MatchMode.Identification);
                 }
+
                 return false;
             }
 
@@ -1063,7 +991,7 @@ namespace AasxCompatibilityModels
 
                 var same = true;
                 for (int i = 0; i < this.Count; i++)
-                    same = same && this.keys[i].Matches(other.keys[i], matchMode);
+                    same = same && this.keys[ i ].Matches(other.keys[ i ], matchMode);
 
                 return same;
             }
@@ -1099,6 +1027,7 @@ namespace AasxCompatibilityModels
                         if (res != "") res += delim;
                         res += x.value;
                     }
+
                 return res;
             }
 
@@ -1115,7 +1044,7 @@ namespace AasxCompatibilityModels
             }
         }
 
-        [XmlType(TypeName = "derivedFrom")]
+        [ XmlType(TypeName = "derivedFrom") ]
         public class AssetAdministrationShellRef : Reference
         {
             // constructors
@@ -1138,7 +1067,7 @@ namespace AasxCompatibilityModels
             }
         }
 
-        [XmlType(TypeName = "assetRef")]
+        [ XmlType(TypeName = "assetRef") ]
         public class AssetRef : Reference
         {
             // constructors
@@ -1164,7 +1093,7 @@ namespace AasxCompatibilityModels
             }
         }
 
-        [XmlType(TypeName = "submodelRef")]
+        [ XmlType(TypeName = "submodelRef") ]
         public class SubmodelRef : Reference
         {
             // constructors
@@ -1203,7 +1132,7 @@ namespace AasxCompatibilityModels
             }
         }
 
-        [XmlType(TypeName = "conceptDescriptionRef")]
+        [ XmlType(TypeName = "conceptDescriptionRef") ]
         public class ConceptDescriptionRef : Reference
         {
             // constructors
@@ -1214,7 +1143,9 @@ namespace AasxCompatibilityModels
 
 #if !DoNotUseAasxCompatibilityModels
             public ConceptDescriptionRef(
-                AasxCompatibilityModels.AdminShellV10.ConceptDescriptionRef src) : base(src) { }
+                AasxCompatibilityModels.AdminShellV10.ConceptDescriptionRef src) : base(src)
+            {
+            }
 #endif
 
             // further methods
@@ -1230,10 +1161,9 @@ namespace AasxCompatibilityModels
             {
                 return new AasElementSelfDescription("ConceptDescriptionRef", "CDRef");
             }
-
         }
 
-        [XmlType(TypeName = "dataSpecificationRef")]
+        [ XmlType(TypeName = "dataSpecificationRef") ]
         public class DataSpecificationRef : Reference
         {
             // constructors
@@ -1266,13 +1196,12 @@ namespace AasxCompatibilityModels
             {
                 return new AasElementSelfDescription("DataSpecificationRef", "DSRef");
             }
-
         }
 
-        [XmlType(TypeName = "conceptDescriptions")]
+        [ XmlType(TypeName = "conceptDescriptions") ]
         public class ConceptDescriptionRefs
         {
-            [XmlElement(ElementName = "conceptDescriptionRef")]
+            [ XmlElement(ElementName = "conceptDescriptionRef") ]
             public List<ConceptDescriptionRef> conceptDescriptions = new List<ConceptDescriptionRef>();
 
             // constructors
@@ -1296,7 +1225,7 @@ namespace AasxCompatibilityModels
 #endif
         }
 
-        [XmlType(TypeName = "containedElementRef")]
+        [ XmlType(TypeName = "containedElementRef") ]
         public class ContainedElementRef : Reference
         {
             // constructors
@@ -1324,7 +1253,6 @@ namespace AasxCompatibilityModels
             {
                 return new AasElementSelfDescription("ContainedElementRef", "CERef");
             }
-
         }
 
 #if __not_valid_anymore
@@ -1355,7 +1283,7 @@ namespace AasxCompatibilityModels
         // Iv 2.0.1, theoretically each entity with HasDataSpecification could also conatin a 
         // EmbeddedDataSpecification. 
 
-        [XmlType(TypeName = "hasDataSpecification")]
+        [ XmlType(TypeName = "hasDataSpecification") ]
         public class HasDataSpecification : List<EmbeddedDataSpecification>
         {
             public HasDataSpecification() { }
@@ -1382,8 +1310,8 @@ namespace AasxCompatibilityModels
 
             // make some explicit and easy to use getter, setters            
 
-            [XmlIgnore]
-            [JsonIgnore]
+            [ XmlIgnore ]
+            [ JsonIgnore ]
             public EmbeddedDataSpecification IEC61360
             {
                 get
@@ -1391,7 +1319,7 @@ namespace AasxCompatibilityModels
                     foreach (var eds in this)
                         if (eds?.dataSpecificationContent?.dataSpecificationIEC61360 != null
                             || eds?.dataSpecification?.MatchesExactlyOneKey(
-                                DataSpecificationIEC61360.GetKey(), Key.MatchMode.Identification) == true)
+                                                                            DataSpecificationIEC61360.GetKey(), Key.MatchMode.Identification) == true)
                             return eds;
                     return null;
                 }
@@ -1403,7 +1331,7 @@ namespace AasxCompatibilityModels
                     {
                         // replace this
                         /* TODO (MIHO, 2020-08-30): this does not prevent the corner case, that we could have
-                            * multiple dataSpecificationIEC61360 in this list, which would be an error */
+                         * multiple dataSpecificationIEC61360 in this list, which would be an error */
                         this.Remove(eds);
                         this.Add(value);
                         return;
@@ -1414,8 +1342,8 @@ namespace AasxCompatibilityModels
                 }
             }
 
-            [XmlIgnore]
-            [JsonIgnore]
+            [ XmlIgnore ]
+            [ JsonIgnore ]
             public DataSpecificationIEC61360 IEC61360Content
             {
                 get
@@ -1432,30 +1360,38 @@ namespace AasxCompatibilityModels
                         eds.dataSpecificationContent.dataSpecificationIEC61360 = value;
                         return;
                     }
+
                     // no? .. add!
                     var edsnew = new EmbeddedDataSpecification();
                     edsnew.dataSpecificationContent.dataSpecificationIEC61360 = value;
                     this.Add(edsnew);
                 }
             }
-
         }
 #endif
 
-        [XmlType(TypeName = "ContainedElements")]
+        [ XmlType(TypeName = "ContainedElements") ]
         public class ContainedElements
         {
-
             // members
 
-            [XmlElement(ElementName = "containedElementRef")] // make "reference" go away by magic?!
+            [ XmlElement(ElementName = "containedElementRef") ] // make "reference" go away by magic?!
             public List<ContainedElementRef> reference = new List<ContainedElementRef>();
 
             // getter / setter
 
             public bool IsEmpty { get { return reference == null || reference.Count < 1; } }
-            public int Count { get { if (reference == null) return 0; return reference.Count; } }
-            public ContainedElementRef this[int index] { get { return reference[index]; } }
+
+            public int Count
+            {
+                get
+                {
+                    if (reference == null) return 0;
+                    return reference.Count;
+                }
+            }
+
+            public ContainedElementRef this[int index] { get { return reference[ index ]; } }
 
             // Creators
 
@@ -1487,13 +1423,13 @@ namespace AasxCompatibilityModels
                     res.reference = null;
                     return res;
                 }
+
                 res.reference = new List<ContainedElementRef>(inner);
                 return res;
             }
-
         }
 
-        [XmlType(TypeName = "langString", Namespace = "http://www.admin-shell.io/2/0")]
+        [ XmlType(TypeName = "langString", Namespace = "http://www.admin-shell.io/2/0") ]
         public class LangStr
         {
             // constants
@@ -1501,18 +1437,14 @@ namespace AasxCompatibilityModels
 
             // members
 
-            [MetaModelName("LangStr.lang")]
-            [TextSearchable]
-            [XmlAttribute(Namespace = "http://www.admin-shell.io/2/0")]
-            [JsonProperty(PropertyName = "language")]
-            [CountForHash]
+            [ MetaModelName("LangStr.lang") ]
+            [ TextSearchable ]
+            [ XmlAttribute(Namespace = "http://www.admin-shell.io/2/0") ]
+            [ JsonProperty(PropertyName = "language") ]
+            [ CountForHash ]
             public string lang = "";
 
-            [MetaModelName("LangStr.str")]
-            [TextSearchable]
-            [XmlText]
-            [JsonProperty(PropertyName = "text")]
-            [CountForHash]
+            [ MetaModelName("LangStr.str") ] [ TextSearchable ] [ XmlText ] [ JsonProperty(PropertyName = "text") ] [ CountForHash ]
             public string str = "";
 
             // constructors
@@ -1522,21 +1454,21 @@ namespace AasxCompatibilityModels
             public LangStr(LangStr src)
             {
                 this.lang = src.lang;
-                this.str = src.str;
+                this.str  = src.str;
             }
 
 #if !DoNotUseAasxCompatibilityModels
             public LangStr(AasxCompatibilityModels.AdminShellV10.LangStr src)
             {
                 this.lang = src.lang;
-                this.str = src.str;
+                this.str  = src.str;
             }
 #endif
 
             public LangStr(string lang, string str)
             {
                 this.lang = lang;
-                this.str = str;
+                this.str  = str;
             }
 
             public static ListOfLangStr CreateManyFromStringArray(string[] s)
@@ -1545,9 +1477,10 @@ namespace AasxCompatibilityModels
                 var i = 0;
                 while ((i + 1) < s.Length)
                 {
-                    r.Add(new LangStr(s[i], s[i + 1]));
+                    r.Add(new LangStr(s[ i ], s[ i + 1 ]));
                     i += 2;
                 }
+
                 return r;
             }
 
@@ -1588,6 +1521,7 @@ namespace AasxCompatibilityModels
                             ls.str = value;
                             return;
                         }
+
                     this.Add(new LangStr(lang, value));
                 }
             }
@@ -1605,7 +1539,7 @@ namespace AasxCompatibilityModels
                     if (ls.lang.Trim().ToLower() == defaultLang)
                         res = ls.str;
                 if (res == null && this.Count > 0)
-                    res = this[0].str;
+                    res = this[ 0 ].str;
 
                 // found?
                 return res;
@@ -1638,7 +1572,7 @@ namespace AasxCompatibilityModels
                     return true;
 
                 for (int i = 1; i < this.Count; i++)
-                    if (this[0]?.str != null && this[0]?.str?.Trim() != this[i]?.str?.Trim())
+                    if (this[ 0 ]?.str != null && this[ 0 ]?.str?.Trim() != this[ i ]?.str?.Trim())
                         return false;
 
                 return true;
@@ -1677,7 +1611,7 @@ namespace AasxCompatibilityModels
                     }
 
                     // use the match and shorten cell ..
-                    res.Add(new LangStr(m.Groups[2].ToString(), m.Groups[1].ToString().Trim()));
+                    res.Add(new LangStr(m.Groups[ 2 ].ToString(), m.Groups[ 1 ].ToString().Trim()));
                     cell = cell.Substring(m.Index + m.Length);
                 }
 
@@ -1687,10 +1621,9 @@ namespace AasxCompatibilityModels
 
         public class Description
         {
-
             // members
 
-            [XmlElement(ElementName = "langString")]
+            [ XmlElement(ElementName = "langString") ]
             public ListOfLangStr langString = new ListOfLangStr();
 
             // constructors
@@ -1725,7 +1658,6 @@ namespace AasxCompatibilityModels
             {
                 return this.langString?.GetDefaultStr(defaultLang);
             }
-
         }
 
         public class AssetKind
@@ -1734,21 +1666,14 @@ namespace AasxCompatibilityModels
             public static string Type = "Type";
             public static string Instance = "Instance";
 
-            [MetaModelName("AssetKind.kind")]
-            [TextSearchable]
-            [XmlText]
-            [CountForHash]
+            [ MetaModelName("AssetKind.kind") ] [ TextSearchable ] [ XmlText ] [ CountForHash ]
             public string kind = "Instance";
 
             // getters / setters
 
-            [XmlIgnore]
-            [JsonIgnore]
-            public bool IsInstance { get { return kind == null || kind.Trim().ToLower() == "instance"; } }
+            [ XmlIgnore ] [ JsonIgnore ] public bool IsInstance { get { return kind == null || kind.Trim().ToLower() == "instance"; } }
 
-            [XmlIgnore]
-            [JsonIgnore]
-            public bool IsType { get { return kind != null && kind.Trim().ToLower() == "type"; } }
+            [ XmlIgnore ] [ JsonIgnore ] public bool IsType { get { return kind != null && kind.Trim().ToLower() == "type"; } }
 
             // constructors / creators
 
@@ -1773,13 +1698,13 @@ namespace AasxCompatibilityModels
 
             public static AssetKind CreateAsType()
             {
-                var res = new AssetKind() { kind = AssetKind.Type };
+                var res = new AssetKind() {kind = AssetKind.Type};
                 return res;
             }
 
             public static AssetKind CreateAsInstance()
             {
-                var res = new AssetKind() { kind = AssetKind.Instance };
+                var res = new AssetKind() {kind = AssetKind.Instance};
                 return res;
             }
         }
@@ -1790,21 +1715,14 @@ namespace AasxCompatibilityModels
             public static string Template = "Template";
             public static string Instance = "Instance";
 
-            [MetaModelName("ModelingKind.kind")]
-            [TextSearchable]
-            [XmlText]
-            [CountForHash]
+            [ MetaModelName("ModelingKind.kind") ] [ TextSearchable ] [ XmlText ] [ CountForHash ]
             public string kind = Instance;
 
             // getters / setters
 
-            [XmlIgnore]
-            [JsonIgnore]
-            public bool IsInstance { get { return kind == null || kind.Trim().ToLower() == Instance.ToLower(); } }
+            [ XmlIgnore ] [ JsonIgnore ] public bool IsInstance { get { return kind == null || kind.Trim().ToLower() == Instance.ToLower(); } }
 
-            [XmlIgnore]
-            [JsonIgnore]
-            public bool IsTemplate { get { return kind != null && kind.Trim().ToLower() == Template.ToLower(); } }
+            [ XmlIgnore ] [ JsonIgnore ] public bool IsTemplate { get { return kind != null && kind.Trim().ToLower() == Template.ToLower(); } }
 
             // constructors / creators
 
@@ -1829,13 +1747,13 @@ namespace AasxCompatibilityModels
 
             public static ModelingKind CreateAsTemplate()
             {
-                var res = new ModelingKind() { kind = Template };
+                var res = new ModelingKind() {kind = Template};
                 return res;
             }
 
             public static ModelingKind CreateAsInstance()
             {
-                var res = new ModelingKind() { kind = Instance };
+                var res = new ModelingKind() {kind = Instance};
                 return res;
             }
 
@@ -1852,40 +1770,40 @@ namespace AasxCompatibilityModels
                 {
                     // warning
                     results.Add(new AasValidationRecord(
-                        AasValidationSeverity.Warning, container,
-                        "ModelingKind: is null",
-                        () =>
-                        {
-                        }));
+                                                        AasValidationSeverity.Warning, container,
+                                                        "ModelingKind: is null",
+                                                        () =>
+                                                        {
+                                                        }));
                 }
                 else
                 {
-                    var k = mk.kind.Trim();
+                    var k  = mk.kind.Trim();
                     var kl = k.ToLower();
                     if (kl != Template.ToLower() && kl != Instance.ToLower())
                     {
                         // violation case
                         results.Add(new AasValidationRecord(
-                            AasValidationSeverity.SchemaViolation, container,
-                            $"ModelingKind: enumeration value neither {Template} nor {Instance}",
-                            () =>
-                            {
-                                mk.kind = Instance;
-                            }));
+                                                            AasValidationSeverity.SchemaViolation, container,
+                                                            $"ModelingKind: enumeration value neither {Template} nor {Instance}",
+                                                            () =>
+                                                            {
+                                                                mk.kind = Instance;
+                                                            }));
                     }
                     else if (k != Template && k != Instance)
                     {
                         // warning
                         results.Add(new AasValidationRecord(
-                            AasValidationSeverity.Warning, container,
-                            "ModelingKind: enumeration value in wrong casing",
-                            () =>
-                            {
-                                if (kl == Template.ToLower())
-                                    mk.kind = Template;
-                                else
-                                    mk.kind = Instance;
-                            }));
+                                                            AasValidationSeverity.Warning, container,
+                                                            "ModelingKind: enumeration value in wrong casing",
+                                                            () =>
+                                                            {
+                                                                if (kl == Template.ToLower())
+                                                                    mk.kind = Template;
+                                                                else
+                                                                    mk.kind = Instance;
+                                                            }));
                     }
                 }
             }
@@ -1893,7 +1811,6 @@ namespace AasxCompatibilityModels
 
         public class SemanticId : Reference
         {
-
             // constructors / creators
 
             public SemanticId()
@@ -1936,7 +1853,7 @@ namespace AasxCompatibilityModels
 
             public new static SemanticId Parse(string input)
             {
-                return (SemanticId)CreateNew(KeyList.Parse(input));
+                return (SemanticId) CreateNew(KeyList.Parse(input));
             }
         }
 
@@ -1950,8 +1867,8 @@ namespace AasxCompatibilityModels
         public interface IEnumerateChildren
         {
             IEnumerable<SubmodelElementWrapper> EnumerateChildren();
-            EnumerationPlacmentBase GetChildrenPlacement(SubmodelElement child);
-            object AddChild(SubmodelElementWrapper smw, EnumerationPlacmentBase placement = null);
+            EnumerationPlacmentBase             GetChildrenPlacement(SubmodelElement child);
+            object                              AddChild(SubmodelElementWrapper smw, EnumerationPlacmentBase placement = null);
         }
 
         public interface IValidateEntity
@@ -1962,7 +1879,7 @@ namespace AasxCompatibilityModels
         /// <summary>
         /// This attribute indicates, that it should e.g. serialized in JSON.
         /// </summary>
-        [System.AttributeUsage(System.AttributeTargets.Field, AllowMultiple = true)]
+        [ System.AttributeUsage(System.AttributeTargets.Field, AllowMultiple = true) ]
         public class CountForHash : System.Attribute
         {
         }
@@ -1970,7 +1887,7 @@ namespace AasxCompatibilityModels
         /// <summary>
         /// This attribute indicates, that evaluation shall not count following field or not dive into references.
         /// </summary>
-        [System.AttributeUsage(System.AttributeTargets.Field, AllowMultiple = true)]
+        [ System.AttributeUsage(System.AttributeTargets.Field, AllowMultiple = true) ]
         public class SkipForHash : System.Attribute
         {
         }
@@ -1978,10 +1895,11 @@ namespace AasxCompatibilityModels
         /// <summary>
         /// This attribute indicates, that the field / property is searchable
         /// </summary>
-        [System.AttributeUsage(System.AttributeTargets.Field | System.AttributeTargets.Property, AllowMultiple = true)]
+        [ System.AttributeUsage(System.AttributeTargets.Field | System.AttributeTargets.Property, AllowMultiple = true) ]
         public class MetaModelName : System.Attribute
         {
             public string name;
+
             public MetaModelName(string name)
             {
                 this.name = name;
@@ -1992,7 +1910,7 @@ namespace AasxCompatibilityModels
         /// This attribute indicates, that the field / property shall be skipped for reflection
         /// in order to avoid cycles
         /// </summary>
-        [System.AttributeUsage(System.AttributeTargets.Field | System.AttributeTargets.Property, AllowMultiple = true)]
+        [ System.AttributeUsage(System.AttributeTargets.Field | System.AttributeTargets.Property, AllowMultiple = true) ]
         public class SkipForReflection : System.Attribute
         {
         }
@@ -2001,7 +1919,7 @@ namespace AasxCompatibilityModels
         /// This attribute indicates, that the field / property shall be skipped for searching, because it is not
         /// directly displayed in Package Explorer
         /// </summary>
-        [System.AttributeUsage(System.AttributeTargets.Field | System.AttributeTargets.Property, AllowMultiple = true)]
+        [ System.AttributeUsage(System.AttributeTargets.Field | System.AttributeTargets.Property, AllowMultiple = true) ]
         public class SkipForSearch : System.Attribute
         {
         }
@@ -2009,7 +1927,7 @@ namespace AasxCompatibilityModels
         /// <summary>
         /// This attribute indicates, that the field / property is searchable
         /// </summary>
-        [System.AttributeUsage(System.AttributeTargets.Field | System.AttributeTargets.Property, AllowMultiple = true)]
+        [ System.AttributeUsage(System.AttributeTargets.Field | System.AttributeTargets.Property, AllowMultiple = true) ]
         public class TextSearchable : System.Attribute
         {
         }
@@ -2045,13 +1963,9 @@ namespace AasxCompatibilityModels
         {
             public enum TimeStampKind { Create, Update }
 
-            [XmlIgnore]
-            [JsonIgnore]
-            private DateTime[] _timeStamp = new DateTime[2];
+            [ XmlIgnore ] [ JsonIgnore ] private DateTime[] _timeStamp = new DateTime[2];
 
-            [XmlIgnore]
-            [JsonIgnore]
-            public DateTime[] TimeStamp { get { return _timeStamp; } }
+            [ XmlIgnore ] [ JsonIgnore ] public DateTime[] TimeStamp { get { return _timeStamp; } }
 
             /// <summary>
             /// List of entries, timewise one after each other (entries are timestamped).
@@ -2083,7 +1997,7 @@ namespace AasxCompatibilityModels
                 while (el?.DiaryData != null)
                 {
                     // itself
-                    el.DiaryData.TimeStamp[(int)tsk] = DateTime.UtcNow;
+                    el.DiaryData.TimeStamp[ (int) tsk ] = DateTime.UtcNow;
 
                     // go up
                     el = (el as Referable)?.parent as IDiaryData;
@@ -2125,36 +2039,27 @@ namespace AasxCompatibilityModels
         {
             // diary
 
-            [XmlIgnore]
-            [JsonIgnore]
-            [SkipForHash]
-            [SkipForReflection]
+            [ XmlIgnore ] [ JsonIgnore ] [ SkipForHash ] [ SkipForReflection ]
             private DiaryDataDef _diaryData = new DiaryDataDef();
 
-            [XmlIgnore]
-            [JsonIgnore]
-            [SkipForReflection]
+            [ XmlIgnore ]
+            [ JsonIgnore ]
+            [ SkipForReflection ]
             public DiaryDataDef DiaryData { get { return _diaryData; } }
 
             // members
 
-            [MetaModelName("Referable.IdShort")]
-            [TextSearchable]
-            [CountForHash]
+            [ MetaModelName("Referable.IdShort") ] [ TextSearchable ] [ CountForHash ]
             public string idShort = "";
 
-            [MetaModelName("Referable.category")]
-            [TextSearchable]
-            [CountForHash]
+            [ MetaModelName("Referable.category") ] [ TextSearchable ] [ CountForHash ]
             public string category = null;
 
-            [XmlElement(ElementName = "description")]
-            [JsonIgnore]
-            [CountForHash]
+            [ XmlElement(ElementName = "description") ] [ JsonIgnore ] [ CountForHash ]
             public Description description = null;
 
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "descriptions")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "descriptions") ]
             public ListOfLangStr JsonDescription
             {
                 get
@@ -2175,17 +2080,18 @@ namespace AasxCompatibilityModels
                 }
             }
 
-            [XmlIgnore]
-            [JsonIgnore]
-            [SkipForHash] // important to skip, as recursion elsewise will go in cycles!
-            [SkipForReflection] // important to skip, as recursion elsewise will go in cycles!
+            [ XmlIgnore ]
+            [ JsonIgnore ]
+            [ SkipForHash ] // important to skip, as recursion elsewise will go in cycles!
+            [ SkipForReflection ]
+            // important to skip, as recursion elsewise will go in cycles!
             public IAasElement parent = null;
 
             public static string CONSTANT = "CONSTANT";
             public static string Category_PARAMETER = "PARAMETER";
             public static string VARIABLE = "VARIABLE";
 
-            public static string[] ReferableCategoryNames = new string[] { CONSTANT, Category_PARAMETER, VARIABLE };
+            public static string[] ReferableCategoryNames = new string[] {CONSTANT, Category_PARAMETER, VARIABLE};
 
             // constructors
 
@@ -2200,7 +2106,7 @@ namespace AasxCompatibilityModels
             {
                 if (src == null)
                     return;
-                this.idShort = src.idShort;
+                this.idShort  = src.idShort;
                 this.category = src.category;
                 if (src.description != null)
                     this.description = new Description(src.description);
@@ -2265,8 +2171,8 @@ namespace AasxCompatibilityModels
             public virtual Reference GetReference(bool includeParents = true)
             {
                 return new Reference(
-                    new AdminShell.Key(
-                        this.GetElementName(), false, Key.IdShort, "" + this.idShort));
+                                     new AdminShell.Key(
+                                                        this.GetElementName(), false, Key.IdShort, "" + this.idShort));
             }
 
             public void CollectReferencesByParent(List<Key> refs)
@@ -2282,7 +2188,7 @@ namespace AasxCompatibilityModels
                     if (idf != null)
                     {
                         var k = Key.CreateNew(
-                            idf.GetElementName(), true, idf.identification?.idType, idf.identification?.id);
+                                              idf.GetElementName(), true, idf.identification?.idType, idf.identification?.id);
                         refs.Insert(0, k);
                     }
                 }
@@ -2337,9 +2243,10 @@ namespace AasxCompatibilityModels
                 public object o;
                 public FieldInfo fi;
                 public ObjectFieldInfo() { }
+
                 public ObjectFieldInfo(object o, FieldInfo fi)
                 {
-                    this.o = o;
+                    this.o  = o;
                     this.fi = fi;
                 }
             }
@@ -2368,7 +2275,7 @@ namespace AasxCompatibilityModels
                     if (f.FieldType.IsClass)
                     {
                         var oo = f.GetValue(o);
-                        var r = RecursivelyFindFields(oo, countAttribute, skipAttribute);
+                        var r  = RecursivelyFindFields(oo, countAttribute, skipAttribute);
                         res.AddRange(r);
                     }
 
@@ -2380,8 +2287,8 @@ namespace AasxCompatibilityModels
                             var r = RecursivelyFindFields(e, countAttribute, skipAttribute);
                             res.AddRange(r);
                         }
-
                 }
+
                 // OK
                 return res;
             }
@@ -2400,35 +2307,33 @@ namespace AasxCompatibilityModels
                     if (a != null)
                     {
                         // found an accountable field, get bytes
-                        var o = ofi.fi.GetValue(ofi.o);
+                        var    o  = ofi.fi.GetValue(ofi.o);
                         byte[] bs = null;
 
                         // optimize for probabilities
 
                         if (o is string)
-                            bs = System.Text.Encoding.UTF8.GetBytes((string)o);
+                            bs = System.Text.Encoding.UTF8.GetBytes((string) o);
                         else if (o is char[])
-                            bs = System.Text.Encoding.UTF8.GetBytes((char[])o);
+                            bs = System.Text.Encoding.UTF8.GetBytes((char[]) o);
                         else if (o is double)
-                            bs = BitConverter.GetBytes((double)o);
+                            bs = BitConverter.GetBytes((double) o);
                         else if (o is float)
-                            bs = BitConverter.GetBytes((float)o);
+                            bs = BitConverter.GetBytes((float) o);
                         else if (o is char)
-                            bs = BitConverter.GetBytes((char)o);
-                        else if (o is byte)
-                            bs = BitConverter.GetBytes((byte)o);
+                            bs = BitConverter.GetBytes((char) o);
                         else if (o is int)
-                            bs = BitConverter.GetBytes((int)o);
+                            bs = BitConverter.GetBytes((int) o);
                         else if (o is long)
-                            bs = BitConverter.GetBytes((long)o);
+                            bs = BitConverter.GetBytes((long) o);
                         else if (o is short)
-                            bs = BitConverter.GetBytes((short)o);
+                            bs = BitConverter.GetBytes((short) o);
                         else if (o is uint)
-                            bs = BitConverter.GetBytes((uint)o);
+                            bs = BitConverter.GetBytes((uint) o);
                         else if (o is ulong)
-                            bs = BitConverter.GetBytes((ulong)o);
+                            bs = BitConverter.GetBytes((ulong) o);
                         else if (o is ushort)
-                            bs = BitConverter.GetBytes((ushort)o);
+                            bs = BitConverter.GetBytes((ushort) o);
 
                         if (bs != null)
                             mems.Write(bs, 0, bs.Length);
@@ -2438,7 +2343,7 @@ namespace AasxCompatibilityModels
                 return mems.ToArray();
             }
 
-            
+
             private static readonly System.Security.Cryptography.SHA256 CreateHashProvider = System.Security.Cryptography.SHA256.Create();
 
             public string ComputeHashcode()
@@ -2462,7 +2367,7 @@ namespace AasxCompatibilityModels
                 public int Compare(Referable a, Referable b)
                 {
                     return String.Compare(a?.idShort, b?.idShort,
-                        CultureInfo.InvariantCulture, CompareOptions.IgnoreCase);
+                                          CultureInfo.InvariantCulture, CompareOptions.IgnoreCase);
                 }
             }
 
@@ -2484,8 +2389,8 @@ namespace AasxCompatibilityModels
                     if (!cb)
                         return -1;
 
-                    var ia = Index[a];
-                    var ib = Index[b];
+                    var ia = Index[ a ];
+                    var ib = Index[ b ];
 
                     if (ia == ib)
                         return 0;
@@ -2506,22 +2411,22 @@ namespace AasxCompatibilityModels
                 // check
                 if (this.idShort == null || this.idShort.Trim() == "")
                     results.Add(new AasValidationRecord(
-                        AasValidationSeverity.SpecViolation, this,
-                        "Referable: missing idShort",
-                        () =>
-                        {
-                            this.idShort = "TO_FIX";
-                        }));
+                                                        AasValidationSeverity.SpecViolation, this,
+                                                        "Referable: missing idShort",
+                                                        () =>
+                                                        {
+                                                            this.idShort = "TO_FIX";
+                                                        }));
 
                 if (this.description != null && (this.description.langString == null
-                    || this.description.langString.Count < 1))
+                                                 || this.description.langString.Count < 1))
                     results.Add(new AasValidationRecord(
-                        AasValidationSeverity.SchemaViolation, this,
-                        "Referable: existing description with missing langString",
-                        () =>
-                        {
-                            this.description = null;
-                        }));
+                                                        AasValidationSeverity.SchemaViolation, this,
+                                                        "Referable: existing description with missing langString",
+                                                        () =>
+                                                        {
+                                                            this.description = null;
+                                                        }));
             }
 
             // hierarchy & recursion (by derived elements)
@@ -2543,13 +2448,13 @@ namespace AasxCompatibilityModels
                         return curri;
                     curr = curr.parent as Referable;
                 }
+
                 return null;
             }
         }
 
         public class Identifiable : Referable, IGetReference
         {
-
             // members
 
             public Identification identification = new Identification();
@@ -2586,7 +2491,7 @@ namespace AasxCompatibilityModels
             public void SetIdentification(string idType, string id, string idShort = null)
             {
                 identification.idType = idType;
-                identification.id = id;
+                identification.id     = id;
                 if (idShort != null)
                     this.idShort = idShort;
             }
@@ -2595,7 +2500,7 @@ namespace AasxCompatibilityModels
             {
                 if (administration == null)
                     administration = new Administration();
-                administration.version = version;
+                administration.version  = version;
                 administration.revision = revision;
             }
 
@@ -2622,8 +2527,8 @@ namespace AasxCompatibilityModels
             {
                 var r = new Reference();
                 r.Keys.Add(
-                    Key.CreateNew(
-                        this.GetElementName(), true, this.identification.idType, this.identification.id));
+                           Key.CreateNew(
+                                         this.GetElementName(), true, this.identification.idType, this.identification.id));
                 return r;
             }
 
@@ -2641,15 +2546,14 @@ namespace AasxCompatibilityModels
                         return -1;
 
                     var vc = String.Compare(a.identification.idType, b.identification.idType,
-                        CultureInfo.InvariantCulture, CompareOptions.IgnoreCase);
+                                            CultureInfo.InvariantCulture, CompareOptions.IgnoreCase);
                     if (vc != 0)
                         return vc;
 
                     return String.Compare(a.identification.id, b.identification.id,
-                        CultureInfo.InvariantCulture, CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace);
+                                          CultureInfo.InvariantCulture, CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace);
                 }
             }
-
         }
 
         public class JsonModelTypeWrapper
@@ -2672,35 +2576,34 @@ namespace AasxCompatibilityModels
         public class AdministrationShell : Identifiable, IFindAllReferences
         {
             // for JSON only
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "modelType")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "modelType") ]
             public JsonModelTypeWrapper JsonModelType { get { return new JsonModelTypeWrapper(GetElementName()); } }
 
             // from hasDataSpecification:
-            [XmlElement(ElementName = "hasDataSpecification")]
+            [ XmlElement(ElementName = "hasDataSpecification") ]
             public HasDataSpecification hasDataSpecification = null;
 
             // from this very class
             public AssetAdministrationShellRef derivedFrom = null;
 
-            [JsonProperty(PropertyName = "asset")]
+            [ JsonProperty(PropertyName = "asset") ]
             public AssetRef assetRef = new AssetRef();
 
-            [JsonProperty(PropertyName = "submodels")]
-            [SkipForSearch]
+            [ JsonProperty(PropertyName = "submodels") ] [ SkipForSearch ]
             public List<SubmodelRef> submodelRefs = new List<SubmodelRef>();
 
-            [JsonIgnore]
-            public Views views = null;
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "views")]
+            [ JsonIgnore ] public Views views = null;
+
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "views") ]
             public View[] JsonViews
             {
                 get { return views?.views.ToArray(); }
                 set { views = Views.CreateOrSetInnerViews(views, value); }
             }
 
-            [JsonProperty(PropertyName = "conceptDictionaries")]
+            [ JsonProperty(PropertyName = "conceptDictionaries") ]
             public List<ConceptDictionary> conceptDictionaries = null;
 
             // constructors
@@ -2776,7 +2679,7 @@ namespace AasxCompatibilityModels
                 if (version != null)
                     s.SetAdminstration(version, revision);
                 s.identification.idType = idType;
-                s.identification.id = id;
+                s.identification.id     = id;
                 return (s);
             }
 
@@ -2896,27 +2799,27 @@ namespace AasxCompatibilityModels
         public class Asset : Identifiable
         {
             // for JSON only
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "modelType")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "modelType") ]
             public JsonModelTypeWrapper JsonModelType { get { return new JsonModelTypeWrapper(GetElementName()); } }
 
             // from hasDataSpecification:
-            [XmlElement(ElementName = "hasDataSpecification")]
+            [ XmlElement(ElementName = "hasDataSpecification") ]
             public HasDataSpecification hasDataSpecification = null;
 
             // from this very class
-            [XmlElement(ElementName = "assetIdentificationModelRef")]
+            [ XmlElement(ElementName = "assetIdentificationModelRef") ]
             public SubmodelRef assetIdentificationModelRef = null;
 
-            [XmlElement(ElementName = "billOfMaterialRef")]
+            [ XmlElement(ElementName = "billOfMaterialRef") ]
             public SubmodelRef billOfMaterialRef = null;
 
             // from HasKind
-            [XmlElement(ElementName = "kind")]
-            [JsonIgnore]
+            [ XmlElement(ElementName = "kind") ] [ JsonIgnore ]
             public AssetKind kind = new AssetKind();
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "kind")]
+
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "kind") ]
             public string JsonKind
             {
                 get
@@ -2975,8 +2878,8 @@ namespace AasxCompatibilityModels
             {
                 var r = new AssetRef();
                 r.Keys.Add(
-                    Key.CreateNew(
-                        this.GetElementName(), true, this.identification.idType, this.identification.id));
+                           Key.CreateNew(
+                                         this.GetElementName(), true, this.identification.idType, this.identification.id));
                 return r;
             }
 
@@ -3025,33 +2928,31 @@ namespace AasxCompatibilityModels
             {
                 return this.GetSelfDescription()?.ElementName;
             }
-
         }
 
         public class View : Referable
         {
             // for JSON only
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "modelType")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "modelType") ]
             public JsonModelTypeWrapper JsonModelType { get { return new JsonModelTypeWrapper(GetElementName()); } }
 
             // members
 
             // from hasSemanticId:
-            [XmlElement(ElementName = "semanticId")]
+            [ XmlElement(ElementName = "semanticId") ]
             public SemanticId semanticId = null;
 
             // from hasDataSpecification
-            [XmlElement(ElementName = "hasDataSpecification")]
+            [ XmlElement(ElementName = "hasDataSpecification") ]
             public HasDataSpecification hasDataSpecification = null;
 
             // from this very class
-            [JsonIgnore]
-            [SkipForSearch]
-            public ContainedElements containedElements = null;
-            [XmlIgnore]
-            [SkipForSearch]
-            [JsonProperty(PropertyName = "containedElements")]
+            [ JsonIgnore ] [ SkipForSearch ] public ContainedElements containedElements = null;
+
+            [ XmlIgnore ]
+            [ SkipForSearch ]
+            [ JsonProperty(PropertyName = "containedElements") ]
             public ContainedElementRef[] JsonContainedElements
             {
                 get { return containedElements?.reference.ToArray(); }
@@ -3060,16 +2961,26 @@ namespace AasxCompatibilityModels
 
             // getter / setter
 
-            [XmlIgnore]
-            [JsonIgnore]
-            public bool IsEmpty { get { return containedElements == null || containedElements.Count < 1; } }
-            [XmlIgnore]
-            [JsonIgnore]
-            public int Count { get { if (containedElements == null) return 0; return containedElements.Count; } }
+            [ XmlIgnore ] [ JsonIgnore ] public bool IsEmpty { get { return containedElements == null || containedElements.Count < 1; } }
+
+            [ XmlIgnore ]
+            [ JsonIgnore ]
+            public int Count
+            {
+                get
+                {
+                    if (containedElements == null) return 0;
+                    return containedElements.Count;
+                }
+            }
 
             public ContainedElementRef this[int index]
             {
-                get { if (containedElements == null) return null; return containedElements[index]; }
+                get
+                {
+                    if (containedElements == null) return null;
+                    return containedElements[ index ];
+                }
             }
 
             // constructors / creators
@@ -3102,7 +3013,7 @@ namespace AasxCompatibilityModels
 
             public static View CreateNew(string idShort)
             {
-                var v = new View() { idShort = idShort };
+                var v = new View() {idShort = idShort};
                 return (v);
             }
 
@@ -3157,12 +3068,12 @@ namespace AasxCompatibilityModels
             public Tuple<string, string> ToCaptionInfo()
             {
                 var caption = AdminShellUtilV20.EvalToNonNullString("\"{0}\" ", idShort, "<no idShort!>");
-                var info = "";
+                var info    = "";
                 if (this.semanticId != null)
                     info = Key.KeyListToString(this.semanticId.Keys);
                 if (this.containedElements != null && this.containedElements.reference != null)
                     info = (info + " ").Trim() +
-                        String.Format("({0} elements)", this.containedElements.reference.Count);
+                           String.Format("({0} elements)", this.containedElements.reference.Count);
                 return Tuple.Create(caption, info);
             }
 
@@ -3188,8 +3099,7 @@ namespace AasxCompatibilityModels
 
         public class Views
         {
-            [XmlElement(ElementName = "view")]
-            [JsonIgnore]
+            [ XmlElement(ElementName = "view") ] [ JsonIgnore ]
             public List<View> views = new List<View>();
 
             // constructors
@@ -3222,6 +3132,7 @@ namespace AasxCompatibilityModels
                     res.views = null;
                     return res;
                 }
+
                 res.views = new List<View>(inner);
                 return res;
             }
@@ -3232,23 +3143,27 @@ namespace AasxCompatibilityModels
         /// </summary>
         public class LangStringSet
         {
-
             // members
 
-            [XmlElement(ElementName = "langString", Namespace = "http://www.admin-shell.io/aas/2/0")]
+            [ XmlElement(ElementName = "langString", Namespace = "http://www.admin-shell.io/aas/2/0") ]
             public ListOfLangStr langString = new ListOfLangStr();
 
             // getters / setters
 
-            [XmlIgnore]
-            [JsonIgnore]
-            public bool IsEmpty { get { return langString == null || langString.Count < 1; } }
-            [XmlIgnore]
-            [JsonIgnore]
-            public int Count { get { if (langString == null) return 0; return langString.Count; } }
-            [XmlIgnore]
-            [JsonIgnore]
-            public LangStr this[int index] { get { return langString[index]; } }
+            [ XmlIgnore ] [ JsonIgnore ] public bool IsEmpty { get { return langString == null || langString.Count < 1; } }
+
+            [ XmlIgnore ]
+            [ JsonIgnore ]
+            public int Count
+            {
+                get
+                {
+                    if (langString == null) return 0;
+                    return langString.Count;
+                }
+            }
+
+            [ XmlIgnore ] [ JsonIgnore ] public LangStr this[int index] { get { return langString[ index ]; } }
 
             // constructors
 
@@ -3316,12 +3231,9 @@ namespace AasxCompatibilityModels
         /// </summary>
         public class LangStringSetIEC61360 : ListOfLangStr
         {
-
             // getters / setters
 
-            [XmlIgnore]
-            [JsonIgnore]
-            public bool IsEmpty { get { return this.Count < 1; } }
+            [ XmlIgnore ] [ JsonIgnore ] public bool IsEmpty { get { return this.Count < 1; } }
 
             // constructors
 
@@ -3360,26 +3272,23 @@ namespace AasxCompatibilityModels
                         res.Add(new LangStr(ls));
                 return res;
             }
-
         }
 
         public class UnitId
         {
-
             // members
 
-            [XmlIgnore]
-            [JsonIgnore]
-            public KeyList keys = new KeyList();
+            [ XmlIgnore ] [ JsonIgnore ] public KeyList keys = new KeyList();
 
             // getter / setters
 
-            [XmlArray("keys")]
-            [XmlArrayItem("key")]
-            [JsonIgnore]
+            [ XmlArray("keys") ]
+            [ XmlArrayItem("key") ]
+            [ JsonIgnore ]
             public KeyList Keys { get { return keys; } }
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "keys")]
+
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "keys") ]
             public KeyList JsonKeys
             {
                 get
@@ -3389,15 +3298,20 @@ namespace AasxCompatibilityModels
                 }
             }
 
-            [XmlIgnore]
-            [JsonIgnore]
-            public bool IsEmpty { get { return keys == null || keys.IsEmpty; } }
-            [XmlIgnore]
-            [JsonIgnore]
-            public int Count { get { if (keys == null) return 0; return keys.Count; } }
-            [XmlIgnore]
-            [JsonIgnore]
-            public Key this[int index] { get { return keys[index]; } }
+            [ XmlIgnore ] [ JsonIgnore ] public bool IsEmpty { get { return keys == null || keys.IsEmpty; } }
+
+            [ XmlIgnore ]
+            [ JsonIgnore ]
+            public int Count
+            {
+                get
+                {
+                    if (keys == null) return 0;
+                    return keys.Count;
+                }
+            }
+
+            [ XmlIgnore ] [ JsonIgnore ] public Key this[int index] { get { return keys[ index ]; } }
 
             // constructors / creators
 
@@ -3438,28 +3352,15 @@ namespace AasxCompatibilityModels
             }
         }
 
-        [XmlRoot(Namespace = "http://www.admin-shell.io/IEC61360/2/0")]
+        [ XmlRoot(Namespace = "http://www.admin-shell.io/IEC61360/2/0") ]
         public class DataSpecificationIEC61360
         {
             // static member
-            [XmlIgnore]
-            [JsonIgnore]
-            public static string[] DataTypeNames = {
-                "STRING",
-                "STRING_TRANSLATABLE",
-                "REAL_MEASURE",
-                "REAL_COUNT",
-                "REAL_CURRENCY",
-                "INTEGER_MEASURE",
-                "INTEGER_COUNT",
-                "INTEGER_CURRENCY",
-                "BOOLEAN",
-                "URL",
-                "RATIONAL",
-                "RATIONAL_MEASURE",
-                "TIME",
-                "TIMESTAMP",
-                "DATE" };
+            [ XmlIgnore ] [ JsonIgnore ] public static string[] DataTypeNames =
+            {
+                "STRING", "STRING_TRANSLATABLE", "REAL_MEASURE", "REAL_COUNT", "REAL_CURRENCY", "INTEGER_MEASURE", "INTEGER_COUNT", "INTEGER_CURRENCY", "BOOLEAN", "URL",
+                "RATIONAL", "RATIONAL_MEASURE", "TIME", "TIMESTAMP", "DATE"
+            };
 
             // members
             // TODO (MIHO, 2020-08-27): According to spec, cardinality is [1..1][1..n]
@@ -3470,31 +3371,21 @@ namespace AasxCompatibilityModels
             // these cardinalities are NOT MAINTAINED in ANY WAY by the system
             public LangStringSetIEC61360 shortName = null;
 
-            [MetaModelName("DataSpecificationIEC61360.unit")]
-            [TextSearchable]
-            [CountForHash]
+            [ MetaModelName("DataSpecificationIEC61360.unit") ] [ TextSearchable ] [ CountForHash ]
             public string unit = "";
 
             public UnitId unitId = null;
 
-            [MetaModelName("DataSpecificationIEC61360.valueFormat")]
-            [TextSearchable]
-            [CountForHash]
+            [ MetaModelName("DataSpecificationIEC61360.valueFormat") ] [ TextSearchable ] [ CountForHash ]
             public string valueFormat = null;
 
-            [MetaModelName("DataSpecificationIEC61360.sourceOfDefinition")]
-            [TextSearchable]
-            [CountForHash]
+            [ MetaModelName("DataSpecificationIEC61360.sourceOfDefinition") ] [ TextSearchable ] [ CountForHash ]
             public string sourceOfDefinition = null;
 
-            [MetaModelName("DataSpecificationIEC61360.symbol")]
-            [TextSearchable]
-            [CountForHash]
+            [ MetaModelName("DataSpecificationIEC61360.symbol") ] [ TextSearchable ] [ CountForHash ]
             public string symbol = null;
 
-            [MetaModelName("DataSpecificationIEC61360.dataType")]
-            [TextSearchable]
-            [CountForHash]
+            [ MetaModelName("DataSpecificationIEC61360.dataType") ] [ TextSearchable ] [ CountForHash ]
             public string dataType = "";
 
             // TODO (MIHO, 2020-08-27): According to spec, cardinality is [0..1][1..n]
@@ -3512,13 +3403,13 @@ namespace AasxCompatibilityModels
                 if (src.preferredName != null)
                     this.preferredName = new LangStringSetIEC61360(src.preferredName);
                 this.shortName = src.shortName;
-                this.unit = src.unit;
+                this.unit      = src.unit;
                 if (src.unitId != null)
                     this.unitId = new UnitId(src.unitId);
-                this.valueFormat = src.valueFormat;
+                this.valueFormat        = src.valueFormat;
                 this.sourceOfDefinition = src.sourceOfDefinition;
-                this.symbol = src.symbol;
-                this.dataType = src.dataType;
+                this.symbol             = src.symbol;
+                this.dataType           = src.dataType;
                 if (src.definition != null)
                     this.definition = new LangStringSetIEC61360(src.definition);
             }
@@ -3529,13 +3420,13 @@ namespace AasxCompatibilityModels
                 if (src.preferredName != null)
                     this.preferredName = new LangStringSetIEC61360(src.preferredName);
                 this.shortName = new LangStringSetIEC61360("EN?", src.shortName);
-                this.unit = src.unit;
+                this.unit      = src.unit;
                 if (src.unitId != null)
                     this.unitId = new UnitId(src.unitId);
                 this.valueFormat = src.valueFormat;
                 if (src.sourceOfDefinition != null && src.sourceOfDefinition.Count > 0)
-                    this.sourceOfDefinition = src.sourceOfDefinition[0].str;
-                this.symbol = src.symbol;
+                    this.sourceOfDefinition = src.sourceOfDefinition[ 0 ].str;
+                this.symbol   = src.symbol;
                 this.dataType = src.dataType;
                 if (src.definition != null)
                     this.definition = new LangStringSetIEC61360(src.definition);
@@ -3559,19 +3450,21 @@ namespace AasxCompatibilityModels
                 {
                     d.preferredName = new LangStringSetIEC61360(LangStr.CreateManyFromStringArray(preferredName));
                 }
-                d.shortName = new LangStringSetIEC61360("EN?", shortName);
-                d.unit = unit;
-                d.unitId = unitId;
-                d.valueFormat = valueFormat;
+
+                d.shortName          = new LangStringSetIEC61360("EN?", shortName);
+                d.unit               = unit;
+                d.unitId             = unitId;
+                d.valueFormat        = valueFormat;
                 d.sourceOfDefinition = sourceOfDefinition;
-                d.symbol = symbol;
-                d.dataType = dataType;
+                d.symbol             = symbol;
+                d.dataType           = dataType;
                 if (definition != null)
                 {
                     if (d.definition == null)
                         d.definition = new LangStringSetIEC61360();
                     d.definition = new LangStringSetIEC61360(LangStr.CreateManyFromStringArray(definition));
                 }
+
                 return (d);
             }
 
@@ -3580,8 +3473,8 @@ namespace AasxCompatibilityModels
             public static Key GetKey()
             {
                 return Key.CreateNew(
-                            "GlobalReference", false, "IRI",
-                            "http://admin-shell.io/DataSpecificationTemplates/DataSpecificationIEC61360/2/0");
+                                     "GlobalReference", false, "IRI",
+                                     "http://admin-shell.io/DataSpecificationTemplates/DataSpecificationIEC61360/2/0");
             }
 
             // validation
@@ -3595,31 +3488,32 @@ namespace AasxCompatibilityModels
                 // check IEC61360 spec
                 if (this.preferredName == null || this.preferredName.Count < 1)
                     results.Add(new AasValidationRecord(
-                        AasValidationSeverity.SchemaViolation, cd,
-                        "ConceptDescription: missing preferredName",
-                        () =>
-                        {
-                            this.preferredName = new AdminShell.LangStringSetIEC61360("EN?",
-                                AdminShellUtilV20.EvalToNonEmptyString("{0}", cd.idShort, "UNKNOWN"));
-                        }));
+                                                        AasValidationSeverity.SchemaViolation, cd,
+                                                        "ConceptDescription: missing preferredName",
+                                                        () =>
+                                                        {
+                                                            this.preferredName = new AdminShell.LangStringSetIEC61360("EN?",
+                                                                                                                      AdminShellUtilV20.EvalToNonEmptyString("{0}", cd.idShort,
+                                                                                                                       "UNKNOWN"));
+                                                        }));
 
                 if (this.shortName != null && this.shortName.Count < 1)
                     results.Add(new AasValidationRecord(
-                        AasValidationSeverity.SchemaViolation, cd,
-                        "ConceptDescription: existing shortName with missing langString",
-                        () =>
-                        {
-                            this.shortName = null;
-                        }));
+                                                        AasValidationSeverity.SchemaViolation, cd,
+                                                        "ConceptDescription: existing shortName with missing langString",
+                                                        () =>
+                                                        {
+                                                            this.shortName = null;
+                                                        }));
 
                 if (this.definition != null && this.definition.Count < 1)
                     results.Add(new AasValidationRecord(
-                        AasValidationSeverity.SchemaViolation, cd,
-                        "ConceptDescription: existing definition with missing langString",
-                        () =>
-                        {
-                            this.definition = null;
-                        }));
+                                                        AasValidationSeverity.SchemaViolation, cd,
+                                                        "ConceptDescription: existing definition with missing langString",
+                                                        () =>
+                                                        {
+                                                            this.definition = null;
+                                                        }));
 
                 // check data type
                 string foundDataType = null;
@@ -3629,12 +3523,12 @@ namespace AasxCompatibilityModels
                             foundDataType = this.dataType;
                 if (foundDataType == null)
                     results.Add(new AasValidationRecord(
-                        AasValidationSeverity.SchemaViolation, cd,
-                        "ConceptDescription: dataType does not match allowed enumeration values",
-                        () =>
-                        {
-                            this.dataType = "STRING";
-                        }));
+                                                        AasValidationSeverity.SchemaViolation, cd,
+                                                        "ConceptDescription: dataType does not match allowed enumeration values",
+                                                        () =>
+                                                        {
+                                                            this.dataType = "STRING";
+                                                        }));
             }
         }
 
@@ -3648,7 +3542,6 @@ namespace AasxCompatibilityModels
 
         public class DataSpecificationContent
         {
-
             // members
 
             public DataSpecificationIEC61360 dataSpecificationIEC61360 = null;
@@ -3677,11 +3570,10 @@ namespace AasxCompatibilityModels
         {
             // members
 
-            [JsonIgnore]
-            public DataSpecificationContent dataSpecificationContent = null;
+            [ JsonIgnore ] public DataSpecificationContent dataSpecificationContent = null;
 
-            [XmlIgnore]
-            [JsonProperty("dataSpecificationContent")]
+            [ XmlIgnore ]
+            [ JsonProperty("dataSpecificationContent") ]
             public DataSpecificationIEC61360 JsonWrongDataSpec61360
             {
                 get { return dataSpecificationContent?.dataSpecificationIEC61360; }
@@ -3703,7 +3595,7 @@ namespace AasxCompatibilityModels
                 DataSpecificationRef dataSpecification,
                 DataSpecificationContent dataSpecificationContent)
             {
-                this.dataSpecification = dataSpecification;
+                this.dataSpecification        = dataSpecification;
                 this.dataSpecificationContent = dataSpecificationContent;
             }
 
@@ -3758,33 +3650,31 @@ namespace AasxCompatibilityModels
         public class ConceptDescription : Identifiable, System.IDisposable
         {
             // for JSON only
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "modelType")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "modelType") ]
             public JsonModelTypeWrapper JsonModelType { get { return new JsonModelTypeWrapper(GetElementName()); } }
 
             // members
 
             // do this in order to be IDisposable, that is: suitable for (using)
             void System.IDisposable.Dispose() { }
-            public void GetData() { }
+            public void             GetData() { }
             // from HasDataSpecification
 
 #if __not_anymore
-
         [XmlElement(ElementName = "embeddedDataSpecification")]
         [JsonIgnore]
         public EmbeddedDataSpecification embeddedDataSpecification = new EmbeddedDataSpecification();
 #else
             // According to Spec V2.0.1, a ConceptDescription might feature alos multiple data specifications
-            /* TODO (MIHO, 2020-08-30): align wording of the member ("embeddedDataSpecification") with the 
-                * wording of the other entities ("hasDataSpecification") */
-            [XmlElement(ElementName = "embeddedDataSpecification")]
-            [JsonIgnore]
+            /* TODO (MIHO, 2020-08-30): align wording of the member ("embeddedDataSpecification") with the
+             * wording of the other entities ("hasDataSpecification") */
+            [ XmlElement(ElementName = "embeddedDataSpecification") ] [ JsonIgnore ]
             public HasDataSpecification embeddedDataSpecification = null;
 #endif
 
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "embeddedDataSpecifications")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "embeddedDataSpecifications") ]
             public EmbeddedDataSpecification[] JsonEmbeddedDataSpecifications
             {
                 get
@@ -3800,13 +3690,12 @@ namespace AasxCompatibilityModels
             // old
 
             // this class
-            [XmlIgnore]
-            private List<Reference> isCaseOf = null;
+            [ XmlIgnore ] private List<Reference> isCaseOf = null;
 
             // getter / setter
 
-            [XmlElement(ElementName = "isCaseOf")]
-            [JsonProperty(PropertyName = "isCaseOf")]
+            [ XmlElement(ElementName = "isCaseOf") ]
+            [ JsonProperty(PropertyName = "isCaseOf") ]
             public List<Reference> IsCaseOf
             {
                 get { return isCaseOf; }
@@ -3840,6 +3729,7 @@ namespace AasxCompatibilityModels
                     this.embeddedDataSpecification = new HasDataSpecification();
                     this.embeddedDataSpecification.Add(new EmbeddedDataSpecification(src.embeddedDataSpecification));
                 }
+
                 if (src.IsCaseOf != null)
                     foreach (var ico in src.IsCaseOf)
                     {
@@ -3854,16 +3744,17 @@ namespace AasxCompatibilityModels
                 string idShort, string idType, string id, string version = null, string revision = null)
             {
                 var cd = new ConceptDescription();
-                cd.idShort = idShort;
+                cd.idShort               = idShort;
                 cd.identification.idType = idType;
-                cd.identification.id = id;
+                cd.identification.id     = id;
                 if (version != null)
                 {
                     if (cd.administration == null)
                         cd.administration = new Administration();
-                    cd.administration.version = version;
+                    cd.administration.version  = version;
                     cd.administration.revision = revision;
                 }
+
                 return (cd);
             }
 
@@ -3876,8 +3767,8 @@ namespace AasxCompatibilityModels
             {
                 var r = new ConceptDescriptionRef();
                 r.Keys.Add(
-                    Key.CreateNew(
-                        this.GetElementName(), true, this.identification.idType, this.identification.id));
+                           Key.CreateNew(
+                                         this.GetElementName(), true, this.identification.idType, this.identification.id));
                 return r;
             }
 
@@ -3895,18 +3786,18 @@ namespace AasxCompatibilityModels
             {
                 var eds = new EmbeddedDataSpecification(new DataSpecificationRef(), new DataSpecificationContent());
                 eds.dataSpecification.Keys.Add(
-                    DataSpecificationIEC61360.GetKey());
+                                               DataSpecificationIEC61360.GetKey());
                 eds.dataSpecificationContent.dataSpecificationIEC61360 =
                     AdminShell.DataSpecificationIEC61360.CreateNew(
-                        preferredNames, shortName, unit, unitId, valueFormat, sourceOfDefinition, symbol,
-                        dataType, definition);
+                                                                   preferredNames, shortName, unit, unitId, valueFormat, sourceOfDefinition, symbol,
+                                                                   dataType, definition);
 
                 this.embeddedDataSpecification = new HasDataSpecification();
                 this.embeddedDataSpecification.Add(eds);
 
                 this.AddIsCaseOf(
-                    Reference.CreateNew(
-                        new Key("ConceptDescription", false, this.identification.idType, this.identification.id)));
+                                 Reference.CreateNew(
+                                                     new Key("ConceptDescription", false, this.identification.idType, this.identification.id)));
             }
 
             public DataSpecificationIEC61360 GetIEC61360()
@@ -3916,8 +3807,8 @@ namespace AasxCompatibilityModels
 
             // as experimental approach, forward the IEC getter/sett of hasDataSpec directly
 
-            [XmlIgnore]
-            [JsonIgnore]
+            [ XmlIgnore ]
+            [ JsonIgnore ]
             public EmbeddedDataSpecification IEC61360DataSpec
             {
                 get
@@ -3933,8 +3824,8 @@ namespace AasxCompatibilityModels
                 }
             }
 
-            [XmlIgnore]
-            [JsonIgnore]
+            [ XmlIgnore ]
+            [ JsonIgnore ]
             public DataSpecificationIEC61360 IEC61360Content
             {
                 get
@@ -3953,13 +3844,13 @@ namespace AasxCompatibilityModels
                     // if already there, update
                     if (eds != null)
                     {
-                        eds.dataSpecificationContent = new DataSpecificationContent();
+                        eds.dataSpecificationContent                           = new DataSpecificationContent();
                         eds.dataSpecificationContent.dataSpecificationIEC61360 = value;
                         return;
                     }
 
                     // no: add a full record
-                    eds = EmbeddedDataSpecification.CreateIEC61360WithContent();
+                    eds                                                    = EmbeddedDataSpecification.CreateIEC61360WithContent();
                     eds.dataSpecificationContent.dataSpecificationIEC61360 = value;
                     this.embeddedDataSpecification.Add(eds);
                 }
@@ -3977,15 +3868,15 @@ namespace AasxCompatibilityModels
             public string GetDefaultPreferredName(string defaultLang = null)
             {
                 return "" +
-                    GetIEC61360()?
-                        .preferredName?.GetDefaultStr(defaultLang);
+                       GetIEC61360()?
+                           .preferredName?.GetDefaultStr(defaultLang);
             }
 
             public string GetDefaultShortName(string defaultLang = null)
             {
                 return "" +
-                    GetIEC61360()?
-                        .shortName?.GetDefaultStr(defaultLang);
+                       GetIEC61360()?
+                           .shortName?.GetDefaultStr(defaultLang);
             }
 
             public override AasElementSelfDescription GetSelfDescription()
@@ -4043,29 +3934,29 @@ namespace AasxCompatibilityModels
                     if (eds61360.dataSpecification == null ||
                         !(eds61360.dataSpecification.MatchesExactlyOneKey(DataSpecificationIEC61360.GetKey())))
                         results.Add(new AasValidationRecord(
-                            AasValidationSeverity.SpecViolation, this,
-                            "HasDataSpecification: data specification content set to IEC61360, but no " +
-                            "data specification reference set!",
-                            () =>
-                            {
-                                eds61360.dataSpecification = new DataSpecificationRef(
-                                    new Reference(
-                                        DataSpecificationIEC61360.GetKey()));
-                            }));
+                                                            AasValidationSeverity.SpecViolation, this,
+                                                            "HasDataSpecification: data specification content set to IEC61360, but no " +
+                                                            "data specification reference set!",
+                                                            () =>
+                                                            {
+                                                                eds61360.dataSpecification = new DataSpecificationRef(
+                                                                                                                      new Reference(
+                                                                                                                       DataSpecificationIEC61360.GetKey()));
+                                                            }));
 
                     // validate content
                     if (eds61360.dataSpecificationContent?.dataSpecificationIEC61360 == null)
                     {
                         results.Add(new AasValidationRecord(
-                            AasValidationSeverity.SpecViolation, this,
-                            "HasDataSpecification: data specification reference set to IEC61360, but no " +
-                            "data specification content set!",
-                            () =>
-                            {
-                                eds61360.dataSpecificationContent = new DataSpecificationContent();
-                                eds61360.dataSpecificationContent.dataSpecificationIEC61360 =
-                                new DataSpecificationIEC61360();
-                            }));
+                                                            AasValidationSeverity.SpecViolation, this,
+                                                            "HasDataSpecification: data specification reference set to IEC61360, but no " +
+                                                            "data specification content set!",
+                                                            () =>
+                                                            {
+                                                                eds61360.dataSpecificationContent = new DataSpecificationContent();
+                                                                eds61360.dataSpecificationContent.dataSpecificationIEC61360 =
+                                                                    new DataSpecificationIEC61360();
+                                                            }));
                     }
                     else
                     {
@@ -4109,7 +4000,7 @@ namespace AasxCompatibilityModels
                 if (keys.Count != 1)
                     return null;
                 // and we're picky
-                var key = keys[0];
+                var key = keys[ 0 ];
                 if (!key.local || key.type.ToLower().Trim() != "conceptdescription")
                     return null;
                 // brute force
@@ -4149,13 +4040,11 @@ namespace AasxCompatibilityModels
             }
 
             // sorting
-
-
         }
 
         public class ConceptDictionary : Referable
         {
-            [XmlElement(ElementName = "conceptDescriptions")]
+            [ XmlElement(ElementName = "conceptDescriptions") ]
             public ConceptDescriptionRefs conceptDescriptionsRefs = null;
 
             // constructors
@@ -4188,7 +4077,7 @@ namespace AasxCompatibilityModels
 
             public void AddReference(Reference r)
             {
-                var cdr = (ConceptDescriptionRef)(ConceptDescriptionRef.CreateNew(r.Keys));
+                var cdr = (ConceptDescriptionRef) (ConceptDescriptionRef.CreateNew(r.Keys));
                 if (conceptDescriptionsRefs == null)
                     conceptDescriptionsRefs = new ConceptDescriptionRefs();
                 conceptDescriptionsRefs.conceptDescriptions.Add(cdr);
@@ -4210,78 +4099,77 @@ namespace AasxCompatibilityModels
             public Reference Reference;
 
             public LocatedReference() { }
+
             public LocatedReference(Identifiable identifiable, Reference reference)
             {
                 Identifiable = identifiable;
-                Reference = reference;
+                Reference    = reference;
             }
         }
 
-        [XmlRoot(ElementName = "aasenv", Namespace = "http://www.admin-shell.io/aas/2/0")]
+        [ XmlRoot(ElementName = "aasenv", Namespace = "http://www.admin-shell.io/aas/2/0") ]
         public class AdministrationShellEnv : IFindAllReferences, IAasElement, IDiaryData, IRecurseOnReferables
         {
-
             // diary (as e.g. deleted AASes need to be listed somewhere)
 
-            [XmlIgnore]
-            [JsonIgnore]
-            [SkipForHash]
-            [SkipForReflection]
+            [ XmlIgnore ] [ JsonIgnore ] [ SkipForHash ] [ SkipForReflection ]
             private DiaryDataDef _diaryData = new DiaryDataDef();
 
-            [XmlIgnore]
-            [JsonIgnore]
-            [SkipForReflection]
+            [ XmlIgnore ]
+            [ JsonIgnore ]
+            [ SkipForReflection ]
             public DiaryDataDef DiaryData { get { return _diaryData; } }
 
             // members
 
-            [XmlAttribute(Namespace = System.Xml.Schema.XmlSchema.InstanceNamespace)]
-            [JsonIgnore]
+            [ XmlAttribute(Namespace = System.Xml.Schema.XmlSchema.InstanceNamespace) ] [ JsonIgnore ]
             public string schemaLocation =
                 "http://www.admin-shell.io/aas/2/0 AAS.xsd http://www.admin-shell.io/IEC61360/2/0 IEC61360.xsd";
 
-            [XmlIgnore] // will be ignored, anyway
+            [ XmlIgnore ] // will be ignored, anyway
             private ListOfAdministrationShells administrationShells = new ListOfAdministrationShells();
-            [XmlIgnore] // will be ignored, anyway
+
+            [ XmlIgnore ] // will be ignored, anyway
             private ListOfAssets assets = new ListOfAssets();
-            [XmlIgnore] // will be ignored, anyway
+
+            [ XmlIgnore ] // will be ignored, anyway
             private ListOfSubmodels submodels = new ListOfSubmodels();
-            [XmlIgnore] // will be ignored, anyway
+
+            [ XmlIgnore ] // will be ignored, anyway
             private ListOfConceptDescriptions conceptDescriptions = new ListOfConceptDescriptions();
 
             // getter / setters
 
-            [XmlArray("assetAdministrationShells")]
-            [XmlArrayItem("assetAdministrationShell")]
-            [JsonProperty(PropertyName = "assetAdministrationShells")]
+            [ XmlArray("assetAdministrationShells") ]
+            [ XmlArrayItem("assetAdministrationShell") ]
+            [ JsonProperty(PropertyName = "assetAdministrationShells") ]
             public ListOfAdministrationShells AdministrationShells
             {
                 get { return administrationShells; }
                 set { administrationShells = value; }
             }
 
-            [XmlArray("assets")]
-            [XmlArrayItem("asset")]
-            [JsonProperty(PropertyName = "assets")]
+            [ XmlArray("assets") ]
+            [ XmlArrayItem("asset") ]
+            [ JsonProperty(PropertyName = "assets") ]
             public ListOfAssets Assets
             {
                 get { return assets; }
                 set { assets = value; }
             }
 
-            [XmlArray("submodels")]
-            [XmlArrayItem("submodel")]
-            [JsonProperty(PropertyName = "submodels")]
+            [ XmlArray("submodels") ]
+            [ XmlArrayItem("submodel") ]
+            [ JsonProperty(PropertyName = "submodels") ]
             public ListOfSubmodels Submodels
             {
                 get { return submodels; }
                 set { submodels = value; }
             }
 
-            [XmlArray("conceptDescriptions")]
-            [XmlArrayItem("conceptDescription")]
-            [JsonProperty(PropertyName = "conceptDescriptions")]
+            [ XmlArray("conceptDescriptions") ]
+            [ XmlArrayItem("conceptDescription") ]
+            [ JsonProperty(PropertyName = "conceptDescriptions") ]
             public ListOfConceptDescriptions ConceptDescriptions
             {
                 get { return conceptDescriptions; }
@@ -4422,7 +4310,7 @@ namespace AasxCompatibilityModels
                 if (aref.Count != 1)
                     return null;
                 // and we're picky
-                var key = aref[0];
+                var key = aref[ 0 ];
                 if (!key.local || key.type.ToLower().Trim() != "asset")
                     return null;
                 // brute force
@@ -4453,7 +4341,7 @@ namespace AasxCompatibilityModels
                 if (smref.Count != 1)
                     return null;
                 // and we're picky
-                var key = smref.Keys[0];
+                var key = smref.Keys[ 0 ];
                 if (!key.local || key.type.ToLower().Trim() != "submodel")
                     return null;
                 // brute force
@@ -4536,9 +4424,10 @@ namespace AasxCompatibilityModels
                                 // TODO (MIHO, 2020-08-26): not very elegant, yet. Avoid temporary collection
                                 var allsme = new ListOfSubmodelElement();
                                 sm.RecurseOnSubmodelElements(null, (state, parents, sme) =>
-                                {
-                                    allsme.Add(sme); return true;
-                                });
+                                                                   {
+                                                                       allsme.Add(sme);
+                                                                       return true;
+                                                                   });
                                 foreach (var sme in allsme)
                                     yield return sme;
                             }
@@ -4560,16 +4449,16 @@ namespace AasxCompatibilityModels
             }
 
             public Referable FindReferableByReference(KeyList kl, int keyIndex = 0, bool exactMatch = false,
-                ReferableRootInfo rootInfo = null)
+                                                      ReferableRootInfo rootInfo = null)
             {
                 // first index needs to exist ..
                 if (kl == null || keyIndex >= kl.Count)
                     return null;
 
                 // which type?
-                var firstType = kl[keyIndex].type.Trim().ToLower();
-                var firstIdentification = new Identification(kl[keyIndex].idType, kl[keyIndex].value);
-                AdministrationShell aasToFollow = null;
+                var                 firstType           = kl[ keyIndex ].type.Trim().ToLower();
+                var                 firstIdentification = new Identification(kl[ keyIndex ].idType, kl[ keyIndex ].value);
+                AdministrationShell aasToFollow         = null;
 
                 if (firstType == Key.AAS.Trim().ToLower())
                 {
@@ -4583,7 +4472,7 @@ namespace AasxCompatibilityModels
                     // side info?
                     if (rootInfo != null)
                     {
-                        rootInfo.AAS = aas;
+                        rootInfo.AAS          = aas;
                         rootInfo.NrOfRootKeys = 1 + keyIndex;
                     }
 
@@ -4602,16 +4491,16 @@ namespace AasxCompatibilityModels
 
                     // try find aas for it
                     var aas = this.FindAllAAS((a) =>
-                    {
-                        return a?.assetRef?.Matches(asset.identification) == true;
-                    }).FirstOrDefault();
+                                              {
+                                                  return a?.assetRef?.Matches(asset.identification) == true;
+                                              }).FirstOrDefault();
                     if (aas == null)
                         return exactMatch ? null : asset;
 
                     // side info?
                     if (rootInfo != null)
                     {
-                        rootInfo.Asset = asset;
+                        rootInfo.Asset        = asset;
                         rootInfo.NrOfRootKeys = 1 + keyIndex;
                     }
 
@@ -4623,11 +4512,11 @@ namespace AasxCompatibilityModels
                 if (aasToFollow != null)
                 {
                     // search different entities
-                    if (kl[keyIndex + 1].type.Trim().ToLower() == Key.Submodel.ToLower()
-                        || kl[keyIndex + 1].type.Trim().ToLower() == Key.SubmodelRef.ToLower())
+                    if (kl[ keyIndex + 1 ].type.Trim().ToLower() == Key.Submodel.ToLower()
+                        || kl[ keyIndex + 1 ].type.Trim().ToLower() == Key.SubmodelRef.ToLower())
                     {
                         // ok, search SubmodelRef
-                        var smref = aasToFollow.FindSubmodelRef(kl[keyIndex + 1].ToId());
+                        var smref = aasToFollow.FindSubmodelRef(kl[ keyIndex + 1 ].ToId());
                         if (smref == null)
                             return exactMatch ? null : aasToFollow;
 
@@ -4640,7 +4529,7 @@ namespace AasxCompatibilityModels
                         // side info?
                         if (rootInfo != null)
                         {
-                            rootInfo.Submodel = sm;
+                            rootInfo.Submodel     = sm;
                             rootInfo.NrOfRootKeys = 2 + keyIndex;
                         }
 
@@ -4659,14 +4548,14 @@ namespace AasxCompatibilityModels
                 if (firstType == Key.Submodel.Trim().ToLower())
                 {
                     // ok, search Submodel
-                    var sm = this.FindSubmodel(new Identification(kl[keyIndex].idType, kl[keyIndex].value));
+                    var sm = this.FindSubmodel(new Identification(kl[ keyIndex ].idType, kl[ keyIndex ].value));
                     if (sm == null)
                         return null;
 
                     // notice in side info
                     if (rootInfo != null)
                     {
-                        rootInfo.Submodel = sm;
+                        rootInfo.Submodel     = sm;
                         rootInfo.NrOfRootKeys = 1 + keyIndex;
 
                         // add even more info
@@ -4736,7 +4625,7 @@ namespace AasxCompatibilityModels
                 if (keys.Count != 1)
                     return null;
                 // and we're picky
-                var key = keys[0];
+                var key = keys[ 0 ];
                 if (!key.local || key.type.ToLower().Trim() != "conceptdescription")
                     return null;
                 // brute force
@@ -4778,7 +4667,7 @@ namespace AasxCompatibilityModels
             {
                 if (key == null)
                     return null;
-                var l = new List<Key> { key };
+                var l = new List<Key> {key};
                 return (FindConceptDescription(l));
             }
 
@@ -4831,7 +4720,6 @@ namespace AasxCompatibilityModels
                 if (!shallowCopy && src is SubmodelElementCollection)
                     foreach (var m in (src as SubmodelElementCollection).value)
                         CopyConceptDescriptionsFrom(srcEnv, m.submodelElement, shallowCopy: false);
-
             }
 
             public SubmodelElementWrapper CopySubmodelElementAndCD(
@@ -4879,8 +4767,7 @@ namespace AasxCompatibilityModels
                     dstSub = new Submodel(srcSub, shallowCopy);
                     this.Submodels.Add(dstSub);
                 }
-                else
-                if (dstSub != null)
+                else if (dstSub != null)
                 {
                     // there is already an submodel, just add members
                     if (!shallowCopy && srcSub.submodelElements != null)
@@ -4889,8 +4776,8 @@ namespace AasxCompatibilityModels
                             dstSub.submodelElements = new SubmodelElementWrapperCollection();
                         foreach (var smw in srcSub.submodelElements)
                             dstSub.submodelElements.Add(
-                                new SubmodelElementWrapper(
-                                    smw.submodelElement, shallowCopy: false));
+                                                        new SubmodelElementWrapper(
+                                                                                   smw.submodelElement, shallowCopy: false));
                     }
                 }
 
@@ -4931,12 +4818,12 @@ namespace AasxCompatibilityModels
 
                     // search all SMEs referring to this CD
                     foreach (var sme in this.FindAllSubmodelElements<SubmodelElement>(match: (s) =>
+                                                                                             {
+                                                                                                 return (s != null && s.semanticId != null && s.semanticId.Matches(oldId));
+                                                                                             }))
                     {
-                        return (s != null && s.semanticId != null && s.semanticId.Matches(oldId));
-                    }))
-                    {
-                        sme.semanticId[0].idType = newId.idType;
-                        sme.semanticId[0].value = newId.id;
+                        sme.semanticId[ 0 ].idType = newId.idType;
+                        sme.semanticId[ 0 ].value  = newId.id;
                         res.Add(sme);
                     }
 
@@ -4957,11 +4844,11 @@ namespace AasxCompatibilityModels
                         var r = lr?.Reference;
                         if (r != null)
                             for (int i = 0; i < r.Count; i++)
-                                if (r[i].Matches(Key.Submodel, false, oldId.idType, oldId.id, Key.MatchMode.Relaxed))
+                                if (r[ i ].Matches(Key.Submodel, false, oldId.idType, oldId.id, Key.MatchMode.Relaxed))
                                 {
                                     // directly replace
-                                    r[i].idType = newId.idType;
-                                    r[i].value = newId.id;
+                                    r[ i ].idType = newId.idType;
+                                    r[ i ].value  = newId.id;
                                     if (res.Contains(lr.Identifiable))
                                         res.Add(lr.Identifiable);
                                 }
@@ -4987,11 +4874,11 @@ namespace AasxCompatibilityModels
                         var r = lr?.Reference;
                         if (r != null)
                             for (int i = 0; i < r.Count; i++)
-                                if (r[i].Matches(Key.Asset, false, oldId.idType, oldId.id, Key.MatchMode.Relaxed))
+                                if (r[ i ].Matches(Key.Asset, false, oldId.idType, oldId.id, Key.MatchMode.Relaxed))
                                 {
                                     // directly replace
-                                    r[i].idType = newId.idType;
-                                    r[i].value = newId.id;
+                                    r[ i ].idType = newId.idType;
+                                    r[ i ].value  = newId.id;
                                     if (res.Contains(lr.Identifiable))
                                         res.Add(lr.Identifiable);
                                 }
@@ -5013,7 +4900,7 @@ namespace AasxCompatibilityModels
             public void SerializeXmlToStream(StreamWriter s)
             {
                 var serializer = new XmlSerializer(typeof(AdminShell.AdministrationShellEnv));
-                var nss = new XmlSerializerNamespaces();
+                var nss        = new XmlSerializerNamespaces();
                 nss.Add("xsi", System.Xml.Schema.XmlSchema.InstanceNamespace);
                 nss.Add("aas", "http://www.admin-shell.io/aas/2/0");
                 nss.Add("IEC61360", "http://www.admin-shell.io/IEC61360/2/0");
@@ -5025,11 +4912,11 @@ namespace AasxCompatibilityModels
                 sw.AutoFlush = true;
 
                 JsonSerializer serializer = new JsonSerializer()
-                {
-                    NullValueHandling = NullValueHandling.Ignore,
-                    ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
-                    Formatting = Newtonsoft.Json.Formatting.Indented
-                };
+                                            {
+                                                NullValueHandling     = NullValueHandling.Ignore,
+                                                ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
+                                                Formatting            = Newtonsoft.Json.Formatting.Indented
+                                            };
 
                 JsonWriter writer = new JsonTextWriter(sw);
                 serializer.Serialize(writer, this);
@@ -5042,7 +4929,7 @@ namespace AasxCompatibilityModels
             public AdministrationShellEnv DeserializeFromXmlStream(TextReader reader)
             {
                 XmlSerializer serializer = new XmlSerializer(
-                    typeof(AdminShell.AdministrationShellEnv), "http://www.admin-shell.io/aas/2/0");
+                                                             typeof(AdminShell.AdministrationShellEnv), "http://www.admin-shell.io/aas/2/0");
                 var res = serializer.Deserialize(reader) as AdminShell.AdministrationShellEnv;
                 return res;
             }
@@ -5051,7 +4938,7 @@ namespace AasxCompatibilityModels
             {
                 JsonSerializer serializer = new JsonSerializer();
                 serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                var res = (AdministrationShellEnv)serializer.Deserialize(reader, typeof(AdministrationShellEnv));
+                var res = (AdministrationShellEnv) serializer.Deserialize(reader, typeof(AdministrationShellEnv));
                 return res;
             }
 
@@ -5085,7 +4972,7 @@ namespace AasxCompatibilityModels
                     if (w.submodelElement is Operation op)
                         for (int i = 0; i < 2; i++)
                         {
-                            var w2s = Operation.GetWrappers(op[i]);
+                            var w2s = Operation.GetWrappers(op[ i ]);
                             CreateFromExistingEnvRecurseForCDs(src, w2s, ref filterForCD);
                         }
 
@@ -5098,10 +4985,10 @@ namespace AasxCompatibilityModels
             }
 
             public static AdministrationShellEnv CreateFromExistingEnv(AdministrationShellEnv src,
-                List<AdministrationShell> filterForAas = null,
-                List<Asset> filterForAsset = null,
-                ListOfSubmodels filterForSubmodel = null,
-                List<ConceptDescription> filterForCD = null)
+                                                                       List<AdministrationShell> filterForAas = null,
+                                                                       List<Asset> filterForAsset = null,
+                                                                       ListOfSubmodels filterForSubmodel = null,
+                                                                       List<ConceptDescription> filterForCD = null)
             {
                 // prepare defaults
                 if (filterForAas == null)
@@ -5187,7 +5074,7 @@ namespace AasxCompatibilityModels
             public Referable.ComparerIndexed CreateIndexedComparerCdsForSmUsage()
             {
                 var cmp = new Referable.ComparerIndexed();
-                int nr = 0;
+                int nr  = 0;
                 foreach (var sm in FindAllSubmodelGroupedByAAS())
                     foreach (var sme in sm.FindDeep<SubmodelElement>())
                     {
@@ -5198,8 +5085,9 @@ namespace AasxCompatibilityModels
                             continue;
                         if (cmp.Index.ContainsKey(cd))
                             continue;
-                        cmp.Index[cd] = nr++;
+                        cmp.Index[ cd ] = nr++;
                     }
+
                 return cmp;
             }
 
@@ -5282,34 +5170,27 @@ namespace AasxCompatibilityModels
         public class Qualifier : IAasElement
         {
             // for JSON only
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "modelType")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "modelType") ]
             public JsonModelTypeWrapper JsonModelType { get { return new JsonModelTypeWrapper(GetElementName()); } }
 
             // member
             // from hasSemantics:
-            [XmlElement(ElementName = "semanticId")]
+            [ XmlElement(ElementName = "semanticId") ]
             public SemanticId semanticId = null;
 
             // this class
             // TODO (Michael Hoffmeister, 2020-08-01): check, if Json has Qualifiers or not
 
-            [MetaModelName("Qualifier.type")]
-            [TextSearchable]
-            [CountForHash]
+            [ MetaModelName("Qualifier.type") ] [ TextSearchable ] [ CountForHash ]
             public string type = "";
 
-            [MetaModelName("Qualifier.valueType")]
-            [TextSearchable]
-            [CountForHash]
+            [ MetaModelName("Qualifier.valueType") ] [ TextSearchable ] [ CountForHash ]
             public string valueType = "";
 
-            [CountForHash]
-            public Reference valueId = null;
+            [ CountForHash ] public Reference valueId = null;
 
-            [MetaModelName("Qualifier.value")]
-            [TextSearchable]
-            [CountForHash]
+            [ MetaModelName("Qualifier.value") ] [ TextSearchable ] [ CountForHash ]
             public string value = null;
 
             // dead-csharp off
@@ -5328,7 +5209,7 @@ namespace AasxCompatibilityModels
             {
                 if (src.semanticId != null)
                     this.semanticId = new SemanticId(src.semanticId);
-                this.type = src.type;
+                this.type  = src.type;
                 this.value = src.value;
                 if (src.valueId != null)
                     this.valueId = new Reference(src.valueId);
@@ -5336,7 +5217,7 @@ namespace AasxCompatibilityModels
 
             public Qualifier(string type, string value)
             {
-                this.type = type;
+                this.type  = type;
                 this.value = value;
             }
 
@@ -5345,7 +5226,7 @@ namespace AasxCompatibilityModels
             {
                 if (src.semanticId != null)
                     this.semanticId = new SemanticId(src.semanticId);
-                this.type = src.qualifierType;
+                this.type  = src.qualifierType;
                 this.value = src.qualifierValue;
                 if (src.qualifierValueId != null)
                     this.valueId = new Reference(src.qualifierValueId);
@@ -5392,12 +5273,12 @@ namespace AasxCompatibilityModels
                     return null;
 
                 return new Qualifier()
-                {
-                    type = m.Groups[1].ToString().Trim(),
-                    semanticId = SemanticId.Parse(m.Groups[1].ToString().Trim()),
-                    value = m.Groups[3].ToString().Trim(),
-                    valueId = Reference.Parse(m.Groups[1].ToString().Trim())
-                };
+                       {
+                           type       = m.Groups[ 1 ].ToString().Trim(),
+                           semanticId = SemanticId.Parse(m.Groups[ 1 ].ToString().Trim()),
+                           value      = m.Groups[ 3 ].ToString().Trim(),
+                           valueId    = Reference.Parse(m.Groups[ 1 ].ToString().Trim())
+                       };
             }
         }
 
@@ -5408,7 +5289,6 @@ namespace AasxCompatibilityModels
         {
             public QualifierCollection()
             {
-
             }
 
 #if !DoNotUseAasxCompatibilityModels
@@ -5467,6 +5347,7 @@ namespace AasxCompatibilityModels
                         res += delimiter;
                     res += q.ToString(format, referencesDelimiter);
                 }
+
                 return res;
             }
 
@@ -5497,12 +5378,7 @@ namespace AasxCompatibilityModels
             {
                 if (qualifiers == null)
                     qualifiers = new QualifierCollection();
-                var q = new Qualifier()
-                {
-                    type = qualifierType,
-                    value = qualifierValue,
-                    valueId = qualifierValueId,
-                };
+                var q = new Qualifier() {type = qualifierType, value = qualifierValue, valueId = qualifierValueId};
                 if (semanticKeys != null)
                     q.semanticId = SemanticId.CreateFromKeys(semanticKeys);
                 qualifiers.Add(q);
@@ -5551,26 +5427,25 @@ namespace AasxCompatibilityModels
         public class SubmodelElement : Referable, System.IDisposable, IGetReference, IGetSemanticId, IGetQualifiers
         {
             // constants
-            public static Type[] PROP_MLP = new Type[] {
-            typeof(AdminShell.MultiLanguageProperty), typeof(AdminShell.Property) };
+            public static Type[] PROP_MLP = new Type[] {typeof(AdminShell.MultiLanguageProperty), typeof(AdminShell.Property)};
 
             // for JSON only
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "modelType")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "modelType") ]
             public JsonModelTypeWrapper JsonModelType { get { return new JsonModelTypeWrapper(GetElementName()); } }
 
             // members
 
             // do this in order to be IDisposable, that is: suitable for (using)
             void System.IDisposable.Dispose() { }
-            public void GetData() { }
+            public void             GetData() { }
 
             // from HasKind
-            [XmlElement(ElementName = "kind")]
-            [JsonIgnore]
+            [ XmlElement(ElementName = "kind") ] [ JsonIgnore ]
             public ModelingKind kind = new ModelingKind();
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "kind")]
+
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "kind") ]
             public string JsonKind
             {
                 get
@@ -5588,19 +5463,19 @@ namespace AasxCompatibilityModels
             }
 
             // from hasSemanticId:
-            [XmlElement(ElementName = "semanticId")]
+            [ XmlElement(ElementName = "semanticId") ]
             public SemanticId semanticId = new SemanticId();
+
             public SemanticId GetSemanticId() { return semanticId; }
 
             // from Qualifiable:
-            [XmlArray("qualifier")]
-            [XmlArrayItem("qualifier")]
-            [JsonProperty(PropertyName = "constraints")]
+            [ XmlArray("qualifier") ] [ XmlArrayItem("qualifier") ] [ JsonProperty(PropertyName = "constraints") ]
             public QualifierCollection qualifiers = null;
+
             public QualifierCollection GetQualifiers() => qualifiers;
 
             // from hasDataSpecification:
-            [XmlElement(ElementName = "embeddedDataSpecification")]
+            [ XmlElement(ElementName = "embeddedDataSpecification") ]
             public HasDataSpecification hasDataSpecification = null;
 
             // getter / setter
@@ -5608,7 +5483,9 @@ namespace AasxCompatibilityModels
             // constructors / creators
 
             public SubmodelElement()
-                : base() { }
+                : base()
+            {
+            }
 
             public SubmodelElement(SubmodelElement src)
                 : base(src)
@@ -5681,7 +5558,7 @@ namespace AasxCompatibilityModels
                 Qualifier q)
             {
                 QualifierCollection.AddQualifier(
-                    ref this.qualifiers, q);
+                                                 ref this.qualifiers, q);
             }
 
             public void AddQualifier(
@@ -5689,7 +5566,7 @@ namespace AasxCompatibilityModels
                 Reference qualifierValueId = null)
             {
                 QualifierCollection.AddQualifier(
-                    ref this.qualifiers, qualifierType, qualifierValue, semanticKeys, qualifierValueId);
+                                                 ref this.qualifiers, qualifierType, qualifierValue, semanticKeys, qualifierValueId);
             }
 
             public Qualifier HasQualifierOfType(string qualifierType)
@@ -5715,19 +5592,18 @@ namespace AasxCompatibilityModels
                     {
                         // add big information set
                         r.Keys.Insert(0, Key.CreateNew(
-                            current.GetElementName(),
-                            true,
-                            cid.identification.idType,
-                            cid.identification.id));
+                                                       current.GetElementName(),
+                                                       true,
+                                                       cid.identification.idType,
+                                                       cid.identification.id));
                     }
-                    else
-                    if (current is Referable crf)
+                    else if (current is Referable crf)
                     {
                         // reference via idShort
                         r.Keys.Insert(0, Key.CreateNew(
-                            current.GetElementName(),
-                            true,
-                            "IdShort", crf.idShort));
+                                                       current.GetElementName(),
+                                                       true,
+                                                       "IdShort", crf.idShort));
                     }
 
                     if (current is Referable crf2)
@@ -5735,6 +5611,7 @@ namespace AasxCompatibilityModels
                     else
                         current = null;
                 }
+
                 return r;
             }
 
@@ -5748,8 +5625,7 @@ namespace AasxCompatibilityModels
                 {
                     if (p == null || p.Invoke(this))
                         yield return this;
-                    else
-                        if (!passOverMiss)
+                    else if (!passOverMiss)
                         yield break;
                 }
 
@@ -5759,7 +5635,7 @@ namespace AasxCompatibilityModels
                     if (this.parent is SubmodelElement psme)
                     {
                         foreach (var q in psme.FindAllParents(p, includeThis: true,
-                            passOverMiss: passOverMiss))
+                                                              passOverMiss: passOverMiss))
                             yield return q;
                     }
                     else if (includeSubmodel && this.parent is Submodel psm)
@@ -5775,15 +5651,15 @@ namespace AasxCompatibilityModels
                 bool includeThis = false, bool includeSubmodel = false, bool passOverMiss = false)
             {
                 return (FindAllParents(
-                    (rf) => (true == (rf as IGetSemanticId)?.GetSemanticId()?.Matches(semId,
-                        matchMode: Key.MatchMode.Relaxed)),
-                    includeThis: includeThis, includeSubmodel: includeSubmodel, passOverMiss: passOverMiss));
+                                       (rf) => (true == (rf as IGetSemanticId)?.GetSemanticId()?.Matches(semId,
+                                                                                                         matchMode: Key.MatchMode.Relaxed)),
+                                       includeThis: includeThis, includeSubmodel: includeSubmodel, passOverMiss: passOverMiss));
             }
 
             public Tuple<string, string> ToCaptionInfo()
             {
                 var caption = AdminShellUtilV20.EvalToNonNullString("\"{0}\" ", idShort, "<no idShort!>");
-                var info = "";
+                var info    = "";
                 // TODO (MIHO, 2021-07-08): obvious error .. info should receive semanticId .. but would change 
                 // display presentation .. therefore to be checked again
                 if (semanticId != null)
@@ -5826,25 +5702,24 @@ namespace AasxCompatibilityModels
             }
         }
 
-        [XmlType(TypeName = "submodelElement")]
+        [ XmlType(TypeName = "submodelElement") ]
         public class SubmodelElementWrapper
         {
-
             // members
 
-            [XmlElement(ElementName = "property", Type = typeof(Property))]
-            [XmlElement(ElementName = "multiLanguageProperty", Type = typeof(MultiLanguageProperty))]
-            [XmlElement(ElementName = "range", Type = typeof(Range))]
-            [XmlElement(ElementName = "file", Type = typeof(File))]
-            [XmlElement(ElementName = "blob", Type = typeof(Blob))]
-            [XmlElement(ElementName = "referenceElement", Type = typeof(ReferenceElement))]
-            [XmlElement(ElementName = "relationshipElement", Type = typeof(RelationshipElement))]
-            [XmlElement(ElementName = "annotatedRelationshipElement", Type = typeof(AnnotatedRelationshipElement))]
-            [XmlElement(ElementName = "capability", Type = typeof(Capability))]
-            [XmlElement(ElementName = "submodelElementCollection", Type = typeof(SubmodelElementCollection))]
-            [XmlElement(ElementName = "operation", Type = typeof(Operation))]
-            [XmlElement(ElementName = "basicEvent", Type = typeof(BasicEvent))]
-            [XmlElement(ElementName = "entity", Type = typeof(Entity))]
+            [ XmlElement(ElementName = "property", Type = typeof(Property)) ]
+            [ XmlElement(ElementName = "multiLanguageProperty", Type = typeof(MultiLanguageProperty)) ]
+            [ XmlElement(ElementName = "range", Type = typeof(Range)) ]
+            [ XmlElement(ElementName = "file", Type = typeof(File)) ]
+            [ XmlElement(ElementName = "blob", Type = typeof(Blob)) ]
+            [ XmlElement(ElementName = "referenceElement", Type = typeof(ReferenceElement)) ]
+            [ XmlElement(ElementName = "relationshipElement", Type = typeof(RelationshipElement)) ]
+            [ XmlElement(ElementName = "annotatedRelationshipElement", Type = typeof(AnnotatedRelationshipElement)) ]
+            [ XmlElement(ElementName = "capability", Type = typeof(Capability)) ]
+            [ XmlElement(ElementName = "submodelElementCollection", Type = typeof(SubmodelElementCollection)) ]
+            [ XmlElement(ElementName = "operation", Type = typeof(Operation)) ]
+            [ XmlElement(ElementName = "basicEvent", Type = typeof(BasicEvent)) ]
+            [ XmlElement(ElementName = "entity", Type = typeof(Entity)) ]
             public SubmodelElement submodelElement;
 
             // element names
@@ -5857,18 +5732,17 @@ namespace AasxCompatibilityModels
 
             public static AdequateElementEnum[] AdequateElementsDataElement =
             {
-                AdequateElementEnum.SubmodelElementCollection, AdequateElementEnum.RelationshipElement,
-                AdequateElementEnum.AnnotatedRelationshipElement, AdequateElementEnum.Capability,
-                AdequateElementEnum.Operation, AdequateElementEnum.BasicEvent, AdequateElementEnum.Entity
+                AdequateElementEnum.SubmodelElementCollection, AdequateElementEnum.RelationshipElement, AdequateElementEnum.AnnotatedRelationshipElement,
+                AdequateElementEnum.Capability, AdequateElementEnum.Operation, AdequateElementEnum.BasicEvent, AdequateElementEnum.Entity
             };
 
-            public static string[] AdequateElementNames = { "Unknown", "SubmodelElementCollection", "Property",
-                "MultiLanguageProperty", "Range", "File", "Blob", "ReferenceElement", "RelationshipElement",
-                "AnnotatedRelationshipElement", "Capability", "Operation", "BasicEvent", "Entity" };
+            public static string[] AdequateElementNames =
+            {
+                "Unknown", "SubmodelElementCollection", "Property", "MultiLanguageProperty", "Range", "File", "Blob", "ReferenceElement", "RelationshipElement",
+                "AnnotatedRelationshipElement", "Capability", "Operation", "BasicEvent", "Entity"
+            };
 
-            public static string[] AdequateElementShortName = { null, "SMC", null,
-                "MLP", null, null, null, "Ref", "Rel",
-                "ARel", null, null, "Event", "Entity" };
+            public static string[] AdequateElementShortName = {null, "SMC", null, "MLP", null, null, null, "Ref", "Rel", "ARel", null, null, "Event", "Entity"};
 
             // constructors
 
@@ -5883,7 +5757,7 @@ namespace AasxCompatibilityModels
 
                 if (src is SubmodelElementCollection)
                     this.submodelElement = new SubmodelElementCollection(
-                        src as SubmodelElementCollection, shallowCopy: shallowCopy);
+                                                                         src as SubmodelElementCollection, shallowCopy: shallowCopy);
                 if (src is Property)
                     this.submodelElement = new Property(src as Property);
                 if (src is MultiLanguageProperty)
@@ -5916,8 +5790,8 @@ namespace AasxCompatibilityModels
             {
                 if (src is AasxCompatibilityModels.AdminShellV10.SubmodelElementCollection)
                     this.submodelElement = new SubmodelElementCollection(
-                        src as AasxCompatibilityModels.AdminShellV10.SubmodelElementCollection,
-                        shallowCopy: shallowCopy);
+                                                                         src as AasxCompatibilityModels.AdminShellV10.SubmodelElementCollection,
+                                                                         shallowCopy: shallowCopy);
                 if (src is AasxCompatibilityModels.AdminShellV10.Property)
                     this.submodelElement = new Property(src as AasxCompatibilityModels.AdminShellV10.Property);
                 if (src is AasxCompatibilityModels.AdminShellV10.File)
@@ -5926,10 +5800,10 @@ namespace AasxCompatibilityModels
                     this.submodelElement = new Blob(src as AasxCompatibilityModels.AdminShellV10.Blob);
                 if (src is AasxCompatibilityModels.AdminShellV10.ReferenceElement)
                     this.submodelElement = new ReferenceElement(
-                        src as AasxCompatibilityModels.AdminShellV10.ReferenceElement);
+                                                                src as AasxCompatibilityModels.AdminShellV10.ReferenceElement);
                 if (src is AasxCompatibilityModels.AdminShellV10.RelationshipElement)
                     this.submodelElement = new RelationshipElement(
-                        src as AasxCompatibilityModels.AdminShellV10.RelationshipElement);
+                                                                   src as AasxCompatibilityModels.AdminShellV10.RelationshipElement);
                 if (src is AasxCompatibilityModels.AdminShellV10.Operation)
                     this.submodelElement = new Operation(src as AasxCompatibilityModels.AdminShellV10.Operation);
             }
@@ -5937,7 +5811,7 @@ namespace AasxCompatibilityModels
 
             public static string GetAdequateName(AdequateElementEnum ae)
             {
-                return AdequateElementNames[(int)ae];
+                return AdequateElementNames[ (int) ae ];
             }
 
             /// <summary>
@@ -5948,7 +5822,7 @@ namespace AasxCompatibilityModels
                 if (adequateName == null)
                     return AdequateElementEnum.Unknown;
 
-                foreach (var en in (AdequateElementEnum[])Enum.GetValues(typeof(AdequateElementEnum)))
+                foreach (var en in (AdequateElementEnum[]) Enum.GetValues(typeof(AdequateElementEnum)))
                     if (Enum.GetName(typeof(AdequateElementEnum), en)?.Trim().ToLower() ==
                         adequateName.Trim().ToLower())
                         return en;
@@ -5964,13 +5838,13 @@ namespace AasxCompatibilityModels
                 if (adequateName == null)
                     return AdequateElementEnum.Unknown;
 
-                foreach (var en in (AdequateElementEnum[])Enum.GetValues(typeof(AdequateElementEnum)))
-                    if (((int)en < AdequateElementNames.Length
-                          && AdequateElementNames[(int)en].Trim().ToLower() == adequateName.Trim().ToLower())
+                foreach (var en in (AdequateElementEnum[]) Enum.GetValues(typeof(AdequateElementEnum)))
+                    if (((int) en < AdequateElementNames.Length
+                         && AdequateElementNames[ (int) en ].Trim().ToLower() == adequateName.Trim().ToLower())
                         || (useShortName
-                          && (int)en < AdequateElementShortName.Length
-                          && AdequateElementShortName[(int)en] != null
-                          && AdequateElementShortName[(int)en].Trim().ToLower() == adequateName.Trim().ToLower()))
+                            && (int) en < AdequateElementShortName.Length
+                            && AdequateElementShortName[ (int) en ] != null
+                            && AdequateElementShortName[ (int) en ].Trim().ToLower() == adequateName.Trim().ToLower()))
                         return en;
 
                 return AdequateElementEnum.Unknown;
@@ -5986,7 +5860,7 @@ namespace AasxCompatibilityModels
                 }
                 else
                 {
-                    foreach (var en in (AdequateElementEnum[])Enum.GetValues(typeof(AdequateElementEnum)))
+                    foreach (var en in (AdequateElementEnum[]) Enum.GetValues(typeof(AdequateElementEnum)))
                     {
                         if (en == AdequateElementEnum.Unknown)
                             continue;
@@ -6073,10 +5947,10 @@ namespace AasxCompatibilityModels
 
                 // get the names
                 string res = null;
-                if ((int)en < AdequateElementNames.Length)
-                    res = AdequateElementNames[(int)en].Trim();
-                if ((int)en < AdequateElementShortName.Length && AdequateElementShortName[(int)en] != null)
-                    res = AdequateElementShortName[(int)en].Trim();
+                if ((int) en < AdequateElementNames.Length)
+                    res = AdequateElementNames[ (int) en ].Trim();
+                if ((int) en < AdequateElementShortName.Length && AdequateElementShortName[ (int) en ] != null)
+                    res = AdequateElementShortName[ (int) en ].Trim();
                 return res;
             }
 
@@ -6093,7 +5967,7 @@ namespace AasxCompatibilityModels
 
             public static SubmodelElementWrapper CreateFor(SubmodelElement sme)
             {
-                var res = new SubmodelElementWrapper() { submodelElement = sme };
+                var res = new SubmodelElementWrapper() {submodelElement = sme};
                 return res;
             }
 
@@ -6111,14 +5985,14 @@ namespace AasxCompatibilityModels
                     return null;
 
                 // as SubmodelElements are not Identifiables, the actual key shall be IdShort
-                if (rf[keyIndex].idType.Trim().ToLower() != Key.GetIdentifierTypeName(
-                                                                Key.IdentifierType.IdShort).Trim().ToLower())
+                if (rf[ keyIndex ].idType.Trim().ToLower() != Key.GetIdentifierTypeName(
+                                                                                        Key.IdentifierType.IdShort).Trim().ToLower())
                     return null;
 
                 // over all wrappers
                 foreach (var smw in wrappers)
                     if (smw.submodelElement != null &&
-                        smw.submodelElement.idShort.Trim().ToLower() == rf[keyIndex].value.Trim().ToLower())
+                        smw.submodelElement.idShort.Trim().ToLower() == rf[ keyIndex ].value.Trim().ToLower())
                     {
                         // match on this level. Did we find a leaf element?
                         if ((keyIndex + 1) >= rf.Count)
@@ -6154,7 +6028,6 @@ namespace AasxCompatibilityModels
                 var x = (this.submodelElement) as T;
                 return x;
             }
-
         }
 
         public class SubmodelElementWrapperCollection : BaseSubmodelElementWrapperCollection<SubmodelElement>
@@ -6258,8 +6131,8 @@ namespace AasxCompatibilityModels
 
                     if (current is Operation op)
                         for (int i = 0; i < 2; i++)
-                            if (Operation.GetWrappers(op[i]) != null)
-                                foreach (var x in Operation.GetWrappers(op[i]).FindDeep<T>(match))
+                            if (Operation.GetWrappers(op[ i ]) != null)
+                                foreach (var x in Operation.GetWrappers(op[ i ]).FindDeep<T>(match))
                                     yield return x;
                 }
             }
@@ -6316,24 +6189,24 @@ namespace AasxCompatibilityModels
             {
                 foreach (var smw in this)
                     if (smw.submodelElement != null && smw.submodelElement is T
-                        && smw.submodelElement.semanticId != null)
+                                                    && smw.submodelElement.semanticId != null)
                         if (smw.submodelElement.semanticId.MatchesExactlyOneKey(semId, matchMode))
                             yield return smw.submodelElement as T;
             }
 
             public IEnumerable<T> FindAllSemanticIdAs<T>(Reference semId,
-                Key.MatchMode matchMode = Key.MatchMode.Strict)
+                                                         Key.MatchMode matchMode = Key.MatchMode.Strict)
                 where T : SubmodelElement
             {
                 foreach (var smw in this)
                     if (smw.submodelElement != null && smw.submodelElement is T
-                        && smw.submodelElement.semanticId != null)
+                                                    && smw.submodelElement.semanticId != null)
                         if (smw.submodelElement.semanticId.Matches(semId, matchMode))
                             yield return smw.submodelElement as T;
             }
 
             public IEnumerable<T> FindAllSemanticIdAs<T>(ConceptDescription cd,
-                Key.MatchMode matchMode = Key.MatchMode.Strict)
+                                                         Key.MatchMode matchMode = Key.MatchMode.Strict)
                 where T : SubmodelElement
             {
                 foreach (var x in FindAllSemanticIdAs<T>(cd.GetReference(), matchMode))
@@ -6354,10 +6227,11 @@ namespace AasxCompatibilityModels
                 foreach (var si in semId)
                 {
                     var found = FindAllSemanticId(si, allowedTypes, matchMode)?
-                                .FirstOrDefault<SubmodelElementWrapper>();
+                        .FirstOrDefault<SubmodelElementWrapper>();
                     if (found != null)
                         return found;
                 }
+
                 return null;
             }
 
@@ -6378,6 +6252,7 @@ namespace AasxCompatibilityModels
                     if (found != null)
                         return found;
                 }
+
                 return null;
             }
 
@@ -6484,7 +6359,7 @@ namespace AasxCompatibilityModels
 
                         if (current is Operation op)
                             for (int i = 0; i < 2; i++)
-                                Operation.GetWrappers(op[i])?.RecurseOnReferables(state, parents, lambda);
+                                Operation.GetWrappers(op[ i ])?.RecurseOnReferables(state, parents, lambda);
 
                         if (current is AnnotatedRelationshipElement arel)
                             arel.annotations?.RecurseOnReferables(state, parents, lambda);
@@ -6593,7 +6468,7 @@ namespace AasxCompatibilityModels
             // a little more business logic
 
             public T CreateSMEForCD<T>(ConceptDescription cd, string category = null, string idShort = null,
-                string idxTemplate = null, int maxNum = 999, bool addSme = false, bool isTemplate = false)
+                                       string idxTemplate = null, int maxNum = 999, bool addSme = false, bool isTemplate = false)
                 where T : SubmodelElement, new()
             {
                 // access
@@ -6615,11 +6490,7 @@ namespace AasxCompatibilityModels
                     ids = this.IterateIdShortTemplateToBeUnique(idxTemplate, maxNum);
 
                 // make a new instance
-                var sme = new T()
-                {
-                    idShort = ids,
-                    semanticId = new SemanticId(cd.GetCdReference())
-                };
+                var sme = new T() {idShort = ids, semanticId = new SemanticId(cd.GetCdReference())};
                 if (category != null)
                     sme.category = category;
                 if (isTemplate)
@@ -6638,7 +6509,7 @@ namespace AasxCompatibilityModels
             }
 
             public T CreateSMEForIdShort<T>(string idShort, string category = null,
-                string idxTemplate = null, int maxNum = 999, bool addSme = false) where T : SubmodelElement, new()
+                                            string idxTemplate = null, int maxNum = 999, bool addSme = false) where T : SubmodelElement, new()
             {
                 // access
                 if (idShort == null)
@@ -6652,7 +6523,7 @@ namespace AasxCompatibilityModels
                     ids = this.IterateIdShortTemplateToBeUnique(idxTemplate, maxNum);
 
                 // make a new instance
-                var sme = new T() { idShort = ids };
+                var sme = new T() {idShort = ids};
                 if (category != null)
                     sme.category = category;
 
@@ -6672,24 +6543,24 @@ namespace AasxCompatibilityModels
                 string idShort = null, bool addSme = false) where T : SubmodelElement, new()
             {
                 if (typeof(T) == typeof(MultiLanguageProperty)
-                        && anySrc is Property srcProp)
+                    && anySrc is Property srcProp)
                 {
                     var res = this.CreateSMEForCD<T>(createDefault, idShort: idShort, addSme: addSme);
                     if (res is MultiLanguageProperty mlp)
                     {
-                        mlp.value = new LangStringSet("EN?", srcProp.value);
+                        mlp.value   = new LangStringSet("EN?", srcProp.value);
                         mlp.valueId = srcProp.valueId;
                         return res;
                     }
                 }
 
                 if (typeof(T) == typeof(Property)
-                        && anySrc is MultiLanguageProperty srcMlp)
+                    && anySrc is MultiLanguageProperty srcMlp)
                 {
                     var res = this.CreateSMEForCD<T>(createDefault, idShort: idShort, addSme: addSme);
                     if (res is Property prp)
                     {
-                        prp.value = "" + srcMlp.value?.GetDefaultStr();
+                        prp.value   = "" + srcMlp.value?.GetDefaultStr();
                         prp.valueId = srcMlp.valueId;
                         return res;
                     }
@@ -6699,10 +6570,10 @@ namespace AasxCompatibilityModels
             }
 
             public T CopyOneSMEbyCopy<T>(Key destSemanticId,
-                SubmodelElementWrapperCollection sourceSmc, Key[] sourceSemanticId,
-                ConceptDescription createDefault = null, Action<T> setDefault = null,
-                Key.MatchMode matchMode = Key.MatchMode.Relaxed,
-                string idShort = null, bool addSme = false) where T : SubmodelElement, new()
+                                         SubmodelElementWrapperCollection sourceSmc, Key[] sourceSemanticId,
+                                         ConceptDescription createDefault = null, Action<T> setDefault = null,
+                                         Key.MatchMode matchMode = Key.MatchMode.Relaxed,
+                                         string idShort = null, bool addSme = false) where T : SubmodelElement, new()
             {
                 // get source
                 var src = sourceSmc?.FindFirstAnySemanticIdAs<T>(sourceSemanticId, matchMode);
@@ -6712,7 +6583,7 @@ namespace AasxCompatibilityModels
                 {
                     var anySrc = sourceSmc?.FindFirstAnySemanticId(sourceSemanticId, matchMode: matchMode);
                     src = AdaptiveConvertTo<T>(anySrc?.submodelElement, createDefault,
-                                idShort: idShort, addSme: false);
+                                               idShort: idShort, addSme: false);
                 }
 
                 // proceed
@@ -6739,8 +6610,8 @@ namespace AasxCompatibilityModels
                     return null;
 
                 // make same things sure
-                dst.idShort = src.idShort;
-                dst.category = src.category;
+                dst.idShort    = src.idShort;
+                dst.category   = src.category;
                 dst.semanticId = new SemanticId(destSemanticId);
 
                 // instantanously add it?
@@ -6752,29 +6623,29 @@ namespace AasxCompatibilityModels
             }
 
             public T CopyOneSMEbyCopy<T>(ConceptDescription destCD,
-                SubmodelElementWrapperCollection sourceSmc, ConceptDescription sourceCD,
-                bool createDefault = false, Action<T> setDefault = null,
-                Key.MatchMode matchMode = Key.MatchMode.Relaxed,
-                string idShort = null, bool addSme = false) where T : SubmodelElement, new()
+                                         SubmodelElementWrapperCollection sourceSmc, ConceptDescription sourceCD,
+                                         bool createDefault = false, Action<T> setDefault = null,
+                                         Key.MatchMode matchMode = Key.MatchMode.Relaxed,
+                                         string idShort = null, bool addSme = false) where T : SubmodelElement, new()
             {
-                return this.CopyOneSMEbyCopy<T>(destCD?.GetSingleKey(), sourceSmc, new[] { sourceCD?.GetSingleKey() },
-                    createDefault ? destCD : null, setDefault, matchMode, idShort, addSme);
+                return this.CopyOneSMEbyCopy<T>(destCD?.GetSingleKey(), sourceSmc, new[] {sourceCD?.GetSingleKey()},
+                                                createDefault ? destCD : null, setDefault, matchMode, idShort, addSme);
             }
 
             public T CopyOneSMEbyCopy<T>(ConceptDescription destCD,
-                SubmodelElementWrapperCollection sourceSmc, Key[] sourceKeys,
-                bool createDefault = false, Action<T> setDefault = null,
-                Key.MatchMode matchMode = Key.MatchMode.Relaxed,
-                string idShort = null, bool addSme = false) where T : SubmodelElement, new()
+                                         SubmodelElementWrapperCollection sourceSmc, Key[] sourceKeys,
+                                         bool createDefault = false, Action<T> setDefault = null,
+                                         Key.MatchMode matchMode = Key.MatchMode.Relaxed,
+                                         string idShort = null, bool addSme = false) where T : SubmodelElement, new()
             {
                 return this.CopyOneSMEbyCopy<T>(destCD?.GetSingleKey(), sourceSmc, sourceKeys,
-                    createDefault ? destCD : null, setDefault, matchMode, idShort, addSme);
+                                                createDefault ? destCD : null, setDefault, matchMode, idShort, addSme);
             }
 
             public void CopyManySMEbyCopy<T>(Key destSemanticId,
-                SubmodelElementWrapperCollection sourceSmc, Key sourceSemanticId,
-                ConceptDescription createDefault = null, Action<T> setDefault = null,
-                Key.MatchMode matchMode = Key.MatchMode.Relaxed) where T : SubmodelElement, new()
+                                             SubmodelElementWrapperCollection sourceSmc, Key sourceSemanticId,
+                                             ConceptDescription createDefault = null, Action<T> setDefault = null,
+                                             Key.MatchMode matchMode = Key.MatchMode.Relaxed) where T : SubmodelElement, new()
             {
                 // bool find possible sources
                 bool foundSrc = false;
@@ -6795,8 +6666,8 @@ namespace AasxCompatibilityModels
                     if (dst != null)
                     {
                         // make same things sure
-                        dst.idShort = src.idShort;
-                        dst.category = src.category;
+                        dst.idShort    = src.idShort;
+                        dst.category   = src.category;
                         dst.semanticId = new SemanticId(destSemanticId);
 
                         // instantanously add it?
@@ -6816,12 +6687,12 @@ namespace AasxCompatibilityModels
             }
 
             public void CopyManySMEbyCopy<T>(ConceptDescription destCD,
-                SubmodelElementWrapperCollection sourceSmc, ConceptDescription sourceCD,
-                bool createDefault = false, Action<T> setDefault = null,
-                Key.MatchMode matchMode = Key.MatchMode.Relaxed) where T : SubmodelElement, new()
+                                             SubmodelElementWrapperCollection sourceSmc, ConceptDescription sourceCD,
+                                             bool createDefault = false, Action<T> setDefault = null,
+                                             Key.MatchMode matchMode = Key.MatchMode.Relaxed) where T : SubmodelElement, new()
             {
                 CopyManySMEbyCopy(destCD.GetSingleKey(), sourceSmc, sourceCD.GetSingleKey(),
-                    createDefault ? destCD : null, setDefault, matchMode);
+                                  createDefault ? destCD : null, setDefault, matchMode);
             }
         }
 
@@ -6833,26 +6704,26 @@ namespace AasxCompatibilityModels
         }
 
         public class Submodel : Identifiable, IManageSubmodelElements,
-                                    System.IDisposable, IEnumerateChildren, IFindAllReferences,
-                                    IGetSemanticId, IGetQualifiers
+                                System.IDisposable, IEnumerateChildren, IFindAllReferences,
+                                IGetSemanticId, IGetQualifiers
         {
             // for JSON only
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "modelType")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "modelType") ]
             public JsonModelTypeWrapper JsonModelType { get { return new JsonModelTypeWrapper(GetElementName()); } }
 
             // members
 
             // do this in order to be IDisposable, that is: suitable for (using)
             void System.IDisposable.Dispose() { }
-            public void GetData() { }
+            public void             GetData() { }
 
             // from HasKind
-            [XmlElement(ElementName = "kind")]
-            [JsonIgnore]
+            [ XmlElement(ElementName = "kind") ] [ JsonIgnore ]
             public ModelingKind kind = new ModelingKind();
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "kind")]
+
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "kind") ]
             public string JsonKind
             {
                 get
@@ -6870,34 +6741,37 @@ namespace AasxCompatibilityModels
             }
 
             // from hasSemanticId:
-            [XmlElement(ElementName = "semanticId")]
+            [ XmlElement(ElementName = "semanticId") ]
             public SemanticId semanticId = new SemanticId();
+
             public SemanticId GetSemanticId() { return semanticId; }
 
             // from Qualifiable:
-            [XmlArray("qualifier")]
-            [XmlArrayItem("qualifier")]
+            [ XmlArray("qualifier") ] [ XmlArrayItem("qualifier") ]
             public QualifierCollection qualifiers = null;
+
             public QualifierCollection GetQualifiers() => qualifiers;
 
             // from hasDataSpecification:
-            [XmlElement(ElementName = "embeddedDataSpecification")]
+            [ XmlElement(ElementName = "embeddedDataSpecification") ]
             public HasDataSpecification hasDataSpecification = null;
 
             // from this very class
-            [XmlIgnore]
-            [JsonIgnore]
-            private SubmodelElementWrapperCollection _submodelElements = null;
+            [ XmlIgnore ] [ JsonIgnore ] private SubmodelElementWrapperCollection _submodelElements = null;
 
-            [JsonIgnore]
+            [ JsonIgnore ]
             public SubmodelElementWrapperCollection submodelElements
             {
                 get { return _submodelElements; }
-                set { _submodelElements = value; _submodelElements.Parent = this; }
+                set
+                {
+                    _submodelElements        = value;
+                    _submodelElements.Parent = this;
+                }
             }
 
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "submodelElements")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "submodelElements") ]
             public SubmodelElement[] JsonSubmodelElements
             {
                 get
@@ -6915,7 +6789,7 @@ namespace AasxCompatibilityModels
                         this.submodelElements = new SubmodelElementWrapperCollection();
                         foreach (var x in value)
                         {
-                            var smew = new SubmodelElementWrapper() { submodelElement = x };
+                            var smew = new SubmodelElementWrapper() {submodelElement = x};
                             this.submodelElements.Add(smew);
                         }
                     }
@@ -6972,19 +6846,20 @@ namespace AasxCompatibilityModels
 
             public static Submodel CreateNew(string idType, string id, string version = null, string revision = null)
             {
-                var s = new Submodel() { identification = new Identification(idType, id) };
+                var s = new Submodel() {identification = new Identification(idType, id)};
                 if (version != null)
                 {
                     if (s.administration == null)
                         s.administration = new Administration();
-                    s.administration.version = version;
+                    s.administration.version  = version;
                     s.administration.revision = revision;
                 }
+
                 return (s);
             }
 
-            [JsonIgnore]
-            [XmlIgnore]
+            [ JsonIgnore ]
+            [ XmlIgnore ]
             public SubmodelElementWrapperCollection SmeForWrite
             {
                 get
@@ -7026,7 +6901,7 @@ namespace AasxCompatibilityModels
                 if (submodelElements == null)
                     submodelElements = new SubmodelElementWrapperCollection();
                 var sew = new SubmodelElementWrapper();
-                sme.parent = this; // track parent here!
+                sme.parent          = this; // track parent here!
                 sew.submodelElement = sme;
                 submodelElements.Add(sew);
             }
@@ -7036,7 +6911,7 @@ namespace AasxCompatibilityModels
                 if (submodelElements == null)
                     submodelElements = new SubmodelElementWrapperCollection();
                 var sew = new SubmodelElementWrapper();
-                sme.parent = this; // track parent here!
+                sme.parent          = this; // track parent here!
                 sew.submodelElement = sme;
                 if (index < 0 || index >= submodelElements.Count)
                     return;
@@ -7056,7 +6931,7 @@ namespace AasxCompatibilityModels
                 Reference qualifierValueId = null)
             {
                 QualifierCollection.AddQualifier(
-                    ref this.qualifiers, qualifierType, qualifierValue, semanticKeys, qualifierValueId);
+                                                 ref this.qualifiers, qualifierType, qualifierValue, semanticKeys, qualifierValueId);
             }
 
             public Qualifier HasQualifierOfType(string qualifierType)
@@ -7074,8 +6949,8 @@ namespace AasxCompatibilityModels
             {
                 SubmodelRef l = new SubmodelRef();
                 l.Keys.Add(
-                    Key.CreateNew(
-                        this.GetElementName(), true, this.identification.idType, this.identification.id));
+                           Key.CreateNew(
+                                         this.GetElementName(), true, this.identification.idType, this.identification.id));
                 return l;
             }
 
@@ -7152,12 +7027,12 @@ namespace AasxCompatibilityModels
                 object state, Func<object, ListOfReferable, SubmodelElement, bool> lambda)
             {
                 this.submodelElements?.RecurseOnReferables(state, null, (o, par, rf) =>
-                {
-                    if (rf is SubmodelElement sme)
-                        return lambda(o, par, sme);
-                    else
-                        return true;
-                });
+                                                                        {
+                                                                            if (rf is SubmodelElement sme)
+                                                                                return lambda(o, par, sme);
+                                                                            else
+                                                                                return true;
+                                                                        });
             }
 
             /// <summary>
@@ -7180,6 +7055,7 @@ namespace AasxCompatibilityModels
                     lambda(state, null, this);
                     parents.Add(this);
                 }
+
                 this.submodelElements?.RecurseOnReferables(state, parents, lambda);
             }
 
@@ -7210,7 +7086,7 @@ namespace AasxCompatibilityModels
             }
 
             public T CreateSMEForCD<T>(ConceptDescription cd, string category = null, string idShort = null,
-                string idxTemplate = null, int maxNum = 999, bool addSme = false) where T : SubmodelElement, new()
+                                       string idxTemplate = null, int maxNum = 999, bool addSme = false) where T : SubmodelElement, new()
             {
                 if (this.submodelElements == null)
                     this.submodelElements = new SubmodelElementWrapperCollection();
@@ -7218,7 +7094,7 @@ namespace AasxCompatibilityModels
             }
 
             public T CreateSMEForIdShort<T>(string idShort, string category = null,
-                string idxTemplate = null, int maxNum = 999, bool addSme = false) where T : SubmodelElement, new()
+                                            string idxTemplate = null, int maxNum = 999, bool addSme = false) where T : SubmodelElement, new()
             {
                 if (this.submodelElements == null)
                     this.submodelElements = new SubmodelElementWrapperCollection();
@@ -7248,20 +7124,21 @@ namespace AasxCompatibilityModels
 
                 // recurse
                 this.RecurseOnSubmodelElements(null, (state, parents, sme) =>
-                {
-                    if (sme is ReferenceElement re)
-                        if (re.value != null)
-                            temp.Add(re.value);
-                    if (sme is RelationshipElement rl)
-                    {
-                        if (rl.first != null)
-                            temp.Add(rl.first);
-                        if (rl.second != null)
-                            temp.Add(rl.second);
-                    }
-                    // recurse
-                    return true;
-                });
+                                                     {
+                                                         if (sme is ReferenceElement re)
+                                                             if (re.value != null)
+                                                                 temp.Add(re.value);
+                                                         if (sme is RelationshipElement rl)
+                                                         {
+                                                             if (rl.first != null)
+                                                                 temp.Add(rl.first);
+                                                             if (rl.second != null)
+                                                                 temp.Add(rl.second);
+                                                         }
+
+                                                         // recurse
+                                                         return true;
+                                                     });
 
                 // now, give back
                 foreach (var r in temp)
@@ -7294,20 +7171,19 @@ namespace AasxCompatibilityModels
             public static string ValueType_DATE = "date";
             public static string ValueType_BOOLEAN = "boolean";
 
-            public static string[] ValueTypeItems = new string[] {
-                    "anyType", "complexType", "anySimpleType", "anyAtomicType", "anyURI", "base64Binary",
-                    "boolean", "date", "dateTime",
-                    "dateTimeStamp", "decimal", "integer", "long", "int", "short", "byte", "nonNegativeInteger",
-                    "positiveInteger",
-                    "unsignedLong", "unsignedInt", "unsignedShort", "unsignedByte", "nonPositiveInteger",
-                    "negativeInteger", "double", "duration",
-                    "dayTimeDuration", "yearMonthDuration", "float", "hexBinary", "string", "langString", "time" };
+            public static string[] ValueTypeItems = new string[]
+                                                    {
+                                                        "anyType", "complexType", "anySimpleType", "anyAtomicType", "anyURI", "base64Binary", "boolean", "date", "dateTime",
+                                                        "dateTimeStamp", "decimal", "integer", "long", "int", "short", "byte", "nonNegativeInteger", "positiveInteger",
+                                                        "unsignedLong", "unsignedInt", "unsignedShort", "unsignedByte", "nonPositiveInteger", "negativeInteger", "double",
+                                                        "duration", "dayTimeDuration", "yearMonthDuration", "float", "hexBinary", "string", "langString", "time"
+                                                    };
 
-            public static string[] ValueTypes_Number = new[] {
-                    "decimal", "integer", "long", "int", "short", "byte", "nonNegativeInteger",
-                    "positiveInteger",
-                    "unsignedLong", "unsignedInt", "unsignedShort", "unsignedByte", "nonPositiveInteger",
-                    "negativeInteger", "double", "float" };
+            public static string[] ValueTypes_Number = new[]
+                                                       {
+                                                           "decimal", "integer", "long", "int", "short", "byte", "nonNegativeInteger", "positiveInteger", "unsignedLong",
+                                                           "unsignedInt", "unsignedShort", "unsignedByte", "nonPositiveInteger", "negativeInteger", "double", "float"
+                                                       };
 
             public DataElement() { }
 
@@ -7318,7 +7194,8 @@ namespace AasxCompatibilityModels
 #if !DoNotUseAasxCompatibilityModels
             public DataElement(AasxCompatibilityModels.AdminShellV10.DataElement src)
                 : base(src)
-            { }
+            {
+            }
 #endif
 
             public override AasElementSelfDescription GetSelfDescription()
@@ -7329,14 +7206,13 @@ namespace AasxCompatibilityModels
 
         public class JsonValueTypeCast
         {
-
             public class JsonDataObjectType
             {
-                [JsonProperty(PropertyName = "name")]
+                [ JsonProperty(PropertyName = "name") ]
                 public string name = "";
             }
 
-            [JsonProperty(PropertyName = "dataObjectType")]
+            [ JsonProperty(PropertyName = "dataObjectType") ]
             public JsonDataObjectType dataObjectType = new JsonDataObjectType();
 
             public JsonValueTypeCast(string name)
@@ -7348,8 +7224,8 @@ namespace AasxCompatibilityModels
         public class Property : DataElement
         {
             // for JSON only
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "modelType")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "modelType") ]
             public new JsonModelTypeWrapper JsonModelType
             {
                 get { return new JsonModelTypeWrapper(GetElementName()); }
@@ -7357,12 +7233,11 @@ namespace AasxCompatibilityModels
 
             // members
 
-            [MetaModelName("Property.valueType")]
-            [TextSearchable]
-            [JsonIgnore]
+            [ MetaModelName("Property.valueType") ] [ TextSearchable ] [ JsonIgnore ]
             public string valueType = "";
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "valueType")]
+
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "valueType") ]
             public JsonValueTypeCast JsonValueType
             {
                 get { return new JsonValueTypeCast(this.valueType); }
@@ -7370,9 +7245,9 @@ namespace AasxCompatibilityModels
             }
 
 
-            [MetaModelName("Property.value")]
-            [TextSearchable]
+            [ MetaModelName("Property.value") ] [ TextSearchable ]
             public string value = "";
+
             public Reference valueId = null;
 
             // constructors
@@ -7385,7 +7260,7 @@ namespace AasxCompatibilityModels
                 if (!(src is Property p))
                     return;
                 this.valueType = p.valueType;
-                this.value = p.value;
+                this.value     = p.value;
                 if (p.valueId != null)
                     valueId = new Reference(p.valueId);
             }
@@ -7398,7 +7273,7 @@ namespace AasxCompatibilityModels
                     return;
 
                 this.valueType = src.valueType;
-                this.value = src.value;
+                this.value     = src.value;
                 if (src.valueId != null)
                     this.valueId = new Reference(src.valueId);
             }
@@ -7414,7 +7289,7 @@ namespace AasxCompatibilityModels
             public Property Set(string valueType = "", string value = "")
             {
                 this.valueType = valueType;
-                this.value = value;
+                this.value     = value;
                 return this;
             }
 
@@ -7434,7 +7309,7 @@ namespace AasxCompatibilityModels
             public override AasElementSelfDescription GetSelfDescription()
             {
                 return new AasElementSelfDescription("Property", "Prop",
-                    SubmodelElementWrapper.AdequateElementEnum.Property);
+                                                     SubmodelElementWrapper.AdequateElementEnum.Property);
             }
 
             public override string ValueAsText(string defaultLang = null)
@@ -7455,6 +7330,7 @@ namespace AasxCompatibilityModels
                     if (v == "true" || v == "1")
                         return true;
                 }
+
                 return false;
             }
 
@@ -7476,14 +7352,13 @@ namespace AasxCompatibilityModels
                 // no
                 return null;
             }
-
         }
 
         public class MultiLanguageProperty : DataElement
         {
             // for JSON only
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "modelType")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "modelType") ]
             public new JsonModelTypeWrapper JsonModelType
             {
                 get { return new JsonModelTypeWrapper(GetElementName()); }
@@ -7524,7 +7399,7 @@ namespace AasxCompatibilityModels
             public override AasElementSelfDescription GetSelfDescription()
             {
                 return new AasElementSelfDescription("MultiLanguageProperty", "MLP",
-                    SubmodelElementWrapper.AdequateElementEnum.MultiLanguageProperty);
+                                                     SubmodelElementWrapper.AdequateElementEnum.MultiLanguageProperty);
             }
 
             public MultiLanguageProperty Set(LangStringSet ls)
@@ -7545,7 +7420,7 @@ namespace AasxCompatibilityModels
                     return this;
                 if (this.value?.langString == null)
                     this.value = new LangStringSet();
-                this.value.langString[ls.lang] = ls.str;
+                this.value.langString[ ls.lang ] = ls.str;
                 return this;
             }
 
@@ -7563,14 +7438,13 @@ namespace AasxCompatibilityModels
             {
                 Set(defaultLang, text);
             }
-
         }
 
         public class Range : DataElement
         {
             // for JSON only
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "modelType")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "modelType") ]
             public new JsonModelTypeWrapper JsonModelType
             {
                 get { return new JsonModelTypeWrapper(GetElementName()); }
@@ -7578,28 +7452,21 @@ namespace AasxCompatibilityModels
 
             // members
 
-            [MetaModelName("Range.valueType")]
-            [TextSearchable]
-            [JsonIgnore]
-            [CountForHash]
+            [ MetaModelName("Range.valueType") ] [ TextSearchable ] [ JsonIgnore ] [ CountForHash ]
             public string valueType = "";
 
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "valueType")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "valueType") ]
             public JsonValueTypeCast JsonValueType
             {
                 get { return new JsonValueTypeCast(this.valueType); }
                 set { this.valueType = value?.dataObjectType?.name; }
             }
 
-            [MetaModelName("Range.min")]
-            [TextSearchable]
-            [CountForHash]
+            [ MetaModelName("Range.min") ] [ TextSearchable ] [ CountForHash ]
             public string min = "";
 
-            [MetaModelName("Range.max")]
-            [TextSearchable]
-            [CountForHash]
+            [ MetaModelName("Range.max") ] [ TextSearchable ] [ CountForHash ]
             public string max = "";
 
             // constructors
@@ -7613,8 +7480,8 @@ namespace AasxCompatibilityModels
                     return;
 
                 this.valueType = rng.valueType;
-                this.min = rng.min;
-                this.max = rng.max;
+                this.min       = rng.min;
+                this.max       = rng.max;
             }
 
 #if !DoNotUseAasxCompatibilityModels
@@ -7631,21 +7498,20 @@ namespace AasxCompatibilityModels
             public override AasElementSelfDescription GetSelfDescription()
             {
                 return new AasElementSelfDescription("Range", "Range",
-                    SubmodelElementWrapper.AdequateElementEnum.Range);
+                                                     SubmodelElementWrapper.AdequateElementEnum.Range);
             }
 
             public override string ValueAsText(string defaultLang = null)
             {
                 return "" + min + " .. " + max;
             }
-
         }
 
         public class Blob : DataElement
         {
             // for JSON only
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "modelType")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "modelType") ]
             public new JsonModelTypeWrapper JsonModelType
             {
                 get { return new JsonModelTypeWrapper(GetElementName()); }
@@ -7653,14 +7519,10 @@ namespace AasxCompatibilityModels
 
             // members
 
-            [MetaModelName("Blob.mimeType")]
-            [TextSearchable]
-            [CountForHash]
+            [ MetaModelName("Blob.mimeType") ] [ TextSearchable ] [ CountForHash ]
             public string mimeType = "";
 
-            [MetaModelName("Blob.value")]
-            [TextSearchable]
-            [CountForHash]
+            [ MetaModelName("Blob.value") ] [ TextSearchable ] [ CountForHash ]
             public string value = "";
 
             // constructors
@@ -7674,7 +7536,7 @@ namespace AasxCompatibilityModels
                     return;
 
                 this.mimeType = blb.mimeType;
-                this.value = blb.value;
+                this.value    = blb.value;
             }
 
 #if !DoNotUseAasxCompatibilityModels
@@ -7685,7 +7547,7 @@ namespace AasxCompatibilityModels
                     return;
 
                 this.mimeType = src.mimeType;
-                this.value = src.value;
+                this.value    = src.value;
             }
 #endif
 
@@ -7699,22 +7561,21 @@ namespace AasxCompatibilityModels
             public void Set(string mimeType = "", string value = "")
             {
                 this.mimeType = mimeType;
-                this.value = value;
+                this.value    = value;
             }
 
             public override AasElementSelfDescription GetSelfDescription()
             {
                 return new AasElementSelfDescription("Blob", "Blob",
-                    SubmodelElementWrapper.AdequateElementEnum.Blob);
+                                                     SubmodelElementWrapper.AdequateElementEnum.Blob);
             }
-
         }
 
         public class File : DataElement
         {
             // for JSON only
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "modelType")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "modelType") ]
             public new JsonModelTypeWrapper JsonModelType
             {
                 get { return new JsonModelTypeWrapper(GetElementName()); }
@@ -7722,14 +7583,10 @@ namespace AasxCompatibilityModels
 
             // members
 
-            [MetaModelName("File.mimeType")]
-            [TextSearchable]
-            [CountForHash]
+            [ MetaModelName("File.mimeType") ] [ TextSearchable ] [ CountForHash ]
             public string mimeType = "";
 
-            [MetaModelName("File.value")]
-            [TextSearchable]
-            [CountForHash]
+            [ MetaModelName("File.value") ] [ TextSearchable ] [ CountForHash ]
             public string value = "";
 
             // constructors
@@ -7743,7 +7600,7 @@ namespace AasxCompatibilityModels
                     return;
 
                 this.mimeType = fil.mimeType;
-                this.value = fil.value;
+                this.value    = fil.value;
             }
 
 #if !DoNotUseAasxCompatibilityModels
@@ -7754,7 +7611,7 @@ namespace AasxCompatibilityModels
                     return;
 
                 this.mimeType = src.mimeType;
-                this.value = src.value;
+                this.value    = src.value;
             }
 #endif
 
@@ -7768,30 +7625,23 @@ namespace AasxCompatibilityModels
             public void Set(string mimeType = "", string value = "")
             {
                 this.mimeType = mimeType;
-                this.value = value;
+                this.value    = value;
             }
 
             public override AasElementSelfDescription GetSelfDescription()
             {
                 return new AasElementSelfDescription("File", "File",
-                    SubmodelElementWrapper.AdequateElementEnum.File);
+                                                     SubmodelElementWrapper.AdequateElementEnum.File);
             }
 
             public static string[] GetPopularMimeTypes()
             {
                 return
-                    new[] {
-                    System.Net.Mime.MediaTypeNames.Text.Plain,
-                    System.Net.Mime.MediaTypeNames.Text.Xml,
-                    System.Net.Mime.MediaTypeNames.Text.Html,
-                    "application/json",
-                    "application/rdf+xml",
-                    System.Net.Mime.MediaTypeNames.Application.Pdf,
-                    System.Net.Mime.MediaTypeNames.Image.Jpeg,
-                    "image/png",
-                    System.Net.Mime.MediaTypeNames.Image.Gif,
-                    "application/iges",
-                    "application/step"
+                    new[]
+                    {
+                        System.Net.Mime.MediaTypeNames.Text.Plain, System.Net.Mime.MediaTypeNames.Text.Xml, System.Net.Mime.MediaTypeNames.Text.Html, "application/json",
+                        "application/rdf+xml", System.Net.Mime.MediaTypeNames.Application.Pdf, System.Net.Mime.MediaTypeNames.Image.Jpeg, "image/png",
+                        System.Net.Mime.MediaTypeNames.Image.Gif, "application/iges", "application/step"
                     };
             }
 
@@ -7804,8 +7654,8 @@ namespace AasxCompatibilityModels
         public class ReferenceElement : DataElement
         {
             // for JSON only
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "modelType")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "modelType") ]
             public new JsonModelTypeWrapper JsonModelType
             {
                 get { return new JsonModelTypeWrapper(GetElementName()); }
@@ -7857,16 +7707,15 @@ namespace AasxCompatibilityModels
             public override AasElementSelfDescription GetSelfDescription()
             {
                 return new AasElementSelfDescription("ReferenceElement", "Ref",
-                    SubmodelElementWrapper.AdequateElementEnum.ReferenceElement);
+                                                     SubmodelElementWrapper.AdequateElementEnum.ReferenceElement);
             }
-
         }
 
         public class RelationshipElement : DataElement
         {
             // for JSON only
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "modelType")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "modelType") ]
             public new JsonModelTypeWrapper JsonModelType
             {
                 get { return new JsonModelTypeWrapper(GetElementName()); }
@@ -7913,29 +7762,29 @@ namespace AasxCompatibilityModels
             {
                 var x = new RelationshipElement();
                 x.CreateNewLogic(idShort, category, semanticIdKey);
-                x.first = first;
+                x.first  = first;
                 x.second = second;
                 return (x);
             }
 
             public void Set(Reference first = null, Reference second = null)
             {
-                this.first = first;
+                this.first  = first;
                 this.second = second;
             }
 
             public override AasElementSelfDescription GetSelfDescription()
             {
                 return new AasElementSelfDescription("RelationshipElement", "Rel",
-                    SubmodelElementWrapper.AdequateElementEnum.RelationshipElement);
+                                                     SubmodelElementWrapper.AdequateElementEnum.RelationshipElement);
             }
         }
 
         public class AnnotatedRelationshipElement : RelationshipElement, IManageSubmodelElements, IEnumerateChildren
         {
             // for JSON only
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "modelType")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "modelType") ]
             public new JsonModelTypeWrapper JsonModelType
             {
                 get { return new JsonModelTypeWrapper(GetElementName()); }
@@ -7945,14 +7794,14 @@ namespace AasxCompatibilityModels
 
             // from this very class
 
-            [JsonIgnore]
-            [SkipForHash] // do NOT count children!
-            [XmlArray("annotations")]
-            [XmlArrayItem("dataElement")]
+            [ JsonIgnore ]
+            [ SkipForHash ] // do NOT count children!
+            [ XmlArray("annotations") ]
+            [ XmlArrayItem("dataElement") ]
             public DataElementWrapperCollection annotations = null;
 
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "annotations")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "annotations") ]
             public DataElement[] JsonAnotations
             {
                 get
@@ -7971,7 +7820,7 @@ namespace AasxCompatibilityModels
                         this.annotations = new DataElementWrapperCollection();
                         foreach (var x in value)
                         {
-                            var smew = new SubmodelElementWrapper() { submodelElement = x };
+                            var smew = new SubmodelElementWrapper() {submodelElement = x};
                             this.annotations.Add(smew);
                         }
                     }
@@ -8001,7 +7850,7 @@ namespace AasxCompatibilityModels
             {
                 var x = new AnnotatedRelationshipElement();
                 x.CreateNewLogic(idShort, category, semanticIdKey);
-                x.first = first;
+                x.first  = first;
                 x.second = second;
                 return (x);
             }
@@ -8038,7 +7887,7 @@ namespace AasxCompatibilityModels
                 if (annotations == null)
                     annotations = new DataElementWrapperCollection();
                 var sew = new SubmodelElementWrapper();
-                sme.parent = this; // track parent here!
+                sme.parent          = this; // track parent here!
                 sew.submodelElement = sme;
                 annotations.Add(sew);
             }
@@ -8064,17 +7913,15 @@ namespace AasxCompatibilityModels
 
             public new void Set(Reference first = null, Reference second = null)
             {
-                this.first = first;
+                this.first  = first;
                 this.second = second;
             }
 
             public override AasElementSelfDescription GetSelfDescription()
             {
                 return new AasElementSelfDescription("AnnotatedRelationshipElement", "RelA",
-                    SubmodelElementWrapper.AdequateElementEnum.AnnotatedRelationshipElement);
+                                                     SubmodelElementWrapper.AdequateElementEnum.AnnotatedRelationshipElement);
             }
-
-
         }
 
         public class Capability : SubmodelElement
@@ -8083,12 +7930,13 @@ namespace AasxCompatibilityModels
 
             public Capability(SubmodelElement src)
                 : base(src)
-            { }
+            {
+            }
 
             public override AasElementSelfDescription GetSelfDescription()
             {
                 return new AasElementSelfDescription("Capability", "Cap",
-                    SubmodelElementWrapper.AdequateElementEnum.Capability);
+                                                     SubmodelElementWrapper.AdequateElementEnum.Capability);
             }
         }
 
@@ -8096,28 +7944,30 @@ namespace AasxCompatibilityModels
         public class SubmodelElementCollection : SubmodelElement, IManageSubmodelElements, IEnumerateChildren
         {
             // for JSON only
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "modelType")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "modelType") ]
             public new JsonModelTypeWrapper JsonModelType
             {
                 get { return new JsonModelTypeWrapper(GetElementName()); }
             }
 
             // values == SMEs
-            [XmlIgnore]
-            [JsonIgnore]
-            [SkipForHash] // do NOT count children!
+            [ XmlIgnore ] [ JsonIgnore ] [ SkipForHash ] // do NOT count children!
             private SubmodelElementWrapperCollection _value = null;
 
-            [JsonIgnore]
+            [ JsonIgnore ]
             public SubmodelElementWrapperCollection value
             {
                 get { return _value; }
-                set { _value = value; _value.Parent = this; }
+                set
+                {
+                    _value        = value;
+                    _value.Parent = this;
+                }
             }
 
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "value")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "value") ]
             public SubmodelElement[] JsonValue
             {
                 get
@@ -8135,7 +7985,7 @@ namespace AasxCompatibilityModels
                         this.value = new SubmodelElementWrapperCollection();
                         foreach (var x in value)
                         {
-                            var smew = new SubmodelElementWrapper() { submodelElement = x };
+                            var smew = new SubmodelElementWrapper() {submodelElement = x};
                             this.value.Add(smew);
                         }
                     }
@@ -8182,9 +8032,9 @@ namespace AasxCompatibilityModels
                 if (!(src is SubmodelElementCollection smc))
                     return;
 
-                this.ordered = smc.ordered;
+                this.ordered         = smc.ordered;
                 this.allowDuplicates = smc.allowDuplicates;
-                this.value = new SubmodelElementWrapperCollection();
+                this.value           = new SubmodelElementWrapperCollection();
                 if (!shallowCopy)
                     foreach (var smw in smc.value)
                         value.Add(new SubmodelElementWrapper(smw.submodelElement));
@@ -8198,9 +8048,9 @@ namespace AasxCompatibilityModels
                 if (src == null)
                     return;
 
-                this.ordered = src.ordered;
+                this.ordered         = src.ordered;
                 this.allowDuplicates = src.allowDuplicates;
-                this.value = new SubmodelElementWrapperCollection();
+                this.value           = new SubmodelElementWrapperCollection();
                 if (!shallowCopy)
                     foreach (var smw in src.value)
                         value.Add(new SubmodelElementWrapper(smw.submodelElement));
@@ -8221,7 +8071,7 @@ namespace AasxCompatibilityModels
                 if (value == null)
                     value = new SubmodelElementWrapperCollection();
                 var sew = new SubmodelElementWrapper();
-                sme.parent = this; // track parent here!
+                sme.parent          = this; // track parent here!
                 sew.submodelElement = sme;
                 value.Add(sew);
             }
@@ -8231,7 +8081,7 @@ namespace AasxCompatibilityModels
                 if (value == null)
                     value = new SubmodelElementWrapperCollection();
                 var sew = new SubmodelElementWrapper();
-                sme.parent = this; // track parent here!
+                sme.parent          = this; // track parent here!
                 sew.submodelElement = sme;
                 if (index < 0 || index >= value.Count)
                     return;
@@ -8249,7 +8099,7 @@ namespace AasxCompatibilityModels
             public void Set(bool allowDuplicates = false, bool ordered = false)
             {
                 this.allowDuplicates = allowDuplicates;
-                this.ordered = ordered;
+                this.ordered         = ordered;
             }
 
             public SubmodelElementWrapper FindFirstIdShort(string idShort)
@@ -8258,7 +8108,7 @@ namespace AasxCompatibilityModels
             }
 
             public T CreateSMEForCD<T>(ConceptDescription cd, string category = null, string idShort = null,
-                string idxTemplate = null, int maxNum = 999, bool addSme = false) where T : SubmodelElement, new()
+                                       string idxTemplate = null, int maxNum = 999, bool addSme = false) where T : SubmodelElement, new()
             {
                 if (this.value == null)
                     this.value = new SubmodelElementWrapperCollection();
@@ -8266,7 +8116,7 @@ namespace AasxCompatibilityModels
             }
 
             public T CreateSMEForIdShort<T>(string idShort, string category = null,
-                string idxTemplate = null, int maxNum = 999, bool addSme = false) where T : SubmodelElement, new()
+                                            string idxTemplate = null, int maxNum = 999, bool addSme = false) where T : SubmodelElement, new()
             {
                 if (this.value == null)
                     this.value = new SubmodelElementWrapperCollection();
@@ -8277,7 +8127,7 @@ namespace AasxCompatibilityModels
             public override AasElementSelfDescription GetSelfDescription()
             {
                 return new AasElementSelfDescription("SubmodelElementCollection", "SMC",
-                    SubmodelElementWrapper.AdequateElementEnum.SubmodelElementCollection);
+                                                     SubmodelElementWrapper.AdequateElementEnum.SubmodelElementCollection);
             }
 
             // Recursing
@@ -8295,12 +8145,12 @@ namespace AasxCompatibilityModels
                 object state, Func<object, ListOfReferable, SubmodelElement, bool> lambda)
             {
                 this.value?.RecurseOnReferables(state, null, (o, par, rf) =>
-                {
-                    if (rf is SubmodelElement sme)
-                        return lambda(o, par, sme);
-                    else
-                        return true;
-                });
+                                                             {
+                                                                 if (rf is SubmodelElement sme)
+                                                                     return lambda(o, par, sme);
+                                                                 else
+                                                                     return true;
+                                                             });
             }
 
             /// <summary>
@@ -8323,6 +8173,7 @@ namespace AasxCompatibilityModels
                     lambda(state, null, this);
                     parents.Add(this);
                 }
+
                 this.value?.RecurseOnReferables(state, parents, lambda);
             }
         }
@@ -8335,8 +8186,8 @@ namespace AasxCompatibilityModels
             // only the SME attributes of "value" are counting
 
             // for JSON only
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "modelType")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "modelType") ]
             public JsonModelTypeWrapper JsonModelType { get { return new JsonModelTypeWrapper(GetElementName()); } }
 
             // members
@@ -8381,40 +8232,34 @@ namespace AasxCompatibilityModels
         public class Operation : SubmodelElement, IEnumerateChildren
         {
             // for JSON only
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "modelType")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "modelType") ]
             public new JsonModelTypeWrapper JsonModelType
             {
                 get { return new JsonModelTypeWrapper(GetElementName()); }
             }
 
             // members
-            [JsonIgnore]
-            [XmlElement(ElementName = "inputVariable")]
-            [SkipForHash] // do NOT count children!
+            [ JsonIgnore ] [ XmlElement(ElementName = "inputVariable") ] [ SkipForHash ] // do NOT count children!
             public List<OperationVariable> inputVariable = new List<OperationVariable>();
 
-            [JsonIgnore]
-            [XmlElement(ElementName = "outputVariable")]
-            [SkipForHash] // do NOT count children!
+            [ JsonIgnore ] [ XmlElement(ElementName = "outputVariable") ] [ SkipForHash ] // do NOT count children!
             public List<OperationVariable> outputVariable = new List<OperationVariable>();
 
-            [JsonIgnore]
-            [XmlElement(ElementName = "inoutputVariable")]
-            [SkipForHash] // do NOT count children!
+            [ JsonIgnore ] [ XmlElement(ElementName = "inoutputVariable") ] [ SkipForHash ] // do NOT count children!
             public List<OperationVariable> inoutputVariable = new List<OperationVariable>();
 
-            [XmlIgnore]
+            [ XmlIgnore ]
             // MICHA 190504: enabled JSON operation variables!
-            [JsonProperty(PropertyName = "inputVariable")]
+            [ JsonProperty(PropertyName = "inputVariable") ]
             public OperationVariable[] JsonInputVariable
             {
                 get { return inputVariable?.ToArray(); }
                 set { inputVariable = (value != null) ? new List<OperationVariable>(value) : null; }
             }
 
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "outputVariable")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "outputVariable") ]
             // MICHA 190504: enabled JSON operation variables!
             public OperationVariable[] JsonOutputVariable
             {
@@ -8422,8 +8267,8 @@ namespace AasxCompatibilityModels
                 set { outputVariable = (value != null) ? new List<OperationVariable>(value) : null; }
             }
 
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "inoutputVariable")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "inoutputVariable") ]
             // MICHA 190504: enabled JSON operation variables!
             public OperationVariable[] JsonInOutputVariable
             {
@@ -8437,8 +8282,7 @@ namespace AasxCompatibilityModels
                 {
                     if (dir == OperationVariable.Direction.In)
                         return inputVariable;
-                    else
-                    if (dir == OperationVariable.Direction.Out)
+                    else if (dir == OperationVariable.Direction.Out)
                         return outputVariable;
                     else
                         return inoutputVariable;
@@ -8447,8 +8291,7 @@ namespace AasxCompatibilityModels
                 {
                     if (dir == OperationVariable.Direction.In)
                         inputVariable = value;
-                    else
-                    if (dir == OperationVariable.Direction.Out)
+                    else if (dir == OperationVariable.Direction.Out)
                         outputVariable = value;
                     else
                         inoutputVariable = value;
@@ -8461,8 +8304,7 @@ namespace AasxCompatibilityModels
                 {
                     if (dir == 0)
                         return inputVariable;
-                    else
-                    if (dir == 1)
+                    else if (dir == 1)
                         return outputVariable;
                     else
                         return inoutputVariable;
@@ -8471,8 +8313,7 @@ namespace AasxCompatibilityModels
                 {
                     if (dir == 0)
                         inputVariable = value;
-                    else
-                    if (dir == 1)
+                    else if (dir == 1)
                         outputVariable = value;
                     else
                         inoutputVariable = value;
@@ -8517,13 +8358,13 @@ namespace AasxCompatibilityModels
                     return null;
 
                 // search
-                OperationVariable.Direction? dir = null;
-                OperationVariable opvar = null;
+                OperationVariable.Direction? dir   = null;
+                OperationVariable            opvar = null;
                 if (this.inputVariable != null)
                     foreach (var ov in this.inputVariable)
                         if (ov?.value?.submodelElement == child)
                         {
-                            dir = OperationVariable.Direction.In;
+                            dir   = OperationVariable.Direction.In;
                             opvar = ov;
                         }
 
@@ -8531,7 +8372,7 @@ namespace AasxCompatibilityModels
                     foreach (var ov in this.outputVariable)
                         if (ov?.value?.submodelElement == child)
                         {
-                            dir = OperationVariable.Direction.Out;
+                            dir   = OperationVariable.Direction.Out;
                             opvar = ov;
                         }
 
@@ -8539,18 +8380,14 @@ namespace AasxCompatibilityModels
                     foreach (var ov in this.inoutputVariable)
                         if (ov?.value?.submodelElement == child)
                         {
-                            dir = OperationVariable.Direction.InOut;
+                            dir   = OperationVariable.Direction.InOut;
                             opvar = ov;
                         }
 
                 // found
                 if (!dir.HasValue)
                     return null;
-                return new EnumerationPlacmentOperationVariable()
-                {
-                    Direction = dir.Value,
-                    OperationVariable = opvar
-                };
+                return new EnumerationPlacmentOperationVariable() {Direction = dir.Value, OperationVariable = opvar};
             }
 
             public object AddChild(SubmodelElementWrapper smw, EnumerationPlacmentBase placement = null)
@@ -8602,12 +8439,12 @@ namespace AasxCompatibilityModels
                     return;
 
                 for (int i = 0; i < 2; i++)
-                    if (op[i] != null)
+                    if (op[ i ] != null)
                     {
-                        if (this[i] == null)
-                            this[i] = new List<OperationVariable>();
-                        foreach (var ov in op[i])
-                            this[i].Add(new OperationVariable(ov));
+                        if (this[ i ] == null)
+                            this[ i ] = new List<OperationVariable>();
+                        foreach (var ov in op[ i ])
+                            this[ i ].Add(new OperationVariable(ov));
                     }
             }
 
@@ -8616,12 +8453,12 @@ namespace AasxCompatibilityModels
                 : base(src)
             {
                 for (int i = 0; i < 2; i++)
-                    if (src[i] != null)
+                    if (src[ i ] != null)
                     {
-                        if (this[i] == null)
-                            this[i] = new List<OperationVariable>();
-                        foreach (var ov in src[i])
-                            this[i].Add(new OperationVariable(ov));
+                        if (this[ i ] == null)
+                            this[ i ] = new List<OperationVariable>();
+                        foreach (var ov in src[ i ])
+                            this[ i ].Add(new OperationVariable(ov));
                     }
             }
 #endif
@@ -8629,39 +8466,42 @@ namespace AasxCompatibilityModels
             public override AasElementSelfDescription GetSelfDescription()
             {
                 return new AasElementSelfDescription("Operation", "Opr",
-                    SubmodelElementWrapper.AdequateElementEnum.Operation);
+                                                     SubmodelElementWrapper.AdequateElementEnum.Operation);
             }
         }
 
         public class Entity : SubmodelElement, IManageSubmodelElements, IEnumerateChildren
         {
             public enum EntityTypeEnum { CoManagedEntity = 0, SelfManagedEntity = 1, Undef = 3 }
-            public static string[] EntityTypeNames = new string[] { "CoManagedEntity", "SelfManagedEntity" };
+
+            public static string[] EntityTypeNames = new string[] {"CoManagedEntity", "SelfManagedEntity"};
 
             // for JSON only
 
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "modelType")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "modelType") ]
             public new JsonModelTypeWrapper JsonModelType
             {
                 get { return new JsonModelTypeWrapper(GetElementName()); }
             }
 
             // from this very class
-            [XmlIgnore]
-            [JsonIgnore]
-            [SkipForHash] // do NOT count children!
+            [ XmlIgnore ] [ JsonIgnore ] [ SkipForHash ] // do NOT count children!
             private SubmodelElementWrapperCollection _statements = null;
 
-            [JsonIgnore]
+            [ JsonIgnore ]
             public SubmodelElementWrapperCollection statements
             {
                 get { return _statements; }
-                set { _statements = value; _statements.Parent = this; }
+                set
+                {
+                    _statements        = value;
+                    _statements.Parent = this;
+                }
             }
 
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "statements")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "statements") ]
             public SubmodelElement[] JsonStatements
             {
                 get
@@ -8679,7 +8519,7 @@ namespace AasxCompatibilityModels
                         this.statements = new SubmodelElementWrapperCollection();
                         foreach (var x in value)
                         {
-                            var smew = new SubmodelElementWrapper() { submodelElement = x };
+                            var smew = new SubmodelElementWrapper() {submodelElement = x};
                             this.statements.Add(smew);
                         }
                     }
@@ -8688,10 +8528,9 @@ namespace AasxCompatibilityModels
 
             // further members
 
-            [CountForHash]
-            public string entityType = "";
+            [ CountForHash ] public string entityType = "";
 
-            [JsonProperty(PropertyName = "asset")]
+            [ JsonProperty(PropertyName = "asset") ]
             public AssetRef assetRef = null;
 
             // enumerates its children
@@ -8736,18 +8575,19 @@ namespace AasxCompatibilityModels
                     foreach (var smw in ent.statements)
                         this.statements.Add(new SubmodelElementWrapper(smw.submodelElement));
                 }
+
                 this.entityType = ent.entityType;
                 if (ent.assetRef != null)
                     this.assetRef = new AssetRef(ent.assetRef);
             }
 
             public Entity(EntityTypeEnum entityType, string idShort = null, AssetRef assetRef = null,
-                string category = null, Key semanticIdKey = null)
+                          string category = null, Key semanticIdKey = null)
             {
                 CreateNewLogic(idShort, null, semanticIdKey);
 
-                this.entityType = EntityTypeNames[(int)entityType];
-                this.assetRef = assetRef;
+                this.entityType = EntityTypeNames[ (int) entityType ];
+                this.assetRef   = assetRef;
             }
 
 #if !DoNotUseAasxCompatibilityModels
@@ -8767,7 +8607,7 @@ namespace AasxCompatibilityModels
                 if (statements == null)
                     statements = new SubmodelElementWrapperCollection();
                 var sew = new SubmodelElementWrapper();
-                sme.parent = this; // track parent here!
+                sme.parent          = this; // track parent here!
                 sew.submodelElement = sme;
                 statements.Add(sew);
             }
@@ -8777,7 +8617,7 @@ namespace AasxCompatibilityModels
                 if (statements == null)
                     statements = new SubmodelElementWrapperCollection();
                 var sew = new SubmodelElementWrapper();
-                sme.parent = this; // track parent here!
+                sme.parent          = this; // track parent here!
                 sew.submodelElement = sme;
                 if (index < 0 || index >= statements.Count)
                     return;
@@ -8804,7 +8644,7 @@ namespace AasxCompatibilityModels
             }
 
             public T CreateSMEForCD<T>(ConceptDescription cd, string category = null, string idShort = null,
-                string idxTemplate = null, int maxNum = 999, bool addSme = false) where T : SubmodelElement, new()
+                                       string idxTemplate = null, int maxNum = 999, bool addSme = false) where T : SubmodelElement, new()
             {
                 if (this.statements == null)
                     this.statements = new SubmodelElementWrapperCollection();
@@ -8812,7 +8652,7 @@ namespace AasxCompatibilityModels
             }
 
             public T CreateSMEForIdShort<T>(string idShort, string category = null,
-                string idxTemplate = null, int maxNum = 999, bool addSme = false) where T : SubmodelElement, new()
+                                            string idxTemplate = null, int maxNum = 999, bool addSme = false) where T : SubmodelElement, new()
             {
                 if (this.statements == null)
                     this.statements = new SubmodelElementWrapperCollection();
@@ -8824,9 +8664,9 @@ namespace AasxCompatibilityModels
             public EntityTypeEnum GetEntityType()
             {
                 EntityTypeEnum res = EntityTypeEnum.Undef;
-                if (this.entityType != null && this.entityType.Trim().ToLower() == EntityTypeNames[0].ToLower())
+                if (this.entityType != null && this.entityType.Trim().ToLower() == EntityTypeNames[ 0 ].ToLower())
                     res = EntityTypeEnum.CoManagedEntity;
-                if (this.entityType != null && this.entityType.Trim().ToLower() == EntityTypeNames[1].ToLower())
+                if (this.entityType != null && this.entityType.Trim().ToLower() == EntityTypeNames[ 1 ].ToLower())
                     res = EntityTypeEnum.SelfManagedEntity;
                 return res;
             }
@@ -8836,15 +8676,15 @@ namespace AasxCompatibilityModels
             public override AasElementSelfDescription GetSelfDescription()
             {
                 return new AasElementSelfDescription("Entity", "Ent",
-                    SubmodelElementWrapper.AdequateElementEnum.Entity);
+                                                     SubmodelElementWrapper.AdequateElementEnum.Entity);
             }
         }
 
         public class BasicEvent : SubmodelElement
         {
             // for JSON only
-            [XmlIgnore]
-            [JsonProperty(PropertyName = "modelType")]
+            [ XmlIgnore ]
+            [ JsonProperty(PropertyName = "modelType") ]
             public new JsonModelTypeWrapper JsonModelType
             {
                 get { return new JsonModelTypeWrapper(GetElementName()); }
@@ -8881,7 +8721,7 @@ namespace AasxCompatibilityModels
             public override AasElementSelfDescription GetSelfDescription()
             {
                 return new AasElementSelfDescription("BasicEvent", "Evt",
-                    SubmodelElementWrapper.AdequateElementEnum.BasicEvent);
+                                                     SubmodelElementWrapper.AdequateElementEnum.BasicEvent);
             }
         }
 
@@ -8892,4 +8732,3 @@ namespace AasxCompatibilityModels
 
     #endregion
 }
-

@@ -13,7 +13,7 @@ namespace AasxServerDB
                 // Deletes automatically from DB
                 db.AASXSets.Where(a => a.AASX == env.Filename).ExecuteDelete();
 
-                // Load Data
+                // Load Everything back in
                 var aasxDB = new AASXSet
                 {
                     AASX = env.Filename

@@ -143,8 +143,7 @@ namespace ProductChange
                     client.Inbox.Open(FolderAccess.ReadWrite);
 
                     var uids = client.Inbox.Search(SearchQuery.All);
-                    int importedCount = 0;
-                    bool error = false;
+                    var importedCount = 0;
 
                     foreach (var uid in uids)
                     {
@@ -368,7 +367,6 @@ namespace ProductChange
                                                                     }
                                                                     catch
                                                                     {
-                                                                        error = true;
                                                                         Console.WriteLine("Can not parse XML of: " + fName);
                                                                     }
                                                                 }
@@ -397,7 +395,6 @@ namespace ProductChange
                     catch
                     {
                         Console.WriteLine("Can not write: " + AasxServer.Program.envFileName[0]);
-                        error = true;
                     }
                     // if (!error)
                     // client.Inbox.Expunge();

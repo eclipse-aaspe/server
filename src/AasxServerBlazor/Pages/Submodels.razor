@@ -2,45 +2,44 @@
 
 @using AasCore.Aas3_0
 @using AasxServerBlazor.Data
-@using AdminShellNS;
 @inject AASService SubmodelService
 
-<h1>Liste Submodels</h1>
+<h1>List of Submodels</h1>
 
 <p>This component demonstrates fetching data from a service.</p>
 
 @if (SubmodelService.GetSubmodels() == null)
 {
-    <p><em>Loading...</em></p>
+    <p>
+        <em>Loading...</em>
+    </p>
 }
 else
 {
     <table class="table">
         <thead>
-            <tr>
-                <th>Submodels</th>
-            </tr>
+        <tr>
+            <th>Submodels</th>
+        </tr>
         </thead>
         <tbody>
-            @foreach (var sm in SubmodelService.GetSubmodels())
-            {
-                if (sm != null && sm.IdShort != null)
-                {
-                    <tr>
-                        <td>@sm.IdShort</td>
-                    </tr>
-                }
-            }
+        @foreach (var sm in SubmodelService.GetSubmodels().Where(sm => sm is {IdShort: not null}))
+        {
+            <tr>
+                <td>@sm.IdShort</td>
+            </tr>
+        }
 
         </tbody>
     </table>
 }
 
 @code {
-    List<ISubmodel> submodels;
+    List<ISubmodel> _submodels;
 
     protected override void OnInitialized()
     {
-        submodels = SubmodelService.GetSubmodels();
+        _submodels = SubmodelService.GetSubmodels();
     }
+
 }

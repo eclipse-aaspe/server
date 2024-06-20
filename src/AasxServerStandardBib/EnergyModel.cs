@@ -692,7 +692,6 @@ namespace AasxDemonstration
 
                     _trackSegment = new TrackInstanceTimeSeriesSegment();
                     var todel = new List<SubmodelElementCollection>();
-                    var first = true;
                     foreach (var smcsegt in smcts.Value.FindAllSemanticIdAs<SubmodelElementCollection>(PrefTimeSeries10.CD_TimeSeriesSegment.Value))
                     {
                         if (smcsegt == null)
@@ -702,8 +701,6 @@ namespace AasxDemonstration
                         // TODO (jtikekar, 2023-09-04): check with Andreas
                         //if ((smcsegt.Kind.Value == ModellingKind.Template) && first)
                         {
-                            first = false;
-
                             // find all elements with required qualifier FOR A SERIES ELEMENT
                             smcsegt.Value.RecurseOnSubmodelElements(null, null, (o, parents, sme) =>
                             {

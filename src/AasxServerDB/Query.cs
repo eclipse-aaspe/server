@@ -263,7 +263,7 @@ namespace AasxServerDB
                     if (submodelDB != null && (smSemanticId.IsNullOrEmpty() || submodelDB.SemanticId == smSemanticId))
                     {
                         r.value = equal;
-                        r.url = "";
+                        r.url = string.Empty;
                         r.smId = submodelDB.Identifier;
                         string path = l.IdShort;
                         int? pId = l.ParentSMEId;

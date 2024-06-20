@@ -1,13 +1,15 @@
 # It is expected that this docker is executed in the context of repository root.
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-env
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
 WORKDIR /repo/src
 
 # Copy the source code and build
 COPY ./src/ /repo/src/
 COPY ./LICENSE.TXT /repo/LICENSE.txt
+
+RUN dotnet restore AasxServerAspNetCore
 RUN dotnet publish -c Release -o /out/AasxServerAspNetCore AasxServerAspNetCore
 
-FROM mcr.microsoft.com/dotnet/aspnet:6.0
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 as base
 EXPOSE 5001
 COPY --from=build-env /out/AasxServerAspNetCore/ /AasxServerAspNetCore/
 COPY ./content-for-demo/ /AasxServerAspNetCore/

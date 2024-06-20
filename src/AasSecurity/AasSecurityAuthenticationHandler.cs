@@ -18,7 +18,7 @@ namespace AasSecurity
         }
 
 
-        protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
+        protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
             _logger.LogDebug("Authenticating the request.");
             if (!GlobalSecurityVariables.WithAuthentication)
@@ -27,20 +27,20 @@ namespace AasSecurity
                 var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(Enumerable.Empty<Claim>(), Scheme.Name));
                 var authenticationTicket = new AuthenticationTicket(claimsPrincipal, Scheme.Name);
 
-                return AuthenticateResult.Success(authenticationTicket);
+                return Task.FromResult(AuthenticateResult.Success(authenticationTicket));
             }
 
             var httpMethod = Request.Method;
             var httpRoute = Request.Path.Value;
             var context = Request.HttpContext;
-            var ticket = _securityService.AuthenticateRequest(context, httpRoute, httpMethod, Scheme.Name);
+            var ticket = _securityService.AuthenticateRequest(context, httpRoute ?? string.Empty, httpMethod, Scheme.Name);
             if (ticket == null)
             {
-                return AuthenticateResult.Fail(new Exception($"Request cannot be authenticated."));
+                return Task.FromResult(AuthenticateResult.Fail(new Exception($"Request cannot be authenticated.")));
             }
 
             _logger.LogInformation($"Request is successfully authenticated.");
-            return AuthenticateResult.Success(ticket);
+            return Task.FromResult(AuthenticateResult.Success(ticket));
 
         }
 
