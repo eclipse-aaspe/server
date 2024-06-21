@@ -28,7 +28,7 @@ namespace IO.Swagger.Models
 
         [ StringLength(32, MinimumLength = 1) ]
         [ DataMember(Name = "code") ]
-        public string Code { get; set; }
+        public string? Code { get; set; }
 
         /// <summary>
         /// Gets or Sets CorrelationId
@@ -36,7 +36,7 @@ namespace IO.Swagger.Models
 
         [ StringLength(128, MinimumLength = 1) ]
         [ DataMember(Name = "correlationId") ]
-        public string CorrelationId { get; set; }
+        public string? CorrelationId { get; set; }
 
         /// <summary>
         /// Gets or Sets MessageType
@@ -82,15 +82,15 @@ namespace IO.Swagger.Models
         /// </summary>
 
         [ DataMember(Name = "text") ]
-        public string Text { get; set; }
+        public string? Text { get; set; }
 
         /// <summary>
         /// Gets or Sets Timestamp
         /// </summary>
         [ RegularExpression(
-            "/^-?(([1-9][0-9][0-9][0-9]+)|(0[0-9][0-9][0-9]))-((0[1-9])|(1[0-2]))-((0[1-9])|([12][0-9])|(3[01]))T(((([01][0-9])|(2[0-3])):[0-5][0-9]:([0-5][0-9])(\\.[0-9]+)?)|24:00:00(\\.0+)?)(Z|\\+00:00|-00:00)$/") ]
+            @"/^-?(([1-9][0-9][0-9][0-9]+)|(0[0-9][0-9][0-9]))-((0[1-9])|(1[0-2]))-((0[1-9])|([12][0-9])|(3[01]))T(((([01][0-9])|(2[0-3])):[0-5][0-9]:([0-5][0-9])(\.[0-9]+)?)|24:00:00(\.0+)?)(Z|\+00:00|-00:00)$/") ]
         [ DataMember(Name = "timestamp") ]
-        public string Timestamp { get; set; }
+        public string? Timestamp { get; set; }
 
         /// <summary>
         /// Returns the string presentation of the object

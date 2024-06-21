@@ -28,7 +28,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
 
         [ DataMember(Name = "messages") ]
-        public List<Message> Messages { get; set; }
+        public List<Message>? Messages { get; set; }
 
         /// <summary>
         /// Returns the string presentation of the object

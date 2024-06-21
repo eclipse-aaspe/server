@@ -7,8 +7,8 @@ namespace AasxServerDB.Entities
         public int Id { get; set; }
 
         [ForeignKey("AASXSet")]
-        public int AASXId { get; set; }
-        public virtual AASXSet AASXSet { get; set; }
+        public int AASXId { get;               set; }
+        public virtual AASXSet? AASXSet { get; set; }
 
         [ForeignKey("AASSet")]
         public int? AASId { get; set; }
