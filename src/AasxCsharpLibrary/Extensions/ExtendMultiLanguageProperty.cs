@@ -16,7 +16,7 @@ namespace Extensions
 
         #endregion
 
-        public static string ValueAsText(this MultiLanguageProperty multiLanguageProperty, string defaultLang = null)
+        public static string? ValueAsText(this MultiLanguageProperty multiLanguageProperty, string defaultLang = null)
         {
             //TODO: need to check/test again
             //return "" + multiLanguageProperty.Value?.LangStrings.FirstOrDefault().Text;

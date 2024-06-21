@@ -16,7 +16,7 @@ namespace AasxServerDB.Entities
 
         public string? SemanticId { get; set; }
         public string? Identifier { get; set; }
-        public string? IdShort { get; set; }
+        public string IdShort { get; set; }
 
         public virtual ICollection<SMESet> SMESets { get; } = new List<SMESet>();
     }

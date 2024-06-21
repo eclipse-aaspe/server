@@ -2,7 +2,7 @@
 {
     public static class ExtendFile
     {
-        public static string ValueAsText(this File file)
+        public static string? ValueAsText(this File file)
         {
             return "" + file.Value;
         }

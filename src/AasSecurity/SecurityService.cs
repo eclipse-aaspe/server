@@ -69,11 +69,11 @@ namespace AasSecurity
             return new AuthenticationTicket(principal, authenticationSchemeName);
         }
 
-        private string? GetAccessRole(NameValueCollection queries, NameValueCollection headers, out string policy, out string policyRequestedResource)
+        private string GetAccessRole(NameValueCollection queries, NameValueCollection headers, out string policy, out string policyRequestedResource)
         {
             _logger.LogDebug("Getting the access rights.");
-            string? accessRole  = null;
-            string? user        = null;
+            string accessRole  = null;
+            string user        = null;
             bool    error       = false;
             string? bearerToken = null;
             policy                  = "";
@@ -143,7 +143,7 @@ namespace AasSecurity
             return accessRole;
         }
 
-        private string? HandleBearerToken(string? bearerToken, ref string? user, ref bool error, out string policy, out string policyRequestedResource)
+        private string HandleBearerToken(string? bearerToken, ref string user, ref bool error, out string policy, out string policyRequestedResource)
         {
             policy                  = "";
             policyRequestedResource = "";
@@ -235,8 +235,8 @@ namespace AasSecurity
             return "";
         }
 
-        private AccessRights? ParseBearerToken(NameValueCollection queries, NameValueCollection headers, ref string? bearerToken, ref bool error, ref string? user,
-                                               ref string? accessRights)
+        private AccessRights? ParseBearerToken(NameValueCollection queries, NameValueCollection headers, ref string? bearerToken, ref bool error, ref string user,
+                                               ref string accessRights)
         {
             //Check the token in header
             foreach (string key in headers.Keys)
@@ -279,7 +279,7 @@ namespace AasSecurity
                                             }
                                         }
 
-                                        string? username = CheckUserPW(split[ 1 ]);
+                                        string username = CheckUserPW(split[ 1 ]);
                                         if (username != null)
                                         {
                                             user = username;
@@ -379,26 +379,26 @@ namespace AasSecurity
             return null;
         }
 
-        private string? CheckUserPW(string userPW64)
+        private string CheckUserPW(string userPW64)
         {
-            var       credentialBytes = Convert.FromBase64String(userPW64);
-            string?[] credentials     = Encoding.UTF8.GetString(credentialBytes).Split(new[] {':'}, 2);
-            var       username        = credentials[ 0 ];
-            var       password        = credentials[ 1 ];
+            var      credentialBytes = Convert.FromBase64String(userPW64);
+            string[] credentials     = Encoding.UTF8.GetString(credentialBytes).Split(new[] {':'}, 2);
+            var      username        = credentials[ 0 ];
+            var   password        = credentials[ 1 ];
 
             var found = GlobalSecurityVariables.SecurityUsernamePassword.TryGetValue(username, out string? storedPassword);
             return found ? password != null && password.Equals(storedPassword) ? username : null : null;
         }
 
         public bool AuthorizeRequest(string accessRole, string httpRoute, AccessRights neededRights,
-                                     out string error, out bool withAllow, out string? getPolicy, string? objPath = null, string? aasResourceType = null,
+                                     out string error, out bool withAllow, out string? getPolicy, string objPath = null, string? aasResourceType = null,
                                      IClass? aasResource = null, string? policy = null)
         {
             return CheckAccessRights(accessRole, httpRoute, neededRights, out error, out withAllow, out getPolicy, objPath, aasResourceType, aasResource, policy: policy);
         }
 
         private static bool CheckAccessRights(string currentRole, string operation, AccessRights neededRights, out string error, out bool withAllow, out string? getPolicy,
-                                              string? objPath = "", string? aasResourceType = null, IClass? aasResource = null, bool testOnly = false, string? policy = null)
+                                              string objPath = "", string? aasResourceType = null, IClass? aasResource = null, bool testOnly = false, string? policy = null)
         {
             withAllow = false;
             return CheckAccessRightsWithAllow(currentRole, operation, neededRights, out error, out withAllow, out getPolicy,
@@ -406,7 +406,7 @@ namespace AasSecurity
         }
 
         private static bool CheckAccessRightsWithAllow(string currentRole, string operation, AccessRights neededRights, out string error, out bool withAllow, out string? getPolicy,
-                                                       string? objPath = "", string? aasResourceType = null, IClass? aasResource = null, bool testOnly = false,
+                                                       string objPath = "", string? aasResourceType = null, IClass? aasResource = null, bool testOnly = false,
                                                        string? policy = null)
         {
             error     = "Access not allowed";
@@ -437,7 +437,7 @@ namespace AasSecurity
         }
 
         private static bool CheckAccessLevelWithError(out string error, string currentRole, string operation, AccessRights neededRights, out bool withAllow, out string? getPolicy,
-                                                      string? objPath, string? aasResourceType, IClass? aasResource, string? policy = null)
+                                                      string objPath, string? aasResourceType, IClass? aasResource, string? policy = null)
         {
             withAllow = false;
             getPolicy = "";
@@ -491,7 +491,7 @@ namespace AasSecurity
             return false;
         }
 
-        private static bool CheckPolicy(out string error, SecurityRole securityRole, out string? getPolicy, string? policy = null)
+        private static bool CheckPolicy(out string error, SecurityRole securityRole, out string getPolicy, string? policy = null)
         {
             error     = "";
             getPolicy = "";
@@ -639,7 +639,7 @@ namespace AasSecurity
         }
 
         private static bool CheckAccessLevelForOperation(string currentRole, string operation, string? aasResourceType, IClass? aasResource, AccessRights neededRights,
-                                                         string? objPath, out bool withAllow, out string? getPolicy, out string error, string? policy = null)
+                                                         string objPath, out bool withAllow, out string? getPolicy, out string error, string? policy = null)
         {
             error     = "";
             withAllow = false;

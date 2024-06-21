@@ -44,7 +44,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
 
         [ MaxLength(128) ]
         [ DataMember(Name = "idShort") ]
-        public string? IdShort { get; set; }
+        public string IdShort { get; set; }
 
         /// <summary>
         /// Gets or Sets Id

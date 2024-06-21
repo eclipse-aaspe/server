@@ -128,7 +128,7 @@ namespace Extensions
                 includeThis: includeThis, includeSubmodel: includeSubmodel, passOverMiss: passOverMiss));
         }
 
-        public static string ValueAsText(this ISubmodelElement submodelElement, string defaultLang = null)
+        public static string? ValueAsText(this ISubmodelElement submodelElement, string defaultLang = null)
         {
             //TODO:Need to check/test this logic again
             if (submodelElement is Property property)
@@ -1338,7 +1338,7 @@ namespace Extensions
         }
 
 
-        public static string IterateIdShortTemplateToBeUnique(this List<ISubmodelElement> submodelElements, string idShortTemplate, int maxNum)
+        public static string? IterateIdShortTemplateToBeUnique(this List<ISubmodelElement> submodelElements, string idShortTemplate, int maxNum)
         {
             if (idShortTemplate == null || maxNum < 1 || !idShortTemplate.Contains("{0"))
                 return null;
@@ -1355,7 +1355,7 @@ namespace Extensions
             return null;
         }
 
-        public static bool CheckIdShortIsUnique(this List<ISubmodelElement> submodelElements, string idShort)
+        public static bool CheckIdShortIsUnique(this List<ISubmodelElement> submodelElements, string? idShort)
         {
             idShort = idShort?.Trim();
             if (idShort == null || idShort.Length < 1)

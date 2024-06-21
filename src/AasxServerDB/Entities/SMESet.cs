@@ -18,13 +18,13 @@ namespace AasxServerDB.Entities
         public string? SMEType { get; set; }
         public string? ValueType { get; set; }
         public string? SemanticId { get; set; }
-        public string? IdShort { get; set; }
+        public string IdShort { get; set; }
 
         public virtual ICollection<IValueSet> IValueSets { get; } = new List<IValueSet>();
         public virtual ICollection<DValueSet> DValueSets { get; } = new List<DValueSet>();
         public virtual ICollection<SValueSet> SValueSets { get; } = new List<SValueSet>();
 
-        public string? getValue()
+        public string getValue()
         {
             using (AasContext db = new AasContext())
             {

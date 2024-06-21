@@ -216,7 +216,7 @@ namespace AasCore.Aas3_0
                 List<IReference>? theSupplementalSemanticIds = null;
                 string? theName = null;
                 DataTypeDefXsd? theValueType = null;
-                string? theValue = null;
+                string theValue = null;
                 List<IReference>? theRefersTo = null;
 
                 if (!isEmptySequence)
@@ -1049,10 +1049,10 @@ namespace AasCore.Aas3_0
                 error = null;
 
                 List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                string? theVersion = null;
-                string? theRevision = null;
+                string theVersion = null;
+                string theRevision = null;
                 IReference? theCreator = null;
-                string? theTemplateId = null;
+                string theTemplateId = null;
 
                 if (!isEmptySequence)
                 {
@@ -1527,7 +1527,7 @@ namespace AasCore.Aas3_0
                 QualifierKind? theKind = null;
                 string? theType = null;
                 DataTypeDefXsd? theValueType = null;
-                string? theValue = null;
+                string theValue = null;
                 IReference? theValueId = null;
 
                 if (!isEmptySequence)
@@ -2016,8 +2016,8 @@ namespace AasCore.Aas3_0
                 error = null;
 
                 List<IExtension>? theExtensions = null;
-                string? theCategory = null;
-                string? theIdShort = null;
+                string theCategory = null;
+                string theIdShort = null;
                 List<ILangStringNameType>? theDisplayName = null;
                 List<ILangStringTextType>? theDescription = null;
                 IAdministrativeInformation? theAdministration = null;
@@ -2605,9 +2605,9 @@ namespace AasCore.Aas3_0
                 error = null;
 
                 AssetKind? theAssetKind = null;
-                string? theGlobalAssetId = null;
+                string theGlobalAssetId = null;
                 List<ISpecificAssetId>? theSpecificAssetIds = null;
-                string? theAssetType = null;
+                string theAssetType = null;
                 IResource? theDefaultThumbnail = null;
 
                 if (!isEmptySequence)
@@ -3015,7 +3015,7 @@ namespace AasCore.Aas3_0
                 error = null;
 
                 string? thePath = null;
-                string? theContentType = null;
+                string theContentType = null;
 
                 if (!isEmptySequence)
                 {
@@ -3693,8 +3693,8 @@ namespace AasCore.Aas3_0
                 error = null;
 
                 List<IExtension>? theExtensions = null;
-                string? theCategory = null;
-                string? theIdShort = null;
+                string theCategory = null;
+                string theIdShort = null;
                 List<ILangStringNameType>? theDisplayName = null;
                 List<ILangStringTextType>? theDescription = null;
                 IAdministrativeInformation? theAdministration = null;
@@ -4475,8 +4475,8 @@ namespace AasCore.Aas3_0
                 error = null;
 
                 List<IExtension>? theExtensions = null;
-                string? theCategory = null;
-                string? theIdShort = null;
+                string theCategory = null;
+                string theIdShort = null;
                 List<ILangStringNameType>? theDisplayName = null;
                 List<ILangStringTextType>? theDescription = null;
                 IReference? theSemanticId = null;
@@ -5110,8 +5110,8 @@ namespace AasCore.Aas3_0
                 error = null;
 
                 List<IExtension>? theExtensions = null;
-                string? theCategory = null;
-                string? theIdShort = null;
+                string theCategory = null;
+                string theIdShort = null;
                 List<ILangStringNameType>? theDisplayName = null;
                 List<ILangStringTextType>? theDescription = null;
                 IReference? theSemanticId = null;
@@ -5870,8 +5870,8 @@ namespace AasCore.Aas3_0
                 error = null;
 
                 List<IExtension>? theExtensions = null;
-                string? theCategory = null;
-                string? theIdShort = null;
+                string theCategory = null;
+                string theIdShort = null;
                 List<ILangStringNameType>? theDisplayName = null;
                 List<ILangStringTextType>? theDescription = null;
                 IReference? theSemanticId = null;
@@ -6503,8 +6503,8 @@ namespace AasCore.Aas3_0
                 error = null;
 
                 List<IExtension>? theExtensions = null;
-                string? theCategory = null;
-                string? theIdShort = null;
+                string theCategory = null;
+                string theIdShort = null;
                 List<ILangStringNameType>? theDisplayName = null;
                 List<ILangStringTextType>? theDescription = null;
                 IReference? theSemanticId = null;
@@ -6512,7 +6512,7 @@ namespace AasCore.Aas3_0
                 List<IQualifier>? theQualifiers = null;
                 List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
                 DataTypeDefXsd? theValueType = null;
-                string? theValue = null;
+                string theValue = null;
                 IReference? theValueId = null;
 
                 if (!isEmptySequence)
@@ -7161,8 +7161,8 @@ namespace AasCore.Aas3_0
                 error = null;
 
                 List<IExtension>? theExtensions = null;
-                string? theCategory = null;
-                string? theIdShort = null;
+                string theCategory = null;
+                string theIdShort = null;
                 List<ILangStringNameType>? theDisplayName = null;
                 List<ILangStringTextType>? theDescription = null;
                 IReference? theSemanticId = null;
@@ -7748,8 +7748,8 @@ namespace AasCore.Aas3_0
                 error = null;
 
                 List<IExtension>? theExtensions = null;
-                string? theCategory = null;
-                string? theIdShort = null;
+                string theCategory = null;
+                string theIdShort = null;
                 List<ILangStringNameType>? theDisplayName = null;
                 List<ILangStringTextType>? theDescription = null;
                 IReference? theSemanticId = null;
@@ -7757,8 +7757,8 @@ namespace AasCore.Aas3_0
                 List<IQualifier>? theQualifiers = null;
                 List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
                 DataTypeDefXsd? theValueType = null;
-                string? theMin = null;
-                string? theMax = null;
+                string theMin = null;
+                string theMax = null;
 
                 if (!isEmptySequence)
                 {
@@ -8432,8 +8432,8 @@ namespace AasCore.Aas3_0
                 error = null;
 
                 List<IExtension>? theExtensions = null;
-                string? theCategory = null;
-                string? theIdShort = null;
+                string theCategory = null;
+                string theIdShort = null;
                 List<ILangStringNameType>? theDisplayName = null;
                 List<ILangStringTextType>? theDescription = null;
                 IReference? theSemanticId = null;
@@ -8981,8 +8981,8 @@ namespace AasCore.Aas3_0
                 error = null;
 
                 List<IExtension>? theExtensions = null;
-                string? theCategory = null;
-                string? theIdShort = null;
+                string theCategory = null;
+                string theIdShort = null;
                 List<ILangStringNameType>? theDisplayName = null;
                 List<ILangStringTextType>? theDescription = null;
                 IReference? theSemanticId = null;
@@ -9616,15 +9616,15 @@ namespace AasCore.Aas3_0
                 error = null;
 
                 List<IExtension>? theExtensions = null;
-                string? theCategory = null;
-                string? theIdShort = null;
+                string theCategory = null;
+                string theIdShort = null;
                 List<ILangStringNameType>? theDisplayName = null;
                 List<ILangStringTextType>? theDescription = null;
                 IReference? theSemanticId = null;
                 List<IReference>? theSupplementalSemanticIds = null;
                 List<IQualifier>? theQualifiers = null;
                 List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                string? theValue = null;
+                string theValue = null;
                 string? theContentType = null;
 
                 if (!isEmptySequence)
@@ -10243,8 +10243,8 @@ namespace AasCore.Aas3_0
                 error = null;
 
                 List<IExtension>? theExtensions = null;
-                string? theCategory = null;
-                string? theIdShort = null;
+                string theCategory = null;
+                string theIdShort = null;
                 List<ILangStringNameType>? theDisplayName = null;
                 List<ILangStringTextType>? theDescription = null;
                 IReference? theSemanticId = null;
@@ -10866,8 +10866,8 @@ namespace AasCore.Aas3_0
                 error = null;
 
                 List<IExtension>? theExtensions = null;
-                string? theCategory = null;
-                string? theIdShort = null;
+                string theCategory = null;
+                string theIdShort = null;
                 List<ILangStringNameType>? theDisplayName = null;
                 List<ILangStringTextType>? theDescription = null;
                 IReference? theSemanticId = null;
@@ -10876,7 +10876,7 @@ namespace AasCore.Aas3_0
                 List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
                 List<ISubmodelElement>? theStatements = null;
                 EntityType? theEntityType = null;
-                string? theGlobalAssetId = null;
+                string theGlobalAssetId = null;
                 List<ISpecificAssetId>? theSpecificAssetIds = null;
 
                 if (!isEmptySequence)
@@ -11587,7 +11587,7 @@ namespace AasCore.Aas3_0
                 IReference? theSourceSemanticId = null;
                 IReference? theObservableReference = null;
                 IReference? theObservableSemanticId = null;
-                string? theTopic = null;
+                string theTopic = null;
                 IReference? theSubjectId = null;
                 string? theTimeStamp = null;
                 byte[]? thePayload = null;
@@ -12080,8 +12080,8 @@ namespace AasCore.Aas3_0
                 error = null;
 
                 List<IExtension>? theExtensions = null;
-                string? theCategory = null;
-                string? theIdShort = null;
+                string theCategory = null;
+                string theIdShort = null;
                 List<ILangStringNameType>? theDisplayName = null;
                 List<ILangStringTextType>? theDescription = null;
                 IReference? theSemanticId = null;
@@ -12091,11 +12091,11 @@ namespace AasCore.Aas3_0
                 IReference? theObserved = null;
                 Direction? theDirection = null;
                 StateOfEvent? theState = null;
-                string? theMessageTopic = null;
+                string theMessageTopic = null;
                 IReference? theMessageBroker = null;
-                string? theLastUpdate = null;
-                string? theMinInterval = null;
-                string? theMaxInterval = null;
+                string theLastUpdate = null;
+                string theMinInterval = null;
+                string theMaxInterval = null;
 
                 if (!isEmptySequence)
                 {
@@ -12957,8 +12957,8 @@ namespace AasCore.Aas3_0
                 error = null;
 
                 List<IExtension>? theExtensions = null;
-                string? theCategory = null;
-                string? theIdShort = null;
+                string theCategory = null;
+                string theIdShort = null;
                 List<ILangStringNameType>? theDisplayName = null;
                 List<ILangStringTextType>? theDescription = null;
                 IReference? theSemanticId = null;
@@ -13874,8 +13874,8 @@ namespace AasCore.Aas3_0
                 error = null;
 
                 List<IExtension>? theExtensions = null;
-                string? theCategory = null;
-                string? theIdShort = null;
+                string theCategory = null;
+                string theIdShort = null;
                 List<ILangStringNameType>? theDisplayName = null;
                 List<ILangStringTextType>? theDescription = null;
                 IReference? theSemanticId = null;
@@ -14407,8 +14407,8 @@ namespace AasCore.Aas3_0
                 error = null;
 
                 List<IExtension>? theExtensions = null;
-                string? theCategory = null;
-                string? theIdShort = null;
+                string theCategory = null;
+                string theIdShort = null;
                 List<ILangStringNameType>? theDisplayName = null;
                 List<ILangStringTextType>? theDescription = null;
                 IAdministrativeInformation? theAdministration = null;
@@ -18852,15 +18852,15 @@ namespace AasCore.Aas3_0
 
                 List<ILangStringPreferredNameTypeIec61360>? thePreferredName = null;
                 List<ILangStringShortNameTypeIec61360>? theShortName = null;
-                string? theUnit = null;
+                string theUnit = null;
                 IReference? theUnitId = null;
-                string? theSourceOfDefinition = null;
-                string? theSymbol = null;
+                string theSourceOfDefinition = null;
+                string theSymbol = null;
                 DataTypeIec61360? theDataType = null;
                 List<ILangStringDefinitionTypeIec61360>? theDefinition = null;
-                string? theValueFormat = null;
+                string theValueFormat = null;
                 IValueList? theValueList = null;
-                string? theValue = null;
+                string theValue = null;
                 ILevelType? theLevelType = null;
 
                 if (!isEmptySequence)

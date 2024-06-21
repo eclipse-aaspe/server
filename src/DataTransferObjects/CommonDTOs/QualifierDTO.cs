@@ -8,6 +8,6 @@ namespace DataTransferObjects.CommonDTOs
             ReferenceDTO? semanticId = null,
             List<ReferenceDTO>? supplementalSemanticIds = null,
             QualifierKind? kind = null,
-            string? value = null,
+            string value = null,
             ReferenceDTO? valueId = null) : IDTO;
 }

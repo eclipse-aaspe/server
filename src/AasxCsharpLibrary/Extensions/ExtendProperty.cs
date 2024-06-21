@@ -28,7 +28,7 @@ namespace Extensions
             return false;
         }
 
-        public static string ValueAsText(this Property property)
+        public static string? ValueAsText(this Property property)
         {
             return "" + property.Value;
         }

@@ -59,7 +59,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         //[RegularExpression("/^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$/")]
         [ StringLength(2000, MinimumLength = 1) ]
         [ DataMember(Name = "globalAssetId") ]
-        public string? GlobalAssetId { get; set; }
+        public string GlobalAssetId { get; set; }
 
         /// <summary>
         /// Gets or Sets IdShort
@@ -67,7 +67,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
 
         [ MaxLength(128) ]
         [ DataMember(Name = "idShort") ]
-        public string? IdShort { get; set; }
+        public string IdShort { get; set; }
 
         /// <summary>
         /// Gets or Sets Id

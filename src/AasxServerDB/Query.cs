@@ -324,7 +324,7 @@ namespace AasxServerDB
         {
             public SMSet sm;
             public SMESet? sme;
-            public string? value;
+            public string value;
         }
 
         private List<SMEWithValue> GetSMEWithValue( string smSemanticId = "", string semanticId = "", string contains = "", string equal = "", string lower = "", string upper = "")
