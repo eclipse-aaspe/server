@@ -145,8 +145,8 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetAllAssetAdministrationShellDescriptors([ FromQuery ] int? limit, [ FromQuery ] string cursor, [ FromQuery ] string assetKind,
-            [ FromQuery ] string assetType)
+        public virtual IActionResult GetAllAssetAdministrationShellDescriptors([ FromQuery ] int? limit, [ FromQuery ] string? cursor, [ FromQuery ] string? assetKind,
+            [ FromQuery ] string? assetType)
         {
             // TODO (jtikekar, 2023-09-04): AssetType resembles GlobalAssetId from old Implementation
             List<string> assetList = new List<string>();
