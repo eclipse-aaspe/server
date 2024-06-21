@@ -51,7 +51,7 @@ namespace IO.Swagger.Lib.V3.Middleware
                         message.Code = HttpStatusCode.Conflict.ToString();
                         message.Text = ex.Message;
                         message.Timestamp = DateTime.Now.ToString();
-                        message.MessageType = Message.MessageTypeEnum.ErrorEnum;
+                        message.MessageType = MessageTypeEnum.ErrorEnum;
                         break;
                     }
                 case FileNotFoundException:
@@ -61,7 +61,7 @@ namespace IO.Swagger.Lib.V3.Middleware
                         message.Code = HttpStatusCode.NotFound.ToString();
                         message.Text = exception.Message;
                         message.Timestamp = DateTime.Now.ToString();
-                        message.MessageType = Message.MessageTypeEnum.ErrorEnum;
+                        message.MessageType = MessageTypeEnum.ErrorEnum;
                         break;
                     }
                 case NotAllowed:
@@ -70,7 +70,7 @@ namespace IO.Swagger.Lib.V3.Middleware
                         message.Code = HttpStatusCode.Forbidden.ToString();
                         message.Text = exception.Message;
                         message.Timestamp = DateTime.Now.ToString();
-                        message.MessageType = Message.MessageTypeEnum.ErrorEnum;
+                        message.MessageType = MessageTypeEnum.ErrorEnum;
                         break;
                     }
                 case MetamodelVerificationException ex:
@@ -86,7 +86,7 @@ namespace IO.Swagger.Lib.V3.Middleware
                         message.Code = HttpStatusCode.BadRequest.ToString();
                         message.Text = exception.Message;
                         message.Timestamp = DateTime.Now.ToString();
-                        message.MessageType = Message.MessageTypeEnum.ErrorEnum;
+                        message.MessageType = MessageTypeEnum.ErrorEnum;
                         break;
                     }
                 case InvalidIdShortPathException:
@@ -104,7 +104,7 @@ namespace IO.Swagger.Lib.V3.Middleware
                         message.Code = HttpStatusCode.BadRequest.ToString();
                         message.Text = exception.Message;
                         message.Timestamp = DateTime.Now.ToString();
-                        message.MessageType = Message.MessageTypeEnum.ErrorEnum;
+                        message.MessageType = MessageTypeEnum.ErrorEnum;
                         break;
                     }
                 case InvalidSerializationModifierException:
@@ -113,7 +113,7 @@ namespace IO.Swagger.Lib.V3.Middleware
                         message.Code = HttpStatusCode.MethodNotAllowed.ToString();
                         message.Text = exception.Message;
                         message.Timestamp = DateTime.Now.ToString();
-                        message.MessageType = Message.MessageTypeEnum.ErrorEnum;
+                        message.MessageType = MessageTypeEnum.ErrorEnum;
                         break;
                     }
                 case Exceptions.NotImplementedException:
@@ -122,7 +122,7 @@ namespace IO.Swagger.Lib.V3.Middleware
                         message.Code = HttpStatusCode.NotImplemented.ToString();
                         message.Text = exception.Message;
                         message.Timestamp = DateTime.Now.ToString();
-                        message.MessageType = Message.MessageTypeEnum.ErrorEnum;
+                        message.MessageType = MessageTypeEnum.ErrorEnum;
                         break;
                     }
                 case UnprocessableEntityException:
@@ -131,7 +131,7 @@ namespace IO.Swagger.Lib.V3.Middleware
                         message.Code = HttpStatusCode.UnprocessableEntity.ToString();
                         message.Text = exception.Message;
                         message.Timestamp = DateTime.Now.ToString();
-                        message.MessageType = Message.MessageTypeEnum.ErrorEnum;
+                        message.MessageType = MessageTypeEnum.ErrorEnum;
                         break;
                     }
                 default:
@@ -140,7 +140,7 @@ namespace IO.Swagger.Lib.V3.Middleware
                         message.Code = HttpStatusCode.InternalServerError.ToString();
                         message.Text = exception.Message;
                         message.Timestamp = DateTime.Now.ToString();
-                        message.MessageType = Message.MessageTypeEnum.ErrorEnum;
+                        message.MessageType = MessageTypeEnum.ErrorEnum;
                         break;
                     }
             }

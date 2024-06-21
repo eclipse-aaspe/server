@@ -17,6 +17,43 @@ using Newtonsoft.Json;
 namespace IO.Swagger.Models
 {
     /// <summary>
+    /// Enum for Message Types
+    /// </summary>
+    [JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public enum MessageTypeEnum
+    {
+        /// <summary>
+        /// Undefined MessageType
+        /// </summary>
+        [EnumMember(Value = "Undefined")]
+        UndefinedEnum = 0,
+
+        /// <summary>
+        /// Info MessageType
+        /// </summary>
+        [EnumMember(Value = "Info")]
+        InfoEnum = 1,
+
+        /// <summary>
+        /// Warning MessageType
+        /// </summary>
+        [EnumMember(Value = "Warning")]
+        WarningEnum = 2,
+
+        /// <summary>
+        /// Error MessageType
+        /// </summary>
+        [EnumMember(Value = "Error")]
+        ErrorEnum = 3,
+
+        /// <summary>
+        /// Exception MessageType
+        /// </summary>
+        [EnumMember(Value = "Exception")]
+        ExceptionEnum = 4
+    }
+    
+    /// <summary>
     /// 
     /// </summary>
     [ DataContract ]
@@ -37,38 +74,6 @@ namespace IO.Swagger.Models
         [ StringLength(128, MinimumLength = 1) ]
         [ DataMember(Name = "correlationId") ]
         public string? CorrelationId { get; set; }
-
-        /// <summary>
-        /// Gets or Sets MessageType
-        /// </summary>
-        [ JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter)) ]
-        public enum MessageTypeEnum
-        {
-            /// <summary>
-            /// Enum UndefinedEnum for Undefined
-            /// </summary>
-            [ EnumMember(Value = "Undefined") ] UndefinedEnum = 0,
-
-            /// <summary>
-            /// Enum InfoEnum for Info
-            /// </summary>
-            [ EnumMember(Value = "Info") ] InfoEnum = 1,
-
-            /// <summary>
-            /// Enum WarningEnum for Warning
-            /// </summary>
-            [ EnumMember(Value = "Warning") ] WarningEnum = 2,
-
-            /// <summary>
-            /// Enum ErrorEnum for Error
-            /// </summary>
-            [ EnumMember(Value = "Error") ] ErrorEnum = 3,
-
-            /// <summary>
-            /// Enum ExceptionEnum for Exception
-            /// </summary>
-            [ EnumMember(Value = "Exception") ] ExceptionEnum = 4
-        }
 
         /// <summary>
         /// Gets or Sets MessageType
