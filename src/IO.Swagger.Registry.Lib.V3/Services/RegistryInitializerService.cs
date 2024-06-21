@@ -1,4 +1,4 @@
-﻿using AasxServer;
+using AasxServer;
 using Extensions;
 using IdentityModel;
 using IdentityModel.Client;
@@ -819,10 +819,17 @@ namespace IO.Swagger.Registry.Lib.V3.Services
 
                 var handler = new HttpClientHandler() {ServerCertificateCustomValidationCallback = delegate { return true; }};
 
-                if (AasxServer.AasxTask.proxy != null)
-                    handler.Proxy = AasxServer.AasxTask.proxy;
-                else
-                    handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                if (!requestPath.Contains("localhost"))
+                {
+                    if (AasxTask.proxy != null)
+                    {
+                        handler.Proxy = AasxTask.proxy;
+                    }
+                    else
+                    {
+                        handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                    }
+                }
 
                 var client = new HttpClient(handler);
                 if (accessToken != null)
