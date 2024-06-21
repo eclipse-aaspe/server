@@ -29,7 +29,7 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="ScottPlot" Version="4.1.68"/>
+        <PackageReference Include="ScottPlot" Version="4.1.74" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
         <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="6.6.2" />
     </ItemGroup>

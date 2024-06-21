@@ -1,20 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net.Http.Headers;
 using System.Net.Http;
 using System.Text;
 using IdentityModel.Client;
 using IdentityModel;
 using Microsoft.IdentityModel.Tokens;
-using ScottPlot.Drawing.Colormaps;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
-using Org.BouncyCastle.Asn1.Ocsp;
-// using System.Drawing;
 
 namespace AasxServer
 {

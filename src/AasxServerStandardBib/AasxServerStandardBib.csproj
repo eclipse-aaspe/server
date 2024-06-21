@@ -38,7 +38,7 @@
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.4"/>
         <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua" Version="1.4.371.60"/>
         <PackageReference Include="QRCoder" Version="1.4.1"/>
-        <PackageReference Include="ScottPlot" Version="4.1.68"/>
+        <PackageReference Include="ScottPlot" Version="4.1.74" />
         <PackageReference Include="SpookilySharp" Version="1.2.0"/>
         <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.20371.2"/>
         <PackageReference Include="System.Dynamic.Runtime" Version="4.3.0"/>
