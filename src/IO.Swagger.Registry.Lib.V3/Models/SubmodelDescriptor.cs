@@ -29,14 +29,14 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
 
         [ DataMember(Name = "administration") ]
-        public AdministrativeInformation Administration { get; set; }
+        public AdministrativeInformation? Administration { get; set; }
 
         /// <summary>
         /// Gets or Sets Endpoints
         /// </summary>
         [ Required ]
         [ DataMember(Name = "endpoints") ]
-        public List<Endpoint> Endpoints { get; set; }
+        public List<Endpoint>? Endpoints { get; set; }
 
         /// <summary>
         /// Gets or Sets IdShort
@@ -44,7 +44,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
 
         [ MaxLength(128) ]
         [ DataMember(Name = "idShort") ]
-        public string IdShort { get; set; }
+        public string? IdShort { get; set; }
 
         /// <summary>
         /// Gets or Sets Id
@@ -60,14 +60,14 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
 
         [ DataMember(Name = "semanticId") ]
-        public Reference SemanticId { get; set; }
+        public Reference? SemanticId { get; set; }
 
         /// <summary>
         /// Gets or Sets SupplementalSemanticId
         /// </summary>
 
         [ DataMember(Name = "supplementalSemanticId") ]
-        public List<Reference> SupplementalSemanticId { get; set; }
+        public List<Reference>? SupplementalSemanticId { get; set; }
 
         // TODO (jtikekar, 2023-09-04): @Andreas Not conformant with specifications
         /// <summary>
@@ -75,7 +75,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
 
         [ DataMember(Name = "federatedElements") ]
-        public List<String> FederatedElements { get; set; }
+        public List<String>? FederatedElements { get; set; }
 
         public SubmodelDescriptor(AdministrativeInformation administration = null, List<Endpoint> endpoints = null, string idShort = null, string id = null,
             Reference semanticId = null, List<Reference> supplementalSemanticId = null, List<string> federatedElements = null)

@@ -28,14 +28,14 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         [ Required ]
         [ MaxLength(128) ]
         [ DataMember(Name = "interface") ]
-        public string Interface { get; set; }
+        public string? Interface { get; set; }
 
         /// <summary>
         /// Gets or Sets ProtocolInformation
         /// </summary>
         [ Required ]
         [ DataMember(Name = "protocolInformation") ]
-        public ProtocolInformation ProtocolInformation { get; set; }
+        public ProtocolInformation? ProtocolInformation { get; set; }
 
         public Endpoint(string @interface = null, ProtocolInformation protocolInformation = null)
         {
