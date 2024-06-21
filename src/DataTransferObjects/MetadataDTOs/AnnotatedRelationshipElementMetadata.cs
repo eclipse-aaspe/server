@@ -12,6 +12,6 @@ namespace DataTransferObjects.MetadataDTOs
             List<ReferenceDTO>? supplementalSemanticIds = null,
             List<QualifierDTO>? qualifiers = null,
             List<EmbeddedDataSpecificationDTO>? embeddedDataSpecifications = null,
-            List<ISubmodelElementMetadata>? annotations = null,
+            List<ISubmodelElementMetadata?> annotations = null,
             string modelType = "AnnotatedRelationshipElement") : ISubmodelElementMetadata;
 }

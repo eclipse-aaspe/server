@@ -85,7 +85,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
         /// <param name="other">Instance of Descriptor to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(Descriptor other)
+        public bool Equals(Descriptor? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;

@@ -113,7 +113,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
         /// <param name="other">Instance of ProtocolInformationSecurityAttributes to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(ProtocolInformationSecurityAttributes other)
+        public bool Equals(ProtocolInformationSecurityAttributes? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;

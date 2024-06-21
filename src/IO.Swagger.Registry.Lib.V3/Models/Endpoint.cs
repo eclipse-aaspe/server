@@ -83,7 +83,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
         /// <param name="other">Instance of Endpoint to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(Endpoint other)
+        public bool Equals(Endpoint? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;

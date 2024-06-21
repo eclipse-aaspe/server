@@ -112,14 +112,14 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 
         private IValueDTO? CreateMultilanguagePropertyValue(string idShort, JsonArray valueArray)
         {
-            var langStrings = new List<KeyValuePair<string, string?>>();
+            var langStrings = new List<KeyValuePair<string, string>>();
 
             foreach (var item in valueArray)
             {
                 if (item is JsonObject jsonObject)
                 {
-                    GetPropertyFromJsonObject(jsonObject, out string propertyName, out string? propertyValue);
-                    langStrings.Add(new KeyValuePair<string, string?>(propertyName, propertyValue));
+                    GetPropertyFromJsonObject(jsonObject, out var propertyName, out var propertyValue);
+                    langStrings.Add(new KeyValuePair<string, string>(propertyName, propertyValue ?? string.Empty));
                 }
             }
 

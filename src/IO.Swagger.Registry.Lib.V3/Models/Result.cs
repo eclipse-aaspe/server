@@ -69,7 +69,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
         /// <param name="other">Instance of Result to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(Result other)
+        public bool Equals(Result? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;

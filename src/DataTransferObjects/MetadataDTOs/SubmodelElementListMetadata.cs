@@ -17,6 +17,6 @@ namespace DataTransferObjects.MetadataDTOs
             bool? orderRelevant = null,
             ReferenceDTO? semanticIdListElement = null,
             DataTypeDefXsd? valueTypeListElement = null,
-            List<ISubmodelElementMetadata>? value = null,
+            List<ISubmodelElementMetadata?> value = null,
             string modelType = "SubmodelElementList") : ISubmodelElementMetadata;
 }

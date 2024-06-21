@@ -134,7 +134,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
         /// <param name="other">Instance of Message to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(Message other)
+        public bool Equals(Message? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
