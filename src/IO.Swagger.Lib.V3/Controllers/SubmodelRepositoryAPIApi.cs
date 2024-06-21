@@ -95,7 +95,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult DeleteFileByPathSubmodelRepo([ FromRoute ] [ Required ] string submodelIdentifier, [ FromRoute ] [ Required ] string idShortPath)
+        public virtual IActionResult DeleteFileByPathSubmodelRepo([ FromRoute ] [ Required ] string? submodelIdentifier, [ FromRoute ] [ Required ] string idShortPath)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -140,7 +140,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult DeleteSubmodelById([ FromRoute ] [ Required ] string submodelIdentifier)
+        public virtual IActionResult DeleteSubmodelById([ FromRoute ] [ Required ] string? submodelIdentifier)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -172,7 +172,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult DeleteSubmodelElementByPathSubmodelRepo([ FromRoute ] [ Required ] string submodelIdentifier, [ FromRoute ] [ Required ] string idShortPath)
+        public virtual IActionResult DeleteSubmodelElementByPathSubmodelRepo([ FromRoute ] [ Required ] string? submodelIdentifier, [ FromRoute ] [ Required ] string idShortPath)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
             if (!Program.noSecurity)
@@ -223,7 +223,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetAllSubmodelElements([ FromRoute ] [ Required ] string submodelIdentifier,
+        public virtual IActionResult GetAllSubmodelElements([ FromRoute ] [ Required ] string? submodelIdentifier,
                                                             [ FromQuery ] int? limit, [ FromQuery ] string cursor, [ FromQuery ] LevelEnum level, [ FromQuery ] ExtentEnum extent,
                                                             [ FromQuery ] string diff)
         {
@@ -354,7 +354,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetAllSubmodelElementsMetadataSubmodelRepo([ FromRoute ] [ Required ] string submodelIdentifier,
+        public virtual IActionResult GetAllSubmodelElementsMetadataSubmodelRepo([ FromRoute ] [ Required ] string? submodelIdentifier,
                                                                                 [ FromQuery ] int? limit, [ FromQuery ] string cursor, [ FromQuery ] LevelEnum level,
                                                                                 [ FromQuery ] string diff)
         {
@@ -420,7 +420,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetAllSubmodelElementsPathSubmodelRepo([ FromRoute ] [ Required ] string submodelIdentifier,
+        public virtual IActionResult GetAllSubmodelElementsPathSubmodelRepo([ FromRoute ] [ Required ] string? submodelIdentifier,
                                                                             [ FromQuery ] int? limit, [ FromQuery ] string cursor, [ FromQuery ] string level,
                                                                             [ FromQuery ] string diff)
         {
@@ -483,7 +483,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetAllSubmodelElementsReferenceSubmodelRepo([ FromRoute ] [ Required ] string submodelIdentifier, [ FromQuery ] int? limit,
+        public virtual IActionResult GetAllSubmodelElementsReferenceSubmodelRepo([ FromRoute ] [ Required ] string? submodelIdentifier, [ FromQuery ] int? limit,
                                                                                  [ FromQuery ] string cursor, [ FromQuery ] string level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -534,7 +534,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetAllSubmodelElementsValueOnlySubmodelRepo([ FromRoute ] [ Required ] string submodelIdentifier,
+        public virtual IActionResult GetAllSubmodelElementsValueOnlySubmodelRepo([ FromRoute ] [ Required ] string? submodelIdentifier,
                                                                                  [ FromQuery ] int? limit, [ FromQuery ] string cursor, [ FromQuery ] LevelEnum level,
                                                                                  [ FromQuery ] ExtentEnum extent, [ FromQuery ] string diff)
         {
@@ -598,7 +598,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetAllSubmodels([ FromQuery ] [ StringLength(3072, MinimumLength = 1) ] string semanticId, [ FromQuery ] string idShort,
+        public virtual IActionResult GetAllSubmodels([ FromQuery ] [ StringLength(3072, MinimumLength = 1) ] string? semanticId, [ FromQuery ] string idShort,
                                                      [ FromQuery ] int? limit, [ FromQuery ] string cursor, [ FromQuery ] LevelEnum level, [ FromQuery ] ExtentEnum extent)
         {
             _logger.LogInformation($"Received a request to get all the submodels.");
@@ -637,7 +637,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetAllSubmodelsMetadata([ FromQuery ] [ StringLength(3072, MinimumLength = 1) ] string semanticId, [ FromQuery ] string idShort,
+        public virtual IActionResult GetAllSubmodelsMetadata([ FromQuery ] [ StringLength(3072, MinimumLength = 1) ] string? semanticId, [ FromQuery ] string idShort,
                                                              [ FromQuery ] int? limit, [ FromQuery ] string cursor, [ FromQuery ] LevelEnum level)
         {
             _logger.LogInformation($"Received request to get the metadata of all the submodels.");
@@ -676,7 +676,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetAllSubmodelsPath([ FromQuery ] [ StringLength(3072, MinimumLength = 1) ] string semanticId, [ FromQuery ] string idShort,
+        public virtual IActionResult GetAllSubmodelsPath([ FromQuery ] [ StringLength(3072, MinimumLength = 1) ] string? semanticId, [ FromQuery ] string idShort,
                                                          [ FromQuery ] int? limit, [ FromQuery ] string cursor, [ FromQuery ] LevelEnum level)
         {
             _logger.LogInformation($"Received request to get the metadata of all the submodels.");
@@ -716,7 +716,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetAllSubmodelsReference([ FromQuery ] [ StringLength(3072, MinimumLength = 1) ] string semanticId, [ FromQuery ] string idShort,
+        public virtual IActionResult GetAllSubmodelsReference([ FromQuery ] [ StringLength(3072, MinimumLength = 1) ] string? semanticId, [ FromQuery ] string idShort,
                                                               [ FromQuery ] int? limit, [ FromQuery ] string cursor, [ FromQuery ] LevelEnum level)
         {
             _logger.LogInformation($"Received a request to get all the submodels.");
@@ -758,7 +758,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetAllSubmodelsValueOnly([ FromQuery ] [ StringLength(3072, MinimumLength = 1) ] string semanticId, [ FromQuery ] string idShort,
+        public virtual IActionResult GetAllSubmodelsValueOnly([ FromQuery ] [ StringLength(3072, MinimumLength = 1) ] string? semanticId, [ FromQuery ] string idShort,
                                                               [ FromQuery ] int? limit, [ FromQuery ] string cursor, [ FromQuery ] LevelEnum level, [ FromQuery ] ExtentEnum extent)
         {
             _logger.LogInformation($"Received a request to get all the submodels.");
@@ -799,7 +799,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 405, type: typeof(Result), description: "Method not allowed - Download only valid for File submodel element") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetFileByPathSubmodelRepo([ FromRoute ] [ Required ] string submodelIdentifier, [ FromRoute ] [ Required ] string idShortPath)
+        public virtual IActionResult GetFileByPathSubmodelRepo([ FromRoute ] [ Required ] string? submodelIdentifier, [ FromRoute ] [ Required ] string idShortPath)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -1008,7 +1008,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetSubmodelPolicyHeader([ FromRoute ] [ Required ] string submodelIdentifier)
+        public virtual IActionResult GetSubmodelPolicyHeader([ FromRoute ] [ Required ] string? submodelIdentifier)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -1053,7 +1053,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetSubmodelById([ FromRoute ] [ Required ] string submodelIdentifier, [ FromQuery ] LevelEnum level, [ FromQuery ] ExtentEnum extent)
+        public virtual IActionResult GetSubmodelById([ FromRoute ] [ Required ] string? submodelIdentifier, [ FromQuery ] LevelEnum level, [ FromQuery ] ExtentEnum extent)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -1107,7 +1107,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetSubmodelByIdMetadata([ FromRoute ] [ Required ] string submodelIdentifier, [ FromQuery ] LevelEnum level)
+        public virtual IActionResult GetSubmodelByIdMetadata([ FromRoute ] [ Required ] string? submodelIdentifier, [ FromQuery ] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
             _logger.LogInformation($"Received request to get the metadata of the submodel with id {decodedSubmodelIdentifier}");
@@ -1151,7 +1151,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetSubmodelByIdPath([ FromRoute ] [ Required ] string submodelIdentifier, [ FromQuery ] LevelEnum level)
+        public virtual IActionResult GetSubmodelByIdPath([ FromRoute ] [ Required ] string? submodelIdentifier, [ FromQuery ] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
             _logger.LogInformation($"Received request to get the idShortPath of the submodel with id {decodedSubmodelIdentifier}");
@@ -1194,7 +1194,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetSubmodelByIdReference([ FromRoute ] [ Required ] string submodelIdentifier)
+        public virtual IActionResult GetSubmodelByIdReference([ FromRoute ] [ Required ] string? submodelIdentifier)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -1239,7 +1239,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetSubmodelByIdValueOnly([ FromRoute ] [ Required ] string submodelIdentifier, [ FromQuery ] LevelEnum level, [ FromQuery ] ExtentEnum extent)
+        public virtual IActionResult GetSubmodelByIdValueOnly([ FromRoute ] [ Required ] string? submodelIdentifier, [ FromQuery ] LevelEnum level, [ FromQuery ] ExtentEnum extent)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
             _logger.LogInformation($"Received request to get value of submodel with id {decodedSubmodelIdentifier}");
@@ -1284,7 +1284,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetSubmodelElementByPathMetadataSubmodelRepo([ FromRoute ] [ Required ] string submodelIdentifier,
+        public virtual IActionResult GetSubmodelElementByPathMetadataSubmodelRepo([ FromRoute ] [ Required ] string? submodelIdentifier,
                                                                                   [ FromRoute ] [ Required ] string idShortPath, [ FromQuery ] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -1335,7 +1335,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetSubmodelElementByPathPathSubmodelRepo([ FromRoute ] [ Required ] string submodelIdentifier, [ FromRoute ] [ Required ] string idShortPath,
+        public virtual IActionResult GetSubmodelElementByPathPathSubmodelRepo([ FromRoute ] [ Required ] string? submodelIdentifier, [ FromRoute ] [ Required ] string idShortPath,
                                                                               [ FromQuery ] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -1385,7 +1385,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetSubmodelElementByPathReferenceSubmodelRepo([ FromRoute ] [ Required ] string submodelIdentifier,
+        public virtual IActionResult GetSubmodelElementByPathReferenceSubmodelRepo([ FromRoute ] [ Required ] string? submodelIdentifier,
                                                                                    [ FromRoute ] [ Required ] string idShortPath, [ FromQuery ] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -1436,7 +1436,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetSubmodelElementByPathSubmodelRepo([ FromRoute ] [ Required ] string submodelIdentifier, [ FromRoute ] [ Required ] string idShortPath,
+        public virtual IActionResult GetSubmodelElementByPathSubmodelRepo([ FromRoute ] [ Required ] string? submodelIdentifier, [ FromRoute ] [ Required ] string idShortPath,
                                                                           [ FromQuery ] LevelEnum level, [ FromQuery ] ExtentEnum extent)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -1487,7 +1487,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetSubmodelElementByPathValueOnlySubmodelRepo([ FromRoute ] [ Required ] string submodelIdentifier,
+        public virtual IActionResult GetSubmodelElementByPathValueOnlySubmodelRepo([ FromRoute ] [ Required ] string? submodelIdentifier,
                                                                                    [ FromRoute ] [ Required ] string idShortPath, [ FromQuery ] LevelEnum level,
                                                                                    [ FromQuery ] ExtentEnum extent)
         {
@@ -1738,7 +1738,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult PatchSubmodelById([ FromBody ] Submodel body, [ FromRoute ] [ Required ] string submodelIdentifier, [ FromQuery ] LevelEnum level)
+        public virtual IActionResult PatchSubmodelById([ FromBody ] Submodel body, [ FromRoute ] [ Required ] string? submodelIdentifier, [ FromQuery ] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -1771,7 +1771,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult PatchSubmodelByIdMetadata([ FromBody ] SubmodelMetadata body, [ FromRoute ] [ Required ] string submodelIdentifier,
+        public virtual IActionResult PatchSubmodelByIdMetadata([ FromBody ] SubmodelMetadata body, [ FromRoute ] [ Required ] string? submodelIdentifier,
                                                                [ FromQuery ] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -1809,7 +1809,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult PatchSubmodelByIdValueOnly([ FromBody ] SubmodelValue body, [ FromRoute ] [ Required ] string submodelIdentifier,
+        public virtual IActionResult PatchSubmodelByIdValueOnly([ FromBody ] SubmodelValue body, [ FromRoute ] [ Required ] string? submodelIdentifier,
                                                                 [ FromQuery ] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -1847,7 +1847,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
         public virtual IActionResult PatchSubmodelElementByPathMetadataSubmodelRepo([ FromBody ] ISubmodelElementMetadata body,
-                                                                                    [ FromRoute ] [ Required ] string submodelIdentifier,
+                                                                                    [ FromRoute ] [ Required ] string? submodelIdentifier,
                                                                                     [ FromRoute ] [ Required ] string idShortPath, [ FromQuery ] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -1886,7 +1886,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult PatchSubmodelElementByPathSubmodelRepo([ FromBody ] ISubmodelElement body, [ FromRoute ] [ Required ] string submodelIdentifier,
+        public virtual IActionResult PatchSubmodelElementByPathSubmodelRepo([ FromBody ] ISubmodelElement body, [ FromRoute ] [ Required ] string? submodelIdentifier,
                                                                             [ FromRoute ] [ Required ] string idShortPath, [ FromQuery ] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -1921,7 +1921,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult PatchSubmodelElementByPathValueOnlySubmodelRepo([ FromBody ] ISubmodelElementValue body, [ FromRoute ] [ Required ] string submodelIdentifier,
+        public virtual IActionResult PatchSubmodelElementByPathValueOnlySubmodelRepo([ FromBody ] ISubmodelElementValue body, [ FromRoute ] [ Required ] string? submodelIdentifier,
                                                                                      [ FromRoute ] [ Required ] string idShortPath, [ FromQuery ] LevelEnum level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -1959,7 +1959,7 @@ namespace IO.Swagger.Controllers
                              "Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult PostSubmodel([ FromBody ] Submodel body, [ FromQuery ] string aasIdentifier)
+        public virtual IActionResult PostSubmodel([ FromBody ] Submodel body, [ FromQuery ] string? aasIdentifier)
         {
             _logger.LogInformation($"Received request to create a submodel.");
 
@@ -1998,7 +1998,7 @@ namespace IO.Swagger.Controllers
                              "Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult PostSubmodelElementByPathSubmodelRepo([ FromBody ] ISubmodelElement body, [ FromRoute ] [ Required ] string submodelIdentifier,
+        public virtual IActionResult PostSubmodelElementByPathSubmodelRepo([ FromBody ] ISubmodelElement body, [ FromRoute ] [ Required ] string? submodelIdentifier,
                                                                            [ FromRoute ] [ Required ] string idShortPath, bool first)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -2050,7 +2050,7 @@ namespace IO.Swagger.Controllers
                              "Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult PostSubmodelElementSubmodelRepo([ FromBody ] ISubmodelElement body, [ FromRoute ] [ Required ] string submodelIdentifier, bool first)
+        public virtual IActionResult PostSubmodelElementSubmodelRepo([ FromBody ] ISubmodelElement body, [ FromRoute ] [ Required ] string? submodelIdentifier, bool first)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
             _logger.LogInformation($"Received request to create a new submodel element in the submodel with id {decodedSubmodelIdentifier}");
@@ -2095,7 +2095,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult PutSubmodelById([ FromBody ] Submodel body, [ FromRoute ] [ Required ] string submodelIdentifier)
+        public virtual IActionResult PutSubmodelById([ FromBody ] Submodel body, [ FromRoute ] [ Required ] string? submodelIdentifier)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -2129,7 +2129,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult PutSubmodelElementByPathSubmodelRepo([ FromBody ] ISubmodelElement body, [ FromRoute ] [ Required ] string submodelIdentifier,
+        public virtual IActionResult PutSubmodelElementByPathSubmodelRepo([ FromBody ] ISubmodelElement body, [ FromRoute ] [ Required ] string? submodelIdentifier,
                                                                           [ FromRoute ] [ Required ] string idShortPath, [ FromQuery ] string level)
         {
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -2171,7 +2171,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request") ]
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult PutFileByPathSubmodelRepo([ FromRoute ] [ Required ] string submodelIdentifier, [ FromRoute ] string idShortPath, IFormFile file)
+        public virtual IActionResult PutFileByPathSubmodelRepo([ FromRoute ] [ Required ] string? submodelIdentifier, [ FromRoute ] string idShortPath, IFormFile file)
         {
             var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 

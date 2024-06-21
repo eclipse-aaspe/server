@@ -8,7 +8,7 @@
         }
 
         public static void Set(this File file,
-            string contentType = "", string value = "")
+            string? contentType = "", string value = "")
         {
             file.ContentType = contentType;
             file.Value = value;

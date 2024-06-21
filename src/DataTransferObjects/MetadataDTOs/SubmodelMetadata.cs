@@ -4,7 +4,7 @@ using DataTransferObjects.CommonDTOs;
 namespace DataTransferObjects.MetadataDTOs
 {
     public record class SubmodelMetadata(
-            string id,
+            string? id,
             List<ExtensionDTO>? extensions = null,
             string category = null,
             string idShort = null,

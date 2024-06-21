@@ -10,7 +10,7 @@ namespace Extensions
     {
         #region AasxPackageExplorer
 
-        public static void Add(this Entity entity, ISubmodelElement submodelElement)
+        public static void Add(this Entity entity, ISubmodelElement? submodelElement)
         {
             if (entity != null)
             {

@@ -30,7 +30,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         [ Required ]
         [ MaxLength(2048) ]
         [ DataMember(Name = "href") ]
-        public string Href { get; set; }
+        public string? Href { get; set; }
 
         /// <summary>
         /// Gets or Sets EndpointProtocol
@@ -78,8 +78,8 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         [ DataMember(Name = "securityAttributes") ]
         public List<ProtocolInformationSecurityAttributes>? SecurityAttributes { get; set; }
 
-        public ProtocolInformation(string href = null, string endpointProtocol = null, List<string> endpointProtocolVersion = null, string subprotocol = null,
-            string subprotocolBody = null, string subprotocolBodyEncoding = null, List<ProtocolInformationSecurityAttributes> securityAttributes = null)
+        public ProtocolInformation(string? href = null, string? endpointProtocol = null, List<string>? endpointProtocolVersion = null, string? subprotocol = null,
+            string? subprotocolBody = null, string? subprotocolBodyEncoding = null, List<ProtocolInformationSecurityAttributes>? securityAttributes = null)
         {
             Href = href;
             EndpointProtocol = endpointProtocol;

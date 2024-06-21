@@ -69,7 +69,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult DeleteAASXByPackageId([FromRoute][Required] string packageId)
+        public virtual IActionResult DeleteAASXByPackageId([FromRoute][Required] string? packageId)
         {
             var decodedPackageId = _decoderService.Decode("packageId", packageId);
 
@@ -117,7 +117,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAASXByPackageId([FromRoute][Required] string packageId)
+        public virtual IActionResult GetAASXByPackageId([FromRoute][Required] string? packageId)
         {
             var decodedPackageId = _decoderService.Decode("packageId", packageId);
 
@@ -175,7 +175,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllAASXPackageIds([FromQuery] string aasId, [FromQuery] int? limit, [FromQuery] string cursor)
+        public virtual IActionResult GetAllAASXPackageIds([FromQuery] string? aasId, [FromQuery] int? limit, [FromQuery] string cursor)
         {
             var decodedAasId = _decoderService.Decode("aasId", aasId);
 
@@ -244,7 +244,7 @@ namespace IO.Swagger.Controllers
         [Route("/packages/{packageId}")]
         [ValidateModelState]
         [SwaggerOperation("PutAASXPackageById")]
-        public virtual IActionResult PutAASXPackageById([FromRoute][Required] string packageId, IFormFile file, [FromQuery] string aasIds)
+        public virtual IActionResult PutAASXPackageById([FromRoute][Required] string? packageId, IFormFile file, [FromQuery] string aasIds)
         {
             // TODO (jtikekar, 2023-09-04): aasIds
             var decodedPackageId = _decoderService.Decode("packageId", packageId);

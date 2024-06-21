@@ -46,7 +46,7 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Check that <paramref name="text" /> is a valid short ID.
         /// </summary>
-        public static bool MatchesIdShort(string text)
+        public static bool MatchesIdShort(string? text)
         {
             return RegexMatchesIdShort.IsMatch(text);
         }
@@ -66,7 +66,7 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Check that <paramref name="text" /> is a valid version string.
         /// </summary>
-        public static bool MatchesVersionType(string text)
+        public static bool MatchesVersionType(string? text)
         {
             return RegexMatchesVersionType.IsMatch(text);
         }
@@ -86,7 +86,7 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Check that <paramref name="text" /> is a valid revision string.
         /// </summary>
-        public static bool MatchesRevisionType(string text)
+        public static bool MatchesRevisionType(string? text)
         {
             return RegexMatchesRevisionType.IsMatch(text);
         }
@@ -132,7 +132,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesXsDateTimeUtc(string text)
+        public static bool MatchesXsDateTimeUtc(string? text)
         {
             return RegexMatchesXsDateTimeUtc.IsMatch(text);
         }
@@ -142,7 +142,7 @@ namespace AasCore.Aas3_0
         /// the time zone set to UTC.
         /// </summary>
         public static bool IsXsDateTimeUtc(
-            string value
+            string? value
         )
         {
             if (!MatchesXsDateTimeUtc(value))
@@ -190,7 +190,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesMimeType(string text)
+        public static bool MatchesMimeType(string? text)
         {
             return RegexMatchesMimeType.IsMatch(text);
         }
@@ -242,7 +242,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesRfc8089Path(string text)
+        public static bool MatchesRfc8089Path(string? text)
         {
             return RegexMatchesRfc8089Path.IsMatch(text);
         }
@@ -279,7 +279,7 @@ namespace AasCore.Aas3_0
         /// <remarks>
         /// See: https://en.wikipedia.org/wiki/IETF_language_tag
         /// </remarks>
-        public static bool MatchesBcp47(string text)
+        public static bool MatchesBcp47(string? text)
         {
             return RegexMatchesBcp47.IsMatch(text);
         }
@@ -349,7 +349,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesXmlSerializableString(string text)
+        public static bool MatchesXmlSerializableString(string? text)
         {
             return RegexMatchesXmlSerializableString.IsMatch(text);
         }
@@ -414,7 +414,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesXsAnyUri(string text)
+        public static bool MatchesXsAnyUri(string? text)
         {
             return RegexMatchesXsAnyUri.IsMatch(text);
         }
@@ -455,7 +455,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesXsBase64Binary(string text)
+        public static bool MatchesXsBase64Binary(string? text)
         {
             return RegexMatchesXsBase64Binary.IsMatch(text);
         }
@@ -484,7 +484,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesXsBoolean(string text)
+        public static bool MatchesXsBoolean(string? text)
         {
             return RegexMatchesXsBoolean.IsMatch(text);
         }
@@ -520,7 +520,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesXsDate(string text)
+        public static bool MatchesXsDate(string? text)
         {
             return RegexMatchesXsDate.IsMatch(text);
         }
@@ -559,7 +559,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesXsDateTime(string text)
+        public static bool MatchesXsDateTime(string? text)
         {
             return RegexMatchesXsDateTime.IsMatch(text);
         }
@@ -615,7 +615,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         ///     <c>true</c> if the value starts with a valid date
         /// </returns>
-        private static bool IsPrefixedWithValidDate(string value)
+        private static bool IsPrefixedWithValidDate(string? value)
         {
             // NOTE (mristin, 2023-03-16):
             // We can not use System.DateTime.ParseExact since it does not handle the zero and
@@ -724,7 +724,7 @@ namespace AasCore.Aas3_0
         /// the time zone set to UTC.
         /// </summary>
         public static bool IsXsDateTime(
-            string value
+            string? value
         )
         {
             if (!MatchesXsDateTime(value))
@@ -766,7 +766,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesXsDecimal(string text)
+        public static bool MatchesXsDecimal(string? text)
         {
             return RegexMatchesXsDecimal.IsMatch(text);
         }
@@ -796,7 +796,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesXsDouble(string text)
+        public static bool MatchesXsDouble(string? text)
         {
             return RegexMatchesXsDouble.IsMatch(text);
         }
@@ -826,7 +826,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesXsDuration(string text)
+        public static bool MatchesXsDuration(string? text)
         {
             return RegexMatchesXsDuration.IsMatch(text);
         }
@@ -856,7 +856,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesXsFloat(string text)
+        public static bool MatchesXsFloat(string? text)
         {
             return RegexMatchesXsFloat.IsMatch(text);
         }
@@ -886,7 +886,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesXsGDay(string text)
+        public static bool MatchesXsGDay(string? text)
         {
             return RegexMatchesXsGDay.IsMatch(text);
         }
@@ -916,7 +916,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesXsGMonth(string text)
+        public static bool MatchesXsGMonth(string? text)
         {
             return RegexMatchesXsGMonth.IsMatch(text);
         }
@@ -946,7 +946,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesXsGMonthDay(string text)
+        public static bool MatchesXsGMonthDay(string? text)
         {
             return RegexMatchesXsGMonthDay.IsMatch(text);
         }
@@ -976,7 +976,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesXsGYear(string text)
+        public static bool MatchesXsGYear(string? text)
         {
             return RegexMatchesXsGYear.IsMatch(text);
         }
@@ -1006,7 +1006,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesXsGYearMonth(string text)
+        public static bool MatchesXsGYearMonth(string? text)
         {
             return RegexMatchesXsGYearMonth.IsMatch(text);
         }
@@ -1036,7 +1036,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesXsHexBinary(string text)
+        public static bool MatchesXsHexBinary(string? text)
         {
             return RegexMatchesXsHexBinary.IsMatch(text);
         }
@@ -1066,7 +1066,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesXsTime(string text)
+        public static bool MatchesXsTime(string? text)
         {
             return RegexMatchesXsTime.IsMatch(text);
         }
@@ -1096,7 +1096,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesXsInteger(string text)
+        public static bool MatchesXsInteger(string? text)
         {
             return RegexMatchesXsInteger.IsMatch(text);
         }
@@ -1246,7 +1246,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesXsNonNegativeInteger(string text)
+        public static bool MatchesXsNonNegativeInteger(string? text)
         {
             return RegexMatchesXsNonNegativeInteger.IsMatch(text);
         }
@@ -1276,7 +1276,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesXsPositiveInteger(string text)
+        public static bool MatchesXsPositiveInteger(string? text)
         {
             return RegexMatchesXsPositiveInteger.IsMatch(text);
         }
@@ -1426,7 +1426,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesXsNonPositiveInteger(string text)
+        public static bool MatchesXsNonPositiveInteger(string? text)
         {
             return RegexMatchesXsNonPositiveInteger.IsMatch(text);
         }
@@ -1456,7 +1456,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesXsNegativeInteger(string text)
+        public static bool MatchesXsNegativeInteger(string? text)
         {
             return RegexMatchesXsNegativeInteger.IsMatch(text);
         }
@@ -1485,7 +1485,7 @@ namespace AasCore.Aas3_0
         /// <returns>
         /// True if the <paramref name="text" /> conforms to the pattern
         /// </returns>
-        public static bool MatchesXsString(string text)
+        public static bool MatchesXsString(string? text)
         {
             return RegexMatchesXsString.IsMatch(text);
         }
@@ -1495,7 +1495,7 @@ namespace AasCore.Aas3_0
         /// the given <paramref name="valueType" />.
         /// </summary>
         public static bool ValueConsistentWithXsdType(
-            string value,
+            string? value,
             Aas.DataTypeDefXsd valueType
         )
         {
@@ -1807,9 +1807,9 @@ namespace AasCore.Aas3_0
                         //
                         // The positive sign is indeed allowed in the lexical representation, see:
                         // https://www.w3.org/TR/xmlschema11-2/#unsignedByte
-                        string clipped = (value[0] == '+')
-                            ? value.Substring(1, value.Length - 1)
-                            : value;
+                        string? clipped = (value[0] == '+')
+                                              ? value.Substring(1, value.Length - 1)
+                                              : value;
 
                         try
                         {
@@ -1848,9 +1848,9 @@ namespace AasCore.Aas3_0
                         //
                         // The positive sign is indeed allowed in the lexical representation, see:
                         // https://www.w3.org/TR/xmlschema11-2/#unsignedInt
-                        string clipped = (value[0] == '+')
-                            ? value.Substring(1, value.Length - 1)
-                            : value;
+                        string? clipped = (value[0] == '+')
+                                              ? value.Substring(1, value.Length - 1)
+                                              : value;
 
                         try
                         {
@@ -1889,9 +1889,9 @@ namespace AasCore.Aas3_0
                         //
                         // The positive sign is indeed allowed in the lexical representation, see:
                         // https://www.w3.org/TR/xmlschema11-2/#unsignedLong
-                        string clipped = (value[0] == '+')
-                            ? value.Substring(1, value.Length - 1)
-                            : value;
+                        string? clipped = (value[0] == '+')
+                                              ? value.Substring(1, value.Length - 1)
+                                              : value;
 
                         try
                         {
@@ -1930,9 +1930,9 @@ namespace AasCore.Aas3_0
                         //
                         // The positive sign is indeed allowed in the lexical representation, see:
                         // https://www.w3.org/TR/xmlschema11-2/#unsignedShort
-                        string clipped = (value[0] == '+')
-                            ? value.Substring(1, value.Length - 1)
-                            : value;
+                        string? clipped = (value[0] == '+')
+                                              ? value.Substring(1, value.Length - 1)
+                                              : value;
 
                         try
                         {
@@ -2462,7 +2462,7 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Check that the <paramref name="text" /> corresponds to a BCP47 code for english.
         /// </summary>
-        public static bool IsBcp47ForEnglish(string text)
+        public static bool IsBcp47ForEnglish(string? text)
         {
             return RegexIsBcp47ForEnglish.IsMatch(text);
         }
@@ -9627,7 +9627,7 @@ namespace AasCore.Aas3_0
         /// Verify the constraints of <paramref name="that" />.
         /// </summary>
         public static IEnumerable<Reporting.Error> VerifyNonEmptyXmlSerializableString(
-            string that)
+            string? that)
         {
             if (!Verification.MatchesXmlSerializableString(that))
             {
@@ -9650,7 +9650,7 @@ namespace AasCore.Aas3_0
         /// Verify the constraints of <paramref name="that" />.
         /// </summary>
         public static IEnumerable<Reporting.Error> VerifyDateTimeUtc(
-            string that)
+            string? that)
         {
             if (!Verification.MatchesXsDateTimeUtc(that))
             {
@@ -9673,7 +9673,7 @@ namespace AasCore.Aas3_0
         /// Verify the constraints of <paramref name="that" />.
         /// </summary>
         public static IEnumerable<Reporting.Error> VerifyDuration(
-            string that)
+            string? that)
         {
             if (!Verification.MatchesXsDuration(that))
             {
@@ -9697,7 +9697,7 @@ namespace AasCore.Aas3_0
         /// Verify the constraints of <paramref name="that" />.
         /// </summary>
         public static IEnumerable<Reporting.Error> VerifyIdentifier(
-            string that)
+            string? that)
         {
             if (!Verification.MatchesXmlSerializableString(that))
             {
@@ -9727,7 +9727,7 @@ namespace AasCore.Aas3_0
         /// Verify the constraints of <paramref name="that" />.
         /// </summary>
         public static IEnumerable<Reporting.Error> VerifyValueTypeIec61360(
-            string that)
+            string? that)
         {
             if (!Verification.MatchesXmlSerializableString(that))
             {
@@ -9758,7 +9758,7 @@ namespace AasCore.Aas3_0
         /// Verify the constraints of <paramref name="that" />.
         /// </summary>
         public static IEnumerable<Reporting.Error> VerifyNameType(
-            string that)
+            string? that)
         {
             if (!Verification.MatchesXmlSerializableString(that))
             {
@@ -9788,7 +9788,7 @@ namespace AasCore.Aas3_0
         /// Verify the constraints of <paramref name="that" />.
         /// </summary>
         public static IEnumerable<Reporting.Error> VerifyVersionType(
-            string that)
+            string? that)
         {
             if (!Verification.MatchesXmlSerializableString(that))
             {
@@ -9825,7 +9825,7 @@ namespace AasCore.Aas3_0
         /// Verify the constraints of <paramref name="that" />.
         /// </summary>
         public static IEnumerable<Reporting.Error> VerifyRevisionType(
-            string that)
+            string? that)
         {
             if (!Verification.MatchesXmlSerializableString(that))
             {
@@ -9862,7 +9862,7 @@ namespace AasCore.Aas3_0
         /// Verify the constraints of <paramref name="that" />.
         /// </summary>
         public static IEnumerable<Reporting.Error> VerifyLabelType(
-            string that)
+            string? that)
         {
             if (!Verification.MatchesXmlSerializableString(that))
             {
@@ -9892,7 +9892,7 @@ namespace AasCore.Aas3_0
         /// Verify the constraints of <paramref name="that" />.
         /// </summary>
         public static IEnumerable<Reporting.Error> VerifyMessageTopicType(
-            string that)
+            string? that)
         {
             if (!Verification.MatchesXmlSerializableString(that))
             {
@@ -9923,7 +9923,7 @@ namespace AasCore.Aas3_0
         /// Verify the constraints of <paramref name="that" />.
         /// </summary>
         public static IEnumerable<Reporting.Error> VerifyBcp47LanguageTag(
-            string that)
+            string? that)
         {
             if (!Verification.MatchesBcp47(that))
             {
@@ -9938,7 +9938,7 @@ namespace AasCore.Aas3_0
         /// Verify the constraints of <paramref name="that" />.
         /// </summary>
         public static IEnumerable<Reporting.Error> VerifyContentType(
-            string that)
+            string? that)
         {
             if (!Verification.MatchesXmlSerializableString(that))
             {
@@ -9976,7 +9976,7 @@ namespace AasCore.Aas3_0
         /// Verify the constraints of <paramref name="that" />.
         /// </summary>
         public static IEnumerable<Reporting.Error> VerifyPathType(
-            string that)
+            string? that)
         {
             if (!Verification.MatchesXmlSerializableString(that))
             {
@@ -10014,7 +10014,7 @@ namespace AasCore.Aas3_0
         /// Verify the constraints of <paramref name="that" />.
         /// </summary>
         public static IEnumerable<Reporting.Error> VerifyQualifierType(
-            string that)
+            string? that)
         {
             if (!Verification.MatchesXmlSerializableString(that))
             {
@@ -10054,7 +10054,7 @@ namespace AasCore.Aas3_0
         /// Verify the constraints of <paramref name="that" />.
         /// </summary>
         public static IEnumerable<Reporting.Error> VerifyIdShortType(
-            string that)
+            string? that)
         {
             if (!Verification.MatchesXmlSerializableString(that))
             {

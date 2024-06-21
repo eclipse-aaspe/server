@@ -59,7 +59,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         //[RegularExpression("/^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$/")]
         [ StringLength(2000, MinimumLength = 1) ]
         [ DataMember(Name = "globalAssetId") ]
-        public string GlobalAssetId { get; set; }
+        public string? GlobalAssetId { get; set; }
 
         /// <summary>
         /// Gets or Sets IdShort
@@ -67,7 +67,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
 
         [ MaxLength(128) ]
         [ DataMember(Name = "idShort") ]
-        public string IdShort { get; set; }
+        public string? IdShort { get; set; }
 
         /// <summary>
         /// Gets or Sets Id
@@ -76,7 +76,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         //[RegularExpression("/^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$/")]
         [ StringLength(2000, MinimumLength = 1) ]
         [ DataMember(Name = "id") ]
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
         /// <summary>
         /// Gets or Sets SpecificAssetIds
@@ -92,9 +92,9 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         [ DataMember(Name = "submodelDescriptors") ]
         public List<SubmodelDescriptor>? SubmodelDescriptors { get; set; }
 
-        public AssetAdministrationShellDescriptor(AdministrativeInformation administration = null, AssetKind assetKind = AssetKind.NotApplicable, string assetType = null,
-            List<Endpoint> endpoints = null, string globalAssetId = null, string idShort = null, string id = null, List<SpecificAssetId> specificAssetIds = null,
-            List<SubmodelDescriptor> submodelDescriptors = null)
+        public AssetAdministrationShellDescriptor(AdministrativeInformation? administration = null, AssetKind assetKind = AssetKind.NotApplicable, string? assetType = null,
+            List<Endpoint>? endpoints = null, string? globalAssetId = null, string? idShort = null, string? id = null, List<SpecificAssetId>? specificAssetIds = null,
+            List<SubmodelDescriptor>? submodelDescriptors = null)
         {
             Administration = administration;
             AssetKind = assetKind;

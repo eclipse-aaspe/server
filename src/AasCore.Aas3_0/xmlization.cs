@@ -359,7 +359,7 @@ namespace AasCore.Aas3_0
                                         return null;
                                     }
 
-                                    string textValueType;
+                                    string? textValueType;
                                     try
                                     {
                                         textValueType = reader.ReadContentAsString();
@@ -1630,7 +1630,7 @@ namespace AasCore.Aas3_0
                                         return null;
                                     }
 
-                                    string textKind;
+                                    string? textKind;
                                     try
                                     {
                                         textKind = reader.ReadContentAsString();
@@ -1725,7 +1725,7 @@ namespace AasCore.Aas3_0
                                         return null;
                                     }
 
-                                    string textValueType;
+                                    string? textValueType;
                                     try
                                     {
                                         textValueType = reader.ReadContentAsString();
@@ -2660,7 +2660,7 @@ namespace AasCore.Aas3_0
                                         return null;
                                     }
 
-                                    string textAssetKind;
+                                    string? textAssetKind;
                                     try
                                     {
                                         textAssetKind = reader.ReadContentAsString();
@@ -3998,7 +3998,7 @@ namespace AasCore.Aas3_0
                                         return null;
                                     }
 
-                                    string textKind;
+                                    string? textKind;
                                     try
                                     {
                                         textKind = reader.ReadContentAsString();
@@ -5545,7 +5545,7 @@ namespace AasCore.Aas3_0
                                         return null;
                                     }
 
-                                    string textTypeValueListElement;
+                                    string? textTypeValueListElement;
                                     try
                                     {
                                         textTypeValueListElement = reader.ReadContentAsString();
@@ -5600,7 +5600,7 @@ namespace AasCore.Aas3_0
                                         return null;
                                     }
 
-                                    string textValueTypeListElement;
+                                    string? textValueTypeListElement;
                                     try
                                     {
                                         textValueTypeListElement = reader.ReadContentAsString();
@@ -6875,7 +6875,7 @@ namespace AasCore.Aas3_0
                                         return null;
                                     }
 
-                                    string textValueType;
+                                    string? textValueType;
                                     try
                                     {
                                         textValueType = reader.ReadContentAsString();
@@ -8120,7 +8120,7 @@ namespace AasCore.Aas3_0
                                         return null;
                                     }
 
-                                    string textValueType;
+                                    string? textValueType;
                                     try
                                     {
                                         textValueType = reader.ReadContentAsString();
@@ -11275,7 +11275,7 @@ namespace AasCore.Aas3_0
                                         return null;
                                     }
 
-                                    string textEntityType;
+                                    string? textEntityType;
                                     try
                                     {
                                         textEntityType = reader.ReadContentAsString();
@@ -12471,7 +12471,7 @@ namespace AasCore.Aas3_0
                                         return null;
                                     }
 
-                                    string textDirection;
+                                    string? textDirection;
                                     try
                                     {
                                         textDirection = reader.ReadContentAsString();
@@ -12526,7 +12526,7 @@ namespace AasCore.Aas3_0
                                         return null;
                                     }
 
-                                    string textState;
+                                    string? textState;
                                     try
                                     {
                                         textState = reader.ReadContentAsString();
@@ -15007,7 +15007,7 @@ namespace AasCore.Aas3_0
                                         return null;
                                     }
 
-                                    string textType;
+                                    string? textType;
                                     try
                                     {
                                         textType = reader.ReadContentAsString();
@@ -15342,7 +15342,7 @@ namespace AasCore.Aas3_0
                                         return null;
                                     }
 
-                                    string textType;
+                                    string? textType;
                                     try
                                     {
                                         textType = reader.ReadContentAsString();
@@ -19119,7 +19119,7 @@ namespace AasCore.Aas3_0
                                         return null;
                                     }
 
-                                    string textDataType;
+                                    string? textDataType;
                                     try
                                     {
                                         textDataType = reader.ReadContentAsString();

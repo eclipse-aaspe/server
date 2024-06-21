@@ -3,7 +3,7 @@
 namespace DataTransferObjects.CommonDTOs
 {
     public record class ExtensionDTO(
-            string name,
+            string? name,
             ReferenceDTO? semanticId = null,
             List<ReferenceDTO>? supplementalSemanticIds = null,
             DataTypeDefXsd? valueType = null,

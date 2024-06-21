@@ -127,7 +127,7 @@ namespace Extensions
             return submodelElementCollection;
         }
 
-        public static void Add(this SubmodelElementCollection submodelElementCollection, ISubmodelElement submodelElement)
+        public static void Add(this SubmodelElementCollection submodelElementCollection, ISubmodelElement? submodelElement)
         {
             submodelElementCollection.Value ??= new List<ISubmodelElement>();
 

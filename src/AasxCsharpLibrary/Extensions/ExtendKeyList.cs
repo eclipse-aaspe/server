@@ -138,12 +138,12 @@ namespace Extensions
         /// Take only idShort, ignore all other key-types and create a '/'-separated list
         /// </summary>
         /// <returns>Empty string or list of idShorts</returns>
-        public static string BuildIdShortPath(this List<Key> keyList,
-            int startPos = 0, int count = int.MaxValue)
+        public static string? BuildIdShortPath(this List<Key> keyList,
+                                               int startPos = 0, int count = int.MaxValue)
         {
             if (keyList == null || startPos >= keyList.Count)
                 return "";
-            int nr = 0;
+            int     nr  = 0;
             var res = "";
             for (int i = startPos; i < keyList.Count && nr < count; i++)
             {

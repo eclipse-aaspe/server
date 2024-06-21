@@ -20,7 +20,7 @@ namespace IO.Swagger.Lib.V3.Services
             _submodelService = submodelService ?? throw new ArgumentNullException(nameof(submodelService));
         }
 
-        public AasCore.Aas3_0.Environment GenerateSerializationByIds(List<string?> aasIds = null, List<string?> submodelIds = null, bool includeConceptDescriptions = false)
+        public AasCore.Aas3_0.Environment GenerateSerializationByIds(List<string?>? aasIds = null, List<string?>? submodelIds = null, bool includeConceptDescriptions = false)
         {
             var outputEnv = new AasCore.Aas3_0.Environment();
             outputEnv.AssetAdministrationShells = new List<IAssetAdministrationShell>();

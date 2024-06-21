@@ -40,15 +40,15 @@ namespace AasxCompatibilityModels
         {
             // members
 
-            [ XmlAttribute ] [ CountForHash ] public string idType = "";
+            [ XmlAttribute ] [ CountForHash ] public string? idType = "";
 
-            [ XmlText ] [ CountForHash ] public string id = "";
+            [ XmlText ] [ CountForHash ] public string? id = "";
 
             // some constants
 
-            public static string IRDI = "IRDI";
-            public static string IRI = "IRI";
-            public static string IdShort = "IdShort";
+            public static string? IRDI = "IRDI";
+            public static string? IRI = "IRI";
+            public static string? IdShort = "IdShort";
 
             // constructors
 
@@ -70,7 +70,7 @@ namespace AasxCompatibilityModels
             }
 #endif
 
-            public Identification(string idType, string id)
+            public Identification(string? idType, string? id)
             {
                 this.idType = idType;
                 this.id     = id;
@@ -84,7 +84,7 @@ namespace AasxCompatibilityModels
 
             // Creator with validation
 
-            public static Identification CreateNew(string idType, string id)
+            public static Identification CreateNew(string? idType, string? id)
             {
                 if (idType == null || id == null)
                     return null;
@@ -170,16 +170,16 @@ namespace AasxCompatibilityModels
             // Members
 
             [ MetaModelName("Key.type") ] [ TextSearchable ] [ XmlAttribute ] [ CountForHash ]
-            public string type = "";
+            public string? type = "";
 
             [ XmlAttribute ] [ CountForHash ] public bool local = false;
 
             [ MetaModelName("Key.idType") ] [ TextSearchable ] [ XmlAttribute ] [ JsonIgnore ] [ CountForHash ]
-            public string idType = "";
+            public string? idType = "";
 
             [ XmlIgnore ]
             [ JsonProperty(PropertyName = "idType") ]
-            public string JsonIdType
+            public string? JsonIdType
             {
                 // adapt idShort <-> IdShort
                 get => (idType == "idShort") ? "IdShort" : idType;
@@ -187,7 +187,7 @@ namespace AasxCompatibilityModels
             }
 
             [ MetaModelName("Key.value") ] [ TextSearchable ] [ XmlText ] [ CountForHash ]
-            public string value = "";
+            public string? value = "";
 
             [ XmlIgnore ] [ JsonProperty(PropertyName = "index") ] [ CountForHash ]
             public int index = 0;
@@ -218,7 +218,7 @@ namespace AasxCompatibilityModels
             }
 #endif
 
-            public Key(string type, bool local, string idType, string value)
+            public Key(string? type, bool local, string? idType, string? value)
             {
                 this.type   = type;
                 this.local  = local;
@@ -226,7 +226,7 @@ namespace AasxCompatibilityModels
                 this.value  = value;
             }
 
-            public static Key CreateNew(string type, bool local, string idType, string value)
+            public static Key CreateNew(string? type, bool local, string? idType, string? value)
             {
                 var k = new Key() {type = type, local = local, idType = idType, value = value};
                 return (k);
@@ -262,7 +262,7 @@ namespace AasxCompatibilityModels
                 return $"[{this.type}, {tlc}, {this.idType}, {this.value}]";
             }
 
-            public static Key Parse(string cell, string typeIfNotSet = null,
+            public static Key Parse(string cell, string? typeIfNotSet = null,
                                     bool allowFmtAll = false, bool allowFmt0 = false,
                                     bool allowFmt1 = false, bool allowFmt2 = false)
             {
@@ -331,14 +331,14 @@ namespace AasxCompatibilityModels
                 return s + " ]";
             }
 
-            public static string[] KeyElements = new string[]
-                                                 {
-                                                     "GlobalReference", "FragmentReference", "AccessPermissionRule", "Asset", "AssetAdministrationShell", "ConceptDescription",
-                                                     "Submodel", "SubmodelRef", // not completely right, but used by Package Explorer
-                                                     "Blob", "ConceptDictionary", "DataElement", "File", "Operation", "OperationVariable", "BasicEvent", "Entity", "Property",
-                                                     "MultiLanguageProperty", "Range", "ReferenceElement", "RelationshipElement", "AnnotatedRelationshipElement", "Capability",
-                                                     "SubmodelElement", "SubmodelElementCollection", "View"
-                                                 };
+            public static string?[] KeyElements = new string[]
+                                                  {
+                                                      "GlobalReference", "FragmentReference", "AccessPermissionRule", "Asset", "AssetAdministrationShell", "ConceptDescription",
+                                                      "Submodel", "SubmodelRef", // not completely right, but used by Package Explorer
+                                                      "Blob", "ConceptDictionary", "DataElement", "File", "Operation", "OperationVariable", "BasicEvent", "Entity", "Property",
+                                                      "MultiLanguageProperty", "Range", "ReferenceElement", "RelationshipElement", "AnnotatedRelationshipElement", "Capability",
+                                                      "SubmodelElement", "SubmodelElementCollection", "View"
+                                                  };
 
             public static string[] ReferableElements = new string[]
                                                        {
@@ -361,30 +361,30 @@ namespace AasxCompatibilityModels
 
             // use this in list to designate the GlobalReference
             // Resharper disable MemberHidesStaticFromOuterClass
-            public static string GlobalReference = "GlobalReference";
+            public static string? GlobalReference = "GlobalReference";
             public static string FragmentReference = "FragmentReference";
             public static string ConceptDescription = "ConceptDescription";
             public static string SubmodelRef = "SubmodelRef";
-            public static string Submodel = "Submodel";
+            public static string? Submodel = "Submodel";
             public static string SubmodelElement = "SubmodelElement";
-            public static string Asset = "Asset";
-            public static string AAS = "AssetAdministrationShell";
+            public static string? Asset = "Asset";
+            public static string? AAS = "AssetAdministrationShell";
             public static string Entity = "Entity";
             public static string View = "View";
             // Resharper enable MemberHidesStaticFromOuterClass
 
-            public static string[] IdentifierTypeNames = new string[] {Identification.IdShort, "FragmentId", "Custom", Identification.IRDI, Identification.IRI};
+            public static string?[] IdentifierTypeNames = new string[] {Identification.IdShort, "FragmentId", "Custom", Identification.IRDI, Identification.IRI};
 
             public enum IdentifierType { IdShort = 0, FragmentId, Custom, IRDI, IRI };
 
-            public static string GetIdentifierTypeName(IdentifierType t)
+            public static string? GetIdentifierTypeName(IdentifierType t)
             {
                 return IdentifierTypeNames[ (int) t ];
             }
 
-            public static string IdShort = "IdShort";
+            public static string? IdShort = "IdShort";
             public static string FragmentId = "FragmentId";
-            public static string Custom = "Custom";
+            public static string? Custom = "Custom";
 
             // some helpers
 
@@ -411,7 +411,7 @@ namespace AasxCompatibilityModels
                 return value.Trim().Equals(idType.Trim());
             }
 
-            public bool IsType(string value)
+            public bool IsType(string? value)
             {
                 if (value == null || type == null || type.Trim() == "")
                     return false;
@@ -427,7 +427,7 @@ namespace AasxCompatibilityModels
             }
 
             public bool Matches(
-                string type, bool local, string idType, string id, MatchMode matchMode = MatchMode.Strict)
+                string? type, bool local, string? idType, string? id, MatchMode matchMode = MatchMode.Strict)
             {
                 if (matchMode == MatchMode.Strict)
                     return this.type == type && this.local == local && this.idType == idType && this.value == id;
@@ -553,13 +553,13 @@ namespace AasxCompatibilityModels
                 return kl;
             }
 
-            public static KeyList CreateNew(string type, bool local, string idType, string value)
+            public static KeyList CreateNew(string? type, bool local, string? idType, string? value)
             {
                 var kl = new KeyList() {Key.CreateNew(type, local, idType, value)};
                 return kl;
             }
 
-            public static KeyList CreateNew(string type, bool local, string idType, string[] valueItems)
+            public static KeyList CreateNew(string? type, bool local, string? idType, string[] valueItems)
             {
                 // access
                 if (valueItems == null)
@@ -594,7 +594,7 @@ namespace AasxCompatibilityModels
                     this[ i ].index = i;
             }
 
-            public string ToString(int format = 0, string delimiter = ",")
+            public string? ToString(int format = 0, string delimiter = ",")
             {
                 var res = string.Join(delimiter, this.Select((k) => k.ToString(format)));
                 return res;
@@ -620,11 +620,11 @@ namespace AasxCompatibilityModels
                 return kl;
             }
 
-            public string MostSignificantInfo()
+            public string? MostSignificantInfo()
             {
                 if (this.Count < 1)
                     return "-";
-                var i   = this.Count - 1;
+                var     i   = this.Count - 1;
                 var res = this[ i ].value;
                 if (this[ i ].IsIdType(new[] {Key.FragmentId}) && i > 0)
                     res += this[ i - 1 ].value;
@@ -730,11 +730,11 @@ namespace AasxCompatibilityModels
             /// Take only idShort, ignore all other key-types and create a '/'-separated list
             /// </summary>
             /// <returns>Empty string or list of idShorts</returns>
-            public string BuildIdShortPath(int startPos = 0, int count = int.MaxValue)
+            public string? BuildIdShortPath(int startPos = 0, int count = int.MaxValue)
             {
                 if (startPos >= this.Count)
                     return "";
-                int nr  = 0;
+                int     nr  = 0;
                 var res = "";
                 for (int i = startPos; i < this.Count && nr < count; i++)
                 {
@@ -753,7 +753,7 @@ namespace AasxCompatibilityModels
 
         public class AasElementSelfDescription
         {
-            public string ElementName = "";
+            public string? ElementName = "";
             public string ElementAbbreviation = "";
 
             public SubmodelElementWrapper.AdequateElementEnum ElementEnum =
@@ -762,7 +762,7 @@ namespace AasxCompatibilityModels
             public AasElementSelfDescription() { }
 
             public AasElementSelfDescription(
-                string ElementName, string ElementAbbreviation,
+                string? ElementName, string ElementAbbreviation,
                 SubmodelElementWrapper.AdequateElementEnum elementEnum
                     = SubmodelElementWrapper.AdequateElementEnum.Unknown)
             {
@@ -778,7 +778,7 @@ namespace AasxCompatibilityModels
         public interface IAasElement
         {
             AasElementSelfDescription GetSelfDescription();
-            string                    GetElementName();
+            string?                   GetElementName();
         }
 
         [ XmlType(TypeName = "reference") ]
@@ -888,7 +888,7 @@ namespace AasxCompatibilityModels
                 return r;
             }
 
-            public static Reference CreateNew(string type, bool local, string idType, string value)
+            public static Reference CreateNew(string? type, bool local, string? idType, string? value)
             {
                 if (type == null || idType == null || value == null)
                     return null;
@@ -897,7 +897,7 @@ namespace AasxCompatibilityModels
                 return r;
             }
 
-            public static Reference CreateIrdiReference(string irdi)
+            public static Reference CreateIrdiReference(string? irdi)
             {
                 if (irdi == null)
                     return null;
@@ -933,7 +933,7 @@ namespace AasxCompatibilityModels
             }
 
             public bool MatchesExactlyOneKey(
-                string type, bool local, string idType, string id, Key.MatchMode matchMode = Key.MatchMode.Strict)
+                string? type, bool local, string? idType, string? id, Key.MatchMode matchMode = Key.MatchMode.Strict)
             {
                 if (keys == null || keys.Count != 1)
                     return false;
@@ -949,7 +949,7 @@ namespace AasxCompatibilityModels
             }
 
             public bool Matches(
-                string type, bool local, string idType, string id, Key.MatchMode matchMode = Key.MatchMode.Strict)
+                string? type, bool local, string? idType, string? id, Key.MatchMode matchMode = Key.MatchMode.Strict)
             {
                 if (this.Count == 1)
                 {
@@ -1006,7 +1006,7 @@ namespace AasxCompatibilityModels
                 return Matches(cd?.GetReference(), matchMode);
             }
 
-            public string ToString(int format = 0, string delimiter = ",")
+            public string? ToString(int format = 0, string delimiter = ",")
             {
                 return keys?.ToString(format, delimiter);
             }
@@ -1016,9 +1016,9 @@ namespace AasxCompatibilityModels
                 return CreateNew(KeyList.Parse(input));
             }
 
-            public string ListOfValues(string delim)
+            public string? ListOfValues(string? delim)
             {
-                string res = "";
+                string? res = "";
                 if (this.Keys != null)
                     foreach (var x in this.Keys)
                     {
@@ -1038,7 +1038,7 @@ namespace AasxCompatibilityModels
                 return new AasElementSelfDescription("Reference", "Rfc");
             }
 
-            public virtual string GetElementName()
+            public virtual string? GetElementName()
             {
                 return this.GetSelfDescription()?.ElementName;
             }
@@ -1108,7 +1108,7 @@ namespace AasxCompatibilityModels
             public SubmodelRef(AasxCompatibilityModels.AdminShellV10.SubmodelRef src) : base(src) { }
 #endif
 
-            public new static SubmodelRef CreateNew(string type, bool local, string idType, string value)
+            public new static SubmodelRef CreateNew(string? type, bool local, string? idType, string? value)
             {
                 var r = new SubmodelRef();
                 r.Keys.Add(Key.CreateNew(type, local, idType, value));
@@ -1150,7 +1150,7 @@ namespace AasxCompatibilityModels
 
             // further methods
 
-            public new static ConceptDescriptionRef CreateNew(string type, bool local, string idType, string value)
+            public new static ConceptDescriptionRef CreateNew(string? type, bool local, string? idType, string? value)
             {
                 var r = new ConceptDescriptionRef();
                 r.Keys.Add(Key.CreateNew(type, local, idType, value));
@@ -1433,7 +1433,7 @@ namespace AasxCompatibilityModels
         public class LangStr
         {
             // constants
-            public static string LANG_DEFAULT = "en";
+            public static string? LANG_DEFAULT = "en";
 
             // members
 
@@ -1442,10 +1442,10 @@ namespace AasxCompatibilityModels
             [ XmlAttribute(Namespace = "http://www.admin-shell.io/2/0") ]
             [ JsonProperty(PropertyName = "language") ]
             [ CountForHash ]
-            public string lang = "";
+            public string? lang = "";
 
             [ MetaModelName("LangStr.str") ] [ TextSearchable ] [ XmlText ] [ JsonProperty(PropertyName = "text") ] [ CountForHash ]
-            public string str = "";
+            public string? str = "";
 
             // constructors
 
@@ -1465,13 +1465,13 @@ namespace AasxCompatibilityModels
             }
 #endif
 
-            public LangStr(string lang, string str)
+            public LangStr(string? lang, string? str)
             {
                 this.lang = lang;
                 this.str  = str;
             }
 
-            public static ListOfLangStr CreateManyFromStringArray(string[] s)
+            public static ListOfLangStr CreateManyFromStringArray(string?[] s)
             {
                 var r = new ListOfLangStr();
                 var i = 0;
@@ -1507,7 +1507,7 @@ namespace AasxCompatibilityModels
                         this.Add(ls);
             }
 
-            public string this[string lang]
+            public string? this[string? lang]
             {
                 get
                 {
@@ -1526,13 +1526,13 @@ namespace AasxCompatibilityModels
                 }
             }
 
-            public string GetDefaultStr(string defaultLang = null)
+            public string? GetDefaultStr(string? defaultLang = null)
             {
                 // start
                 if (defaultLang == null)
                     defaultLang = LangStr.LANG_DEFAULT;
                 defaultLang = defaultLang.Trim().ToLower();
-                string res = null;
+                string? res = null;
 
                 // search
                 foreach (var ls in this)
@@ -1545,12 +1545,12 @@ namespace AasxCompatibilityModels
                 return res;
             }
 
-            public string GetExactStrForLang(string lang)
+            public string? GetExactStrForLang(string lang)
             {
                 // start
                 if (lang == null)
                     return null;
-                string res = null;
+                string? res = null;
 
                 // exact search
                 foreach (var ls in this)
@@ -1583,7 +1583,7 @@ namespace AasxCompatibilityModels
                 return string.Join(", ", this.Select((ls) => ls.ToString()));
             }
 
-            public static ListOfLangStr Parse(string cell)
+            public static ListOfLangStr Parse(string? cell)
             {
                 // access
                 if (cell == null)
@@ -1654,7 +1654,7 @@ namespace AasxCompatibilityModels
 #endif
 
             // single string representation
-            public string GetDefaultStr(string defaultLang = null)
+            public string? GetDefaultStr(string? defaultLang = null)
             {
                 return this.langString?.GetDefaultStr(defaultLang);
             }
@@ -2050,7 +2050,7 @@ namespace AasxCompatibilityModels
             // members
 
             [ MetaModelName("Referable.IdShort") ] [ TextSearchable ] [ CountForHash ]
-            public string idShort = "";
+            public string? idShort = "";
 
             [ MetaModelName("Referable.category") ] [ TextSearchable ] [ CountForHash ]
             public string category = null;
@@ -2097,7 +2097,7 @@ namespace AasxCompatibilityModels
 
             public Referable() { }
 
-            public Referable(string idShort)
+            public Referable(string? idShort)
             {
                 this.idShort = idShort;
             }
@@ -2131,7 +2131,7 @@ namespace AasxCompatibilityModels
             /// Introduced for JSON serialization, can create Referables based on a string name
             /// </summary>
             /// <param name="elementName">string name (standard PascalCased)</param>
-            public static Referable CreateAdequateType(string elementName)
+            public static Referable CreateAdequateType(string? elementName)
             {
                 if (elementName == Key.AAS)
                     return new AdministrationShell();
@@ -2146,7 +2146,7 @@ namespace AasxCompatibilityModels
                 return SubmodelElementWrapper.CreateAdequateType(elementName);
             }
 
-            public void AddDescription(string lang, string str)
+            public void AddDescription(string? lang, string? str)
             {
                 if (description == null)
                     description = new Description();
@@ -2158,7 +2158,7 @@ namespace AasxCompatibilityModels
                 return new AasElementSelfDescription("Referable", "Ref");
             }
 
-            public virtual string GetElementName()
+            public virtual string? GetElementName()
             {
                 return this.GetSelfDescription()?.ElementName;
             }
@@ -2464,7 +2464,7 @@ namespace AasxCompatibilityModels
 
             public Identifiable() : base() { }
 
-            public Identifiable(string idShort) : base(idShort) { }
+            public Identifiable(string? idShort) : base(idShort) { }
 
             public Identifiable(Identifiable src)
                 : base(src)
@@ -2488,7 +2488,7 @@ namespace AasxCompatibilityModels
             }
 #endif
 
-            public void SetIdentification(string idType, string id, string idShort = null)
+            public void SetIdentification(string? idType, string? id, string? idShort = null)
             {
                 identification.idType = idType;
                 identification.id     = id;
@@ -2558,9 +2558,9 @@ namespace AasxCompatibilityModels
 
         public class JsonModelTypeWrapper
         {
-            public string name = "";
+            public string? name = "";
 
-            public JsonModelTypeWrapper(string name = "") { this.name = name; }
+            public JsonModelTypeWrapper(string? name = "") { this.name = name; }
         }
 
         public interface IFindAllReferences
@@ -2610,7 +2610,7 @@ namespace AasxCompatibilityModels
 
             public AdministrationShell() { }
 
-            public AdministrationShell(string idShort) : base(idShort) { }
+            public AdministrationShell(string? idShort) : base(idShort) { }
 
             public AdministrationShell(AdministrationShell src)
                 : base(src)
@@ -2672,7 +2672,7 @@ namespace AasxCompatibilityModels
 #endif
 
             public static AdministrationShell CreateNew(
-                string idShort, string idType, string id, string version = null, string revision = null)
+                string? idShort, string? idType, string? id, string version = null, string revision = null)
             {
                 var s = new AdministrationShell();
                 s.idShort = idShort;
@@ -2790,7 +2790,7 @@ namespace AasxCompatibilityModels
                 return new AasElementSelfDescription("AssetAdministrationShells", "AASs");
             }
 
-            public string GetElementName()
+            public string? GetElementName()
             {
                 return this.GetSelfDescription()?.ElementName;
             }
@@ -2840,7 +2840,7 @@ namespace AasxCompatibilityModels
 
             public Asset() { }
 
-            public Asset(string idShort) : base(idShort) { }
+            public Asset(string? idShort) : base(idShort) { }
 
             public Asset(Asset src)
                 : base(src)
@@ -2924,7 +2924,7 @@ namespace AasxCompatibilityModels
                 return new AasElementSelfDescription("Assets", "Assets");
             }
 
-            public string GetElementName()
+            public string? GetElementName()
             {
                 return this.GetSelfDescription()?.ElementName;
             }
@@ -3186,7 +3186,7 @@ namespace AasxCompatibilityModels
 #if !DoNotUseAasxCompatibilityModels
             // not available in V1.0
 #endif
-            public LangStringSet(string lang, string str)
+            public LangStringSet(string? lang, string? str)
             {
                 if (str == null || str.Trim() == "")
                     return;
@@ -3212,7 +3212,7 @@ namespace AasxCompatibilityModels
                 return ls;
             }
 
-            public LangStr Add(string lang, string str)
+            public LangStr Add(string? lang, string? str)
             {
                 var ls = new LangStr(lang, str);
                 this.langString.Add(ls);
@@ -3220,7 +3220,7 @@ namespace AasxCompatibilityModels
             }
 
             // single string representation
-            public string GetDefaultStr(string defaultLang = null)
+            public string? GetDefaultStr(string? defaultLang = null)
             {
                 return this.langString?.GetDefaultStr(defaultLang);
             }
@@ -3255,7 +3255,7 @@ namespace AasxCompatibilityModels
                         this.Add(new LangStr(ls));
             }
 #endif
-            public LangStringSetIEC61360(string lang, string str)
+            public LangStringSetIEC61360(string? lang, string? str)
             {
                 if (str == null || str.Trim() == "")
                     return;
@@ -3333,7 +3333,7 @@ namespace AasxCompatibilityModels
             }
 #endif
 
-            public static UnitId CreateNew(string type, bool local, string idType, string value)
+            public static UnitId CreateNew(string? type, bool local, string? idType, string? value)
             {
                 var u = new UnitId();
                 u.keys.Add(Key.CreateNew(type, local, idType, value));
@@ -3380,13 +3380,13 @@ namespace AasxCompatibilityModels
             public string valueFormat = null;
 
             [ MetaModelName("DataSpecificationIEC61360.sourceOfDefinition") ] [ TextSearchable ] [ CountForHash ]
-            public string sourceOfDefinition = null;
+            public string? sourceOfDefinition = null;
 
             [ MetaModelName("DataSpecificationIEC61360.symbol") ] [ TextSearchable ] [ CountForHash ]
             public string symbol = null;
 
             [ MetaModelName("DataSpecificationIEC61360.dataType") ] [ TextSearchable ] [ CountForHash ]
-            public string dataType = "";
+            public string? dataType = "";
 
             // TODO (MIHO, 2020-08-27): According to spec, cardinality is [0..1][1..n]
             // these cardinalities are NOT MAINTAINED in ANY WAY by the system
@@ -3434,15 +3434,15 @@ namespace AasxCompatibilityModels
 #endif
 
             public static DataSpecificationIEC61360 CreateNew(
-                string[] preferredName = null,
-                string shortName = "",
+                string?[] preferredName = null,
+                string? shortName = "",
                 string unit = "",
                 UnitId unitId = null,
                 string valueFormat = null,
-                string sourceOfDefinition = null,
+                string? sourceOfDefinition = null,
                 string symbol = null,
-                string dataType = "",
-                string[] definition = null
+                string? dataType = "",
+                string?[] definition = null
             )
             {
                 var d = new DataSpecificationIEC61360();
@@ -3516,7 +3516,7 @@ namespace AasxCompatibilityModels
                                                         }));
 
                 // check data type
-                string foundDataType = null;
+                string? foundDataType = null;
                 if (this.dataType != null)
                     foreach (var dtn in DataTypeNames)
                         if (this.dataType.Trim() == dtn.Trim())
@@ -3741,7 +3741,7 @@ namespace AasxCompatibilityModels
 #endif
 
             public static ConceptDescription CreateNew(
-                string idShort, string idType, string id, string version = null, string revision = null)
+                string? idShort, string? idType, string? id, string version = null, string revision = null)
             {
                 var cd = new ConceptDescription();
                 cd.idShort               = idShort;
@@ -3773,15 +3773,15 @@ namespace AasxCompatibilityModels
             }
 
             public void SetIEC61360Spec(
-                string[] preferredNames = null,
-                string shortName = "",
+                string?[] preferredNames = null,
+                string? shortName = "",
                 string unit = "",
                 UnitId unitId = null,
                 string valueFormat = null,
-                string sourceOfDefinition = null,
+                string? sourceOfDefinition = null,
                 string symbol = null,
-                string dataType = "",
-                string[] definition = null
+                string? dataType = "",
+                string?[] definition = null
             )
             {
                 var eds = new EmbeddedDataSpecification(new DataSpecificationRef(), new DataSpecificationContent());
@@ -3865,14 +3865,14 @@ namespace AasxCompatibilityModels
                 return eds.dataSpecificationContent?.dataSpecificationIEC61360;
             }
 
-            public string GetDefaultPreferredName(string defaultLang = null)
+            public string GetDefaultPreferredName(string? defaultLang = null)
             {
                 return "" +
                        GetIEC61360()?
                            .preferredName?.GetDefaultStr(defaultLang);
             }
 
-            public string GetDefaultShortName(string defaultLang = null)
+            public string GetDefaultShortName(string? defaultLang = null)
             {
                 return "" +
                        GetIEC61360()?
@@ -4034,7 +4034,7 @@ namespace AasxCompatibilityModels
                 return new AasElementSelfDescription("ConceptDescriptions", "CDS");
             }
 
-            public string GetElementName()
+            public string? GetElementName()
             {
                 return this.GetSelfDescription()?.ElementName;
             }
@@ -4065,7 +4065,7 @@ namespace AasxCompatibilityModels
             }
 #endif
 
-            public static ConceptDictionary CreateNew(string idShort = null)
+            public static ConceptDictionary CreateNew(string? idShort = null)
             {
                 var d = new ConceptDictionary();
                 if (idShort != null)
@@ -4224,7 +4224,7 @@ namespace AasxCompatibilityModels
                 return new AasElementSelfDescription("AdministrationShellEnv", "Env");
             }
 
-            public string GetElementName()
+            public string? GetElementName()
             {
                 return this.GetSelfDescription()?.ElementName;
             }
@@ -5183,7 +5183,7 @@ namespace AasxCompatibilityModels
             // TODO (Michael Hoffmeister, 2020-08-01): check, if Json has Qualifiers or not
 
             [ MetaModelName("Qualifier.type") ] [ TextSearchable ] [ CountForHash ]
-            public string type = "";
+            public string? type = "";
 
             [ MetaModelName("Qualifier.valueType") ] [ TextSearchable ] [ CountForHash ]
             public string valueType = "";
@@ -5215,7 +5215,7 @@ namespace AasxCompatibilityModels
                     this.valueId = new Reference(src.valueId);
             }
 
-            public Qualifier(string type, string value)
+            public Qualifier(string? type, string value)
             {
                 this.type  = type;
                 this.value = value;
@@ -5238,7 +5238,7 @@ namespace AasxCompatibilityModels
                 return new AasElementSelfDescription("Qualifier", "Qfr");
             }
 
-            public string GetElementName()
+            public string? GetElementName()
             {
                 return this.GetSelfDescription()?.ElementName;
             }
@@ -5527,7 +5527,7 @@ namespace AasxCompatibilityModels
             }
 #endif
 
-            public static T CreateNew<T>(string idShort = null, string category = null, Reference semanticId = null)
+            public static T CreateNew<T>(string? idShort = null, string category = null, Reference semanticId = null)
                 where T : SubmodelElement, new()
             {
                 var res = new T();
@@ -5540,7 +5540,7 @@ namespace AasxCompatibilityModels
                 return res;
             }
 
-            public void CreateNewLogic(string idShort = null, string category = null, Key semanticIdKey = null)
+            public void CreateNewLogic(string? idShort = null, string category = null, Key semanticIdKey = null)
             {
                 if (idShort != null)
                     this.idShort = idShort;
@@ -5673,7 +5673,7 @@ namespace AasxCompatibilityModels
                 return string.Format("{0}{1}", ci.Item1, (ci.Item2 != "") ? " / " + ci.Item2 : "");
             }
 
-            public virtual string ValueAsText(string defaultLang = null)
+            public virtual string ValueAsText(string? defaultLang = null)
             {
                 return "";
             }
@@ -5683,7 +5683,7 @@ namespace AasxCompatibilityModels
                 return null;
             }
 
-            public virtual void ValueFromText(string text, string defaultLang = null)
+            public virtual void ValueFromText(string? text, string? defaultLang = null)
             {
             }
 
@@ -5817,7 +5817,7 @@ namespace AasxCompatibilityModels
             /// <summary>
             /// Deprecated. See below.
             /// </summary>
-            public static AdequateElementEnum GetAdequateEnum(string adequateName)
+            public static AdequateElementEnum GetAdequateEnum(string? adequateName)
             {
                 if (adequateName == null)
                     return AdequateElementEnum.Unknown;
@@ -5909,7 +5909,7 @@ namespace AasxCompatibilityModels
             /// Introduced for JSON serialization, can create SubModelElements based on a string name
             /// </summary>
             /// <param name="elementName">string name (standard PascalCased)</param>
-            public static SubmodelElement CreateAdequateType(string elementName)
+            public static SubmodelElement CreateAdequateType(string? elementName)
             {
                 return CreateAdequateType(GetAdequateEnum(elementName));
             }
@@ -6844,7 +6844,7 @@ namespace AasxCompatibilityModels
             }
 #endif
 
-            public static Submodel CreateNew(string idType, string id, string version = null, string revision = null)
+            public static Submodel CreateNew(string? idType, string? id, string version = null, string revision = null)
             {
                 var s = new Submodel() {identification = new Identification(idType, id)};
                 if (version != null)
@@ -7155,7 +7155,7 @@ namespace AasxCompatibilityModels
                 return new AasElementSelfDescription("Submodels", "SMS");
             }
 
-            public string GetElementName()
+            public string? GetElementName()
             {
                 return this.GetSelfDescription()?.ElementName;
             }
@@ -7246,7 +7246,7 @@ namespace AasxCompatibilityModels
 
 
             [ MetaModelName("Property.value") ] [ TextSearchable ]
-            public string value = "";
+            public string? value = "";
 
             public Reference valueId = null;
 
@@ -7279,21 +7279,21 @@ namespace AasxCompatibilityModels
             }
 #endif
 
-            public static Property CreateNew(string idShort = null, string category = null, Key semanticIdKey = null)
+            public static Property CreateNew(string? idShort = null, string category = null, Key semanticIdKey = null)
             {
                 var x = new Property();
                 x.CreateNewLogic(idShort, category, semanticIdKey);
                 return (x);
             }
 
-            public Property Set(string valueType = "", string value = "")
+            public Property Set(string valueType = "", string? value = "")
             {
                 this.valueType = valueType;
                 this.value     = value;
                 return this;
             }
 
-            public Property Set(string type, bool local, string idType, string value)
+            public Property Set(string? type, bool local, string? idType, string? value)
             {
                 this.valueId = Reference.CreateNew(Key.CreateNew(type, local, idType, value));
                 return this;
@@ -7312,12 +7312,12 @@ namespace AasxCompatibilityModels
                                                      SubmodelElementWrapper.AdequateElementEnum.Property);
             }
 
-            public override string ValueAsText(string defaultLang = null)
+            public override string ValueAsText(string? defaultLang = null)
             {
                 return "" + value;
             }
 
-            public override void ValueFromText(string text, string defaultLang = null)
+            public override void ValueFromText(string? text, string? defaultLang = null)
             {
                 value = "" + text;
             }
@@ -7389,7 +7389,7 @@ namespace AasxCompatibilityModels
 #endif
 
             public static MultiLanguageProperty CreateNew(
-                string idShort = null, string category = null, Key semanticIdKey = null)
+                string? idShort = null, string category = null, Key semanticIdKey = null)
             {
                 var x = new MultiLanguageProperty();
                 x.CreateNewLogic(idShort, category, semanticIdKey);
@@ -7424,17 +7424,17 @@ namespace AasxCompatibilityModels
                 return this;
             }
 
-            public MultiLanguageProperty Set(string lang, string str)
+            public MultiLanguageProperty Set(string? lang, string? str)
             {
                 return this.Set(new LangStr(lang, str));
             }
 
-            public override string ValueAsText(string defaultLang = null)
+            public override string ValueAsText(string? defaultLang = null)
             {
                 return "" + value?.GetDefaultStr(defaultLang);
             }
 
-            public override void ValueFromText(string text, string defaultLang = null)
+            public override void ValueFromText(string? text, string? defaultLang = null)
             {
                 Set(defaultLang, text);
             }
@@ -7488,7 +7488,7 @@ namespace AasxCompatibilityModels
             // not available in V1.0
 #endif
 
-            public static Range CreateNew(string idShort = null, string category = null, Key semanticIdKey = null)
+            public static Range CreateNew(string? idShort = null, string category = null, Key semanticIdKey = null)
             {
                 var x = new Range();
                 x.CreateNewLogic(idShort, category, semanticIdKey);
@@ -7501,7 +7501,7 @@ namespace AasxCompatibilityModels
                                                      SubmodelElementWrapper.AdequateElementEnum.Range);
             }
 
-            public override string ValueAsText(string defaultLang = null)
+            public override string ValueAsText(string? defaultLang = null)
             {
                 return "" + min + " .. " + max;
             }
@@ -7520,7 +7520,7 @@ namespace AasxCompatibilityModels
             // members
 
             [ MetaModelName("Blob.mimeType") ] [ TextSearchable ] [ CountForHash ]
-            public string mimeType = "";
+            public string? mimeType = "";
 
             [ MetaModelName("Blob.value") ] [ TextSearchable ] [ CountForHash ]
             public string value = "";
@@ -7551,14 +7551,14 @@ namespace AasxCompatibilityModels
             }
 #endif
 
-            public static Blob CreateNew(string idShort = null, string category = null, Key semanticIdKey = null)
+            public static Blob CreateNew(string? idShort = null, string category = null, Key semanticIdKey = null)
             {
                 var x = new Blob();
                 x.CreateNewLogic(idShort, category, semanticIdKey);
                 return (x);
             }
 
-            public void Set(string mimeType = "", string value = "")
+            public void Set(string? mimeType = "", string value = "")
             {
                 this.mimeType = mimeType;
                 this.value    = value;
@@ -7584,7 +7584,7 @@ namespace AasxCompatibilityModels
             // members
 
             [ MetaModelName("File.mimeType") ] [ TextSearchable ] [ CountForHash ]
-            public string mimeType = "";
+            public string? mimeType = "";
 
             [ MetaModelName("File.value") ] [ TextSearchable ] [ CountForHash ]
             public string value = "";
@@ -7615,14 +7615,14 @@ namespace AasxCompatibilityModels
             }
 #endif
 
-            public static File CreateNew(string idShort = null, string category = null, Key semanticIdKey = null)
+            public static File CreateNew(string? idShort = null, string category = null, Key semanticIdKey = null)
             {
                 var x = new File();
                 x.CreateNewLogic(idShort, category, semanticIdKey);
                 return (x);
             }
 
-            public void Set(string mimeType = "", string value = "")
+            public void Set(string? mimeType = "", string value = "")
             {
                 this.mimeType = mimeType;
                 this.value    = value;
@@ -7645,7 +7645,7 @@ namespace AasxCompatibilityModels
                     };
             }
 
-            public override string ValueAsText(string defaultLang = null)
+            public override string ValueAsText(string? defaultLang = null)
             {
                 return "" + value;
             }
@@ -7692,7 +7692,7 @@ namespace AasxCompatibilityModels
 #endif
 
             public static ReferenceElement CreateNew(
-                string idShort = null, string category = null, Key semanticIdKey = null)
+                string? idShort = null, string category = null, Key semanticIdKey = null)
             {
                 var x = new ReferenceElement();
                 x.CreateNewLogic(idShort, category, semanticIdKey);
@@ -7757,7 +7757,7 @@ namespace AasxCompatibilityModels
 #endif
 
             public static RelationshipElement CreateNew(
-                string idShort = null, string category = null, Key semanticIdKey = null, Reference first = null,
+                string? idShort = null, string category = null, Key semanticIdKey = null, Reference first = null,
                 Reference second = null)
             {
                 var x = new RelationshipElement();
@@ -7845,7 +7845,7 @@ namespace AasxCompatibilityModels
             }
 
             public new static AnnotatedRelationshipElement CreateNew(
-                string idShort = null, string category = null, Key semanticIdKey = null,
+                string? idShort = null, string category = null, Key semanticIdKey = null,
                 Reference first = null, Reference second = null)
             {
                 var x = new AnnotatedRelationshipElement();
@@ -8058,7 +8058,7 @@ namespace AasxCompatibilityModels
 #endif
 
             public static SubmodelElementCollection CreateNew(
-                string idShort = null, string category = null, Key semanticIdKey = null)
+                string? idShort = null, string category = null, Key semanticIdKey = null)
             {
                 var x = new SubmodelElementCollection();
                 x.CreateNewLogic(idShort, category, semanticIdKey);
@@ -8223,7 +8223,7 @@ namespace AasxCompatibilityModels
                 return new AasElementSelfDescription("OperationVariable", "OprVar");
             }
 
-            public string GetElementName()
+            public string? GetElementName()
             {
                 return this.GetSelfDescription()?.ElementName;
             }
@@ -8474,7 +8474,7 @@ namespace AasxCompatibilityModels
         {
             public enum EntityTypeEnum { CoManagedEntity = 0, SelfManagedEntity = 1, Undef = 3 }
 
-            public static string[] EntityTypeNames = new string[] {"CoManagedEntity", "SelfManagedEntity"};
+            public static string?[] EntityTypeNames = new string[] {"CoManagedEntity", "SelfManagedEntity"};
 
             // for JSON only
 
@@ -8528,7 +8528,7 @@ namespace AasxCompatibilityModels
 
             // further members
 
-            [ CountForHash ] public string entityType = "";
+            [ CountForHash ] public string? entityType = "";
 
             [ JsonProperty(PropertyName = "asset") ]
             public AssetRef assetRef = null;
@@ -8581,7 +8581,7 @@ namespace AasxCompatibilityModels
                     this.assetRef = new AssetRef(ent.assetRef);
             }
 
-            public Entity(EntityTypeEnum entityType, string idShort = null, AssetRef assetRef = null,
+            public Entity(EntityTypeEnum entityType, string? idShort = null, AssetRef assetRef = null,
                           string category = null, Key semanticIdKey = null)
             {
                 CreateNewLogic(idShort, null, semanticIdKey);
@@ -8594,7 +8594,7 @@ namespace AasxCompatibilityModels
             // not available in V1.0
 #endif
 
-            public static Entity CreateNew(string idShort = null, string category = null, Key semanticIdKey = null)
+            public static Entity CreateNew(string? idShort = null, string category = null, Key semanticIdKey = null)
             {
                 var x = new Entity();
                 x.CreateNewLogic(idShort, category, semanticIdKey);
@@ -8711,7 +8711,7 @@ namespace AasxCompatibilityModels
             // not available in V1.0
 #endif
 
-            public static BasicEvent CreateNew(string idShort = null, string category = null, Key semanticIdKey = null)
+            public static BasicEvent CreateNew(string? idShort = null, string category = null, Key semanticIdKey = null)
             {
                 var x = new BasicEvent();
                 x.CreateNewLogic(idShort, category, semanticIdKey);

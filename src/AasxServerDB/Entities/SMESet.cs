@@ -50,9 +50,9 @@ namespace AasxServerDB.Entities
             return string.Empty;
         }
 
-        public List<string> getMLPValue()
+        public List<string?> getMLPValue()
         {
-            var list = new List<string>();
+            var list = new List<string?>();
             if (SMEType == "MLP")
             {
                 using (AasContext db = new AasContext())
@@ -66,7 +66,7 @@ namespace AasxServerDB.Entities
                     return list;
                 }
             }
-            return new List<string>();
+            return new List<string?>();
         }
 
         public static List<SValueSet>? getValueList(List<SMESet> smesets)

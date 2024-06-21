@@ -10,7 +10,7 @@ namespace AasxServerDB.Entities
         public int SMEId { get;              set; }
         public virtual SMESet? SMESet { get; set; }
 
-        public string Value { get; set; }
+        public string? Value      { get; set; }
         public string? Annotation { get; set; }
     }
 }

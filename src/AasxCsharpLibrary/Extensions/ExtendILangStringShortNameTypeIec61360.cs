@@ -5,13 +5,13 @@ namespace Extensions
 {
     public static class ExtendILangStringShortNameTypeIec61360
     {
-        public static string GetDefaultString(this List<ILangStringShortNameTypeIec61360> langStringSet, string defaultLang = null)
+        public static string? GetDefaultString(this List<ILangStringShortNameTypeIec61360> langStringSet, string defaultLang = null)
         {
             // start
             if (defaultLang == null)
                 defaultLang = "en"; //Default Lang in old implementation is en
 
-            string res = null;
+            string? res = null;
 
             // search
             foreach (var langString in langStringSet)
@@ -34,7 +34,7 @@ namespace Extensions
                 foreach (var sourceLangString in src)
                 {
                     //Remove ? in the end added by AdminShellV20, to avoid verification error
-                    string lang = sourceLangString.lang;
+                    string? lang = sourceLangString.lang;
                     if (!string.IsNullOrEmpty(sourceLangString.lang) && sourceLangString.lang.EndsWith("?"))
                     {
                         lang = sourceLangString.lang.Remove(sourceLangString.lang.Length - 1);

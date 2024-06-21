@@ -430,7 +430,7 @@ namespace Extensions
         }
 
 
-        public static void Add(this Submodel submodel, ISubmodelElement submodelElement)
+        public static void Add(this Submodel submodel, ISubmodelElement? submodelElement)
         {
             if (submodel.SubmodelElements == null)
             {

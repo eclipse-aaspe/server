@@ -83,7 +83,7 @@ namespace AasxServerDB
         public List<SMEResult> SearchSMEsResult(
             string smSemanticId = "", 
             string searchSemanticId = "",  string searchIdShort = "",
-            string equal = "", string contains = "",
+            string? equal = "", string? contains = "",
             string resultSemanticId = "", string resultIdShort = "")
         {
             List<SMEResult> result = new List<SMEResult>();
@@ -324,7 +324,7 @@ namespace AasxServerDB
         {
             public SMSet sm;
             public SMESet? sme;
-            public string value;
+            public string? value;
         }
 
         private List<SMEWithValue> GetSMEWithValue( string smSemanticId = "", string semanticId = "", string contains = "", string equal = "", string lower = "", string upper = "")

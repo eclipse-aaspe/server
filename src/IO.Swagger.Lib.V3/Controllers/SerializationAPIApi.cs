@@ -57,7 +57,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GenerateSerializationByIds([FromQuery] List<string> aasIds, [FromQuery] List<string> submodelIds, [FromQuery] bool includeConceptDescriptions = false)
+        public virtual IActionResult GenerateSerializationByIds([FromQuery] List<string?> aasIds, [FromQuery] List<string?> submodelIds, [FromQuery] bool includeConceptDescriptions = false)
         {
             var decodedAasIds = new List<string?>();
             foreach (var aasId in aasIds)

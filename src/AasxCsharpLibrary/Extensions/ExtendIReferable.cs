@@ -54,7 +54,7 @@ namespace Extensions
             }
         }
 
-        public static void Add(this IReferable referable, ISubmodelElement submodelElement)
+        public static void Add(this IReferable referable, ISubmodelElement? submodelElement)
         {
             if (referable is Submodel submodel)
             {
@@ -465,7 +465,7 @@ namespace Extensions
             return head + myid;
         }
 
-        public static void AddDescription(this IReferable referable, string language, string Text)
+        public static void AddDescription(this IReferable referable, string? language, string? Text)
         {
             if (referable.Description == null)
                 referable.Description = new List<ILangStringTextType>();

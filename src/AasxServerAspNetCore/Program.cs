@@ -13,7 +13,7 @@ var host = CreateHostBuilder(args).Build();
 AasxServer.Program.Main(args);
 SecurityHelper.SecurityInit();
 await host.RunAsync();
-host.WaitForShutdownAsync();
+await host.WaitForShutdownAsync();
 
 
 static IHostBuilder CreateHostBuilder(string[] args) =>

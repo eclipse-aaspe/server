@@ -10,10 +10,10 @@ namespace AasxServerDB.Entities
         public int AASXId { get; set; }
         public virtual AASXSet AASXSet { get; set; }
 
-        public string? Identifier { get; set; }
-        public string IdShort { get; set; }
-        public string? AssetKind { get; set; }
-        public string GlobalAssetId { get; set; }
+        public string? Identifier    { get; set; }
+        public string? IdShort       { get; set; }
+        public string? AssetKind     { get; set; }
+        public string? GlobalAssetId { get; set; }
 
         public virtual ICollection<SMSet> SMSets { get; } = new List<SMSet>();
     }

@@ -77,7 +77,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new BasicEventElement(TransformReference(valueDTO.observed), Direction.Output, StateOfEvent.On, idShort: valueDTO.idShort);
         }
 
-        private static IClass? Transform(SubmodelValue valueDTO)
+        private static IClass Transform(SubmodelValue valueDTO)
         {
             List<ISubmodelElement> submodelElements = null;
             if (valueDTO.submodelElements != null)

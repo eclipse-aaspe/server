@@ -126,7 +126,7 @@ namespace AasCore.Aas3_0
             /// </summary>
             /// <param name="node">JSON node to be parsed</param>
             /// <param name="error">Error, if any, during the deserialization</param>
-            internal static string StringFrom(
+            internal static string? StringFrom(
                 Nodes.JsonNode node,
                 out Reporting.Error? error)
             {
@@ -326,12 +326,12 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                string theName = null;
-                IReference? theSemanticId = null;
+                string?           theName                    = null;
+                IReference?       theSemanticId              = null;
                 List<IReference>? theSupplementalSemanticIds = null;
-                DataTypeDefXsd? theValueType = null;
-                string theValue = null;
-                List<IReference>? theRefersTo = null;
+                DataTypeDefXsd?   theValueType               = null;
+                string?           theValue                   = null;
+                List<IReference>? theRefersTo                = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -851,8 +851,8 @@ namespace AasCore.Aas3_0
                 out Reporting.Error? error)
             {
                 error = null;
-                string text = DeserializeImplementation.StringFrom(
-                                                                   node, out error);
+                string? text = DeserializeImplementation.StringFrom(
+                                                                    node, out error);
                 if (error != null)
                 {
                     return null;
@@ -1056,10 +1056,10 @@ namespace AasCore.Aas3_0
                 }
 
                 List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                string theVersion = null;
-                string theRevision = null;
-                IReference? theCreator = null;
-                string theTemplateId = null;
+                string?                           theVersion                    = null;
+                string?                           theRevision                   = null;
+                IReference?                       theCreator                    = null;
+                string?                           theTemplateId                 = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -1342,8 +1342,8 @@ namespace AasCore.Aas3_0
                 out Reporting.Error? error)
             {
                 error = null;
-                string text = DeserializeImplementation.StringFrom(
-                                                                   node, out error);
+                string? text = DeserializeImplementation.StringFrom(
+                                                                    node, out error);
                 if (error != null)
                 {
                     return null;
@@ -1381,13 +1381,13 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                string theType = null;
-                DataTypeDefXsd? theValueType = null;
-                IReference? theSemanticId = null;
+                string?           theType                    = null;
+                DataTypeDefXsd?   theValueType               = null;
+                IReference?       theSemanticId              = null;
                 List<IReference>? theSupplementalSemanticIds = null;
-                QualifierKind? theKind = null;
-                string theValue = null;
-                IReference? theValueId = null;
+                QualifierKind?    theKind                    = null;
+                string?           theValue                   = null;
+                IReference?       theValueId                 = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -1646,17 +1646,17 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                string theId = null;
-                IAssetInformation? theAssetInformation = null;
-                List<IExtension>? theExtensions = null;
-                string theCategory = null;
-                string theIdShort = null;
-                List<ILangStringNameType>? theDisplayName = null;
-                List<ILangStringTextType>? theDescription = null;
-                IAdministrativeInformation? theAdministration = null;
+                string?                           theId                         = null;
+                IAssetInformation?                theAssetInformation           = null;
+                List<IExtension>?                 theExtensions                 = null;
+                string?                           theCategory                   = null;
+                string?                           theIdShort                    = null;
+                List<ILangStringNameType>?        theDisplayName                = null;
+                List<ILangStringTextType>?        theDescription                = null;
+                IAdministrativeInformation?       theAdministration             = null;
                 List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                IReference? theDerivedFrom = null;
-                List<IReference>? theSubmodels = null;
+                IReference?                       theDerivedFrom                = null;
+                List<IReference>?                 theSubmodels                  = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -2141,11 +2141,11 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                AssetKind? theAssetKind = null;
-                string theGlobalAssetId = null;
+                AssetKind?              theAssetKind        = null;
+                string?                 theGlobalAssetId    = null;
                 List<ISpecificAssetId>? theSpecificAssetIds = null;
-                string theAssetType = null;
-                IResource? theDefaultThumbnail = null;
+                string?                 theAssetType        = null;
+                IResource?              theDefaultThumbnail = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -2345,8 +2345,8 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                string thePath = null;
-                string theContentType = null;
+                string? thePath        = null;
+                string? theContentType = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -2431,8 +2431,8 @@ namespace AasCore.Aas3_0
                 out Reporting.Error? error)
             {
                 error = null;
-                string text = DeserializeImplementation.StringFrom(
-                                                                   node, out error);
+                string? text = DeserializeImplementation.StringFrom(
+                                                                    node, out error);
                 if (error != null)
                 {
                     return null;
@@ -2470,11 +2470,11 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                string theName = null;
-                string theValue = null;
-                IReference? theSemanticId = null;
+                string?           theName                    = null;
+                string?           theValue                   = null;
+                IReference?       theSemanticId              = null;
                 List<IReference>? theSupplementalSemanticIds = null;
-                IReference? theExternalSubjectId = null;
+                IReference?       theExternalSubjectId       = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -2683,19 +2683,19 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                string theId = null;
-                List<IExtension>? theExtensions = null;
-                string theCategory = null;
-                string theIdShort = null;
-                List<ILangStringNameType>? theDisplayName = null;
-                List<ILangStringTextType>? theDescription = null;
-                IAdministrativeInformation? theAdministration = null;
-                ModellingKind? theKind = null;
-                IReference? theSemanticId = null;
-                List<IReference>? theSupplementalSemanticIds = null;
-                List<IQualifier>? theQualifiers = null;
+                string?                           theId                         = null;
+                List<IExtension>?                 theExtensions                 = null;
+                string?                           theCategory                   = null;
+                string?                           theIdShort                    = null;
+                List<ILangStringNameType>?        theDisplayName                = null;
+                List<ILangStringTextType>?        theDescription                = null;
+                IAdministrativeInformation?       theAdministration             = null;
+                ModellingKind?                    theKind                       = null;
+                IReference?                       theSemanticId                 = null;
+                List<IReference>?                 theSupplementalSemanticIds    = null;
+                List<IQualifier>?                 theQualifiers                 = null;
                 List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                List<ISubmodelElement>? theSubmodelElements = null;
+                List<ISubmodelElement>?           theSubmodelElements           = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -3439,16 +3439,16 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                IReference? theFirst = null;
-                IReference? theSecond = null;
-                List<IExtension>? theExtensions = null;
-                string theCategory = null;
-                string theIdShort = null;
-                List<ILangStringNameType>? theDisplayName = null;
-                List<ILangStringTextType>? theDescription = null;
-                IReference? theSemanticId = null;
-                List<IReference>? theSupplementalSemanticIds = null;
-                List<IQualifier>? theQualifiers = null;
+                IReference?                       theFirst                      = null;
+                IReference?                       theSecond                     = null;
+                List<IExtension>?                 theExtensions                 = null;
+                string?                           theCategory                   = null;
+                string?                           theIdShort                    = null;
+                List<ILangStringNameType>?        theDisplayName                = null;
+                List<ILangStringTextType>?        theDescription                = null;
+                IReference?                       theSemanticId                 = null;
+                List<IReference>?                 theSupplementalSemanticIds    = null;
+                List<IQualifier>?                 theQualifiers                 = null;
                 List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
 
                 foreach (var keyValue in obj)
@@ -3956,8 +3956,8 @@ namespace AasCore.Aas3_0
                 out Reporting.Error? error)
             {
                 error = null;
-                string text = DeserializeImplementation.StringFrom(
-                                                                   node, out error);
+                string? text = DeserializeImplementation.StringFrom(
+                                                                    node, out error);
                 if (error != null)
                 {
                     return null;
@@ -3995,20 +3995,20 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                AasSubmodelElements? theTypeValueListElement = null;
-                List<IExtension>? theExtensions = null;
-                string theCategory = null;
-                string theIdShort = null;
-                List<ILangStringNameType>? theDisplayName = null;
-                List<ILangStringTextType>? theDescription = null;
-                IReference? theSemanticId = null;
-                List<IReference>? theSupplementalSemanticIds = null;
-                List<IQualifier>? theQualifiers = null;
+                AasSubmodelElements?              theTypeValueListElement       = null;
+                List<IExtension>?                 theExtensions                 = null;
+                string?                           theCategory                   = null;
+                string?                           theIdShort                    = null;
+                List<ILangStringNameType>?        theDisplayName                = null;
+                List<ILangStringTextType>?        theDescription                = null;
+                IReference?                       theSemanticId                 = null;
+                List<IReference>?                 theSupplementalSemanticIds    = null;
+                List<IQualifier>?                 theQualifiers                 = null;
                 List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                bool? theOrderRelevant = null;
-                IReference? theSemanticIdListElement = null;
-                DataTypeDefXsd? theValueTypeListElement = null;
-                List<ISubmodelElement>? theValue = null;
+                bool?                             theOrderRelevant              = null;
+                IReference?                       theSemanticIdListElement      = null;
+                DataTypeDefXsd?                   theValueTypeListElement       = null;
+                List<ISubmodelElement>?           theValue                      = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -4621,16 +4621,16 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                List<IExtension>? theExtensions = null;
-                string theCategory = null;
-                string theIdShort = null;
-                List<ILangStringNameType>? theDisplayName = null;
-                List<ILangStringTextType>? theDescription = null;
-                IReference? theSemanticId = null;
-                List<IReference>? theSupplementalSemanticIds = null;
-                List<IQualifier>? theQualifiers = null;
+                List<IExtension>?                 theExtensions                 = null;
+                string?                           theCategory                   = null;
+                string?                           theIdShort                    = null;
+                List<ILangStringNameType>?        theDisplayName                = null;
+                List<ILangStringTextType>?        theDescription                = null;
+                IReference?                       theSemanticId                 = null;
+                List<IReference>?                 theSupplementalSemanticIds    = null;
+                List<IQualifier>?                 theQualifiers                 = null;
                 List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                List<ISubmodelElement>? theValue = null;
+                List<ISubmodelElement>?           theValue                      = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -5208,18 +5208,18 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                DataTypeDefXsd? theValueType = null;
-                List<IExtension>? theExtensions = null;
-                string theCategory = null;
-                string theIdShort = null;
-                List<ILangStringNameType>? theDisplayName = null;
-                List<ILangStringTextType>? theDescription = null;
-                IReference? theSemanticId = null;
-                List<IReference>? theSupplementalSemanticIds = null;
-                List<IQualifier>? theQualifiers = null;
+                DataTypeDefXsd?                   theValueType                  = null;
+                List<IExtension>?                 theExtensions                 = null;
+                string?                           theCategory                   = null;
+                string?                           theIdShort                    = null;
+                List<ILangStringNameType>?        theDisplayName                = null;
+                List<ILangStringTextType>?        theDescription                = null;
+                IReference?                       theSemanticId                 = null;
+                List<IReference>?                 theSupplementalSemanticIds    = null;
+                List<IQualifier>?                 theQualifiers                 = null;
                 List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                string theValue = null;
-                IReference? theValueId = null;
+                string?                           theValue                      = null;
+                IReference?                       theValueId                    = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -5751,17 +5751,17 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                List<IExtension>? theExtensions = null;
-                string theCategory = null;
-                string theIdShort = null;
-                List<ILangStringNameType>? theDisplayName = null;
-                List<ILangStringTextType>? theDescription = null;
-                IReference? theSemanticId = null;
-                List<IReference>? theSupplementalSemanticIds = null;
-                List<IQualifier>? theQualifiers = null;
+                List<IExtension>?                 theExtensions                 = null;
+                string?                           theCategory                   = null;
+                string?                           theIdShort                    = null;
+                List<ILangStringNameType>?        theDisplayName                = null;
+                List<ILangStringTextType>?        theDescription                = null;
+                IReference?                       theSemanticId                 = null;
+                List<IReference>?                 theSupplementalSemanticIds    = null;
+                List<IQualifier>?                 theQualifiers                 = null;
                 List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                List<ILangStringTextType>? theValue = null;
-                IReference? theValueId = null;
+                List<ILangStringTextType>?        theValue                      = null;
+                IReference?                       theValueId                    = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -6292,18 +6292,18 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                DataTypeDefXsd? theValueType = null;
-                List<IExtension>? theExtensions = null;
-                string theCategory = null;
-                string theIdShort = null;
-                List<ILangStringNameType>? theDisplayName = null;
-                List<ILangStringTextType>? theDescription = null;
-                IReference? theSemanticId = null;
-                List<IReference>? theSupplementalSemanticIds = null;
-                List<IQualifier>? theQualifiers = null;
+                DataTypeDefXsd?                   theValueType                  = null;
+                List<IExtension>?                 theExtensions                 = null;
+                string?                           theCategory                   = null;
+                string?                           theIdShort                    = null;
+                List<ILangStringNameType>?        theDisplayName                = null;
+                List<ILangStringTextType>?        theDescription                = null;
+                IReference?                       theSemanticId                 = null;
+                List<IReference>?                 theSupplementalSemanticIds    = null;
+                List<IQualifier>?                 theQualifiers                 = null;
                 List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                string theMin = null;
-                string theMax = null;
+                string?                           theMin                        = null;
+                string?                           theMax                        = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -6835,16 +6835,16 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                List<IExtension>? theExtensions = null;
-                string theCategory = null;
-                string theIdShort = null;
-                List<ILangStringNameType>? theDisplayName = null;
-                List<ILangStringTextType>? theDescription = null;
-                IReference? theSemanticId = null;
-                List<IReference>? theSupplementalSemanticIds = null;
-                List<IQualifier>? theQualifiers = null;
+                List<IExtension>?                 theExtensions                 = null;
+                string?                           theCategory                   = null;
+                string?                           theIdShort                    = null;
+                List<ILangStringNameType>?        theDisplayName                = null;
+                List<ILangStringTextType>?        theDescription                = null;
+                IReference?                       theSemanticId                 = null;
+                List<IReference>?                 theSupplementalSemanticIds    = null;
+                List<IQualifier>?                 theQualifiers                 = null;
                 List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                IReference? theValue = null;
+                IReference?                       theValue                      = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -7319,17 +7319,17 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                string theContentType = null;
-                List<IExtension>? theExtensions = null;
-                string theCategory = null;
-                string theIdShort = null;
-                List<ILangStringNameType>? theDisplayName = null;
-                List<ILangStringTextType>? theDescription = null;
-                IReference? theSemanticId = null;
-                List<IReference>? theSupplementalSemanticIds = null;
-                List<IQualifier>? theQualifiers = null;
+                string?                           theContentType                = null;
+                List<IExtension>?                 theExtensions                 = null;
+                string?                           theCategory                   = null;
+                string?                           theIdShort                    = null;
+                List<ILangStringNameType>?        theDisplayName                = null;
+                List<ILangStringTextType>?        theDescription                = null;
+                IReference?                       theSemanticId                 = null;
+                List<IReference>?                 theSupplementalSemanticIds    = null;
+                List<IQualifier>?                 theQualifiers                 = null;
                 List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                byte[]? theValue = null;
+                byte[]?                           theValue                      = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -7836,17 +7836,17 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                string theContentType = null;
-                List<IExtension>? theExtensions = null;
-                string theCategory = null;
-                string theIdShort = null;
-                List<ILangStringNameType>? theDisplayName = null;
-                List<ILangStringTextType>? theDescription = null;
-                IReference? theSemanticId = null;
-                List<IReference>? theSupplementalSemanticIds = null;
-                List<IQualifier>? theQualifiers = null;
+                string?                           theContentType                = null;
+                List<IExtension>?                 theExtensions                 = null;
+                string?                           theCategory                   = null;
+                string?                           theIdShort                    = null;
+                List<ILangStringNameType>?        theDisplayName                = null;
+                List<ILangStringTextType>?        theDescription                = null;
+                IReference?                       theSemanticId                 = null;
+                List<IReference>?                 theSupplementalSemanticIds    = null;
+                List<IQualifier>?                 theQualifiers                 = null;
                 List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                string theValue = null;
+                string?                           theValue                      = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -8353,18 +8353,18 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                IReference? theFirst = null;
-                IReference? theSecond = null;
-                List<IExtension>? theExtensions = null;
-                string theCategory = null;
-                string theIdShort = null;
-                List<ILangStringNameType>? theDisplayName = null;
-                List<ILangStringTextType>? theDescription = null;
-                IReference? theSemanticId = null;
-                List<IReference>? theSupplementalSemanticIds = null;
-                List<IQualifier>? theQualifiers = null;
+                IReference?                       theFirst                      = null;
+                IReference?                       theSecond                     = null;
+                List<IExtension>?                 theExtensions                 = null;
+                string?                           theCategory                   = null;
+                string?                           theIdShort                    = null;
+                List<ILangStringNameType>?        theDisplayName                = null;
+                List<ILangStringTextType>?        theDescription                = null;
+                IReference?                       theSemanticId                 = null;
+                List<IReference>?                 theSupplementalSemanticIds    = null;
+                List<IQualifier>?                 theQualifiers                 = null;
                 List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                List<IDataElement>? theAnnotations = null;
+                List<IDataElement>?               theAnnotations                = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -8936,19 +8936,19 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                EntityType? theEntityType = null;
-                List<IExtension>? theExtensions = null;
-                string theCategory = null;
-                string theIdShort = null;
-                List<ILangStringNameType>? theDisplayName = null;
-                List<ILangStringTextType>? theDescription = null;
-                IReference? theSemanticId = null;
-                List<IReference>? theSupplementalSemanticIds = null;
-                List<IQualifier>? theQualifiers = null;
+                EntityType?                       theEntityType                 = null;
+                List<IExtension>?                 theExtensions                 = null;
+                string?                           theCategory                   = null;
+                string?                           theIdShort                    = null;
+                List<ILangStringNameType>?        theDisplayName                = null;
+                List<ILangStringTextType>?        theDescription                = null;
+                IReference?                       theSemanticId                 = null;
+                List<IReference>?                 theSupplementalSemanticIds    = null;
+                List<IQualifier>?                 theQualifiers                 = null;
                 List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                List<ISubmodelElement>? theStatements = null;
-                string theGlobalAssetId = null;
-                List<ISpecificAssetId>? theSpecificAssetIds = null;
+                List<ISubmodelElement>?           theStatements                 = null;
+                string?                           theGlobalAssetId              = null;
+                List<ISpecificAssetId>?           theSpecificAssetIds           = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -9558,8 +9558,8 @@ namespace AasCore.Aas3_0
                 out Reporting.Error? error)
             {
                 error = null;
-                string text = DeserializeImplementation.StringFrom(
-                                                                   node, out error);
+                string? text = DeserializeImplementation.StringFrom(
+                                                                    node, out error);
                 if (error != null)
                 {
                     return null;
@@ -9588,8 +9588,8 @@ namespace AasCore.Aas3_0
                 out Reporting.Error? error)
             {
                 error = null;
-                string text = DeserializeImplementation.StringFrom(
-                                                                   node, out error);
+                string? text = DeserializeImplementation.StringFrom(
+                                                                    node, out error);
                 if (error != null)
                 {
                     return null;
@@ -9618,8 +9618,8 @@ namespace AasCore.Aas3_0
                 out Reporting.Error? error)
             {
                 error = null;
-                string text = DeserializeImplementation.StringFrom(
-                                                                   node, out error);
+                string? text = DeserializeImplementation.StringFrom(
+                                                                    node, out error);
                 if (error != null)
                 {
                     return null;
@@ -9657,14 +9657,14 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                IReference? theSource = null;
-                IReference? theObservableReference = null;
-                string theTimeStamp = null;
-                IReference? theSourceSemanticId = null;
+                IReference? theSource               = null;
+                IReference? theObservableReference  = null;
+                string?     theTimeStamp            = null;
+                IReference? theSourceSemanticId     = null;
                 IReference? theObservableSemanticId = null;
-                string theTopic = null;
-                IReference? theSubjectId = null;
-                byte[]? thePayload = null;
+                string?     theTopic                = null;
+                IReference? theSubjectId            = null;
+                byte[]?     thePayload              = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -9983,23 +9983,23 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                IReference? theObserved = null;
-                Direction? theDirection = null;
-                StateOfEvent? theState = null;
-                List<IExtension>? theExtensions = null;
-                string theCategory = null;
-                string theIdShort = null;
-                List<ILangStringNameType>? theDisplayName = null;
-                List<ILangStringTextType>? theDescription = null;
-                IReference? theSemanticId = null;
-                List<IReference>? theSupplementalSemanticIds = null;
-                List<IQualifier>? theQualifiers = null;
+                IReference?                       theObserved                   = null;
+                Direction?                        theDirection                  = null;
+                StateOfEvent?                     theState                      = null;
+                List<IExtension>?                 theExtensions                 = null;
+                string?                           theCategory                   = null;
+                string?                           theIdShort                    = null;
+                List<ILangStringNameType>?        theDisplayName                = null;
+                List<ILangStringTextType>?        theDescription                = null;
+                IReference?                       theSemanticId                 = null;
+                List<IReference>?                 theSupplementalSemanticIds    = null;
+                List<IQualifier>?                 theQualifiers                 = null;
                 List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                string theMessageTopic = null;
-                IReference? theMessageBroker = null;
-                string theLastUpdate = null;
-                string theMinInterval = null;
-                string theMaxInterval = null;
+                string?                           theMessageTopic               = null;
+                IReference?                       theMessageBroker              = null;
+                string?                           theLastUpdate                 = null;
+                string?                           theMinInterval                = null;
+                string?                           theMaxInterval                = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -10674,18 +10674,18 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                List<IExtension>? theExtensions = null;
-                string theCategory = null;
-                string theIdShort = null;
-                List<ILangStringNameType>? theDisplayName = null;
-                List<ILangStringTextType>? theDescription = null;
-                IReference? theSemanticId = null;
-                List<IReference>? theSupplementalSemanticIds = null;
-                List<IQualifier>? theQualifiers = null;
+                List<IExtension>?                 theExtensions                 = null;
+                string?                           theCategory                   = null;
+                string?                           theIdShort                    = null;
+                List<ILangStringNameType>?        theDisplayName                = null;
+                List<ILangStringTextType>?        theDescription                = null;
+                IReference?                       theSemanticId                 = null;
+                List<IReference>?                 theSupplementalSemanticIds    = null;
+                List<IQualifier>?                 theQualifiers                 = null;
                 List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                List<IOperationVariable>? theInputVariables = null;
-                List<IOperationVariable>? theOutputVariables = null;
-                List<IOperationVariable>? theInoutputVariables = null;
+                List<IOperationVariable>?         theInputVariables             = null;
+                List<IOperationVariable>?         theOutputVariables            = null;
+                List<IOperationVariable>?         theInoutputVariables          = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -11372,14 +11372,14 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                List<IExtension>? theExtensions = null;
-                string theCategory = null;
-                string theIdShort = null;
-                List<ILangStringNameType>? theDisplayName = null;
-                List<ILangStringTextType>? theDescription = null;
-                IReference? theSemanticId = null;
-                List<IReference>? theSupplementalSemanticIds = null;
-                List<IQualifier>? theQualifiers = null;
+                List<IExtension>?                 theExtensions                 = null;
+                string?                           theCategory                   = null;
+                string?                           theIdShort                    = null;
+                List<ILangStringNameType>?        theDisplayName                = null;
+                List<ILangStringTextType>?        theDescription                = null;
+                IReference?                       theSemanticId                 = null;
+                List<IReference>?                 theSupplementalSemanticIds    = null;
+                List<IQualifier>?                 theQualifiers                 = null;
                 List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
 
                 foreach (var keyValue in obj)
@@ -11830,15 +11830,15 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                string theId = null;
-                List<IExtension>? theExtensions = null;
-                string theCategory = null;
-                string theIdShort = null;
-                List<ILangStringNameType>? theDisplayName = null;
-                List<ILangStringTextType>? theDescription = null;
-                IAdministrativeInformation? theAdministration = null;
+                string?                            theId                         = null;
+                List<IExtension>?                 theExtensions                 = null;
+                string?                           theCategory                   = null;
+                string?                           theIdShort                    = null;
+                List<ILangStringNameType>?        theDisplayName                = null;
+                List<ILangStringTextType>?        theDescription                = null;
+                IAdministrativeInformation?       theAdministration             = null;
                 List<IEmbeddedDataSpecification>? theEmbeddedDataSpecifications = null;
-                List<IReference>? theIsCaseOf = null;
+                List<IReference>?                 theIsCaseOf                   = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -12255,8 +12255,8 @@ namespace AasCore.Aas3_0
                 out Reporting.Error? error)
             {
                 error = null;
-                string text = DeserializeImplementation.StringFrom(
-                                                                   node, out error);
+                string? text = DeserializeImplementation.StringFrom(
+                                                                    node, out error);
                 if (error != null)
                 {
                     return null;
@@ -12455,8 +12455,8 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                KeyTypes? theType = null;
-                string theValue = null;
+                KeyTypes? theType  = null;
+                string?   theValue = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -12550,8 +12550,8 @@ namespace AasCore.Aas3_0
                 out Reporting.Error? error)
             {
                 error = null;
-                string text = DeserializeImplementation.StringFrom(
-                                                                   node, out error);
+                string? text = DeserializeImplementation.StringFrom(
+                                                                    node, out error);
                 if (error != null)
                 {
                     return null;
@@ -12580,8 +12580,8 @@ namespace AasCore.Aas3_0
                 out Reporting.Error? error)
             {
                 error = null;
-                string text = DeserializeImplementation.StringFrom(
-                                                                   node, out error);
+                string? text = DeserializeImplementation.StringFrom(
+                                                                    node, out error);
                 if (error != null)
                 {
                     return null;
@@ -12688,8 +12688,8 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                string theLanguage = null;
-                string theText = null;
+                string? theLanguage = null;
+                string? theText     = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -12792,8 +12792,8 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                string theLanguage = null;
-                string theText = null;
+                string? theLanguage = null;
+                string? theText     = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -13255,8 +13255,8 @@ namespace AasCore.Aas3_0
                 out Reporting.Error? error)
             {
                 error = null;
-                string text = DeserializeImplementation.StringFrom(
-                                                                   node, out error);
+                string? text = DeserializeImplementation.StringFrom(
+                                                                    node, out error);
                 if (error != null)
                 {
                     return null;
@@ -13468,7 +13468,7 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                string theValue = null;
+                string? theValue = null;
                 IReference? theValueId = null;
 
                 foreach (var keyValue in obj)
@@ -13672,8 +13672,8 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                string theLanguage = null;
-                string theText = null;
+                string? theLanguage = null;
+                string? theText     = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -13776,8 +13776,8 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                string theLanguage = null;
-                string theText = null;
+                string? theLanguage = null;
+                string? theText     = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -13880,8 +13880,8 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                string theLanguage = null;
-                string theText = null;
+                string? theLanguage = null;
+                string? theText     = null;
 
                 foreach (var keyValue in obj)
                 {
@@ -13984,18 +13984,18 @@ namespace AasCore.Aas3_0
                     return null;
                 }
 
-                List<ILangStringPreferredNameTypeIec61360>? thePreferredName = null;
-                List<ILangStringShortNameTypeIec61360>? theShortName = null;
-                string theUnit = null;
-                IReference? theUnitId = null;
-                string theSourceOfDefinition = null;
-                string theSymbol = null;
-                DataTypeIec61360? theDataType = null;
-                List<ILangStringDefinitionTypeIec61360>? theDefinition = null;
-                string theValueFormat = null;
-                IValueList? theValueList = null;
-                string theValue = null;
-                ILevelType? theLevelType = null;
+                List<ILangStringPreferredNameTypeIec61360>? thePreferredName      = null;
+                List<ILangStringShortNameTypeIec61360>?     theShortName          = null;
+                string?                                     theUnit               = null;
+                IReference?                                 theUnitId             = null;
+                string?                                     theSourceOfDefinition = null;
+                string?                                     theSymbol             = null;
+                DataTypeIec61360?                           theDataType           = null;
+                List<ILangStringDefinitionTypeIec61360>?    theDefinition         = null;
+                string?                                     theValueFormat        = null;
+                IValueList?                                 theValueList          = null;
+                string?                                     theValue              = null;
+                ILevelType?                                 theLevelType          = null;
 
                 foreach (var keyValue in obj)
                 {

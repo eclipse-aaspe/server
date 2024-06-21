@@ -159,10 +159,10 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 
         public IDTO TransformMultiLanguageProperty(IMultiLanguageProperty that)
         {
-            var langStrings = new List<KeyValuePair<string, string>>();
+            var langStrings = new List<KeyValuePair<string, string?>>();
             foreach (var langString in that.Value)
             {
-                langStrings.Add(new KeyValuePair<string, string>(langString.Language, langString.Text));
+                langStrings.Add(new KeyValuePair<string, string?>(langString.Language, langString.Text));
             }
 
             return new MultiLanguagePropertyValue(that.IdShort, langStrings);
