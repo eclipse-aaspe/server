@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 @inject AASService SubmodelService
 @inject NavigationManager NavigationManager
 @inject ISecurityService SecService
@@ -10,6 +10,7 @@
 @using System.Net;
 @using QRCoder;
 @using AasxServerBlazor.Data
+@using TimeStamp
 @using static AasxServerStandardBib.TimeSeriesPlotting;
 @using Range = AasCore.Aas3_0.Range
 
@@ -188,14 +189,13 @@
 
                 if (SelectedNode != null && SelectedNode.Tag is IReferable r)
                 {
-                    <span style="color:lightgray;">UPDATE @r.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span>
+                    <span style="color:lightgray;">UPDATE @TimeStamp.DateTimeToString(r.TimeStamp)</span>
                     <br/>
                     <button style="border-width: 1px; border-color: black; background-color: lightgray" @onclick="SetTimeStamp">TIMESTAMP</button>
                     <br/>
-                    <span style="color:lightgray;">CREATE @r.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span>
+                    <span style="color:lightgray;">CREATE @TimeStamp.DateTimeToString(r.TimeStampCreate)</span>
                     <br/>
-                    <span style="color:lightgray;">TREE @r.TimeStampTree.ToString("yy-MM-dd HH:mm:ss.fff")</span>
-
+                    <span style="color:lightgray;">TREE @TimeStamp.DateTimeToString(r.TimeStampTree)</span>
                     <br/>
             @code {
 
@@ -478,7 +478,7 @@
                                 <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series"
                                      style="max-width:950px;cursor:zoom-in;"/>
                                 <span class="text-muted" style="font-size:14px;">
-                                    Image processing took @elapsedMsToProcessImage ms (Last update: @timeStampPlot.ToString("yy-MM-dd HH:mm:ss.fff"))
+                                    Image processing took @elapsedMsToProcessImage ms (Last update: @TimeStamp.DateTimeToString(timeStampPlot))
                                 </span>
                             </div>
 
@@ -560,15 +560,15 @@
                     var refsme = Program.env[0].AasEnv.FindReferableByReference(be.Observed);
                     if (refsme != null)
                     {
-                        <span style="color:lightgray;">UPDATE @refsme.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fff")</span>
-                        <br/>
-                        <span style="color:lightgray;">CREATE @refsme.TimeStampCreate.ToString("yy-MM-dd HH:mm:ss.fff")</span>
-                        <br/>
+                        <span style="color:lightgray;">UPDATE @TimeStamp.DateTimeToString(refsme.TimeStamp)</span>
+                        <br />
+                        <span style="color:lightgray;">CREATE @TimeStamp.DateTimeToString(refsme.TimeStampCreate)</span>
+                        <br />
                     }
                     else
                     {
                         <span>Referenced element does not exist!</span>
-                        <br/>
+                        <br />
                     }
                 }
             }
@@ -1352,7 +1352,7 @@
         var itemTag = item.Tag;
 
         if (itemTag is IReferable r)
-            ret += $" ({r.TimeStampTree:yy-MM-dd HH:mm:ss.fff}) ";
+            ret += $" ({TimeStamp.DateTimeToString(r.TimeStampTree)}) ";
 
         return ret;
     }

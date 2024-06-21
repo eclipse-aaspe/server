@@ -38,6 +38,15 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Property<string>("Identifier")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime>("TimeStamp")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("TimeStampCreate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("TimeStampTree")
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AASXId");
@@ -125,6 +134,15 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Property<string>("SemanticId")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime>("TimeStamp")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("TimeStampCreate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("TimeStampTree")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("ValueType")
                         .HasColumnType("TEXT");
 
@@ -156,6 +174,15 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SemanticId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("TimeStamp")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("TimeStampCreate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("TimeStampTree")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

@@ -97,9 +97,7 @@ namespace AasxServer
         {
             output       = null;
             packageIndex = -1;
-            if (!withDb)
-                return false;
-            if (Program.isLoading)
+            if (!withDb || Program.isLoading)
                 return false;
 
             int i = envimin;
@@ -2637,7 +2635,6 @@ namespace AasxServer
                             }
                         }
                     }
-
                     i++;
                 }
             }
@@ -2646,7 +2643,8 @@ namespace AasxServer
         }
 
         public static bool parseJson(SubmodelElementCollection c, JObject o, List<string> filter,
-                                     Property minDiffAbsolute = null, Property minDiffPercent = null)
+                                     Property minDiffAbsolute = null, Property minDiffPercent = null,
+                                     AdminShellPackageEnv envaas = null)
         {
             int      newMode   = 0;
             DateTime timeStamp = DateTime.UtcNow;
@@ -2697,7 +2695,7 @@ namespace AasxServer
                                 newMode = 1;
                             }
 
-                            ok |= parseJson(c3, el, filter);
+                            ok |= parseJson(c3, el, filter, envaas: envaas);
                         }
 
                         break;
@@ -2714,7 +2712,7 @@ namespace AasxServer
 
                         foreach (JObject el in jp1.Value)
                         {
-                            ok |= parseJson(c2, el, filter);
+                            ok |= parseJson(c2, el, filter, envaas: envaas);
                         }
 
                         break;
@@ -2768,11 +2766,12 @@ namespace AasxServer
                         catch
                         {
                         }
-
                         break;
                 }
             }
 
+            if (envaas != null)
+                envaas.setWrite(true);
             Program.signalNewData(newMode);
             return ok;
         }

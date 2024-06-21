@@ -77,11 +77,11 @@ namespace AasxTimeSeries
             timeSeriesBlockList = new List<TimeSeriesBlock>();
             timeSeriesSubscribe = new List<SubmodelElementCollection>();
 
-            int aascount = AasxServer.Program.env.Length;
+            int aascount = Program.env.Length;
 
             for (int i = 0; i < aascount; i++)
             {
-                var env = AasxServer.Program.env[i];
+                var env = Program.env[i];
                 if (env != null)
                 {
                     var aas = env.AasEnv.AssetAdministrationShells[0];
@@ -765,7 +765,7 @@ namespace AasxTimeSeries
                             {
                                 if (tsb.samplesTimeStamp == "")
                                 {
-                                    latestTimeStamp = dt.ToString("yy-MM-dd HH:mm:ss.fff");
+                                    latestTimeStamp = TimeStamp.TimeStamp.DateTimeToString(dt);
                                     tsb.samplesTimeStamp += latestTimeStamp;
                                 }
                                 else
@@ -822,7 +822,7 @@ namespace AasxTimeSeries
                                 latestDataProperty.TimeStampCreate = timeStamp;
                                 tsb.latestData.Value.Add(latestDataProperty);
                             }
-                            (latestDataProperty as Property).Value = dt.ToString("yy-MM-dd HH:mm:ss.fff");
+                            (latestDataProperty as Property).Value = TimeStamp.TimeStamp.DateTimeToString(dt);
                             latestDataProperty.SetTimeStamp(timeStamp);
 
                             updateMode = 1;

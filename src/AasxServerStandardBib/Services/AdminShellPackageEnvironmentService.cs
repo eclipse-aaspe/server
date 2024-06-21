@@ -377,6 +377,7 @@ namespace AasxServerStandardBib.Services
                 var timeStamp = DateTime.UtcNow;
                 body.TimeStampCreate = timeStamp;
                 body.SetTimeStamp(timeStamp);
+                // _packages[emptyPackageIndex].setWrite(true); this api is currently not connected to the database
                 Program.signalNewData(2);
                 return _packages[ emptyPackageIndex ].AasEnv.ConceptDescriptions[ 0 ]; //Considering it is the first AAS being added to empty package.
             }
@@ -397,6 +398,7 @@ namespace AasxServerStandardBib.Services
                 var timeStamp = DateTime.UtcNow;
                 body.TimeStampCreate = timeStamp;
                 body.SetTimeStamp(timeStamp);
+                // _packages[packageIndex].setWrite(true); this api is currently not connected to the database
                 Program.signalNewData(1); //0 not working, hence 1 = same tree, structure may change
 
                 _logger.LogDebug($"Successfully updated the ConceptDescription.");
