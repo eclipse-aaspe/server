@@ -2,8 +2,8 @@
 {
     public record class AdministrativeInformationDTO(
             List<EmbeddedDataSpecificationDTO>? embeddedDataSpecifications = null,
-            string? version = null,
-            string? revision = null,
+            string version = null,
+            string revision = null,
             ReferenceDTO? creator = null,
-            string? templateId = null) : IDTO;
+            string templateId = null) : IDTO;
 }

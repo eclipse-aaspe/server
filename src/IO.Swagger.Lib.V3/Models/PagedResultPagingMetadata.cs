@@ -18,7 +18,7 @@ namespace IO.Swagger.Models
         /// <summary>
         /// Gets or Sets Cursor
         /// </summary>
-        public string cursor { get; set; }
+        public string? cursor { get; set; }
 
     }
 }

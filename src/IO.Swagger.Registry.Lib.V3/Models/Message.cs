@@ -19,77 +19,77 @@ namespace IO.Swagger.Registry.Lib.V3.Models
     /// <summary>
     /// 
     /// </summary>
-    [ DataContract ]
+    [DataContract]
     public partial class Message : IEquatable<Message>
     {
         /// <summary>
         /// Gets or Sets Code
         /// </summary>
 
-        [ StringLength(32, MinimumLength = 1) ]
-        [ DataMember(Name = "code") ]
-        public string Code { get; set; }
+        [StringLength(32, MinimumLength = 1)]
+        [DataMember(Name = "code")]
+        public string? Code { get; set; }
 
         /// <summary>
         /// Gets or Sets CorrelationId
         /// </summary>
 
-        [ StringLength(128, MinimumLength = 1) ]
-        [ DataMember(Name = "correlationId") ]
-        public string CorrelationId { get; set; }
+        [StringLength(128, MinimumLength = 1)]
+        [DataMember(Name = "correlationId")]
+        public string? CorrelationId { get; set; }
 
         /// <summary>
         /// Gets or Sets MessageType
         /// </summary>
-        [ JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter)) ]
+        [JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
         public enum MessageTypeEnum
         {
             /// <summary>
             /// Enum UndefinedEnum for Undefined
             /// </summary>
-            [ EnumMember(Value = "Undefined") ] UndefinedEnum = 0,
+            [EnumMember(Value = "Undefined")] UndefinedEnum = 0,
 
             /// <summary>
             /// Enum InfoEnum for Info
             /// </summary>
-            [ EnumMember(Value = "Info") ] InfoEnum = 1,
+            [EnumMember(Value = "Info")] InfoEnum = 1,
 
             /// <summary>
             /// Enum WarningEnum for Warning
             /// </summary>
-            [ EnumMember(Value = "Warning") ] WarningEnum = 2,
+            [EnumMember(Value = "Warning")] WarningEnum = 2,
 
             /// <summary>
             /// Enum ErrorEnum for Error
             /// </summary>
-            [ EnumMember(Value = "Error") ] ErrorEnum = 3,
+            [EnumMember(Value = "Error")] ErrorEnum = 3,
 
             /// <summary>
             /// Enum ExceptionEnum for Exception
             /// </summary>
-            [ EnumMember(Value = "Exception") ] ExceptionEnum = 4
+            [EnumMember(Value = "Exception")] ExceptionEnum = 4
         }
 
         /// <summary>
         /// Gets or Sets MessageType
         /// </summary>
 
-        [ DataMember(Name = "messageType") ]
+        [DataMember(Name = "messageType")]
         public MessageTypeEnum? MessageType { get; set; }
 
         /// <summary>
         /// Gets or Sets Text
         /// </summary>
 
-        [ DataMember(Name = "text") ]
-        public string Text { get; set; }
+        [DataMember(Name = "text")]
+        public string? Text { get; set; }
 
         /// <summary>
         /// Gets or Sets Timestamp
         /// </summary>
         //[RegularExpression("/^-?(([1-9][0-9][0-9][0-9]+)|(0[0-9][0-9][0-9]))-((0[1-9])|(1[0-2]))-((0[1-9])|([12][0-9])|(3[01]))T(((([01][0-9])|(2[0-3])):[0-5][0-9]:([0-5][0-9])(\\.[0-9]+)?)|24:00:00(\\.0+)?)(Z|\\+00:00|-00:00)$/")]
-        [ DataMember(Name = "timestamp") ]
-        public string Timestamp { get; set; }
+        [DataMember(Name = "timestamp")]
+        public string? Timestamp { get; set; }
 
         /// <summary>
         /// Returns the string presentation of the object
@@ -126,7 +126,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
-            return obj.GetType() == GetType() && Equals((Message) obj);
+            return obj.GetType() == GetType() && Equals((Message)obj);
         }
 
         /// <summary>
@@ -134,7 +134,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
         /// <param name="other">Instance of Message to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(Message other)
+        public bool Equals(Message? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;

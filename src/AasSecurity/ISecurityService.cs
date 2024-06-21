@@ -14,7 +14,7 @@ namespace AasSecurity
                               out string error,
                               out bool withAllow,
                               out string? getPolicy,
-                              string? objPath = null,
+                              string objPath = null,
                               string? aasResourceType = null,
                               IClass? aasResource = null, string? policy = null);
 

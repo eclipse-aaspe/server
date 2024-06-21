@@ -29,13 +29,13 @@ namespace Extensions
 
             return false;
         }
-        public static string GetDefaultString(this List<ILangStringTextType> langStringSet, string defaultLang = null)
+        public static string? GetDefaultString(this List<ILangStringTextType> langStringSet, string defaultLang = null)
         {
             // start
             if (defaultLang == null)
                 defaultLang = "en"; //Default Lang in old implementation is en
 
-            string res = null;
+            string? res = null;
 
             // search
             foreach (var langString in langStringSet)
@@ -49,12 +49,12 @@ namespace Extensions
             return res;
         }
 
-        public static List<ILangStringNameType> Create(string language, string text)
+        public static List<ILangStringNameType> Create(string? language, string? text)
         {
             return new List<ILangStringNameType> { new LangStringNameType(language, text) };
         }
 
-        public static List<ILangStringPreferredNameTypeIec61360> CreateManyPreferredNamesFromStringArray(string[] s)
+        public static List<ILangStringPreferredNameTypeIec61360> CreateManyPreferredNamesFromStringArray(string?[] s)
         {
             if (s == null)
                 return null;
@@ -67,7 +67,7 @@ namespace Extensions
             }
             return r;
         }
-        public static List<ILangStringDefinitionTypeIec61360> CreateManyDefinitionFromStringArray(string[] s)
+        public static List<ILangStringDefinitionTypeIec61360> CreateManyDefinitionFromStringArray(string?[] s)
         {
             if (s == null)
                 return null;
@@ -81,7 +81,7 @@ namespace Extensions
             return r;
         }
 
-        public static List<ILangStringTextType> Set(this List<ILangStringTextType> lss, string lang, string text)
+        public static List<ILangStringTextType> Set(this List<ILangStringTextType> lss, string? lang, string? text)
         {
             foreach (var ls in lss)
                 if (ls.Language.Trim().ToLower() == lang?.Trim().ToLower())

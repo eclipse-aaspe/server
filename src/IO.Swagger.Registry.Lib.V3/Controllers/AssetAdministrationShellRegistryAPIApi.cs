@@ -149,11 +149,11 @@ namespace IO.Swagger.Controllers
             [ FromQuery ] string? assetType)
         {
             // TODO (jtikekar, 2023-09-04): AssetType resembles GlobalAssetId from old Implementation
-            List<string> assetList = new List<string>();
+            List<string?>? assetList = new List<string?>();
             if (!string.IsNullOrEmpty(assetType))
             {
                 var decodedAssetType = _decoderService.Decode("assetType", assetType);
-                assetList = new List<string>()
+                assetList = new List<string?>()
                 {
                     decodedAssetType
                 };
@@ -542,12 +542,12 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 200, type: typeof(List<string>), description: "Requested Asset Administration Shell ids") ]
         public virtual IActionResult GetAllAssetAdministrationShellIdsByAssetLink(
             [ FromQuery ] List<SpecificAssetId> assetIds,
-            [ FromQuery ] string assetId)
+            [ FromQuery ] string? assetId)
         {
             try
             {
                 //collect aasetIds from list
-                var assetList = new List<String>();
+                var assetList = new List<string?>();
                 foreach (var kv in assetIds)
                 {
                     if (kv.Value != "")
@@ -564,7 +564,7 @@ namespace IO.Swagger.Controllers
                     assetList.Add(decodedAssetId);
                 }
 
-                var aasList = new List<String>();
+                var aasList = new List<string?>();
 
                 if (!Program.withDb)
                 {

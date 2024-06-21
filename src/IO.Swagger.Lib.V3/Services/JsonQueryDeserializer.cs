@@ -21,7 +21,7 @@ namespace IO.Swagger.Lib.V3.Services
             _decoderService = decoderService;
         }
 
-        public Reference? DeserializeReference(string fieldName, string referenceString)
+        public Reference? DeserializeReference(string fieldName, string? referenceString)
         {
             Reference? output = null;
             try

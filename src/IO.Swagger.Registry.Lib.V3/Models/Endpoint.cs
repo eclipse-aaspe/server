@@ -37,7 +37,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         [ DataMember(Name = "protocolInformation") ]
         public ProtocolInformation? ProtocolInformation { get; set; }
 
-        public Endpoint(string @interface = null, ProtocolInformation protocolInformation = null)
+        public Endpoint(string? @interface = null, ProtocolInformation? protocolInformation = null)
         {
             Interface = @interface;
             ProtocolInformation = protocolInformation;
@@ -83,7 +83,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
         /// <param name="other">Instance of Endpoint to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(Endpoint other)
+        public bool Equals(Endpoint? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;

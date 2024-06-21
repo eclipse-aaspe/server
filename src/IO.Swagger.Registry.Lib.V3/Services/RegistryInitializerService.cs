@@ -1,4 +1,4 @@
-using AasxServer;
+﻿using AasxServer;
 using Extensions;
 using IdentityModel;
 using IdentityModel.Client;
@@ -24,15 +24,15 @@ namespace IO.Swagger.Registry.Lib.V3.Services
 {
     public class RegistryInitializerService : IRegistryInitializerService
     {
-        static bool init = false;
-        static ISubmodel aasRegistry = null;
-        static ISubmodel submodelRegistry = null;
+        static bool init;
+        static ISubmodel? aasRegistry;
+        static ISubmodel? submodelRegistry;
         static int initiallyEmpty = 0;
-        static AasCore.Aas3_0.Environment envRegistry = null;
-        static List<string> getRegistry = new List<string>();
-        static List<string> postRegistry = new List<string>();
-        static List<string> federatedElemensSemanticId = new List<string>();
-        static int submodelRegistryCount = 0;
+        static AasCore.Aas3_0.Environment envRegistry;
+        static List<string> getRegistry = [];
+        static List<string> postRegistry = [];
+        static List<string?> federatedElemensSemanticId = [];
+        static int submodelRegistryCount;
         static List<AssetAdministrationShellDescriptor> aasDescriptorsForSubmodelView = new List<AssetAdministrationShellDescriptor>();
 
         public List<string> GetRegistryList()
@@ -40,7 +40,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
             return getRegistry;
         }
 
-        public ISubmodel GetAasRegistry()
+        public ISubmodel? GetAasRegistry()
         {
             return aasRegistry;
         }
@@ -295,11 +295,11 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                         string json        = null;
                         string accessToken = null;
                         //string requestPath = greg + "/" + "registry/shell-descriptors";
-                        string requestPath   = greg + "/shell-descriptors";
-                        string queryPara     = "";
-                        string userPW        = "";
-                        string urlEdcWrapper = "";
-                        string replace       = "";
+                        string?  requestPath   = greg + "/shell-descriptors";
+                        string? queryPara     = "";
+                        string  userPW        = "";
+                        string? urlEdcWrapper = "";
+                        string? replace       = "";
 
                         if (AasxCredentials.get(cs.credentials, requestPath, out queryPara, out userPW, out urlEdcWrapper, out replace))
                         {
@@ -362,7 +362,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                                         node  = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
                                                         var aas = Jsonization.Deserialize.AssetAdministrationShellFrom(node);
 
-                                                        var ids = new List<string>();
+                                                        var ids = new List<string?>();
                                                         foreach (var s in aas.Submodels)
                                                         {
                                                             var id = s.Keys[ 0 ].Value;
@@ -435,11 +435,11 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                     if (sd.IdShort == "NameplateVC")
                                         continue;
 
-                                    bool   success   = false;
-                                    bool   external  = false;
-                                    string idEncoded = "";
-                                    string endpoint  = sd.Endpoints[ 0 ].ProtocolInformation.Href;
-                                    var    s1        = endpoint.Split("/shells/");
+                                    bool    success   = false;
+                                    bool    external  = false;
+                                    string  idEncoded = "";
+                                    string? endpoint  = sd.Endpoints[ 0 ].ProtocolInformation.Href;
+                                    var     s1        = endpoint.Split("/shells/");
                                     if (s1.Length == 2)
                                     {
                                         var s2 = s1[ 1 ].Split("/submodels/");
@@ -678,7 +678,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
             var aas = env.AasEnv.AssetAdministrationShells[ 0 ];
 
             AssetAdministrationShellDescriptor ad            = new AssetAdministrationShellDescriptor();
-            string                             globalAssetId = aas.AssetInformation.GlobalAssetId!;
+            string?                            globalAssetId = aas.AssetInformation.GlobalAssetId!;
 
             // ad.Administration.Version = aas.administration.version;
             // ad.Administration.Revision = aas.administration.revision;
@@ -880,9 +880,9 @@ namespace IO.Swagger.Registry.Lib.V3.Services
 
         static void AddAasDescriptorToRegistry(AssetAdministrationShellDescriptor ad, DateTime timestamp, bool initial = false)
         {
-            string aasID    = ad.Id;
-            string assetID  = ad.GlobalAssetId;
-            string endpoint = "";
+            string? aasID    = ad.Id;
+            string? assetID  = ad.GlobalAssetId;
+            string? endpoint = "";
             if (ad.Endpoints != null && ad.Endpoints.Count != 0)
             {
                 endpoint = ad.Endpoints[ 0 ].ProtocolInformation.Href;

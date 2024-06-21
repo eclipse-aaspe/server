@@ -186,8 +186,6 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformOperation(IOperation that, PathModifierContext context)
         {
-            if (that == null) return null;
-
             context.IdShortPaths.Add(that.IdShort);
 
             if (that.InputVariables != null)
@@ -283,10 +281,8 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
             throw new System.NotImplementedException();
         }
 
-        public List<string> TransformSubmodel(ISubmodel that, PathModifierContext context)
+        public List<string> TransformSubmodel(ISubmodel? that, PathModifierContext context)
         {
-            if (that == null) return null;
-
             context.IdShortPaths.Add(that.IdShort);
 
             if (that.SubmodelElements != null)

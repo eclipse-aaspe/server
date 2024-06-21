@@ -70,7 +70,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult DeleteConceptDescriptionById([ FromRoute ] [ Required ] string cdIdentifier)
+        public virtual IActionResult DeleteConceptDescriptionById([ FromRoute ] [ Required ] string? cdIdentifier)
         {
             var decodedCdIdentifier = _decoderService.Decode("cdIdentifier", cdIdentifier);
 
@@ -104,7 +104,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetAllConceptDescriptions([ FromQuery ] string idShort, [ FromQuery ] string isCaseOf, [ FromQuery ] string dataSpecificationRef,
+        public virtual IActionResult GetAllConceptDescriptions([ FromQuery ] string idShort, [ FromQuery ] string? isCaseOf, [ FromQuery ] string? dataSpecificationRef,
             [ FromQuery ] int? limit, [ FromQuery ] string cursor)
         {
             _logger.LogInformation($"Received request to get all the concept descriptions.");
@@ -149,7 +149,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetConceptDescriptionById([ FromRoute ] [ Required ] string cdIdentifier)
+        public virtual IActionResult GetConceptDescriptionById([ FromRoute ] [ Required ] string? cdIdentifier)
         {
             var decodedCdIdentifier = _decoderService.Decode("cdIdentifier", cdIdentifier);
 
@@ -219,7 +219,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult PutConceptDescriptionById([ FromBody ] ConceptDescription body, [ FromRoute ] [ Required ] string cdIdentifier)
+        public virtual IActionResult PutConceptDescriptionById([ FromBody ] ConceptDescription body, [ FromRoute ] [ Required ] string? cdIdentifier)
         {
             var decodedCdId = _decoderService.Decode("cdIdentifier", cdIdentifier);
 

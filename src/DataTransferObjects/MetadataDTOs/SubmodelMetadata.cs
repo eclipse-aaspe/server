@@ -4,10 +4,10 @@ using DataTransferObjects.CommonDTOs;
 namespace DataTransferObjects.MetadataDTOs
 {
     public record class SubmodelMetadata(
-            string id,
+            string? id,
             List<ExtensionDTO>? extensions = null,
-            string? category = null,
-            string? idShort = null,
+            string category = null,
+            string idShort = null,
             List<LangStringNameTypeDTO>? displayName = null,
             List<LangStringTextTypeDTO>? description = null,
             AdministrativeInformationDTO? administration = null,
@@ -16,6 +16,6 @@ namespace DataTransferObjects.MetadataDTOs
             List<ReferenceDTO>? supplementalSemanticIds = null,
             List<QualifierDTO>? qualifiers = null,
             List<EmbeddedDataSpecificationDTO>? embeddedDataSpecifications = null,
-            List<ISubmodelElementMetadata>? submodelElements = null,
+            List<ISubmodelElementMetadata?> submodelElements = null,
             string modelType = "Submodel") : IMetadataDTO;
 }

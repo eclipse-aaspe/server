@@ -9,7 +9,7 @@ namespace Extensions
     {
         #region AasxPackageExplorer
 
-        public static void ValueFromText(this Property property, string text)
+        public static void ValueFromText(this Property property, string? text)
         {
             property.Value = text;
         }
@@ -28,7 +28,7 @@ namespace Extensions
             return false;
         }
 
-        public static string ValueAsText(this Property property)
+        public static string? ValueAsText(this Property property)
         {
             return "" + property.Value;
         }
@@ -237,7 +237,7 @@ namespace Extensions
         }
 
         public static Property Set(this Property prop,
-            KeyTypes type, string value)
+            KeyTypes type, string? value)
         {
             prop.ValueId = ExtendReference.CreateFromKey(new Key(type, value));
             return prop;

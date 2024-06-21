@@ -125,7 +125,7 @@ namespace IO.Swagger.Models
         /// </summary>
 
         [DataMember(Name = "profiles")]
-        public List<ProfilesEnum> Profiles { get; set; }
+        public List<ProfilesEnum>? Profiles { get; set; }
 
         /// <summary>
         /// Returns the string presentation of the object

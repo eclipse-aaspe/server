@@ -17,15 +17,15 @@ namespace Extensions
         }
 
         public static EmbeddedDataSpecification SetIEC61360Spec(this ConceptDescription conceptDescription,
-            string[] preferredNames = null,
-            string shortName = "",
+            string?[] preferredNames = null,
+            string? shortName = "",
             string unit = "",
             Reference unitId = null,
             string valueFormat = null,
             string sourceOfDefinition = null,
             string symbol = null,
-            string dataType = "",
-            string[] definition = null
+            string? dataType = "",
+            string?[] definition = null
         )
         {
             var eds = new EmbeddedDataSpecification(new Reference(ReferenceTypes.ExternalReference, new List<IKey> {ExtendIDataSpecificationContent.GetKeyForIec61360()}),

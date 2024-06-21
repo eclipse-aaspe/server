@@ -6,7 +6,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
     {
         private static ResponseMetadataTransformer Transformer = new ResponseMetadataTransformer();
 
-        public static IDTO Map(IClass source)
+        public static IDTO? Map(IClass source)
         {
             return Transformer.Transform(source);
         }

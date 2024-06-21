@@ -54,7 +54,7 @@ namespace Extensions
             }
         }
 
-        public static void Add(this IReferable referable, ISubmodelElement submodelElement)
+        public static void Add(this IReferable referable, ISubmodelElement? submodelElement)
         {
             if (referable is Submodel submodel)
             {
@@ -114,7 +114,7 @@ namespace Extensions
             return new Reference(ReferenceTypes.ExternalReference, referables.ToKeyList());
         }
 
-        public static List<IKey> ToKeyList(this List<IReferable> referables)
+        public static List<IKey>? ToKeyList(this List<IReferable> referables)
         {
             var res = new List<IKey>();
             foreach (var rf in referables)
@@ -465,7 +465,7 @@ namespace Extensions
             return head + myid;
         }
 
-        public static void AddDescription(this IReferable referable, string language, string Text)
+        public static void AddDescription(this IReferable referable, string? language, string? Text)
         {
             if (referable.Description == null)
                 referable.Description = new List<ILangStringTextType>();

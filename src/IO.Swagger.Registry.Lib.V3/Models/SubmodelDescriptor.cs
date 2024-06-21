@@ -53,7 +53,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         //[RegularExpression("/^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$/")]
         [ StringLength(2000, MinimumLength = 1) ]
         [ DataMember(Name = "id") ]
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
         /// <summary>
         /// Gets or Sets SemanticId
@@ -77,8 +77,8 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         [ DataMember(Name = "federatedElements") ]
         public List<String>? FederatedElements { get; set; }
 
-        public SubmodelDescriptor(AdministrativeInformation administration = null, List<Endpoint> endpoints = null, string idShort = null, string id = null,
-            Reference semanticId = null, List<Reference> supplementalSemanticId = null, List<string> federatedElements = null)
+        public SubmodelDescriptor(AdministrativeInformation? administration = null, List<Endpoint>? endpoints = null, string? idShort = null, string? id = null,
+            Reference? semanticId = null, List<Reference>? supplementalSemanticId = null, List<string>? federatedElements = null)
         {
             Administration = administration;
             Endpoints = endpoints;
@@ -121,7 +121,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
         /// <param name="obj">Object to be compared</param>
         /// <returns>Boolean</returns>
-        public override bool Equals(object obj = null)
+        public override bool Equals(object? obj)
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
@@ -133,7 +133,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
         /// <param name="other">Instance of SubmodelDescriptor to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(SubmodelDescriptor other = null)
+        public bool Equals(SubmodelDescriptor? other = null)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;

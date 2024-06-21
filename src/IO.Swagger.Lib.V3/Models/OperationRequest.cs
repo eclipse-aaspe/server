@@ -29,14 +29,14 @@ namespace IO.Swagger.Models
         /// </summary>
 
         [DataMember(Name = "inoutputArguments")]
-        public List<OperationVariable> InoutputArguments { get; set; }
+        public List<OperationVariable>? InoutputArguments { get; set; }
 
         /// <summary>
         /// Gets or Sets InputArguments
         /// </summary>
 
         [DataMember(Name = "inputArguments")]
-        public List<OperationVariable> InputArguments { get; set; }
+        public List<OperationVariable>? InputArguments { get; set; }
 
         /// <summary>
         /// Gets or Sets RequestId
@@ -44,7 +44,7 @@ namespace IO.Swagger.Models
 
         [MaxLength(128)]
         [DataMember(Name = "requestId")]
-        public string RequestId { get; set; }
+        public string? RequestId { get; set; }
 
         /// <summary>
         /// Gets or Sets Timeout

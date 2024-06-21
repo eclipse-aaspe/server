@@ -7,7 +7,7 @@ namespace Extensions
     {
         #region AasxPackageExplorer
 
-        public static void ValueFromText(this MultiLanguageProperty multiLanguageProperty, string text, string defaultLang)
+        public static void ValueFromText(this MultiLanguageProperty multiLanguageProperty, string? text, string? defaultLang)
         {
             multiLanguageProperty.Value ??= new List<ILangStringTextType>();
 
@@ -16,7 +16,7 @@ namespace Extensions
 
         #endregion
 
-        public static string ValueAsText(this MultiLanguageProperty multiLanguageProperty, string defaultLang = null)
+        public static string? ValueAsText(this MultiLanguageProperty multiLanguageProperty, string defaultLang = null)
         {
             //TODO: need to check/test again
             //return "" + multiLanguageProperty.Value?.LangStrings.FirstOrDefault().Text;
@@ -118,7 +118,7 @@ namespace Extensions
         }
 
         public static MultiLanguageProperty Set(this MultiLanguageProperty mlp,
-            string lang, string str)
+            string? lang, string? str)
         {
             return mlp.Set(new LangStringTextType(lang, str));
         }

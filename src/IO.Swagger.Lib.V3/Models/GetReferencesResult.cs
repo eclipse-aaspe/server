@@ -27,7 +27,7 @@ namespace IO.Swagger.Models
         /// </summary>
 
         [DataMember(Name = "result")]
-        public List<Reference> Result { get; set; }
+        public List<Reference>? Result { get; set; }
 
         /// <summary>
         /// Returns the string presentation of the object

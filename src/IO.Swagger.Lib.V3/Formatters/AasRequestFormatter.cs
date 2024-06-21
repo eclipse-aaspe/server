@@ -178,7 +178,14 @@ namespace IO.Swagger.Lib.V3.Formatters
                 node["submodelElements"] = null;
                 var submodelMetadata = JsonConvert.DeserializeObject<SubmodelMetadata>(node.ToJsonString(), serilizerSettings);
 
-                output = new SubmodelMetadata(submodelMetadata.id, submodelMetadata.extensions, submodelMetadata.category, submodelMetadata.idShort, submodelMetadata.displayName, submodelMetadata.description, submodelMetadata.administration, submodelMetadata.kind, submodelMetadata.semanticId, submodelMetadata.supplementalSemanticIds, submodelMetadata.qualifiers, submodelMetadata.embeddedDataSpecifications, valueMetadata);
+                if (submodelMetadata != null)
+                {
+                    output = new SubmodelMetadata(submodelMetadata.id, submodelMetadata.extensions, submodelMetadata.category, submodelMetadata.idShort,
+                                                  submodelMetadata.displayName,
+                                                  submodelMetadata.description, submodelMetadata.administration, submodelMetadata.kind, submodelMetadata.semanticId,
+                                                  submodelMetadata.supplementalSemanticIds, submodelMetadata.qualifiers, submodelMetadata.embeddedDataSpecifications,
+                                                  valueMetadata);
+                }
             }
 
             return output;
@@ -231,7 +238,10 @@ namespace IO.Swagger.Lib.V3.Formatters
                         node["annotations"] = null;
                         var annotatedRelElement = JsonConvert.DeserializeObject<AnnotatedRelationshipElementMetadata>(node.ToJsonString(), serilizerSettings);
 
-                        output = new AnnotatedRelationshipElementMetadata(annotatedRelElement.extensions, annotatedRelElement.category, annotatedRelElement.idShort, annotatedRelElement.displayName, annotatedRelElement.description, annotatedRelElement.semanticId, annotatedRelElement.supplementalSemanticIds, annotatedRelElement.qualifiers, annotatedRelElement.embeddedDataSpecifications, valueMetadata);
+                        output = new AnnotatedRelationshipElementMetadata(annotatedRelElement.extensions, annotatedRelElement.category, annotatedRelElement.idShort,
+                                                                          annotatedRelElement.displayName, annotatedRelElement.description, annotatedRelElement.semanticId,
+                                                                          annotatedRelElement.supplementalSemanticIds, annotatedRelElement.qualifiers,
+                                                                          annotatedRelElement.embeddedDataSpecifications, valueMetadata);
                         break;
                     }
                 case "basiceventelement":
@@ -251,7 +261,8 @@ namespace IO.Swagger.Lib.V3.Formatters
                         node["statements"] = null;
                         var entity = JsonConvert.DeserializeObject<EntityMetadata>(node.ToJsonString(), serilizerSettings);
 
-                        output = new EntityMetadata(entity.entityType, entity.extensions, entity.category, entity.idShort, entity.displayName, entity.description, entity.semanticId, entity.supplementalSemanticIds, entity.qualifiers, entity.embeddedDataSpecifications, valueMetadata);
+                        output = new EntityMetadata(entity.entityType, entity.extensions, entity.category, entity.idShort, entity.displayName, entity.description,
+                                                    entity.semanticId, entity.supplementalSemanticIds, entity.qualifiers, entity.embeddedDataSpecifications, valueMetadata);
                         break;
                     }
                 case "file":
@@ -292,7 +303,9 @@ namespace IO.Swagger.Lib.V3.Formatters
                         node["value"] = null;
                         var smeColl = JsonConvert.DeserializeObject<SubmodelElementCollectionMetadata>(node.ToJsonString(), serilizerSettings);
 
-                        output = new SubmodelElementCollectionMetadata(smeColl.extensions, smeColl.category, smeColl.idShort, smeColl.displayName, smeColl.description, smeColl.semanticId, smeColl.supplementalSemanticIds, smeColl.qualifiers, smeColl.embeddedDataSpecifications, valueMetadata);
+                        output = new SubmodelElementCollectionMetadata(smeColl.extensions, smeColl.category, smeColl.idShort, smeColl.displayName, smeColl.description,
+                                                                       smeColl.semanticId, smeColl.supplementalSemanticIds, smeColl.qualifiers, smeColl.embeddedDataSpecifications,
+                                                                       valueMetadata);
 
                         break;
                     }
@@ -303,7 +316,10 @@ namespace IO.Swagger.Lib.V3.Formatters
                         node["value"] = null;
                         var smeList = JsonConvert.DeserializeObject<SubmodelElementListMetadata>(node.ToJsonString(), serilizerSettings);
 
-                        output = new SubmodelElementListMetadata(smeList.typeValueListElement, smeList.extensions, smeList.category, smeList.idShort, smeList.displayName, smeList.description, smeList.semanticId, smeList.supplementalSemanticIds, smeList.qualifiers, smeList.embeddedDataSpecifications, smeList.orderRelevant, smeList.semanticIdListElement, smeList.valueTypeListElement, valueMetadata);
+                        output = new SubmodelElementListMetadata(smeList.typeValueListElement, smeList.extensions, smeList.category, smeList.idShort, smeList.displayName,
+                                                                 smeList.description, smeList.semanticId, smeList.supplementalSemanticIds, smeList.qualifiers,
+                                                                 smeList.embeddedDataSpecifications, smeList.orderRelevant, smeList.semanticIdListElement,
+                                                                 smeList.valueTypeListElement, valueMetadata);
                         break;
                     }
             }

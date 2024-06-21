@@ -29,7 +29,7 @@ namespace IO.Swagger.Models
         /// </summary>
 
         [DataMember(Name = "executionResult")]
-        public Result ExecutionResult { get; set; }
+        public Result? ExecutionResult { get; set; }
 
         /// <summary>
         /// Gets or Sets ExecutionState
@@ -43,14 +43,14 @@ namespace IO.Swagger.Models
         /// </summary>
 
         [DataMember(Name = "inoutputArguments")]
-        public List<OperationVariable> InoutputArguments { get; set; }
+        public List<OperationVariable>? InoutputArguments { get; set; }
 
         /// <summary>
         /// Gets or Sets OutputArguments
         /// </summary>
 
         [DataMember(Name = "outputArguments")]
-        public List<OperationVariable> OutputArguments { get; set; }
+        public List<OperationVariable>? OutputArguments { get; set; }
 
         /// <summary>
         /// Gets or Sets RequestId
@@ -58,7 +58,7 @@ namespace IO.Swagger.Models
 
         [MaxLength(128)]
         [DataMember(Name = "requestId")]
-        public string RequestId { get; set; }
+        public string? RequestId { get; set; }
 
         /// <summary>
         /// Returns the string presentation of the object

@@ -7,7 +7,7 @@ namespace Extensions
 {
     public static class ExtendKeyList
     {
-        public static bool IsEmpty(this List<IKey> keys)
+        public static bool IsEmpty(this List<IKey>? keys)
         {
             return keys.Count < 1;
         }
@@ -35,7 +35,7 @@ namespace Extensions
             return res;
         }
 
-        public static bool StartsWith(this List<IKey> keyList, List<IKey> otherKeyList)
+        public static bool StartsWith(this List<IKey> keyList, List<IKey>? otherKeyList)
         {
             if (otherKeyList == null || otherKeyList.Count == 0)
                 return false;
@@ -79,12 +79,12 @@ namespace Extensions
             return true;
         }
 
-        public static string ToStringExtended(this List<IKey> keys, int format = 1, string delimiter = ",")
+        public static string ToStringExtended(this List<IKey>? keys, int format = 1, string delimiter = ",")
         {
             return string.Join(delimiter, keys.Select((k) => k.ToStringExtended(format)));
         }
 
-        public static void Validate(this List<IKey> keys, AasValidationRecordList results,
+        public static void Validate(this List<IKey>? keys, AasValidationRecordList results,
                 IReferable container)
         {
             // access
@@ -114,15 +114,15 @@ namespace Extensions
             return res;
         }
 
-        public static List<IKey> Parse(string input)
+        public static List<IKey>? Parse(string input)
         {
             // access
             if (input == null)
                 return null;
 
             // split
-            var parts = input.Split(',', ';');
-            var kl = new List<IKey>();
+            var         parts = input.Split(',', ';');
+            var kl    = new List<IKey>();
 
             foreach (var p in parts)
             {
@@ -138,12 +138,12 @@ namespace Extensions
         /// Take only idShort, ignore all other key-types and create a '/'-separated list
         /// </summary>
         /// <returns>Empty string or list of idShorts</returns>
-        public static string BuildIdShortPath(this List<Key> keyList,
-            int startPos = 0, int count = int.MaxValue)
+        public static string? BuildIdShortPath(this List<Key> keyList,
+                                               int startPos = 0, int count = int.MaxValue)
         {
             if (keyList == null || startPos >= keyList.Count)
                 return "";
-            int nr = 0;
+            int     nr  = 0;
             var res = "";
             for (int i = startPos; i < keyList.Count && nr < count; i++)
             {

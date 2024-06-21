@@ -18,13 +18,13 @@ namespace AasxServerDB.Entities
         public string? SMEType { get; set; }
         public string? ValueType { get; set; }
         public string? SemanticId { get; set; }
-        public string? IdShort { get; set; }
+        public string IdShort { get; set; }
 
         public virtual ICollection<IValueSet> IValueSets { get; } = new List<IValueSet>();
         public virtual ICollection<DValueSet> DValueSets { get; } = new List<DValueSet>();
         public virtual ICollection<SValueSet> SValueSets { get; } = new List<SValueSet>();
 
-        public string? getValue()
+        public string getValue()
         {
             using (AasContext db = new AasContext())
             {
@@ -50,9 +50,9 @@ namespace AasxServerDB.Entities
             return string.Empty;
         }
 
-        public List<string> getMLPValue()
+        public List<string?> getMLPValue()
         {
-            var list = new List<string>();
+            var list = new List<string?>();
             if (SMEType == "MLP")
             {
                 using (AasContext db = new AasContext())
@@ -66,7 +66,7 @@ namespace AasxServerDB.Entities
                     return list;
                 }
             }
-            return new List<string>();
+            return new List<string?>();
         }
 
         public static List<SValueSet>? getValueList(List<SMESet> smesets)
