@@ -11071,7 +11071,7 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Unique references in their name space.
         /// </summary>
-        public List<IKey> Keys { get; set; }
+        public List<IKey>? Keys { get; set; }
     }
 
     /// <summary>
@@ -11197,7 +11197,7 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Unique references in their name space.
         /// </summary>
-        public List<IKey> Keys { get; set; }
+        public List<IKey>? Keys { get; set; }
 
         /// <summary>
         /// Iterate over all the class instances referenced from this instance
@@ -11286,7 +11286,7 @@ namespace AasCore.Aas3_0
 
         public Reference(
             ReferenceTypes type,
-            List<IKey> keys,
+            List<IKey>? keys,
             IReference? referredSemanticId = null)
         {
             Type               = type;

@@ -34,6 +34,8 @@ using System.Security.Claims;
 
 namespace IO.Swagger.Controllers
 {
+    using DataTransferObjects;
+
     /// <summary>
     /// 
     /// </summary>
@@ -470,8 +472,8 @@ namespace IO.Swagger.Controllers
 
             var smeList = _aasService.GetAllSubmodelElements(decodedAasIdentifier, decodedSubmodelIdentifier);
 
-            var smePaginated = _paginationService.GetPaginatedList(smeList, new PaginationParameters(cursor, limit));
-            var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginated.result, level);
+            var         smePaginated    = _paginationService.GetPaginatedList(smeList, new PaginationParameters(cursor, limit));
+            var         smeLevelList    = _levelExtentModifierService.ApplyLevelExtent(smePaginated.result, level);
             var smeMetadataList = _mappingService.Map(smeLevelList, "metadata");
             var output = new MetadataPagedResult
             {
@@ -636,8 +638,8 @@ namespace IO.Swagger.Controllers
 
             var submodelElements = _aasService.GetAllSubmodelElements(decodedAasIdentifier, decodedSubmodelIdentifier);
 
-            var smePaginated = _paginationService.GetPaginatedList(submodelElements, new PaginationParameters(cursor, limit));
-            var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginated.result, level);
+            var         smePaginated = _paginationService.GetPaginatedList(submodelElements, new PaginationParameters(cursor, limit));
+            var         smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginated.result, level);
             var smeValueList = _mappingService.Map(smeLevelList, "value");
             var output = new ValueOnlyPagedResult
             {
@@ -1096,8 +1098,8 @@ namespace IO.Swagger.Controllers
                 }
             }
 
-            var submodelLevel = _levelExtentModifierService.ApplyLevelExtent(submodel, level);
-            var output = _mappingService.Map(submodelLevel, "metadata");
+            var   submodelLevel = _levelExtentModifierService.ApplyLevelExtent(submodel, level);
+            var output        = _mappingService.Map(submodelLevel, "metadata");
             return new ObjectResult(output);
         }
 
@@ -1236,8 +1238,8 @@ namespace IO.Swagger.Controllers
                 }
             }
 
-            var submodelLevel = _levelExtentModifierService.ApplyLevelExtent(submodel, level, extent);
-            var output = _mappingService.Map(submodelLevel, "value");
+            var   submodelLevel = _levelExtentModifierService.ApplyLevelExtent(submodel, level, extent);
+            var output        = _mappingService.Map(submodelLevel, "value");
             return new ObjectResult(output);
         }
 
@@ -1347,8 +1349,8 @@ namespace IO.Swagger.Controllers
                 }
             }
 
-            var smeLevel = _levelExtentModifierService.ApplyLevelExtent(submodelElement, level);
-            var output = _mappingService.Map(smeLevel, "metadata");
+            var   smeLevel = _levelExtentModifierService.ApplyLevelExtent(submodelElement, level);
+            var output   = _mappingService.Map(smeLevel, "metadata");
             return new ObjectResult(output);
         }
 
@@ -1514,8 +1516,8 @@ namespace IO.Swagger.Controllers
                 }
             }
 
-            var smeLevel = _levelExtentModifierService.ApplyLevelExtent(submodelElement, level, extent);
-            var output = _mappingService.Map(smeLevel, "value");
+            var   smeLevel = _levelExtentModifierService.ApplyLevelExtent(submodelElement, level, extent);
+            var output   = _mappingService.Map(smeLevel, "value");
             return new ObjectResult(output);
         }
 

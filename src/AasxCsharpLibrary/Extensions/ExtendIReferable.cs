@@ -114,7 +114,7 @@ namespace Extensions
             return new Reference(ReferenceTypes.ExternalReference, referables.ToKeyList());
         }
 
-        public static List<IKey> ToKeyList(this List<IReferable> referables)
+        public static List<IKey>? ToKeyList(this List<IReferable> referables)
         {
             var res = new List<IKey>();
             foreach (var rf in referables)

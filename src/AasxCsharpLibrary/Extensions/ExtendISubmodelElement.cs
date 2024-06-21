@@ -539,7 +539,7 @@ namespace Extensions
 
             if (sourceSubmodelElement.semanticId != null && !sourceSubmodelElement.semanticId.IsEmpty)
             {
-                List<IKey> keyList = null;
+                List<IKey>? keyList = null;
                 if (sourceSubmodelElement.semanticId.Keys != null)
                 {
                     keyList = new List<IKey>();
@@ -606,7 +606,7 @@ namespace Extensions
         }
 
         public static IReferable FindReferableByReference(
-            this List<ISubmodelElement> submodelElements, List<IKey> keys, int keyIndex)
+            this List<ISubmodelElement> submodelElements, List<IKey>? keys, int keyIndex)
         {
             // first index needs to exist ..
             if (submodelElements == null || keys == null || keyIndex >= keys.Count)

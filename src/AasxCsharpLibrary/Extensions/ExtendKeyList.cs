@@ -7,7 +7,7 @@ namespace Extensions
 {
     public static class ExtendKeyList
     {
-        public static bool IsEmpty(this List<IKey> keys)
+        public static bool IsEmpty(this List<IKey>? keys)
         {
             return keys.Count < 1;
         }
@@ -35,7 +35,7 @@ namespace Extensions
             return res;
         }
 
-        public static bool StartsWith(this List<IKey> keyList, List<IKey> otherKeyList)
+        public static bool StartsWith(this List<IKey> keyList, List<IKey>? otherKeyList)
         {
             if (otherKeyList == null || otherKeyList.Count == 0)
                 return false;
@@ -79,12 +79,12 @@ namespace Extensions
             return true;
         }
 
-        public static string ToStringExtended(this List<IKey> keys, int format = 1, string delimiter = ",")
+        public static string ToStringExtended(this List<IKey>? keys, int format = 1, string delimiter = ",")
         {
             return string.Join(delimiter, keys.Select((k) => k.ToStringExtended(format)));
         }
 
-        public static void Validate(this List<IKey> keys, AasValidationRecordList results,
+        public static void Validate(this List<IKey>? keys, AasValidationRecordList results,
                 IReferable container)
         {
             // access
@@ -114,15 +114,15 @@ namespace Extensions
             return res;
         }
 
-        public static List<IKey> Parse(string input)
+        public static List<IKey>? Parse(string input)
         {
             // access
             if (input == null)
                 return null;
 
             // split
-            var parts = input.Split(',', ';');
-            var kl = new List<IKey>();
+            var         parts = input.Split(',', ';');
+            var kl    = new List<IKey>();
 
             foreach (var p in parts)
             {
