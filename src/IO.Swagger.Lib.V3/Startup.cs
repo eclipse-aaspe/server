@@ -9,7 +9,6 @@
  */
 using System;
 using System.IO;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -19,123 +18,140 @@ using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
-using Swashbuckle.AspNetCore.Swagger;
-using Swashbuckle.AspNetCore.SwaggerGen;
 using IO.Swagger.Filters;
 
 
-namespace IO.Swagger
+namespace IO.Swagger;
+
+using System.Collections.Generic;
+using Microsoft.OpenApi.Any;
+using Models;
+
+/// <summary>
+/// Startup
+/// </summary>
+public class Startup
 {
+    private readonly IWebHostEnvironment _hostingEnv;
+
+    private IConfiguration Configuration { get; }
+
     /// <summary>
-    /// Startup
+    /// Constructor
     /// </summary>
-    public class Startup
+    /// <param name="env"></param>
+    /// <param name="configuration"></param>
+    public Startup(IWebHostEnvironment env, IConfiguration configuration)
     {
-        private readonly IWebHostEnvironment _hostingEnv;
+        _hostingEnv   = env;
+        Configuration = configuration;
+    }
 
-        private IConfiguration Configuration { get; }
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="env"></param>
-        /// <param name="configuration"></param>
-        public Startup(IWebHostEnvironment env, IConfiguration configuration)
-        {
-            _hostingEnv = env;
-            Configuration = configuration;
-        }
-
-        /// <summary>
-        /// This method gets called by the runtime. Use this method to add services to the container.
-        /// </summary>
-        /// <param name="services"></param>
-        public void ConfigureServices(IServiceCollection services)
-        {
-            // Add framework services.
-            services
-                .AddMvc(options =>
-                {
-                    options.InputFormatters.RemoveType<Microsoft.AspNetCore.Mvc.Formatters.SystemTextJsonInputFormatter>();
-                    options.OutputFormatters.RemoveType<Microsoft.AspNetCore.Mvc.Formatters.SystemTextJsonOutputFormatter>();
-                })
-                .AddNewtonsoftJson(opts =>
-                {
-                    opts.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
-                    opts.SerializerSettings.Converters.Add(new StringEnumConverter(new CamelCaseNamingStrategy()));
-                })
-                .AddXmlSerializerFormatters();
-
-
-            services
-                .AddSwaggerGen(c =>
-                {
-                    c.SwaggerDoc("V3.0", new OpenApiInfo
+    /// <summary>
+    /// This method gets called by the runtime. Use this method to add services to the container.
+    /// </summary>
+    /// <param name="services"></param>
+    public void ConfigureServices(IServiceCollection services)
+    {
+        // Add framework services.
+        services
+            .AddMvc(options =>
                     {
-                        Version = "V3.0",
-                        Title = "DotAAS Part 2 | HTTP/REST | Repository Service Specification",
-                        Description = "DotAAS Part 2 | HTTP/REST | Repository Service Specification (ASP.NET Core 3.1)",
-                        Contact = new OpenApiContact()
-                        {
-                            Name = "Constantin Ziesche, Andreas Orzelski, Florian Krebs, Bastian Rössl, Manuel Sauer, Jens Vialkowitsch, Michael Hoffmeister, Torben Miny, Sebastian Bader, Marko Ristin, Nico Braunisch",
-                            Url = new Uri("https://github.com/swagger-api/swagger-codegen"),
-                            Email = ""
-                        },
-                        TermsOfService = new Uri("https://github.com/admin-shell-io/aas-specs")
-                    });
-                    c.CustomSchemaIds(type => type.FullName);
-                    c.IncludeXmlComments($"{AppContext.BaseDirectory}{Path.DirectorySeparatorChar}{_hostingEnv.ApplicationName}.xml");
+                        options.InputFormatters.RemoveType<Microsoft.AspNetCore.Mvc.Formatters.SystemTextJsonInputFormatter>();
+                        options.OutputFormatters.RemoveType<Microsoft.AspNetCore.Mvc.Formatters.SystemTextJsonOutputFormatter>();
+                    })
+            .AddNewtonsoftJson(opts =>
+                               {
+                                   opts.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+                                   opts.SerializerSettings.Converters.Add(new StringEnumConverter(new CamelCaseNamingStrategy()));
+                               })
+            .AddXmlSerializerFormatters();
 
-                    // Include DataAnnotation attributes on Controller Action parameters as Swagger validation rules (e.g required, pattern, ..)
-                    // Use [ValidateModelState] on Actions to actually validate it in C# as well!
-                    c.OperationFilter<GeneratePathParamsValidationFilter>();
-                });
-        }
+        services.AddSwaggerGen(c =>
+                               {
+                                   // Other Swagger configuration...
 
-        /// <summary>
-        /// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        /// </summary>
-        /// <param name="app"></param>
-        /// <param name="env"></param>
-        /// <param name="loggerFactory"></param>
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
+                                   c.MapType<MessageTypeEnum>(() => new OpenApiSchema
+                                                                            {
+                                                                                Type = "string",
+                                                                                Enum = new List<IOpenApiAny>
+                                                                                       {
+                                                                                           new OpenApiString(MessageTypeEnum.UndefinedEnum.ToString()),
+                                                                                           new OpenApiString(MessageTypeEnum.InfoEnum.ToString()),
+                                                                                           new OpenApiString(MessageTypeEnum.WarningEnum.ToString()),
+                                                                                           new OpenApiString(MessageTypeEnum.ErrorEnum.ToString()),
+                                                                                           new OpenApiString(MessageTypeEnum.ExceptionEnum.ToString())
+                                                                                       }
+                                                                            });
+                               });
+        services
+            .AddSwaggerGen(c =>
+                           {
+                               c.SwaggerDoc("V3.0", new OpenApiInfo
+                                                    {
+                                                        Version     = "V3.0",
+                                                        Title       = "DotAAS Part 2 | HTTP/REST | Repository Service Specification",
+                                                        Description = "DotAAS Part 2 | HTTP/REST | Repository Service Specification (ASP.NET Core 3.1)",
+                                                        Contact = new OpenApiContact()
+                                                                  {
+                                                                      Name = "Constantin Ziesche, Andreas Orzelski, Florian Krebs, Bastian Rössl, Manuel Sauer, Jens Vialkowitsch, Michael Hoffmeister, Torben Miny, Sebastian Bader, Marko Ristin, Nico Braunisch",
+                                                                      Url = new Uri("https://github.com/swagger-api/swagger-codegen"),
+                                                                      Email = ""
+                                                                  },
+                                                        TermsOfService = new Uri("https://github.com/admin-shell-io/aas-specs")
+                                                    });
+                               c.CustomSchemaIds(type => type.FullName);
+                               c.IncludeXmlComments($"{AppContext.BaseDirectory}{Path.DirectorySeparatorChar}{_hostingEnv.ApplicationName}.xml");
+
+                               // Include DataAnnotation attributes on Controller Action parameters as Swagger validation rules (e.g required, pattern, ..)
+                               // Use [ValidateModelState] on Actions to actually validate it in C# as well!
+                               c.OperationFilter<GeneratePathParamsValidationFilter>();
+                           });
+    }
+
+    /// <summary>
+    /// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+    /// </summary>
+    /// <param name="app"></param>
+    /// <param name="env"></param>
+    /// <param name="loggerFactory"></param>
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
+    {
+        app.UseRouting();
+
+        //TODO: Uncomment this if you need wwwroot folder
+        // app.UseStaticFiles();
+
+        app.UseAuthorization();
+
+        app.UseSwagger();
+        app.UseSwaggerUI(c =>
+                         {
+                             //TODO: Either use the SwaggerGen generated Swagger contract (generated from C# classes)
+                             c.SwaggerEndpoint("/swagger/V3.0/swagger.json", "DotAAS Part 2 | HTTP/REST | Repository Service Specification");
+
+                             //TODO: Or alternatively use the original Swagger contract that's included in the static files
+                             // c.SwaggerEndpoint("/swagger-original.json", "DotAAS Part 2 | HTTP/REST | Repository Service Specification Original");
+                         });
+
+        //TODO: Use Https Redirection
+        // app.UseHttpsRedirection();
+
+        app.UseEndpoints(endpoints =>
+                         {
+                             endpoints.MapControllers();
+                         });
+
+        if (env.IsDevelopment())
         {
-            app.UseRouting();
+            app.UseDeveloperExceptionPage();
+        }
+        else
+        {
+            //TODO: Enable production exception handling (https://docs.microsoft.com/en-us/aspnet/core/fundamentals/error-handling)
+            app.UseExceptionHandler("/Error");
 
-            //TODO: Uncomment this if you need wwwroot folder
-            // app.UseStaticFiles();
-
-            app.UseAuthorization();
-
-            app.UseSwagger();
-            app.UseSwaggerUI(c =>
-            {
-                //TODO: Either use the SwaggerGen generated Swagger contract (generated from C# classes)
-                c.SwaggerEndpoint("/swagger/V3.0/swagger.json", "DotAAS Part 2 | HTTP/REST | Repository Service Specification");
-
-                //TODO: Or alternatively use the original Swagger contract that's included in the static files
-                // c.SwaggerEndpoint("/swagger-original.json", "DotAAS Part 2 | HTTP/REST | Repository Service Specification Original");
-            });
-
-            //TODO: Use Https Redirection
-            // app.UseHttpsRedirection();
-
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
-
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
-            else
-            {
-                //TODO: Enable production exception handling (https://docs.microsoft.com/en-us/aspnet/core/fundamentals/error-handling)
-                app.UseExceptionHandler("/Error");
-
-                app.UseHsts();
-            }
+            app.UseHsts();
         }
     }
 }
