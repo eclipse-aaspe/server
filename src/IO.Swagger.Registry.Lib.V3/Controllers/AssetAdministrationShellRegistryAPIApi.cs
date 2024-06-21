@@ -254,7 +254,7 @@ namespace IO.Swagger.Controllers
         [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
         [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
         [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetAssetAdministrationShellDescriptorById([ FromRoute ] [ Required ] string? aasIdentifier)
+        public virtual IActionResult GetAssetAdministrationShellDescriptorById([ FromRoute ] [ Required ] string aasIdentifier)
         {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             _logger.LogInformation($"Received request to get the AAS Descriptor by Id");
