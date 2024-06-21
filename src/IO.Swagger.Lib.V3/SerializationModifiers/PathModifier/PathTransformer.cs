@@ -283,7 +283,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
             throw new System.NotImplementedException();
         }
 
-        public List<string> TransformSubmodel(ISubmodel that, PathModifierContext context)
+        public List<string>? TransformSubmodel(ISubmodel? that, PathModifierContext context)
         {
             if (that == null) return null;
 

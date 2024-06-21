@@ -6,7 +6,7 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
 {
     public static class DescriptorSerializer
     {
-        public static JsonObject ToJsonObject(object that)
+        public static JsonObject? ToJsonObject(object that)
         {
             if (that == null)
                 return null;
@@ -24,7 +24,7 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
             }
         }
 
-        private static JsonObject Transform(AssetAdministrationShellDescriptor that)
+        private static JsonObject? Transform(AssetAdministrationShellDescriptor that)
         {
             if (that == null)
                 throw new ArgumentNullException(nameof(that));
@@ -97,7 +97,7 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
             return result;
         }
 
-        private static JsonObject Transform(SubmodelDescriptor that)
+        private static JsonObject? Transform(SubmodelDescriptor that)
         {
             if (that == null)
                 throw new ArgumentNullException(nameof(that));

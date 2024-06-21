@@ -7,7 +7,7 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
 {
     public static class DescriptorDeserializeImplementation
     {
-        internal static AssetAdministrationShellDescriptor AssetAdministrationShellDescriptorFrom(JsonNode node, out Reporting.Error error)
+        internal static AssetAdministrationShellDescriptor? AssetAdministrationShellDescriptorFrom(JsonNode node, out Reporting.Error error)
         {
             error = null;
 
@@ -279,7 +279,7 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                 submodelDescriptors);
         }
 
-        internal static SubmodelDescriptor SubmodelDescriptorFrom(JsonNode node, out Reporting.Error error)
+        internal static SubmodelDescriptor? SubmodelDescriptorFrom(JsonNode node, out Reporting.Error error)
         {
             error = null;
 
@@ -503,7 +503,7 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
             return new SubmodelDescriptor(administration, endpoints, idShort, id, semanticId, supplementalSemanticId, federatedElements);
         }
 
-        private static Endpoint EndpointFrom(JsonNode node, out Reporting.Error error)
+        private static Endpoint? EndpointFrom(JsonNode node, out Reporting.Error error)
         {
             error = null;
 
@@ -515,8 +515,8 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                 return null;
             }
 
-            string _interface = null;
-            ProtocolInformation protocolInformation = null;
+            string               _interface          = null;
+            ProtocolInformation? protocolInformation = null;
 
             foreach (var keyValue in obj)
             {
@@ -563,7 +563,7 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
             return new Endpoint(_interface, protocolInformation);
         }
 
-        private static ProtocolInformation ProtocolInformationFrom(JsonNode node, out Reporting.Error error)
+        private static ProtocolInformation? ProtocolInformationFrom(JsonNode node, out Reporting.Error error)
         {
             error = null;
 
@@ -781,7 +781,7 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
             return new ProtocolInformation(href, endpointProtocol, endpointProtocolVersion, subprotocol, subprotocolBody, subprotocolBodyEncoding, securityAttributes);
         }
 
-        private static ProtocolInformationSecurityAttributes ProtocolInformationSecurityAttributesFrom(JsonNode node, out Reporting.Error error)
+        private static ProtocolInformationSecurityAttributes? ProtocolInformationSecurityAttributesFrom(JsonNode node, out Reporting.Error error)
         {
             error = null;
 

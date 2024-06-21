@@ -37,7 +37,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         [ DataMember(Name = "protocolInformation") ]
         public ProtocolInformation? ProtocolInformation { get; set; }
 
-        public Endpoint(string @interface = null, ProtocolInformation protocolInformation = null)
+        public Endpoint(string @interface = null, ProtocolInformation? protocolInformation = null)
         {
             Interface = @interface;
             ProtocolInformation = protocolInformation;
