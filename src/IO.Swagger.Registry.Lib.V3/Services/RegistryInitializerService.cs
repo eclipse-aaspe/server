@@ -137,7 +137,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                                 Console.WriteLine("GET from Registry: " + registryURL);
                                 if (registryURL != "")
                                 {
-                                    postRegistry.Add(registryURL);
+                                    getRegistry.Add(registryURL);
                                 }
                             }
                         }

@@ -1027,7 +1027,7 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetSubmodelByIdAasRepository([FromRoute] [Required] string aasIdentifier, [FromRoute] [Required] string submodelIdentifier,
-                                                              [FromQuery] [Required] LevelEnum level, [FromQuery] [Required] ExtentEnum extent)
+                                                              [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
     {
         var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
