@@ -75,11 +75,9 @@ namespace IO.Swagger.Models
             if (ReferenceEquals(this, other)) return true;
 
             return
-            (
-                Messages == other.Messages ||
-                Messages != null &&
-                Messages.SequenceEqual(other.Messages)
-            );
+            Messages == other.Messages ||
+            (Messages != null &&
+             Messages.SequenceEqual(other.Messages));
         }
 
         /// <summary>
@@ -93,7 +91,7 @@ namespace IO.Swagger.Models
                 var hashCode = 41;
                 // Suitable nullity checks etc, of course :)
                 if (Messages != null)
-                    hashCode = hashCode * 59 + Messages.GetHashCode();
+                    hashCode = (hashCode * 59) + Messages.GetHashCode();
                 return hashCode;
             }
         }

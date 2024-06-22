@@ -45,7 +45,7 @@ namespace IO.Swagger.Controllers
             _decoderService = decoderService ?? throw new ArgumentNullException(nameof(decoderService)); ;
             _fileService = fileService ?? throw new ArgumentNullException(nameof(fileService));
             _paginationService = paginationService ?? throw new ArgumentNullException(nameof(paginationService));
-            _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(paginationService));
+            _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
         }
         /// <summary>
         /// Deletes a specific AASX package from the server
