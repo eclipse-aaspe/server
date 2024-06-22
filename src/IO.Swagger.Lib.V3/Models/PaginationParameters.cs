@@ -1,66 +1,46 @@
 ﻿namespace IO.Swagger.Models;
 
+/// <summary>
+/// Represents parameters for pagination, including cursor position and result limit.
+/// </summary>
 public class PaginationParameters
 {
-    const int MAX_RESULT_SIZE = 500;
-
-    private int _cursor;
-
-    private int _limit = MAX_RESULT_SIZE;
+    private const int MaxResultSize = 500;
+    private int _limit = MaxResultSize;
 
     /// <summary>
-    /// Constructor
+    /// Initializes a new instance of the <see cref="PaginationParameters"/> class.
     /// </summary>
-    /// <param name="cursor"></param>
-    /// <param name="limit"></param>
+    /// <param name="cursor">The position from which to resume a result listing, as a string.</param>
+    /// <param name="limit">The maximum size of the result list.</param>
     public PaginationParameters(string? cursor, int? limit)
     {
-        if (string.IsNullOrEmpty(cursor))
+        if (!string.IsNullOrEmpty(cursor) && int.TryParse(cursor, out int parsedCursor))
         {
-            Cursor = _cursor = 0;
+            Cursor = parsedCursor;
         }
-        else if (!string.IsNullOrEmpty(cursor))
+        else
         {
-            int.TryParse(cursor, out _cursor);
-            Cursor = _cursor;
+            Cursor = 0;
         }
+        Cursor = Cursor;
 
-        if (limit != null)
-        {
-            Limit = limit.Value;
-        }
+        
+        _limit = limit.HasValue ? limit.Value : MaxResultSize;
     }
 
     /// <summary>
-    /// The maximum size of the result list.
+    /// Gets or sets the maximum size of the result list. 
+    /// If the value exceeds <see cref="MaxResultSize"/>, it will be set to <see cref="MaxResultSize"/>.
     /// </summary>
     public int Limit
     {
-        get
-        {
-            return _limit;
-        }
-        set
-        {
-            //_limit = (value > MAX_RESULT_SIZE) ? MAX_RESULT_SIZE : value;
-            _limit = value;
-        }
+        get => _limit;
+        set => _limit = (value > MaxResultSize) ? MaxResultSize : value;
     }
 
     /// <summary>
-    /// The position from which to resume a result listing.
+    /// Gets or sets the position from which to resume a result listing.
     /// </summary>
-    public int Cursor
-    {
-        get
-        {
-            return _cursor;
-        }
-        set
-        {
-            // TODO (jtikekar, 2023-09-04): @Andreas about Base64Encoding. May need to decode
-
-            _cursor = value;
-        }
-    }
+    public int Cursor { get; set; }
 }
