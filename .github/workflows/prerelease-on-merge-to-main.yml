@@ -206,7 +206,7 @@ jobs:
 
       - name: Generate release notes
         id: generate_release_notes
-        uses: mikepenz/release-changelog-builder-action@v4
+        uses: mikepenz/release-changelog-builder-action@v5.0.0-a04
         with:
           configuration: ".github/changelog_configuration.json"
           token: ${{ secrets.GITHUB_TOKEN }}
