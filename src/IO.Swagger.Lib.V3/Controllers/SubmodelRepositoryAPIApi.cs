@@ -1043,7 +1043,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult GetSubmodelById([FromRoute] [Required] string submodelIdentifier, [FromQuery] [Required] LevelEnum level, [FromQuery] [Required] ExtentEnum extent)
+    public virtual IActionResult GetSubmodelById([FromRoute] [Required] string submodelIdentifier, [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
