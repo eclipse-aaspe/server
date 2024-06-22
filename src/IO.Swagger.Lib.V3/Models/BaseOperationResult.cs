@@ -89,13 +89,13 @@ namespace IO.Swagger.Models
             return
                 (
                     ExecutionState == other.ExecutionState ||
-                    ExecutionState != null &&
-                    ExecutionState.Equals(other.ExecutionState)
+                    (ExecutionState != null &&
+                     ExecutionState.Equals(other.ExecutionState))
                 ) &&
                 (
                     Success == other.Success ||
-                    Success != null &&
-                    Success.Equals(other.Success)
+                    (Success != null &&
+                     Success.Equals(other.Success))
                 );
         }
 
@@ -110,9 +110,9 @@ namespace IO.Swagger.Models
                 var hashCode = 41;
                 // Suitable nullity checks etc, of course :)
                 if (ExecutionState != null)
-                    hashCode = hashCode * 59 + ExecutionState.GetHashCode();
+                    hashCode = (hashCode * 59) + ExecutionState.GetHashCode();
                 if (Success != null)
-                    hashCode = hashCode * 59 + Success.GetHashCode();
+                    hashCode = (hashCode * 59) + Success.GetHashCode();
                 return hashCode;
             }
         }

@@ -69,7 +69,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return null;
         }
 
-        private static JsonNode? Transform(EntityValue entityValue)
+        private static JsonNode Transform(EntityValue entityValue)
         {
             var result = new JsonObject();
 
@@ -98,7 +98,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return result;
         }
 
-        private static JsonNode? Transform(AnnotatedRelationshipElementValue annotatedRelEleValue)
+        private static JsonNode Transform(AnnotatedRelationshipElementValue annotatedRelEleValue)
         {
             var result = new JsonObject();
 
@@ -122,7 +122,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return result;
         }
 
-        private static JsonNode? Transform(SubmodelValue submodelValue)
+        private static JsonNode Transform(SubmodelValue submodelValue)
         {
             var result = new JsonObject();
             if (submodelValue.submodelElements != null)
@@ -142,7 +142,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return result;
         }
 
-        private static JsonObject? Transform(SubmodelElementListValue submodelElementListValue)
+        private static JsonObject Transform(SubmodelElementListValue submodelElementListValue)
         {
             var result = new JsonObject();
 
@@ -166,7 +166,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return result;
         }
 
-        private static JsonObject? Transform(SubmodelElementCollectionValue submodelElementCollectionValue)
+        private static JsonObject Transform(SubmodelElementCollectionValue submodelElementCollectionValue)
         {
             var result = new JsonObject();
 
@@ -190,7 +190,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return result;
         }
 
-        private static JsonObject? Transform(RelationshipElementValue relationshipElementValue)
+        private static JsonObject Transform(RelationshipElementValue relationshipElementValue)
         {
             var result = new JsonObject();
 
@@ -203,7 +203,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return result;
         }
 
-        private static JsonObject? Transform(ReferenceElementValue referenceElementValue)
+        private static JsonObject Transform(ReferenceElementValue referenceElementValue)
         {
             var result = new JsonObject();
 
@@ -212,7 +212,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return result;
         }
 
-        private static JsonObject? Transform(RangeValue rangeValue)
+        private static JsonObject Transform(RangeValue rangeValue)
         {
             var result = new JsonObject();
 
@@ -225,7 +225,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return result;
         }
 
-        private static JsonObject? Transform(FileValue fileValue)
+        private static JsonObject Transform(FileValue fileValue)
         {
             var result = new JsonObject();
 
@@ -238,7 +238,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return result;
         }
 
-        private static JsonObject? Transform(BlobValue blobValue)
+        private static JsonObject Transform(BlobValue blobValue)
         {
             var result = new JsonObject();
 
@@ -254,7 +254,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return result;
         }
 
-        private static JsonObject? Transform(BasicEventElementValue basicEventElementValue)
+        private static JsonObject Transform(BasicEventElementValue basicEventElementValue)
         {
             var result = new JsonObject();
 
@@ -302,7 +302,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return result;
         }
 
-        private static JsonObject? Transform(MultiLanguagePropertyValue multiLanguagePropertyValue)
+        private static JsonObject Transform(MultiLanguagePropertyValue multiLanguagePropertyValue)
         {
             var result = new JsonObject();
 
@@ -318,7 +318,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return result;
         }
 
-        private static JsonObject? Transform(PropertyValue propertyValue)
+        private static JsonObject Transform(PropertyValue propertyValue)
         {
             var result = new JsonObject();
             result[propertyValue.idShort] = propertyValue.value;

@@ -46,7 +46,7 @@ public static class RequestMetadataMapper
     }
 
 
-    private static IEntity? Transform(EntityMetadata metadata)
+    private static IEntity Transform(EntityMetadata metadata)
     {
         List<ISubmodelElement> statements = null;
         if (metadata.statements != null)
@@ -64,7 +64,7 @@ public static class RequestMetadataMapper
                           TransformEmbeddedDataSpecList(metadata.embeddedDataSpecifications), statements);
     }
 
-    private static IAnnotatedRelationshipElement? Transform(AnnotatedRelationshipElementMetadata metadata)
+    private static IAnnotatedRelationshipElement Transform(AnnotatedRelationshipElementMetadata metadata)
     {
         List<IDataElement> annotations = null;
         if (metadata.annotations != null)
@@ -82,7 +82,7 @@ public static class RequestMetadataMapper
                                                 TransformQualifierList(metadata.qualifiers), TransformEmbeddedDataSpecList(metadata.embeddedDataSpecifications), annotations);
     }
 
-    private static ISubmodelElementList? Transform(SubmodelElementListMetadata metadata)
+    private static ISubmodelElementList Transform(SubmodelElementListMetadata metadata)
     {
         List<ISubmodelElement> value = null;
         if (metadata.value != null)
@@ -101,7 +101,7 @@ public static class RequestMetadataMapper
                                        TransformReference(metadata.semanticIdListElement), metadata.valueTypeListElement, value);
     }
 
-    private static ISubmodelElementCollection? Transform(SubmodelElementCollectionMetadata metadata)
+    private static ISubmodelElementCollection Transform(SubmodelElementCollectionMetadata metadata)
     {
         List<ISubmodelElement> value = null;
         if (metadata.value != null)
@@ -119,7 +119,7 @@ public static class RequestMetadataMapper
                                              TransformQualifierList(metadata.qualifiers), TransformEmbeddedDataSpecList(metadata.embeddedDataSpecifications), value);
     }
 
-    private static IRelationshipElement? Transform(RelationshipElementMetadata metadata)
+    private static IRelationshipElement Transform(RelationshipElementMetadata metadata)
     {
         return new RelationshipElement(null, null, TransformExtensions(metadata.extensions), metadata.category, metadata.idShort,
                                        TransformLangStringNameTypeList(metadata.displayName), TransformLangStringTextTypeList(metadata.description),
@@ -127,7 +127,7 @@ public static class RequestMetadataMapper
                                        TransformQualifierList(metadata.qualifiers), TransformEmbeddedDataSpecList(metadata.embeddedDataSpecifications));
     }
 
-    private static IReferenceElement? Transform(ReferenceElementMetadata metadata)
+    private static IReferenceElement Transform(ReferenceElementMetadata metadata)
     {
         return new ReferenceElement(TransformExtensions(metadata.extensions), metadata.category, metadata.idShort, TransformLangStringNameTypeList(metadata.displayName),
                                     TransformLangStringTextTypeList(metadata.description), TransformReference(metadata.semanticId),
@@ -135,7 +135,7 @@ public static class RequestMetadataMapper
                                     TransformEmbeddedDataSpecList(metadata.embeddedDataSpecifications));
     }
 
-    private static IRange? Transform(RangeMetadata metadata)
+    private static IRange Transform(RangeMetadata metadata)
     {
         return new AasCore.Aas3_0.Range(metadata.valueType, TransformExtensions(metadata.extensions), metadata.category, metadata.idShort,
                                         TransformLangStringNameTypeList(metadata.displayName), TransformLangStringTextTypeList(metadata.description),
@@ -143,7 +143,7 @@ public static class RequestMetadataMapper
                                         TransformQualifierList(metadata.qualifiers), TransformEmbeddedDataSpecList(metadata.embeddedDataSpecifications));
     }
 
-    private static IFile? Transform(FileMetadata metadata)
+    private static IFile Transform(FileMetadata metadata)
     {
         return new File(null, TransformExtensions(metadata.extensions), metadata.category, metadata.idShort, TransformLangStringNameTypeList(metadata.displayName),
                         TransformLangStringTextTypeList(metadata.description), TransformReference(metadata.semanticId),
@@ -151,7 +151,7 @@ public static class RequestMetadataMapper
                         TransformEmbeddedDataSpecList(metadata.embeddedDataSpecifications));
     }
 
-    private static IBlob? Transform(BlobMetadata metadata)
+    private static IBlob Transform(BlobMetadata metadata)
     {
         return new Blob(null, TransformExtensions(metadata.extensions), metadata.category, metadata.idShort, TransformLangStringNameTypeList(metadata.displayName),
                         TransformLangStringTextTypeList(metadata.description), TransformReference(metadata.semanticId),
@@ -159,7 +159,7 @@ public static class RequestMetadataMapper
                         TransformEmbeddedDataSpecList(metadata.embeddedDataSpecifications));
     }
 
-    private static IBasicEventElement? Transform(BasicEventElementMetadata metadata)
+    private static IBasicEventElement Transform(BasicEventElementMetadata metadata)
     {
         return new BasicEventElement(null, metadata.direction, metadata.state, TransformExtensions(metadata.extensions), metadata.category, metadata.idShort,
                                      TransformLangStringNameTypeList(metadata.displayName), TransformLangStringTextTypeList(metadata.description),
@@ -168,7 +168,7 @@ public static class RequestMetadataMapper
                                      TransformReference(metadata.messageBroker), metadata.lastUpdate, metadata.minInterval, metadata.maxInterval);
     }
 
-    private static IMultiLanguageProperty? Transform(MultiLanguagePropertyMetadata multiLanguagePropertyMetadata) =>
+    private static IMultiLanguageProperty Transform(MultiLanguagePropertyMetadata multiLanguagePropertyMetadata) =>
         new MultiLanguageProperty(TransformExtensions(multiLanguagePropertyMetadata.extensions), multiLanguagePropertyMetadata.category,
                                   multiLanguagePropertyMetadata.idShort, TransformLangStringNameTypeList(multiLanguagePropertyMetadata.displayName),
                                   TransformLangStringTextTypeList(multiLanguagePropertyMetadata.description),
@@ -177,7 +177,7 @@ public static class RequestMetadataMapper
                                   TransformQualifierList(multiLanguagePropertyMetadata.qualifiers),
                                   TransformEmbeddedDataSpecList(multiLanguagePropertyMetadata.embeddedDataSpecifications));
 
-    private static IProperty? Transform(PropertyMetadata propertyMetadata) =>
+    private static IProperty Transform(PropertyMetadata propertyMetadata) =>
         new Property(propertyMetadata.valueType, TransformExtensions(propertyMetadata.extensions), propertyMetadata.category, propertyMetadata.idShort,
                      TransformLangStringNameTypeList(propertyMetadata.displayName), TransformLangStringTextTypeList(propertyMetadata.description),
                      TransformReference(propertyMetadata.semanticId), TransformReferenceList(propertyMetadata.supplementalSemanticIds),
@@ -207,8 +207,15 @@ public static class RequestMetadataMapper
         return references.Select(reference => TransformReference(reference)).ToList();
     }
 
-    private static IReference TransformReference(ReferenceDTO referenceDTO) =>
-        new Reference(referenceDTO.type, TransformKeys(referenceDTO.keys), TransformReference(referenceDTO.referredSemanticId));
+    private static IReference TransformReference(ReferenceDTO referenceDTO)
+    {
+        var transformedKeys = TransformKeys(referenceDTO.keys);
+        var transformedSemanticId = referenceDTO.referredSemanticId != null ? 
+                                        TransformReference(referenceDTO.referredSemanticId) : 
+                                        null;
+
+        return new Reference(referenceDTO.type, transformedKeys, transformedSemanticId);
+    }
 
     private static List<IKey>? TransformKeys(List<KeyDTO>? keys) => keys?.Select(key => new Key(key.type, key.value)).Cast<IKey>().ToList();
 

@@ -168,8 +168,8 @@ namespace IO.Swagger.Models
             return
                 (
                     Profiles == other.Profiles ||
-                    Profiles != null &&
-                    Profiles.SequenceEqual(other.Profiles)
+                    (Profiles != null &&
+                     Profiles.SequenceEqual(other.Profiles))
                 );
         }
 
@@ -184,7 +184,7 @@ namespace IO.Swagger.Models
                 var hashCode = 41;
                 // Suitable nullity checks etc, of course :)
                 if (Profiles != null)
-                    hashCode = hashCode * 59 + Profiles.GetHashCode();
+                    hashCode = (hashCode * 59) + Profiles.GetHashCode();
                 return hashCode;
             }
         }
