@@ -49,13 +49,13 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                 endIndex = sourceList.Count - 1;
             }
 
-            //If there are less elements in the sourceList than "from"
+            //If there are fewer elements in the sourceList than "from"
             if (startIndex > sourceList.Count - 1)
             {
-                _logger.LogError($"There are less elements in the retrived list than requested pagination - (from: {startIndex}, size:{endIndex})");
+                _logger.LogError($"There are less elements in the retrieved list than requested pagination - (from: {startIndex}, size:{endIndex})");
             }
 
-            for (int i = startIndex; i <= endIndex; i++)
+            for (var i = startIndex; i <= endIndex; i++)
             {
                 outputList.Add(sourceList[ i ]);
             }
