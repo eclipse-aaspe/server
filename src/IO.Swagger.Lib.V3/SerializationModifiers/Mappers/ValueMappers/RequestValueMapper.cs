@@ -92,12 +92,12 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new Submodel(null, submodelElements: submodelElements);
         }
 
-        private static IClass? Transform(RangeValue valueDTO)
+        private static IClass Transform(RangeValue valueDTO)
         {
             return new AasCore.Aas3_0.Range(DataTypeDefXsd.String, idShort: valueDTO.idShort, min: valueDTO.min, max: valueDTO.max);
         }
 
-        private static IClass? Transform(SubmodelElementListValue valueDTO)
+        private static IClass Transform(SubmodelElementListValue valueDTO)
         {
             List<ISubmodelElement> value = null;
             if (valueDTO.value != null)
@@ -112,7 +112,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new SubmodelElementList(AasSubmodelElements.SubmodelElement, idShort: valueDTO.idShort, value: value);
         }
 
-        private static IClass? Transform(MultiLanguagePropertyValue valueDTO)
+        private static IClass Transform(MultiLanguagePropertyValue valueDTO)
         {
             var value = new List<ILangStringTextType>();
             foreach (var langString in valueDTO.langStrings)
@@ -122,7 +122,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new MultiLanguageProperty(idShort: valueDTO.idShort, value: value);
         }
 
-        private static IClass? Transform(SubmodelElementCollectionValue valueDTO)
+        private static IClass Transform(SubmodelElementCollectionValue valueDTO)
         {
             List<ISubmodelElement> value = null;
             if (valueDTO.value != null)
@@ -137,7 +137,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new SubmodelElementCollection(idShort: valueDTO.idShort, value: value);
         }
 
-        private static IClass? Transform(EntityValue valueDTO)
+        private static IClass Transform(EntityValue valueDTO)
         {
             List<ISubmodelElement> statements = null;
             if (valueDTO.statements != null)
@@ -151,12 +151,12 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new Entity(valueDTO.entityType, idShort: valueDTO.idShort, statements: statements, globalAssetId: valueDTO.globalAssetId);
         }
 
-        private static IClass? Transform(ReferenceElementValue valueDTO)
+        private static IClass Transform(ReferenceElementValue valueDTO)
         {
             return new ReferenceElement(idShort: valueDTO.idShort, value: TransformReference(valueDTO.value));
         }
 
-        private static IClass? Transform(RelationshipElementValue valueDTO)
+        private static IClass Transform(RelationshipElementValue valueDTO)
         {
             return new RelationshipElement(TransformReference(valueDTO.first), TransformReference(valueDTO.second), idShort: valueDTO.idShort);
         }
@@ -175,17 +175,17 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new AnnotatedRelationshipElement(TransformReference(valueDTO.first), TransformReference(valueDTO.second), idShort: valueDTO.idShort, annotations: annotations);
         }
 
-        private static IClass? Transform(FileValue valueDTO)
+        private static IClass Transform(FileValue valueDTO)
         {
             return new File(valueDTO.contentType, idShort: valueDTO.idShort, value: valueDTO.value);
         }
 
-        private static IClass? Transform(BlobValue valueDTO)
+        private static IClass Transform(BlobValue valueDTO)
         {
             return new Blob(valueDTO.contentType, idShort: valueDTO.idShort, value: valueDTO.value);
         }
 
-        private static IClass? Transform(PropertyValue valueDTO)
+        private static IClass Transform(PropertyValue valueDTO)
         {
             return new Property(DataTypeDefXsd.String, idShort: valueDTO.idShort, value: valueDTO.value);
         }

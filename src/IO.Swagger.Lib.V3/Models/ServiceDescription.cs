@@ -174,8 +174,8 @@ namespace IO.Swagger.Models
             return
 
                     Profiles == other.Profiles ||
-                    Profiles != null &&
-                    Profiles.SequenceEqual(other.Profiles)
+                    (Profiles != null &&
+                     Profiles.SequenceEqual(other.Profiles))
                 ;
         }
 
@@ -188,9 +188,9 @@ namespace IO.Swagger.Models
             unchecked // Overflow is fine, just wrap
             {
                 var hashCode = 41;
-                // Suitable nullity checks etc, of course :)
+                // Suitable nullity checks etc., of course :)
                 if (Profiles != null)
-                    hashCode = hashCode * 59 + Profiles.GetHashCode();
+                    hashCode = (hashCode * 59) + Profiles.GetHashCode();
                 return hashCode;
             }
         }

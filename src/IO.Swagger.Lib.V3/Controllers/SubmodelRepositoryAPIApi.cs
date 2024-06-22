@@ -66,8 +66,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         _jsonQueryDeserializer      = jsonQueryDeserializer ?? throw new ArgumentNullException(nameof(jsonQueryDeserializer));
         _mappingService             = mappingService ?? throw new ArgumentNullException(nameof(mappingService));
         _pathModifierService        = pathModifierService ?? throw new ArgumentNullException(nameof(pathModifierService));
-        _levelExtentModifierService = levelExtentModifierService ?? throw new ArgumentNullException(nameof(pathModifierService));
-        _paginationService          = paginationService ?? throw new ArgumentNullException(nameof(pathModifierService));
+        _levelExtentModifierService = levelExtentModifierService ?? throw new ArgumentNullException(nameof(levelExtentModifierService));
+        _paginationService          = paginationService ?? throw new ArgumentNullException(nameof(paginationService));
         _authorizationService       = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
     }
 
