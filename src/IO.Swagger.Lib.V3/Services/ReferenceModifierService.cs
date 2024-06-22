@@ -6,6 +6,8 @@ using System.Collections.Generic;
 
 namespace IO.Swagger.Lib.V3.Services
 {
+    using System.Linq;
+
     public class ReferenceModifierService : IReferenceModifierService
     {
         private readonly IAppLogger<ReferenceModifierService> _logger;
@@ -21,11 +23,7 @@ namespace IO.Swagger.Lib.V3.Services
 
             if (!referables.IsNullOrEmpty())
             {
-                foreach (var referable in referables)
-                {
-                    Reference reference = referable.GetReference();
-                    output.Add(reference);
-                }
+                output.AddRange(referables.Select(referable => referable.GetReference()).Cast<IReference>());
             }
 
             return output;

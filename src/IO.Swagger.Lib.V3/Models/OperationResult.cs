@@ -111,28 +111,28 @@ namespace IO.Swagger.Models
             return
                 (
                     ExecutionResult == other.ExecutionResult ||
-                    ExecutionResult != null &&
-                    ExecutionResult.Equals(other.ExecutionResult)
+                    (ExecutionResult != null &&
+                     ExecutionResult.Equals(other.ExecutionResult))
                 ) &&
                 (
                     ExecutionState == other.ExecutionState ||
-                    ExecutionState != null &&
-                    ExecutionState.Equals(other.ExecutionState)
+                    (ExecutionState != null &&
+                     ExecutionState.Equals(other.ExecutionState))
                 ) &&
                 (
                     InoutputArguments == other.InoutputArguments ||
-                    InoutputArguments != null &&
-                    InoutputArguments.SequenceEqual(other.InoutputArguments)
+                    (InoutputArguments != null &&
+                     InoutputArguments.SequenceEqual(other.InoutputArguments))
                 ) &&
                 (
                     OutputArguments == other.OutputArguments ||
-                    OutputArguments != null &&
-                    OutputArguments.SequenceEqual(other.OutputArguments)
+                    (OutputArguments != null &&
+                     OutputArguments.SequenceEqual(other.OutputArguments))
                 ) &&
                 (
                     RequestId == other.RequestId ||
-                    RequestId != null &&
-                    RequestId.Equals(other.RequestId)
+                    (RequestId != null &&
+                     RequestId.Equals(other.RequestId))
                 );
         }
 
@@ -147,15 +147,15 @@ namespace IO.Swagger.Models
                 var hashCode = 41;
                 // Suitable nullity checks etc, of course :)
                 if (ExecutionResult != null)
-                    hashCode = hashCode * 59 + ExecutionResult.GetHashCode();
+                    hashCode = (hashCode * 59) + ExecutionResult.GetHashCode();
                 if (ExecutionState != null)
-                    hashCode = hashCode * 59 + ExecutionState.GetHashCode();
+                    hashCode = (hashCode * 59) + ExecutionState.GetHashCode();
                 if (InoutputArguments != null)
-                    hashCode = hashCode * 59 + InoutputArguments.GetHashCode();
+                    hashCode = (hashCode * 59) + InoutputArguments.GetHashCode();
                 if (OutputArguments != null)
-                    hashCode = hashCode * 59 + OutputArguments.GetHashCode();
+                    hashCode = (hashCode * 59) + OutputArguments.GetHashCode();
                 if (RequestId != null)
-                    hashCode = hashCode * 59 + RequestId.GetHashCode();
+                    hashCode = (hashCode * 59) + RequestId.GetHashCode();
                 return hashCode;
             }
         }

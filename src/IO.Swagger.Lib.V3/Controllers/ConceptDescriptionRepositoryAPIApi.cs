@@ -48,7 +48,7 @@ public class ConceptDescriptionRepositoryAPIApiController : ControllerBase
         _cdService             = cdService ?? throw new ArgumentNullException(nameof(cdService));
         _jsonQueryDeserializer = jsonQueryDeserializer ?? throw new ArgumentNullException(nameof(jsonQueryDeserializer));
         _paginationService     = paginationService ?? throw new ArgumentNullException(nameof(paginationService));
-        _authorizationService  = authorizationService ?? throw new ArgumentNullException(nameof(paginationService));
+        _authorizationService  = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
     }
 
     /// <summary>
