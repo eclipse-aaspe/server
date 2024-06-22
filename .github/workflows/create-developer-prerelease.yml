@@ -134,7 +134,7 @@ jobs:
 
       - name: Generate release notes
         id: generate_release_notes
-        uses: mikepenz/release-changelog-builder-action@v5.0.0-a04
+        uses: mikepenz/release-changelog-builder-action@v4
         with:
           configuration: ".github/changelog_configuration.json"
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -171,7 +171,7 @@ jobs:
   build-and-publish-docker-release-images:
     runs-on: ubuntu-latest
     name: Create new docker builds with latest prerelease and upload to DockerHub
-    needs: create-new-prerelease
+    needs: draft_develop_release
     steps:
       - uses: actions/checkout@v4
 
