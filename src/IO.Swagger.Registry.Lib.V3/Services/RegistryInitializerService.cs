@@ -1,4 +1,4 @@
-﻿using AasxServer;
+using AasxServer;
 using Extensions;
 using IdentityModel;
 using IdentityModel.Client;
@@ -16,6 +16,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Policy;
 using System.Text;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
@@ -124,14 +125,20 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                             {
                                 string registryURL = TranslateURL(p.Value);
                                 Console.WriteLine("POST to Registry: " + registryURL);
-                                postRegistry.Add(registryURL);
+                                if (registryURL != "")
+                                {
+                                    postRegistry.Add(registryURL);
+                                }
                             }
 
                             if (p.IdShort.ToLower() == "getregistry")
                             {
                                 string registryURL = TranslateURL(p.Value);
                                 Console.WriteLine("GET from Registry: " + registryURL);
-                                getRegistry.Add(registryURL);
+                                if (registryURL != "")
+                                {
+                                    postRegistry.Add(registryURL);
+                                }
                             }
                         }
 
@@ -665,6 +672,10 @@ namespace IO.Swagger.Registry.Lib.V3.Services
             {
                 string envVar = url.Substring(1);
                 url = System.Environment.GetEnvironmentVariable(envVar);
+                if (url == null)
+                {
+                    url = "";
+                }
                 url = url.Replace("\r", "");
                 url = url.Replace("\n", "");
             }
