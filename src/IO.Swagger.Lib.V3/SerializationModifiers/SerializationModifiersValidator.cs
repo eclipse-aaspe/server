@@ -73,7 +73,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers
 
         public static void Validate(List<IClass?> resources, LevelEnum level, ExtentEnum extent)
         {
-            foreach (IClass? resource in resources)
+            foreach (var resource in resources)
                 Validate(resource, level, extent);
         }
     }

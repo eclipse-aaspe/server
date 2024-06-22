@@ -215,7 +215,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
                                          TransformEmbeddedDataSpecList(that.EmbeddedDataSpecifications), inputVarMetadataList, outputVarMetadataList, inOutVarMetadataList);
         }
 
-        public IDTO? TransformOperationVariable(IOperationVariable that) => Transform(that.Value);
+        public IDTO TransformOperationVariable(IOperationVariable that) => Transform(that.Value);
 
         public IDTO TransformProperty(IProperty that) =>
             new PropertyMetadata(that.ValueType, TransformExtensionList(that.Extensions), that.Category, that.IdShort, TransformLangStringNameTypeList(that.DisplayName),

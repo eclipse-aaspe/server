@@ -334,7 +334,6 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     // TODO (jtikekar, 2023-09-04): assetIds: string or specific asset id, and what about Base64Uel encoding
-    //public virtual IActionResult GetAllAssetAdministrationShells([FromQuery] List<string> assetIds, [FromQuery] string idShort, [FromQuery] int? limit, [FromQuery] string cursor)
     public virtual IActionResult GetAllAssetAdministrationShells([FromQuery] List<SpecificAssetId>? assetIds, [FromQuery] string? idShort, [FromQuery] int? limit,
                                                                  [FromQuery] string? cursor)
     {
