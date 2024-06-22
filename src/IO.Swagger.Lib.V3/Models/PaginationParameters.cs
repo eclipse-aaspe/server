@@ -23,8 +23,6 @@ public class PaginationParameters
         {
             Cursor = 0;
         }
-        Cursor = Cursor;
-
         
         _limit = limit.HasValue ? limit.Value : MaxResultSize;
     }

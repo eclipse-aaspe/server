@@ -145,15 +145,9 @@ public class AasRegistryService : IAasRegistryService
 
             var found = aasIdentifier == null && assetList.IsNullOrEmpty();
 
-            if (aasIdentifier != null)
+            if (aasIdentifier != null && aasID != "" && descriptorJSON != "" && aasIdentifier.Equals(aasID))
             {
-                if (aasID != "" && descriptorJSON != "")
-                {
-                    if (aasIdentifier.Equals(aasID))
-                    {
-                        found = true;
-                    }
-                }
+                found = true;
             }
 
             if (!assetList.IsNullOrEmpty())
