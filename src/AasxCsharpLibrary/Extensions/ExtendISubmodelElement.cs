@@ -64,7 +64,7 @@ namespace Extensions
             return Tuple.Create(caption, info);
         }
 
-        public static void ValueFromText(this ISubmodelElement submodelElement, string text, string defaultLang = null)
+        public static void ValueFromText(this ISubmodelElement submodelElement, string? text, string? defaultLang = null)
         {
             switch (submodelElement)
             {
@@ -128,7 +128,7 @@ namespace Extensions
                 includeThis: includeThis, includeSubmodel: includeSubmodel, passOverMiss: passOverMiss));
         }
 
-        public static string ValueAsText(this ISubmodelElement submodelElement, string defaultLang = null)
+        public static string? ValueAsText(this ISubmodelElement submodelElement, string defaultLang = null)
         {
             //TODO:Need to check/test this logic again
             if (submodelElement is Property property)
@@ -539,7 +539,7 @@ namespace Extensions
 
             if (sourceSubmodelElement.semanticId != null && !sourceSubmodelElement.semanticId.IsEmpty)
             {
-                List<IKey> keyList = null;
+                List<IKey>? keyList = null;
                 if (sourceSubmodelElement.semanticId.Keys != null)
                 {
                     keyList = new List<IKey>();
@@ -606,7 +606,7 @@ namespace Extensions
         }
 
         public static IReferable FindReferableByReference(
-            this List<ISubmodelElement> submodelElements, List<IKey> keys, int keyIndex)
+            this List<ISubmodelElement> submodelElements, List<IKey>? keys, int keyIndex)
         {
             // first index needs to exist ..
             if (submodelElements == null || keys == null || keyIndex >= keys.Count)
@@ -1173,7 +1173,7 @@ namespace Extensions
             }
         }
 
-        public static IEnumerable<T> FindAllSemanticIdAs<T>(this List<ISubmodelElement> submodelELements, string semanticId) where T : ISubmodelElement
+        public static IEnumerable<T> FindAllSemanticIdAs<T>(this List<ISubmodelElement> submodelELements, string? semanticId) where T : ISubmodelElement
         {
             foreach (var submodelElement in submodelELements)
             {
@@ -1187,12 +1187,12 @@ namespace Extensions
             }
         }
 
-        public static T FindFirstSemanticIdAs<T>(this List<ISubmodelElement> submodelELements, string semanticId) where T : ISubmodelElement
+        public static T FindFirstSemanticIdAs<T>(this List<ISubmodelElement> submodelELements, string? semanticId) where T : ISubmodelElement
         {
             return submodelELements.FindAllSemanticIdAs<T>(semanticId).FirstOrDefault();
         }
 
-        public static T FindFirstAnySemanticIdAs<T>(this List<ISubmodelElement> submodelELements, string[] semanticIds) where T : ISubmodelElement
+        public static T FindFirstAnySemanticIdAs<T>(this List<ISubmodelElement> submodelELements, string?[] semanticIds) where T : ISubmodelElement
         {
             if (semanticIds == null)
                 return default;
@@ -1208,7 +1208,7 @@ namespace Extensions
 
         public static IEnumerable<T> FindAllSemanticId<T>(
             this List<ISubmodelElement> smes,
-            string[] allowedSemanticIds,
+            string?[] allowedSemanticIds,
             bool invertedAllowed = false) where T : ISubmodelElement
         {
             if (allowedSemanticIds == null || allowedSemanticIds.Length < 1)
@@ -1242,7 +1242,7 @@ namespace Extensions
             }
         }
 
-        public static T FindFirstAnySemanticId<T>(this List<ISubmodelElement> submodelElements, string[] allowedSemanticIds, bool invertAllowed = false) where T : ISubmodelElement
+        public static T FindFirstAnySemanticId<T>(this List<ISubmodelElement> submodelElements, string?[] allowedSemanticIds, bool invertAllowed = false) where T : ISubmodelElement
         {
             return submodelElements.FindAllSemanticId<T>(allowedSemanticIds, invertAllowed).FirstOrDefault();
         }
@@ -1338,7 +1338,7 @@ namespace Extensions
         }
 
 
-        public static string IterateIdShortTemplateToBeUnique(this List<ISubmodelElement> submodelElements, string idShortTemplate, int maxNum)
+        public static string? IterateIdShortTemplateToBeUnique(this List<ISubmodelElement> submodelElements, string idShortTemplate, int maxNum)
         {
             if (idShortTemplate == null || maxNum < 1 || !idShortTemplate.Contains("{0"))
                 return null;
@@ -1355,7 +1355,7 @@ namespace Extensions
             return null;
         }
 
-        public static bool CheckIdShortIsUnique(this List<ISubmodelElement> submodelElements, string idShort)
+        public static bool CheckIdShortIsUnique(this List<ISubmodelElement> submodelElements, string? idShort)
         {
             idShort = idShort?.Trim();
             if (idShort == null || idShort.Length < 1)
@@ -1445,27 +1445,27 @@ namespace Extensions
             return AasSubmodelElementsToAbbrev.TryGetValue(that.Value, out var value) ? value : null;
         }
 
-        private static readonly Dictionary<string, AasSubmodelElements> _aasSubmodelElementsFromAbbrev = (
-            new Dictionary<string, AasSubmodelElements>()
-            {
-                {"RelA", AasSubmodelElements.AnnotatedRelationshipElement},
-                {"BEvt", AasSubmodelElements.BasicEventElement},
-                {"Blob", AasSubmodelElements.Blob},
-                {"Cap", AasSubmodelElements.Capability},
-                {"DE", AasSubmodelElements.DataElement},
-                {"Ent", AasSubmodelElements.Entity},
-                {"Evt", AasSubmodelElements.EventElement},
-                {"File", AasSubmodelElements.File},
-                {"MLP", AasSubmodelElements.MultiLanguageProperty},
-                {"Opr", AasSubmodelElements.Operation},
-                {"Prop", AasSubmodelElements.Property},
-                {"Range", AasSubmodelElements.Range},
-                {"Ref", AasSubmodelElements.ReferenceElement},
-                {"Rel", AasSubmodelElements.RelationshipElement},
-                {"SME", AasSubmodelElements.SubmodelElement},
-                {"SML", AasSubmodelElements.SubmodelElementList},
-                {"SMC", AasSubmodelElements.SubmodelElementCollection}
-            });
+        private static readonly Dictionary<string?, AasSubmodelElements> _aasSubmodelElementsFromAbbrev = (
+                                                                                                              new Dictionary<string?, AasSubmodelElements>()
+                                                                                                              {
+                                                                                                                  {"RelA", AasSubmodelElements.AnnotatedRelationshipElement},
+                                                                                                                  {"BEvt", AasSubmodelElements.BasicEventElement},
+                                                                                                                  {"Blob", AasSubmodelElements.Blob},
+                                                                                                                  {"Cap", AasSubmodelElements.Capability},
+                                                                                                                  {"DE", AasSubmodelElements.DataElement},
+                                                                                                                  {"Ent", AasSubmodelElements.Entity},
+                                                                                                                  {"Evt", AasSubmodelElements.EventElement},
+                                                                                                                  {"File", AasSubmodelElements.File},
+                                                                                                                  {"MLP", AasSubmodelElements.MultiLanguageProperty},
+                                                                                                                  {"Opr", AasSubmodelElements.Operation},
+                                                                                                                  {"Prop", AasSubmodelElements.Property},
+                                                                                                                  {"Range", AasSubmodelElements.Range},
+                                                                                                                  {"Ref", AasSubmodelElements.ReferenceElement},
+                                                                                                                  {"Rel", AasSubmodelElements.RelationshipElement},
+                                                                                                                  {"SME", AasSubmodelElements.SubmodelElement},
+                                                                                                                  {"SML", AasSubmodelElements.SubmodelElementList},
+                                                                                                                  {"SMC", AasSubmodelElements.SubmodelElementCollection}
+                                                                                                              });
 
         /// <summary>
         /// Parse the string abbreviation of <see cref="AasSubmodelElements" />.
@@ -1475,7 +1475,7 @@ namespace Extensions
         /// of a literal of <see cref="AasSubmodelElements" />,
         /// return <c>null</c>.
         /// </remarks>
-        public static AasSubmodelElements? AasSubmodelElementsFromAbbrev(string text)
+        public static AasSubmodelElements? AasSubmodelElementsFromAbbrev(string? text)
         {
             if (_aasSubmodelElementsFromAbbrev.TryGetValue(text, out AasSubmodelElements value))
             {
@@ -1495,7 +1495,7 @@ namespace Extensions
         /// of a literal of <see cref="AasSubmodelElements" />,
         /// return <c>null</c>.
         /// </remarks>
-        public static AasSubmodelElements? AasSubmodelElementsFromStringOrAbbrev(string text)
+        public static AasSubmodelElements? AasSubmodelElementsFromStringOrAbbrev(string? text)
         {
             var res = Stringification.AasSubmodelElementsFromString(text);
             if (res.HasValue)

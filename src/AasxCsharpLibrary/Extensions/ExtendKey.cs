@@ -15,7 +15,7 @@ namespace Extensions
         }
 
         public static bool Matches(this IKey key,
-                KeyTypes type, string id, MatchMode matchMode = MatchMode.Strict)
+                KeyTypes type, string? id, MatchMode matchMode = MatchMode.Strict)
         {
             if (matchMode == MatchMode.Strict)
                 return key.Type == type && key.Value == id;

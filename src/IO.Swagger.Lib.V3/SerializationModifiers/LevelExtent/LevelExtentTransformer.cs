@@ -5,6 +5,9 @@ using static AasCore.Aas3_0.Visitation;
 
 namespace IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent
 {
+    using System;
+    using AdminShellNS.Exceptions;
+
     public class LevelExtentTransformer : AbstractTransformerWithContext<LevelExtentModifierContext, IClass>
     {
         public override IClass TransformAdministrativeInformation(IAdministrativeInformation that, LevelExtentModifierContext context)
@@ -334,7 +337,12 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent
                 output.Value = (ISubmodelElement)Transform(that.Value, context);
             }
 
-            return output;
+            if (output != null)
+            {
+                return output;
+            }
+
+            throw new ArgumentException($"{nameof(output)} must not be null in {nameof(TransformOperationVariable)}");
         }
 
         public override IClass TransformProperty(IProperty that, LevelExtentModifierContext context)

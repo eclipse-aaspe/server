@@ -96,7 +96,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
         {
             if (context.IdShortPaths.Count == 0)
             {
-                context.IdShortPaths.Add(that.IdShort);
+                context.IdShortPaths.Add(that.IdShort ?? string.Empty);
             }
             else
             {
@@ -106,7 +106,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
             if (that.Statements != null)
             {
                 var currentParentPath = string.IsNullOrEmpty(context.ParentPath) ? that.IdShort : $"{context.ParentPath}.{that.IdShort}";
-                foreach (ISubmodelElement item in that.Statements)
+                foreach (var item in that.Statements)
                 {
                     context.ParentPath = currentParentPath;
                     Transform(item, context);
@@ -186,8 +186,6 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformOperation(IOperation that, PathModifierContext context)
         {
-            if (that == null) return null;
-
             context.IdShortPaths.Add(that.IdShort);
 
             if (that.InputVariables != null)
@@ -283,10 +281,8 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
             throw new System.NotImplementedException();
         }
 
-        public List<string> TransformSubmodel(ISubmodel that, PathModifierContext context)
+        public List<string> TransformSubmodel(ISubmodel? that, PathModifierContext context)
         {
-            if (that == null) return null;
-
             context.IdShortPaths.Add(that.IdShort);
 
             if (that.SubmodelElements != null)
@@ -315,7 +311,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
             if (that.Value != null)
             {
                 var currentParentPath = string.IsNullOrEmpty(context.ParentPath) ? that.IdShort : $"{context.ParentPath}.{that.IdShort}";
-                foreach (ISubmodelElement item in that.Value)
+                foreach (var item in that.Value)
                 {
                     context.ParentPath = currentParentPath;
                     Transform(item, context);
@@ -329,7 +325,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
         {
             if (that.Value != null)
             {
-                for (int i = 0; i < that.Value.Count; i++)
+                for (var i = 0; i < that.Value.Count; i++)
                 {
                     if (string.IsNullOrEmpty(context.ParentPath))
                     {

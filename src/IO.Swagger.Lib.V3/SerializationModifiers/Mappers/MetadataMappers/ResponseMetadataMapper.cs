@@ -1,14 +1,9 @@
 ﻿using DataTransferObjects;
 
-namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
-{
-    public class ResponseMetadataMapper
-    {
-        private static ResponseMetadataTransformer Transformer = new ResponseMetadataTransformer();
+namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers;
 
-        public static IDTO Map(IClass source)
-        {
-            return Transformer.Transform(source);
-        }
-    }
+public class ResponseMetadataMapper
+{
+    private static ResponseMetadataTransformer Transformer = new();
+    public static IDTO Map(IClass source) => Transformer.Transform(source);
 }

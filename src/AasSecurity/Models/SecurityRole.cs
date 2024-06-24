@@ -10,7 +10,7 @@ namespace AasSecurity.Models
         internal string?                     ObjectType      { get; set; }
         internal string?                     ApiOperation    { get; set; }
         internal IClass?                     ObjectReference { get; set; }
-        internal string?                     ObjectPath      { get; set; }
+        internal string                     ObjectPath      { get; set; }
         internal AccessRights?               Permission      { get; set; }
         internal KindOfPermissionEnum?       Kind            { get; set; }
         internal ISubmodel?                  Submodel        { get; set; }

@@ -39,11 +39,8 @@ namespace IO.Swagger.Filters
                     var regexAttr = attributes.FirstOrDefault(p => p.AttributeType == typeof(RegularExpressionAttribute));
                     if (regexAttr != null)
                     {
-                        string regex = (string)regexAttr.ConstructorArguments[0].Value;
-                        if (swaggerParam is OpenApiParameter)
-                        {
-                            ((OpenApiParameter)swaggerParam).Schema.Pattern = regex;
-                        }
+                        var regex = (string)regexAttr.ConstructorArguments[0].Value;
+                        swaggerParam.Schema.Pattern = regex;
                     }
 
                     // String Length [StringLength]
@@ -83,11 +80,8 @@ namespace IO.Swagger.Filters
                         var rangeMin = (int)(rangeAttr.ConstructorArguments[0].Value ?? 0);
                         var rangeMax = (int)(rangeAttr.ConstructorArguments[1].Value ?? 1);
 
-                        if (swaggerParam is OpenApiParameter)
-                        {
-                            ((OpenApiParameter)swaggerParam).Schema.Minimum = rangeMin;
-                            ((OpenApiParameter)swaggerParam).Schema.Maximum = rangeMax;
-                        }
+                        swaggerParam.Schema.Minimum = rangeMin;
+                        swaggerParam.Schema.Maximum = rangeMax;
                     }
                 }
             }

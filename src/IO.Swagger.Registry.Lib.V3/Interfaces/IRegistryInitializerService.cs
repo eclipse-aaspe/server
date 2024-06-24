@@ -7,9 +7,9 @@ namespace IO.Swagger.Registry.Lib.V3.Interfaces
 {
     public interface IRegistryInitializerService
     {
-        void CreateAssetAdministrationShellDescriptor(AssetAdministrationShellDescriptor newAasDesc, DateTime timestamp, bool initial = false);
-        void CreateMultipleAssetAdministrationShellDescriptor(List<AssetAdministrationShellDescriptor> body, DateTime timestamp);
-        ISubmodel GetAasRegistry();
+        void       CreateAssetAdministrationShellDescriptor(AssetAdministrationShellDescriptor newAasDesc, DateTime timestamp, bool initial = false);
+        void       CreateMultipleAssetAdministrationShellDescriptor(List<AssetAdministrationShellDescriptor> body, DateTime timestamp);
+        ISubmodel? GetAasRegistry();
 
         List<AssetAdministrationShellDescriptor> GetAasDescriptorsForSubmodelView();
         List<string> GetRegistryList();

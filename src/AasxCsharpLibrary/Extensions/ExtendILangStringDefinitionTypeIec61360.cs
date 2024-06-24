@@ -14,7 +14,7 @@ namespace Extensions
                 foreach (var sourceLangString in src)
                 {
                     //Remove ? in the end added by AdminShellV20, to avoid verification error
-                    string lang = sourceLangString.lang;
+                    string? lang = sourceLangString.lang;
                     if (!string.IsNullOrEmpty(sourceLangString.lang) && sourceLangString.lang.EndsWith("?"))
                     {
                         lang = sourceLangString.lang.Remove(sourceLangString.lang.Length - 1);

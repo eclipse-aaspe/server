@@ -30,7 +30,7 @@ namespace AasxCompatibilityModels
 
     public class AdminShellUtilV10
     {
-        public static string EvalToNonNullString(string fmt, object o, string elseString = "")
+        public static string EvalToNonNullString(string fmt, object? o, string elseString = "")
         {
             if (o == null)
                 return elseString;
@@ -44,7 +44,7 @@ namespace AasxCompatibilityModels
             return string.Format(fmt, o);
         }
 
-        public static string FilterFriendlyName(string src)
+        public static string FilterFriendlyName(string? src)
         {
             if (src == null)
                 return null;
@@ -131,15 +131,15 @@ namespace AasxCompatibilityModels
             // members
 
             [XmlAttribute]
-            public string idType = "";
+            public string? idType = "";
             [XmlText]
-            public string id = "";
+            public string? id = "";
 
             // constructors
 
             public Identification() { }
 
-            public Identification(string idType, string id)
+            public Identification(string? idType, string? id)
             {
                 this.idType = idType;
                 this.id = id;
@@ -153,7 +153,7 @@ namespace AasxCompatibilityModels
 
             // Creator with validation
 
-            public static Identification CreateNew(string idType, string id)
+            public static Identification CreateNew(string? idType, string? id)
             {
                 if (idType == null || id == null)
                     return null;
@@ -212,23 +212,23 @@ namespace AasxCompatibilityModels
         public class Key
         {
             [XmlAttribute]
-            public string type = "";
+            public string? type = "";
             [XmlAttribute]
             public bool local = false;
 
             [XmlAttribute]
             [JsonIgnore]
-            public string idType = "";
+            public string? idType = "";
             [XmlIgnore]
             [JsonProperty(PropertyName = "idType")]
-            public string JsonIdType
+            public string? JsonIdType
             {
                 get { return (idType == "idShort") ? "IdShort" : idType; }
                 set { if (value == "IdShort") idType = "idShort"; else idType = value; }
             }
 
             [XmlText]
-            public string value = "";
+            public string? value = "";
 
             [XmlIgnore]
             [JsonProperty(PropertyName = "index")]
@@ -246,7 +246,7 @@ namespace AasxCompatibilityModels
                 this.value = src.value;
             }
 
-            public Key(string type, bool local, string idType, string value)
+            public Key(string? type, bool local, string? idType, string? value)
             {
                 this.type = type;
                 this.local = local;
@@ -254,7 +254,7 @@ namespace AasxCompatibilityModels
                 this.value = value;
             }
 
-            public static Key CreateNew(string type, bool local, string idType, string value)
+            public static Key CreateNew(string? type, bool local, string? idType, string? value)
             {
                 var k = new Key();
                 k.type = type;
@@ -358,7 +358,7 @@ namespace AasxCompatibilityModels
             public static string AllElements = "All";
 
             // use this in list to designate the GlobalReference
-            public static string GlobalReference = "GlobalReference";
+            public static string? GlobalReference = "GlobalReference";
             public static string ConceptDescription = "ConceptDescription";
             public static string SubmodelRef = "SubmodelRef";
             public static string Submodel = "Submodel";
@@ -420,7 +420,7 @@ namespace AasxCompatibilityModels
                 return kl;
             }
 
-            public static KeyList CreateNew(string type, bool local, string idType, string value)
+            public static KeyList CreateNew(string? type, bool local, string? idType, string? value)
             {
                 var kl = new KeyList();
                 kl.Add(Key.CreateNew(type, local, idType, value));
@@ -519,7 +519,7 @@ namespace AasxCompatibilityModels
                 return r;
             }
 
-            public static Reference CreateNew(string type, bool local, string idType, string value)
+            public static Reference CreateNew(string? type, bool local, string? idType, string? value)
             {
                 if (type == null || idType == null || value == null)
                     return null;
@@ -528,7 +528,7 @@ namespace AasxCompatibilityModels
                 return r;
             }
 
-            public static Reference CreateIrdiReference(string irdi)
+            public static Reference CreateIrdiReference(string? irdi)
             {
                 if (irdi == null)
                     return null;
@@ -579,9 +579,9 @@ namespace AasxCompatibilityModels
                 return res.TrimEnd(',');
             }
 
-            public string ListOfValues(string delim)
+            public string? ListOfValues(string? delim)
             {
-                string res = "";
+                string? res = "";
                 if (this.Keys != null)
                     foreach (var x in this.Keys)
                     {
@@ -651,7 +651,7 @@ namespace AasxCompatibilityModels
 
             public SubmodelRef(SubmodelRef src) : base(src) { }
 
-            public static new SubmodelRef CreateNew(string type, bool local, string idType, string value)
+            public static new SubmodelRef CreateNew(string? type, bool local, string? idType, string? value)
             {
                 var r = new SubmodelRef();
                 r.Keys.Add(Key.CreateNew(type, local, idType, value));
@@ -686,7 +686,7 @@ namespace AasxCompatibilityModels
 
             // further methods
 
-            public new static ConceptDescriptionRef CreateNew(string type, bool local, string idType, string value)
+            public new static ConceptDescriptionRef CreateNew(string? type, bool local, string? idType, string? value)
             {
                 var r = new ConceptDescriptionRef();
                 r.Keys.Add(Key.CreateNew(type, local, idType, value));
@@ -834,10 +834,10 @@ namespace AasxCompatibilityModels
 
             [XmlAttribute(Namespace = "http://www.admin-shell.io/1/0")]
             [JsonProperty(PropertyName = "language")]
-            public string lang = "";
+            public string? lang = "";
             [XmlText]
             [JsonProperty(PropertyName = "text")]
-            public string str = "";
+            public string? str = "";
 
             // constructors
 
@@ -849,7 +849,7 @@ namespace AasxCompatibilityModels
                 this.str = src.str;
             }
 
-            public static LangStr CreateNew(string lang, string str)
+            public static LangStr CreateNew(string? lang, string? str)
             {
                 var l = new LangStr();
                 l.lang = lang;
@@ -857,7 +857,7 @@ namespace AasxCompatibilityModels
                 return (l);
             }
 
-            public static List<LangStr> CreateManyFromStringArray(string[] s)
+            public static List<LangStr> CreateManyFromStringArray(string?[] s)
             {
                 var r = new List<LangStr>();
                 var i = 0;
@@ -1032,7 +1032,7 @@ namespace AasxCompatibilityModels
 
             // members
 
-            public string idShort = null;
+            public string? idShort = null;
             public string category = null;
 
             [XmlElement(ElementName = "description")]
@@ -1074,14 +1074,14 @@ namespace AasxCompatibilityModels
                     this.description = new Description(src.description);
             }
 
-            public void AddDescription(string lang, string str)
+            public void AddDescription(string? lang, string? str)
             {
                 if (description == null)
                     description = new Description();
                 description.langString.Add(LangStr.CreateNew(lang, str));
             }
 
-            public virtual string GetElementName()
+            public virtual string? GetElementName()
             {
                 return "GlobalReference"; // not correct, but this method wasn't overridden correctly
             }
@@ -1148,7 +1148,7 @@ namespace AasxCompatibilityModels
                     this.administration = new Administration(src.administration);
             }
 
-            public void SetIdentification(string idType, string id, string idShort = null)
+            public void SetIdentification(string? idType, string? id, string? idShort = null)
             {
                 identification.idType = idType;
                 identification.id = id;
@@ -1175,9 +1175,9 @@ namespace AasxCompatibilityModels
 
         public class JsonModelTypeWrapper
         {
-            public string name = "";
+            public string? name = "";
 
-            public JsonModelTypeWrapper(string name = "") { this.name = name; }
+            public JsonModelTypeWrapper(string? name = "") { this.name = name; }
         }
 
         public class AdministrationShell : Identifiable
@@ -1245,7 +1245,7 @@ namespace AasxCompatibilityModels
             }
 
             public static AdministrationShell CreateNew(
-                string idType, string id, string version = null, string revision = null)
+                string? idType, string? id, string version = null, string revision = null)
             {
                 var s = new AdministrationShell();
                 s.identification.idType = idType;
@@ -1280,7 +1280,7 @@ namespace AasxCompatibilityModels
                 hasDataSpecification.reference.Add(r);
             }
 
-            public override string GetElementName()
+            public override string? GetElementName()
             {
                 return "AssetAdministrationShell";
             }
@@ -1394,7 +1394,7 @@ namespace AasxCompatibilityModels
                 return r;
             }
 
-            public override string GetElementName()
+            public override string? GetElementName()
             {
                 return "Asset";
             }
@@ -1480,7 +1480,7 @@ containedElements == null) return null; return containedElements[index];
                     this.containedElements = new ContainedElements(src.containedElements);
             }
 
-            public static View CreateNew(string idShort)
+            public static View CreateNew(string? idShort)
             {
                 var v = new View();
                 v.idShort = idShort;
@@ -1530,7 +1530,7 @@ containedElements == null) return null; return containedElements[index];
                     containedElements.reference.Add(ContainedElementRef.CreateNew(r));
             }
 
-            public override string GetElementName()
+            public override string? GetElementName()
             {
                 return "View";
             }
@@ -1677,7 +1677,7 @@ containedElements == null) return null; return containedElements[index];
                         this.keys.Add(new Key(k));
             }
 
-            public static UnitId CreateNew(string type, bool local, string idType, string value)
+            public static UnitId CreateNew(string? type, bool local, string? idType, string? value)
             {
                 var u = new UnitId();
                 u.keys.Keys.Add(Key.CreateNew(type, local, idType, value));
@@ -1719,13 +1719,13 @@ containedElements == null) return null; return containedElements[index];
 
             // members
             public LangStringIEC61360 preferredName = new LangStringIEC61360();
-            public string shortName = "";
+            public string? shortName = "";
             public string unit = "";
             public UnitId unitId = null;
             public string valueFormat = null;
             public List<LangStr> sourceOfDefinition = new List<LangStr>();
             public string symbol = null;
-            public string dataType = "";
+            public string? dataType = "";
             public LangStringIEC61360 definition = new LangStringIEC61360();
 
             // getter / setters
@@ -1753,15 +1753,15 @@ containedElements == null) return null; return containedElements[index];
             }
 
             public static DataSpecificationIEC61360 CreateNew(
-                string[] preferredName = null,
-                string shortName = "",
+                string?[] preferredName = null,
+                string? shortName = "",
                 string unit = "",
                 UnitId unitId = null,
                 string valueFormat = null,
-                string[] sourceOfDefinition = null,
+                string?[] sourceOfDefinition = null,
                 string symbol = null,
-                string dataType = "",
-                string[] definition = null
+                string? dataType = "",
+                string?[] definition = null
             )
             {
                 var d = new DataSpecificationIEC61360();
@@ -1893,7 +1893,7 @@ containedElements == null) return null; return containedElements[index];
             }
 
             public static ConceptDescription CreateNew(
-                string idType, string id, string version = null, string revision = null)
+                string? idType, string? id, string version = null, string revision = null)
             {
                 var cd = new ConceptDescription();
                 cd.identification.idType = idType;
@@ -1924,15 +1924,15 @@ containedElements == null) return null; return containedElements[index];
             }
 
             public void SetIEC61360Spec(
-                string[] preferredNames = null,
-                string shortName = "",
+                string?[] preferredNames = null,
+                string? shortName = "",
                 string unit = "",
                 UnitId unitId = null,
                 string valueFormat = null,
-                string[] sourceOfDefinition = null,
+                string?[] sourceOfDefinition = null,
                 string symbol = null,
-                string dataType = "",
-                string[] definition = null
+                string? dataType = "",
+                string?[] definition = null
             )
             {
                 this.embeddedDataSpecification = new EmbeddedDataSpecification();
@@ -1957,7 +1957,7 @@ containedElements == null) return null; return containedElements[index];
                 return null;
             }
 
-            public string GetShortName()
+            public string? GetShortName()
             {
                 if (embeddedDataSpecification != null &&
                     embeddedDataSpecification.dataSpecificationContent != null &&
@@ -1966,7 +1966,7 @@ containedElements == null) return null; return containedElements[index];
                 return "";
             }
 
-            public override string GetElementName()
+            public override string? GetElementName()
             {
                 return "ConceptDescription";
             }
@@ -2022,7 +2022,7 @@ containedElements == null) return null; return containedElements[index];
                     this.conceptDescriptionsRefs = new ConceptDescriptionRefs(src.conceptDescriptionsRefs);
             }
 
-            public static ConceptDictionary CreateNew(string idShort = null)
+            public static ConceptDictionary CreateNew(string? idShort = null)
             {
                 var d = new ConceptDictionary();
                 if (idShort != null)
@@ -2040,7 +2040,7 @@ containedElements == null) return null; return containedElements[index];
                 conceptDescriptionsRefs.conceptDescriptions.Add(cdr);
             }
 
-            public override string GetElementName()
+            public override string? GetElementName()
             {
                 return "ConceptDictionary";
             }
@@ -2560,7 +2560,7 @@ containedElements == null) return null; return containedElements[index];
             public SemanticId semanticId = null;
 
             // this class
-            public string qualifierType = null;
+            public string? qualifierType = null;
             public string qualifierValue = null;
             public Reference qualifierValueId = null;
 
@@ -2578,7 +2578,7 @@ containedElements == null) return null; return containedElements[index];
                     this.qualifierValueId = new Reference(src.qualifierValueId);
             }
 
-            public string GetElementName()
+            public string? GetElementName()
             {
                 return "Qualifier";
             }
@@ -2654,7 +2654,7 @@ containedElements == null) return null; return containedElements[index];
                 }
             }
 
-            public void CreateNewLogic(string idShort = null, string category = null, Key semanticIdKey = null)
+            public void CreateNewLogic(string? idShort = null, string category = null, Key semanticIdKey = null)
             {
                 if (idShort != null)
                     this.idShort = idShort;
@@ -2669,7 +2669,7 @@ containedElements == null) return null; return containedElements[index];
             }
 
             public void AddQualifier(
-                string qualifierType = null, string qualifierValue = null, KeyList semanticKeys = null,
+                string? qualifierType = null, string qualifierValue = null, KeyList semanticKeys = null,
                 Reference qualifierValueId = null)
             {
                 if (this.qualifiers == null)
@@ -2693,7 +2693,7 @@ containedElements == null) return null; return containedElements[index];
                 return null;
             }
 
-            public override string GetElementName()
+            public override string? GetElementName()
             {
                 return "SubmodelElement";
             }
@@ -3024,7 +3024,7 @@ containedElements == null) return null; return containedElements[index];
                 }
             }
 
-            public static Submodel CreateNew(string idType, string id, string version = null, string revision = null)
+            public static Submodel CreateNew(string? idType, string? id, string version = null, string revision = null)
             {
                 var s = new Submodel();
                 s.identification.idType = idType;
@@ -3039,7 +3039,7 @@ containedElements == null) return null; return containedElements[index];
                 return (s);
             }
 
-            public override string GetElementName()
+            public override string? GetElementName()
             {
                 return "Submodel";
             }
@@ -3180,7 +3180,7 @@ containedElements == null) return null; return containedElements[index];
                 : base(src)
             { }
 
-            public override string GetElementName()
+            public override string? GetElementName()
             {
                 return "DataElement";
             }
@@ -3227,7 +3227,7 @@ containedElements == null) return null; return containedElements[index];
             }
 
 
-            public string value = "";
+            public string? value = "";
             public Reference valueId = null;
 
             // constructors
@@ -3243,25 +3243,25 @@ containedElements == null) return null; return containedElements[index];
                     src.valueId = new Reference(src.valueId);
             }
 
-            public static Property CreateNew(string idShort = null, string category = null, Key semanticIdKey = null)
+            public static Property CreateNew(string? idShort = null, string category = null, Key semanticIdKey = null)
             {
                 var x = new Property();
                 x.CreateNewLogic(idShort, category, semanticIdKey);
                 return (x);
             }
 
-            public void Set(string valueType = "", string value = "")
+            public void Set(string valueType = "", string? value = "")
             {
                 this.valueType = valueType;
                 this.value = value;
             }
 
-            public void Set(string type, bool local, string idType, string value)
+            public void Set(string? type, bool local, string? idType, string? value)
             {
                 this.valueId = Reference.CreateNew(Key.CreateNew(type, local, idType, value));
             }
 
-            public override string GetElementName()
+            public override string? GetElementName()
             {
                 return "Property";
             }
@@ -3279,7 +3279,7 @@ containedElements == null) return null; return containedElements[index];
 
             // members
 
-            public string mimeType = "";
+            public string? mimeType = "";
             public string value = "";
 
             // constructors
@@ -3293,20 +3293,20 @@ containedElements == null) return null; return containedElements[index];
                 this.value = src.value;
             }
 
-            public static Blob CreateNew(string idShort = null, string category = null, Key semanticIdKey = null)
+            public static Blob CreateNew(string? idShort = null, string category = null, Key semanticIdKey = null)
             {
                 var x = new Blob();
                 x.CreateNewLogic(idShort, category, semanticIdKey);
                 return (x);
             }
 
-            public void Set(string mimeType = "", string value = "")
+            public void Set(string? mimeType = "", string value = "")
             {
                 this.mimeType = mimeType;
                 this.value = value;
             }
 
-            public override string GetElementName()
+            public override string? GetElementName()
             {
                 return "Blob";
             }
@@ -3325,7 +3325,7 @@ containedElements == null) return null; return containedElements[index];
 
             // members
 
-            public string mimeType = "";
+            public string? mimeType = "";
             public string value = "";
 
             // constructors
@@ -3339,20 +3339,20 @@ containedElements == null) return null; return containedElements[index];
                 this.value = src.value;
             }
 
-            public static File CreateNew(string idShort = null, string category = null, Key semanticIdKey = null)
+            public static File CreateNew(string? idShort = null, string category = null, Key semanticIdKey = null)
             {
                 var x = new File();
                 x.CreateNewLogic(idShort, category, semanticIdKey);
                 return (x);
             }
 
-            public void Set(string mimeType = "", string value = "")
+            public void Set(string? mimeType = "", string value = "")
             {
                 this.mimeType = mimeType;
                 this.value = value;
             }
 
-            public override string GetElementName()
+            public override string? GetElementName()
             {
                 return "File";
             }
@@ -3402,7 +3402,7 @@ containedElements == null) return null; return containedElements[index];
             }
 
             public static ReferenceElement CreateNew(
-                string idShort = null, string category = null, Key semanticIdKey = null)
+                string? idShort = null, string category = null, Key semanticIdKey = null)
             {
                 var x = new ReferenceElement();
                 x.CreateNewLogic(idShort, category, semanticIdKey);
@@ -3414,7 +3414,7 @@ containedElements == null) return null; return containedElements[index];
                 this.value = value;
             }
 
-            public override string GetElementName()
+            public override string? GetElementName()
             {
                 return "ReferenceElement";
             }
@@ -3450,7 +3450,7 @@ containedElements == null) return null; return containedElements[index];
             }
 
             public static RelationshipElement CreateNew(
-                string idShort = null, string category = null, Key semanticIdKey = null)
+                string? idShort = null, string category = null, Key semanticIdKey = null)
             {
                 var x = new RelationshipElement();
                 x.CreateNewLogic(idShort, category, semanticIdKey);
@@ -3463,7 +3463,7 @@ containedElements == null) return null; return containedElements[index];
                 this.second = second;
             }
 
-            public override string GetElementName()
+            public override string? GetElementName()
             {
                 return "RelationshipElement";
             }
@@ -3529,7 +3529,7 @@ containedElements == null) return null; return containedElements[index];
             }
 
             public static SubmodelElementCollection CreateNew(
-                string idShort = null, string category = null, Key semanticIdKey = null)
+                string? idShort = null, string category = null, Key semanticIdKey = null)
             {
                 var x = new SubmodelElementCollection();
                 x.CreateNewLogic(idShort, category, semanticIdKey);
@@ -3563,7 +3563,7 @@ containedElements == null) return null; return containedElements[index];
                 return null;
             }
 
-            public override string GetElementName()
+            public override string? GetElementName()
             {
                 return "SubmodelElementCollection";
             }
@@ -3606,7 +3606,7 @@ containedElements == null) return null; return containedElements[index];
                 this.value = new SubmodelElementWrapper(elem);
             }
 
-            public override string GetElementName()
+            public override string? GetElementName()
             {
                 return "OperationVariable";
             }
@@ -3706,7 +3706,7 @@ containedElements == null) return null; return containedElements[index];
             }
 
 
-            public override string GetElementName()
+            public override string? GetElementName()
             {
                 return "Operation";
             }
@@ -3824,7 +3824,7 @@ containedElements == null) return null; return containedElements[index];
             }
 
             // class derives from Referable in order to provide GetElementName
-            public override string GetElementName()
+            public override string? GetElementName()
             {
                 return "File";
             }

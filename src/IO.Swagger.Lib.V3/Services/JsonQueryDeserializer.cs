@@ -21,7 +21,7 @@ namespace IO.Swagger.Lib.V3.Services
             _decoderService = decoderService;
         }
 
-        public Reference? DeserializeReference(string fieldName, string referenceString)
+        public Reference? DeserializeReference(string fieldName, string? referenceString)
         {
             Reference? output = null;
             try
@@ -29,8 +29,8 @@ namespace IO.Swagger.Lib.V3.Services
                 if (!string.IsNullOrEmpty(referenceString))
                 {
                     var decodedString = _decoderService.Decode(fieldName, referenceString);
-                    MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(decodedString));
-                    JsonNode node = JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                    var mStrm         = new MemoryStream(Encoding.UTF8.GetBytes(decodedString ?? string.Empty));
+                    var node          = JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
                     output = Jsonization.Deserialize.ReferenceFrom(node);
                 }
             }

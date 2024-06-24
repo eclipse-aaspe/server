@@ -10,7 +10,7 @@ namespace Extensions
     {
         #region AasxPackageExplorer
 
-        public static void Add(this AnnotatedRelationshipElement annotatedRelationshipElement, ISubmodelElement submodelElement)
+        public static void Add(this AnnotatedRelationshipElement annotatedRelationshipElement, ISubmodelElement? submodelElement)
         {
             if (annotatedRelationshipElement != null)
             {

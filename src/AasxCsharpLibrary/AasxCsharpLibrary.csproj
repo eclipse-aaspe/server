@@ -5,6 +5,7 @@
         <RootNamespace>AdminShellNS</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <Version>0.3.0.1-aasV3-alpha-latest</Version>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
     <PropertyGroup>
         <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>

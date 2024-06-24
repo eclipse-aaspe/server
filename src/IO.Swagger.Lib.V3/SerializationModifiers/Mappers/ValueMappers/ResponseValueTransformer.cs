@@ -9,11 +9,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 {
     internal class ResponseValueTransformer : ITransformer<IDTO>
     {
-        public IDTO? Transform(IClass that)
-        {
-            if (that == null) return null;
-            return that.Transform(this);
-        }
+        public IDTO? Transform(IClass? that) => that?.Transform(this);
 
         public IDTO TransformAdministrativeInformation(IAdministrativeInformation that)
         {
@@ -110,7 +106,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new FileValue(that.IdShort, that.ContentType, that.Value);
         }
 
-        internal List<KeyDTO>? TransformKeyList(List<IKey> keyList)
+        internal List<KeyDTO>? TransformKeyList(List<IKey>? keyList)
         {
             List<KeyDTO>? output = null;
 
@@ -163,10 +159,10 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 
         public IDTO TransformMultiLanguageProperty(IMultiLanguageProperty that)
         {
-            var langStrings = new List<KeyValuePair<string, string>>();
+            var langStrings = new List<KeyValuePair<string, string?>>();
             foreach (var langString in that.Value)
             {
-                langStrings.Add(new KeyValuePair<string, string>(langString.Language, langString.Text));
+                langStrings.Add(new KeyValuePair<string, string?>(langString.Language, langString.Text));
             }
 
             return new MultiLanguagePropertyValue(that.IdShort, langStrings);
@@ -207,10 +203,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new OperationValue(that.IdShort, inputVariables, outputVariables, inoutputVariables);
         }
 
-        public IDTO? TransformOperationVariable(IOperationVariable that)
-        {
-            return Transform(that.Value);
-        }
+        public IDTO? TransformOperationVariable(IOperationVariable? that) => Transform(that?.Value);
 
         public IDTO TransformProperty(IProperty that)
         {

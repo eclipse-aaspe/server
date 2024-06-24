@@ -56,7 +56,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
         [ Required ]
         [ DataMember(Name = "key") ]
-        public string Key { get; set; }
+        public string? Key { get; set; }
 
         /// <summary>
         /// Gets or Sets Value
@@ -65,7 +65,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         [ DataMember(Name = "value") ]
         public string Value { get; set; }
 
-        public ProtocolInformationSecurityAttributes(TypeEnum type, string key, string value)
+        public ProtocolInformationSecurityAttributes(TypeEnum type, string? key, string value)
         {
             Type = type;
             Key = key;
@@ -113,7 +113,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
         /// <param name="other">Instance of ProtocolInformationSecurityAttributes to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(ProtocolInformationSecurityAttributes other)
+        public bool Equals(ProtocolInformationSecurityAttributes? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;

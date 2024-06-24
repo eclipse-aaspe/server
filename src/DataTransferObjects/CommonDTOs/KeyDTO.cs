@@ -4,5 +4,5 @@ namespace DataTransferObjects.CommonDTOs
 {
     public record class KeyDTO(
             KeyTypes type,
-            string value) : IDTO;
+            string? value) : IDTO;
 }

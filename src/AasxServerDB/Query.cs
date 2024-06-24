@@ -7,7 +7,7 @@ namespace AasxServerDB
 {
     public class Query
     {
-        public static string ExternalBlazor { get; set; }
+        public static string? ExternalBlazor { get; set; }
 
         // --------------- API ---------------
         public List<SMResult> SearchSMs(string semanticId = "")
@@ -83,7 +83,7 @@ namespace AasxServerDB
         public List<SMEResult> SearchSMEsResult(
             string smSemanticId = "", 
             string searchSemanticId = "",  string searchIdShort = "",
-            string equal = "", string contains = "",
+            string? equal = "", string? contains = "",
             string resultSemanticId = "", string resultIdShort = "")
         {
             List<SMEResult> result = new List<SMEResult>();
@@ -322,7 +322,7 @@ namespace AasxServerDB
         // --------------- SME Methodes ---------------
         private class SMEWithValue
         {
-            public SMSet sm;
+            public SMSet? sm;
             public SMESet? sme;
             public string? value;
         }

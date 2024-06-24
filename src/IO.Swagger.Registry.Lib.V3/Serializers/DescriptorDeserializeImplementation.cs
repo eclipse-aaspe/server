@@ -7,7 +7,7 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
 {
     public static class DescriptorDeserializeImplementation
     {
-        internal static AssetAdministrationShellDescriptor AssetAdministrationShellDescriptorFrom(JsonNode node, out Reporting.Error error)
+        internal static AssetAdministrationShellDescriptor? AssetAdministrationShellDescriptorFrom(JsonNode node, out Reporting.Error? error)
         {
             error = null;
 
@@ -15,19 +15,19 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
             if (obj == null)
             {
                 error = new Reporting.Error(
-                    $"Expected a JsonObject, but got {node.GetType()}");
+                                            $"Expected a JsonObject, but got {node.GetType()}");
                 return null;
             }
 
             AdministrativeInformation administrativeInformation = null;
-            AssetKind assetKind = AssetKind.NotApplicable;
-            string assetType = null;
-            List<Endpoint> endpoints = null;
-            string globalAssetId = null;
-            string idShort = null;
-            string id = null;
-            List<SpecificAssetId> specificAssetIds = null;
-            List<SubmodelDescriptor> submodelDescriptors = null;
+            AssetKind                 assetKind                 = AssetKind.NotApplicable;
+            string?                   assetType                 = null;
+            List<Endpoint>            endpoints                 = null;
+            string?                   globalAssetId             = null;
+            string?                   idShort                   = null;
+            string?                   id                        = null;
+            List<SpecificAssetId>     specificAssetIds          = null;
+            List<SubmodelDescriptor>  submodelDescriptors       = null;
 
             foreach (var keyValue in obj)
             {
@@ -66,13 +66,13 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                         }
 
                         assetType = StringFrom(
-                            keyValue.Value,
-                            out error);
+                                               keyValue.Value,
+                                               out error);
                         if (error != null)
                         {
                             error.PrependSegment(
-                                new Reporting.NameSegment(
-                                    "id"));
+                                                 new Reporting.NameSegment(
+                                                                           "id"));
                             return null;
                         }
 
@@ -89,49 +89,49 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                         if (arrayEndpoints == null)
                         {
                             error = new Reporting.Error(
-                                $"Expected a JsonArray, but got {keyValue.Value.GetType()}");
+                                                        $"Expected a JsonArray, but got {keyValue.Value.GetType()}");
                             error.PrependSegment(
-                                new Reporting.NameSegment(
-                                    "endpoints"));
+                                                 new Reporting.NameSegment(
+                                                                           "endpoints"));
                             return null;
                         }
 
                         endpoints = new List<Endpoint>(
-                            arrayEndpoints.Count);
+                                                       arrayEndpoints.Count);
                         int indexEndpoint = 0;
                         foreach (JsonNode? item in arrayEndpoints)
                         {
                             if (item == null)
                             {
                                 error = new Reporting.Error(
-                                    "Expected a non-null item, but got a null");
+                                                            "Expected a non-null item, but got a null");
                                 error.PrependSegment(
-                                    new Reporting.IndexSegment(
-                                        indexEndpoint));
+                                                     new Reporting.IndexSegment(
+                                                                                indexEndpoint));
                                 error.PrependSegment(
-                                    new Reporting.NameSegment(
-                                        "endpoints"));
+                                                     new Reporting.NameSegment(
+                                                                               "endpoints"));
                                 return null;
                             }
 
                             Endpoint? parsedItem = EndpointFrom(
-                                item ?? throw new System.InvalidOperationException(),
-                                out error);
+                                                                item ?? throw new System.InvalidOperationException(),
+                                                                out error);
                             if (error != null)
                             {
                                 error.PrependSegment(
-                                    new Reporting.IndexSegment(
-                                        indexEndpoint));
+                                                     new Reporting.IndexSegment(
+                                                                                indexEndpoint));
                                 error.PrependSegment(
-                                    new Reporting.NameSegment(
-                                        "endpoint"));
+                                                     new Reporting.NameSegment(
+                                                                               "endpoint"));
                                 return null;
                             }
 
                             endpoints.Add(
-                                parsedItem
-                                ?? throw new System.InvalidOperationException(
-                                    "Unexpected result null when error is null"));
+                                          parsedItem
+                                          ?? throw new System.InvalidOperationException(
+                                                                                        "Unexpected result null when error is null"));
                             indexEndpoint++;
                         }
 
@@ -140,13 +140,13 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                     case "globalAssetId":
                     {
                         globalAssetId = StringFrom(
-                            keyValue.Value,
-                            out error);
+                                                   keyValue.Value,
+                                                   out error);
                         if (error != null)
                         {
                             error.PrependSegment(
-                                new Reporting.NameSegment(
-                                    "globalAssetId"));
+                                                 new Reporting.NameSegment(
+                                                                           "globalAssetId"));
                             return null;
                         }
 
@@ -155,13 +155,13 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                     case "idShort":
                     {
                         idShort = StringFrom(
-                            keyValue.Value,
-                            out error);
+                                             keyValue.Value,
+                                             out error);
                         if (error != null)
                         {
                             error.PrependSegment(
-                                new Reporting.NameSegment(
-                                    "idShort"));
+                                                 new Reporting.NameSegment(
+                                                                           "idShort"));
                             return null;
                         }
 
@@ -170,13 +170,13 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                     case "id":
                     {
                         id = StringFrom(
-                            keyValue.Value,
-                            out error);
+                                        keyValue.Value,
+                                        out error);
                         if (error != null)
                         {
                             error.PrependSegment(
-                                new Reporting.NameSegment(
-                                    "id"));
+                                                 new Reporting.NameSegment(
+                                                                           "id"));
                             return null;
                         }
 
@@ -188,10 +188,10 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                         if (arraySpecificAssetIds == null)
                         {
                             error = new Reporting.Error(
-                                $"Expected a JsonArray, but got {keyValue.Value.GetType()}");
+                                                        $"Expected a JsonArray, but got {keyValue.Value.GetType()}");
                             error.PrependSegment(
-                                new Reporting.NameSegment(
-                                    "specificAssetIds"));
+                                                 new Reporting.NameSegment(
+                                                                           "specificAssetIds"));
                             return null;
                         }
 
@@ -202,13 +202,13 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                             if (item == null)
                             {
                                 error = new Reporting.Error(
-                                    "Expected a non-null item, but got a null");
+                                                            "Expected a non-null item, but got a null");
                                 error.PrependSegment(
-                                    new Reporting.IndexSegment(
-                                        indexSpecificAssetId));
+                                                     new Reporting.IndexSegment(
+                                                                                indexSpecificAssetId));
                                 error.PrependSegment(
-                                    new Reporting.NameSegment(
-                                        "endpoints"));
+                                                     new Reporting.NameSegment(
+                                                                               "endpoints"));
                                 return null;
                             }
 
@@ -224,49 +224,49 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                         if (arraySubmodelDescriptors == null)
                         {
                             error = new Reporting.Error(
-                                $"Expected a JsonArray, but got {keyValue.Value.GetType()}");
+                                                        $"Expected a JsonArray, but got {keyValue.Value.GetType()}");
                             error.PrependSegment(
-                                new Reporting.NameSegment(
-                                    "submodelDescriptors"));
+                                                 new Reporting.NameSegment(
+                                                                           "submodelDescriptors"));
                             return null;
                         }
 
                         submodelDescriptors = new List<SubmodelDescriptor>(
-                            arraySubmodelDescriptors.Count);
+                                                                           arraySubmodelDescriptors.Count);
                         int indexSubmodelDescriptors = 0;
                         foreach (JsonNode? item in arraySubmodelDescriptors)
                         {
                             if (item == null)
                             {
                                 error = new Reporting.Error(
-                                    "Expected a non-null item, but got a null");
+                                                            "Expected a non-null item, but got a null");
                                 error.PrependSegment(
-                                    new Reporting.IndexSegment(
-                                        indexSubmodelDescriptors));
+                                                     new Reporting.IndexSegment(
+                                                                                indexSubmodelDescriptors));
                                 error.PrependSegment(
-                                    new Reporting.NameSegment(
-                                        "submodelDescriptors"));
+                                                     new Reporting.NameSegment(
+                                                                               "submodelDescriptors"));
                                 return null;
                             }
 
                             SubmodelDescriptor? parsedItem = SubmodelDescriptorFrom(
-                                item ?? throw new System.InvalidOperationException(),
-                                out error);
+                                                                                    item ?? throw new System.InvalidOperationException(),
+                                                                                    out error);
                             if (error != null)
                             {
                                 error.PrependSegment(
-                                    new Reporting.IndexSegment(
-                                        indexSubmodelDescriptors));
+                                                     new Reporting.IndexSegment(
+                                                                                indexSubmodelDescriptors));
                                 error.PrependSegment(
-                                    new Reporting.NameSegment(
-                                        "submodelDescriptors"));
+                                                     new Reporting.NameSegment(
+                                                                               "submodelDescriptors"));
                                 return null;
                             }
 
                             submodelDescriptors.Add(
-                                parsedItem
-                                ?? throw new System.InvalidOperationException(
-                                    "Unexpected result null when error is null"));
+                                                    parsedItem
+                                                    ?? throw new System.InvalidOperationException(
+                                                                                                  "Unexpected result null when error is null"));
                             indexSubmodelDescriptors++;
                         }
 
@@ -276,10 +276,10 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
             }
 
             return new AssetAdministrationShellDescriptor(administrativeInformation, assetKind, assetType, endpoints, globalAssetId, idShort, id, specificAssetIds,
-                submodelDescriptors);
+                                                          submodelDescriptors);
         }
 
-        internal static SubmodelDescriptor SubmodelDescriptorFrom(JsonNode node, out Reporting.Error error)
+        internal static SubmodelDescriptor? SubmodelDescriptorFrom(JsonNode node, out Reporting.Error? error)
         {
             error = null;
 
@@ -287,17 +287,17 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
             if (obj == null)
             {
                 error = new Reporting.Error(
-                    $"Expected a JsonObject, but got {node.GetType()}");
+                                            $"Expected a JsonObject, but got {node.GetType()}");
                 return null;
             }
 
-            AdministrativeInformation administration = null;
-            List<Endpoint> endpoints = null;
-            string idShort = null;
-            string id = null;
-            Reference semanticId = null;
-            List<Reference> supplementalSemanticId = null;
-            List<String> federatedElements = null;
+            AdministrativeInformation administration         = null;
+            List<Endpoint>            endpoints              = null;
+            string?                   idShort                = null;
+            string?                   id                     = null;
+            Reference                 semanticId             = null;
+            List<Reference>           supplementalSemanticId = null;
+            List<String>              federatedElements      = null;
 
             foreach (var keyValue in obj)
             {
@@ -324,49 +324,49 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                         if (arrayEndpoints == null)
                         {
                             error = new Reporting.Error(
-                                $"Expected a JsonArray, but got {keyValue.Value.GetType()}");
+                                                        $"Expected a JsonArray, but got {keyValue.Value.GetType()}");
                             error.PrependSegment(
-                                new Reporting.NameSegment(
-                                    "endpoints"));
+                                                 new Reporting.NameSegment(
+                                                                           "endpoints"));
                             return null;
                         }
 
                         endpoints = new List<Endpoint>(
-                            arrayEndpoints.Count);
+                                                       arrayEndpoints.Count);
                         int indexEndpoint = 0;
                         foreach (JsonNode? item in arrayEndpoints)
                         {
                             if (item == null)
                             {
                                 error = new Reporting.Error(
-                                    "Expected a non-null item, but got a null");
+                                                            "Expected a non-null item, but got a null");
                                 error.PrependSegment(
-                                    new Reporting.IndexSegment(
-                                        indexEndpoint));
+                                                     new Reporting.IndexSegment(
+                                                                                indexEndpoint));
                                 error.PrependSegment(
-                                    new Reporting.NameSegment(
-                                        "endpoints"));
+                                                     new Reporting.NameSegment(
+                                                                               "endpoints"));
                                 return null;
                             }
 
                             Endpoint? parsedItem = EndpointFrom(
-                                item ?? throw new System.InvalidOperationException(),
-                                out error);
+                                                                item ?? throw new System.InvalidOperationException(),
+                                                                out error);
                             if (error != null)
                             {
                                 error.PrependSegment(
-                                    new Reporting.IndexSegment(
-                                        indexEndpoint));
+                                                     new Reporting.IndexSegment(
+                                                                                indexEndpoint));
                                 error.PrependSegment(
-                                    new Reporting.NameSegment(
-                                        "endpoint"));
+                                                     new Reporting.NameSegment(
+                                                                               "endpoint"));
                                 return null;
                             }
 
                             endpoints.Add(
-                                parsedItem
-                                ?? throw new System.InvalidOperationException(
-                                    "Unexpected result null when error is null"));
+                                          parsedItem
+                                          ?? throw new System.InvalidOperationException(
+                                                                                        "Unexpected result null when error is null"));
                             indexEndpoint++;
                         }
 
@@ -375,13 +375,13 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                     case "idShort":
                     {
                         idShort = StringFrom(
-                            keyValue.Value,
-                            out error);
+                                             keyValue.Value,
+                                             out error);
                         if (error != null)
                         {
                             error.PrependSegment(
-                                new Reporting.NameSegment(
-                                    "idShort"));
+                                                 new Reporting.NameSegment(
+                                                                           "idShort"));
                             return null;
                         }
 
@@ -390,13 +390,13 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                     case "id":
                     {
                         id = StringFrom(
-                            keyValue.Value,
-                            out error);
+                                        keyValue.Value,
+                                        out error);
                         if (error != null)
                         {
                             error.PrependSegment(
-                                new Reporting.NameSegment(
-                                    "id"));
+                                                 new Reporting.NameSegment(
+                                                                           "id"));
                             return null;
                         }
 
@@ -413,10 +413,10 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                         if (arraySupplementalSemanticId == null)
                         {
                             error = new Reporting.Error(
-                                $"Expected a JsonArray, but got {keyValue.Value.GetType()}");
+                                                        $"Expected a JsonArray, but got {keyValue.Value.GetType()}");
                             error.PrependSegment(
-                                new Reporting.NameSegment(
-                                    "supplementalSemanticId"));
+                                                 new Reporting.NameSegment(
+                                                                           "supplementalSemanticId"));
                             return null;
                         }
 
@@ -427,13 +427,13 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                             if (item == null)
                             {
                                 error = new Reporting.Error(
-                                    "Expected a non-null item, but got a null");
+                                                            "Expected a non-null item, but got a null");
                                 error.PrependSegment(
-                                    new Reporting.IndexSegment(
-                                        indexSpecificAssetId));
+                                                     new Reporting.IndexSegment(
+                                                                                indexSpecificAssetId));
                                 error.PrependSegment(
-                                    new Reporting.NameSegment(
-                                        "supplementalSemanticId"));
+                                                     new Reporting.NameSegment(
+                                                                               "supplementalSemanticId"));
                                 return null;
                             }
 
@@ -449,49 +449,49 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                         if (arrayFederatedElements == null)
                         {
                             error = new Reporting.Error(
-                                $"Expected a JsonArray, but got {keyValue.Value.GetType()}");
+                                                        $"Expected a JsonArray, but got {keyValue.Value.GetType()}");
                             error.PrependSegment(
-                                new Reporting.NameSegment(
-                                    "federatedElements"));
+                                                 new Reporting.NameSegment(
+                                                                           "federatedElements"));
                             return null;
                         }
 
                         federatedElements = new List<string>(
-                            arrayFederatedElements.Count);
+                                                             arrayFederatedElements.Count);
                         int indexFederatedElements = 0;
                         foreach (JsonNode? item in arrayFederatedElements)
                         {
                             if (item == null)
                             {
                                 error = new Reporting.Error(
-                                    "Expected a non-null item, but got a null");
+                                                            "Expected a non-null item, but got a null");
                                 error.PrependSegment(
-                                    new Reporting.IndexSegment(
-                                        indexFederatedElements));
+                                                     new Reporting.IndexSegment(
+                                                                                indexFederatedElements));
                                 error.PrependSegment(
-                                    new Reporting.NameSegment(
-                                        "federatedElements"));
+                                                     new Reporting.NameSegment(
+                                                                               "federatedElements"));
                                 return null;
                             }
 
                             string? parsedItem = StringFrom(
-                                item ?? throw new System.InvalidOperationException(),
-                                out error);
+                                                            item ?? throw new System.InvalidOperationException(),
+                                                            out error);
                             if (error != null)
                             {
                                 error.PrependSegment(
-                                    new Reporting.IndexSegment(
-                                        indexFederatedElements));
+                                                     new Reporting.IndexSegment(
+                                                                                indexFederatedElements));
                                 error.PrependSegment(
-                                    new Reporting.NameSegment(
-                                        "endpoint"));
+                                                     new Reporting.NameSegment(
+                                                                               "endpoint"));
                                 return null;
                             }
 
                             federatedElements.Add(
-                                parsedItem
-                                ?? throw new System.InvalidOperationException(
-                                    "Unexpected result null when error is null"));
+                                                  parsedItem
+                                                  ?? throw new System.InvalidOperationException(
+                                                                                                "Unexpected result null when error is null"));
                             indexFederatedElements++;
                         }
 
@@ -503,20 +503,20 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
             return new SubmodelDescriptor(administration, endpoints, idShort, id, semanticId, supplementalSemanticId, federatedElements);
         }
 
-        private static Endpoint EndpointFrom(JsonNode node, out Reporting.Error error)
+        private static Endpoint? EndpointFrom(JsonNode node, out Reporting.Error? error)
         {
             error = null;
 
-            JsonObject? obj = node as JsonObject;
+            var obj = node as JsonObject;
             if (obj == null)
             {
                 error = new Reporting.Error(
-                    $"Expected a JsonObject, but got {node.GetType()}");
+                                            $"Expected a JsonObject, but got {node.GetType()}");
                 return null;
             }
 
-            string _interface = null;
-            ProtocolInformation protocolInformation = null;
+            string?              _interface          = null;
+            ProtocolInformation? protocolInformation = null;
 
             foreach (var keyValue in obj)
             {
@@ -530,13 +530,13 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                     case "interface":
                     {
                         _interface = StringFrom(
-                            keyValue.Value,
-                            out error);
+                                                keyValue.Value,
+                                                out error);
                         if (error != null)
                         {
                             error.PrependSegment(
-                                new Reporting.NameSegment(
-                                    "interface"));
+                                                 new Reporting.NameSegment(
+                                                                           "interface"));
                             return null;
                         }
 
@@ -545,13 +545,13 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                     case "protocolInformation":
                     {
                         protocolInformation = ProtocolInformationFrom(
-                            keyValue.Value,
-                            out error);
+                                                                      keyValue.Value,
+                                                                      out error);
                         if (error != null)
                         {
                             error.PrependSegment(
-                                new Reporting.NameSegment(
-                                    "protocolInformation"));
+                                                 new Reporting.NameSegment(
+                                                                           "protocolInformation"));
                             return null;
                         }
 
@@ -563,7 +563,7 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
             return new Endpoint(_interface, protocolInformation);
         }
 
-        private static ProtocolInformation ProtocolInformationFrom(JsonNode node, out Reporting.Error error)
+        private static ProtocolInformation? ProtocolInformationFrom(JsonNode node, out Reporting.Error? error)
         {
             error = null;
 
@@ -571,17 +571,17 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
             if (obj == null)
             {
                 error = new Reporting.Error(
-                    $"Expected a JsonObject, but got {node.GetType()}");
+                                            $"Expected a JsonObject, but got {node.GetType()}");
                 return null;
             }
 
-            string href = null;
-            string endpointProtocol = null;
-            List<string> endpointProtocolVersion = null;
-            string subprotocol = null;
-            string subprotocolBody = null;
-            string subprotocolBodyEncoding = null;
-            List<ProtocolInformationSecurityAttributes> securityAttributes = null;
+            string?                                     href                    = null;
+            string?                                     endpointProtocol        = null;
+            List<string>                                endpointProtocolVersion = null;
+            string?                                     subprotocol             = null;
+            string?                                     subprotocolBody         = null;
+            string?                                     subprotocolBodyEncoding = null;
+            List<ProtocolInformationSecurityAttributes> securityAttributes      = null;
 
             foreach (var keyValue in obj)
             {
@@ -595,13 +595,13 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                     case "href":
                     {
                         href = StringFrom(
-                            keyValue.Value,
-                            out error);
+                                          keyValue.Value,
+                                          out error);
                         if (error != null)
                         {
                             error.PrependSegment(
-                                new Reporting.NameSegment(
-                                    "href"));
+                                                 new Reporting.NameSegment(
+                                                                           "href"));
                             return null;
                         }
 
@@ -610,13 +610,13 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                     case "endpointProtocol":
                     {
                         endpointProtocol = StringFrom(
-                            keyValue.Value,
-                            out error);
+                                                      keyValue.Value,
+                                                      out error);
                         if (error != null)
                         {
                             error.PrependSegment(
-                                new Reporting.NameSegment(
-                                    "endpointProtocol"));
+                                                 new Reporting.NameSegment(
+                                                                           "endpointProtocol"));
                             return null;
                         }
 
@@ -624,53 +624,52 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                     }
                     case "endpointProtocolVersion":
                     {
-                        JsonArray? arrayEndpointsProtocolVersion = keyValue.Value as JsonArray;
-                        if (arrayEndpointsProtocolVersion == null)
+                        if (keyValue.Value is not JsonArray arrayEndpointsProtocolVersion)
                         {
                             error = new Reporting.Error(
-                                $"Expected a JsonArray, but got {keyValue.Value.GetType()}");
+                                                        $"Expected a JsonArray, but got {keyValue.Value.GetType()}");
                             error.PrependSegment(
-                                new Reporting.NameSegment(
-                                    "EndpointsProtocolVersion"));
+                                                 new Reporting.NameSegment(
+                                                                           "EndpointsProtocolVersion"));
                             return null;
                         }
 
                         endpointProtocolVersion = new List<string>(
-                            arrayEndpointsProtocolVersion.Count);
-                        int indexEndpointsProtocolVersion = 0;
+                                                                   arrayEndpointsProtocolVersion.Count);
+                        var indexEndpointsProtocolVersion = 0;
                         foreach (JsonNode? item in arrayEndpointsProtocolVersion)
                         {
                             if (item == null)
                             {
                                 error = new Reporting.Error(
-                                    "Expected a non-null item, but got a null");
+                                                            "Expected a non-null item, but got a null");
                                 error.PrependSegment(
-                                    new Reporting.IndexSegment(
-                                        indexEndpointsProtocolVersion));
+                                                     new Reporting.IndexSegment(
+                                                                                indexEndpointsProtocolVersion));
                                 error.PrependSegment(
-                                    new Reporting.NameSegment(
-                                        "EndpointsProtocolVersion"));
+                                                     new Reporting.NameSegment(
+                                                                               "EndpointsProtocolVersion"));
                                 return null;
                             }
 
                             string? parsedItem = StringFrom(
-                                item ?? throw new System.InvalidOperationException(),
-                                out error);
+                                                            item ?? throw new System.InvalidOperationException(),
+                                                            out error);
                             if (error != null)
                             {
                                 error.PrependSegment(
-                                    new Reporting.IndexSegment(
-                                        indexEndpointsProtocolVersion));
+                                                     new Reporting.IndexSegment(
+                                                                                indexEndpointsProtocolVersion));
                                 error.PrependSegment(
-                                    new Reporting.NameSegment(
-                                        "endpoint"));
+                                                     new Reporting.NameSegment(
+                                                                               "endpoint"));
                                 return null;
                             }
 
                             endpointProtocolVersion.Add(
-                                parsedItem
-                                ?? throw new System.InvalidOperationException(
-                                    "Unexpected result null when error is null"));
+                                                        parsedItem
+                                                        ?? throw new System.InvalidOperationException(
+                                                                                                      "Unexpected result null when error is null"));
                             indexEndpointsProtocolVersion++;
                         }
 
@@ -679,13 +678,13 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                     case "subprotocol":
                     {
                         subprotocol = StringFrom(
-                            keyValue.Value,
-                            out error);
+                                                 keyValue.Value,
+                                                 out error);
                         if (error != null)
                         {
                             error.PrependSegment(
-                                new Reporting.NameSegment(
-                                    "subprotocol"));
+                                                 new Reporting.NameSegment(
+                                                                           "subprotocol"));
                             return null;
                         }
 
@@ -694,13 +693,13 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                     case "subprotocolBody":
                     {
                         subprotocolBody = StringFrom(
-                            keyValue.Value,
-                            out error);
+                                                     keyValue.Value,
+                                                     out error);
                         if (error != null)
                         {
                             error.PrependSegment(
-                                new Reporting.NameSegment(
-                                    "subprotocolBody"));
+                                                 new Reporting.NameSegment(
+                                                                           "subprotocolBody"));
                             return null;
                         }
 
@@ -709,13 +708,13 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                     case "subprotocolBodyEncoding":
                     {
                         subprotocolBodyEncoding = StringFrom(
-                            keyValue.Value,
-                            out error);
+                                                             keyValue.Value,
+                                                             out error);
                         if (error != null)
                         {
                             error.PrependSegment(
-                                new Reporting.NameSegment(
-                                    "subprotocolBodyEncoding"));
+                                                 new Reporting.NameSegment(
+                                                                           "subprotocolBodyEncoding"));
                             return null;
                         }
 
@@ -727,49 +726,49 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                         if (arraySecurityAttributes == null)
                         {
                             error = new Reporting.Error(
-                                $"Expected a JsonArray, but got {keyValue.Value.GetType()}");
+                                                        $"Expected a JsonArray, but got {keyValue.Value.GetType()}");
                             error.PrependSegment(
-                                new Reporting.NameSegment(
-                                    "securityAttributes"));
+                                                 new Reporting.NameSegment(
+                                                                           "securityAttributes"));
                             return null;
                         }
 
                         securityAttributes = new List<ProtocolInformationSecurityAttributes>(
-                            arraySecurityAttributes.Count);
+                                                                                             arraySecurityAttributes.Count);
                         int indexSecurityAttributes = 0;
                         foreach (JsonNode? item in arraySecurityAttributes)
                         {
                             if (item == null)
                             {
                                 error = new Reporting.Error(
-                                    "Expected a non-null item, but got a null");
+                                                            "Expected a non-null item, but got a null");
                                 error.PrependSegment(
-                                    new Reporting.IndexSegment(
-                                        indexSecurityAttributes));
+                                                     new Reporting.IndexSegment(
+                                                                                indexSecurityAttributes));
                                 error.PrependSegment(
-                                    new Reporting.NameSegment(
-                                        "SecurityAttributes"));
+                                                     new Reporting.NameSegment(
+                                                                               "SecurityAttributes"));
                                 return null;
                             }
 
                             ProtocolInformationSecurityAttributes? parsedItem = ProtocolInformationSecurityAttributesFrom(
-                                item ?? throw new System.InvalidOperationException(),
-                                out error);
+                                 item ?? throw new System.InvalidOperationException(),
+                                 out error);
                             if (error != null)
                             {
                                 error.PrependSegment(
-                                    new Reporting.IndexSegment(
-                                        indexSecurityAttributes));
+                                                     new Reporting.IndexSegment(
+                                                                                indexSecurityAttributes));
                                 error.PrependSegment(
-                                    new Reporting.NameSegment(
-                                        "SecurityAttributes"));
+                                                     new Reporting.NameSegment(
+                                                                               "SecurityAttributes"));
                                 return null;
                             }
 
                             securityAttributes.Add(
-                                parsedItem
-                                ?? throw new System.InvalidOperationException(
-                                    "Unexpected result null when error is null"));
+                                                   parsedItem
+                                                   ?? throw new System.InvalidOperationException(
+                                                                                                 "Unexpected result null when error is null"));
                             indexSecurityAttributes++;
                         }
 
@@ -781,7 +780,7 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
             return new ProtocolInformation(href, endpointProtocol, endpointProtocolVersion, subprotocol, subprotocolBody, subprotocolBodyEncoding, securityAttributes);
         }
 
-        private static ProtocolInformationSecurityAttributes ProtocolInformationSecurityAttributesFrom(JsonNode node, out Reporting.Error error)
+        private static ProtocolInformationSecurityAttributes? ProtocolInformationSecurityAttributesFrom(JsonNode node, out Reporting.Error? error)
         {
             error = null;
 
@@ -789,13 +788,13 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
             if (obj == null)
             {
                 error = new Reporting.Error(
-                    $"Expected a JsonObject, but got {node.GetType()}");
+                                            $"Expected a JsonObject, but got {node.GetType()}");
                 return null;
             }
 
-            ProtocolInformationSecurityAttributes.TypeEnum type = ProtocolInformationSecurityAttributes.TypeEnum.NONEEnum;
-            string key = null;
-            string value = null;
+            ProtocolInformationSecurityAttributes.TypeEnum type  = ProtocolInformationSecurityAttributes.TypeEnum.NONEEnum;
+            string?                                        key   = null;
+            string                                         value = null;
 
             foreach (var keyValue in obj)
             {
@@ -814,13 +813,13 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                     case "key":
                     {
                         key = StringFrom(
-                            keyValue.Value,
-                            out error);
+                                         keyValue.Value,
+                                         out error);
                         if (error != null)
                         {
                             error.PrependSegment(
-                                new Reporting.NameSegment(
-                                    "key"));
+                                                 new Reporting.NameSegment(
+                                                                           "key"));
                             return null;
                         }
 
@@ -829,13 +828,13 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                     case "value":
                     {
                         key = StringFrom(
-                            keyValue.Value,
-                            out error);
+                                         keyValue.Value,
+                                         out error);
                         if (error != null)
                         {
                             error.PrependSegment(
-                                new Reporting.NameSegment(
-                                    "value"));
+                                                 new Reporting.NameSegment(
+                                                                           "value"));
                             return null;
                         }
 
@@ -856,7 +855,7 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
             if (value == null)
             {
                 error = new Reporting.Error(
-                    $"Expected a JsonValue, but got {node.GetType()}");
+                                            $"Expected a JsonValue, but got {node.GetType()}");
                 return null;
             }
 
@@ -864,15 +863,15 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
             if (!ok)
             {
                 error = new Reporting.Error(
-                    "Expected a string, but the conversion failed " +
-                    $"from {value.ToJsonString()}");
+                                            "Expected a string, but the conversion failed " +
+                                            $"from {value.ToJsonString()}");
                 return null;
             }
 
             if (result == null)
             {
                 error = new Reporting.Error(
-                    "Expected a string, but got a null");
+                                            "Expected a string, but got a null");
                 return null;
             }
 

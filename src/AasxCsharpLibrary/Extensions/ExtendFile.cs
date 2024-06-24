@@ -2,13 +2,13 @@
 {
     public static class ExtendFile
     {
-        public static string ValueAsText(this File file)
+        public static string? ValueAsText(this File file)
         {
             return "" + file.Value;
         }
 
         public static void Set(this File file,
-            string contentType = "", string value = "")
+            string? contentType = "", string value = "")
         {
             file.ContentType = contentType;
             file.Value = value;

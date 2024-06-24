@@ -119,7 +119,7 @@ namespace AasCore.Aas3_0
         ///   </li>
         /// </ul>
         /// </remarks>
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// Type of the value of the extension.
@@ -185,7 +185,7 @@ namespace AasCore.Aas3_0
         ///   </li>
         /// </ul>
         /// </remarks>
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// Type of the value of the extension.
@@ -346,7 +346,7 @@ namespace AasCore.Aas3_0
         }
 
         public Extension(
-            string name,
+            string? name,
             IReference? semanticId = null,
             List<IReference>? supplementalSemanticIds = null,
             DataTypeDefXsd? valueType = null,
@@ -483,7 +483,7 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// The globally unique identification of the element.
         /// </summary>
-        public string Id { get; set; }
+        public string? Id { get; set; }
     }
 
     /// <summary>
@@ -961,7 +961,7 @@ namespace AasCore.Aas3_0
         /// The qualifier <em>type</em> describes the type of the qualifier that is applied to
         /// the element.
         /// </summary>
-        public string Type { get; set; }
+        public string? Type { get; set; }
 
         /// <summary>
         /// Data type of the qualifier value.
@@ -1040,7 +1040,7 @@ namespace AasCore.Aas3_0
         /// The qualifier <em>type</em> describes the type of the qualifier that is applied to
         /// the element.
         /// </summary>
-        public string Type { get; set; }
+        public string? Type { get; set; }
 
         /// <summary>
         /// Data type of the qualifier value.
@@ -1200,7 +1200,7 @@ namespace AasCore.Aas3_0
         }
 
         public Qualifier(
-            string type,
+            string? type,
             DataTypeDefXsd valueType,
             IReference? semanticId = null,
             List<IReference>? supplementalSemanticIds = null,
@@ -1330,7 +1330,7 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// The globally unique identification of the element.
         /// </summary>
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
         /// <summary>
         /// Embedded data specification.
@@ -1628,7 +1628,7 @@ namespace AasCore.Aas3_0
         }
 
         public AssetAdministrationShell(
-            string id,
+            string? id,
             IAssetInformation assetInformation,
             List<IExtension>? extensions = null,
             string? category = null,
@@ -1985,7 +1985,7 @@ namespace AasCore.Aas3_0
         /// <remarks>
         /// The path can be absolute or relative.
         /// </remarks>
-        public string Path { get; set; }
+        public string? Path { get; set; }
 
         /// <summary>
         /// Content type of the content of the file.
@@ -2008,7 +2008,7 @@ namespace AasCore.Aas3_0
         /// <remarks>
         /// The path can be absolute or relative.
         /// </remarks>
-        public string Path { get; set; }
+        public string? Path { get; set; }
 
         /// <summary>
         /// Content type of the content of the file.
@@ -2078,7 +2078,7 @@ namespace AasCore.Aas3_0
         }
 
         public Resource(
-            string path,
+            string? path,
             string? contentType = null)
         {
             Path        = path;
@@ -2132,12 +2132,12 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Name of the identifier
         /// </summary>
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// The value of the specific asset identifier with the corresponding name.
         /// </summary>
-        public string Value { get; set; }
+        public string? Value { get; set; }
 
         /// <summary>
         /// The (external) subject the key belongs to or has meaning to.
@@ -2190,12 +2190,12 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Name of the identifier
         /// </summary>
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// The value of the specific asset identifier with the corresponding name.
         /// </summary>
-        public string Value { get; set; }
+        public string? Value { get; set; }
 
         /// <summary>
         /// The (external) subject the key belongs to or has meaning to.
@@ -2322,8 +2322,8 @@ namespace AasCore.Aas3_0
         }
 
         public SpecificAssetId(
-            string name,
-            string value,
+            string? name,
+            string? value,
             IReference? semanticId = null,
             List<IReference>? supplementalSemanticIds = null,
             IReference? externalSubjectId = null)
@@ -2442,7 +2442,7 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// The globally unique identification of the element.
         /// </summary>
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
         /// <summary>
         /// Kind of the element: either type or instance.
@@ -2823,7 +2823,7 @@ namespace AasCore.Aas3_0
         }
 
         public Submodel(
-            string id,
+            string? id,
             List<IExtension>? extensions = null,
             string? category = null,
             string? idShort = null,
@@ -6466,7 +6466,7 @@ namespace AasCore.Aas3_0
         /// The allowed values are defined as in RFC2046.
         /// </para>
         /// </remarks>
-        public string ContentType { get; set; }
+        public string? ContentType { get; set; }
     }
 
     /// <summary>
@@ -6595,7 +6595,7 @@ namespace AasCore.Aas3_0
         /// The allowed values are defined as in RFC2046.
         /// </para>
         /// </remarks>
-        public string ContentType { get; set; }
+        public string? ContentType { get; set; }
 
         #region Parent
 
@@ -6888,7 +6888,7 @@ namespace AasCore.Aas3_0
         }
 
         public Blob(
-            string contentType,
+            string? contentType,
             List<IExtension>? extensions = null,
             string? category = null,
             string? idShort = null,
@@ -6936,7 +6936,7 @@ namespace AasCore.Aas3_0
         /// <remarks>
         /// The content type states which file extensions the file can have.
         /// </remarks>
-        public string ContentType { get; set; }
+        public string? ContentType { get; set; }
     }
 
     /// <summary>
@@ -7057,7 +7057,7 @@ namespace AasCore.Aas3_0
         /// <remarks>
         /// The content type states which file extensions the file can have.
         /// </remarks>
-        public string ContentType { get; set; }
+        public string? ContentType { get; set; }
 
         #region Parent
 
@@ -7350,7 +7350,7 @@ namespace AasCore.Aas3_0
         }
 
         public File(
-            string contentType,
+            string? contentType,
             List<IExtension>? extensions = null,
             string? category = null,
             string? idShort = null,
@@ -8539,7 +8539,7 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Timestamp in UTC, when this event was triggered.
         /// </summary>
-        public string TimeStamp { get; set; }
+        public string? TimeStamp { get; set; }
 
         /// <summary>
         /// Event specific payload.
@@ -8606,7 +8606,7 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Timestamp in UTC, when this event was triggered.
         /// </summary>
-        public string TimeStamp { get; set; }
+        public string? TimeStamp { get; set; }
 
         /// <summary>
         /// Event specific payload.
@@ -8737,7 +8737,7 @@ namespace AasCore.Aas3_0
         public EventPayload(
             IReference source,
             IReference observableReference,
-            string timeStamp,
+            string? timeStamp,
             IReference? sourceSemanticId = null,
             IReference? observableSemanticId = null,
             string? topic = null,
@@ -10648,7 +10648,7 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// The globally unique identification of the element.
         /// </summary>
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
         /// <summary>
         /// Embedded data specification.
@@ -10908,7 +10908,7 @@ namespace AasCore.Aas3_0
         }
 
         public ConceptDescription(
-            string id,
+            string? id,
             List<IExtension>? extensions = null,
             string? category = null,
             string? idShort = null,
@@ -11071,7 +11071,7 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Unique references in their name space.
         /// </summary>
-        public List<IKey> Keys { get; set; }
+        public List<IKey>? Keys { get; set; }
     }
 
     /// <summary>
@@ -11197,7 +11197,7 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Unique references in their name space.
         /// </summary>
-        public List<IKey> Keys { get; set; }
+        public List<IKey>? Keys { get; set; }
 
         /// <summary>
         /// Iterate over all the class instances referenced from this instance
@@ -11286,7 +11286,7 @@ namespace AasCore.Aas3_0
 
         public Reference(
             ReferenceTypes type,
-            List<IKey> keys,
+            List<IKey>? keys,
             IReference? referredSemanticId = null)
         {
             Type               = type;
@@ -11354,7 +11354,7 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// The key value, for example an IRDI or an URI
         /// </summary>
-        public string Value { get; set; }
+        public string? Value { get; set; }
     }
 
     /// <summary>
@@ -11381,7 +11381,7 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// The key value, for example an IRDI or an URI
         /// </summary>
-        public string Value { get; set; }
+        public string? Value { get; set; }
 
         /// <summary>
         /// Iterate over all the class instances referenced from this instance
@@ -11444,7 +11444,7 @@ namespace AasCore.Aas3_0
 
         public Key(
             KeyTypes type,
-            string value)
+            string? value)
         {
             Type  = type;
             Value = value;
@@ -11650,12 +11650,12 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Language tag conforming to BCP 47
         /// </summary>
-        public string Language { get; set; }
+        public string? Language { get; set; }
 
         /// <summary>
         /// Text in the <see cref="Aas.IAbstractLangString.Language" />
         /// </summary>
-        public string Text { get; set; }
+        public string? Text { get; set; }
     }
 
     /// <summary>
@@ -11674,12 +11674,12 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Language tag conforming to BCP 47
         /// </summary>
-        public string Language { get; set; }
+        public string? Language { get; set; }
 
         /// <summary>
         /// Text in the <see cref="Aas.IAbstractLangString.Language" />
         /// </summary>
-        public string Text { get; set; }
+        public string? Text { get; set; }
 
         /// <summary>
         /// Iterate over all the class instances referenced from this instance
@@ -11741,8 +11741,8 @@ namespace AasCore.Aas3_0
         }
 
         public LangStringNameType(
-            string language,
-            string text)
+            string? language,
+            string? text)
         {
             Language = language;
             Text     = text;
@@ -11765,12 +11765,12 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Language tag conforming to BCP 47
         /// </summary>
-        public string Language { get; set; }
+        public string? Language { get; set; }
 
         /// <summary>
         /// Text in the <see cref="Aas.IAbstractLangString.Language" />
         /// </summary>
-        public string Text { get; set; }
+        public string? Text { get; set; }
 
         /// <summary>
         /// Iterate over all the class instances referenced from this instance
@@ -11832,8 +11832,8 @@ namespace AasCore.Aas3_0
         }
 
         public LangStringTextType(
-            string language,
-            string text)
+            string? language,
+            string? text)
         {
             Language = language;
             Text     = text;
@@ -12583,7 +12583,7 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// The value of the referenced concept definition of the value in <see cref="Aas.ValueReferencePair.ValueId" />.
         /// </summary>
-        public string Value { get; set; }
+        public string? Value { get; set; }
 
         /// <summary>
         /// Global unique id of the value.
@@ -12603,7 +12603,7 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// The value of the referenced concept definition of the value in <see cref="Aas.ValueReferencePair.ValueId" />.
         /// </summary>
-        public string Value { get; set; }
+        public string? Value { get; set; }
 
         /// <summary>
         /// Global unique id of the value.
@@ -12677,7 +12677,7 @@ namespace AasCore.Aas3_0
         }
 
         public ValueReferencePair(
-            string value,
+            string? value,
             IReference valueId)
         {
             Value   = value;
@@ -12803,12 +12803,12 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Language tag conforming to BCP 47
         /// </summary>
-        public string Language { get; set; }
+        public string? Language { get; set; }
 
         /// <summary>
         /// Text in the <see cref="Aas.IAbstractLangString.Language" />
         /// </summary>
-        public string Text { get; set; }
+        public string? Text { get; set; }
 
         /// <summary>
         /// Iterate over all the class instances referenced from this instance
@@ -12870,8 +12870,8 @@ namespace AasCore.Aas3_0
         }
 
         public LangStringPreferredNameTypeIec61360(
-            string language,
-            string text)
+            string? language,
+            string? text)
         {
             Language = language;
             Text     = text;
@@ -12894,12 +12894,12 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Language tag conforming to BCP 47
         /// </summary>
-        public string Language { get; set; }
+        public string? Language { get; set; }
 
         /// <summary>
         /// Text in the <see cref="Aas.IAbstractLangString.Language" />
         /// </summary>
-        public string Text { get; set; }
+        public string? Text { get; set; }
 
         /// <summary>
         /// Iterate over all the class instances referenced from this instance
@@ -12961,8 +12961,8 @@ namespace AasCore.Aas3_0
         }
 
         public LangStringShortNameTypeIec61360(
-            string language,
-            string text)
+            string? language,
+            string? text)
         {
             Language = language;
             Text     = text;
@@ -12985,12 +12985,12 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Language tag conforming to BCP 47
         /// </summary>
-        public string Language { get; set; }
+        public string? Language { get; set; }
 
         /// <summary>
         /// Text in the <see cref="Aas.IAbstractLangString.Language" />
         /// </summary>
-        public string Text { get; set; }
+        public string? Text { get; set; }
 
         /// <summary>
         /// Iterate over all the class instances referenced from this instance
@@ -13052,8 +13052,8 @@ namespace AasCore.Aas3_0
         }
 
         public LangStringDefinitionTypeIec61360(
-            string language,
-            string text)
+            string? language,
+            string? text)
         {
             Language = language;
             Text     = text;

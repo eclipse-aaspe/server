@@ -2,6 +2,6 @@
 {
     public interface IBase64UrlDecoderService
     {
-        string? Decode(string fieldName, string encodedString);
+        string? Decode(string fieldName, string? encodedString);
     }
 }
