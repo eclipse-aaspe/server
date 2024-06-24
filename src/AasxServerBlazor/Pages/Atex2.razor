@@ -1,4 +1,4 @@
-﻿@page "/atex2";
+@page "/atex2";
 @using AasxRestServerLibrary;
 @using AasxServer
 @using Microsoft.AspNetCore.Html;
@@ -60,7 +60,12 @@
     }</style>
 
 <div>
-    @{
+    @if (Program.isLoadingDB)
+    {
+        <span style="color:white;background-color:blue;">Loading...</span>
+    }
+    else
+    {
         string url = NavMan.Uri;
         string filter = "";
         var s = url.Split("?");
@@ -68,7 +73,7 @@
         {
             filter = s[1];
         }
-
+        Program.loadAllPackages();
         collectData();
 
         for (int p = 0; p < countProject; p++)
@@ -1258,6 +1263,7 @@
 
         for (int i = 0; i < aascount; i++)
         {
+            bool found = false;
             var env = AasxServer.Program.env[i];
             if (env != null)
             {
@@ -1418,6 +1424,7 @@
                                 }
                                 if (sm.IdShort.ToLower() == "nameplate")
                                 {
+                                    found = true;
                                     isOutput.Add(false);
                                     envIndex.Add(i);
                                     Nameplate.Add(sm as Submodel);
@@ -1718,6 +1725,7 @@
                                 }
                                 if (sm.IdShort.ToLower() == "handoverdocumentation")
                                 {
+                                    found = true;
                                     if (PreviewFile[count] != "")
                                     {
                                         var sme = findeSMEValue(sm: sm, value: PreviewFile[count]);
@@ -1770,6 +1778,7 @@
                                 }
                                 if (sm.IdShort.ToLower() == "technicaldata")
                                 {
+                                    found = true;
                                     TechnicalData.Add(sm as Submodel);
                                     ManufacturerLogo.Add("");
                                     ProductImage.Add("");
@@ -1791,13 +1800,17 @@
                                                 ProductImage[count] = f.Value;
                                         }
                                     }
-
-                                    count++;
                                 }
                             }
                         }
                     }
+
                 }
+            }
+
+            if (found)
+            {
+                count++;
             }
         }
     }
