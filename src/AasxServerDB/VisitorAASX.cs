@@ -402,7 +402,10 @@ namespace AasxServerDB
         public override void VisitEntity(IEntity that)
         {
             SMESet smeSet = collectSMEData(that);
+            //smeSet.ParentSME = _parSME;
+            //_parSME = smeSet;
             base.VisitEntity(that);
+            //_parSME = smeSet.ParentSME;
         }
         public override void VisitEventPayload(IEventPayload that)
         {
