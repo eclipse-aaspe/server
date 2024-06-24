@@ -274,7 +274,7 @@ namespace AasxServerDB
                             if (lParentParentNum.Contains(pId))
                             {
                                 found = true;
-                                if (l.SMEType == "F")
+                                if (l.SMEType == "D")
                                 {
                                     var v = db.SValueSets.Where(v => v.SMEId == l.Id).FirstOrDefault();
                                     if (v.Value.ToLower().StartsWith("http"))

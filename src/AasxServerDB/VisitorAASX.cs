@@ -7,6 +7,12 @@ using System.IO.Compression;
 using Microsoft.IdentityModel.Tokens;
 using static System.Net.Mime.MediaTypeNames;
 using AasxServerDB.Entities;
+using Newtonsoft.Json.Linq;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Runtime.InteropServices.JavaScript;
+using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics.X86;
+using System.ComponentModel.DataAnnotations;
 
 namespace AasxServerDB
 {
@@ -118,7 +124,7 @@ namespace AasxServerDB
                         new VisitorAASX(aasxDB: aasxDB).Visit(cd);
         }
 
-        private string? shortType(ISubmodelElement sme)
+        private string shortSMEType(ISubmodelElement sme)
         {
             return sme switch
                    {
@@ -135,158 +141,130 @@ namespace AasxServerDB
                        AnnotatedRelationshipElement => "RelA",
                        SubmodelElementCollection    => "SMC",
                        SubmodelElementList          => "SML",
-                       _                            => null
+                       _                            => string.Empty
                    };
         }
 
-        private string getValueAndType(string v, out string sValue, out long iValue, out double fValue)
+        private string shortValueType(DataTypeDefXsd? dataType)
         {
-            sValue = "";
-            iValue = 0;
-            fValue = 0;
-
-            if (v.All(char.IsDigit) && v.Length <= 10)
-            {
-                try
-                {
-                    iValue = Convert.ToInt64(v);
-                    return ("I");
-                }
-                catch
-                {
-                    sValue = v;
-                    return "S";
-                }
-            }
-
-            if (v.Contains("."))
-            {
-                var legal = "012345679.E";
-
-                foreach (var c in v)
-                {
-                    if (Char.IsDigit(c))
-                        continue;
-                    if (c == '.')
-                        continue;
-                    if (!legal.Contains(c))
+            return dataType switch
                     {
-                        sValue = v;
-                        return "S";
-                    }
-                }
+                        DataTypeDefXsd.AnyUri => "S",
+                        DataTypeDefXsd.Base64Binary => "S",
+                        DataTypeDefXsd.Boolean => "S",
+                        DataTypeDefXsd.Byte => "I",
+                        DataTypeDefXsd.Date => "S",
+                        DataTypeDefXsd.DateTime => "S",
+                        DataTypeDefXsd.Decimal => "S",
+                        DataTypeDefXsd.Double => "D",
+                        DataTypeDefXsd.Duration => "S",
+                        DataTypeDefXsd.Float => "D",
+                        DataTypeDefXsd.GDay => "S",
+                        DataTypeDefXsd.GMonth => "S",
+                        DataTypeDefXsd.GMonthDay => "S",
+                        DataTypeDefXsd.GYear => "S",
+                        DataTypeDefXsd.GYearMonth => "S",
+                        DataTypeDefXsd.HexBinary => "S",
+                        DataTypeDefXsd.Int => "I",
+                        DataTypeDefXsd.Integer => "I",
+                        DataTypeDefXsd.Long => "I",
+                        DataTypeDefXsd.NegativeInteger => "I",
+                        DataTypeDefXsd.NonNegativeInteger => "I",
+                        DataTypeDefXsd.NonPositiveInteger => "I",
+                        DataTypeDefXsd.PositiveInteger => "I",
+                        DataTypeDefXsd.Short => "I",
+                        DataTypeDefXsd.String => "S",
+                        DataTypeDefXsd.Time => "S",
+                        DataTypeDefXsd.UnsignedByte => "I",
+                        DataTypeDefXsd.UnsignedInt => "I",
+                        DataTypeDefXsd.UnsignedLong => "I",
+                        DataTypeDefXsd.UnsignedShort => "I",
+                        _ => string.Empty
+                    };
+        }
 
-                try
-                {
-                    var decSep = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
-                    v      = v.Replace(".", decSep);
-                    v      = v.Replace(",", decSep);
-                    fValue = Convert.ToDouble(v);
-                    return "F";
-                }
-                catch { }
+        private string getValueAndType(string? value, DataTypeDefXsd? dataType, out string sValue, out long iValue, out double dValue)
+        {
+            sValue = string.Empty;
+            iValue = 0;
+            dValue = 0;
+
+            if (value.IsNullOrEmpty())
+                return string.Empty;
+
+            var valueType = shortValueType(dataType);
+            var withValueType = !valueType.IsNullOrEmpty();
+
+            if (valueType.Equals("S"))
+            {
+                sValue = value;
+                return "S";
             }
 
-            sValue = v;
+            var isInt64 = Int64.TryParse(value, out iValue);
+            if (isInt64 && (!withValueType || valueType.Equals("I")))
+                return "I";
+
+            /*var valueD = value.Replace(",", ".");*/
+            var isDouble = Double.TryParse(value, out dValue);
+            if (isDouble && (!withValueType || valueType.Equals("D")))
+                return "D";
+
+            sValue = value;
             return "S";
         }
 
-        private void getValue(ISubmodelElement sme, out string vt, out string sValue, out long iValue, out double fValue)
+        private void setValues(ISubmodelElement sme, SMESet smeDB)
         {
-            sValue = "";
-            iValue = 0;
-            fValue = 0;
-            vt     = "";
-            var v = "";
+            if (sme.ValueAsText().IsNullOrEmpty())
+                return;
 
-            if (sme is Property p)
+            if (sme is Property prop)
             {
-                v = sme.ValueAsText();
-                if (!v.IsNullOrEmpty())
-                    vt = getValueAndType(v, out sValue, out iValue, out fValue);
+                var value = prop.ValueAsText();
+                smeDB.ValueType = getValueAndType(value, prop.ValueType, out var sValue, out var iValue, out var dValue);
+                if (smeDB.ValueType.Equals("S"))
+                    smeDB.SValueSets.Add(new SValueSet { Value = sValue, Annotation = string.Empty });
+                else if (smeDB.ValueType.Equals("I"))
+                    smeDB.IValueSets.Add(new IValueSet { Value = iValue, Annotation = string.Empty });
+                else if (smeDB.ValueType.Equals("D"))
+                    smeDB.DValueSets.Add(new DValueSet { Value = dValue, Annotation = string.Empty });
             }
-            else if (sme is AasCore.Aas3_0.File f)
+            else if (sme is AasCore.Aas3_0.File file)
             {
-                v      = f.Value;
-                vt     = "S";
-                sValue = v;
+                smeDB.ValueType = "S";
+                smeDB.SValueSets.Add(new SValueSet { Value = file.Value, Annotation = string.Empty });
             }
             else if (sme is MultiLanguageProperty mlp)
             {
-                var ls = mlp.Value;
-                if (ls != null)
-                {
-                    vt     = "S";
-                    sValue = v;
-                }
+                smeDB.ValueType = "S";
+                if (mlp.Value != null)
+                    foreach (var sValueMLP in mlp.Value)
+                        smeDB.SValueSets.Add(new SValueSet() { Annotation = sValueMLP.Language, Value = sValueMLP.Text });
             }
-            else if (sme is AasCore.Aas3_0.Range r)
+            /*else if (sme is Entity entity)
             {
-                v = r.Min;
-                var v2 = r.Max;
-                v      += "$$" + v2;
-                vt     =  "S";
-                sValue =  v;
-            }
-            /*else if (sme is Entity e)
-            {
-                vt = "S";
-                sValue = e.GlobalAssetId;
+                smeDB.ValueType = "S";
+                smeDB.SValueSets.Add(new SValueSet { Value = entity.GlobalAssetId, Annotation = entity.EntityType.ToString() });
             }*/
         }
 
         private SMESet collectSMEData(ISubmodelElement sme)
         {
-            var st         = shortType(sme);
             var semanticId = sme.SemanticId.GetAsIdentifier();
-            if (semanticId == null)
-                semanticId = "";
-            getValue(sme, out var vt, out var sValue, out var iValue, out var fValue);
+            semanticId     = (!semanticId.IsNullOrEmpty()) ? semanticId : string.Empty;
+
+            var smeType = shortSMEType(sme);
             var smeDB = new SMESet
                         {
                             ParentSME  = _parSME,
-                            SMEType    = st,
-                            ValueType  = vt,
+                            SMEType    = smeType,
+                            ValueType  = string.Empty,
                             SemanticId = semanticId,
                             IdShort    = sme.IdShort
                         };
+            setValues(sme, smeDB);
             _smDB?.SMESets.Add(smeDB);
-
-            if (vt == "S" && st == "MLP")
-            {
-                if (sme is MultiLanguageProperty mlp)
-                {
-                    var ls = mlp.Value;
-                    if (ls != null)
-                    {
-                        for (int i = 0; i < ls.Count; i++)
-                        {
-                            var mlpval = new SValueSet() {Annotation = ls[ i ].Language, Value = ls[ i ].Text};
-                            smeDB.SValueSets.Add(mlpval);
-                        }
-                    }
-                }
-            }
-            else if (vt == "S" && st != "MLP")
-            {
-                var ValueDB = new SValueSet {Value = sValue, Annotation = ""};
-                smeDB.SValueSets.Add(ValueDB);
-            }
-            else if (vt == "I")
-            {
-                var ValueDB = new IValueSet {Value = iValue, Annotation = ""};
-                smeDB.IValueSets.Add(ValueDB);
-            }
-            else if (vt == "F")
-            {
-                var ValueDB = new DValueSet {Value = fValue, Annotation = ""};
-                smeDB.DValueSets.Add(ValueDB);
-            }
-            /*else if (vt == "F")
-            {
-                var ValueDB = new SValueSet { Value = sValue, Annotation = ""};
-                smeDB.DValueSets.Add(ValueDB);
-            }*/
 
             return smeDB;
         }

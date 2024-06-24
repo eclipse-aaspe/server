@@ -40,7 +40,7 @@ namespace AasxServerDB.Entities
                         if (li.Count != 0)
                             return li.First().ToString();
                         break;
-                    case "F":
+                    case "D":
                         var ld = db.DValueSets.Where(s => s.SMEId == Id).Select(s => s.Value).ToList();
                         if (ld.Count != 0)
                             return ld.First().ToString();
