@@ -65,6 +65,7 @@ namespace AasxServerDB
                 submodel.IdShort = smDB.IdShort;
                 submodel.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
                     new List<IKey>() { new Key(KeyTypes.GlobalReference, smDB.SemanticId) });
+                submodel.SubmodelElements = new List<ISubmodelElement>();
 
                 LoadSME(submodel, null, null, SMEList, null);
 
