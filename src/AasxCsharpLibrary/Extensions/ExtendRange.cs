@@ -5,7 +5,7 @@ namespace Extensions
 {
     public static class ExtendRange
     {
-        public static string ValueAsText(this AasCore.Aas3_0.Range range)
+        public static string? ValueAsText(this AasCore.Aas3_0.Range range)
         {
             return "" + range.Min + " .. " + range.Max;
         }

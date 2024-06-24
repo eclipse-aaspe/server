@@ -2365,7 +2365,7 @@ namespace AasCore.Aas3_0
             )
             {
                 var theKeys = new List<IKey>(
-                    that.Keys.Count);
+                                             that.Keys.Count);
                 foreach (var item in that.Keys)
                 {
                     theKeys.Add(Deep(item));

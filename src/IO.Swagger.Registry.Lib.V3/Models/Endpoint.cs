@@ -28,16 +28,16 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         [ Required ]
         [ MaxLength(128) ]
         [ DataMember(Name = "interface") ]
-        public string Interface { get; set; }
+        public string? Interface { get; set; }
 
         /// <summary>
         /// Gets or Sets ProtocolInformation
         /// </summary>
         [ Required ]
         [ DataMember(Name = "protocolInformation") ]
-        public ProtocolInformation ProtocolInformation { get; set; }
+        public ProtocolInformation? ProtocolInformation { get; set; }
 
-        public Endpoint(string @interface = null, ProtocolInformation protocolInformation = null)
+        public Endpoint(string? @interface = null, ProtocolInformation? protocolInformation = null)
         {
             Interface = @interface;
             ProtocolInformation = protocolInformation;
@@ -83,7 +83,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
         /// <param name="other">Instance of Endpoint to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(Endpoint other)
+        public bool Equals(Endpoint? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;

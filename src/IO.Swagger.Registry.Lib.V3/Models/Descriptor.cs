@@ -28,21 +28,21 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
 
         [ DataMember(Name = "description") ]
-        public List<LangStringTextType> Description { get; set; }
+        public List<LangStringTextType>? Description { get; set; }
 
         /// <summary>
         /// Gets or Sets DisplayName
         /// </summary>
 
         [ DataMember(Name = "displayName") ]
-        public List<LangStringNameType> DisplayName { get; set; }
+        public List<LangStringNameType>? DisplayName { get; set; }
 
         /// <summary>
         /// Gets or Sets Extensions
         /// </summary>
 
         [ DataMember(Name = "extensions") ]
-        public List<Extension> Extensions { get; set; }
+        public List<Extension>? Extensions { get; set; }
 
         /// <summary>
         /// Returns the string presentation of the object
@@ -85,7 +85,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
         /// <param name="other">Instance of Descriptor to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(Descriptor other)
+        public bool Equals(Descriptor? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;

@@ -6,8 +6,8 @@ namespace DataTransferObjects.MetadataDTOs
     public record class SubmodelElementListMetadata(
             AasSubmodelElements typeValueListElement,
             List<ExtensionDTO>? extensions = null,
-            string? category = null,
-            string? idShort = null,
+            string category = null,
+            string idShort = null,
             List<LangStringNameTypeDTO>? displayName = null,
             List<LangStringTextTypeDTO>? description = null,
             ReferenceDTO? semanticId = null,
@@ -17,6 +17,6 @@ namespace DataTransferObjects.MetadataDTOs
             bool? orderRelevant = null,
             ReferenceDTO? semanticIdListElement = null,
             DataTypeDefXsd? valueTypeListElement = null,
-            List<ISubmodelElementMetadata>? value = null,
+            List<ISubmodelElementMetadata?> value = null,
             string modelType = "SubmodelElementList") : ISubmodelElementMetadata;
 }

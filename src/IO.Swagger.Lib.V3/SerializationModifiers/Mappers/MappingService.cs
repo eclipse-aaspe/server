@@ -10,7 +10,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers
 {
     public class MappingService : IMappingService
     {
-        public IDTO Map(IClass source, string mappingResolverKey)
+        public IDTO? Map(IClass source, string mappingResolverKey)
         {
             if (mappingResolverKey == null)
             {
@@ -31,7 +31,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers
             }
         }
 
-        public List<IDTO> Map(List<IClass> sourceList, string mappingResolverKey)
+        public List<IDTO?> Map(List<IClass> sourceList, string mappingResolverKey)
         {
             if (mappingResolverKey == null)
             {
@@ -40,7 +40,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers
 
             if (mappingResolverKey.Equals("metadata", StringComparison.OrdinalIgnoreCase))
             {
-                var output = new List<IDTO>();
+                var output = new List<IDTO?>();
 
                 foreach (var source in sourceList)
                 {
@@ -52,7 +52,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers
             }
             else if (mappingResolverKey.Equals("value", StringComparison.OrdinalIgnoreCase))
             {
-                var output = new List<IDTO>();
+                var output = new List<IDTO?>();
 
                 foreach (var source in sourceList)
                 {
@@ -68,7 +68,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers
             }
         }
 
-        public IClass Map(IDTO dto, string mappingResolverKey)
+        public IClass? Map(IDTO dto, string mappingResolverKey)
         {
             if (mappingResolverKey == null)
             {

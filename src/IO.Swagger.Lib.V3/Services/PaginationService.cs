@@ -34,7 +34,7 @@ namespace IO.Swagger.Lib.V3.Services
                 _logger.LogError($"There are less elements in the retrived list than requested pagination - (from: {startIndex}, size:{endIndex})");
             }
 
-            for (int i = startIndex; i <= endIndex; i++)
+            for (var i = startIndex; i <= endIndex; i++)
             {
                 outputList.Add(sourceList[i]);
             }
@@ -48,7 +48,7 @@ namespace IO.Swagger.Lib.V3.Services
 
             var paginationResult = new PagedResult()
             {
-                result = outputList.ConvertAll(r => (IClass)r),
+                result          = outputList.ConvertAll(r => r as IClass),
                 paging_metadata = pagingMetadata
             };
 
@@ -95,7 +95,7 @@ namespace IO.Swagger.Lib.V3.Services
                 _logger.LogError($"There are less elements in the retrived list than requested pagination - (from: {startIndex}, size:{endIndex})");
             }
 
-            for (int i = startIndex; i <= endIndex; i++)
+            for (var i = startIndex; i <= endIndex; i++)
             {
                 outputList.Add(sourceList[i]);
             }

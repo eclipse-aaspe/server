@@ -12,85 +12,87 @@ using System;
 using System.Text;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
-using Newtonsoft.Json;
 
 namespace IO.Swagger.Models
 {
+    using System.Text.Json;
+    using System.Text.Json.Serialization;
+
+    /// <summary>
+    /// Enum for Message Types
+    /// </summary>
+    [Newtonsoft.Json.JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum MessageTypeEnum
+    {
+        /// <summary>
+        /// Undefined MessageType
+        /// </summary>
+        [EnumMember(Value = "Undefined")] UndefinedEnum = 0,
+
+        /// <summary>
+        /// Info MessageType
+        /// </summary>
+        [EnumMember(Value = "Info")] InfoEnum = 1,
+
+        /// <summary>
+        /// Warning MessageType
+        /// </summary>
+        [EnumMember(Value = "Warning")] WarningEnum = 2,
+
+        /// <summary>
+        /// Error MessageType
+        /// </summary>
+        [EnumMember(Value = "Error")] ErrorEnum = 3,
+
+        /// <summary>
+        /// Exception MessageType
+        /// </summary>
+        [EnumMember(Value = "Exception")] ExceptionEnum = 4
+    }
+
     /// <summary>
     /// 
     /// </summary>
-    [ DataContract ]
+    [DataContract]
     public partial class Message : IEquatable<Message>
     {
+        private JsonSerializerOptions options = new(); 
+        
         /// <summary>
         /// Gets or Sets Code
         /// </summary>
-
-        [ StringLength(32, MinimumLength = 1) ]
-        [ DataMember(Name = "code") ]
-        public string Code { get; set; }
+        [StringLength(32, MinimumLength = 1)]
+        [DataMember(Name = "code")]
+        public string? Code { get; set; }
 
         /// <summary>
         /// Gets or Sets CorrelationId
         /// </summary>
-
-        [ StringLength(128, MinimumLength = 1) ]
-        [ DataMember(Name = "correlationId") ]
-        public string CorrelationId { get; set; }
-
-        /// <summary>
-        /// Gets or Sets MessageType
-        /// </summary>
-        [ JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter)) ]
-        public enum MessageTypeEnum
-        {
-            /// <summary>
-            /// Enum UndefinedEnum for Undefined
-            /// </summary>
-            [ EnumMember(Value = "Undefined") ] UndefinedEnum = 0,
-
-            /// <summary>
-            /// Enum InfoEnum for Info
-            /// </summary>
-            [ EnumMember(Value = "Info") ] InfoEnum = 1,
-
-            /// <summary>
-            /// Enum WarningEnum for Warning
-            /// </summary>
-            [ EnumMember(Value = "Warning") ] WarningEnum = 2,
-
-            /// <summary>
-            /// Enum ErrorEnum for Error
-            /// </summary>
-            [ EnumMember(Value = "Error") ] ErrorEnum = 3,
-
-            /// <summary>
-            /// Enum ExceptionEnum for Exception
-            /// </summary>
-            [ EnumMember(Value = "Exception") ] ExceptionEnum = 4
-        }
+        [StringLength(128, MinimumLength = 1)]
+        [DataMember(Name = "correlationId")]
+        public string? CorrelationId { get; set; }
 
         /// <summary>
         /// Gets or Sets MessageType
         /// </summary>
 
-        [ DataMember(Name = "messageType") ]
+        [DataMember(Name = "messageType")]
         public MessageTypeEnum? MessageType { get; set; }
 
         /// <summary>
         /// Gets or Sets Text
         /// </summary>
 
-        [ DataMember(Name = "text") ]
-        public string Text { get; set; }
+        [DataMember(Name = "text")]
+        public string? Text { get; set; }
 
         /// <summary>
         /// Gets or Sets Timestamp
         /// </summary>
-        [ RegularExpression(
-            "/^-?(([1-9][0-9][0-9][0-9]+)|(0[0-9][0-9][0-9]))-((0[1-9])|(1[0-2]))-((0[1-9])|([12][0-9])|(3[01]))T(((([01][0-9])|(2[0-3])):[0-5][0-9]:([0-5][0-9])(\\.[0-9]+)?)|24:00:00(\\.0+)?)(Z|\\+00:00|-00:00)$/") ]
-        [ DataMember(Name = "timestamp") ]
-        public string Timestamp { get; set; }
+        [RegularExpression(
+                              @"/^-?(([1-9][0-9][0-9][0-9]+)|(0[0-9][0-9][0-9]))-((0[1-9])|(1[0-2]))-((0[1-9])|([12][0-9])|(3[01]))T(((([01][0-9])|(2[0-3])):[0-5][0-9]:([0-5][0-9])(\.[0-9]+)?)|24:00:00(\.0+)?)(Z|\+00:00|-00:00)$/")]
+        [DataMember(Name = "timestamp")]
+        public string? Timestamp { get; set; }
 
         /// <summary>
         /// Returns the string presentation of the object
@@ -100,11 +102,11 @@ namespace IO.Swagger.Models
         {
             var sb = new StringBuilder();
             sb.Append("class Message {\n");
-            sb.Append("  Code: ").Append(Code).Append("\n");
-            sb.Append("  CorrelationId: ").Append(CorrelationId).Append("\n");
-            sb.Append("  MessageType: ").Append(MessageType).Append("\n");
-            sb.Append("  Text: ").Append(Text).Append("\n");
-            sb.Append("  Timestamp: ").Append(Timestamp).Append("\n");
+            sb.Append("  Code: ").Append(Code).Append('\n');
+            sb.Append("  CorrelationId: ").Append(CorrelationId).Append('\n');
+            sb.Append("  MessageType: ").Append(MessageType).Append('\n');
+            sb.Append("  Text: ").Append(Text).Append('\n');
+            sb.Append("  Timestamp: ").Append(Timestamp).Append('\n');
             sb.Append("}\n");
             return sb.ToString();
         }
@@ -115,7 +117,9 @@ namespace IO.Swagger.Models
         /// <returns>JSON string presentation of the object</returns>
         public string ToJson()
         {
-            return JsonConvert.SerializeObject(this, Formatting.Indented);
+            options.WriteIndented = true;
+            options.Converters.Add(new JsonStringEnumConverter());
+            return JsonSerializer.Serialize(this, options);
         }
 
         /// <summary>
@@ -127,7 +131,7 @@ namespace IO.Swagger.Models
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
-            return obj.GetType() == GetType() && Equals((Message) obj);
+            return obj.GetType() == GetType() && Equals((Message)obj);
         }
 
         /// <summary>
@@ -143,28 +147,28 @@ namespace IO.Swagger.Models
             return
                 (
                     Code == other.Code ||
-                    Code != null &&
-                    Code.Equals(other.Code)
+                    (Code != null &&
+                     Code.Equals(other.Code, StringComparison.Ordinal))
                 ) &&
                 (
                     CorrelationId == other.CorrelationId ||
-                    CorrelationId != null &&
-                    CorrelationId.Equals(other.CorrelationId)
+                    (CorrelationId != null &&
+                     CorrelationId.Equals(other.CorrelationId, StringComparison.Ordinal))
                 ) &&
                 (
                     MessageType == other.MessageType ||
-                    MessageType != null &&
-                    MessageType.Equals(other.MessageType)
+                    (MessageType != null &&
+                     MessageType.Equals(other.MessageType))
                 ) &&
                 (
                     Text == other.Text ||
-                    Text != null &&
-                    Text.Equals(other.Text)
+                    (Text != null &&
+                     Text.Equals(other.Text, StringComparison.Ordinal))
                 ) &&
                 (
                     Timestamp == other.Timestamp ||
-                    Timestamp != null &&
-                    Timestamp.Equals(other.Timestamp)
+                    (Timestamp != null &&
+                     Timestamp.Equals(other.Timestamp, StringComparison.Ordinal))
                 );
         }
 
@@ -179,32 +183,26 @@ namespace IO.Swagger.Models
                 var hashCode = 41;
                 // Suitable nullity checks etc, of course :)
                 if (Code != null)
-                    hashCode = hashCode * 59 + Code.GetHashCode();
+                    hashCode = (hashCode * 59) + Code.GetHashCode();
                 if (CorrelationId != null)
-                    hashCode = hashCode * 59 + CorrelationId.GetHashCode();
+                    hashCode = (hashCode * 59) + CorrelationId.GetHashCode();
                 if (MessageType != null)
-                    hashCode = hashCode * 59 + MessageType.GetHashCode();
+                    hashCode = (hashCode * 59) + MessageType.GetHashCode();
                 if (Text != null)
-                    hashCode = hashCode * 59 + Text.GetHashCode();
+                    hashCode = (hashCode * 59) + Text.GetHashCode();
                 if (Timestamp != null)
-                    hashCode = hashCode * 59 + Timestamp.GetHashCode();
+                    hashCode = (hashCode * 59) + Timestamp.GetHashCode();
                 return hashCode;
             }
         }
-
+        
         #region Operators
 
 #pragma warning disable 1591
 
-        public static bool operator ==(Message left, Message right)
-        {
-            return Equals(left, right);
-        }
+        public static bool operator ==(Message left, Message right) => Equals(left, right);
 
-        public static bool operator !=(Message left, Message right)
-        {
-            return !Equals(left, right);
-        }
+        public static bool operator !=(Message left, Message right) => !Equals(left, right);
 
 #pragma warning restore 1591
 

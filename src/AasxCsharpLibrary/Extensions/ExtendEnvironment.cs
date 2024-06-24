@@ -479,7 +479,7 @@ namespace Extensions
             return null;
         }
 
-        public static ISubmodel FindSubmodelById(this AasCore.Aas3_0.Environment environment, string submodelId)
+        public static ISubmodel FindSubmodelById(this AasCore.Aas3_0.Environment environment, string? submodelId)
         {
             if (string.IsNullOrEmpty(submodelId))
             {
@@ -512,7 +512,7 @@ namespace Extensions
             }
         }
 
-        public static IEnumerable<ISubmodel> FindAllSubmodelBySemanticId(this AasCore.Aas3_0.Environment environment, string semanticId)
+        public static IEnumerable<ISubmodel> FindAllSubmodelBySemanticId(this AasCore.Aas3_0.Environment environment, string? semanticId)
         {
             if (semanticId == null)
                 yield break;
@@ -525,7 +525,7 @@ namespace Extensions
         #endregion
 
         #region AssetAdministrationShell Queries
-        public static IAssetAdministrationShell FindAasWithSubmodelId(this AasCore.Aas3_0.Environment environment, string submodelId)
+        public static IAssetAdministrationShell FindAasWithSubmodelId(this AasCore.Aas3_0.Environment environment, string? submodelId)
         {
             if (submodelId == null)
             {
@@ -537,7 +537,7 @@ namespace Extensions
             return aas;
         }
 
-        public static IAssetAdministrationShell FindAasById(this AasCore.Aas3_0.Environment environment, string aasId)
+        public static IAssetAdministrationShell FindAasById(this AasCore.Aas3_0.Environment environment, string? aasId)
         {
             if (string.IsNullOrEmpty(aasId))
             {
@@ -554,7 +554,7 @@ namespace Extensions
         #region ConceptDescription Queries
 
         public static IConceptDescription FindConceptDescriptionById(
-            this AasCore.Aas3_0.Environment env, string cdId)
+            this AasCore.Aas3_0.Environment env, string? cdId)
         {
             if (string.IsNullOrEmpty(cdId))
                 return null;
@@ -610,8 +610,8 @@ namespace Extensions
                 return null;
 
             // shortcuts
-            var firstKeyType = keyList[keyIndex].Type;
-            var firstKeyId = keyList[keyIndex].Value;
+            var     firstKeyType = keyList[keyIndex].Type;
+            var firstKeyId   = keyList[keyIndex].Value;
 
             // different pathes
             switch (firstKeyType)
@@ -807,7 +807,7 @@ namespace Extensions
         /// Currently supported: ConceptDescriptions
         /// Returns a list of Referables, which were changed or <c>null</c> in case of error
         /// </summary>
-        public static List<IReferable> RenameIdentifiable<T>(this AasCore.Aas3_0.Environment environment, string oldId, string newId)
+        public static List<IReferable> RenameIdentifiable<T>(this AasCore.Aas3_0.Environment environment, string? oldId, string? newId)
             where T : IClass
         {
             // access
@@ -920,7 +920,7 @@ namespace Extensions
             return null;
         }
 
-        public static IAssetAdministrationShell FindAasWithAssetInformation(this AasCore.Aas3_0.Environment environment, string globalAssetId)
+        public static IAssetAdministrationShell FindAasWithAssetInformation(this AasCore.Aas3_0.Environment environment, string? globalAssetId)
         {
             if (string.IsNullOrEmpty(globalAssetId))
             {

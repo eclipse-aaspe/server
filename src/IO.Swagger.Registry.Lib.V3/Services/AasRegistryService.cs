@@ -36,7 +36,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                 // ad.Administration.Version = aas.administration.version;
                 // ad.Administration.Revision = aas.administration.revision;
                 ad.IdShort = aasDB.IdShort;
-                ad.Id = aasDB.Identifier;
+                ad.Id = aasDB.Identifier ?? string.Empty;
                 var e = new Models.Endpoint();
                 e.ProtocolInformation = new ProtocolInformation();
                 e.ProtocolInformation.Href =
@@ -63,15 +63,13 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                     {
                         SubmodelDescriptor sd = new SubmodelDescriptor();
                         sd.IdShort = submodelDB.IdShort;
-                        sd.Id = submodelDB.Identifier;
+                        sd.Id = submodelDB.Identifier ?? string.Empty;
                         var esm = new Models.Endpoint();
                         esm.ProtocolInformation = new ProtocolInformation();
                         esm.ProtocolInformation.Href =
                             AasxServer.Program.externalRepository + "/shells/" +
                             Base64UrlEncoder.Encode(ad.Id) + "/submodels/" +
                             Base64UrlEncoder.Encode(sd.Id);
-                        // Base64UrlEncoder.Encode(sd.Identification) + "/submodel/";
-                        // Console.WriteLine("SM " + sd.IdShort + " " + esm.ProtocolInformation.EndpointAddress);
                         esm.Interface = "SUBMODEL-1.0";
                         sd.Endpoints = new List<Models.Endpoint>
                         {
@@ -87,7 +85,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
         }
 
         //getFromAasRegistry from old implementation
-        public List<AssetAdministrationShellDescriptor> GetAllAssetAdministrationShellDescriptors(string assetKind = null, List<string> assetList = null, string aasIdentifier = null)
+        public List<AssetAdministrationShellDescriptor> GetAllAssetAdministrationShellDescriptors(string? assetKind = null, List<string?>? assetList = null, string? aasIdentifier = null)
         {
             List<AssetAdministrationShellDescriptor> result = new List<AssetAdministrationShellDescriptor>();
 
@@ -101,9 +99,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
             {
                 foreach (var ad in aasDescriptors)
                 {
-                    bool found = false;
-                    if (aasIdentifier == null && assetList.IsNullOrEmpty())
-                        found = true;
+                    var found = aasIdentifier == null && assetList.IsNullOrEmpty();
                     if (aasIdentifier != null)
                     {
                         if (aasIdentifier.Equals(ad.Id))

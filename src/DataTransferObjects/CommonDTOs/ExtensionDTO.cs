@@ -3,10 +3,10 @@
 namespace DataTransferObjects.CommonDTOs
 {
     public record class ExtensionDTO(
-            string name,
+            string? name,
             ReferenceDTO? semanticId = null,
             List<ReferenceDTO>? supplementalSemanticIds = null,
             DataTypeDefXsd? valueType = null,
-            string? value = null,
+            string value = null,
             List<ReferenceDTO>? refersTo = null) : IDTO;
 }

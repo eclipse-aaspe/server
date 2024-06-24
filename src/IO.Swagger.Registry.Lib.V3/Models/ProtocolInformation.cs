@@ -30,7 +30,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         [ Required ]
         [ MaxLength(2048) ]
         [ DataMember(Name = "href") ]
-        public string Href { get; set; }
+        public string? Href { get; set; }
 
         /// <summary>
         /// Gets or Sets EndpointProtocol
@@ -38,14 +38,14 @@ namespace IO.Swagger.Registry.Lib.V3.Models
 
         [ MaxLength(128) ]
         [ DataMember(Name = "endpointProtocol") ]
-        public string EndpointProtocol { get; set; }
+        public string? EndpointProtocol { get; set; }
 
         /// <summary>
         /// Gets or Sets EndpointProtocolVersion
         /// </summary>
 
         [ DataMember(Name = "endpointProtocolVersion") ]
-        public List<string> EndpointProtocolVersion { get; set; }
+        public List<string>? EndpointProtocolVersion { get; set; }
 
         /// <summary>
         /// Gets or Sets Subprotocol
@@ -53,7 +53,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
 
         [ MaxLength(128) ]
         [ DataMember(Name = "subprotocol") ]
-        public string Subprotocol { get; set; }
+        public string? Subprotocol { get; set; }
 
         /// <summary>
         /// Gets or Sets SubprotocolBody
@@ -61,7 +61,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
 
         [ MaxLength(128) ]
         [ DataMember(Name = "subprotocolBody") ]
-        public string SubprotocolBody { get; set; }
+        public string? SubprotocolBody { get; set; }
 
         /// <summary>
         /// Gets or Sets SubprotocolBodyEncoding
@@ -69,17 +69,17 @@ namespace IO.Swagger.Registry.Lib.V3.Models
 
         [ MaxLength(128) ]
         [ DataMember(Name = "subprotocolBodyEncoding") ]
-        public string SubprotocolBodyEncoding { get; set; }
+        public string? SubprotocolBodyEncoding { get; set; }
 
         /// <summary>
         /// Gets or Sets SecurityAttributes
         /// </summary>
 
         [ DataMember(Name = "securityAttributes") ]
-        public List<ProtocolInformationSecurityAttributes> SecurityAttributes { get; set; }
+        public List<ProtocolInformationSecurityAttributes>? SecurityAttributes { get; set; }
 
-        public ProtocolInformation(string href = null, string endpointProtocol = null, List<string> endpointProtocolVersion = null, string subprotocol = null,
-            string subprotocolBody = null, string subprotocolBodyEncoding = null, List<ProtocolInformationSecurityAttributes> securityAttributes = null)
+        public ProtocolInformation(string? href = null, string? endpointProtocol = null, List<string>? endpointProtocolVersion = null, string? subprotocol = null,
+            string? subprotocolBody = null, string? subprotocolBodyEncoding = null, List<ProtocolInformationSecurityAttributes>? securityAttributes = null)
         {
             Href = href;
             EndpointProtocol = endpointProtocol;
@@ -123,7 +123,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
         /// <param name="obj">Object to be compared</param>
         /// <returns>Boolean</returns>
-        public override bool Equals(object obj = null)
+        public override bool Equals(object? obj)
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
@@ -135,7 +135,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
         /// <param name="other">Instance of ProtocolInformation to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(ProtocolInformation other = null)
+        public bool Equals(ProtocolInformation? other = null)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;

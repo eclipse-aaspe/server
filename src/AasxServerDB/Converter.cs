@@ -77,13 +77,13 @@ namespace AasxServerDB
             }           
         }
 
-        static private void LoadSME(Submodel submodel, ISubmodelElement sme, string SMEType, List<SMESet> SMEList, int? smeId)
+        static private void LoadSME(Submodel submodel, ISubmodelElement? sme, string? SMEType, List<SMESet> SMEList, int? smeId)
         {
             var smeLevel = SMEList.Where(s => s.ParentSMEId == smeId).OrderBy(s => s.IdShort).ToList();
 
             foreach (var smel in smeLevel)
             {
-                ISubmodelElement nextSME = null;
+                ISubmodelElement? nextSME = null;
                 switch (smel.SMEType)
                 {
                     case "Prop":

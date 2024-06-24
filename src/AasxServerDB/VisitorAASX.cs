@@ -139,7 +139,7 @@ namespace AasxServerDB
                    };
         }
 
-        private string getValueAndType(string? v, out string? sValue, out long iValue, out double fValue)
+        private string getValueAndType(string v, out string sValue, out long iValue, out double fValue)
         {
             sValue = "";
             iValue = 0;
@@ -191,7 +191,7 @@ namespace AasxServerDB
             return "S";
         }
 
-        private void getValue(ISubmodelElement sme, out string vt, out string? sValue, out long iValue, out double fValue)
+        private void getValue(ISubmodelElement sme, out string vt, out string sValue, out long iValue, out double fValue)
         {
             sValue = string.Empty;
             iValue = 0;

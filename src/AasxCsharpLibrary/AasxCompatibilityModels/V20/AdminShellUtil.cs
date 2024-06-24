@@ -20,14 +20,14 @@ namespace AdminShell_V20
 {
     public static class AdminShellUtilV20
     {
-        public static string EvalToNonNullString(string fmt, object o, string elseString = "")
+        public static string EvalToNonNullString(string fmt, object? o, string elseString = "")
         {
             if (o == null)
                 return elseString;
             return string.Format(fmt, o);
         }
 
-        public static string EvalToNonEmptyString(string fmt, string o, string elseString = "")
+        public static string? EvalToNonEmptyString(string fmt, string? o, string? elseString = "")
         {
             if (o == null || o == "")
                 return elseString;
@@ -40,7 +40,7 @@ namespace AdminShell_V20
         /// <code doctest="true">Assert.AreEqual("someName", AdminShellUtil.FilterFriendlyName("someName"));</code>
         /// <code doctest="true">Assert.AreEqual("some__name", AdminShellUtil.FilterFriendlyName("some!;name"));</code>
         /// </example>
-        public static string FilterFriendlyName(string src)
+        public static string FilterFriendlyName(string? src)
         {
             if (src == null)
                 return null;
@@ -237,7 +237,7 @@ namespace AdminShell_V20
 
         public enum ConstantFoundEnum { No, AnyCase, ExactCase }
 
-        public static ConstantFoundEnum CheckIfInConstantStringArray(string[] arr, string str)
+        public static ConstantFoundEnum CheckIfInConstantStringArray(string?[] arr, string? str)
         {
             if (arr == null || str == null)
                 return ConstantFoundEnum.No;
@@ -257,7 +257,7 @@ namespace AdminShell_V20
             return ConstantFoundEnum.No;
         }
 
-        public static string CorrectCasingForConstantStringArray(string[] arr, string str)
+        public static string? CorrectCasingForConstantStringArray(string?[] arr, string? str)
         {
             if (arr == null || str == null)
                 return str;
@@ -428,7 +428,7 @@ namespace AdminShell_V20
                 return;
 
             // try to get element name of an AAS entity
-            string elName = null;
+            string? elName = null;
             if (obj is AdminShell.Referable)
             {
                 elName         = (obj as AdminShell.Referable).GetElementName();

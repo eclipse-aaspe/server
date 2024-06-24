@@ -27,7 +27,7 @@ namespace IO.Swagger.Models
         /// </summary>
 
         [DataMember(Name = "result")]
-        public List<Reference> Result { get; set; }
+        public List<Reference>? Result { get; set; }
 
         /// <summary>
         /// Returns the string presentation of the object
@@ -73,8 +73,8 @@ namespace IO.Swagger.Models
             return
                 (
                     Result == other.Result ||
-                    Result != null &&
-                    Result.SequenceEqual(other.Result)
+                    (Result != null &&
+                     Result.SequenceEqual(other.Result))
                 );
         }
 
@@ -89,7 +89,7 @@ namespace IO.Swagger.Models
                 var hashCode = 41;
                 // Suitable nullity checks etc, of course :)
                 if (Result != null)
-                    hashCode = hashCode * 59 + Result.GetHashCode();
+                    hashCode = (hashCode * 59) + Result.GetHashCode();
                 return hashCode;
             }
         }

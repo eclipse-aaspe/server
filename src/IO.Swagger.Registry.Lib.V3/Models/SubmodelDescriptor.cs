@@ -29,14 +29,14 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
 
         [ DataMember(Name = "administration") ]
-        public AdministrativeInformation Administration { get; set; }
+        public AdministrativeInformation? Administration { get; set; }
 
         /// <summary>
         /// Gets or Sets Endpoints
         /// </summary>
         [ Required ]
         [ DataMember(Name = "endpoints") ]
-        public List<Endpoint> Endpoints { get; set; }
+        public List<Endpoint>? Endpoints { get; set; }
 
         /// <summary>
         /// Gets or Sets IdShort
@@ -44,7 +44,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
 
         [ MaxLength(128) ]
         [ DataMember(Name = "idShort") ]
-        public string IdShort { get; set; }
+        public string? IdShort { get; set; }
 
         /// <summary>
         /// Gets or Sets Id
@@ -53,21 +53,21 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         //[RegularExpression("/^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$/")]
         [ StringLength(2000, MinimumLength = 1) ]
         [ DataMember(Name = "id") ]
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
         /// <summary>
         /// Gets or Sets SemanticId
         /// </summary>
 
         [ DataMember(Name = "semanticId") ]
-        public Reference SemanticId { get; set; }
+        public Reference? SemanticId { get; set; }
 
         /// <summary>
         /// Gets or Sets SupplementalSemanticId
         /// </summary>
 
         [ DataMember(Name = "supplementalSemanticId") ]
-        public List<Reference> SupplementalSemanticId { get; set; }
+        public List<Reference>? SupplementalSemanticId { get; set; }
 
         // TODO (jtikekar, 2023-09-04): @Andreas Not conformant with specifications
         /// <summary>
@@ -75,10 +75,10 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
 
         [ DataMember(Name = "federatedElements") ]
-        public List<String> FederatedElements { get; set; }
+        public List<String>? FederatedElements { get; set; }
 
-        public SubmodelDescriptor(AdministrativeInformation administration = null, List<Endpoint> endpoints = null, string idShort = null, string id = null,
-            Reference semanticId = null, List<Reference> supplementalSemanticId = null, List<string> federatedElements = null)
+        public SubmodelDescriptor(AdministrativeInformation? administration = null, List<Endpoint>? endpoints = null, string? idShort = null, string? id = null,
+            Reference? semanticId = null, List<Reference>? supplementalSemanticId = null, List<string>? federatedElements = null)
         {
             Administration = administration;
             Endpoints = endpoints;
@@ -121,7 +121,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
         /// <param name="obj">Object to be compared</param>
         /// <returns>Boolean</returns>
-        public override bool Equals(object obj = null)
+        public override bool Equals(object? obj)
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
@@ -133,7 +133,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         /// </summary>
         /// <param name="other">Instance of SubmodelDescriptor to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(SubmodelDescriptor other = null)
+        public bool Equals(SubmodelDescriptor? other = null)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;

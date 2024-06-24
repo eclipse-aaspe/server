@@ -22,8 +22,8 @@ namespace IO.Swagger.Lib.V3.Formatters
     {
         public AasResponseFormatter()
         {
-            this.SupportedMediaTypes.Clear();
-            this.SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse("application/json"));
+            SupportedMediaTypes.Clear();
+            SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse("application/json"));
         }
         public static bool IsGenericListOfIClass(object o)
         {

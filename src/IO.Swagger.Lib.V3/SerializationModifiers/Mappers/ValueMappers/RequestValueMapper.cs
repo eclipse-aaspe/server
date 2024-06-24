@@ -7,7 +7,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 {
     public static class RequestValueMapper
     {
-        public static IClass Map(IValueDTO source)
+        public static IClass? Map(IValueDTO source)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             switch (source)
@@ -72,7 +72,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 
         }
 
-        private static IClass Transform(BasicEventElementValue valueDTO)
+        private static IClass? Transform(BasicEventElementValue valueDTO)
         {
             return new BasicEventElement(TransformReference(valueDTO.observed), Direction.Output, StateOfEvent.On, idShort: valueDTO.idShort);
         }
@@ -161,7 +161,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new RelationshipElement(TransformReference(valueDTO.first), TransformReference(valueDTO.second), idShort: valueDTO.idShort);
         }
 
-        private static IClass Transform(AnnotatedRelationshipElementValue valueDTO)
+        private static IClass? Transform(AnnotatedRelationshipElementValue valueDTO)
         {
             List<IDataElement> annotations = null;
             if (valueDTO.annotations != null)

@@ -5,8 +5,8 @@ namespace IO.Swagger.Lib.V3.Models
 {
     public class ReferencePagedResult : PagedResult
     {
-        public List<IReference>? result { get; set; }
+        public new List<IReference>? result { get; set; }
 
-        public PagedResultPagingMetadata? paging_metadata { get; set; }
+        public new PagedResultPagingMetadata? paging_metadata { get; set; }
     }
 }

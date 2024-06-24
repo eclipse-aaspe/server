@@ -36,7 +36,7 @@ namespace Extensions
         /// Creates a Reference from a key, guessing Reference.Type.
         /// </summary>
         public static Reference CreateFromKey(KeyTypes type,
-            string value)
+            string? value)
         {
             var res = new Reference(ReferenceTypes.ExternalReference,
                         new List<IKey> { new Key(type, value) });
@@ -108,7 +108,7 @@ namespace Extensions
 
         #endregion
 
-        public static bool Matches(this IReference reference, KeyTypes keyType, string id, MatchMode matchMode = MatchMode.Strict)
+        public static bool Matches(this IReference reference, KeyTypes keyType, string? id, MatchMode matchMode = MatchMode.Strict)
         {
             if (reference.IsEmpty())
             {
@@ -124,7 +124,7 @@ namespace Extensions
             return false;
         }
 
-        public static bool Matches(this IReference reference, string id)
+        public static bool Matches(this IReference reference, string? id)
         {
             if (string.IsNullOrEmpty(id))
             {
@@ -167,7 +167,7 @@ namespace Extensions
             return referenceKey.Matches(key, matchMode);
         }
 
-        public static string GetAsIdentifier(this IReference reference)
+        public static string? GetAsIdentifier(this IReference reference)
         {
             if (reference != null && reference.Type == ReferenceTypes.ExternalReference) // Applying only to Global Reference, based on older implementation, TODO:Make it Generic
             {
@@ -182,14 +182,14 @@ namespace Extensions
             return null;
         }
 
-        public static string MostSignificantInfo(this IReference reference)
+        public static string? MostSignificantInfo(this IReference reference)
         {
             if (reference.Keys.Count < 1)
             {
                 return "-";
             }
 
-            var i = reference.Keys.Count - 1;
+            var     i      = reference.Keys.Count - 1;
             var output = reference.Keys[i].Value;
             if (reference.Keys[i].Type == KeyTypes.FragmentReference && i > 0)
                 output += reference.Keys[i - 1].Value;
@@ -240,9 +240,9 @@ namespace Extensions
             return rf.Keys.Last();
         }
 
-        public static string ListOfValues(this Reference rf, string delim)
+        public static string? ListOfValues(this Reference rf, string? delim)
         {
-            string res = "";
+            string? res = "";
             if (rf.Keys != null)
                 foreach (var x in rf.Keys)
                 {

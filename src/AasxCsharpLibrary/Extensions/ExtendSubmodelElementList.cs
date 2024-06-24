@@ -32,7 +32,7 @@ namespace Extensions
             submodelElementList.Value?.RecurseOnReferables(state, parents, lambda);
         }
 
-        public static void Add(this SubmodelElementList submodelElementList, ISubmodelElement submodelElement)
+        public static void Add(this SubmodelElementList submodelElementList, ISubmodelElement? submodelElement)
         {
             if (submodelElementList != null)
             {
