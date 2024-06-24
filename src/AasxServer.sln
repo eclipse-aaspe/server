@@ -98,6 +98,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AasSecurityTests", "AasSecu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IO.Swagger.Lib.V3.Tests", "IO.Swagger.Lib.V3.Tests\IO.Swagger.Lib.V3.Tests.csproj", "{64148CC9-DE3E-465A-98E8-370431226E70}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IO.Swagger.Registry.Lib.V3.Tests", "IO.Swagger.Registry.Lib.V3.Tests\IO.Swagger.Registry.Lib.V3.Tests.csproj", "{CF9C2ABA-944C-46EB-8788-346D432321D5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -381,6 +383,24 @@ Global
 		{64148CC9-DE3E-465A-98E8-370431226E70}.Release|x64.Build.0 = Release|Any CPU
 		{64148CC9-DE3E-465A-98E8-370431226E70}.Release|x86.ActiveCfg = Release|Any CPU
 		{64148CC9-DE3E-465A-98E8-370431226E70}.Release|x86.Build.0 = Release|Any CPU
+		{CF9C2ABA-944C-46EB-8788-346D432321D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF9C2ABA-944C-46EB-8788-346D432321D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF9C2ABA-944C-46EB-8788-346D432321D5}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CF9C2ABA-944C-46EB-8788-346D432321D5}.Debug|x64.Build.0 = Debug|Any CPU
+		{CF9C2ABA-944C-46EB-8788-346D432321D5}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CF9C2ABA-944C-46EB-8788-346D432321D5}.Debug|x86.Build.0 = Debug|Any CPU
+		{CF9C2ABA-944C-46EB-8788-346D432321D5}.DebugSlow|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF9C2ABA-944C-46EB-8788-346D432321D5}.DebugSlow|Any CPU.Build.0 = Debug|Any CPU
+		{CF9C2ABA-944C-46EB-8788-346D432321D5}.DebugSlow|x64.ActiveCfg = Debug|Any CPU
+		{CF9C2ABA-944C-46EB-8788-346D432321D5}.DebugSlow|x64.Build.0 = Debug|Any CPU
+		{CF9C2ABA-944C-46EB-8788-346D432321D5}.DebugSlow|x86.ActiveCfg = Debug|Any CPU
+		{CF9C2ABA-944C-46EB-8788-346D432321D5}.DebugSlow|x86.Build.0 = Debug|Any CPU
+		{CF9C2ABA-944C-46EB-8788-346D432321D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF9C2ABA-944C-46EB-8788-346D432321D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF9C2ABA-944C-46EB-8788-346D432321D5}.Release|x64.ActiveCfg = Release|Any CPU
+		{CF9C2ABA-944C-46EB-8788-346D432321D5}.Release|x64.Build.0 = Release|Any CPU
+		{CF9C2ABA-944C-46EB-8788-346D432321D5}.Release|x86.ActiveCfg = Release|Any CPU
+		{CF9C2ABA-944C-46EB-8788-346D432321D5}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
