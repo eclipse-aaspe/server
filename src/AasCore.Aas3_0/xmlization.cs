@@ -16813,6 +16813,7 @@ namespace AasCore.Aas3_0
                     }
                 }
 
+                /*
                 if (theDataSpecification == null)
                 {
                     error = new Reporting.Error(
@@ -16828,6 +16829,7 @@ namespace AasCore.Aas3_0
                         "in the XML representation of an instance of class EmbeddedDataSpecification");
                     return null;
                 }
+                */
                 
                 return new EmbeddedDataSpecification(theDataSpecification, theDataSpecificationContent);
             }  
