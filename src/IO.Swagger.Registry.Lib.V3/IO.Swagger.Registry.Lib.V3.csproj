@@ -31,4 +31,9 @@
         <ProjectReference Include="..\AasxServerStandardBib\AasxServerStandardBib.csproj"/>
         <ProjectReference Include="..\IO.Swagger.Lib.V3\IO.Swagger.Lib.V3.csproj"/>
     </ItemGroup>
+    <ItemGroup>
+        <None Update="appsettings.json">
+            <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+        </None>
+    </ItemGroup>
 </Project>

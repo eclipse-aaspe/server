@@ -197,6 +197,7 @@ namespace AasxServerStandardBib.Services
                         submodel.TimeStampCreate = timeStamp;
                         submodel.SetParentAndTimestamp(timeStamp);
                     }
+                    // newAasx.setWrite(true); this api is currently not connected to the database
                     Program.signalNewData(2);
                     return emptyPackageIndex.ToString();
                 }

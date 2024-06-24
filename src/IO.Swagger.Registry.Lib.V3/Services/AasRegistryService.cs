@@ -13,7 +13,7 @@ using AasxServerDB;
 using AasxServerDB.Entities;
 
 namespace IO.Swagger.Registry.Lib.V3.Services
-{
+{ 
     public class AasRegistryService : IAasRegistryService
     {
         private readonly IAppLogger<AasRegistryService> _logger;

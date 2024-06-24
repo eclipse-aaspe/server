@@ -18,6 +18,10 @@
 > [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo-arm64?label=aasx-server-blazor-for-demo-arm64)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm64)<br>
 > [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo-arm32?label=aasx-server-blazor-for-demo-arm32)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm32)<br>
 > [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo?label=aasx-server-blazor-for-demo)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo)<br>
+>
+> ### Important
+> We currently use Dotnet Version ![.NET Version](https://img.shields.io/badge/dotnet-8.0-blue)
+
 
 AASX Server is a companion app for the [AASX Package Explorer](). It provides a local service to host and serve Industrie 4.0 AASX packages. The Core version
 exposes endpoints for REST, OPC UA, and MQTT protocols. The GUI version offers the same functionality and additionally uses the Blazor Framework to provide a
@@ -55,7 +59,7 @@ export Kestrel__Endpoints__Http__Url=http://*:YOURPORT
 dotnet AasxServerBlazor.dll --no-security --data-path ./aasxs --external-blazor YOURURL  
 ```
 
-> Note: ASP.NET Core Runtime 6.0 can be downloaded [here](https://dotnet.microsoft.com/en-us/download/dotnet/6.0).
+> Note: ASP.NET Core Runtime 8.0 can be downloaded [here](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
 
 ### Running AASX Server with Docker
 

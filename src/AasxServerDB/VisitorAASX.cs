@@ -254,6 +254,11 @@ namespace AasxServerDB
             var semanticId = sme.SemanticId.GetAsIdentifier();
             semanticId     = (!semanticId.IsNullOrEmpty()) ? semanticId : string.Empty;
 
+            DateTime currentDataTime = DateTime.UtcNow;
+            DateTime timeStamp = (sme.TimeStamp == default(DateTime)) ? currentDataTime : sme.TimeStamp;
+            DateTime timeStampCreate = (sme.TimeStampCreate == default(DateTime)) ? currentDataTime : sme.TimeStampCreate;
+            DateTime timeStampTree = (sme.TimeStampTree == default(DateTime)) ? currentDataTime : sme.TimeStampTree;
+
             var smeType = shortSMEType(sme);
             var smeDB = new SMESet
                         {
@@ -261,7 +266,10 @@ namespace AasxServerDB
                             SMEType    = smeType,
                             ValueType  = string.Empty,
                             SemanticId = semanticId,
-                            IdShort    = sme.IdShort
+                            IdShort    = sme.IdShort,
+                            TimeStamp = timeStamp,
+                            TimeStampCreate = timeStampCreate,
+                            TimeStampTree = timeStampTree
                         };
             setValues(sme, smeDB);
             _smDB?.SMESets.Add(smeDB);
@@ -273,61 +281,71 @@ namespace AasxServerDB
         {
             // base.VisitExtension(that);
         }
-
         public override void VisitAdministrativeInformation(IAdministrativeInformation that)
         {
             // base.VisitAdministrativeInformation(that);
         }
-
         public override void VisitQualifier(IQualifier that)
         {
             // base.VisitQualifier(that);
         }
-
         public override void VisitAssetAdministrationShell(IAssetAdministrationShell that)
         {
+            DateTime currentDataTime = DateTime.UtcNow;
+            DateTime timeStamp = (that.TimeStamp == default(DateTime))? currentDataTime : that.TimeStamp;
+            DateTime timeStampCreate = (that.TimeStampCreate == default(DateTime)) ? currentDataTime : that.TimeStampCreate;
+            DateTime timeStampTree = (that.TimeStampTree == default(DateTime)) ? currentDataTime : that.TimeStampTree;
             var aasDB = new AASSet
                         {
                             Identifier    = that.Id,
                             IdShort       = that.IdShort,
                             AssetKind     = that.AssetInformation.AssetKind.ToString(),
-                            GlobalAssetId = that.AssetInformation.GlobalAssetId
+                            GlobalAssetId = that.AssetInformation.GlobalAssetId,
+                            TimeStamp = timeStamp,
+                            TimeStampCreate = timeStampCreate,
+                            TimeStampTree = timeStampTree
                         };
             _aasxDB.AASSets.Add(aasDB);
             base.VisitAssetAdministrationShell(that);
         }
-
         public override void VisitAssetInformation(IAssetInformation that)
         {
             // base.VisitAssetInformation(that);
         }
-
         public override void VisitResource(IResource that)
         {
             // base.VisitResource(that);
         }
-
         public override void VisitSpecificAssetId(ISpecificAssetId that)
         {
             //base.VisitSpecificAssetId(that);
         }
-
         public override void VisitSubmodel(ISubmodel that)
         {
+            DateTime currentDataTime = DateTime.UtcNow;
+            DateTime timeStamp = (that.TimeStamp == default(DateTime)) ? currentDataTime : that.TimeStamp;
+            DateTime timeStampCreate = (that.TimeStampCreate == default(DateTime)) ? currentDataTime : that.TimeStampCreate;
+            DateTime timeStampTree = (that.TimeStampTree == default(DateTime)) ? currentDataTime : that.TimeStampTree;
             var semanticId = that.SemanticId.GetAsIdentifier();
-            if (semanticId == null)
-                semanticId = "";
-            _smDB = new SMSet {SemanticId = semanticId, Identifier = that.Id, IdShort = that.IdShort};
+            if (semanticId.IsNullOrEmpty())
+                semanticId = string.Empty;
+            _smDB = new SMSet
+                        {
+                            SemanticId = semanticId,
+                            Identifier = that.Id,
+                            IdShort = that.IdShort,
+                            TimeStamp = timeStamp,
+                            TimeStampCreate = timeStampCreate,
+                            TimeStampTree = timeStampTree
+                        };
             _aasxDB.SMSets.Add(_smDB);
             base.VisitSubmodel(that);
         }
-
         public override void VisitRelationshipElement(IRelationshipElement that)
         {
             SMESet smeSet = collectSMEData(that);
             base.VisitRelationshipElement(that);
         }
-
         public override void VisitSubmodelElementList(ISubmodelElementList that)
         {
             SMESet smeSet = collectSMEData(that);
@@ -351,87 +369,72 @@ namespace AasxServerDB
             SMESet smeSet = collectSMEData(that);
             base.VisitProperty(that);
         }
-
         public override void VisitMultiLanguageProperty(IMultiLanguageProperty that)
         {
             SMESet smeSet = collectSMEData(that);
             base.VisitMultiLanguageProperty(that);
         }
-
         public override void VisitRange(AasCore.Aas3_0.IRange that)
         {
             SMESet smeSet = collectSMEData(that);
             base.VisitRange(that);
         }
-
         public override void VisitReferenceElement(IReferenceElement that)
         {
             SMESet smeSet = collectSMEData(that);
             base.VisitReferenceElement(that);
         }
-
         public override void VisitBlob(IBlob that)
         {
             SMESet smeSet = collectSMEData(that);
             base.VisitBlob(that);
         }
-
         public override void VisitFile(AasCore.Aas3_0.IFile that)
         {
             SMESet smeSet = collectSMEData(that);
             base.VisitFile(that);
         }
-
         public override void VisitAnnotatedRelationshipElement(IAnnotatedRelationshipElement that)
         {
             SMESet smeSet = collectSMEData(that);
             base.VisitAnnotatedRelationshipElement(that);
         }
-
         public override void VisitEntity(IEntity that)
         {
             SMESet smeSet = collectSMEData(that);
             base.VisitEntity(that);
         }
-
         public override void VisitEventPayload(IEventPayload that)
         {
             // base.VisitEventPayload(that);
         }
-
         public override void VisitBasicEventElement(IBasicEventElement that)
         {
             SMESet smeSet = collectSMEData(that);
             base.VisitBasicEventElement(that);
         }
-
         public override void VisitOperation(IOperation that)
         {
             SMESet smeSet = collectSMEData(that);
             base.VisitOperation(that);
         }
-
         public override void VisitOperationVariable(IOperationVariable that)
         {
             // base.VisitOperationVariable(that);
         }
-
         public override void VisitCapability(ICapability that)
         {
             SMESet smeSet = collectSMEData(that);
             base.VisitCapability(that);
         }
-
         public override void VisitConceptDescription(IConceptDescription that)
         {
             // base.VisitConceptDescription(that);
         }
-
         public override void VisitReference(AasCore.Aas3_0.IReference that)
         {
             // base.VisitReference(that);
         }
-
         public override void VisitKey(IKey that)
         {
             // base.VisitKey(that);
@@ -446,7 +449,6 @@ namespace AasxServerDB
         {
             // base.VisitLangStringNameType(that);
         }
-
         public override void VisitLangStringTextType(ILangStringTextType that)
         {
             // base.VisitLangStringTextType(that);
@@ -462,32 +464,26 @@ namespace AasxServerDB
         {
             // base.VisitLevelType(that);
         }
-
         public override void VisitValueReferencePair(IValueReferencePair that)
         {
             // base.VisitValueReferencePair(that);
         }
-
         public override void VisitValueList(IValueList that)
         {
             // base.VisitValueList(that);
         }
-
         public override void VisitLangStringPreferredNameTypeIec61360(ILangStringPreferredNameTypeIec61360 that)
         {
             // base.VisitLangStringPreferredNameTypeIec61360(that);
         }
-
         public override void VisitLangStringShortNameTypeIec61360(ILangStringShortNameTypeIec61360 that)
         {
             // base.VisitLangStringShortNameTypeIec61360(that);
         }
-
         public override void VisitLangStringDefinitionTypeIec61360(ILangStringDefinitionTypeIec61360 that)
         {
             // base.VisitLangStringDefinitionTypeIec61360(that);
         }
-
         public override void VisitDataSpecificationIec61360(IDataSpecificationIec61360 that)
         {
             // base.VisitDataSpecificationIec61360(that);

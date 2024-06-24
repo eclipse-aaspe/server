@@ -45,6 +45,15 @@ namespace AasxServerDB.Migrations.Postgres
                     b.Property<string>("Identifier")
                         .HasColumnType("text");
 
+                    b.Property<DateTime>("TimeStamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("TimeStampCreate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("TimeStampTree")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AASXId");
@@ -140,6 +149,15 @@ namespace AasxServerDB.Migrations.Postgres
                     b.Property<string>("SemanticId")
                         .HasColumnType("text");
 
+                    b.Property<DateTime>("TimeStamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("TimeStampCreate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("TimeStampTree")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("ValueType")
                         .HasColumnType("text");
 
@@ -174,6 +192,15 @@ namespace AasxServerDB.Migrations.Postgres
 
                     b.Property<string>("SemanticId")
                         .HasColumnType("text");
+
+                    b.Property<DateTime>("TimeStamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("TimeStampCreate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("TimeStampTree")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 

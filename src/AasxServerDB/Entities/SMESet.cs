@@ -20,6 +20,10 @@ namespace AasxServerDB.Entities
         public string? SemanticId { get; set; }
         public string IdShort { get; set; }
 
+        public DateTime TimeStampCreate { get; set; }
+        public DateTime TimeStamp { get; set; }
+        public DateTime TimeStampTree { get; set; }
+
         public virtual ICollection<IValueSet> IValueSets { get; } = new List<IValueSet>();
         public virtual ICollection<DValueSet> DValueSets { get; } = new List<DValueSet>();
         public virtual ICollection<SValueSet> SValueSets { get; } = new List<SValueSet>();
@@ -33,7 +37,7 @@ namespace AasxServerDB.Entities
                     case "S":
                         var ls = db.SValueSets.Where(s => s.SMEId == Id).Select(s => s.Value).ToList();
                         if (ls.Count != 0)
-                            return ls.First();
+                            return ls.First().ToString();
                         break;
                     case "I":
                         var li = db.IValueSets.Where(s => s.SMEId == Id).Select(s => s.Value).ToList();
