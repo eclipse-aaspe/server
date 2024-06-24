@@ -26,7 +26,11 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
     </ItemGroup>
-
+    <ItemGroup>
+        <None Update="appsettings.json">
+            <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+        </None>
+    </ItemGroup>
     <ItemGroup>
         <Using Include="Xunit"/>
     </ItemGroup>
