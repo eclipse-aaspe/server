@@ -18,6 +18,10 @@ namespace AasxServerDB.Entities
         public string? Identifier { get; set; }
         public string? IdShort    { get; set; }
 
+        public DateTime TimeStampCreate { get; set; }
+        public DateTime TimeStamp { get; set; }
+        public DateTime TimeStampTree { get; set; }
+
         public virtual ICollection<SMESet> SMESets { get; } = new List<SMESet>();
     }
 }

@@ -1,7 +1,8 @@
-﻿using AasxServerDB.Entities;
+using AasxServerDB.Entities;
 using AasxServerDB.Result;
 using Extensions;
 using Microsoft.IdentityModel.Tokens;
+using TimeStamp;
 
 namespace AasxServerDB
 {
@@ -10,7 +11,7 @@ namespace AasxServerDB
         public static string? ExternalBlazor { get; set; }
 
         // --------------- API ---------------
-        public List<SMResult> SearchSMs(string semanticId = "")
+        public List<SMResult> SearchSMs(string semanticId = "", string identifier = "", string diff = "")
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
             Console.WriteLine();
@@ -18,7 +19,7 @@ namespace AasxServerDB
             Console.WriteLine("Total number of SMs " + (new AasContext()).SMSets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
 
             watch.Restart();
-            var smList = GetSMSet(semanticId);
+            var smList = GetSMSet(semanticId, identifier, diff);
             Console.WriteLine("Found " + smList.Count() + " SM in " + watch.ElapsedMilliseconds + "ms");
 
             watch.Restart();
@@ -28,7 +29,7 @@ namespace AasxServerDB
             return result;
         }
 
-        public int CountSMs(string semanticId = "")
+        public int CountSMs(string semanticId = "", string identifier = "", string diff = "")
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
             Console.WriteLine();
@@ -36,7 +37,7 @@ namespace AasxServerDB
             Console.WriteLine("Total number of SMs " + new AasContext().SMSets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
 
             watch.Restart();
-            var smList = GetSMSet(semanticId);
+            var smList = GetSMSet(semanticId, identifier, diff);
             var count = smList.Count();
             Console.WriteLine("Found " + count + " SM in " + watch.ElapsedMilliseconds + "ms");
 
@@ -44,7 +45,7 @@ namespace AasxServerDB
         }
 
         public List<SMEResult> SearchSMEs(
-            string smSemanticId = "", string semanticId = "",
+            string smSemanticId = "", string smIdentifier = "", string semanticId = "", string diff = "",
             string contains = "", string equal = "", string lower = "", string upper = "")
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
@@ -53,7 +54,7 @@ namespace AasxServerDB
             Console.WriteLine("Total number of SMEs " + new AasContext().SMESets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
 
             watch.Restart();
-            var smeWithValue = GetSMEWithValue(smSemanticId, semanticId, contains, equal, lower, upper);
+            var smeWithValue = GetSMEWithValue(smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper);
             Console.WriteLine("Found " + smeWithValue.Count() + " SMEs in " + watch.ElapsedMilliseconds + "ms");
 
             watch.Restart();
@@ -64,7 +65,7 @@ namespace AasxServerDB
         }
         
         public int CountSMEs(
-            string smSemanticId = "", string semanticId = "",
+            string smSemanticId = "", string smIdentifier = "", string semanticId = "", string diff = "",
             string contains = "", string equal = "", string lower = "", string upper = "")
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
@@ -73,7 +74,7 @@ namespace AasxServerDB
             Console.WriteLine("Total number of SMEs " + new AasContext().SMESets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
 
             watch.Restart();
-            var smeWithValue = GetSMEWithValue(smSemanticId, semanticId, contains, equal, lower, upper);
+            var smeWithValue = GetSMEWithValue(smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper);
             var count = smeWithValue.Count();
             Console.WriteLine("Found " + count + " SMEs in " + watch.ElapsedMilliseconds + "ms");
 
@@ -262,7 +263,7 @@ namespace AasxServerDB
                     if (submodelDB != null && (smSemanticId.IsNullOrEmpty() || submodelDB.SemanticId == smSemanticId))
                     {
                         r.value = equal;
-                        r.url = "";
+                        r.url = string.Empty;
                         r.smId = submodelDB.Identifier;
                         string path = l.IdShort;
                         int? pId = l.ParentSMEId;
@@ -297,11 +298,22 @@ namespace AasxServerDB
         }
 
         // --------------- SM Methodes ---------------
-        private List<SMSet> GetSMSet(string semanticId = "")
+        private List<SMSet> GetSMSet(string semanticId = "", string identifier = "", string diffString = "")
         {
-            if (semanticId.IsNullOrEmpty())
+            var withSemanticId = !semanticId.IsNullOrEmpty();
+            var withIdentifier = !identifier.IsNullOrEmpty();
+            DateTime diff = TimeStamp.TimeStamp.StringToDateTime(diffString);
+            var withDiff = !diff.Equals(DateTime.MinValue);
+
+            if (!withSemanticId && !withIdentifier && !withDiff)
                 return new List<SMSet>();
-            return new AasContext().SMSets.Where(s => s.SemanticId != null && s.SemanticId.Equals(semanticId)).ToList();
+
+            return new AasContext().SMSets
+                .Where(s => 
+                    (!withSemanticId || (s.SemanticId != null && s.SemanticId.Equals(semanticId))) &&
+                    (!withIdentifier || (s.Identifier != null && s.Identifier.Equals(identifier))) &&
+                    (!withDiff || s.TimeStamp.CompareTo(diff) > 0))
+                .ToList();
         }
 
         private List<SMResult> GetSMResult(List<SMSet> smList)
@@ -309,11 +321,12 @@ namespace AasxServerDB
             return smList.ConvertAll(
                 sm =>
                 {
-                    var identifier = (sm != null && sm.Identifier != null) ? sm.Identifier : "";
+                    string identifier = (sm != null && !sm.Identifier.IsNullOrEmpty()) ? sm.Identifier : string.Empty;
                     return new SMResult()
                     {
                         smId = identifier,
-                        url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(identifier)}"
+                        url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(identifier)}",
+                        timeStamp = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStamp)
                     };
                 }
             );
@@ -327,32 +340,37 @@ namespace AasxServerDB
             public string? value;
         }
 
-        private List<SMEWithValue> GetSMEWithValue( string smSemanticId = "", string semanticId = "", string contains = "", string equal = "", string lower = "", string upper = "")
+        private List<SMEWithValue> GetSMEWithValue( string smSemanticId = "", string smIdentifier = "", string semanticId = "", string diff = "", string contains = "", string equal = "", string lower = "", string upper = "")
         {
-            var withContains = !contains.IsNullOrEmpty();
-            var withEquals = !equal.IsNullOrEmpty();
-            var withCompare = !(lower.IsNullOrEmpty() && upper.IsNullOrEmpty());
-            var withOneOperation =
-                (withContains && !withEquals && !withCompare) ||
-                (!withContains && withEquals && !withCompare) ||
-                (!withContains && !withEquals && withCompare);
             var result = new List<SMEWithValue>();
-            if (withOneOperation)
-            {
-                GetSValue(ref result, semanticId, contains, equal);
-                GetIValue(ref result, semanticId, equal, lower, upper);
-                GetDValue(ref result, semanticId, equal, lower, upper);
-                SelectSM(ref result, smSemanticId);
-            }
+
+            DateTime dateTime = TimeStamp.TimeStamp.StringToDateTime(diff);
+            var withDiff = !diff.Equals(DateTime.MinValue);
+
+            var parameter = 0;
+            if (!contains.IsNullOrEmpty())
+                parameter++;
+            if (!equal.IsNullOrEmpty())
+                parameter++;
+            if (!(lower.IsNullOrEmpty() && upper.IsNullOrEmpty()))
+                parameter++;
+            if (parameter > 1 || (semanticId.IsNullOrEmpty() && !withDiff && parameter != 1))
+                return result;
+
+            GetSValue(ref result, semanticId, dateTime, contains, equal);
+            GetIValue(ref result, semanticId, dateTime, equal, lower, upper);
+            GetDValue(ref result, semanticId, dateTime, equal, lower, upper);
+            SelectSM(ref result, smSemanticId, smIdentifier);
             return result;
         }
 
-        private void GetSValue(ref List<SMEWithValue> smeValue, string semanticId = "", string contains = "", string equal = "")
+        private void GetSValue(ref List<SMEWithValue> smeValue, string semanticId = "", DateTime diff = new(), string contains = "", string equal = "")
         {
             var withSME = !semanticId.IsNullOrEmpty();
+            var withDiff = !diff.Equals(DateTime.MinValue);
             var withContains = !contains.IsNullOrEmpty();
             var withEqual = !equal.IsNullOrEmpty();
-            if (!withContains && !withEqual)
+            if (!withDiff && !withContains && !withEqual)
                 return;
 
             using AasContext db = new();
@@ -361,22 +379,26 @@ namespace AasxServerDB
                     (!withContains || v.Value.Contains(contains)) &&
                     (!withEqual || v.Value.Equals(equal)))
                 .Join(
-                    (db.SMESets.Where(sme => !withSME || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId)))),
+                    (db.SMESets
+                        .Where(sme => 
+                            (!withSME || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) &&
+                            (!withDiff || sme.TimeStamp.CompareTo(diff) > 0))),
                     v => v.SMEId, sme => sme.Id, (v, sme) => new SMEWithValue { sme = sme, value = v.Value })
                 .ToList());
         }
 
-        private void GetIValue(ref List<SMEWithValue> smeValue, string semanticId = "", string equal = "", string lower = "", string upper = "")
+        private void GetIValue(ref List<SMEWithValue> smeValue, string semanticId = "", DateTime diff = new(), string equal = "", string lower = "", string upper = "")
         {
             var withSME = !semanticId.IsNullOrEmpty();
+            var withDiff = !diff.Equals(DateTime.MinValue);
             var withEqual = !equal.IsNullOrEmpty();
             var withCompare = !(lower.IsNullOrEmpty() && upper.IsNullOrEmpty());
-            if (!withEqual && !withCompare)
+            if (!withDiff && !withEqual && !withCompare)
                 return;
 
-            long iEqual = 0;
-            long iLower = 0;
-            long iUpper = 0;
+            var iEqual = (long) 0;
+            var iLower = (long) 0;
+            var iUpper = (long) 0;
             try
             {
                 if (withEqual)
@@ -386,8 +408,6 @@ namespace AasxServerDB
                     iLower = Convert.ToInt64(lower);
                     iUpper = Convert.ToInt64(upper);
                 }
-                else
-                    return;
             }
             catch 
             {
@@ -400,22 +420,26 @@ namespace AasxServerDB
                     (!withEqual || v.Value == iEqual) &&
                     (!withCompare || (v.Value >= iLower && v.Value <= iUpper)))
                 .Join(
-                    (db.SMESets.Where(sme => !withSME || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId)))),
+                    (db.SMESets
+                        .Where(sme =>
+                            (!withSME || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) &&
+                            (!withDiff || sme.TimeStamp.CompareTo(diff) > 0))),
                     v => v.SMEId, sme => sme.Id, (v, sme) => new SMEWithValue { sme = sme, value = v.Value.ToString() })
                 .ToList());
         }
         
-        private void GetDValue(ref List<SMEWithValue> smeValue, string semanticId = "", string equal = "", string lower = "", string upper = "")
+        private void GetDValue(ref List<SMEWithValue> smeValue, string semanticId = "", DateTime diff = new(), string equal = "", string lower = "", string upper = "")
         {
             var withSME = !semanticId.IsNullOrEmpty();
+            var withDiff = !diff.Equals(DateTime.MinValue);
             var withEqual = !equal.IsNullOrEmpty();
             var withCompare = !(lower.IsNullOrEmpty() && upper.IsNullOrEmpty());
-            if (!withEqual && !withCompare)
+            if (!withDiff && !withEqual && !withCompare)
                 return;
 
-            long dEqual = 0;
-            long dLower = 0;
-            long dUpper = 0;
+            var dEqual = (long) 0;
+            var dLower = (long) 0;
+            var dUpper = (long) 0;
             try
             {
                 if (withEqual)
@@ -425,8 +449,6 @@ namespace AasxServerDB
                     dLower = Convert.ToInt64(lower);
                     dUpper = Convert.ToInt64(upper);
                 }
-                else
-                    return;
             }
             catch 
             {
@@ -439,17 +461,23 @@ namespace AasxServerDB
                     (!withEqual || v.Value == dEqual) &&
                     (!withCompare || (v.Value >= dLower && v.Value <= dUpper)))
                 .Join(
-                    (db.SMESets.Where(sme => !withSME || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId)))),
+                    (db.SMESets
+                        .Where(sme =>
+                            (!withSME || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) &&
+                            (!withDiff || sme.TimeStamp.CompareTo(diff) > 0))),
                     v => v.SMEId, sme => sme.Id, (v, sme) => new SMEWithValue { sme = sme, value = v.Value.ToString() })
                 .ToList());
         }
 
-        private void SelectSM(ref List<SMEWithValue> smeValue, string semanticId = "")
+        private void SelectSM(ref List<SMEWithValue> smeValue, string semanticId = "", string identifier = "")
         {
-            var withSM = !semanticId.IsNullOrEmpty();
+            var withSemanticId = !semanticId.IsNullOrEmpty();
+            var withIdentifier = !identifier.IsNullOrEmpty();
             using AasContext db = new();
             smeValue = smeValue
-                .Join((db.SMSets.Where(sm => !withSM || (sm.SemanticId != null && sm.SemanticId.Equals(semanticId)))),
+                .Join((db.SMSets.Where(sm =>
+                    (!withSemanticId || (sm.SemanticId != null && sm.SemanticId.Equals(semanticId))) &&
+                    (!withIdentifier || (sm.Identifier != null && sm.Identifier.Equals(identifier))))),
                     sme => sme.sme.SMId, sm => sm.Id, (sme, sm) => new SMEWithValue { sm = sm, sme = sme.sme, value = sme.value })
                 .Where(sme => sme.sm != null)
                 .ToList();
@@ -463,7 +491,7 @@ namespace AasxServerDB
                 {
                     var identifier = (sme != null && sme.sm.Identifier != null) ? sme.sm.Identifier : "";
                     var path = sme.sme.IdShort;
-                    var pId = sme.sme.ParentSMEId;
+                    int? pId = sme.sme.ParentSMEId;
                     while (pId != null)
                     {
                         var smeDB = db.SMESets.Where(s => s.Id == pId).First();
@@ -475,7 +503,8 @@ namespace AasxServerDB
                         smId = identifier,
                         value = sme.value,
                         idShortPath = path,
-                        url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(identifier)}/submodel-elements/{path}"
+                        url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(identifier)}/submodel-elements/{path}",
+                        timeStamp = TimeStamp.TimeStamp.DateTimeToString(sme.sme.TimeStamp)
                     };
                 }
             );

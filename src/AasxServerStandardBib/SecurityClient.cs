@@ -22,7 +22,6 @@ using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
 using System.Security.Cryptography;
 using System.Linq;
-using Microsoft.EntityFrameworkCore;
 
 namespace AasxServer
 {
@@ -385,6 +384,7 @@ namespace AasxServer
             }
             catch
             {
+
             }
 
             if (s == null)
@@ -412,6 +412,7 @@ namespace AasxServer
             }
             catch
             {
+
             }
 
             if (s2 == null)
@@ -448,19 +449,18 @@ namespace AasxServer
                 {
                     xce.MoveNext();
                     X509Base64[ --j ] = Convert.ToBase64String(xce.Current.GetRawCertData());
-                    // X509Base64[--j] = Base64UrlEncoder.Encode(xce.Current.GetRawCertData());
+                    // X509Base64[ --j ] = Base64UrlEncoder.Encode(xce.Current.GetRawCertData());
                 }
-
                 x5c = X509Base64;
 
                 var credential = new X509SigningCredentials(certificate);
                 string clientId = "client.jwt";
                 string email = "";
                 string subject = certificate.Subject;
-                var split = subject.Split(new Char[] {','});
+                var split = subject.Split(new Char[] { ',' });
                 if (split[ 0 ] != "")
                 {
-                    var split2 = split[ 0 ].Split(new Char[] {'='});
+                    var split2 = split[ 0 ].Split(new Char[] { '=' });
                     if (split2[ 0 ] == "E")
                     {
                         email = split2[ 1 ];
@@ -489,8 +489,8 @@ namespace AasxServer
                         claimList,
                         now,
                         now.AddMinutes(1),
-                        credential)
-                    ;
+                        credential
+                    );
 
                 token.Header.Add("x5c", x5c);
                 var tokenHandler = new JwtSecurityTokenHandler();
@@ -539,6 +539,7 @@ namespace AasxServer
                 }
                 catch
                 {
+
                 }
 
                 string expires = "";
@@ -548,6 +549,7 @@ namespace AasxServer
                 }
                 catch
                 {
+
                 }
 
                 if (userName != "" && expires != "")
@@ -575,7 +577,7 @@ namespace AasxServer
                             now,
                             now.AddDays(1),
                             credential)
-                        ;
+                    ;
                     var tokenHandler = new JwtSecurityTokenHandler();
                     var t = tokenHandler.WriteToken(token);
                     if (t != null)
@@ -742,6 +744,7 @@ namespace AasxServer
                             }
 
                             break;
+
                         case "accesstoken":
                             if (sme2 is Property)
                             {
@@ -749,6 +752,7 @@ namespace AasxServer
                             }
 
                             break;
+
                         case "clienttoken":
                             if (sme2 is Property)
                             {
@@ -756,6 +760,7 @@ namespace AasxServer
                             }
 
                             break;
+
                         case "username":
                             if (sme2 is Property)
                             {
@@ -763,6 +768,7 @@ namespace AasxServer
                             }
 
                             break;
+
                         case "password":
                             if (sme2 is Property)
                             {
@@ -770,6 +776,7 @@ namespace AasxServer
                             }
 
                             break;
+
                         case "authservercertificate":
                             if (sme2 is AasCore.Aas3_0.File)
                             {
@@ -777,6 +784,7 @@ namespace AasxServer
                             }
 
                             break;
+
                         case "authserverendpoint":
                             if (sme2 is Property)
                             {
@@ -784,6 +792,7 @@ namespace AasxServer
                             }
 
                             break;
+
                         case "clientcertificate":
                             if (sme2 is AasCore.Aas3_0.File)
                             {
@@ -791,6 +800,7 @@ namespace AasxServer
                             }
 
                             break;
+
                         case "clientcertificatepassword":
                             if (sme2 is Property)
                             {
@@ -874,7 +884,6 @@ namespace AasxServer
                                 requestPath += "/" + splitPath[ i ];
                                 i++;
                             }
-
                             requestPath += "/complete";
                         }
                         else
@@ -1053,7 +1062,7 @@ namespace AasxServer
                                     var aas = Program.env[ envIndex ].AasEnv.FindAasWithSubmodelId(elementSubmodel.Id);
 
                                     // datastructure update
-                                    if (Program.env == null || Program.env[ envIndex ].AasEnv == null /*|| Program.env[envIndex].AasEnv.Assets == null*/)
+                                    if (Program.env == null || Program.env[ envIndex ].AasEnv == null /*|| Program.env[ envIndex ].AasEnv.Assets == null*/)
                                         continue;
 
                                     // add Submodel
@@ -1153,7 +1162,6 @@ namespace AasxServer
                                                                     smc.SetAllParentsAndTimestamps(elementCollection, timeStamp, elementCollection.TimeStampCreate);
                                                                     smc.SetTimeStamp(timeStamp);
                                                                 }
-
                                                                 found = true;
                                                                 break;
                                                             }
@@ -1221,7 +1229,7 @@ namespace AasxServer
                             bool error = false;
                             splitPath = path.Value.Split('/');
                             /*
-                            requestPath = endPoint.Value + "/aas/" + splitPath[1] +
+                            requestPath = endPoint.Value + "/aas/" + splitPath[ 1 ] +
                                 "/submodels/" + splitPath[3];
                             requestPath += "/elements/" + elementCollection.IdShort;
                             requestPath += "/latestData/complete";
@@ -1260,7 +1268,7 @@ namespace AasxServer
                                     var receiveCollection = Jsonization.Deserialize.SubmodelElementCollectionFrom(node);
 
                                     // JObject parsed = JObject.Parse(json);
-                                    // foreach (JProperty jp1 in (JToken)parsed)
+                                    // foreach (JProperty jp1 in (JToken) parsed)
                                     {
                                         // if (jp1.Name == "elem")
                                         {
@@ -1293,6 +1301,7 @@ namespace AasxServer
                                                     {
                                                         if (smc.Value.Count == 0)
                                                             continue;
+
                                                         foreach (var sme in smc.Value)
                                                         {
                                                             var e = sme;
@@ -1417,7 +1426,6 @@ namespace AasxServer
                                                   response.Content.ReadAsStringAsync().Result + " ; " +
                                                   "PUT " + requestPath;
                                 }
-
                                 error = true;
                             }
                         }
@@ -1530,7 +1538,7 @@ namespace AasxServer
                         IReferable r = collection.Value[ i ];
                         var sm = r.GetParentSubmodel();
                         AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
-                            r, "Remove", sm, (ulong) timeStamp.Ticks);
+                            r, "Remove", sm, (ulong)timeStamp.Ticks);
                         collection.Value.RemoveAt(i);
                         preCount--;
                     }
@@ -1542,6 +1550,7 @@ namespace AasxServer
             }
             catch
             {
+
             }
 
             Program.signalNewData(1);
@@ -1638,7 +1647,7 @@ namespace AasxServer
                                 {
                                     if (sm.Extensions != null && sm.Extensions.Count != 0 && sm.Extensions[ 0 ].Name == "endpoint")
                                     {
-                                        var requestPath = sm.Extensions[ 0 ].Value;
+                                        var requestPath = sm.Extensions[0].Value;
 
                                         string queryPara = "";
                                         string userPW = "";
@@ -1755,7 +1764,7 @@ namespace AasxServer
                 {
                     var aas = env.AasEnv.AssetAdministrationShells[ 0 ];
 
-                    //var assetId = aas.assetRef.Keys[0].Value;
+                    //var assetId = aas.assetRef.Keys[ 0 ].Value;
                     var assetId = aas.AssetInformation.GlobalAssetId;
                     var cfp = new cfpNode();
                     cfp.envIndex = i;
@@ -1965,7 +1974,7 @@ namespace AasxServer
                                                 {
                                                     // check if first entity is newer than last cfp creation
                                                     //TODO jtikekar:Whether to use GlobalAssetId or SpecificAssetId
-                                                    //s = e?.assetRef?.Keys?[0].Value;
+                                                    //s = e?.assetRef?.Keys?[ 0 ].Value;
                                                     s = e?.GlobalAssetId;
                                                     if (s != "")
                                                     {
@@ -2190,7 +2199,6 @@ namespace AasxServer
 
                         node.productionCombination.SetTimeStamp(timeStamp);
                     }
-
                     if (node.distributionCombination != null)
                     {
                         node.distributionCombination.Value = "0.0";
@@ -2201,7 +2209,6 @@ namespace AasxServer
 
                         node.distributionCombination.SetTimeStamp(timeStamp);
                     }
-
                     if (node.weightCombination != null)
                     {
                         node.weightCombination.Value = "0.0";
@@ -2213,7 +2220,6 @@ namespace AasxServer
                         node.weightCombination.SetTimeStamp(timeStamp);
                     }
                 }
-
                 // move up, if all children iterated
                 if (node.iChild == node.children.Count)
                 {
@@ -2230,6 +2236,7 @@ namespace AasxServer
                             Property p = node.cradleToGateModule;
                             if (node.cradleToGateCombination != null)
                                 p = node.cradleToGateCombination;
+
                             if (p != null)
                             {
                                 double value1 = 0.0;
@@ -2244,10 +2251,10 @@ namespace AasxServer
                                 }
                                 catch
                                 {
+
                                 }
                             }
                         }
-
                         if (parent.productionCombination != null)
                         {
                             Property p = node.productionModule;
@@ -2267,10 +2274,10 @@ namespace AasxServer
                                 }
                                 catch
                                 {
+
                                 }
                             }
                         }
-
                         if (parent.distributionCombination != null)
                         {
                             Property p = node.distributionModule;
@@ -2290,10 +2297,10 @@ namespace AasxServer
                                 }
                                 catch
                                 {
+
                                 }
                             }
                         }
-
                         if (parent.weightCombination != null)
                         {
                             Property p = node.weightModule;
@@ -2313,10 +2320,10 @@ namespace AasxServer
                                 }
                                 catch
                                 {
+
                                 }
                             }
                         }
-
                         parent = null;
                         node = stack[ sp ];
                         stack.RemoveAt(sp);
@@ -2380,7 +2387,7 @@ namespace AasxServer
                     {
                         lock (Program.changeAasxFile)
                         {
-                            Edit.Update(Program.env[envi]);
+                            Edit.Update(Program.env[ envi ]);
                             newData = true;
                         }
                     }
@@ -2430,10 +2437,12 @@ namespace AasxServer
                 {
                     if (t.nextExecution > timeStamp)
                         continue;
+
                     if (t.cycleCount != null)
                     {
                         if (t.cycleCount.Value == "")
                             t.cycleCount.Value = "0";
+
                         t.cycleCount.Value = (Convert.ToInt32(t.cycleCount.Value) + 1).ToString();
                         t.cycleCount.SetTimeStamp(timeStamp);
                     }

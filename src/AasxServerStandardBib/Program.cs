@@ -34,6 +34,7 @@ using System.Xml;
 using System.Xml.Serialization;
 using Formatting = Newtonsoft.Json.Formatting;
 using AasxServerDB.Context;
+using Microsoft.IdentityModel.Tokens;
 
 /*
 Copyright (c) 2019-2020 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski
@@ -73,7 +74,7 @@ namespace AasxServer
             {
                 int Start, End;
                 Start = strSource.IndexOf(strStart, 0) + strStart.Length;
-                End   = strSource.IndexOf(strEnd, Start);
+                End = strSource.IndexOf(strEnd, Start);
                 return strSource.Substring(Start, End - Start);
             }
 
@@ -82,24 +83,41 @@ namespace AasxServer
 
         public static void saveEnv(int envIndex)
         {
-            Console.WriteLine("SAVE: " + envFileName[ envIndex ]);
-            string requestedFileName = envFileName[ envIndex ];
-            string copyFileName      = Path.GetTempFileName().Replace(".tmp", ".aasx");
+            Console.WriteLine("SAVE: " + envFileName[envIndex]);
+            string requestedFileName = envFileName[envIndex];
+            string copyFileName = Path.GetTempFileName().Replace(".tmp", ".aasx");
             System.IO.File.Copy(requestedFileName, copyFileName, true);
-            AasxServer.Program.env[ envIndex ].SaveAs(copyFileName);
+            AasxServer.Program.env[envIndex].SaveAs(copyFileName);
             System.IO.File.Copy(copyFileName, requestedFileName, true);
             System.IO.File.Delete(copyFileName);
         }
 
         static int oldest = 0;
 
+        public static bool isLoadingDB = false;
+        static bool isLoaded = false;
+
+        public static void loadAllPackages()
+        {
+            if (!withDb || isLoadingDB || isLoaded)
+                return;
+
+            Program.isLoadingDB = true;
+            var aasIDDBList = new AasContext().AASSets.Select(aas => aas.Identifier).ToList();
+
+            foreach (var aasIDDB in aasIDDBList)
+                loadPackageForAas(aasIDDB, out _, out _);
+
+            isLoaded = true;
+            Program.isLoadingDB = false;
+            Program.signalNewData(2);
+        }
+
         public static bool loadPackageForAas(string aasIdentifier, out IAssetAdministrationShell output, out int packageIndex)
         {
             output       = null;
             packageIndex = -1;
-            if (!withDb)
-                return false;
-            if (Program.isLoading)
+            if (!withDb || Program.isLoading)
                 return false;
 
             int i = envimin;
@@ -186,9 +204,7 @@ namespace AasxServer
         {
             output       = null;
             packageIndex = -1;
-            if (!withDb)
-                return false;
-            if (Program.isLoading)
+            if (!withDb || Program.isLoading)
                 return false;
 
             int i = envimin;
@@ -2637,7 +2653,6 @@ namespace AasxServer
                             }
                         }
                     }
-
                     i++;
                 }
             }
@@ -2646,7 +2661,8 @@ namespace AasxServer
         }
 
         public static bool parseJson(SubmodelElementCollection c, JObject o, List<string> filter,
-                                     Property minDiffAbsolute = null, Property minDiffPercent = null)
+                                     Property minDiffAbsolute = null, Property minDiffPercent = null,
+                                     AdminShellPackageEnv envaas = null)
         {
             int      newMode   = 0;
             DateTime timeStamp = DateTime.UtcNow;
@@ -2697,7 +2713,7 @@ namespace AasxServer
                                 newMode = 1;
                             }
 
-                            ok |= parseJson(c3, el, filter);
+                            ok |= parseJson(c3, el, filter, envaas: envaas);
                         }
 
                         break;
@@ -2714,7 +2730,7 @@ namespace AasxServer
 
                         foreach (JObject el in jp1.Value)
                         {
-                            ok |= parseJson(c2, el, filter);
+                            ok |= parseJson(c2, el, filter, envaas: envaas);
                         }
 
                         break;
@@ -2768,11 +2784,12 @@ namespace AasxServer
                         catch
                         {
                         }
-
                         break;
                 }
             }
 
+            if (envaas != null)
+                envaas.setWrite(true);
             Program.signalNewData(newMode);
             return ok;
         }

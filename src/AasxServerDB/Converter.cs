@@ -1,4 +1,4 @@
-﻿using AasCore.Aas3_0;
+using AasCore.Aas3_0;
 using AasxServerDB.Entities;
 using AdminShellNS;
 using Extensions;
@@ -20,6 +20,9 @@ namespace AasxServerDB
                     idShort: aasDB.IdShort,
                     assetInformation: new AssetInformation(AssetKind.Type, aasDB.GlobalAssetId),
                     submodels: new List<AasCore.Aas3_0.IReference>());
+                aas.TimeStampCreate = aasDB.TimeStampCreate;
+                aas.TimeStamp = aasDB.TimeStamp;
+                aas.TimeStampTree = aasDB.TimeStampTree;
 
                 AdminShellPackageEnv? aasEnv = new AdminShellPackageEnv();
                 aasEnv.SetFilename(path);
@@ -62,13 +65,14 @@ namespace AasxServerDB
                 submodel.IdShort = smDB.IdShort;
                 submodel.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
                     new List<IKey>() { new Key(KeyTypes.GlobalReference, smDB.SemanticId) });
+                submodel.SubmodelElements = new List<ISubmodelElement>();
 
                 LoadSME(submodel, null, null, SMEList, null);
 
-                DateTime timeStamp = DateTime.Now;
-                submodel.TimeStampCreate = timeStamp;
-                submodel.SetTimeStamp(timeStamp);
-                submodel.SetAllParents(timeStamp);
+                submodel.TimeStampCreate = smDB.TimeStampCreate;
+                submodel.TimeStamp = smDB.TimeStamp;
+                submodel.TimeStampTree = smDB.TimeStampTree;
+                submodel.SetAllParents();
 
                 return submodel;
             }           
@@ -119,6 +123,9 @@ namespace AasxServerDB
                     nextSME.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
                         new List<IKey>() { new Key(KeyTypes.GlobalReference, smel.SemanticId) });
                 }
+                nextSME.TimeStamp = smel.TimeStamp;
+                nextSME.TimeStampCreate = smel.TimeStampCreate;
+                nextSME.TimeStampTree = smel.TimeStampTree;
 
                 if (sme == null)
                 {
@@ -134,7 +141,7 @@ namespace AasxServerDB
                     }
                 }
 
-                if (smel.SMEType == "SMC")
+                if (smel.SMEType.Equals("SMC"))
                 {
                     LoadSME(submodel, nextSME, smel.SMEType, SMEList, smel.Id);
                 }
