@@ -1,4 +1,4 @@
-﻿using AasCore.Aas3_0;
+using AasCore.Aas3_0;
 using AdminShellNS;
 using System.Globalization;
 using static AasCore.Aas3_0.Visitation;
@@ -205,15 +205,13 @@ namespace AasxServerDB
                 if (!v.IsNullOrEmpty())
                     vt = getValueAndType(v, out sValue, out iValue, out fValue);
             }
-
-            if (sme is AasCore.Aas3_0.File f)
+            else if (sme is AasCore.Aas3_0.File f)
             {
                 v      = f.Value;
                 vt     = "S";
                 sValue = v;
             }
-
-            if (sme is MultiLanguageProperty mlp)
+            else if (sme is MultiLanguageProperty mlp)
             {
                 var ls = mlp.Value;
                 if (ls != null)
@@ -222,17 +220,19 @@ namespace AasxServerDB
                     sValue = v;
                 }
             }
-
-            if (sme is not AasCore.Aas3_0.Range r)
+            else if (sme is AasCore.Aas3_0.Range r)
             {
-                return;
+                v = r.Min;
+                var v2 = r.Max;
+                v      += "$$" + v2;
+                vt     =  "S";
+                sValue =  v;
             }
-
-            v = r.Min;
-            var v2 = r.Max;
-            v      += "$$" + v2;
-            vt     =  "S";
-            sValue =  v;
+            /*else if (sme is Entity e)
+            {
+                vt = "S";
+                sValue = e.GlobalAssetId;
+            }*/
         }
 
         private SMESet collectSMEData(ISubmodelElement sme)
@@ -267,24 +267,26 @@ namespace AasxServerDB
                     }
                 }
             }
-
-            if (vt == "S" && st != "MLP")
+            else if (vt == "S" && st != "MLP")
             {
                 var ValueDB = new SValueSet {Value = sValue, Annotation = ""};
                 smeDB.SValueSets.Add(ValueDB);
             }
-
-            if (vt == "I")
+            else if (vt == "I")
             {
                 var ValueDB = new IValueSet {Value = iValue, Annotation = ""};
                 smeDB.IValueSets.Add(ValueDB);
             }
-
-            if (vt == "F")
+            else if (vt == "F")
             {
                 var ValueDB = new DValueSet {Value = fValue, Annotation = ""};
                 smeDB.DValueSets.Add(ValueDB);
             }
+            /*else if (vt == "F")
+            {
+                var ValueDB = new SValueSet { Value = sValue, Annotation = ""};
+                smeDB.DValueSets.Add(ValueDB);
+            }*/
 
             return smeDB;
         }
@@ -421,7 +423,8 @@ namespace AasxServerDB
 
         public override void VisitBasicEventElement(IBasicEventElement that)
         {
-            // base.VisitBasicEventElement(that);
+            SMESet smeSet = collectSMEData(that);
+            base.VisitBasicEventElement(that);
         }
 
         public override void VisitOperation(IOperation that)
