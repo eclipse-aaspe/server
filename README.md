@@ -59,7 +59,7 @@ export Kestrel__Endpoints__Http__Url=http://*:YOURPORT
 dotnet AasxServerBlazor.dll --no-security --data-path ./aasxs --external-blazor YOURURL  
 ```
 
-> Note: ASP.NET Core Runtime 6.0 can be downloaded [here](https://dotnet.microsoft.com/en-us/download/dotnet/6.0).
+> Note: ASP.NET Core Runtime 8.0 can be downloaded [here](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
 
 ### Running AASX Server with Docker
 
