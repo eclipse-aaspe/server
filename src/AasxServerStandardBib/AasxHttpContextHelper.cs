@@ -37,8 +37,6 @@ specification Details of the Administration Shell. The hereby stated approach is
 namespace AasxRestServerLibrary
 {
     using System.Text.Json;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
     using JsonConverter = System.Text.Json.Serialization.JsonConverter;
     using JsonSerializer = System.Text.Json.JsonSerializer;
 
@@ -1164,7 +1162,7 @@ namespace AasxRestServerLibrary
             }
 
             AasxFileInfo file = Newtonsoft.Json.JsonConvert.DeserializeObject<AasxFileInfo>(context.Request.Payload);
-            Console.WriteLine("EvalPutAasxToFilesystem: " + JsonConvert.SerializeObject(file.path));
+            Console.WriteLine("EvalPutAasxToFilesystem: " + JsonSerializer.Serialize(file.path, new JsonSerializerOptions { WriteIndented = true }));
             if (!file.path.ToLower().EndsWith(".aasx"))
             {
                 context.Response.SendResponse(HttpStatusCode.BadRequest, $"Not a path ending with \".aasx\"...:{file.path}. Aborting...");
@@ -2975,16 +2973,15 @@ namespace AasxRestServerLibrary
             bool userFound = false;
             bool error     = false;
 
-            dynamic res = new ExpandoObject();
-
-            var parsed = JObject.Parse(context.Request.Payload);
+            dynamic res    = new ExpandoObject();
+            var     parsed = JsonDocument.Parse(context.Request.Payload);
 
             string user     = null;
             string password = null;
             try
             {
-                user     = parsed.SelectToken("user").Value<string>();
-                password = parsed.SelectToken("password").Value<string>();
+                user     = parsed.RootElement.GetProperty("user").GetString();
+                password = parsed.RootElement.GetProperty("password").GetString();
             }
             catch
             {
@@ -3062,8 +3059,8 @@ namespace AasxRestServerLibrary
 
             try
             {
-                var parsed = JObject.Parse(context.Request.Payload);
-                token = parsed.SelectToken("token").Value<string>();
+                var     parsed = JsonDocument.Parse(context.Request.Payload);
+                token = parsed.RootElement.GetProperty("token").GetString();
 
                 var    headers = Jose.JWT.Headers(token);
                 string x5c     = headers["x5c"].ToString();
@@ -3072,14 +3069,14 @@ namespace AasxRestServerLibrary
                 {
                     Console.WriteLine("Security 2.1a Server: x5c with certificate chain received");
 
-                    parsed = JObject.Parse(Jose.JWT.Payload(token));
-                    user   = parsed.SelectToken("user").Value<string>();
+                    parsed = JsonDocument.Parse(Jose.JWT.Payload(token));
+                    user   = parsed.RootElement.GetProperty("user").GetString();
 
                     X509Store storeCA = new X509Store("CA", StoreLocation.CurrentUser);
                     storeCA.Open(OpenFlags.ReadWrite);
-                    bool valid = false;
-
-                    string[] x5c64 = JsonConvert.DeserializeObject<string[]>(x5c);
+                    bool     valid = false;
+                    
+                    var x5c64 = JsonSerializer.Deserialize<string[]>(x5c);
 
                     X509Certificate2Collection xcc           = new X509Certificate2Collection();
                     Byte[]                     certFileBytes = Convert.FromBase64String(x5c64[0]);
@@ -3125,8 +3122,8 @@ namespace AasxRestServerLibrary
                 }
                 else
                 {
-                    parsed = JObject.Parse(Jose.JWT.Payload(token));
-                    user   = parsed.SelectToken("user").Value<string>();
+                    parsed = JsonDocument.Parse(Jose.JWT.Payload(token));
+                    user   = parsed.RootElement.GetProperty("user").GetString();
 
                     string fileCert = "./user/" + user + ".cer";
                     if (System.IO.File.Exists(fileCert))
@@ -3137,7 +3134,7 @@ namespace AasxRestServerLibrary
                     else
                     {
                         // receive .cer and verify against root
-                        string certFileBase64 = parsed.SelectToken("certFile").Value<string>();
+                        string certFileBase64 = parsed.RootElement.GetProperty("certFile").GetString();
                         Byte[] certFileBytes  = Convert.FromBase64String(certFileBase64);
                         fileCert = "./temp/" + user + ".cer";
                         System.IO.File.WriteAllBytes(fileCert, certFileBytes);
@@ -3145,7 +3142,7 @@ namespace AasxRestServerLibrary
 
                         x509 = new X509Certificate2(certFileBytes);
 
-                        // check if certifcate is valid according to root certificates
+                        // check if certificate is valid according to root certificates
                         X509Chain chain = new X509Chain();
                         chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
                         bool isValid = chain.Build(x509);
@@ -3229,11 +3226,11 @@ namespace AasxRestServerLibrary
 
             try
             {
-                var parsed = JObject.Parse(context.Request.Payload);
-                token = parsed.SelectToken("token").Value<string>();
+                var parsed = JsonDocument.Parse(context.Request.Payload);
+                token = parsed.RootElement.GetProperty("token").GetString();
 
-                parsed    = JObject.Parse(Jose.JWT.Payload(token));
-                challenge = parsed.SelectToken("challenge").Value<string>();
+                parsed    = JsonDocument.Parse(Jose.JWT.Payload(token));
+                challenge = parsed.RootElement.GetProperty("challenge").GetString();
             }
             catch
             {
@@ -3913,7 +3910,7 @@ namespace AasxRestServerLibrary
 
             if (!error)
             {
-                JObject parsed2 = null;
+                JsonDocument parsed2 = null;
 
                 try
                 {
@@ -3922,11 +3919,11 @@ namespace AasxRestServerLibrary
                         string serverName = "";
                         string email      = "";
 
-                        parsed2 = JObject.Parse(Jose.JWT.Payload(bearerToken));
+                        parsed2 = JsonDocument.Parse(Jose.JWT.Payload(bearerToken));
 
                         try
                         {
-                            email = parsed2.SelectToken("email").Value<string>();
+                            email = parsed2.RootElement.GetProperty("email").GetString();
                         }
                         catch
                         {
@@ -3934,7 +3931,7 @@ namespace AasxRestServerLibrary
 
                         try
                         {
-                            serverName = parsed2.SelectToken("serverName").Value<string>();
+                            serverName = parsed2.RootElement.GetProperty("serverName").GetString();
                         }
                         catch
                         {
@@ -3943,7 +3940,7 @@ namespace AasxRestServerLibrary
 
                         try
                         {
-                            policy = parsed2.SelectToken("policy").Value<string>();
+                            policy = parsed2.RootElement.GetProperty("policy").GetString();
                         }
                         catch
                         {
@@ -3951,7 +3948,7 @@ namespace AasxRestServerLibrary
 
                         try
                         {
-                            policyRequestedResource = parsed2.SelectToken("policyRequestedResource").Value<string>();
+                            policyRequestedResource = parsed2.RootElement.GetProperty("policyRequestedResource").GetString();
                         }
                         catch
                         {
@@ -3965,7 +3962,7 @@ namespace AasxRestServerLibrary
 
                         try
                         {
-                            user = parsed2.SelectToken("userName").Value<string>();
+                            user = parsed2.RootElement.GetProperty("userName").GetString();
                             user = user.ToLower();
                         }
                         catch
@@ -3997,7 +3994,7 @@ namespace AasxRestServerLibrary
 
                             try
                             {
-                                certificate = parsed2.SelectToken("certificate").Value<string>();
+                                certificate = parsed2.RootElement.GetProperty("certificate").GetString();
                             }
                             catch
                             {
@@ -4261,18 +4258,16 @@ namespace AasxRestServerLibrary
                 if (token == "application/aas")
                 {
                     Console.WriteLine("Received Accept header = " + token);
-                    // context.Response.ContentType = ContentType.JSON;
+// context.Response.ContentType = ContentType.JSON;
                     context.Response.AddHeader("Content-Type", "application/aas");
+
                     res.client        = "I40 IT client";
                     res.assetID       = assetId;
                     res.humanEndpoint = "https://admin-shell-io.com:5001";
                     res.restEndpoint  = "http://" + AasxServer.Program.hostPort;
 
-                    var settings = new JsonSerializerSettings();
-                    // if (contractResolver != null)
-                    //    settings.ContractResolver = contractResolver;
-                    var json   = JsonConvert.SerializeObject(res, Formatting.Indented, settings);
-                    var buffer = context.Request.ContentEncoding.GetBytes(json);
+                    var json   = JsonSerializer.Serialize(res, new JsonSerializerOptions { WriteIndented = true });
+                    var buffer = Encoding.UTF8.GetBytes(json);
                     var length = buffer.Length;
 
                     context.Response.ContentEncoding = Encoding.UTF8;
@@ -4281,6 +4276,7 @@ namespace AasxRestServerLibrary
                     context.Response.SendResponse(buffer);
 
                     return;
+
                 }
             }
 
