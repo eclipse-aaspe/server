@@ -17,14 +17,15 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Serialization;
 using IO.Swagger.Registry.Lib.V3.Filters;
 using System.Collections.Generic;
 using Microsoft.OpenApi.Any;
 
 namespace IO.Swagger;
 
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using Models;
 
 /// <summary>
@@ -57,14 +58,16 @@ public class Startup
         services
             .AddMvc(options =>
                     {
-                        options.InputFormatters.RemoveType<Microsoft.AspNetCore.Mvc.Formatters.SystemTextJsonInputFormatter>();
-                        options.OutputFormatters.RemoveType<Microsoft.AspNetCore.Mvc.Formatters.SystemTextJsonOutputFormatter>();
+                        // Remove System.Text.Json formatters
+                        options.InputFormatters.RemoveType<SystemTextJsonInputFormatter>();
+                        options.OutputFormatters.RemoveType<SystemTextJsonOutputFormatter>();
                     })
-            .AddNewtonsoftJson(opts =>
-                               {
-                                   opts.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
-                                   opts.SerializerSettings.Converters.Add(new StringEnumConverter(new CamelCaseNamingStrategy()));
-                               })
+            .AddJsonOptions(options =>
+                            {
+                                // Configure System.Text.Json settings
+                                options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                            })
             .AddXmlSerializerFormatters();
 
 
