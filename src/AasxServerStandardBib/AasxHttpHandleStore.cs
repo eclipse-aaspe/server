@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
@@ -15,6 +14,8 @@ specification Details of the Administration Shell. The hereby stated approach is
 
 namespace AasxRestServerLibrary
 {
+    using Newtonsoft.Json;
+
     /// <summary>
     /// Describes a handle to a Identification or Reference to be used in HTTP REST APIs
     /// </summary>

@@ -9,15 +9,14 @@ This source code may use other Open Source software components (see LICENSE.txt)
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 
 namespace AasxIntegrationBase
 {
+    using System.Text.Json;
+    using System.Text.Json.Serialization;
+    using Newtonsoft.Json.Serialization;
+
     // see: https://stackoverflow.com/questions/11099466/
     // using-a-custom-type-discriminator-to-tell-json-net-which-type-of-a-class-hierarc
 
@@ -111,18 +110,28 @@ namespace AasxIntegrationBase
 
     public static class AasxPluginOptionSerialization
     {
-        public static JsonSerializerSettings GetDefaultJsonSettings(Type[] startingTypes)
+        public static JsonSerializerOptions GetDefaultJsonOptions(Type[] startingTypes)
         {
-            JsonSerializerSettings settings = new JsonSerializerSettings
-            {
-                SerializationBinder = new DisplayNameSerializationBinder(startingTypes),
-                NullValueHandling = NullValueHandling.Ignore,
-                ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
-                TypeNameHandling = TypeNameHandling.Objects /*,
-                Formatting = Formatting.Indented */
-            };
-            return settings;
-        }
+            var options = new JsonSerializerOptions
+                          {
+                              // Custom serialization binder if needed (not directly supported in System.Text.Json)
+                              // SerializationBinder = new DisplayNameSerializationBinder(startingTypes),
 
+                              // Ignore null values during serialization
+                              DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+
+                              // Serialize reference loops (not directly supported in System.Text.Json)
+                              // ReferenceHandler = ReferenceHandler.Serialize,
+
+                              // Include type information for objects (similar to TypeNameHandling.Objects)
+                              // Note: System.Text.Json does not directly support TypeNameHandling like Newtonsoft.Json
+                              // Consider alternatives based on specific requirements
+
+                              // Set other options as needed
+                              WriteIndented = false // Example of setting indentation
+                          };
+
+            return options;
+        }
     }
 }
