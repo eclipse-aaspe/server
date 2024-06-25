@@ -205,7 +205,6 @@ namespace AasxServerDB
             if (isInt64 && (!withValueType || valueType.Equals("I")))
                 return "I";
 
-            /*var valueD = value.Replace(",", ".");*/
             var isDouble = Double.TryParse(value, out dValue);
             if (isDouble && (!withValueType || valueType.Equals("D")))
                 return "D";
