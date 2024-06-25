@@ -84,35 +84,30 @@ namespace AasxServerDB
 
             foreach (var smel in smeLevel)
             {
+                var value = smel.getValue();
                 ISubmodelElement? nextSME = null;
                 switch (smel.SMEType)
                 {
                     case "Prop":
-                        nextSME = new Property(DataTypeDefXsd.String, idShort: smel.IdShort, value: smel.getValue());
+                        nextSME = new Property(DataTypeDefXsd.String, idShort: smel.IdShort, value: value.First()[0]);
                         break;
                     case "SMC":
                         nextSME = new SubmodelElementCollection(idShort: smel.IdShort, value: new List<ISubmodelElement>());
                         break;
                     case "MLP":
-                        var mlp = new MultiLanguageProperty(idShort: smel.IdShort);
-                        var ls = new List<ILangStringTextType>();
-
-                        using (AasContext db = new AasContext())
-                        {
-                            var SValueSetList = db.SValueSets
-                                .Where(s => s.SMEId == smel.Id)
-                                .ToList();
-                            foreach (var MLPValue in SValueSetList)
-                            {
-                                ls.Add(new LangStringTextType(MLPValue.Annotation, MLPValue.Value));
-                            }
-                        }
-
-                        mlp.Value = ls;
-                        nextSME = mlp;
+                        nextSME = new MultiLanguageProperty(
+                            idShort: smel.IdShort,
+                            value: value.ConvertAll<ILangStringTextType>(val => new LangStringTextType(val[1], val[0])));
                         break;
                     case "File":
-                        nextSME = new AasCore.Aas3_0.File("text", idShort: smel.IdShort, value: smel.getValue());
+                        nextSME = new AasCore.Aas3_0.File("text", idShort: smel.IdShort, value: value.First()[0]);
+                        break;
+                    case "Ent":
+                        nextSME = new Entity(
+                            value.First()[1].Equals("SelfManagedEntity") ? EntityType.SelfManagedEntity : EntityType.CoManagedEntity,
+                            idShort: smel.IdShort,
+                            globalAssetId: value.First()[0],
+                            statements: new List<ISubmodelElement>());
                         break;
                 }
                 if (nextSME == null)
@@ -138,10 +133,13 @@ namespace AasxServerDB
                         case "SMC":
                             (sme as SubmodelElementCollection).Value.Add(nextSME);
                             break;
+                        case "Ent":
+                            (sme as Entity).Statements.Add(nextSME);
+                            break;
                     }
                 }
 
-                if (smel.SMEType.Equals("SMC"))
+                if (smel.SMEType.Equals("SMC") || smel.SMEType.Equals("Ent"))
                 {
                     LoadSME(submodel, nextSME, smel.SMEType, SMEList, smel.Id);
                 }

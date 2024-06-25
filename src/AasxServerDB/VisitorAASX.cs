@@ -216,9 +216,6 @@ namespace AasxServerDB
 
         private void setValues(ISubmodelElement sme, SMESet smeDB)
         {
-            if (sme.ValueAsText().IsNullOrEmpty())
-                return;
-
             if (sme is Property prop)
             {
                 var value = prop.ValueAsText();
@@ -242,11 +239,11 @@ namespace AasxServerDB
                     foreach (var sValueMLP in mlp.Value)
                         smeDB.SValueSets.Add(new SValueSet() { Annotation = sValueMLP.Language, Value = sValueMLP.Text });
             }
-            /*else if (sme is Entity entity)
+            else if (sme is Entity entity)
             {
                 smeDB.ValueType = "S";
                 smeDB.SValueSets.Add(new SValueSet { Value = entity.GlobalAssetId, Annotation = entity.EntityType.ToString() });
-            }*/
+            }
         }
 
         private SMESet collectSMEData(ISubmodelElement sme)
@@ -402,10 +399,10 @@ namespace AasxServerDB
         public override void VisitEntity(IEntity that)
         {
             SMESet smeSet = collectSMEData(that);
-            //smeSet.ParentSME = _parSME;
-            //_parSME = smeSet;
+            smeSet.ParentSME = _parSME;
+            _parSME = smeSet;
             base.VisitEntity(that);
-            //_parSME = smeSet.ParentSME;
+            _parSME = smeSet.ParentSME;
         }
         public override void VisitEventPayload(IEventPayload that)
         {
