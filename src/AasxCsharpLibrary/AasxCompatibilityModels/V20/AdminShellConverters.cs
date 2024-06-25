@@ -46,19 +46,30 @@ public static class AdminShellConverters
 
             var target = new AdminShellV20.Referable();
 
-            if (!root.TryGetProperty(UpperClassProperty, out JsonElement upperClassProperty))
+            // Check if the root element has the necessary properties
+            if (root.TryGetProperty("idShort", out JsonElement idShortElement))
             {
-                return target;
+                target.idShort = idShortElement.GetString();
             }
 
-            foreach (var adequateType in (from prop in upperClassProperty.EnumerateObject()
-                                          where prop.Name == LowerClassProperty && prop.Value.ValueKind == JsonValueKind.String
-                                          select prop.Value.GetString()).OfType<string>()
-                                                                        .Select(AdminShellV20.Referable.CreateAdequateType)
-                                                                        .OfType<AdminShellV20.Referable>())
+            if (root.TryGetProperty("category", out JsonElement categoryElement))
             {
-                CopyProperties(adequateType, target);
+                target.category = categoryElement.GetString();
             }
+
+            if (root.TryGetProperty("description", out JsonElement descriptionElement))
+            {
+                var langStringArray = descriptionElement.GetProperty("langString").EnumerateArray();
+
+                foreach (var langString in langStringArray)
+                {
+                    var lang = langString.GetProperty("lang").GetString();
+                    var str  = langString.GetProperty("str").GetString();
+                    target.AddDescription(lang, str);
+                }
+            }
+
+            // Populate other properties as needed
 
             return target;
         }

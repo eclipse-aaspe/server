@@ -2048,7 +2048,7 @@ namespace AasxCompatibilityModels
             // members
 
             [MetaModelName("Referable.IdShort")] [TextSearchable] [CountForHash]
-            public string? idShort = "";
+            public string? idShort = string.Empty;
 
             [MetaModelName("Referable.category")] [TextSearchable] [CountForHash]
             public string category = null;
@@ -4931,15 +4931,14 @@ namespace AasxCompatibilityModels
                 return res;
             }
 
+            private JsonSerializerOptions options = new();
+            
             public AdministrationShellEnv DeserializeFromJsonStream(TextReader reader)
             {
-                var options = new JsonSerializerOptions();
                 options.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
 
-                using (var jsonDocument = JsonDocument.Parse(reader.ReadToEnd()))
-                {
-                    return JsonSerializer.Deserialize<AdministrationShellEnv>(jsonDocument.RootElement.GetRawText(), options);
-                }
+                using var jsonDocument = JsonDocument.Parse(reader.ReadToEnd());
+                return JsonSerializer.Deserialize<AdministrationShellEnv>(jsonDocument.RootElement.GetRawText(), options);
             }
 
 
