@@ -31,7 +31,7 @@ namespace IO.Swagger.Lib.V3.Services
             //If there are less elements in the sourceList than "from"
             if (startIndex > sourceList.Count - 1)
             {
-                _logger.LogError($"There are less elements in the retrived list than requested pagination - (from: {startIndex}, size:{endIndex})");
+                _logger.LogError($"There are less elements in the retrieved list than requested pagination - (from: {startIndex}, size:{endIndex})");
             }
 
             for (var i = startIndex; i <= endIndex; i++)
@@ -92,7 +92,7 @@ namespace IO.Swagger.Lib.V3.Services
             //If there are less elements in the sourceList than "from"
             if (startIndex > sourceList.Count - 1)
             {
-                _logger.LogError($"There are less elements in the retrived list than requested pagination - (from: {startIndex}, size:{endIndex})");
+                _logger.LogError($"There are less elements in the retrieved list than requested pagination - (from: {startIndex}, size:{endIndex})");
             }
 
             for (var i = startIndex; i <= endIndex; i++)
