@@ -12,7 +12,6 @@ using AasxCompatibilityModels;
 
 namespace AdminShell_V20;
 
-using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
