@@ -1,6 +1,5 @@
 ﻿using AdminShellNS;
 using AdminShellNS.Extensions;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,6 +7,8 @@ using System.Linq;
 
 namespace Extensions
 {
+    using System.Text.Json;
+    using System.Text.Json.Serialization;
     using Environment = AasCore.Aas3_0.Environment;
 
     public static class ExtendEnvironment
@@ -415,25 +416,36 @@ namespace Extensions
             return aas;
         }
 
-        public static JsonWriter SerialiazeJsonToStream(this AasCore.Aas3_0.Environment environment, StreamWriter streamWriter, bool leaveJsonWriterOpen = false)
+        private static JsonSerializerOptions JsonSerializerOptions = new()
+                                                {
+                                                    WriteIndented          = true,
+                                                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                                                    ReferenceHandler       = ReferenceHandler.Preserve
+                                                };
+        
+        public static Utf8JsonWriter SerializeJsonToStream(this AasCore.Aas3_0.Environment environment, StreamWriter streamWriter, bool leaveJsonWriterOpen = false)
         {
             streamWriter.AutoFlush = true;
 
-            JsonSerializer serializer = new JsonSerializer()
-            {
-                NullValueHandling = NullValueHandling.Ignore,
-                ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
-                Formatting = Newtonsoft.Json.Formatting.Indented
-            };
+            var utf8JsonWriter = new Utf8JsonWriter(streamWriter.BaseStream, new JsonWriterOptions
+                                                                             {
+                                                                                 Indented = true
+                                                                             });
 
-            JsonWriter writer = new JsonTextWriter(streamWriter);
-            serializer.Serialize(writer, environment);
+            JsonSerializer.Serialize(utf8JsonWriter, environment, JsonSerializerOptions);
+
             if (leaveJsonWriterOpen)
-                return writer;
-            writer.Close();
-            return null;
+            {
+                utf8JsonWriter.Flush();
+                return utf8JsonWriter;
+            }
+            else
+            {
+                utf8JsonWriter.Dispose();
+                return null;
+            }
         }
-
+        
         #endregion
 
         #region Submodel Queries

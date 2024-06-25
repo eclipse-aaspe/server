@@ -840,12 +840,12 @@ namespace AasxRestServerLibrary
                         if (findAasReturn.aas.IdShort != null)
                             fn = findAasReturn.aas.IdShort + "." + fn;
                         // serialize via helper
-                        var jsonwriter = copyenv.SerialiazeJsonToStream(new StreamWriter(ms), leaveJsonWriterOpen: true);
+                        var jsonwriter = copyenv.SerializeJsonToStream(new StreamWriter(ms), leaveJsonWriterOpen: true);
                         // write out again
                         ms.Position = 0;
                         SendStreamResponse(context, ms, Path.GetFileName(fn));
-                        // bit ugly
-                        jsonwriter.Close();
+                        // a bit ugly
+                        jsonwriter.Flush();
                     }
                 }
 
