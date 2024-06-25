@@ -6,13 +6,11 @@ using global::AasxCompatibilityModels;
 public class AdaptiveFilterContractResolverTests
 {
     private readonly Fixture _fixture;
-    private readonly Mock<JsonSerializerOptions> _mockOptions;
 
     public AdaptiveFilterContractResolverTests()
     {
         _fixture = new Fixture();
         _fixture.Customize(new AutoMoqCustomization());
-        _mockOptions = _fixture.Freeze<Mock<JsonSerializerOptions>>();
     }
 
     [Fact]
@@ -28,6 +26,4 @@ public class AdaptiveFilterContractResolverTests
         // Assert
         result.Should().BeTrue();
     }
-
-    // Add more tests as per other scenarios and edge cases
 }
