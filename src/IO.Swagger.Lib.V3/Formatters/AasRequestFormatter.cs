@@ -180,8 +180,7 @@ namespace IO.Swagger.Lib.V3.Formatters
             // Deserialize submodelElements
             var valueMetadata = ISubmodelElementMetadatListFrom(obj["submodelElements"]);
 
-            // Convert Newtonsoft.Json.Linq.JObject to JSON string
-            string jsonString = obj.ToString();
+            var jsonString = obj.ToString();
 
             // Deserialize using System.Text.Json
             var options = new JsonSerializerOptions

@@ -8,15 +8,12 @@ This source code may use other Open Source software components (see LICENSE.txt)
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace AasxIntegrationBase
 {
     using System.Text.Json;
     using System.Text.Json.Serialization;
-    using Newtonsoft.Json.Serialization;
-
+    
     // see: https://stackoverflow.com/questions/11099466/
     // using-a-custom-type-discriminator-to-tell-json-net-which-type-of-a-class-hierarc
 
@@ -44,70 +41,6 @@ namespace AasxIntegrationBase
         }
     }
 
-    /// <summary>
-    /// Serialization Binder for AASX Options. Allows modified $typename via [DisplayNameAttribute]
-    /// </summary>
-    public class DisplayNameSerializationBinder : DefaultSerializationBinder
-    {
-        private Dictionary<string, Type> _nameToType;
-        private Dictionary<Type, string> _typeToName;
-
-        public DisplayNameSerializationBinder(Type[] startingTypes)
-        {
-            if (startingTypes == null)
-                return;
-
-            _nameToType = new Dictionary<string, Type>();
-            _typeToName = new Dictionary<Type, string>();
-
-            foreach (var startingType in startingTypes)
-            {
-                var customDisplayNameTypes =
-                    // this.GetType()
-                    startingType
-                        .Assembly
-                        //concat with references if desired
-                        .GetTypes()
-                        .Where(x => x
-                            .GetCustomAttributes(false)
-                            .Any(y => y is DisplayNameAttribute));
-
-                foreach (var t in customDisplayNameTypes)
-                {
-                    var dn = t.GetCustomAttributes(false).OfType<DisplayNameAttribute>().First().DisplayName;
-                    var ntu = t.GetCustomAttributes(false).OfType<DisplayNameAttribute>().First().NoTypeLookup;
-                    // MIHO, 21-05-24: added existence check to make more buller proof
-                    if (!ntu && !_nameToType.ContainsKey(dn))
-                        _nameToType.Add(dn, t);
-                    if (!_typeToName.ContainsKey(t))
-                        _typeToName.Add(t, dn);
-                }
-            }
-        }
-
-        public override void BindToName(Type serializedType, out string assemblyName, out string typeName)
-        {
-            if (false == _typeToName.ContainsKey(serializedType))
-            {
-                base.BindToName(serializedType, out assemblyName, out typeName);
-                return;
-            }
-
-            var name = _typeToName[serializedType];
-
-            assemblyName = null;
-            typeName = name;
-        }
-
-        public override Type BindToType(string assemblyName, string typeName)
-        {
-            if (_nameToType.ContainsKey(typeName))
-                return _nameToType[typeName];
-
-            return base.BindToType(assemblyName, typeName);
-        }
-    }
-
     public static class AasxPluginOptionSerialization
     {
         public static JsonSerializerOptions GetDefaultJsonOptions(Type[] startingTypes)
@@ -124,7 +57,6 @@ namespace AasxIntegrationBase
                               // ReferenceHandler = ReferenceHandler.Serialize,
 
                               // Include type information for objects (similar to TypeNameHandling.Objects)
-                              // Note: System.Text.Json does not directly support TypeNameHandling like Newtonsoft.Json
                               // Consider alternatives based on specific requirements
 
                               // Set other options as needed

@@ -1048,8 +1048,6 @@ public class AasxTask
 
                             if (elementSubmodel != null)
                             {
-                                // receiveSubmodel = Newtonsoft.Json.JsonConvert.DeserializeObject<Submodel>(
-                                //    json, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
                                 MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(json));
                                 JsonNode     node  = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
                                 receiveSubmodel = Jsonization.Deserialize.SubmodelFrom(node);
@@ -1092,7 +1090,7 @@ public class AasxTask
                         {
                             // lastDiff.Value = "" + timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
                             List<AasxRestServer.TestResource.diffEntry> diffList = new List<AasxRestServer.TestResource.diffEntry>();
-                            diffList = Newtonsoft.Json.JsonConvert.DeserializeObject<List<AasxRestServer.TestResource.diffEntry>>(json);
+                            diffList = JsonSerializer.Deserialize<List<AasxRestServer.TestResource.diffEntry>>(json);
                             foreach (var d in diffList)
                             {
                                 if (d.type == "SMEC")
@@ -1269,15 +1267,7 @@ public class AasxTask
                                 JsonNode     node              = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
                                 var          receiveCollection = Jsonization.Deserialize.SubmodelElementCollectionFrom(node);
 
-                                // JObject parsed = JObject.Parse(json);
-                                // foreach (JProperty jp1 in (JToken) parsed)
-                                {
-                                    // if (jp1.Name == "elem")
-                                    {
-                                        // string text = jp1.Value.ToString();
-                                        // var receiveCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<SubmodelElementCollection>(
-                                        //    text, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                                        foreach (var sme in receiveCollection.Value)
+                                foreach (var sme in receiveCollection.Value)
                                         {
                                             var e = sme;
                                             if (e is Property ep)
@@ -1295,7 +1285,7 @@ public class AasxTask
                                             }
                                         }
 
-                                        if (elementCollection.Value.Count == 1)
+                                if (elementCollection.Value.Count == 1)
                                         {
                                             if (elementCollection.Value[0] is SubmodelElementCollection smc)
                                             {
@@ -1328,8 +1318,6 @@ public class AasxTask
                                                 }
                                             }
                                         }
-                                    }
-                                }
                             }
                             catch
                             {

@@ -747,28 +747,6 @@ namespace AdminShellNS
 
                     try
                     {
-                        //// TODO (Michael Hoffmeister, 2020-08-01): use a unified function to create a serializer
-                        //JsonSerializer serializer = new JsonSerializer()
-                        //{
-                        //    NullValueHandling = NullValueHandling.Ignore,
-                        //    ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
-                        //    Formatting = Newtonsoft.Json.Formatting.Indented
-                        //};
-
-                        //var sw = new StreamWriter(s);
-                        //var writer = new JsonTextWriter(sw);
-
-                        //serializer.Serialize(writer, _aasEnv);
-                        //writer.Flush();
-                        //sw.Flush();
-                        //s.Flush();
-
-                        //if (useMemoryStream == null)
-                        //{
-                        //    writer.Close();
-                        //    sw.Close();
-                        //}
-
                         using (var wr = new System.Text.Json.Utf8JsonWriter(s))
                         {
                             Jsonization.Serialize.ToJsonObject(_aasEnv).WriteTo(wr,

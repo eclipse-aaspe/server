@@ -9,8 +9,7 @@ using System.Reflection;
 namespace AasxServerStandardBib
 {
     using System.Text.Json;
-    using Newtonsoft.Json;
-
+    
     public class TimeSeriesPlotting
     {
         public enum TimeSeriesTimeAxis { None, Utc, Tai, Plain, Duration }
@@ -1229,7 +1228,7 @@ namespace AasxServerStandardBib
 
                 try
                 {
-                    var res = Newtonsoft.Json.JsonConvert.DeserializeObject<PlotArguments>(json);
+                    var res = JsonSerializer.Deserialize<PlotArguments>(json);
                     return res;
                 }
                 catch (Exception ex)
@@ -1619,7 +1618,7 @@ namespace AasxServerStandardBib
                 // try de-serialize
                 try
                 {
-                    var r = JsonConvert.DeserializeObject<T>(entry.contents);
+                    var r = JsonSerializer.Deserialize<T>(entry.contents);
                     return r;
                 }
                 catch (Exception ex)

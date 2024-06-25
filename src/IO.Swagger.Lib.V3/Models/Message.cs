@@ -21,7 +21,6 @@ namespace IO.Swagger.Models
     /// <summary>
     /// Enum for Message Types
     /// </summary>
-    [Newtonsoft.Json.JsonConverter(typeof(JsonStringEnumConverter))]
     public enum MessageTypeEnum
     {
         /// <summary>

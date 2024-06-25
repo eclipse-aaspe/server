@@ -37,8 +37,6 @@ specification Details of the Administration Shell. The hereby stated approach is
 namespace AasxRestServerLibrary
 {
     using System.Text.Json;
-    using Newtonsoft.Json;
-    using JsonSerializer = System.Text.Json.JsonSerializer;
 
     public class AasxRestServer
     {
@@ -2290,11 +2288,11 @@ namespace AasxRestServerLibrary
                         {
                             case "Add":
                                 reason = AasPayloadStructuralChangeItem.ChangeReason.Create;
-                                json = JsonConvert.SerializeObject(smec, Newtonsoft.Json.Formatting.Indented,
-                                    new JsonSerializerSettings
-                                    {
-                                        NullValueHandling = NullValueHandling.Ignore
-                                    });
+                                json = JsonSerializer.Serialize(smec, new JsonSerializerOptions
+                                                                      {
+                                                                          WriteIndented    = true,
+                                                                          IgnoreNullValues = true
+                                                                      });
                                 break;
                             case "Remove":
                                 reason = AasPayloadStructuralChangeItem.ChangeReason.Delete;
@@ -2735,7 +2733,7 @@ namespace AasxRestServerLibrary
                                     AasPayloadStructuralChangeItem.ChangeReason.Create,
                                     path: p2,
                                     // Assumption: models will be serialized correctly
-                                    data: JsonConvert.SerializeObject(sme)));
+                                    data: JsonSerializer.Serialize(sme)));
                         }
                         else
                         {
@@ -2822,7 +2820,7 @@ namespace AasxRestServerLibrary
                                     AasPayloadStructuralChangeItem.ChangeReason.Create,
                                     path: p2,
                                     // Assumption: models will be serialized correctly
-                                    data: JsonConvert.SerializeObject(sme)));
+                                    data: JsonSerializer.Serialize(sme)));
                         }
                     }
                     else if (sme.TimeStamp > minimumDate && sme.TimeStamp != sme.TimeStampCreate)

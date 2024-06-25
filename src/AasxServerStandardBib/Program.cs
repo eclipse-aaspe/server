@@ -41,7 +41,6 @@ namespace AasxServer
     using System.Text.Json;
     using System.Text.Json.Serialization;
     using AasxTimeSeries;
-    using JsonSerializer = Newtonsoft.Json.JsonSerializer;
 
     /// <summary>
     /// Checks whether the console will persist after the program exits.
@@ -1662,7 +1661,7 @@ namespace AasxServer
                     try
                     {
                         TransmitFrame tf2 = new TransmitFrame();
-                        tf2 = Newtonsoft.Json.JsonConvert.DeserializeObject<TransmitFrame>(content);
+                        tf2 = JsonSerializer.Deserialize<TransmitFrame>(content);
 
                         node = tf2.source;
                         foreach (TransmitData td2 in tf2.data)

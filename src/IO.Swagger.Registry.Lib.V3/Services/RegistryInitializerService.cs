@@ -1086,18 +1086,13 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                         try
                         {
                             federatedElementsCount++;
-                            /*
-                            var sme = Newtonsoft.Json.JsonConvert.DeserializeObject<ISubmodelElement>(
-                                fe, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                            */
+                            
                             MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(fe));
                             JsonNode     node  = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
                             var          sme   = Jsonization.Deserialize.ISubmodelElementFrom(node);
 
-                            // p = AdminShell.Property.CreateNew("federatedElement" + federatedElementsCount);
                             sme.TimeStampCreate = timestamp;
                             sme.TimeStamp       = timestamp;
-                            // p.value = fe;
                             smc.Value.Add(sme);
                         }
                         catch
