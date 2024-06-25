@@ -66,7 +66,7 @@ public static class AdminShellConverters
             }
         }
 
-        private static void DeserializeArrayProperty(JsonElement root, string propertyName, JsonValueKind expectedKind, Action<JsonElement> assignAction)
+        public static void DeserializeArrayProperty(JsonElement root, string propertyName, JsonValueKind expectedKind, Action<JsonElement> assignAction)
         {
             if (root.TryGetProperty(propertyName, out var property) && property.ValueKind == expectedKind)
             {
@@ -74,7 +74,7 @@ public static class AdminShellConverters
             }
         }
 
-        private void DeserializeLangStringArrayProperty(JsonElement root, string propertyName, Action<List<ILangStringNameType>> assignAction)
+        private static void DeserializeLangStringArrayProperty(JsonElement root, string propertyName, Action<List<ILangStringNameType>> assignAction)
         {
             if (!root.TryGetProperty(propertyName, out var property) || property.ValueKind != JsonValueKind.Array)
             {
@@ -121,7 +121,7 @@ public static class AdminShellConverters
             assignAction(list);
         }
 
-        private ILangStringTextType ConvertToLangStringTextType(ILangStringNameType nameType) => new LangStringTextType(nameType.Language, nameType.Text);
+        private static ILangStringTextType ConvertToLangStringTextType(ILangStringNameType nameType) => new LangStringTextType(nameType.Language, nameType.Text);
 
         public override void Write(Utf8JsonWriter writer, IReferable value, JsonSerializerOptions options) => throw new NotImplementedException();
 
