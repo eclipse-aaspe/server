@@ -42,7 +42,16 @@ public class AdminShellConvertersTests
         var result = converter.Read(ref reader, typeof(AdminShellV20.Referable), options);
 
         // Assert
-        result.Should().BeOfType<AdminShellV20.SubmodelElement>(); // Adjust type as needed
-        // Add more assertions based on expected behavior
+        result.Should().BeOfType<AdminShellV20.Referable>(); // Adjust type as needed based on the actual return type
+
+        result.Should().NotBeNull();
+        result.category.Should().BeNull();
+        result.description.Should().BeNull();
+        result.idShort.Should().Be(string.Empty);
+        result.parent.Should().BeNull();
+        result.DiaryData.Should().NotBeNull();
+        result.DiaryData.Entries.Should().BeNull();
+        result.DiaryData.TimeStamp.Should().NotBeNull();
+        result.JsonDescription.Should().BeNull();
     }
 }
