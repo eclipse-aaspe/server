@@ -26,6 +26,8 @@ using System.Xml.Serialization;
 
 namespace AdminShellNS
 {
+    using Environment = AasCore.Aas3_0.Environment;
+
     /// <summary>
     /// This class lets an outer functionality keep track on the supplementary files, which are in or
     /// are pending to be added or deleted to an Package.
@@ -142,10 +144,10 @@ namespace AdminShellNS
         /// </summary>
         /// <param name="s">Open for read stream</param>
         /// <returns></returns>
-        public static AasCore.Aas3_0.Environment DeserializeXmlFromStreamWithCompat(Stream s)
+        public static Environment? DeserializeXmlFromStreamWithCompat(Stream s)
         {
             // not sure
-            AasCore.Aas3_0.Environment res = null;
+            Environment? res = null;
 
             // try get first element
             var nsuri = TryReadXmlFirstElementNamespaceURI(s);
@@ -260,7 +262,7 @@ namespace AdminShellNS
 
         private string _tempFn = null;
 
-        private AasCore.Aas3_0.Environment _aasEnv = new AasCore.Aas3_0.Environment(new List<IAssetAdministrationShell>(), new List<ISubmodel>(), new List<IConceptDescription>());
+        private Environment? _aasEnv = new AasCore.Aas3_0.Environment(new List<IAssetAdministrationShell>(), new List<ISubmodel>(), new List<IConceptDescription>());
         private Package _openPackage = null;
         private string _envXml = null;
         private readonly ListOfAasSupplementaryFile _pendingFilesToAdd = new ListOfAasSupplementaryFile();
@@ -285,7 +287,7 @@ namespace AdminShellNS
             return _envXml;
         }
 
-        public AdminShellPackageEnv(AasCore.Aas3_0.Environment env)
+        public AdminShellPackageEnv(Environment? env)
         {
             if (env != null)
                 _aasEnv = env;
@@ -318,7 +320,7 @@ namespace AdminShellNS
             }
         }
 
-        public AasCore.Aas3_0.Environment AasEnv
+        public Environment? AasEnv
         {
             get
             {
@@ -326,7 +328,7 @@ namespace AdminShellNS
             }
         }
 
-        private static AasCore.Aas3_0.Environment LoadXml(string fn)
+        private static Environment? LoadXml(string fn)
         {
             try
             {
@@ -348,7 +350,7 @@ namespace AdminShellNS
             }
         }
 
-        private static AasCore.Aas3_0.Environment LoadJson(string fn)
+        private static Environment? LoadJson(string fn)
         {
             try
             {
@@ -363,7 +365,7 @@ namespace AdminShellNS
                     //var aasEnv = (AasCore.Aas3_0_RC02.Environment)serializer.Deserialize(
                     //    file, typeof(AasCore.Aas3_0_RC02.Environment));
 
-                    var node = System.Text.Json.Nodes.JsonNode.Parse(file);
+                    var          node   = System.Text.Json.Nodes.JsonNode.Parse(file);
                     var aasEnv = Jsonization.Deserialize.EnvironmentFrom(node);
 
                     return aasEnv;
@@ -379,7 +381,7 @@ namespace AdminShellNS
         /// <remarks><paramref name="fn"/> is unequal <paramref name="fnToLoad"/> if indirectLoadSave is used.</remarks>
         private static (AasCore.Aas3_0.Environment, Package, String) LoadPackageAasx(string fn, string fnToLoad, bool loadXml = false)
         {
-            AasCore.Aas3_0.Environment aasEnv;
+            Environment? aasEnv;
             Package openPackage = null;
             string envXml = null;
 

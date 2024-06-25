@@ -8,6 +8,8 @@ using System.Linq;
 
 namespace Extensions
 {
+    using Environment = AasCore.Aas3_0.Environment;
+
     public static class ExtendEnvironment
     {
         #region Environment
@@ -112,7 +114,7 @@ namespace Extensions
 
 #if !DoNotUseAasxCompatibilityModels
 
-        public static AasCore.Aas3_0.Environment ConvertFromV10(this AasCore.Aas3_0.Environment environment, AasxCompatibilityModels.AdminShellV10.AdministrationShellEnv sourceEnvironement)
+        public static Environment? ConvertFromV10(this Environment? environment, AasxCompatibilityModels.AdminShellV10.AdministrationShellEnv sourceEnvironement)
         {
             //Convert Administration Shells
             if (!sourceEnvironement.AdministrationShells.IsNullOrEmpty())
@@ -171,7 +173,7 @@ namespace Extensions
         }
 
 
-        public static AasCore.Aas3_0.Environment ConvertFromV20(this AasCore.Aas3_0.Environment environment, AasxCompatibilityModels.AdminShellV20.AdministrationShellEnv sourceEnvironement)
+        public static Environment? ConvertFromV20(this Environment? environment, AasxCompatibilityModels.AdminShellV20.AdministrationShellEnv sourceEnvironement)
         {
             //Convert Administration Shells
             if (!sourceEnvironement.AdministrationShells.IsNullOrEmpty())
@@ -232,7 +234,7 @@ namespace Extensions
 
 #endif
 
-        public static AasCore.Aas3_0.Environment CreateFromExistingEnvironment(this AasCore.Aas3_0.Environment environment, AasCore.Aas3_0.Environment sourceEnvironment, List<IAssetAdministrationShell> filterForAas = null, List<AssetInformation> filterForAssets = null, List<ISubmodel> filterForSubmodel = null, List<IConceptDescription> filterForConceptDescriptions = null)
+        public static AasCore.Aas3_0.Environment CreateFromExistingEnvironment(this AasCore.Aas3_0.Environment environment, Environment? sourceEnvironment, List<IAssetAdministrationShell> filterForAas = null, List<AssetInformation> filterForAssets = null, List<ISubmodel> filterForSubmodel = null, List<IConceptDescription> filterForConceptDescriptions = null)
         {
             if (filterForAas == null)
             {
@@ -311,7 +313,7 @@ namespace Extensions
 
         }
 
-        public static void CreateFromExistingEnvRecurseForCDs(this AasCore.Aas3_0.Environment environment, AasCore.Aas3_0.Environment sourceEnvironment, List<ISubmodelElement> submodelElements, ref List<IConceptDescription> filterForConceptDescription)
+        public static void CreateFromExistingEnvRecurseForCDs(this AasCore.Aas3_0.Environment environment, Environment? sourceEnvironment, List<ISubmodelElement?> submodelElements, ref List<IConceptDescription> filterForConceptDescription)
         {
             if (submodelElements.IsNullOrEmpty() || filterForConceptDescription.IsNullOrEmpty())
             {
@@ -351,7 +353,7 @@ namespace Extensions
 
                 if (submodelElement is AnnotatedRelationshipElement annotatedRelationshipElement)
                 {
-                    var annotedELements = new List<ISubmodelElement>();
+                    var annotedELements = new List<ISubmodelElement?>();
                     foreach (var annotation in annotatedRelationshipElement.Annotations)
                     {
                         annotedELements.Add(annotation);
@@ -361,7 +363,7 @@ namespace Extensions
 
                 if (submodelElement is Operation operation)
                 {
-                    var operationELements = new List<ISubmodelElement>();
+                    var operationELements = new List<ISubmodelElement?>();
                     foreach (var inputVariable in operation.InputVariables)
                     {
                         operationELements.Add(inputVariable.Value);
@@ -452,7 +454,7 @@ namespace Extensions
                 }
             }
         }
-        public static ISubmodel FindSubmodel(this AasCore.Aas3_0.Environment environment, IReference submodelReference)
+        public static ISubmodel FindSubmodel(this Environment? environment, IReference submodelReference)
         {
             if (submodelReference == null)
             {
@@ -479,7 +481,7 @@ namespace Extensions
             return null;
         }
 
-        public static ISubmodel FindSubmodelById(this AasCore.Aas3_0.Environment environment, string? submodelId)
+        public static ISubmodel FindSubmodelById(this Environment? environment, string? submodelId)
         {
             if (string.IsNullOrEmpty(submodelId))
             {
@@ -525,7 +527,7 @@ namespace Extensions
         #endregion
 
         #region AssetAdministrationShell Queries
-        public static IAssetAdministrationShell FindAasWithSubmodelId(this AasCore.Aas3_0.Environment environment, string? submodelId)
+        public static IAssetAdministrationShell FindAasWithSubmodelId(this Environment? environment, string? submodelId)
         {
             if (submodelId == null)
             {
@@ -537,7 +539,7 @@ namespace Extensions
             return aas;
         }
 
-        public static IAssetAdministrationShell FindAasById(this AasCore.Aas3_0.Environment environment, string? aasId)
+        public static IAssetAdministrationShell FindAasById(this Environment? environment, string? aasId)
         {
             if (string.IsNullOrEmpty(aasId))
             {
@@ -554,7 +556,7 @@ namespace Extensions
         #region ConceptDescription Queries
 
         public static IConceptDescription FindConceptDescriptionById(
-            this AasCore.Aas3_0.Environment env, string? cdId)
+            this Environment? env, string? cdId)
         {
             if (string.IsNullOrEmpty(cdId))
                 return null;
@@ -564,7 +566,7 @@ namespace Extensions
         }
 
         public static IConceptDescription FindConceptDescriptionByReference(
-            this AasCore.Aas3_0.Environment env, IReference rf)
+            this Environment? env, IReference rf)
         {
             if (rf == null)
                 return null;
@@ -598,8 +600,8 @@ namespace Extensions
         }
 
         public static IReferable FindReferableByReference(
-            this AasCore.Aas3_0.Environment environment,
-            IReference reference,
+            this Environment? environment,
+            IReference? reference,
             int keyIndex = 0,
             List<ISubmodelElement> submodelElementList = null,
             ReferableRootInfo rootInfo = null)
@@ -920,7 +922,7 @@ namespace Extensions
             return null;
         }
 
-        public static IAssetAdministrationShell FindAasWithAssetInformation(this AasCore.Aas3_0.Environment environment, string? globalAssetId)
+        public static IAssetAdministrationShell FindAasWithAssetInformation(this Environment? environment, string? globalAssetId)
         {
             if (string.IsNullOrEmpty(globalAssetId))
             {

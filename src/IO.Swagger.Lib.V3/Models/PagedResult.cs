@@ -17,7 +17,7 @@ namespace IO.Swagger.Models
     /// </summary>
     public class PagedResult
     {
-        public List<IClass>?              result          { get; set; }
+        public List<IClass?>?             result          { get; set; }
         public PagedResultPagingMetadata? paging_metadata { get; set; }
 
         public static PagedResult ToPagedList<T>(List<T> sourceList, PaginationParameters paginationParameters)

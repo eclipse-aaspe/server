@@ -10,7 +10,7 @@ namespace Extensions
             return "" + range.Min + " .. " + range.Max;
         }
 
-        public static AasCore.Aas3_0.Range ConvertFromV20(this AasCore.Aas3_0.Range range, AasxCompatibilityModels.AdminShellV20.Range sourceRange)
+        public static AAS.Range? ConvertFromV20(this AAS.Range? range, AasxCompatibilityModels.AdminShellV20.Range sourceRange)
         {
             if (sourceRange == null)
             {

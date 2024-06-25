@@ -22,6 +22,7 @@ namespace IO.Swagger.Controllers;
 
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using Environment = AasCore.Aas3_0.Environment;
 
 /// <summary>
 /// 

@@ -5,7 +5,7 @@ namespace Extensions
     public static class ExtendRelationshipElement
     {
         public static AAS.RelationshipElement Set(this AAS.RelationshipElement elem,
-            AAS.Reference first, AAS.Reference second)
+            Reference? first, Reference? second)
         {
             elem.First = first;
             elem.Second = second;

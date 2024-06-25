@@ -7,6 +7,8 @@ using System.Linq;
 
 namespace IO.Swagger.Lib.V3.Services
 {
+    using Environment = AasCore.Aas3_0.Environment;
+
     public class GenerateSerializationService : IGenerateSerializationService
     {
         private readonly IAppLogger<GenerateSerializationService> _logger;
@@ -20,7 +22,7 @@ namespace IO.Swagger.Lib.V3.Services
             _submodelService = submodelService ?? throw new ArgumentNullException(nameof(submodelService));
         }
 
-        public AasCore.Aas3_0.Environment GenerateSerializationByIds(List<string?>? aasIds = null, List<string?>? submodelIds = null, bool includeConceptDescriptions = false)
+        public Environment? GenerateSerializationByIds(List<string?>? aasIds = null, List<string?>? submodelIds = null, bool includeConceptDescriptions = false)
         {
             var outputEnv = new AasCore.Aas3_0.Environment();
             outputEnv.AssetAdministrationShells = new List<IAssetAdministrationShell>();

@@ -428,9 +428,9 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
 
         var submodelElements = _aasService.GetAllSubmodelElements(decodedAasIdentifier, decodedSubmodelIdentifier);
 
-        var smePaginated = _paginationService.GetPaginatedList(submodelElements, new PaginationParameters(cursor, limit));
+        var           smePaginated = _paginationService.GetPaginatedList(submodelElements, new PaginationParameters(cursor, limit));
         var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginated.result ?? [], level, extent);
-        var output       = new PagedResult() {result = smeLevelList.ConvertAll(sme => sme), paging_metadata = smePaginated.paging_metadata};
+        var           output       = new PagedResult() {result = smeLevelList.ConvertAll(sme => sme), paging_metadata = smePaginated.paging_metadata};
         return new ObjectResult(output);
     }
 
@@ -479,10 +479,10 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
 
         var smeList = _aasService.GetAllSubmodelElements(decodedAasIdentifier, decodedSubmodelIdentifier);
 
-        var smePaginated    = _paginationService.GetPaginatedList(smeList, new PaginationParameters(cursor, limit));
+        var           smePaginated    = _paginationService.GetPaginatedList(smeList, new PaginationParameters(cursor, limit));
         var smeLevelList    = _levelExtentModifierService.ApplyLevelExtent(smePaginated.result ?? [], level);
-        var smeMetadataList = _mappingService.Map(smeLevelList, "metadata");
-        var output          = new MetadataPagedResult {result = smeMetadataList.ConvertAll(sme => (IMetadataDTO)sme), paging_metadata = smePaginated.paging_metadata};
+        var           smeMetadataList = _mappingService.Map(smeLevelList, "metadata");
+        var           output          = new MetadataPagedResult {result = smeMetadataList.ConvertAll(sme => (IMetadataDTO)sme), paging_metadata = smePaginated.paging_metadata};
         return new ObjectResult(output);
     }
 
@@ -533,10 +533,10 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
 
         var submodelElementsList = _aasService.GetAllSubmodelElements(decodedAasIdentifier, decodedSubmodelIdentifier);
 
-        var smePaginated = _paginationService.GetPaginatedList(submodelElementsList, new PaginationParameters(cursor, limit));
+        var           smePaginated = _paginationService.GetPaginatedList(submodelElementsList, new PaginationParameters(cursor, limit));
         var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginated.result??[], level, extent);
-        var smePathList  = _pathModifierService.ToIdShortPath(smeLevelList.ConvertAll(sme => (ISubmodelElement)sme));
-        var output       = new PathPagedResult {result = smePathList, paging_metadata = smePaginated.paging_metadata};
+        var           smePathList  = _pathModifierService.ToIdShortPath(smeLevelList.ConvertAll(sme => (ISubmodelElement)sme));
+        var           output       = new PathPagedResult {result = smePathList, paging_metadata = smePaginated.paging_metadata};
         return new ObjectResult(output);
     }
 
@@ -640,10 +640,10 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
 
         var submodelElements = _aasService.GetAllSubmodelElements(decodedAasIdentifier, decodedSubmodelIdentifier);
 
-        var smePaginated = _paginationService.GetPaginatedList(submodelElements, new PaginationParameters(cursor, limit));
+        var           smePaginated = _paginationService.GetPaginatedList(submodelElements, new PaginationParameters(cursor, limit));
         var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginated.result, level);
-        var smeValueList = _mappingService.Map(smeLevelList, "value");
-        var output       = new ValueOnlyPagedResult {result = smeValueList.ConvertAll(sme => (IValueDTO)sme), paging_metadata = smePaginated.paging_metadata};
+        var           smeValueList = _mappingService.Map(smeLevelList, "value");
+        var           output       = new ValueOnlyPagedResult {result = smeValueList.ConvertAll(sme => (IValueDTO)sme), paging_metadata = smePaginated.paging_metadata};
         return new ObjectResult(output);
     }
 

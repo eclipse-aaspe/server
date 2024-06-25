@@ -16,7 +16,7 @@ namespace Extensions
         }
 
         #endregion
-        public static AssetInformation ConvertFromV10(this AssetInformation assetInformation, AasxCompatibilityModels.AdminShellV10.Asset sourceAsset)
+        public static AssetInformation? ConvertFromV10(this AssetInformation? assetInformation, AasxCompatibilityModels.AdminShellV10.Asset sourceAsset)
         {
             //Determine AssetKind
             var assetKind = AssetKind.Instance;
@@ -34,7 +34,7 @@ namespace Extensions
             return assetInformation;
         }
 
-        public static AssetInformation ConvertFromV20(this AssetInformation assetInformation, AasxCompatibilityModels.AdminShellV20.Asset sourceAsset)
+        public static AssetInformation? ConvertFromV20(this AssetInformation? assetInformation, AasxCompatibilityModels.AdminShellV20.Asset sourceAsset)
         {
             //Determine AssetKind
             var assetKind = AssetKind.Instance;

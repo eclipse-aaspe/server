@@ -33,7 +33,7 @@ namespace Extensions
             }
         }
 
-        public static object AddChild(this AnnotatedRelationshipElement annotatedRelationshipElement, ISubmodelElement childSubmodelElement, EnumerationPlacmentBase placement = null)
+        public static object? AddChild(this AnnotatedRelationshipElement annotatedRelationshipElement, ISubmodelElement? childSubmodelElement, EnumerationPlacmentBase placement = null)
         {
             if (childSubmodelElement == null || childSubmodelElement is not IDataElement)
                 return null;
@@ -48,7 +48,7 @@ namespace Extensions
         }
 
         #endregion
-        public static AnnotatedRelationshipElement ConvertAnnotationsFromV20(this AnnotatedRelationshipElement annotatedRelationshipElement, AasxCompatibilityModels.AdminShellV20.AnnotatedRelationshipElement sourceAnnotedRelElement)
+        public static AnnotatedRelationshipElement? ConvertAnnotationsFromV20(this AnnotatedRelationshipElement? annotatedRelationshipElement, AasxCompatibilityModels.AdminShellV20.AnnotatedRelationshipElement sourceAnnotedRelElement)
         {
             if (sourceAnnotedRelElement == null)
             {
@@ -60,8 +60,8 @@ namespace Extensions
                 annotatedRelationshipElement.Annotations ??= new List<IDataElement>();
                 foreach (var submodelElementWrapper in sourceAnnotedRelElement.annotations)
                 {
-                    var sourceSubmodelElement = submodelElementWrapper.submodelElement;
-                    ISubmodelElement outputSubmodelElement = null;
+                    var               sourceSubmodelElement = submodelElementWrapper.submodelElement;
+                    ISubmodelElement? outputSubmodelElement = null;
                     if (sourceSubmodelElement != null)
                     {
                         outputSubmodelElement = outputSubmodelElement.ConvertFromV20(sourceSubmodelElement);
@@ -91,7 +91,7 @@ namespace Extensions
         }
 
         public static AnnotatedRelationshipElement Set(this AnnotatedRelationshipElement elem,
-            Reference first, Reference second)
+            Reference? first, Reference? second)
         {
             elem.First = first;
             elem.Second = second;

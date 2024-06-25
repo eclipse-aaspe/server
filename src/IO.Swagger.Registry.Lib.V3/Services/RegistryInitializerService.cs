@@ -23,13 +23,15 @@ using System.Threading.Tasks;
 
 namespace IO.Swagger.Registry.Lib.V3.Services
 {
+    using Environment = AasCore.Aas3_0.Environment;
+
     public class RegistryInitializerService : IRegistryInitializerService
     {
         static bool init;
         static ISubmodel? aasRegistry;
         static ISubmodel? submodelRegistry;
         static int initiallyEmpty = 0;
-        static AasCore.Aas3_0.Environment envRegistry;
+        static Environment? envRegistry;
         static List<string> getRegistry = [];
         static List<string> postRegistry = [];
         static List<string?> federatedElemensSemanticId = [];
