@@ -10,8 +10,6 @@ This source code may use other Open Source software components (see LICENSE.txt)
 
 
 using Extensions;
-using Newtonsoft.Json;
-// using ScottPlot.Drawing.Colormaps;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -26,6 +24,7 @@ using System.Xml.Serialization;
 
 namespace AdminShellNS
 {
+    using System.Text.Json;
     using Environment = AasCore.Aas3_0.Environment;
 
     /// <summary>
@@ -644,6 +643,13 @@ namespace AdminShellNS
             }
         }
 
+        private JsonSerializerOptions _jsonSerializerOptions = new()
+                                                {
+                                                    WriteIndented          = true,
+                                                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+                                                    ReferenceHandler       = System.Text.Json.Serialization.ReferenceHandler.Preserve
+                                                };
+        
         public void LoadFromAasEnvString(string content)
         {
             try
@@ -975,20 +981,10 @@ namespace AdminShellNS
                     // now, specPart shall be != null!
                     if (specPart.Uri.ToString().ToLower().Trim().EndsWith("json"))
                     {
-                        using (var s = specPart.GetStream(FileMode.Create))
-                        {
-                            JsonSerializer serializer = new JsonSerializer();
-                            serializer.NullValueHandling = NullValueHandling.Ignore;
-                            serializer.ReferenceLoopHandling = ReferenceLoopHandling.Serialize;
-                            serializer.Formatting = Newtonsoft.Json.Formatting.Indented;
-                            using (var sw = new StreamWriter(s))
-                            {
-                                using (JsonWriter writer = new JsonTextWriter(sw))
-                                {
-                                    serializer.Serialize(writer, _aasEnv);
-                                }
-                            }
-                        }
+                        using var s          = specPart.GetStream(FileMode.Create);
+                        using var sw         = new StreamWriter(s);
+                        var       jsonString = JsonSerializer.Serialize(_aasEnv, _jsonSerializerOptions);
+                        sw.Write(jsonString);
                     }
                     else
                     {
