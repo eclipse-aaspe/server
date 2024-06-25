@@ -1,6 +1,5 @@
 namespace AasxCsharpLibary.Tests.AasxCompatibilityModels.V20;
 
-using System.Buffers;
 using System.Text;
 using System.Text.Json;
 using AdminShell_V20;
@@ -20,7 +19,7 @@ public class AdminShellConvertersTests
     public void JsonAasxConverter_CanConvert_Should_Return_True_For_Referable()
     {
         // Arrange
-        var converter     = new AdminShell_V20.AdminShellConverters.JsonAasxConverter("modelType", "name");
+        var converter     = new AdminShell_V20.AdminShellConverters.JsonAasxConverter();
         var typeToConvert = typeof(AdminShellV20.Referable);
 
         // Act
@@ -39,7 +38,7 @@ public class AdminShellConvertersTests
         var bytes      = System.Text.Encoding.UTF8.GetBytes(jsonString);
         var reader     = new Utf8JsonReader(bytes, new JsonReaderOptions {AllowTrailingCommas = true});
 
-        var converter = new AdminShell_V20.AdminShellConverters.JsonAasxConverter("modelType", "name");
+        var converter = new AdminShell_V20.AdminShellConverters.JsonAasxConverter();
 
         // Act
         var result = converter.Read(ref reader, typeof(AdminShellV20.Referable), options);
@@ -80,7 +79,7 @@ public class AdminShellConvertersTests
         var bytes   = Encoding.UTF8.GetBytes(jsonString);
         var reader  = new Utf8JsonReader(bytes, new JsonReaderOptions { AllowTrailingCommas = true });
 
-        var converter = new AdminShellConverters.JsonAasxConverter("modelType", "name");
+        var converter = new AdminShellConverters.JsonAasxConverter();
 
         // Act
         var result = converter.Read(ref reader, typeof(AdminShellV20.Referable), options) as AdminShellV20.Referable;
@@ -152,7 +151,7 @@ public class AdminShellConvertersTests
     {
         // Arrange
         var originalReferable = _fixture.Create<AdminShellV20.Referable>();
-        var converter         = new AdminShell_V20.AdminShellConverters.JsonAasxConverter("modelType", "name");
+        var converter         = new AdminShell_V20.AdminShellConverters.JsonAasxConverter();
         var options           = new JsonSerializerOptions {WriteIndented = true};
         var buffer            = new MemoryStream();
         var writer            = new Utf8JsonWriter(buffer);

@@ -29,15 +29,6 @@ public static class AdminShellConverters
     /// </summary>
     public class JsonAasxConverter : JsonConverter<AdminShell.Referable>
     {
-        private string UpperClassProperty = "modelType";
-        private string LowerClassProperty = "name";
-
-        public JsonAasxConverter(string upperClassProperty, string lowerClassProperty)
-        {
-            UpperClassProperty = upperClassProperty;
-            LowerClassProperty = lowerClassProperty;
-        }
-
         public override AdminShellV20.Referable Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             using var doc  = JsonDocument.ParseValue(ref reader);
@@ -56,39 +47,23 @@ public static class AdminShellConverters
                 target.category = categoryElement.GetString();
             }
 
-            if (root.TryGetProperty("description", out JsonElement descriptionElement))
+            if (!root.TryGetProperty("description", out JsonElement descriptionElement))
             {
-                var langStringArray = descriptionElement.GetProperty("langString").EnumerateArray();
-
-                foreach (var langString in langStringArray)
-                {
-                    var lang = langString.GetProperty("lang").GetString();
-                    var str  = langString.GetProperty("str").GetString();
-                    target.AddDescription(lang, str);
-                }
+                return target;
             }
 
-            // Populate other properties as needed
+            var langStringArray = descriptionElement.GetProperty("langString").EnumerateArray();
+
+            foreach (var langString in langStringArray)
+            {
+                var lang = langString.GetProperty("lang").GetString();
+                var str  = langString.GetProperty("str").GetString();
+                target.AddDescription(lang, str);
+            }
 
             return target;
         }
-
-        private static void CopyProperties(AdminShellV20.Referable source, AdminShellV20.Referable destination)
-        {
-            // Using reflection to copy public properties
-            var properties = typeof(AdminShellV20.Referable).GetProperties();
-            foreach (var property in properties)
-            {
-                if (!property.CanWrite)
-                {
-                    continue;
-                }
-
-                var value = property.GetValue(source);
-                property.SetValue(destination, value);
-            }
-        }
-
+        
         public override void Write(Utf8JsonWriter writer, AdminShellV20.Referable value, JsonSerializerOptions options) => throw new NotImplementedException();
 
         public override bool CanConvert(Type typeToConvert) => typeof(AdminShellV20.Referable).IsAssignableFrom(typeToConvert);
