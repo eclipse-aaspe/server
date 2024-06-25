@@ -43,6 +43,10 @@ Copyright (c) 2018-2020 Festo SE & Co. KG <https://www.festo.com/net/de_de/Forms
 
 namespace AasxServer
 {
+    using System.Text.Json;
+    using AasxTimeSeries;
+    using JsonSerializer = Newtonsoft.Json.JsonSerializer;
+
     /// <summary>
     /// Checks whether the console will persist after the program exits.
     /// This should run only on Windows as it depends on kernel32.dll.
@@ -1754,45 +1758,7 @@ namespace AasxServer
 
                                             if (tsb.block == smc)
                                             {
-                                                foreach (string data in td2.publish)
-                                                {
-                                                    using (TextReader reader = new StringReader(data))
-                                                    {
-                                                        JsonSerializer serializer = new JsonSerializer();
-                                                        serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                                                        var smcData = (SubmodelElementCollection) serializer.Deserialize(reader,
-                                                         typeof(SubmodelElementCollection));
-                                                        if (smcData != null && smc.Value.Count < 100)
-                                                        {
-                                                            if (tsb.data != null)
-                                                            {
-                                                                int maxCollections    = Convert.ToInt32(tsb.maxCollections.Value);
-                                                                int actualCollections = tsb.data.Value.Count;
-                                                                if (actualCollections < maxCollections ||
-                                                                    (tsb.sampleMode.Value == "continuous" && actualCollections == maxCollections))
-                                                                {
-                                                                    tsb.data.Value.Add(smcData);
-                                                                    actualCollections++;
-                                                                }
-
-                                                                if (actualCollections > maxCollections)
-                                                                {
-                                                                    tsb.data.Value.RemoveAt(0);
-                                                                    actualCollections--;
-                                                                }
-
-                                                                tsb.actualCollections.Value = actualCollections.ToString();
-                                                                /*
-                                                                tsb.lowDataIndex =
-                                                                    Convert.ToInt32(tsb.data.Value[0].submodelElement.IdShort.Substring("data".Length));
-                                                                tsb.highDataIndex =
-                                                                    Convert.ToInt32(tsb.data.Value[tsb.data.Value.Count - 1].submodelElement.IdShort.Substring("data".Length));
-                                                                */
-                                                                signalNewData(1);
-                                                            }
-                                                        }
-                                                    }
-                                                }
+                                                transformTsbBlock(td2, smc, tsb);
                                             }
                                         }
                                     }
@@ -1806,11 +1772,12 @@ namespace AasxServer
                                     Submodel submodel = null;
                                     try
                                     {
-                                        using (TextReader reader = new StringReader(sm))
+                                        using (var reader = new StringReader(sm))
                                         {
-                                            JsonSerializer serializer = new JsonSerializer();
-                                            serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                                            submodel = (Submodel) serializer.Deserialize(reader, typeof(Submodel));
+                                            var options = new JsonSerializerOptions();
+                                            options.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+
+                                            submodel = System.Text.Json.JsonSerializer.Deserialize<Submodel>(reader.ReadToEnd(), options);
                                         }
                                     }
                                     catch (Exception)
@@ -1964,6 +1931,53 @@ namespace AasxServer
                 }
                 else
                     Thread.Sleep(connectUpdateRate);
+            }
+        }
+
+        private static void transformTsbBlock(TransmitData td2, SubmodelElementCollection smc, TimeSeries.TimeSeriesBlock tsb)
+        {
+            foreach (var data in td2.publish)
+            {
+                var options = new JsonSerializerOptions();
+                options.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+
+                SubmodelElementCollection smcData;
+
+                using (TextReader reader = new StringReader(data))
+                {
+                    string jsonString = reader.ReadToEnd();
+                    smcData = System.Text.Json.JsonSerializer.Deserialize<SubmodelElementCollection>(jsonString, options);
+                
+                    if (smcData != null && smc.Value.Count < 100)
+                    {
+                        if (tsb.data != null)
+                        {
+                            int maxCollections    = Convert.ToInt32(tsb.maxCollections.Value);
+                            int actualCollections = tsb.data.Value.Count;
+                            if (actualCollections < maxCollections ||
+                                (tsb.sampleMode.Value == "continuous" && actualCollections == maxCollections))
+                            {
+                                tsb.data.Value.Add(smcData);
+                                actualCollections++;
+                            }
+
+                            if (actualCollections > maxCollections)
+                            {
+                                tsb.data.Value.RemoveAt(0);
+                                actualCollections--;
+                            }
+
+                            tsb.actualCollections.Value = actualCollections.ToString();
+                            /*
+                                                                tsb.lowDataIndex =
+                                                                    Convert.ToInt32(tsb.data.Value[0].submodelElement.IdShort.Substring("data".Length));
+                                                                tsb.highDataIndex =
+                                                                    Convert.ToInt32(tsb.data.Value[tsb.data.Value.Count - 1].submodelElement.IdShort.Substring("data".Length));
+                                                                */
+                            signalNewData(1);
+                        }
+                    }
+                }
             }
         }
 
@@ -2128,12 +2142,11 @@ namespace AasxServer
                 Submodel submodel = null;
                 try
                 {
-                    using (TextReader reader = new StringReader(sm))
-                    {
-                        JsonSerializer serializer = new JsonSerializer();
-                        serializer.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                        submodel = (Submodel) serializer.Deserialize(reader, typeof(Submodel));
-                    }
+                    var options = new JsonSerializerOptions();
+                    options.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                    using var reader     = new StringReader(sm);
+                    var       jsonString = reader.ReadToEnd();
+                    submodel = System.Text.Json.JsonSerializer.Deserialize<Submodel>(jsonString, options);
                 }
                 catch (Exception)
                 {

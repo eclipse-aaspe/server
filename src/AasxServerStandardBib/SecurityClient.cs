@@ -25,6 +25,8 @@ using System.Linq;
 
 namespace AasxServer
 {
+    using System.Text.Json;
+
     public class AasxTask
     {
         public SubmodelElementCollection def = null;
@@ -63,18 +65,18 @@ namespace AasxServer
             {
                 // Test for proxy
                 Console.WriteLine("Read proxyFile: " + proxyFile);
-                bool error = false;
+                bool   error        = false;
                 string proxyAddress = "";
-                string username = "";
-                string password = "";
+                string username     = "";
+                string password     = "";
                 try
                 {
                     // Open the text file using a stream reader.
                     using (StreamReader sr = new StreamReader(proxyFile))
                     {
                         proxyAddress = sr.ReadLine();
-                        username = sr.ReadLine();
-                        password = sr.ReadLine();
+                        username     = sr.ReadLine();
+                        password     = sr.ReadLine();
                     }
                 }
                 catch (IOException e)
@@ -102,10 +104,10 @@ namespace AasxServer
 
             for (int i = 0; i < aascount; i++)
             {
-                var env = AasxServer.Program.env[ i ];
+                var env = AasxServer.Program.env[i];
                 if (env != null)
                 {
-                    var aas = env.AasEnv.AssetAdministrationShells[ 0 ];
+                    var aas = env.AasEnv.AssetAdministrationShells[0];
                     if (aas.Submodels != null && aas.Submodels.Count > 0)
                     {
                         foreach (var smr in aas.Submodels)
@@ -119,18 +121,18 @@ namespace AasxServer
                                     countSme = sm.SubmodelElements.Count;
                                 for (int iSme = 0; iSme < countSme; iSme++)
                                 {
-                                    var sme = sm.SubmodelElements[ iSme ];
+                                    var sme = sm.SubmodelElements[iSme];
                                     if (sme is SubmodelElementCollection smec)
                                     {
                                         var nextTask = new AasxTask();
                                         AasxTask.taskList.Add(nextTask);
-                                        nextTask.def = smec;
+                                        nextTask.def      = smec;
                                         nextTask.envIndex = i;
 
                                         int countSmec = smec.Value.Count;
                                         for (int iSmec = 0; iSmec < countSmec; iSmec++)
                                         {
-                                            var sme2 = smec.Value[ iSmec ];
+                                            var sme2    = smec.Value[iSmec];
                                             var idShort = sme2.IdShort.ToLower();
 
                                             switch (idShort)
@@ -186,7 +188,7 @@ namespace AasxServer
             int countSmec = smec.Value.Count;
             for (int iSmec = 0; iSmec < countSmec; iSmec++)
             {
-                var sme2 = smec.Value[ iSmec ];
+                var sme2 = smec.Value[iSmec];
 
                 if (sme2 is Operation op)
                 {
@@ -230,15 +232,15 @@ namespace AasxServer
                 return;
             }
 
-            Property authType = null;
-            Property authServerEndPoint = null;
-            AasCore.Aas3_0.File authServerCertificate = null;
-            AasCore.Aas3_0.File clientCertificate = null;
-            Property clientCertificatePassWord = null;
-            Property accessToken = null;
-            Property userName = null;
-            Property passWord = null;
-            Property clientToken = null;
+            Property            authType                  = null;
+            Property            authServerEndPoint        = null;
+            AasCore.Aas3_0.File authServerCertificate     = null;
+            AasCore.Aas3_0.File clientCertificate         = null;
+            Property            clientCertificatePassWord = null;
+            Property            accessToken               = null;
+            Property            userName                  = null;
+            Property            passWord                  = null;
+            Property            clientToken               = null;
 
             var smec = new SubmodelElementCollection();
             foreach (var input in op.InputVariables)
@@ -246,7 +248,7 @@ namespace AasxServer
                 var inputRef = input.Value;
                 if (!(inputRef is ReferenceElement))
                     return;
-                var refElement = Program.env[ envIndex ].AasEnv.FindReferableByReference((inputRef as ReferenceElement).Value);
+                var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as ReferenceElement).Value);
                 if (refElement is SubmodelElementCollection re)
                     smec = re;
             }
@@ -254,7 +256,7 @@ namespace AasxServer
             int countSmec = smec.Value.Count;
             for (int iSmec = 0; iSmec < countSmec; iSmec++)
             {
-                var sme2 = smec.Value[ iSmec ];
+                var sme2    = smec.Value[iSmec];
                 var idShort = sme2.IdShort.ToLower();
 
                 switch (idShort)
@@ -338,8 +340,8 @@ namespace AasxServer
 
                             if (accessToken.Value != "")
                             {
-                                bool valid = true;
-                                var jwtToken = new JwtSecurityToken(accessToken.Value);
+                                bool valid    = true;
+                                var  jwtToken = new JwtSecurityToken(accessToken.Value);
                                 if ((jwtToken == null) || (jwtToken.ValidFrom > DateTime.UtcNow) || (jwtToken.ValidTo < DateTime.UtcNow))
                                     valid = false;
                                 if (valid) return;
@@ -347,8 +349,8 @@ namespace AasxServer
                             }
 
                             if (createAccessToken(envIndex, authServerEndPoint, authServerCertificate,
-                                    clientCertificate, clientCertificatePassWord,
-                                    accessToken, clientToken))
+                                                  clientCertificate, clientCertificatePassWord,
+                                                  accessToken, clientToken))
                                 accessToken.SetTimeStamp(timeStamp);
                         }
 
@@ -358,9 +360,9 @@ namespace AasxServer
         }
 
         static bool createAccessToken(int envIndex, Property authServerEndPoint, AasCore.Aas3_0.File authServerCertificate,
-            AasCore.Aas3_0.File clientCertificate, Property clientCertificatePassWord,
-            Property accessToken, Property clientToken,
-            string policy = "", string policyRequestedResource = "")
+                                      AasCore.Aas3_0.File clientCertificate, Property clientCertificatePassWord,
+                                      Property accessToken, Property clientToken,
+                                      string policy = "", string policyRequestedResource = "")
         {
             var handler = new HttpClientHandler();
 
@@ -368,8 +370,8 @@ namespace AasxServer
                 handler.Proxy = proxy;
             else
                 handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
-            var client = new HttpClient(handler);
-            DiscoveryDocumentResponse disco = null;
+            var                       client = new HttpClient(handler);
+            DiscoveryDocumentResponse disco  = null;
 
             if (authServerEndPoint == null)
                 return false;
@@ -380,11 +382,10 @@ namespace AasxServer
             Stream s = null;
             try
             {
-                s = AasxServer.Program.env[ envIndex ].GetLocalStreamFromPackage(authServerCertificate.Value, access: FileAccess.Read);
+                s = AasxServer.Program.env[envIndex].GetLocalStreamFromPackage(authServerCertificate.Value, access: FileAccess.Read);
             }
             catch
             {
-
             }
 
             if (s == null)
@@ -396,23 +397,22 @@ namespace AasxServer
             using (var m = new System.IO.MemoryStream())
             {
                 s.CopyTo(m);
-                var b = m.GetBuffer();
+                var b          = m.GetBuffer();
                 var serverCert = new X509Certificate2(b);
                 Console.WriteLine("Auth server certificate: " + authServerCertificate.Value);
                 s.Close();
             }
 
-            string[] x5c = null;
-            X509Certificate2 certificate = null;
-            string certificatePassword = clientCertificatePassWord.Value;
-            Stream s2 = null;
+            string[]         x5c                 = null;
+            X509Certificate2 certificate         = null;
+            string           certificatePassword = clientCertificatePassWord.Value;
+            Stream           s2                  = null;
             try
             {
-                s2 = AasxServer.Program.env[ envIndex ].GetLocalStreamFromPackage(clientCertificate.Value, access: FileAccess.Read);
+                s2 = AasxServer.Program.env[envIndex].GetLocalStreamFromPackage(clientCertificate.Value, access: FileAccess.Read);
             }
             catch
             {
-
             }
 
             if (s2 == null)
@@ -443,27 +443,28 @@ namespace AasxServer
 
                 string[] X509Base64 = new string[xc.Count];
 
-                int j = xc.Count;
+                int j   = xc.Count;
                 var xce = xc.GetEnumerator();
                 for (int i = 0; i < xc.Count; i++)
                 {
                     xce.MoveNext();
-                    X509Base64[ --j ] = Convert.ToBase64String(xce.Current.GetRawCertData());
+                    X509Base64[--j] = Convert.ToBase64String(xce.Current.GetRawCertData());
                     // X509Base64[ --j ] = Base64UrlEncoder.Encode(xce.Current.GetRawCertData());
                 }
+
                 x5c = X509Base64;
 
-                var credential = new X509SigningCredentials(certificate);
-                string clientId = "client.jwt";
-                string email = "";
-                string subject = certificate.Subject;
-                var split = subject.Split(new Char[] { ',' });
-                if (split[ 0 ] != "")
+                var    credential = new X509SigningCredentials(certificate);
+                string clientId   = "client.jwt";
+                string email      = "";
+                string subject    = certificate.Subject;
+                var    split      = subject.Split(new Char[] {','});
+                if (split[0] != "")
                 {
-                    var split2 = split[ 0 ].Split(new Char[] { '=' });
-                    if (split2[ 0 ] == "E")
+                    var split2 = split[0].Split(new Char[] {'='});
+                    if (split2[0] == "E")
                     {
-                        email = split2[ 1 ];
+                        email = split2[1];
                     }
                 }
 
@@ -484,34 +485,33 @@ namespace AasxServer
                 if (policyRequestedResource != "")
                     claimList.Add(new Claim("policyRequestedResource", policyRequestedResource, ClaimValueTypes.String));
                 var token = new JwtSecurityToken(
-                        clientId,
-                        disco.TokenEndpoint,
-                        claimList,
-                        now,
-                        now.AddMinutes(1),
-                        credential
-                    );
+                                                 clientId,
+                                                 disco.TokenEndpoint,
+                                                 claimList,
+                                                 now,
+                                                 now.AddMinutes(1),
+                                                 credential
+                                                );
 
                 token.Header.Add("x5c", x5c);
-                var tokenHandler = new JwtSecurityTokenHandler();
+                var    tokenHandler    = new JwtSecurityTokenHandler();
                 string clientLongToken = tokenHandler.WriteToken(token);
 
                 TokenResponse response = null;
                 // client.Timeout = TimeSpan.FromSeconds(20);
                 task = Task.Run(async () =>
-                {
-                    response = await client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
-                    {
-                        Address = disco.TokenEndpoint,
-                        Scope = "resource1.scope1",
-
-                        ClientAssertion =
-                        {
-                            Type = OidcConstants.ClientAssertionTypes.JwtBearer,
-                            Value = clientLongToken
-                        }
-                    });
-                });
+                                {
+                                    response = await client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
+                                                                                               {
+                                                                                                   Address = disco.TokenEndpoint,
+                                                                                                   Scope   = "resource1.scope1",
+                                                                                                   ClientAssertion =
+                                                                                                   {
+                                                                                                       Type  = OidcConstants.ClientAssertionTypes.JwtBearer,
+                                                                                                       Value = clientLongToken
+                                                                                                   }
+                                                                                               });
+                                });
                 task.Wait();
 
                 if (response.IsError) return false;
@@ -539,7 +539,6 @@ namespace AasxServer
                 }
                 catch
                 {
-
                 }
 
                 string expires = "";
@@ -549,7 +548,6 @@ namespace AasxServer
                 }
                 catch
                 {
-
                 }
 
                 if (userName != "" && expires != "")
@@ -563,7 +561,6 @@ namespace AasxServer
                             new Claim(JwtClaimTypes.JwtId, Guid.NewGuid().ToString()),
                             new Claim(JwtClaimTypes.Subject, clientId),
                             new Claim(JwtClaimTypes.IssuedAt, now.ToEpochTime().ToString(), ClaimValueTypes.Integer64),
-
                             new Claim("userName", userName),
                         };
                     if (policy != "")
@@ -571,15 +568,15 @@ namespace AasxServer
                     if (policyRequestedResource != "")
                         claimList.Add(new Claim("policyRequestedResource", policyRequestedResource, ClaimValueTypes.String));
                     var token = new JwtSecurityToken(
-                            clientId,
-                            policyRequestedResource,
-                            claimList,
-                            now,
-                            now.AddDays(1),
-                            credential)
-                    ;
+                                                     clientId,
+                                                     policyRequestedResource,
+                                                     claimList,
+                                                     now,
+                                                     now.AddDays(1),
+                                                     credential)
+                        ;
                     var tokenHandler = new JwtSecurityTokenHandler();
-                    var t = tokenHandler.WriteToken(token);
+                    var t            = tokenHandler.WriteToken(token);
                     if (t != null)
                     {
                         clientToken.Value = t;
@@ -604,41 +601,41 @@ namespace AasxServer
             if (opName.Substring(0, 4) == "get-")
                 opName = "get";
 
-            SubmodelElementCollection authentication = null;
-            Property authType = null;
-            Property authServerEndPoint = null;
-            Property accessToken = null;
-            Property userName = null;
-            Property passWord = null;
-            AasCore.Aas3_0.File authServerCertificate = null;
-            AasCore.Aas3_0.File clientCertificate = null;
-            Property clientCertificatePassWord = null;
-            Property clientToken = null;
+            SubmodelElementCollection authentication            = null;
+            Property                  authType                  = null;
+            Property                  authServerEndPoint        = null;
+            Property                  accessToken               = null;
+            Property                  userName                  = null;
+            Property                  passWord                  = null;
+            AasCore.Aas3_0.File       authServerCertificate     = null;
+            AasCore.Aas3_0.File       clientCertificate         = null;
+            Property                  clientCertificatePassWord = null;
+            Property                  clientToken               = null;
 
-            Property endPoint = null;
-            Property path = null;
+            Property                  endPoint          = null;
+            Property                  path              = null;
             SubmodelElementCollection elementCollection = null;
-            Submodel elementSubmodel = null;
-            Property steps = null;
-            Property loop = null;
-            Property duration = null;
+            Submodel                  elementSubmodel   = null;
+            Property                  steps             = null;
+            Property                  loop              = null;
+            Property                  duration          = null;
 
             Property lastDiff = null;
-            Property status = null;
-            Property mode = null;
+            Property status   = null;
+            Property mode     = null;
 
             SubmodelElementCollection smec = null;
-            Submodel sm = null;
-            Property p = null;
+            Submodel                  sm   = null;
+            Property                  p    = null;
 
-            HttpClient client = null;
+            HttpClient        client  = null;
             HttpClientHandler handler = null;
 
             foreach (var input in op.InputVariables)
             {
                 smec = null;
-                sm = null;
-                p = null;
+                sm   = null;
+                p    = null;
                 var inputRef = input.Value;
                 if (inputRef is Property)
                 {
@@ -647,7 +644,7 @@ namespace AasxServer
 
                 if (inputRef is ReferenceElement)
                 {
-                    var refElement = Program.env[ envIndex ].AasEnv.FindReferableByReference((inputRef as ReferenceElement).Value);
+                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as ReferenceElement).Value);
                     if (refElement is SubmodelElementCollection)
                         smec = refElement as SubmodelElementCollection;
                     if (refElement is Submodel)
@@ -692,8 +689,8 @@ namespace AasxServer
             foreach (var output in op.OutputVariables)
             {
                 smec = null;
-                sm = null;
-                p = null;
+                sm   = null;
+                p    = null;
                 var outputRef = output.Value;
                 if (outputRef is Property)
                 {
@@ -702,7 +699,7 @@ namespace AasxServer
 
                 if (outputRef is ReferenceElement)
                 {
-                    var refElement = Program.env[ envIndex ].AasEnv.FindReferableByReference((outputRef as ReferenceElement).Value);
+                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((outputRef as ReferenceElement).Value);
                     if (refElement is SubmodelElementCollection)
                         smec = refElement as SubmodelElementCollection;
                     if (refElement is Submodel)
@@ -732,7 +729,7 @@ namespace AasxServer
                 int countSmec = smec.Value.Count;
                 for (int iSmec = 0; iSmec < countSmec; iSmec++)
                 {
-                    var sme2 = smec.Value[ iSmec ];
+                    var sme2    = smec.Value[iSmec];
                     var idShort = sme2.IdShort.ToLower();
 
                     switch (idShort)
@@ -830,7 +827,7 @@ namespace AasxServer
 
                 if (duration != null)
                 {
-                    duration.Value = watch.ElapsedMilliseconds + " ms";
+                    duration.Value     = watch.ElapsedMilliseconds + " ms";
                     duration.TimeStamp = timeStamp;
                 }
 
@@ -839,24 +836,24 @@ namespace AasxServer
                 string requestPath = endPoint.Value;
                 if (path.Value != "")
                     requestPath += "/" + path.Value;
-                HttpResponseMessage response = null;
-                Task task = null;
-                string diffPath = "";
-                var splitPath = path.Value.Split('/');
-                string aasPath = splitPath[ 0 ];
-                string subPath = "";
-                int i = 1;
-                string pre = "";
+                HttpResponseMessage response  = null;
+                Task                task      = null;
+                string              diffPath  = "";
+                var                 splitPath = path.Value.Split('/');
+                string              aasPath   = splitPath[0];
+                string              subPath   = "";
+                int                 i         = 1;
+                string              pre       = "";
                 while (i < splitPath.Length)
                 {
-                    subPath += pre + splitPath[ i ];
-                    pre = ".";
+                    subPath += pre + splitPath[i];
+                    pre     =  ".";
                     i++;
                 }
 
                 if (status != null)
                 {
-                    status.Value = "OK";
+                    status.Value     = "OK";
                     status.TimeStamp = timeStamp;
                 }
 
@@ -877,20 +874,21 @@ namespace AasxServer
                         {
                             opName = "get";
                             requestPath = endPoint.Value + "/aas/" + aasPath +
-                                          "/submodels/" + splitPath[ 1 ] + "/elements";
+                                          "/submodels/" + splitPath[1] + "/elements";
                             i = 2;
                             while (i < splitPath.Length)
                             {
-                                requestPath += "/" + splitPath[ i ];
+                                requestPath += "/" + splitPath[i];
                                 i++;
                             }
+
                             requestPath += "/complete";
                         }
                         else
                         {
                             last = DateTime.Parse(lastDiff.Value).ToUniversalTime();
                             requestPath = endPoint.Value +
-                                          "/diffjson/aas/" + splitPath[ 0 ] +
+                                          "/diffjson/aas/" + splitPath[0] +
                                           "?path=" + subPath;
                             requestPath += "."; // to avoid wrong data by prefix only
                             requestPath += "&time=" + lastDiff.Value;
@@ -907,10 +905,10 @@ namespace AasxServer
                             handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
                     }
 
-                    client = new HttpClient(handler);
+                    client         = new HttpClient(handler);
                     client.Timeout = TimeSpan.FromSeconds(20);
 
-                    string policy = "";
+                    string policy                  = "";
                     string policyRequestedResource = "";
                     // test, if usage policy is needed
                     if (steps != null && steps.Value != "")
@@ -920,9 +918,9 @@ namespace AasxServer
                             accessToken.Value = "";
 
                             if (!createAccessToken(envIndex, authServerEndPoint, authServerCertificate,
-                                    clientCertificate, clientCertificatePassWord,
-                                    accessToken, clientToken,
-                                    "", ""))
+                                                   clientCertificate, clientCertificatePassWord,
+                                                   accessToken, clientToken,
+                                                   "", ""))
                                 continue;
                             accessToken.TimeStamp = timeStamp;
                             Console.WriteLine("Create Token1");
@@ -977,9 +975,9 @@ namespace AasxServer
                         {
                             clientToken.Value = "";
                             if (!createAccessToken(envIndex, authServerEndPoint, authServerCertificate,
-                                    clientCertificate, clientCertificatePassWord,
-                                    accessToken, clientToken,
-                                    policy, policyRequestedResource))
+                                                   clientCertificate, clientCertificatePassWord,
+                                                   accessToken, clientToken,
+                                                   policy, policyRequestedResource))
                                 continue;
                             clientToken.TimeStamp = timeStamp;
                             Console.WriteLine("Create Token2");
@@ -1019,9 +1017,9 @@ namespace AasxServer
                             continue;
                         }
 
-                        string json = response.Content.ReadAsStringAsync().Result;
+                        string                    json              = response.Content.ReadAsStringAsync().Result;
                         SubmodelElementCollection receiveCollection = null;
-                        Submodel receiveSubmodel = null;
+                        Submodel                  receiveSubmodel   = null;
                         try
                         {
                             if (opName == "get")
@@ -1029,13 +1027,21 @@ namespace AasxServer
                                 if (elementCollection != null)
                                 {
                                     JObject parsed = JObject.Parse(json);
-                                    foreach (JProperty jp1 in (JToken) parsed)
+                                    foreach (JProperty jp1 in (JToken)parsed)
                                     {
                                         if (jp1.Name == "elem")
                                         {
                                             string text = jp1.Value.ToString();
-                                            receiveCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<SubmodelElementCollection>(
-                                                text, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                                            receiveCollection = JsonSerializer.Deserialize<SubmodelElementCollection>(
+                                                                                                                      text,
+                                                                                                                      new JsonSerializerOptions
+                                                                                                                      {
+                                                                                                                          Converters =
+                                                                                                                          {
+                                                                                                                              new AdminShellConverters.
+                                                                                                                                  JsonAasxConverter("modelType", "name")
+                                                                                                                          }
+                                                                                                                      });
                                             elementCollection.Value = receiveCollection.Value;
                                             elementCollection.SetAllParentsAndTimestamps(elementCollection, timeStamp, elementCollection.TimeStampCreate);
                                             elementCollection.SetTimeStamp(timeStamp);
@@ -1048,7 +1054,7 @@ namespace AasxServer
                                     // receiveSubmodel = Newtonsoft.Json.JsonConvert.DeserializeObject<Submodel>(
                                     //    json, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
                                     MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(json));
-                                    JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                                    JsonNode     node  = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
                                     receiveSubmodel = Jsonization.Deserialize.SubmodelFrom(node);
 
                                     receiveSubmodel.SetTimeStamp(timeStamp);
@@ -1059,20 +1065,20 @@ namespace AasxServer
                                         continue;
                                     receiveSubmodel.Id = elementSubmodel.Id;
 
-                                    var aas = Program.env[ envIndex ].AasEnv.FindAasWithSubmodelId(elementSubmodel.Id);
+                                    var aas = Program.env[envIndex].AasEnv.FindAasWithSubmodelId(elementSubmodel.Id);
 
                                     // datastructure update
-                                    if (Program.env == null || Program.env[ envIndex ].AasEnv == null /*|| Program.env[ envIndex ].AasEnv.Assets == null*/)
+                                    if (Program.env == null || Program.env[envIndex].AasEnv == null /*|| Program.env[ envIndex ].AasEnv.Assets == null*/)
                                         continue;
 
                                     // add Submodel
-                                    var existingSm = Program.env[ envIndex ].AasEnv.FindSubmodelById(elementSubmodel.Id);
+                                    var existingSm = Program.env[envIndex].AasEnv.FindSubmodelById(elementSubmodel.Id);
                                     if (existingSm != null)
-                                        Program.env[ envIndex ].AasEnv.Submodels.Remove(existingSm);
-                                    Program.env[ envIndex ].AasEnv.Submodels.Add(receiveSubmodel);
+                                        Program.env[envIndex].AasEnv.Submodels.Remove(existingSm);
+                                    Program.env[envIndex].AasEnv.Submodels.Add(receiveSubmodel);
                                     for (int s = 0; s < aas.Submodels.Count; s++)
                                     {
-                                        if (aas.Submodels[ s ].Keys[ 0 ].Value == existingSm.Id)
+                                        if (aas.Submodels[s].Keys[0].Value == existingSm.Id)
                                         {
                                             aas.Submodels.RemoveAt(s);
                                             break;
@@ -1104,11 +1110,11 @@ namespace AasxServer
                                                     if (splitPath.Length < 2)
                                                         continue;
                                                     requestPath = endPoint.Value + "/aas/" + aasPath +
-                                                                  "/submodels/" + splitPath[ 0 ] + "/elements";
+                                                                  "/submodels/" + splitPath[0] + "/elements";
                                                     i = 1;
                                                     while (i < splitPath.Length)
                                                     {
-                                                        requestPath += "/" + splitPath[ i ];
+                                                        requestPath += "/" + splitPath[i];
                                                         i++;
                                                     }
 
@@ -1137,13 +1143,13 @@ namespace AasxServer
 
                                                     json = response.Content.ReadAsStringAsync().Result;
                                                     JObject parsed = JObject.Parse(json);
-                                                    foreach (JProperty jp1 in (JToken) parsed)
+                                                    foreach (JProperty jp1 in (JToken)parsed)
                                                     {
                                                         if (jp1.Name == "elem")
                                                         {
                                                             string text = jp1.Value.ToString();
-                                                            receiveCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<SubmodelElementCollection>(
-                                                                text, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                                                            receiveCollection = JsonSerializer.Deserialize<SubmodelElementCollection>(
+                                                             text, new JsonSerializerOptions {Converters = {new AdminShellConverters.JsonAasxConverter("modelType", "name")}});
                                                             break;
                                                         }
                                                     }
@@ -1162,6 +1168,7 @@ namespace AasxServer
                                                                     smc.SetAllParentsAndTimestamps(elementCollection, timeStamp, elementCollection.TimeStampCreate);
                                                                     smc.SetTimeStamp(timeStamp);
                                                                 }
+
                                                                 found = true;
                                                                 break;
                                                             }
@@ -1203,7 +1210,7 @@ namespace AasxServer
                         handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
                 }
 
-                client = new HttpClient(handler);
+                client         = new HttpClient(handler);
                 client.Timeout = TimeSpan.FromSeconds(20);
                 if (accessToken != null)
                     client.SetBearerToken(accessToken.Value);
@@ -1211,8 +1218,8 @@ namespace AasxServer
                 if (opName == "put" || opName == "putdiff")
                 {
                     SubmodelElementCollection diffCollection = null;
-                    DateTime last = new DateTime();
-                    int count = 1;
+                    DateTime                  last           = new DateTime();
+                    int                       count          = 1;
                     if (mode != null && mode.Value == "clear")
                         opName = "put";
                     if (opName == "putdiff")
@@ -1222,7 +1229,7 @@ namespace AasxServer
                         if (elementCollection == null)
                             continue;
                         diffCollection = elementCollection;
-                        count = elementCollection.Value.Count;
+                        count          = elementCollection.Value.Count;
                         if (lastDiff.Value == "")
                         {
                             // get "latestData" from server
@@ -1256,16 +1263,16 @@ namespace AasxServer
                             }
 
                             int highDataIndex = -1;
-                            int lowDataIndex = 0;
-                            int totalSamples = 0;
+                            int lowDataIndex  = 0;
+                            int totalSamples  = 0;
                             if (!error)
                             {
                                 try
                                 {
-                                    string json = response.Content.ReadAsStringAsync().Result;
-                                    MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(json));
-                                    JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
-                                    var receiveCollection = Jsonization.Deserialize.SubmodelElementCollectionFrom(node);
+                                    string       json              = response.Content.ReadAsStringAsync().Result;
+                                    MemoryStream mStrm             = new MemoryStream(Encoding.UTF8.GetBytes(json));
+                                    JsonNode     node              = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                                    var          receiveCollection = Jsonization.Deserialize.SubmodelElementCollectionFrom(node);
 
                                     // JObject parsed = JObject.Parse(json);
                                     // foreach (JProperty jp1 in (JToken) parsed)
@@ -1283,7 +1290,7 @@ namespace AasxServer
                                                     if (ep.IdShort == "highDataIndex")
                                                     {
                                                         highDataIndex = Convert.ToInt32(ep.Value);
-                                                        lowDataIndex = highDataIndex + 1;
+                                                        lowDataIndex  = highDataIndex + 1;
                                                     }
 
                                                     if (ep.IdShort == "totalSamples")
@@ -1295,7 +1302,7 @@ namespace AasxServer
 
                                             if (elementCollection.Value.Count == 1)
                                             {
-                                                if (elementCollection.Value[ 0 ] is SubmodelElementCollection smc)
+                                                if (elementCollection.Value[0] is SubmodelElementCollection smc)
                                                 {
                                                     if (smc.IdShort == "latestData")
                                                     {
@@ -1353,18 +1360,18 @@ namespace AasxServer
 
                     for (i = 0; i < count; i++)
                     {
-                        bool error = false;
+                        bool   error       = false;
                         string statusValue = "";
-                        string json = "";
+                        string json        = "";
                         try
                         {
                             if (opName == "putdiff")
                             {
-                                var sme = diffCollection.Value[ i ];
+                                var sme = diffCollection.Value[i];
                                 if (!(sme is SubmodelElementCollection))
                                     continue;
                                 elementCollection = sme as SubmodelElementCollection;
-                                diffPath = "." + elementCollection.IdShort;
+                                diffPath          = "." + elementCollection.IdShort;
                                 if (elementCollection.TimeStamp <= last)
                                     elementCollection = null;
                             }
@@ -1397,18 +1404,18 @@ namespace AasxServer
                                 if (opName == "put" || (elementCollection != null && elementCollection.IdShort == "latestData"))
                                 {
                                     task = Task.Run(async () =>
-                                    {
-                                        response = await client.PutAsync(
-                                            requestPath + diffPath, content);
-                                    });
+                                                    {
+                                                        response = await client.PutAsync(
+                                                                                         requestPath + diffPath, content);
+                                                    });
                                 }
                                 else if (opName == "putdiff")
                                 {
                                     task = Task.Run(async () =>
-                                    {
-                                        response = await client.PostAsync(
-                                            requestPath, content);
-                                    });
+                                                    {
+                                                        response = await client.PostAsync(
+                                                                                          requestPath, content);
+                                                    });
                                 }
 
                                 task.Wait();
@@ -1426,6 +1433,7 @@ namespace AasxServer
                                                   response.Content.ReadAsStringAsync().Result + " ; " +
                                                   "PUT " + requestPath;
                                 }
+
                                 error = true;
                             }
                         }
@@ -1449,14 +1457,14 @@ namespace AasxServer
 
             if (loop != null)
             {
-                loop.Value = loopCount + "";
+                loop.Value     = loopCount + "";
                 loop.TimeStamp = timeStamp;
             }
 
             watch.Stop();
             if (duration != null)
             {
-                duration.Value = watch.ElapsedMilliseconds + " ms";
+                duration.Value     = watch.ElapsedMilliseconds + " ms";
                 duration.TimeStamp = timeStamp;
             }
 
@@ -1475,15 +1483,15 @@ namespace AasxServer
             }
 
             SubmodelElementCollection collection = null;
-            Property limit = null;
-            Property prefix = null;
-            SubmodelElementCollection smec = null;
-            Property p = null;
+            Property                  limit      = null;
+            Property                  prefix     = null;
+            SubmodelElementCollection smec       = null;
+            Property                  p          = null;
 
             foreach (var input in op.InputVariables)
             {
                 smec = null;
-                p = null;
+                p    = null;
                 var inputRef = input.Value;
                 if (inputRef is Property)
                 {
@@ -1492,7 +1500,7 @@ namespace AasxServer
 
                 if (inputRef is ReferenceElement)
                 {
-                    var refElement = Program.env[ envIndex ].AasEnv.FindReferableByReference((inputRef as ReferenceElement).Value);
+                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as ReferenceElement).Value);
                     if (refElement is SubmodelElementCollection)
                         smec = refElement as SubmodelElementCollection;
                 }
@@ -1519,13 +1527,13 @@ namespace AasxServer
 
             try
             {
-                int count = Convert.ToInt32(limit.Value);
-                string pre = prefix.Value;
-                int preCount = 0;
-                int i = 0;
+                int    count    = Convert.ToInt32(limit.Value);
+                string pre      = prefix.Value;
+                int    preCount = 0;
+                int    i        = 0;
                 while (i < collection.Value.Count)
                 {
-                    if (pre == collection.Value[ i ].IdShort.Substring(0, pre.Length))
+                    if (pre == collection.Value[i].IdShort.Substring(0, pre.Length))
                         preCount++;
                     i++;
                 }
@@ -1533,12 +1541,12 @@ namespace AasxServer
                 i = 0;
                 while (preCount > count && i < collection.Value.Count)
                 {
-                    if (pre == collection.Value[ i ].IdShort.Substring(0, pre.Length))
+                    if (pre == collection.Value[i].IdShort.Substring(0, pre.Length))
                     {
-                        IReferable r = collection.Value[ i ];
-                        var sm = r.GetParentSubmodel();
+                        IReferable r  = collection.Value[i];
+                        var        sm = r.GetParentSubmodel();
                         AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
-                            r, "Remove", sm, (ulong)timeStamp.Ticks);
+                                                                                           r, "Remove", sm, (ulong)timeStamp.Ticks);
                         collection.Value.RemoveAt(i);
                         preCount--;
                     }
@@ -1550,7 +1558,6 @@ namespace AasxServer
             }
             catch
             {
-
             }
 
             Program.signalNewData(1);
@@ -1587,7 +1594,7 @@ namespace AasxServer
         public static void resetTimeStamp()
         {
             lastCreateTimestamp = new DateTime();
-            credentialsChanged = true;
+            credentialsChanged  = true;
         }
 
         static string cleanupIdShort(String text)
@@ -1607,8 +1614,8 @@ namespace AasxServer
 
         public static bool createCfpTree(int envIndex, DateTime timeStamp)
         {
-            bool changed = false;
-            string digest = "";
+            bool   changed = false;
+            string digest  = "";
             cfpValid = true;
 
             if (logCount % logCountModulo == 0)
@@ -1621,15 +1628,15 @@ namespace AasxServer
             }
 
             // GET actual BOM
-            AdminShellPackageEnv env = null;
-            int aascount = AasxServer.Program.env.Length;
+            AdminShellPackageEnv env      = null;
+            int                  aascount = AasxServer.Program.env.Length;
 
             for (int i = 0; i < aascount; i++)
             {
-                env = AasxServer.Program.env[ i ];
+                env = AasxServer.Program.env[i];
                 if (env != null)
                 {
-                    var aas = env.AasEnv.AssetAdministrationShells[ 0 ];
+                    var aas = env.AasEnv.AssetAdministrationShells[0];
                     // if (aas.IdShort != "ZveiControlCabinetAas - EXTERNAL")
                     //    continue;
 
@@ -1639,20 +1646,20 @@ namespace AasxServer
                         // foreach (var smr in aas.Submodels)
                         for (int j = 0; j < aas.Submodels.Count; j++)
                         {
-                            var smr = aas.Submodels[ j ];
-                            var sm = env.AasEnv.FindSubmodel(smr);
+                            var smr = aas.Submodels[j];
+                            var sm  = env.AasEnv.FindSubmodel(smr);
                             if (sm != null && sm.IdShort != null)
                             {
                                 if (sm.IdShort.Contains("BillOfMaterial"))
                                 {
-                                    if (sm.Extensions != null && sm.Extensions.Count != 0 && sm.Extensions[ 0 ].Name == "endpoint")
+                                    if (sm.Extensions != null && sm.Extensions.Count != 0 && sm.Extensions[0].Name == "endpoint")
                                     {
                                         var requestPath = sm.Extensions[0].Value;
 
-                                        string queryPara = "";
-                                        string userPW = "";
+                                        string queryPara     = "";
+                                        string userPW        = "";
                                         string urlEdcWrapper = "";
-                                        string replace = "";
+                                        string replace       = "";
                                         if (AasxCredentials.get(cs.credentials, requestPath, out queryPara, out userPW, out urlEdcWrapper, out replace))
                                         {
                                             if (replace != "")
@@ -1663,10 +1670,7 @@ namespace AasxServer
                                                 requestPath = urlEdcWrapper;
                                         }
 
-                                        var handler = new HttpClientHandler()
-                                        {
-                                            ServerCertificateCustomValidationCallback = delegate { return true; },
-                                        };
+                                        var handler = new HttpClientHandler() {ServerCertificateCustomValidationCallback = delegate { return true; },};
 
                                         if (!requestPath.Contains("localhost"))
                                         {
@@ -1681,14 +1685,14 @@ namespace AasxServer
                                         if (userPW != "")
                                             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", userPW);
                                         string clientToken = "";
-                                        if (sm.Extensions != null && sm.Extensions.Count > 1 && sm.Extensions[ 1 ].Name == "clientToken")
-                                            clientToken = sm.Extensions[ 1 ].Value;
+                                        if (sm.Extensions != null && sm.Extensions.Count > 1 && sm.Extensions[1].Name == "clientToken")
+                                            clientToken = sm.Extensions[1].Value;
                                         if (clientToken != "")
                                             client.SetBearerToken(clientToken);
 
                                         client.DefaultRequestHeaders.Clear();
 
-                                        bool success = false;
+                                        bool                success  = false;
                                         HttpResponseMessage response = new HttpResponseMessage();
                                         try
                                         {
@@ -1700,18 +1704,18 @@ namespace AasxServer
                                             task1.Wait();
                                             if (response.IsSuccessStatusCode)
                                             {
-                                                var json = response.Content.ReadAsStringAsync().Result;
+                                                var    json   = response.Content.ReadAsStringAsync().Result;
                                                 byte[] buffer = Encoding.UTF8.GetBytes(json);
                                                 digest += Convert.ToBase64String(SHA256.HashData(buffer));
                                                 // if (digest != hashBOM)
                                                 //    changed= true;
                                                 // hashBOM = digest;
                                                 MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(json));
-                                                JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
-                                                newsm = new Submodel("");
-                                                newsm = Jsonization.Deserialize.SubmodelFrom(node);
-                                                newsm.IdShort += " - COPY";
-                                                newsm.Extensions = sm.Extensions;
+                                                JsonNode     node  = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                                                newsm            =  new Submodel("");
+                                                newsm            =  Jsonization.Deserialize.SubmodelFrom(node);
+                                                newsm.IdShort    += " - COPY";
+                                                newsm.Extensions =  sm.Extensions;
                                                 newsm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp);
                                                 env.AasEnv.Submodels.Remove(sm);
                                                 env.AasEnv.Submodels.Add(newsm);
@@ -1729,9 +1733,9 @@ namespace AasxServer
                                             {
                                                 if (hashBOM != "")
                                                     changed = true;
-                                                hashBOM = "";
-                                                newsm = new Submodel(sm.Id);
-                                                newsm.IdShort = "BillOfMaterial - NO ACCESS";
+                                                hashBOM          = "";
+                                                newsm            = new Submodel(sm.Id);
+                                                newsm.IdShort    = "BillOfMaterial - NO ACCESS";
                                                 newsm.Extensions = sm.Extensions;
                                                 newsm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp);
                                                 env.AasEnv.Submodels.Remove(sm);
@@ -1754,22 +1758,22 @@ namespace AasxServer
             Dictionary<string, cfpNode> assetCfp = new Dictionary<string, cfpNode>();
             // cfpNode root = new cfpNode();
             aascount = AasxServer.Program.env.Length;
-            root = null;
+            root     = null;
 
             // Collect data from all AAS into cfpNode(s)
             for (int i = 0; i < aascount; i++)
             {
-                env = AasxServer.Program.env[ i ];
+                env = AasxServer.Program.env[i];
                 if (env != null)
                 {
-                    var aas = env.AasEnv.AssetAdministrationShells[ 0 ];
+                    var aas = env.AasEnv.AssetAdministrationShells[0];
 
                     //var assetId = aas.assetRef.Keys[ 0 ].Value;
                     var assetId = aas.AssetInformation.GlobalAssetId;
-                    var cfp = new cfpNode();
-                    cfp.envIndex = i;
-                    cfp.aas = aas as AssetAdministrationShell;
-                    cfp.asset = assetId;
+                    var cfp     = new cfpNode();
+                    cfp.envIndex           = i;
+                    cfp.aas                = aas as AssetAdministrationShell;
+                    cfp.asset              = assetId;
                     cfp.productDesignation = aas.IdShort;
 
                     if (aas.Submodels != null && aas.Submodels.Count > 0)
@@ -1797,8 +1801,8 @@ namespace AasxServer
                                                 if (c.IdShort.Contains("FootprintInformationModule")
                                                     || c.IdShort.Contains("FootprintInformationCombination"))
                                                 {
-                                                    string lifeCyclePhase = "";
-                                                    Property co2eq = null;
+                                                    string   lifeCyclePhase = "";
+                                                    Property co2eq          = null;
                                                     foreach (var v2 in c.Value)
                                                     {
                                                         switch (v2.IdShort)
@@ -1817,13 +1821,13 @@ namespace AasxServer
                                                         case "Cradle-to-gate":
                                                             if (c.IdShort.Contains("FootprintInformationModule"))
                                                             {
-                                                                co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                                co2eq.Value            = co2eq.Value.Replace(",", ".");
                                                                 cfp.cradleToGateModule = co2eq;
                                                             }
 
                                                             if (c.IdShort.Contains("FootprintInformationCombination"))
                                                             {
-                                                                co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                                co2eq.Value                 = co2eq.Value.Replace(",", ".");
                                                                 cfp.cradleToGateCombination = co2eq;
                                                             }
 
@@ -1831,13 +1835,13 @@ namespace AasxServer
                                                         case "Production":
                                                             if (c.IdShort.Contains("FootprintInformationModule"))
                                                             {
-                                                                co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                                co2eq.Value          = co2eq.Value.Replace(",", ".");
                                                                 cfp.productionModule = co2eq;
                                                             }
 
                                                             if (c.IdShort.Contains("FootprintInformationCombination"))
                                                             {
-                                                                co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                                co2eq.Value               = co2eq.Value.Replace(",", ".");
                                                                 cfp.productionCombination = co2eq;
                                                             }
 
@@ -1845,13 +1849,13 @@ namespace AasxServer
                                                         case "Distribution":
                                                             if (c.IdShort.Contains("FootprintInformationModule"))
                                                             {
-                                                                co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                                co2eq.Value            = co2eq.Value.Replace(",", ".");
                                                                 cfp.distributionModule = co2eq;
                                                             }
 
                                                             if (c.IdShort.Contains("FootprintInformationCombination"))
                                                             {
-                                                                co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                                co2eq.Value                 = co2eq.Value.Replace(",", ".");
                                                                 cfp.distributionCombination = co2eq;
                                                             }
 
@@ -1880,8 +1884,8 @@ namespace AasxServer
                                             {
                                                 if (c.IdShort.Contains("ProductCarbonFootprint"))
                                                 {
-                                                    string lifeCyclePhase = "";
-                                                    Property co2eq = null;
+                                                    string   lifeCyclePhase = "";
+                                                    Property co2eq          = null;
                                                     foreach (var v2 in c.Value)
                                                     {
                                                         switch (v2.IdShort)
@@ -1902,13 +1906,13 @@ namespace AasxServer
                                                         case "A1-A3":
                                                             if (c.IdShort.Contains("ProductCarbonFootprint"))
                                                             {
-                                                                co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                                co2eq.Value            = co2eq.Value.Replace(",", ".");
                                                                 cfp.cradleToGateModule = co2eq;
                                                             }
 
                                                             if (c.IdShort.Contains("FootprintInformationCombination"))
                                                             {
-                                                                co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                                co2eq.Value                 = co2eq.Value.Replace(",", ".");
                                                                 cfp.cradleToGateCombination = co2eq;
                                                             }
 
@@ -1918,13 +1922,13 @@ namespace AasxServer
                                                         case "A3 - production":
                                                             if (c.IdShort.Contains("ProductCarbonFootprint"))
                                                             {
-                                                                co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                                co2eq.Value          = co2eq.Value.Replace(",", ".");
                                                                 cfp.productionModule = co2eq;
                                                             }
 
                                                             if (c.IdShort.Contains("FootprintInformationCombination"))
                                                             {
-                                                                co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                                co2eq.Value               = co2eq.Value.Replace(",", ".");
                                                                 cfp.productionCombination = co2eq;
                                                             }
 
@@ -1934,13 +1938,13 @@ namespace AasxServer
                                                         case "A1 – raw material supply (and upstream production)":
                                                             if (c.IdShort.Contains("ProductCarbonFootprint"))
                                                             {
-                                                                co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                                co2eq.Value            = co2eq.Value.Replace(",", ".");
                                                                 cfp.distributionModule = co2eq;
                                                             }
 
                                                             if (c.IdShort.Contains("FootprintInformationCombination"))
                                                             {
-                                                                co2eq.Value = co2eq.Value.Replace(",", ".");
+                                                                co2eq.Value                 = co2eq.Value.Replace(",", ".");
                                                                 cfp.distributionCombination = co2eq;
                                                             }
 
@@ -2071,13 +2075,13 @@ namespace AasxServer
                                                             case "ProductWeight":
                                                                 if (c.IdShort.Contains("WeightInformationModule"))
                                                                 {
-                                                                    cfp.weightModule = v2 as Property;
+                                                                    cfp.weightModule       = v2 as Property;
                                                                     cfp.weightModule.Value = cfp.weightModule.Value.Replace(",", ".");
                                                                 }
 
                                                                 if (c.IdShort.Contains("WeightInformationCombination"))
                                                                 {
-                                                                    cfp.weightCombination = v2 as Property;
+                                                                    cfp.weightCombination       = v2 as Property;
                                                                     cfp.weightCombination.Value = cfp.weightCombination.Value.Replace(",", ".");
                                                                 }
 
@@ -2168,10 +2172,10 @@ namespace AasxServer
             // Iterate tree and calculate CFP values
             bool changed = createCfpTree(envIndex, timeStamp);
 
-            cfpNode node = root;
-            cfpNode parent = null;
-            List<cfpNode> stack = new List<cfpNode>();
-            int sp = -1;
+            cfpNode       node   = root;
+            cfpNode       parent = null;
+            List<cfpNode> stack  = new List<cfpNode>();
+            int           sp     = -1;
 
             while (node != null)
             {
@@ -2199,6 +2203,7 @@ namespace AasxServer
 
                         node.productionCombination.SetTimeStamp(timeStamp);
                     }
+
                     if (node.distributionCombination != null)
                     {
                         node.distributionCombination.Value = "0.0";
@@ -2209,6 +2214,7 @@ namespace AasxServer
 
                         node.distributionCombination.SetTimeStamp(timeStamp);
                     }
+
                     if (node.weightCombination != null)
                     {
                         node.weightCombination.Value = "0.0";
@@ -2220,6 +2226,7 @@ namespace AasxServer
                         node.weightCombination.SetTimeStamp(timeStamp);
                     }
                 }
+
                 // move up, if all children iterated
                 if (node.iChild == node.children.Count)
                 {
@@ -2230,7 +2237,7 @@ namespace AasxServer
                     }
                     else
                     {
-                        parent = stack[ sp ];
+                        parent = stack[sp];
                         if (parent.cradleToGateCombination != null)
                         {
                             Property p = node.cradleToGateModule;
@@ -2243,18 +2250,18 @@ namespace AasxServer
                                 double value2 = 0.0;
                                 try
                                 {
-                                    value1 = Convert.ToDouble(parent.cradleToGateCombination.Value, CultureInfo.InvariantCulture);
-                                    value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
-                                    value1 = Math.Round(value1 + value2, 8);
+                                    value1                               = Convert.ToDouble(parent.cradleToGateCombination.Value, CultureInfo.InvariantCulture);
+                                    value2                               = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                    value1                               = Math.Round(value1 + value2, 8);
                                     parent.cradleToGateCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
                                     parent.cradleToGateCombination.SetTimeStamp(timeStamp);
                                 }
                                 catch
                                 {
-
                                 }
                             }
                         }
+
                         if (parent.productionCombination != null)
                         {
                             Property p = node.productionModule;
@@ -2266,18 +2273,18 @@ namespace AasxServer
                                 double value2 = 0.0;
                                 try
                                 {
-                                    value1 = Convert.ToDouble(parent.productionCombination.Value, CultureInfo.InvariantCulture);
-                                    value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
-                                    value1 = Math.Round(value1 + value2, 8);
+                                    value1                             = Convert.ToDouble(parent.productionCombination.Value, CultureInfo.InvariantCulture);
+                                    value2                             = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                    value1                             = Math.Round(value1 + value2, 8);
                                     parent.productionCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
                                     parent.productionCombination.SetTimeStamp(timeStamp);
                                 }
                                 catch
                                 {
-
                                 }
                             }
                         }
+
                         if (parent.distributionCombination != null)
                         {
                             Property p = node.distributionModule;
@@ -2289,18 +2296,18 @@ namespace AasxServer
                                 double value2 = 0.0;
                                 try
                                 {
-                                    value1 = Convert.ToDouble(parent.distributionCombination.Value, CultureInfo.InvariantCulture);
-                                    value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
-                                    value1 = Math.Round(value1 + value2, 8);
+                                    value1                               = Convert.ToDouble(parent.distributionCombination.Value, CultureInfo.InvariantCulture);
+                                    value2                               = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                    value1                               = Math.Round(value1 + value2, 8);
                                     parent.distributionCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
                                     parent.distributionCombination.SetTimeStamp(timeStamp);
                                 }
                                 catch
                                 {
-
                                 }
                             }
                         }
+
                         if (parent.weightCombination != null)
                         {
                             Property p = node.weightModule;
@@ -2312,20 +2319,20 @@ namespace AasxServer
                                 double value2 = 0.0;
                                 try
                                 {
-                                    value1 = Convert.ToDouble(parent.weightCombination.Value, CultureInfo.InvariantCulture);
-                                    value2 = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
-                                    value1 = Math.Round(value1 + value2, 8);
+                                    value1                         = Convert.ToDouble(parent.weightCombination.Value, CultureInfo.InvariantCulture);
+                                    value2                         = Convert.ToDouble(p.Value, CultureInfo.InvariantCulture);
+                                    value1                         = Math.Round(value1 + value2, 8);
                                     parent.weightCombination.Value = value1.ToString(CultureInfo.InvariantCulture);
                                     parent.weightCombination.SetTimeStamp(timeStamp);
                                 }
                                 catch
                                 {
-
                                 }
                             }
                         }
+
                         parent = null;
-                        node = stack[ sp ];
+                        node   = stack[sp];
                         stack.RemoveAt(sp);
                         sp--;
                     }
@@ -2335,7 +2342,7 @@ namespace AasxServer
                     // Interate children
                     stack.Add(node);
                     sp++;
-                    node = node.children[ node.iChild++ ];
+                    node = node.children[node.iChild++];
                 }
             }
 
@@ -2345,19 +2352,19 @@ namespace AasxServer
             {
                 Program.signalNewData(1);
                 lastCreateTimestamp = timeStamp;
-                credentialsChanged = false;
+                credentialsChanged  = false;
             }
         }
 
         static void saveAASXtoTemp()
         {
             bool newData = false;
-            int envi = 0;
+            int  envi    = 0;
             while (envi < Program.env.Length)
             {
                 if (!Program.withDb)
                 {
-                    string fn = Program.envFileName[ envi ];
+                    string fn = Program.envFileName[envi];
 
                     if (fn != null && fn != "")
                     {
@@ -2367,9 +2374,9 @@ namespace AasxServer
                             lock (Program.changeAasxFile)
                             {
                                 Console.WriteLine("SAVE TEMP: " + fn);
-                                Program.env[ envi ].SaveAs("./temp/" + fn, true);
+                                Program.env[envi].SaveAs("./temp/" + fn, true);
                                 DateTime timeStamp = DateTime.Now;
-                                foreach (var submodel in Program.env[ envi ].AasEnv.Submodels)
+                                foreach (var submodel in Program.env[envi].AasEnv.Submodels)
                                 {
                                     submodel.TimeStampCreate = timeStamp;
                                     submodel.SetTimeStamp(timeStamp);
@@ -2383,16 +2390,17 @@ namespace AasxServer
                 }
                 else
                 {
-                    if (Program.env[ envi ] != null && Program.env[ envi ].getWrite())
+                    if (Program.env[envi] != null && Program.env[envi].getWrite())
                     {
                         lock (Program.changeAasxFile)
                         {
-                            Edit.Update(Program.env[ envi ]);
+                            Edit.Update(Program.env[envi]);
                             newData = true;
                         }
                     }
                     // delete of aas handeling
                 }
+
                 envi++;
             }
 
@@ -2432,7 +2440,7 @@ namespace AasxServer
             bool taskRun = false;
             for (int i = 0; i < taskList.Count; i++)
             {
-                var t = taskList[ i ];
+                var t = taskList[i];
                 if (t.taskType?.Value.ToLower() == "cyclic")
                 {
                     if (t.nextExecution > timeStamp)
