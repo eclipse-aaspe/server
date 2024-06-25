@@ -4935,7 +4935,7 @@ namespace AasxCompatibilityModels
             
             public AdministrationShellEnv DeserializeFromJsonStream(TextReader reader)
             {
-                options.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+                options.Converters.Add(new AdminShellConverters.JsonAasxConverter());
 
                 using var jsonDocument = JsonDocument.Parse(reader.ReadToEnd());
                 return JsonSerializer.Deserialize<AdministrationShellEnv>(jsonDocument.RootElement.GetRawText(), options);
