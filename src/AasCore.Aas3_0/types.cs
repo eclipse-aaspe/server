@@ -3,7 +3,6 @@
  * Do NOT edit or append.
  */
 
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;          // can't alias
@@ -12,6 +11,8 @@ using EnumMemberAttribute = System.Runtime.Serialization.EnumMemberAttribute;
 
 namespace AasCore.Aas3_0
 {
+    using System.Text.Json.Serialization;
+
     /// <summary>
     /// Represent a general class of an AAS model.
     /// </summary>
