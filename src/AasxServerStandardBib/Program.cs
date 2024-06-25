@@ -16,7 +16,6 @@ using System.CommandLine;
 using System.CommandLine.Help;
 using System.CommandLine.IO;
 using System.ComponentModel;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -30,9 +29,7 @@ using System.Threading.Tasks;
 using System.Timers;
 using System.Xml;
 using System.Xml.Serialization;
-using Formatting = Newtonsoft.Json.Formatting;
 using AasxServerDB.Context;
-using Microsoft.IdentityModel.Tokens;
 
 /*
 Copyright (c) 2019-2020 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski
@@ -1477,9 +1474,14 @@ namespace AasxServer
                             aasDescriptor aasDsecritpor      = Program.creatAASDescriptor(Program.env[j]);
                             TransmitData  aasDsecritporTData = new TransmitData {source = connectNodeName};
                             aasDsecritporTData.type        = "register";
-                            aasDsecritporTData.destination = "VWS_AAS_Registry";
-                            var aasDescriptorJsonData = JsonConvert.SerializeObject(aasDsecritpor, Newtonsoft.Json.Formatting.Indented,
-                                                                                    new JsonSerializerSettings {NullValueHandling = NullValueHandling.Ignore});
+                            aasDsecritporTData.destination = "VWS_AAS_Registry";var options = new JsonSerializerOptions
+                                                                                              {
+                                                                                                  WriteIndented    = true,
+                                                                                                  IgnoreNullValues = true
+                                                                                              };
+
+                            var aasDescriptorJsonData = System.Text.Json.JsonSerializer.Serialize(aasDsecritpor, options);
+
                             aasDsecritporTData.publish.Add(aasDescriptorJsonData);
                             descriptortf.data.Add(aasDsecritporTData);
                             /* Create Detail part 2 Descriptor END */
@@ -1499,12 +1501,18 @@ namespace AasxServer
                         }
                     }
 
-                    string decriptorData = JsonConvert.SerializeObject(descriptortf, Formatting.Indented);
+                    string decriptorData = System.Text.Json.JsonSerializer.Serialize(descriptortf, new JsonSerializerOptions
+                                                                        {
+                                                                            WriteIndented = true,
+                                                                        });
                     Program.publishDescriptorData(decriptorData);
 
                     td = new TransmitData {source = connectNodeName};
 
-                    var json = JsonConvert.SerializeObject(adp, Newtonsoft.Json.Formatting.Indented);
+                    string json = System.Text.Json.JsonSerializer.Serialize(adp, new JsonSerializerOptions
+                                                                                 {
+                                                                                     WriteIndented = true,
+                                                                                 });
                     td.type        = "directory";
                     td.destination = getDirectoryDestination;
                     td.publish.Add(json);
@@ -1538,8 +1546,10 @@ namespace AasxServer
                     res.fileType        = getaasxFile_fileType;
                     res.fileTransmitted = getaasxFile_fileTransmitted;
 
-                    string responseJson = JsonConvert.SerializeObject(res, Formatting.Indented);
-
+                    string responseJson = System.Text.Json.JsonSerializer.Serialize(res, new JsonSerializerOptions
+                                                                        {
+                                                                            WriteIndented = true,
+                                                                        });
                     td.destination = getaasxFile_destination;
                     td.type        = "getaasxBlock";
                     td.publish.Add(responseJson);
@@ -1602,7 +1612,10 @@ namespace AasxServer
                             {
                                 td = new TransmitData {source = connectNodeName};
 
-                                var json = JsonConvert.SerializeObject(sm, Newtonsoft.Json.Formatting.Indented);
+                                var json = System.Text.Json.JsonSerializer.Serialize(sm, new JsonSerializerOptions
+                                                                                         {
+                                                                                             WriteIndented = true,
+                                                                                         });
                                 td.type = "submodel";
                                 td.publish.Add(json);
                                 tf.data.Add(td);
@@ -1613,9 +1626,12 @@ namespace AasxServer
 
                     envi++;
                 }
-
-                string publish = JsonConvert.SerializeObject(tf, Formatting.Indented);
-
+                
+                string publish = System.Text.Json.JsonSerializer.Serialize(tf, new JsonSerializerOptions
+                                                                               {
+                                                                                   WriteIndented = true,
+                                                                               });
+                
                 HttpClient httpClient;
                 if (clientHandler != null)
                 {
@@ -1677,7 +1693,10 @@ namespace AasxServer
                                     res.fileName = Path.GetFileName(Program.envFileName[aasIndex]);
                                     res.fileData = fileToken;
 
-                                    string responseJson = JsonConvert.SerializeObject(res, Formatting.Indented);
+                                    string responseJson = System.Text.Json.JsonSerializer.Serialize(res, new JsonSerializerOptions
+                                                                                                         {
+                                                                                                             WriteIndented = true,
+                                                                                                         });
 
                                     TransmitData tdp = new TransmitData();
 
@@ -1713,8 +1732,11 @@ namespace AasxServer
                                     res.fileName = Path.GetFileName(Program.envFileName[aasIndex]);
                                     res.fileData = binaryBase64;
                                     Byte[] fileBytes = Convert.FromBase64String(binaryBase64);
+                                    string responseJson = System.Text.Json.JsonSerializer.Serialize(res, new JsonSerializerOptions
+                                                                                                         {
+                                                                                                             WriteIndented = true,
+                                                                                                         });
 
-                                    string responseJson = JsonConvert.SerializeObject(res, Formatting.Indented);
 
                                     TransmitData tdp = new TransmitData();
 
@@ -2189,11 +2211,17 @@ namespace AasxServer
                 Console.WriteLine("{0} PUT Submodel {1} from URL {2}.", countGetPut++, PUTSUBMODEL, PUTURL);
 
                 {
+                    
+                    var jsonOptions = new JsonSerializerOptions
+                                      {
+                                          WriteIndented = true
+                                      };
                     foreach (var sm in env[0].AasEnv.Submodels)
                     {
                         if (sm != null && sm.IdShort != null && sm.IdShort == PUTSUBMODEL)
                         {
-                            var json = JsonConvert.SerializeObject(sm, Newtonsoft.Json.Formatting.Indented);
+                            
+                            var json = System.Text.Json.JsonSerializer.Serialize(sm,jsonOptions);
 
                             try
                             {
