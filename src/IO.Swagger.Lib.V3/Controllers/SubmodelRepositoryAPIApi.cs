@@ -24,7 +24,6 @@ using IO.Swagger.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Annotations;
 using System;
 using System.Collections.Generic;
@@ -886,7 +885,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         exampleJson = "\"\"";
 
         var example = exampleJson != null
-                          ? JsonConvert.DeserializeObject<OperationResult>(exampleJson)
+                          ? System.Text.Json.JsonSerializer.Deserialize<OperationResult>(exampleJson)
                           : default(OperationResult); //TODO: Change the data returned
         return new ObjectResult(example);
     }
@@ -972,7 +971,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
         // return StatusCode(0, default(Result));
         
-        return new ObjectResult(JsonConvert.DeserializeObject<BaseOperationResult>(string.Empty));
+        return new ObjectResult(System.Text.Json.JsonSerializer.Deserialize<BaseOperationResult>(string.Empty));
     }
 
     //TODO:jtikekar @Andreas the route is same as GetSubmodelById
@@ -1664,7 +1663,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
         // return StatusCode(0, default(Result));
-        return new ObjectResult(JsonConvert.DeserializeObject<OperationResult>(string.Empty));
+        return new ObjectResult(System.Text.Json.JsonSerializer.Deserialize<OperationResult>(string.Empty));
     }
 
     /// <summary>
