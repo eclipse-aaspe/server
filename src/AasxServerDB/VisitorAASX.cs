@@ -218,6 +218,9 @@ namespace AasxServerDB
             if (sme is Property prop)
             {
                 var value = prop.ValueAsText();
+                if (value.IsNullOrEmpty())
+                    return;
+
                 smeDB.ValueType = getValueAndType(value, prop.ValueType, out var sValue, out var iValue, out var dValue);
                 if (smeDB.ValueType.Equals("S"))
                     smeDB.SValueSets.Add(new SValueSet { Value = sValue, Annotation = string.Empty });
@@ -228,11 +231,17 @@ namespace AasxServerDB
             }
             else if (sme is AasCore.Aas3_0.File file)
             {
+                if (file.Value.IsNullOrEmpty())
+                    return;
+
                 smeDB.ValueType = "S";
                 smeDB.SValueSets.Add(new SValueSet { Value = file.Value, Annotation = string.Empty });
             }
             else if (sme is MultiLanguageProperty mlp)
             {
+                if (mlp.Value == null || mlp.Value.Count == 0)
+                    return;
+
                 smeDB.ValueType = "S";
                 if (mlp.Value != null)
                     foreach (var sValueMLP in mlp.Value)
@@ -242,13 +251,29 @@ namespace AasxServerDB
             {
                 smeDB.ValueType = "S";
                 smeDB.SValueSets.Add(new SValueSet { Value = entity.GlobalAssetId, Annotation = entity.EntityType.ToString() });
-            }
+            }/*
+            else if (sme is ReferenceElement referenceElement)
+            {
+                if (referenceElement.Value == null || (referenceElement.Value.ReferredSemanticId == null && (referenceElement.Value.Keys == null || referenceElement.Value.Keys.Count < 1)))
+                    return;
+
+                smeDB.ValueType = "S";
+                var valueS = string.Empty;
+                if (referenceElement.Value.Type is ReferenceTypes.ExternalReference)
+                {
+                    valueS = referenceElement.Value.GetAsIdentifier();
+                }
+                else if (referenceElement.Value.Type is ReferenceTypes.ModelReference)
+                {
+                    valueS = referenceElement.Value.ReferredSemanticId.GetAsIdentifier();
+                }
+                smeDB.SValueSets.Add(new SValueSet { Value = valueS, Annotation = referenceElement.Value.Type.ToString() });
+            }*/
         }
 
         private SMESet collectSMEData(ISubmodelElement sme)
         {
-            var semanticId = sme.SemanticId.GetAsIdentifier();
-            semanticId     = (!semanticId.IsNullOrEmpty()) ? semanticId : string.Empty;
+            var semanticId = sme.SemanticId.GetAsIdentifier() ?? string.Empty;
 
             DateTime currentDataTime = DateTime.UtcNow;
             DateTime timeStamp = (sme.TimeStamp == default(DateTime)) ? currentDataTime : sme.TimeStamp;
