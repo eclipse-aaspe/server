@@ -32,7 +32,6 @@
         </PackageReference>
         <PackageReference Include="ScottPlot" Version="4.1.74" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
-        <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="6.6.2" />
     </ItemGroup>
 
     <ItemGroup>
@@ -41,8 +40,6 @@
         <ProjectReference Include="..\es6numberserializer\es6numberserializer.csproj"/>
         <ProjectReference Include="..\IO.Swagger.Lib.V3\IO.Swagger.Lib.V3.csproj"/>
         <ProjectReference Include="..\IO.Swagger.Registry.Lib.V3\IO.Swagger.Registry.Lib.V3.csproj"/>
-        <!--<ProjectReference Include="..\IO.Swagger.AasEnvApi.V1RC03\src\IO.Swagger\IO.Swagger.AasEnvApi.V1RC03.csproj" />-->
-        <!--<ProjectReference Include="..\IO.Swagger.Lib\IO.Swagger.Lib.csproj" />-->
         <ProjectReference Include="..\jsoncanonicalizer\jsoncanonicalizer.csproj"/>
     </ItemGroup>
 
