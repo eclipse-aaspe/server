@@ -57,13 +57,15 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64,linux/arm32
 
       - name: Build AasxServerBlazor
         uses: docker/build-push-action@v6
         with:
           push: false
           load: true
-          platforms: linux/arm64
+          platforms: linux/arm64, linux/amd64
           file: ./src/docker/Dockerfile-AasxServerBlazor
           tags: adminshellio/aasx-server-blazor:test
           
