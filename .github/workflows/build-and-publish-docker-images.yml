@@ -118,5 +118,5 @@ jobs:
           file: ./src/docker/Dockerfile-AasxServerAspNetCore
           platforms: linux/arm64
           tags: adminshellio/aasx-server-aspnetcore-for-demo-arm64:v3latest
-          github-token: ${{ secrets.GITHUB_TOKEN }}"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           labels: "version =${{ env.VERSION_NUMBER }}"
