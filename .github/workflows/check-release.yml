@@ -46,6 +46,14 @@ jobs:
   test-docker-images:
     runs-on: ubuntu-latest
     name: Build all docker images
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm/v6
+          - linux/arm/v7
+          - linux/arm64
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -57,22 +65,16 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          platforms: linux/amd64,linux/arm64,linux/arm32
 
       - name: Build AasxServerBlazor
         uses: docker/build-push-action@v6
         with:
           push: false
-          load: true
-          platforms: |
-            linux/amd64
-            linux/arm/v6
-            linux/arm/v7
-            linux/arm64
+          platforms: ${{ matrix.platform }}
           file: ./src/docker/Dockerfile-AasxServerBlazor
           tags: adminshellio/aasx-server-blazor:test
-          
+          #outputs: type=image,push-by-digest=true,name-canonical=true      
+      
       - name: Build AasxServerBlazor-arm32
         uses: docker/build-push-action@v6
         with:
