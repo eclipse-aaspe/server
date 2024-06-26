@@ -17,7 +17,7 @@ namespace Extensions
                 return null;
             }
 
-            var propertyType = AAS.Stringification.DataTypeDefXsdFromString("xs:" + sourceRange.valueType);
+            var propertyType = Stringification.DataTypeDefXsdFromString("xs:" + sourceRange.valueType);
             if (propertyType != null)
             {
                 range.ValueType = (AAS.DataTypeDefXsd)propertyType;
