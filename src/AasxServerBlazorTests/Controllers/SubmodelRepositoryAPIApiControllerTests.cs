@@ -39,7 +39,7 @@ public class SubmodelRepositoryAPIApiControllerTests
     [InlineData("asdf1234")]
     [InlineData("")]
     [InlineData(" ")]
-    public void DeleteFileByPathSubmodelRepo_ValidRequest_ReturnsNoContent(string submodelIdentifier)
+    public void DeleteFileByPathSubmodelRepo_WithValidRequest_CorrectlyCallsSubmodelDeletionPath(string submodelIdentifier)
     {
         // Arrange
         var decodedSubmodelIdentifier = _fixture.Create<string>();
