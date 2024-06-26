@@ -72,9 +72,10 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           labels: "version =${{ env.VERSION_NUMBER }}"
       
-      # ------------------------------------------------------------------------------
-      # These are the old specific docker image builds. We need to decide, if we can delete them          
-      # ------------------------------------------------------------------------------
+      # --------------------------------------------------------------------------------------------------
+      # These are the old specific docker image builds. We need to decide, if we want to delete them 
+      # and only use the multi-platform builds                
+      # --------------------------------------------------------------------------------------------------
 
       - name: Build and publish AasxServerBlazor-arm32
         uses: docker/build-push-action@v6
