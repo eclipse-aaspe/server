@@ -63,7 +63,7 @@ jobs:
         with:
           push: false
           load: true
-          platforms: linux/arm/v5, linux/arm/v6, linux/arm/v7, linux/arm64, linux/amd64, linux/i386
+          platforms: linux/arm/v5, linux/arm/v6, linux/arm/v7, linux/arm64, linux/amd64
           file: ./src/docker/Dockerfile-AasxServerBlazor
           tags: adminshellio/aasx-server-blazor:test
 
@@ -90,7 +90,7 @@ jobs:
         with:
           push: false
           load: true
-          platforms: linux/arm/v5, linux/arm/v6, linux/arm/v7, linux/arm64, linux/amd64, linux/i386
+          platforms: linux/arm/v5, linux/arm/v6, linux/arm/v7, linux/arm64, linux/amd64
           file: ./src/docker/Dockerfile-AasxServerAspNetCore
           tags: adminshellio/aasx-server-core:test
 
