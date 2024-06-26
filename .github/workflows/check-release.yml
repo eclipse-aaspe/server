@@ -66,7 +66,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build AasxServerBlazor
+      - name: Build multi-architecture Docker image for AasxServerBlazor
         uses: docker/build-push-action@v6
         with:
           push: false
@@ -97,7 +97,7 @@ jobs:
           file: ./src/docker/Dockerfile-AasxServerBlazor
           tags: adminshellio/aasx-server-blazor-arm64:test
 
-      - name: Build AasxServerCore
+      - name: Build multi-architecture Docker image for AasxServerCore
         uses: docker/build-push-action@v6
         with:
           push: false
