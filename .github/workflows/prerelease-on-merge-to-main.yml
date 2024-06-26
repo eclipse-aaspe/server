@@ -281,12 +281,12 @@ jobs:
           push: true
           load: true
           file: ./src/docker/Dockerfile-AasxServerBlazor
-          platforms: linux/arm/v5, linux/arm/v6, linux/arm/v7, linux/arm64, linux/amd64, linux/i386
+          platforms: linux/amd64,linux/arm64
           tags: |
             adminshellio/aasx-server-blazor-for-demo:${{ steps.set-docker-tag.outputs.tag }}
             adminshellio/aasx-server-blazor-for-demo:${{ env.VERSION_NUMBER }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          labels: "version =${{ env.VERSION_NUMBER }}"
+          labels: "version=${{ env.VERSION_NUMBER }}"
 
       - name: Build and publish multi-architecture Docker image for AasxServerCore
         uses: docker/build-push-action@v6
@@ -294,12 +294,12 @@ jobs:
           push: true
           load: true
           file: ./src/docker/Dockerfile-AasxServerAspNetCore
-          platforms: linux/arm/v5, linux/arm/v6, linux/arm/v7, linux/arm64, linux/amd64, linux/i386
+          platforms: linux/amd64,linux/arm64
           tags: |
             adminshellio/aasx-server-aspnetcore-for-demo:${{ steps.set-docker-tag.outputs.tag }}
             adminshellio/aasx-server-aspnetcore-for-demo:${{ env.VERSION_NUMBER }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          labels: "version =${{ env.VERSION_NUMBER }}"
+          labels: "version=${{ env.VERSION_NUMBER }}"
       
       # --------------------------------------------------------------------------------------------------
       # These are the old specific docker image builds. We need to decide, if we want to delete them 
