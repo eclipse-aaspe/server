@@ -113,9 +113,9 @@ public class Message : IEquatable<Message>
     /// Returns the JSON string presentation of the object
     /// </summary>
     /// <returns>JSON string presentation of the object</returns>
-    public new string ToJson() => JsonSerializer.Serialize(this, options);
+    public string ToJson() => JsonSerializer.Serialize(this, options);
 
-    private static JsonSerializerOptions options = new() {WriteIndented = true, IgnoreNullValues = true, Converters = {new JsonStringEnumConverter()}};
+    private static readonly JsonSerializerOptions options = new() {WriteIndented = true, IgnoreNullValues = true, Converters = {new JsonStringEnumConverter()}};
 
     /// <summary>
     /// Returns true if objects are equal
