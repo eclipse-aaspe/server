@@ -63,6 +63,7 @@ jobs:
         with:
           push: false
           load: true
+          platforms: linux/amd64,linux/arm64,linux/arm/v7, linux/arm64/v8
           file: ./src/docker/Dockerfile-AasxServerBlazor
           tags: adminshellio/aasx-server-blazor:test
 
@@ -71,7 +72,8 @@ jobs:
         with:
           push: false
           load: true
-          file: ./src/docker/Dockerfile-AasxServerBlazor-arm32
+          platforms: linux/arm/v7
+          file: ./src/docker/Dockerfile-AasxServerBlazor
           tags: adminshellio/aasx-server-blazor-arm32:test
 
       - name: Build AasxServerBlazor-arm64
@@ -79,7 +81,8 @@ jobs:
         with:
           push: false
           load: true
-          file: ./src/docker/Dockerfile-AasxServerBlazor-arm64
+          platforms: linux/arm64
+          file: ./src/docker/Dockerfile-AasxServerBlazor
           tags: adminshellio/aasx-server-blazor-arm64:test
 
       - name: Build AasxServerCore
@@ -87,6 +90,7 @@ jobs:
         with:
           push: false
           load: true
+          platforms: linux/amd64,linux/arm64,linux/arm/v7, linux/arm64/v8
           file: ./src/docker/Dockerfile-AasxServerAspNetCore
           tags: adminshellio/aasx-server-core:test
 
@@ -95,7 +99,8 @@ jobs:
         with:
           push: false
           load: true
-          file: ./src/docker/Dockerfile-AasxServerAspNetCore-arm32
+          platforms: linux/arm/v7
+          file: ./src/docker/Dockerfile-AasxServerAspNetCore
           tags: adminshellio/aasx-server-core-arm32:test
 
       - name: Build AasxServerCore-arm64
@@ -103,7 +108,8 @@ jobs:
         with:
           push: false
           load: true
-          file: ./src/docker/Dockerfile-AasxServerAspNetCore-arm64
+          platforms: linux/arm64
+          file: ./src/docker/Dockerfile-AasxServerAspNetCore
           tags: adminshellio/aasx-server-core-arm64:test
   
   check-release:
