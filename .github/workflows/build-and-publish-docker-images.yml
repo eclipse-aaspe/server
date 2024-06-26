@@ -57,7 +57,7 @@ jobs:
             adminshellio/aasx-server-blazor-for-demo:v3latest
             adminshellio/aasx-server-blazor-for-demo:${{ env.VERSION_NUMBER }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          labels: "version"${{ env.VERSION_NUMBER }}
+          labels: "version =${{ env.VERSION_NUMBER }}"
 
       - name: Build and publish multi-architecture Docker image for AasxServerCore
         uses: docker/build-push-action@v6
@@ -70,7 +70,7 @@ jobs:
             adminshellio/aasx-server-aspnetcore-for-demo:v3latest
             adminshellio/aasx-server-aspnetcore-for-demo:${{ env.VERSION_NUMBER }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          labels: ${{ env.VERSION_NUMBER }}
+          labels: "version =${{ env.VERSION_NUMBER }}"
       
       # ------------------------------------------------------------------------------
       # These are the old specific docker image builds. We need to decide, if we can delete them          
@@ -85,7 +85,7 @@ jobs:
           platforms: linux/arm/v7
           tags: adminshellio/aasx-server-blazor-for-demo-arm32:v3latest
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          labels: ${{ env.VERSION_NUMBER }}
+          labels: "version =${{ env.VERSION_NUMBER }}"
 
       - name: Build and publish AasxServerBlazor-arm64
         uses: docker/build-push-action@v6
@@ -96,7 +96,7 @@ jobs:
           platforms: linux/arm64
           tags: adminshellio/aasx-server-blazor-for-demo-arm64:v3latest
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          labels: ${{ env.VERSION_NUMBER }}
+          labels: "version =${{ env.VERSION_NUMBER }}"
 
 
       - name: Build and publish AasxServerCore-arm32
@@ -108,7 +108,7 @@ jobs:
           platforms: linux/arm/v7
           tags: adminshellio/aasx-server-aspnetcore-for-demo-arm32:v3latest
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          labels: ${{ env.VERSION_NUMBER }}
+          labels: "version =${{ env.VERSION_NUMBER }}"
 
       - name: Build and publish AasxServerCore-arm64
         uses: docker/build-push-action@v6
@@ -119,4 +119,4 @@ jobs:
           platforms: linux/arm64
           tags: adminshellio/aasx-server-aspnetcore-for-demo-arm64:v3latest
           github-token: ${{ secrets.GITHUB_TOKEN }}"
-          labels: ${{ env.VERSION_NUMBER }}
+          labels: "version =${{ env.VERSION_NUMBER }}"
