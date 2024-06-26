@@ -19,7 +19,7 @@ jobs:
           echo "branch=$branch" >> $env:GITHUB_OUTPUT
           Write-Host "The current branch is: $branch"
         shell: pwsh
-        
+
       - name: Generate Version Number
         working-directory: src
         id: generate_version_number
@@ -33,7 +33,7 @@ jobs:
       - name: Set version number
         id: set-version
         run: echo "VERSION_NUMBER=$(echo ${{ steps.generate_version_number.outputs.version }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-        
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
