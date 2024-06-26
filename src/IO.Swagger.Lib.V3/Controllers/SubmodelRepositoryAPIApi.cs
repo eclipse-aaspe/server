@@ -101,8 +101,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         if (!Program.noSecurity)
         {
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
-            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)};
+            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+            var claimsList = new List<Claim>(User.Claims);
+            claimsList.Add(new Claim("IdShortPath", $"{submodel.IdShort}.{idShortPath}"));
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
