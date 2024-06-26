@@ -947,17 +947,6 @@ namespace AasxServer
             // MICHA MICHA
             AasxTimeSeries.TimeSeries.timeSeriesInit();
 
-            /* OZOZ
-            var _energyModelInstances = new List<EnergyModelInstance>();
-            foreach (var penv in AasxServer.Program.env)
-            {
-                EnergyModelInstance.TagAllAasAndSm(penv?.AasEnv, DateTime.UtcNow);
-                _energyModelInstances.AddRange(
-                    EnergyModelInstance.FindAllSmInstances(penv?.AasEnv));
-            }
-            EnergyModelInstance.StartAllAsOneThread(_energyModelInstances);
-            */
-
             AasxTask.taskInit();
 
             RunScript(true);
