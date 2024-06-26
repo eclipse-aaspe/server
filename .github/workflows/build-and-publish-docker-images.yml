@@ -50,9 +50,12 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          load: true
           file: ./src/docker/Dockerfile-AasxServerBlazor
-          platforms: linux/amd64,linux/arm64
+          platforms: |
+            linux/amd64
+            linux/arm/v6
+            linux/arm/v7
+            linux/arm64
           tags: |
             adminshellio/aasx-server-blazor-for-demo:v3latest
             adminshellio/aasx-server-blazor-for-demo:${{ env.VERSION_NUMBER }}
@@ -63,9 +66,12 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          load: true
           file: ./src/docker/Dockerfile-AasxServerAspNetCore
-          platforms: linux/amd64,linux/arm64
+          platforms: |
+            linux/amd64
+            linux/arm/v6
+            linux/arm/v7
+            linux/arm64
           tags: |
             adminshellio/aasx-server-aspnetcore-for-demo:v3latest
             adminshellio/aasx-server-aspnetcore-for-demo:${{ env.VERSION_NUMBER }}

@@ -70,6 +70,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: false
+          outputs: type=cacheonly
           platforms: |
             linux/amd64
             linux/arm/v6
@@ -82,7 +83,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: false
-          load: true
+          outputs: type=cacheonly
           platforms: linux/arm/v7
           file: ./src/docker/Dockerfile-AasxServerBlazor
           tags: adminshellio/aasx-server-blazor-arm32:test
@@ -91,7 +92,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: false
-          load: true
+          outputs: type=cacheonly
           platforms: linux/arm64
           file: ./src/docker/Dockerfile-AasxServerBlazor
           tags: adminshellio/aasx-server-blazor-arm64:test
@@ -100,6 +101,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: false
+          outputs: type=cacheonly
           platforms: linux/arm64, linux/amd64
           file: ./src/docker/Dockerfile-AasxServerAspNetCore
           tags: adminshellio/aasx-server-core:test
@@ -108,7 +110,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: false
-          load: true
+          outputs: type=cacheonly
           platforms: linux/arm/v7
           file: ./src/docker/Dockerfile-AasxServerAspNetCore
           tags: adminshellio/aasx-server-core-arm32:test
@@ -117,7 +119,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: false
-          load: true
+          outputs: type=cacheonly
           platforms: linux/arm64
           file: ./src/docker/Dockerfile-AasxServerAspNetCore
           tags: adminshellio/aasx-server-core-arm64:test
