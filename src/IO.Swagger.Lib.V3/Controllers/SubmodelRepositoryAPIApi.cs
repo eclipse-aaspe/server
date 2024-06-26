@@ -242,12 +242,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var submodelElements = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
         var      filtered = new List<ISubmodelElement>();
-        DateTime _diff;
-        if (diff != null && diff != "")
+        if (!string.IsNullOrEmpty(diff))
         {
             try
             {
-                _diff    = DateTime.Parse(diff).ToUniversalTime();
+                var _diff = DateTime.Parse(diff).ToUniversalTime();
                 filtered = filterSubmodelElements(submodelElements, _diff);
             }
             catch { }
@@ -283,8 +282,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                                                                 supplementalSemanticIds: smc.SupplementalSemanticIds,
                                                                 qualifiers: smc.Qualifiers,
                                                                 embeddedDataSpecifications: smc.EmbeddedDataSpecifications,
-                                                                value: smeDiff);
-                    smcDiff.Parent = smc.Parent;
+                                                                value: smeDiff) {Parent = smc.Parent};
                     output.Add(smcDiff);
                 }
                 else if (smc.TimeStamp >= diff)
@@ -308,8 +306,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                                                           supplementalSemanticIds: sml.SupplementalSemanticIds,
                                                           qualifiers: sml.Qualifiers,
                                                           embeddedDataSpecifications: sml.EmbeddedDataSpecifications,
-                                                          value: smeDiff);
-                    smlDiff.Parent = sml.Parent;
+                                                          value: smeDiff) {Parent = sml.Parent};
                     output.Add(smlDiff);
                 }
                 else if (sml.TimeStamp >= diff)
@@ -370,12 +367,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var smeList = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
         var      filtered = new List<ISubmodelElement>();
-        DateTime _diff;
-        if (diff != null && diff != "")
+        if (!string.IsNullOrEmpty(diff))
         {
             try
             {
-                _diff    = DateTime.Parse(diff).ToUniversalTime();
+                var _diff = DateTime.Parse(diff).ToUniversalTime();
                 filtered = filterSubmodelElements(smeList, _diff);
             }
             catch { }
@@ -435,12 +431,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var submodelElementList = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
         var      filtered = new List<ISubmodelElement>();
-        DateTime _diff;
-        if (diff != null && diff != "")
+        if (!string.IsNullOrEmpty(diff))
         {
             try
             {
-                _diff    = DateTime.Parse(diff).ToUniversalTime();
+                var _diff = DateTime.Parse(diff).ToUniversalTime();
                 filtered = filterSubmodelElements(submodelElementList, _diff);
             }
             catch { }
@@ -549,12 +544,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var submodelElements = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
         var      filtered = new List<ISubmodelElement>();
-        DateTime _diff;
-        if (diff != null && diff != "")
+        if (!string.IsNullOrEmpty(diff))
         {
             try
             {
-                _diff    = DateTime.Parse(diff).ToUniversalTime();
+                var _diff = DateTime.Parse(diff).ToUniversalTime();
                 filtered = filterSubmodelElements(submodelElements, _diff);
             }
             catch { }
@@ -818,10 +812,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var fileName = _submodelService.GetFileByPath(decodedSubmodelIdentifier, idShortPath, out var content, out var fileSize);
 
-        //content-disposition so that the aasx file can be doenloaded from the web browser.
+        //content-disposition so that the aasx file can be downloaded from the web browser.
         ContentDisposition contentDisposition = new() {FileName = fileName ?? throw new ArgumentNullException(nameof(fileName)), Inline = fileName.ToLower().EndsWith(".pdf")};
 
-        HttpContext.Response.Headers.Add("Content-Disposition", contentDisposition.ToString());
+        HttpContext.Response.Headers.Append("Content-Disposition", contentDisposition.ToString());
         HttpContext.Response.ContentLength = fileSize;
         if (fileName.ToLower().EndsWith(".svg"))
             HttpContext.Response.ContentType = "image/svg+xml";
@@ -1049,7 +1043,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
         if (!authResult.Succeeded)
         {
-            var failedReason = authResult.Failure.FailureReasons.First();
+            var failedReason = authResult.Failure.FailureReasons.FirstOrDefault();
+
             if (failedReason != null)
             {
                 if (failedReason.Message != "")
