@@ -12,7 +12,7 @@ RUN dotnet build -o /out/AasxServerBlazor AasxServerBlazor -v diag
 RUN dotnet publish -c Release -v diag --no-restore
 
 # Use a runtime image to run the application
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 as base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine as base
 RUN apt update && apt upgrade --yes
 RUN apt install -y curl nano libgdiplus
 EXPOSE 5001
