@@ -1,15 +1,18 @@
-# It is expected that this docker is executed in the context of repository root.
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
+# Use a multi-stage build to build and publish the .NET application
+FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
 WORKDIR /repo/src
 
 # Copy the source code and build
 COPY ./src/ /repo/src/
 COPY ./LICENSE.TXT /repo/LICENSE.txt
 
-RUN dotnet restore AasxServerAspNetCore
-RUN dotnet publish -c Release -o /out/AasxServerAspNetCore AasxServerAspNetCore
+RUN dotnet clean
+RUN dotnet restore
+RUN dotnet build -o /out/AasxServerAspNetCore AasxServerAspNetCore -v diag
+RUN dotnet publish -c Release -v diag --no-restore
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 as base
+# Use a runtime image to run the application
+FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/aspnet:8.0 as base
 EXPOSE 5001
 COPY --from=build-env /out/AasxServerAspNetCore/ /AasxServerAspNetCore/
 COPY ./content-for-demo/ /AasxServerAspNetCore/

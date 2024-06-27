@@ -1,5 +1,6 @@
-# It is expected that this docker is executed in the context of repository root.
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
+# Use a multi-stage build to build and publish the .NET application
+# Specify the initial base architecture (amd64 in this case)
+FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
 WORKDIR /repo/src
 
 # Copy everything else and build
@@ -11,7 +12,9 @@ RUN dotnet restore
 RUN dotnet build -o /out/AasxServerBlazor AasxServerBlazor -v diag
 RUN dotnet publish -c Release -v diag --no-restore
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 as base
+# Use a runtime image to run the application
+# Specify the initial base architecture (amd64 in this case)
+FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/aspnet:8.0 as base
 RUN apt update && apt upgrade --yes
 RUN apt install -y curl nano libgdiplus
 EXPOSE 5001
