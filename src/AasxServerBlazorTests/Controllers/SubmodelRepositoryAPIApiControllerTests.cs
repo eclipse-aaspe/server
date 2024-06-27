@@ -84,4 +84,33 @@ public class SubmodelRepositoryAPIApiControllerTests
         result.Should().BeOfType<NoContentResult>();
         _submodelServiceMock.Verify(x => x.DeleteFileByPath(decodedSubmodelIdentifier, idShortPath), Times.Once);
     }
+    
+    [Theory]
+    [InlineData("asdf1234")]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void DeleteFileByPathSubmodelRepo_WhenAuthorizationResultIsFailed_WillThrowNotAllowed(string submodelIdentifier)
+    {
+        // Arrange
+        var decodedSubmodelIdentifier = _fixture.Create<string>();
+        var idShortPath               = _fixture.Create<string>();
+        var submodel                  = _fixture.Create<ISubmodel>();
+
+        _fixture.Freeze<HttpContext>();
+
+        Program.noSecurity = false;
+
+        _decoderServiceMock.Setup(x => x.Decode("submodelIdentifier", submodelIdentifier)).Returns(decodedSubmodelIdentifier);
+
+        _submodelServiceMock.Setup(x => x.GetSubmodelById(submodelIdentifier)).Returns(submodel);
+        
+        _authorizationServiceMock.Setup(x => x.AuthorizeAsync(It.IsAny<GenericPrincipal>(), It.IsAny<ISubmodel>(), "SecurityPolicy")).Returns(Task.FromResult(AuthorizationResult.Failed()));
+
+        // Act
+        Action action = () => _controller.DeleteFileByPathSubmodelRepo(submodelIdentifier, idShortPath);
+
+        // Assert
+        action.Should().ThrowExactly<AasSecurity.Exceptions.NotAllowed>();
+        _submodelServiceMock.Verify(x => x.DeleteFileByPath(decodedSubmodelIdentifier, idShortPath), Times.Never);
+    }
 }
