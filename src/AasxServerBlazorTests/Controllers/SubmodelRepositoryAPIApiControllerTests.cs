@@ -75,8 +75,7 @@ public class SubmodelRepositoryAPIApiControllerTests
         _decoderServiceMock.Setup(x => x.Decode("submodelIdentifier", submodelIdentifier)).Returns(decodedSubmodelIdentifier);
 
         _submodelServiceMock.Setup(x => x.GetSubmodelById(submodelIdentifier)).Returns(submodel);
-        var authResult = AuthorizationResult.Success(); // Create concrete instance instead of mock
-        _authorizationServiceMock.Setup(x => x.AuthorizeAsync(It.IsAny<GenericPrincipal>(), submodel, "SecurityPolicy")).ReturnsAsync(authResult);
+        _authorizationServiceMock.Setup(x => x.AuthorizeAsync(It.IsAny<GenericPrincipal>(), It.IsAny<ISubmodel>(), "SecurityPolicy")).Returns(Task.FromResult(AuthorizationResult.Success()));
 
         // Act
         var result = _controller.DeleteFileByPathSubmodelRepo(submodelIdentifier, idShortPath);
