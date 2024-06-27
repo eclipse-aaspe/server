@@ -53,7 +53,7 @@ public class PaginationService : IPaginationService
             pagingMetadata.cursor = Convert.ToString(endIndex + 1);
         }
 
-        var paginationResult = new PagedResult() {result = outputList.ConvertAll(r => r as IClass), paging_metadata = pagingMetadata};
+        var paginationResult = new PagedResult {result = outputList.ConvertAll(r => r as IClass), paging_metadata = pagingMetadata};
 
         //return paginationResult;
         return paginationResult;
@@ -73,7 +73,7 @@ public class PaginationService : IPaginationService
             pagingMetadata.cursor = Convert.ToString(endIndex + 1);
         }
 
-        var paginationResult = new PackageDescriptionPagedResult() {result = outputList, paging_metadata = pagingMetadata};
+        var paginationResult = new PackageDescriptionPagedResult {result = outputList, paging_metadata = pagingMetadata};
 
         //return paginationResult;
         return paginationResult;
@@ -97,7 +97,7 @@ public class PaginationService : IPaginationService
             endIndex = sourceList.Count - 1;
         }
 
-        //If there are less elements in the sourceList than "from"
+        //If there are fewer elements in the sourceList than "from"
         if (startIndex > sourceList.Count - 1)
         {
             _logger.LogError($"There are less elements in the retried list than requested pagination - (from: {startIndex}, size:{endIndex})");
