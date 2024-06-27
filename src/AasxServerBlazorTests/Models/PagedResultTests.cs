@@ -13,7 +13,7 @@ public class PagedResultTests
     {
         _fixture = new Fixture().Customize(new AutoMoqCustomization());
     }
-    
+
     [Fact]
     public void ToPagedList_Should_Return_Correct_Subset()
     {
@@ -35,7 +35,7 @@ public class PagedResultTests
     public void ToPagedList_Should_Cap_EndIndex()
     {
         // Arrange
-        var sourceList           = new List<string> {"A", "B", "C"};
+        var sourceList           = new List<string> { "A", "B", "C" };
         var paginationParameters = new PaginationParameters("1", 5);
 
         // Act
@@ -44,8 +44,7 @@ public class PagedResultTests
         // Assert
         result.Should().NotBeNull();
         result.result.Should().HaveCount(2);
-        result.paging_metadata.Should().NotBeNull();
-        result.paging_metadata.cursor.Should().BeNull();
+        result.paging_metadata.Should().BeNull("No paging metadata because endIndex doesn't exceed list size");
     }
 
     [Fact]
@@ -61,8 +60,7 @@ public class PagedResultTests
         // Assert
         result.Should().NotBeNull();
         result.result.Should().BeEmpty();
-        result.paging_metadata.Should().NotBeNull();
-        result.paging_metadata.cursor.Should().BeNull();
+        result.paging_metadata.Should().BeNull("No paging metadata for empty list");
     }
 
     [Fact]
@@ -79,5 +77,54 @@ public class PagedResultTests
         // Logging is not directly testable here, but this test ensures the method runs without exceptions
         result.Should().NotBeNull();
         result.result.Should().BeEmpty();
+        result.paging_metadata.Should().BeNull("No paging metadata because startIndex is out of bounds");
+    }
+
+    [Fact]
+    public void ToPagedList_Should_Handle_Limit_Greater_Than_List_Size()
+    {
+        // Arrange
+        var sourceList           = new List<char> { 'A', 'B', 'C' };
+        var paginationParameters = new PaginationParameters("0", 5);
+
+        // Act
+        var result = PagedResult.ToPagedList(sourceList, paginationParameters);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.result.Should().HaveCount(3,"Only 3 items in the source list");
+        result.paging_metadata.Should().BeNull("No paging metadata because endIndex doesn't exceed list size");
+    }
+
+    [Fact]
+    public void ToPagedList_Should_Return_Empty_If_Cursor_Null()
+    {
+        // Arrange
+        var sourceList           = _fixture.CreateMany<DateTime>(10).ToList();
+        var paginationParameters = new PaginationParameters(null, 5);
+
+        // Act
+        var result = PagedResult.ToPagedList(sourceList, paginationParameters);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.result.Should().NotBeNull();
+        result.paging_metadata.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void ToPagedList_Should_Return_All_Items_If_Limit_Greater_Than_List_Size()
+    {
+        // Arrange
+        var sourceList           = new List<long> { 1, 2, 3 };
+        var paginationParameters = new PaginationParameters("0", 5);
+
+        // Act
+        var result = PagedResult.ToPagedList(sourceList, paginationParameters);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.result.Should().HaveCount(3,"Only 3 items in the source list");
+        result.paging_metadata.Should().BeNull("No paging metadata because endIndex doesn't exceed list size");
     }
 }
