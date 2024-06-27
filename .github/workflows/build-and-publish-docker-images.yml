@@ -57,7 +57,7 @@ jobs:
             linux/arm/v7
             linux/arm64
           tags: |
-            adminshellio/aasx-server-blazor-for-demo:v3latest
+            adminshellio/aasx-server-blazor-for-demo:latest
             adminshellio/aasx-server-blazor-for-demo:${{ env.VERSION_NUMBER }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           labels: "version =${{ env.VERSION_NUMBER }}"
@@ -73,7 +73,7 @@ jobs:
             linux/arm/v7
             linux/arm64
           tags: |
-            adminshellio/aasx-server-aspnetcore-for-demo:v3latest
+            adminshellio/aasx-server-aspnetcore-for-demo:latest
             adminshellio/aasx-server-aspnetcore-for-demo:${{ env.VERSION_NUMBER }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           labels: "version =${{ env.VERSION_NUMBER }}"
@@ -90,7 +90,7 @@ jobs:
           load: true
           file: ./src/docker/Dockerfile-AasxServerBlazor
           platforms: linux/arm/v7
-          tags: adminshellio/aasx-server-blazor-for-demo-arm32:v3latest
+          tags: adminshellio/aasx-server-blazor-for-demo-arm32:latest
           github-token: ${{ secrets.GITHUB_TOKEN }}
           labels: "version =${{ env.VERSION_NUMBER }}"
 
@@ -101,7 +101,7 @@ jobs:
           load: true
           file: ./src/docker/Dockerfile-AasxServerBlazor
           platforms: linux/arm64
-          tags: adminshellio/aasx-server-blazor-for-demo-arm64:v3latest
+          tags: adminshellio/aasx-server-blazor-for-demo-arm64:latest
           github-token: ${{ secrets.GITHUB_TOKEN }}
           labels: "version =${{ env.VERSION_NUMBER }}"
 
@@ -113,7 +113,7 @@ jobs:
           load: true
           file: ./src/docker/Dockerfile-AasxServerAspNetCore
           platforms: linux/arm/v7
-          tags: adminshellio/aasx-server-aspnetcore-for-demo-arm32:v3latest
+          tags: adminshellio/aasx-server-aspnetcore-for-demo-arm32:latest
           github-token: ${{ secrets.GITHUB_TOKEN }}
           labels: "version =${{ env.VERSION_NUMBER }}"
 
@@ -124,6 +124,6 @@ jobs:
           load: true
           file: ./src/docker/Dockerfile-AasxServerAspNetCore
           platforms: linux/arm64
-          tags: adminshellio/aasx-server-aspnetcore-for-demo-arm64:v3latest
+          tags: adminshellio/aasx-server-aspnetcore-for-demo-arm64:latest
           github-token: ${{ secrets.GITHUB_TOKEN }}
           labels: "version =${{ env.VERSION_NUMBER }}"
