@@ -359,11 +359,12 @@ public class SubmodelRepositoryAPIApiControllerTests
     {
         // Arrange
         var decodedSubmodelIdentifier = _fixture.Create<string>();
-        var submodelElements          = new List<ISubmodelElement>(); // mock or actual data as needed
+        var submodelElements          = new List<ISubmodelElement>();
+        submodelElements.Add(_fixture.Create<ISubmodelElement>());
 
         _decoderServiceMock.Setup(x => x.Decode("submodelIdentifier", submodelIdentifier)).Returns(decodedSubmodelIdentifier);
         _submodelServiceMock.Setup(x => x.GetAllSubmodelElements(decodedSubmodelIdentifier)).Returns(submodelElements);
-
+    
         _authorizationServiceMock.Setup(x => x.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<ISubmodel>(), "SecurityPolicy"))
                                  .Returns(Task.FromResult(AuthorizationResult.Success()));
 
@@ -373,9 +374,9 @@ public class SubmodelRepositoryAPIApiControllerTests
         // Assert
         result.Should().BeOfType<ObjectResult>();
         var objectResult = result as ObjectResult;
-        objectResult.Value.Should().BeOfType<List<ISubmodelElement>>();
+        objectResult.Value.Should().BeAssignableTo<IEnumerable<ISubmodelElement>>();
 
-        var submodelElementsList = objectResult.Value as List<ISubmodelElement>;
+        var submodelElementsList = objectResult.Value as IEnumerable<ISubmodelElement>;
         submodelElementsList.Should().NotBeNull();
     }
 
