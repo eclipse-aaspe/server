@@ -101,7 +101,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         {
             throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
         }
-        
+
         _logger.LogInformation($"Received a request to delete a file at {idShortPath} from the submodel {decodedSubmodelIdentifier}");
         if (!Program.noSecurity)
         {
@@ -152,7 +152,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         {
             throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
         }
-        
+
         _logger.LogInformation($"Received a request to delete a submodel with id {decodedSubmodelIdentifier}");
         _submodelService.DeleteSubmodelById(decodedSubmodelIdentifier);
 
@@ -184,17 +184,23 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     public virtual IActionResult DeleteSubmodelElementByPathSubmodelRepo([FromRoute] [Required] string submodelIdentifier, [FromRoute] [Required] string idShortPath)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
+        }
+
         if (!Program.noSecurity)
         {
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
-            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)};
+            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -239,6 +245,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
+        }
+        
         _logger.LogInformation($"Received a request to get all the submodel elements from submodel with id {decodedSubmodelIdentifier}");
         if (!Program.noSecurity)
         {
@@ -246,13 +257,13 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
         var submodelElements = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
-        var      filtered = new List<ISubmodelElement>();
+        var filtered = new List<ISubmodelElement>();
         if (!string.IsNullOrEmpty(diff))
         {
             try
@@ -260,10 +271,15 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 var _diff = DateTime.Parse(diff).ToUniversalTime();
                 filtered = filterSubmodelElements(submodelElements, _diff);
             }
-            catch { }
+            catch
+            {
+                // ignored
+            }
         }
         else
+        {
             filtered = submodelElements;
+        }
 
         var smePaginatedList = _paginationService.GetPaginatedList(filtered, new PaginationParameters(cursor, limit));
         var smeLevelList     = _levelExtentModifierService.ApplyLevelExtent(smePaginatedList.result ?? [], level, extent);
@@ -377,7 +393,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var smeList = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
-        var      filtered = new List<ISubmodelElement>();
+        var filtered = new List<ISubmodelElement>();
         if (!string.IsNullOrEmpty(diff))
         {
             try
@@ -441,7 +457,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var submodelElementList = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
-        var      filtered = new List<ISubmodelElement>();
+        var filtered = new List<ISubmodelElement>();
         if (!string.IsNullOrEmpty(diff))
         {
             try
@@ -554,7 +570,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var submodelElements = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
-        var      filtered = new List<ISubmodelElement>();
+        var filtered = new List<ISubmodelElement>();
         if (!string.IsNullOrEmpty(diff))
         {
             try
