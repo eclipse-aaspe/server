@@ -10,55 +10,57 @@
 using System;
 using System.Collections.Generic;
 
-namespace IO.Swagger.Models
+namespace IO.Swagger.Models;
+
+using System.Linq;
+
+/// <summary>
+/// 
+/// </summary>
+public class PagedResult
 {
-    /// <summary>
-    /// 
-    /// </summary>
-    public class PagedResult
+    public List<IClass?>              result          { get; set; }
+    public PagedResultPagingMetadata? paging_metadata { get; set; }
+
+    public static PagedResult ToPagedList<T>(List<T> sourceList, PaginationParameters paginationParameters)
     {
-        public List<IClass?>              result          { get; set; }
-        public PagedResultPagingMetadata? paging_metadata { get; set; }
+        var outputList = new List<T>();
+        var startIndex = paginationParameters.Cursor;
+        var endIndex   = startIndex + paginationParameters.Limit - 1;
 
-        public static PagedResult ToPagedList<T>(List<T> sourceList, PaginationParameters paginationParameters)
+        // Cap the endIndex
+        if (endIndex > sourceList.Count - 1)
         {
-            var outputList = new List<T>();
-            var startIndex = paginationParameters.Cursor;
-            var endIndex = startIndex + paginationParameters.Limit - 1;
-
-            //cap the endIndex
-            if (endIndex > sourceList.Count - 1)
-            {
-                endIndex = sourceList.Count - 1;
-            }
-
-            //If there are less elements in the sourceList than "from"
-            if (startIndex > sourceList.Count - 1)
-            {
-                //TODO:support logger
-                Console.WriteLine($"There are less elements in the retrived list than requested pagination - (from: {startIndex}, size:{endIndex})");
-            }
-
-            for (int i = startIndex; i <= endIndex; i++)
-            {
-                outputList.Add(sourceList[i]);
-            }
-
-            //Creating pagination result
-            var pagingMetadata = new PagedResultPagingMetadata();
-            if (endIndex < sourceList.Count - 1)
-            {
-                pagingMetadata.cursor = Convert.ToString(endIndex + 1);
-            }
-
-            var paginationResult = new PagedResult()
-            {
-                result = outputList.ConvertAll(r => (IClass)r),
-                paging_metadata = pagingMetadata
-            };
-
-            //return paginationResult;
-            return paginationResult;
+            endIndex = sourceList.Count - 1;
         }
+
+        // If there are fewer elements in the sourceList than "from"
+        if (startIndex > sourceList.Count - 1)
+        {
+            // TODO: Log this error
+            Console.WriteLine($"There are less elements in the retrieved list than requested for pagination - (from: {startIndex}, size:{endIndex})");
+        }
+
+        for (int i = startIndex; i <= endIndex; i++)
+        {
+            outputList.Add(sourceList[i]);
+        }
+
+        // Creating pagination result
+        var pagingMetadata = new PagedResultPagingMetadata();
+        if (endIndex < sourceList.Count - 1)
+        {
+            pagingMetadata.cursor = Convert.ToString(endIndex + 1);
+        }
+
+        var convertedList = outputList.Select(r => r as IClass).ToList(); // Convert each item to IClass
+
+        var paginationResult = new PagedResult()
+                               {
+                                   result          = convertedList,
+                                   paging_metadata = pagingMetadata
+                               };
+
+        return paginationResult;
     }
 }
