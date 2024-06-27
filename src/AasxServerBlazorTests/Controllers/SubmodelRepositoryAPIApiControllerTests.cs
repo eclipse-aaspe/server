@@ -2,16 +2,16 @@ using IO.Swagger.Controllers;
 
 namespace AasxServerBlazorTests.Controllers;
 
-using System.Security.Claims;
+using System.Security.Principal;
 using AasCore.Aas3_0;
 using AasxServer;
 using AasxServerStandardBib.Interfaces;
 using IO.Swagger.Lib.V3.Interfaces;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Claim = System.IdentityModel.Claims.Claim;
 
 [TestSubject(typeof(SubmodelRepositoryAPIApiController))]
 public class SubmodelRepositoryAPIApiControllerTests
@@ -48,6 +48,35 @@ public class SubmodelRepositoryAPIApiControllerTests
         Program.noSecurity = true;
 
         _decoderServiceMock.Setup(x => x.Decode("submodelIdentifier", submodelIdentifier)).Returns(decodedSubmodelIdentifier);
+
+        // Act
+        var result = _controller.DeleteFileByPathSubmodelRepo(submodelIdentifier, idShortPath);
+
+        // Assert
+        result.Should().BeOfType<NoContentResult>();
+        _submodelServiceMock.Verify(x => x.DeleteFileByPath(decodedSubmodelIdentifier, idShortPath), Times.Once);
+    }
+    
+    [Theory]
+    [InlineData("asdf1234")]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void DeleteFileByPathSubmodelRepo_WithValidRequestAndNoSecurity_CorrectlyCallsSubmodelDeletionPath(string submodelIdentifier)
+    {
+        // Arrange
+        var decodedSubmodelIdentifier = _fixture.Create<string>();
+        var idShortPath               = _fixture.Create<string>();
+        var submodel                  = _fixture.Create<ISubmodel>();
+
+        _fixture.Freeze<HttpContext>();
+
+        Program.noSecurity = false;
+
+        _decoderServiceMock.Setup(x => x.Decode("submodelIdentifier", submodelIdentifier)).Returns(decodedSubmodelIdentifier);
+
+        _submodelServiceMock.Setup(x => x.GetSubmodelById(submodelIdentifier)).Returns(submodel);
+        var authResult = AuthorizationResult.Success(); // Create concrete instance instead of mock
+        _authorizationServiceMock.Setup(x => x.AuthorizeAsync(It.IsAny<GenericPrincipal>(), submodel, "SecurityPolicy")).ReturnsAsync(authResult);
 
         // Act
         var result = _controller.DeleteFileByPathSubmodelRepo(submodelIdentifier, idShortPath);
