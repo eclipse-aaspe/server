@@ -46,14 +46,6 @@ jobs:
   test-docker-images:
     runs-on: ubuntu-latest
     name: Build all docker images
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - linux/amd64
-          - linux/arm/v6
-          - linux/arm/v7
-          - linux/arm64
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -102,7 +94,11 @@ jobs:
         with:
           push: false
           outputs: type=cacheonly
-          platforms: linux/arm64, linux/amd64
+          platforms: |
+            linux/amd64
+            linux/arm/v6
+            linux/arm/v7
+            linux/arm64
           file: ./src/docker/Dockerfile-AasxServerAspNetCore
           tags: adminshellio/aasx-server-core:test
 
