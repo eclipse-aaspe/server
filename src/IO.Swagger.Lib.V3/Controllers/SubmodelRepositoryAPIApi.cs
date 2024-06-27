@@ -470,8 +470,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         else
             filtered = submodelElementList;
 
-        // TODO (jtikekar, 2023-09-04): pagination and modifier
-        // TODO (jtikekar, 2023-09-04): not complete implemented
+        // TODO (jtikekar, 2023-09-04): pagination and modifier not completely implemented
         var output = _pathModifierService.ToIdShortPath(filtered);
         return new ObjectResult(output);
     }
