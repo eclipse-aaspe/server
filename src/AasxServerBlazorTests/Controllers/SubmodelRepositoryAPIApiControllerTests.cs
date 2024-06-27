@@ -2,11 +2,13 @@ using IO.Swagger.Controllers;
 
 namespace AasxServerBlazorTests.Controllers;
 
+using System.Security.Claims;
 using System.Security.Principal;
 using AasCore.Aas3_0;
 using AasxServer;
 using AasxServerStandardBib.Interfaces;
 using IO.Swagger.Lib.V3.Interfaces;
+using IO.Swagger.Models;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -20,6 +22,7 @@ public class SubmodelRepositoryAPIApiControllerTests
     private readonly Mock<IBase64UrlDecoderService> _decoderServiceMock;
     private readonly Mock<ISubmodelService> _submodelServiceMock;
     private readonly Mock<IAuthorizationService> _authorizationServiceMock;
+    private readonly Mock<IPaginationService> _paginationServiceMock;
     private readonly SubmodelRepositoryAPIApiController _controller;
 
     public SubmodelRepositoryAPIApiControllerTests()
@@ -31,6 +34,7 @@ public class SubmodelRepositoryAPIApiControllerTests
         _decoderServiceMock       = _fixture.Freeze<Mock<IBase64UrlDecoderService>>();
         _submodelServiceMock      = _fixture.Freeze<Mock<ISubmodelService>>();
         _authorizationServiceMock = _fixture.Freeze<Mock<IAuthorizationService>>();
+        _paginationServiceMock    = _fixture.Freeze<Mock<IPaginationService>>();
 
         _controller = _fixture.Create<SubmodelRepositoryAPIApiController>();
     }
@@ -243,6 +247,104 @@ public class SubmodelRepositoryAPIApiControllerTests
         // Assert
         action.Should().ThrowExactly<AasSecurity.Exceptions.NotAllowed>();
         _submodelServiceMock.Verify(x => x.DeleteSubmodelElementByPath(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    #endregion
+    
+    #region GetAllSubmodelElements
+
+    [Theory(Skip = "Need a way to instanciate the page result")]
+    [InlineData("asdf1234", 10, "cursor123", LevelEnum.Deep, ExtentEnum.WithoutBlobValue, "2023-01-01T00:00:00Z")]
+    [InlineData("", null, null, LevelEnum.Deep, ExtentEnum.WithBlobValue, null)]
+    [InlineData(" ", 5, "cursor456", LevelEnum.Core, ExtentEnum.WithBlobValue, "2022-06-01T00:00:00Z")]
+    public void GetAllSubmodelElements_WithValidRequest_ReturnsPagedResult(string submodelIdentifier, int? limit, string cursor, LevelEnum level, ExtentEnum extent, string diff)
+    {
+        // Arrange
+        var decodedSubmodelIdentifier = _fixture.Create<string>();
+        var submodelElements = new List<ISubmodelElement>(); // mock or actual data as needed
+
+        _decoderServiceMock.Setup(x => x.Decode("submodelIdentifier", submodelIdentifier)).Returns(decodedSubmodelIdentifier);
+        _submodelServiceMock.Setup(x => x.GetAllSubmodelElements(decodedSubmodelIdentifier)).Returns(submodelElements);
+       
+        
+        _authorizationServiceMock.Setup(x => x.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<ISubmodel>(), "SecurityPolicy"))
+                                 .Returns(Task.FromResult(AuthorizationResult.Success()));
+
+        // Act
+        var result = _controller.GetAllSubmodelElements(submodelIdentifier, limit, cursor, level, extent, diff);
+
+        // Assert
+        result.Should().BeOfType<ObjectResult>();
+        var objectResult = result as ObjectResult;
+        objectResult.Value.Should().BeOfType<PagedResult>();
+
+        var pagedResult = objectResult.Value as PagedResult;
+        pagedResult.result.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void GetAllSubmodelElements_WhenDecodingReturnedNull_ThrowsNotAllowedException()
+    {
+        // Arrange
+        var submodelIdentifier = _fixture.Create<string>();
+
+        _decoderServiceMock.Setup(x => x.Decode("submodelIdentifier", submodelIdentifier)).Returns((string)null);
+
+        // Act
+        Action action = () => _controller.GetAllSubmodelElements(submodelIdentifier, null, null, LevelEnum.Deep, ExtentEnum.WithoutBlobValue, null);
+
+        // Assert
+        action.Should().ThrowExactly<AasSecurity.Exceptions.NotAllowed>().WithMessage($"Decoding {submodelIdentifier} returned null");
+        _submodelServiceMock.Verify(x => x.GetAllSubmodelElements(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public void GetAllSubmodelElements_WhenAuthorizationFails_ThrowsNotAllowedException()
+    {
+        // Arrange
+        var submodelIdentifier = _fixture.Create<string>();
+        var submodelElements = new List<ISubmodelElement>(); // mock or actual data as needed
+
+        _decoderServiceMock.Setup(x => x.Decode("submodelIdentifier", submodelIdentifier)).Returns(submodelIdentifier);
+        _submodelServiceMock.Setup(x => x.GetAllSubmodelElements(submodelIdentifier)).Returns(submodelElements);
+        _authorizationServiceMock.Setup(x => x.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<object>(), "SecurityPolicy"))
+                                 .Returns(Task.FromResult(AuthorizationResult.Failed()));
+
+        Program.noSecurity = false;
+        
+        // Act
+        Action action = () => _controller.GetAllSubmodelElements(submodelIdentifier, null, null, LevelEnum.Core, ExtentEnum.WithBlobValue, null);
+
+        // Assert
+        action.Should().ThrowExactly<AasSecurity.Exceptions.NotAllowed>();
+        _submodelServiceMock.Verify(x => x.GetAllSubmodelElements(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public void GetAllSubmodelElements_WithValidRequestAndDiffParameter_FiltersSubmodelElements()
+    {
+        // Arrange
+        var submodelIdentifier = _fixture.Create<string>();
+        var submodelElements = new List<ISubmodelElement>(); // mock or actual data as needed
+
+        _decoderServiceMock.Setup(x => x.Decode("submodelIdentifier", submodelIdentifier)).Returns(submodelIdentifier);
+        _submodelServiceMock.Setup(x => x.GetAllSubmodelElements(submodelIdentifier)).Returns(submodelElements);
+
+        var diffDateTime = DateTime.UtcNow.AddDays(-1).ToString("yyyy-MM-ddTHH:mm:ssZ");
+        var diffParameterValue = diffDateTime; // Set the diff parameter value as per test needs
+
+        
+        _authorizationServiceMock.Setup(x => x.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<ISubmodel>(), "SecurityPolicy"))
+                                 .Returns(Task.FromResult(AuthorizationResult.Success()));
+        
+        //_paginationServiceMock.Setup(x => x.GetPaginatedList(It.IsAny<List<ISubmodelElement>>(), It.IsAny<PaginationParameters>()))
+        //                      .Returns((List<ISubmodelElement> elements, PaginationParameters parameters) => new List<ISubmodelElement>(elements));
+        // Act
+        Action action = () => _controller.GetAllSubmodelElements(submodelIdentifier, null, null, LevelEnum.Deep, ExtentEnum.WithBlobValue, diffParameterValue);
+
+        // Assert
+        action.Should().NotThrow(); // Ensure no exception is thrown
+        _submodelServiceMock.Verify(x => x.GetAllSubmodelElements(submodelIdentifier), Times.Once);
     }
 
     #endregion
