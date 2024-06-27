@@ -250,7 +250,7 @@ public class SubmodelRepositoryAPIApiControllerTests
     }
 
     #endregion
-    
+
     #region GetAllSubmodelElements
 
     [Theory(Skip = "Need a way to instanciate the page result")]
@@ -261,12 +261,12 @@ public class SubmodelRepositoryAPIApiControllerTests
     {
         // Arrange
         var decodedSubmodelIdentifier = _fixture.Create<string>();
-        var submodelElements = new List<ISubmodelElement>(); // mock or actual data as needed
+        var submodelElements          = new List<ISubmodelElement>(); // mock or actual data as needed
 
         _decoderServiceMock.Setup(x => x.Decode("submodelIdentifier", submodelIdentifier)).Returns(decodedSubmodelIdentifier);
         _submodelServiceMock.Setup(x => x.GetAllSubmodelElements(decodedSubmodelIdentifier)).Returns(submodelElements);
-       
-        
+
+
         _authorizationServiceMock.Setup(x => x.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<ISubmodel>(), "SecurityPolicy"))
                                  .Returns(Task.FromResult(AuthorizationResult.Success()));
 
@@ -303,7 +303,7 @@ public class SubmodelRepositoryAPIApiControllerTests
     {
         // Arrange
         var submodelIdentifier = _fixture.Create<string>();
-        var submodelElements = new List<ISubmodelElement>(); // mock or actual data as needed
+        var submodelElements   = new List<ISubmodelElement>(); // mock or actual data as needed
 
         _decoderServiceMock.Setup(x => x.Decode("submodelIdentifier", submodelIdentifier)).Returns(submodelIdentifier);
         _submodelServiceMock.Setup(x => x.GetAllSubmodelElements(submodelIdentifier)).Returns(submodelElements);
@@ -311,7 +311,7 @@ public class SubmodelRepositoryAPIApiControllerTests
                                  .Returns(Task.FromResult(AuthorizationResult.Failed()));
 
         Program.noSecurity = false;
-        
+
         // Act
         Action action = () => _controller.GetAllSubmodelElements(submodelIdentifier, null, null, LevelEnum.Core, ExtentEnum.WithBlobValue, null);
 
@@ -325,18 +325,18 @@ public class SubmodelRepositoryAPIApiControllerTests
     {
         // Arrange
         var submodelIdentifier = _fixture.Create<string>();
-        var submodelElements = new List<ISubmodelElement>(); // mock or actual data as needed
+        var submodelElements   = new List<ISubmodelElement>(); // mock or actual data as needed
 
         _decoderServiceMock.Setup(x => x.Decode("submodelIdentifier", submodelIdentifier)).Returns(submodelIdentifier);
         _submodelServiceMock.Setup(x => x.GetAllSubmodelElements(submodelIdentifier)).Returns(submodelElements);
 
-        var diffDateTime = DateTime.UtcNow.AddDays(-1).ToString("yyyy-MM-ddTHH:mm:ssZ");
+        var diffDateTime       = DateTime.UtcNow.AddDays(-1).ToString("yyyy-MM-ddTHH:mm:ssZ");
         var diffParameterValue = diffDateTime; // Set the diff parameter value as per test needs
 
-        
+
         _authorizationServiceMock.Setup(x => x.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<ISubmodel>(), "SecurityPolicy"))
                                  .Returns(Task.FromResult(AuthorizationResult.Success()));
-        
+
         //_paginationServiceMock.Setup(x => x.GetPaginatedList(It.IsAny<List<ISubmodelElement>>(), It.IsAny<PaginationParameters>()))
         //                      .Returns((List<ISubmodelElement> elements, PaginationParameters parameters) => new List<ISubmodelElement>(elements));
         // Act
@@ -348,6 +348,102 @@ public class SubmodelRepositoryAPIApiControllerTests
     }
 
     #endregion
-    
-    
+
+    #region GetAllSubmodelElementsPathSubmodelRepo
+
+    [Theory]
+    [InlineData("asdf1234", 10, "cursor123", "Deep", "2023-01-01T00:00:00Z")]
+    [InlineData("", null, null, "Deep", null)]
+    [InlineData(" ", 5, "cursor456", "Core", "2022-06-01T00:00:00Z")]
+    public void GetAllSubmodelElementsPathSubmodelRepo_WithValidRequest_ReturnsSubmodelElements(string submodelIdentifier, int? limit, string cursor, string level, string diff)
+    {
+        // Arrange
+        var decodedSubmodelIdentifier = _fixture.Create<string>();
+        var submodelElements          = new List<ISubmodelElement>(); // mock or actual data as needed
+
+        _decoderServiceMock.Setup(x => x.Decode("submodelIdentifier", submodelIdentifier)).Returns(decodedSubmodelIdentifier);
+        _submodelServiceMock.Setup(x => x.GetAllSubmodelElements(decodedSubmodelIdentifier)).Returns(submodelElements);
+
+        _authorizationServiceMock.Setup(x => x.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<ISubmodel>(), "SecurityPolicy"))
+                                 .Returns(Task.FromResult(AuthorizationResult.Success()));
+
+        // Act
+        var result = _controller.GetAllSubmodelElementsPathSubmodelRepo(submodelIdentifier, limit, cursor, level, diff);
+
+        // Assert
+        result.Should().BeOfType<ObjectResult>();
+        var objectResult = result as ObjectResult;
+        objectResult.Value.Should().BeOfType<List<ISubmodelElement>>();
+
+        var submodelElementsList = objectResult.Value as List<ISubmodelElement>;
+        submodelElementsList.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void GetAllSubmodelElementsPathSubmodelRepo_WhenDecodingReturnedNull_ThrowsNotAllowedException()
+    {
+        // Arrange
+        var submodelIdentifier = _fixture.Create<string>();
+
+        _decoderServiceMock.Setup(x => x.Decode("submodelIdentifier", submodelIdentifier)).Returns((string)null);
+
+        // Act
+        Action action = () => _controller.GetAllSubmodelElementsPathSubmodelRepo(submodelIdentifier, null, null, "Deep", null);
+
+        // Assert
+        action.Should().ThrowExactly<AasSecurity.Exceptions.NotAllowed>().WithMessage($"Decoding {submodelIdentifier} returned null");
+        _submodelServiceMock.Verify(x => x.GetAllSubmodelElements(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public void GetAllSubmodelElementsPathSubmodelRepo_WhenAuthorizationFails_ThrowsNotAllowedException()
+    {
+        // Arrange
+        var submodelIdentifier = _fixture.Create<string>();
+        var submodelElements   = new List<ISubmodelElement>(); // mock or actual data as needed
+
+        _decoderServiceMock.Setup(x => x.Decode("submodelIdentifier", submodelIdentifier)).Returns(submodelIdentifier);
+        _submodelServiceMock.Setup(x => x.GetAllSubmodelElements(submodelIdentifier)).Returns(submodelElements);
+        _authorizationServiceMock.Setup(x => x.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<object>(), "SecurityPolicy"))
+                                 .Returns(Task.FromResult(AuthorizationResult.Failed()));
+
+        Program.noSecurity = false;
+
+        // Act
+        Action action = () => _controller.GetAllSubmodelElementsPathSubmodelRepo(submodelIdentifier, null, null, "Core", null);
+
+        // Assert
+        action.Should().ThrowExactly<AasSecurity.Exceptions.NotAllowed>();
+        _submodelServiceMock.Verify(x => x.GetAllSubmodelElements(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public void GetAllSubmodelElementsPathSubmodelRepo_WithValidRequestAndDiffParameter_FiltersSubmodelElements()
+    {
+        // Arrange
+        var submodelIdentifier = _fixture.Create<string>();
+        var submodelElements   = new List<ISubmodelElement>(); // mock or actual data as needed
+
+        _decoderServiceMock.Setup(x => x.Decode("submodelIdentifier", submodelIdentifier)).Returns(submodelIdentifier);
+        _submodelServiceMock.Setup(x => x.GetAllSubmodelElements(submodelIdentifier)).Returns(submodelElements);
+
+        var diffDateTime       = DateTime.UtcNow.AddDays(-1).ToString("yyyy-MM-ddTHH:mm:ssZ");
+        var diffParameterValue = diffDateTime; // Set the diff parameter value as per test needs
+
+        _authorizationServiceMock.Setup(x => x.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<ISubmodel>(), "SecurityPolicy"))
+                                 .Returns(Task.FromResult(AuthorizationResult.Success()));
+
+        // Act
+        var result = _controller.GetAllSubmodelElementsPathSubmodelRepo(submodelIdentifier, null, null, "Deep", diffParameterValue);
+
+        // Assert
+        result.Should().BeOfType<ObjectResult>();
+        var objectResult = result as ObjectResult;
+        objectResult.Value.Should().BeOfType<List<ISubmodelElement>>();
+
+        var submodelElementsList = objectResult.Value as List<ISubmodelElement>;
+        submodelElementsList.Should().NotBeNull();
+    }
+
+    #endregion
 }

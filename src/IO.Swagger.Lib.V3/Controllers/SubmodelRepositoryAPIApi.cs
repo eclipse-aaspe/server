@@ -445,13 +445,19 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     {
         var decodedSubmodelIdentifier = _decoderService.Decode($"submodelIdentifier", submodelIdentifier);
         _logger.LogDebug($"Received request to get all the submodel elements from the submodel with id {decodedSubmodelIdentifier}");
+        
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
+        }
+        
         if (!Program.noSecurity)
         {
             var submodel   = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
             var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
