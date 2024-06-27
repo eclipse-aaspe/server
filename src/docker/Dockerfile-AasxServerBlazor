@@ -7,7 +7,6 @@ WORKDIR /repo/src
 COPY ./src/ /repo/src/
 COPY ./LICENSE.TXT /repo/LICENSE.txt
 
-RUN dotnet clean
 RUN dotnet restore
 RUN dotnet build -o /out/AasxServerBlazor AasxServerBlazor -v diag
 RUN dotnet publish -c Release -v diag --no-restore
@@ -18,7 +17,9 @@ FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/aspnet:8.0 as base
 RUN apt update && apt upgrade --yes
 RUN apt install -y curl nano libgdiplus
 ENV ASPNETCORE_URLS=http://+:5001
+ENV ASPNETCORE_HTTP_PORTS=5001
 EXPOSE 5001
+EXPOSE 5002
 COPY --from=build-env /out/AasxServerBlazor/ /AasxServerBlazor/
 COPY ./content-for-demo/ /AasxServerBlazor/
 WORKDIR /AasxServerBlazor
