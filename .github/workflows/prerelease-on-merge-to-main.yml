@@ -271,10 +271,8 @@ jobs:
         run: |
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
             echo "tag=main" >> $GITHUB_OUTPUT
-            Write-Host "Docker tag will be main"
           else
             echo "tag=develop" >> $GITHUB_OUTPUT
-            Write-Host "Docker tag will be develop"
           fi
 
       - name: Build and publish multi-architecture Docker image for AASX Server Blazor
