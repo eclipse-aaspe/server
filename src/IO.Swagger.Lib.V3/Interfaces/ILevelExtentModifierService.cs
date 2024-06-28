@@ -28,5 +28,5 @@ public interface ILevelExtentModifierService
     /// <param name="extent">The extent of transformation. Default is ExtentEnum.WithoutBlobValue.</param>
     /// <returns>The list of transformed IClass instances.</returns>
     /// <exception cref="ArgumentNullException">Thrown if the input list is null.</exception>
-    List<IClass> ApplyLevelExtent(List<IClass> that, LevelEnum level = LevelEnum.Deep, ExtentEnum extent = ExtentEnum.WithoutBlobValue);
+    List<IClass?> ApplyLevelExtent(List<IClass?> that, LevelEnum level = LevelEnum.Deep, ExtentEnum extent = ExtentEnum.WithoutBlobValue);
 }

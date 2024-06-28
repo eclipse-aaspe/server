@@ -22,12 +22,12 @@ public class LevelExtentModifierService : ILevelExtentModifierService
     }
     
     /// <inheritdoc />
-    public List<IClass> ApplyLevelExtent(List<IClass> that, LevelEnum level = LevelEnum.Deep, ExtentEnum extent = ExtentEnum.WithoutBlobValue)
+    public List<IClass?> ApplyLevelExtent(List<IClass?> that, LevelEnum level = LevelEnum.Deep, ExtentEnum extent = ExtentEnum.WithoutBlobValue)
     {
         ArgumentNullException.ThrowIfNull(that);
 
         var context = new LevelExtentModifierContext(level, extent);
 
-        return that.Select(source => _transformer.Transform(source, context)).ToList();
+        return that.Select(source => source != null ? _transformer.Transform(source, context) : null).ToList();
     }
 }

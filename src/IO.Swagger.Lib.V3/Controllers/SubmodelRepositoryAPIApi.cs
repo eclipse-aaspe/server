@@ -282,8 +282,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         var smePaginatedList = _paginationService.GetPaginatedList(filtered, new PaginationParameters(cursor, limit));
-        var smeLevelList     = _levelExtentModifierService.ApplyLevelExtent(smePaginatedList.result ?? [], level, extent);
-        var output           = new PagedResult() {result = smeLevelList, paging_metadata = smePaginatedList.paging_metadata};
+        var smeLevelList     = _levelExtentModifierService.ApplyLevelExtent(smePaginatedList.result, level, extent);
+        var output           = new PagedResult {result = smeLevelList, paging_metadata = smePaginatedList.paging_metadata};
         return new ObjectResult(output);
     }
 

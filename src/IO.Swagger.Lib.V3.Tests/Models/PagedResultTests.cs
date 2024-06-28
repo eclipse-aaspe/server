@@ -2,6 +2,7 @@ using IO.Swagger.Models;
 
 namespace AasxServerBlazorTests.Models;
 
+using AasCore.Aas3_0;
 using JetBrains.Annotations;
 
 [TestSubject(typeof(PagedResult))]
