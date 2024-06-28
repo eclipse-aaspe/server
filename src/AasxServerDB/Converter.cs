@@ -107,11 +107,6 @@ namespace AasxServerDB
                             globalAssetId: value.First()[0],
                             statements: new List<ISubmodelElement>());
                         break;
-                    /*case "Ref":
-                        nextSME = new ReferenceElement(value: new Reference(
-                                AasCore.Aas3_0.ReferenceTypes.ExternalReference,
-                                new List<IKey>() { new Key(KeyTypes.GlobalReference, value.First()[0]) }));
-                        break;*/
                 }
 
                 if (nextSME == null)

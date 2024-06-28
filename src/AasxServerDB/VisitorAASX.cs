@@ -192,21 +192,16 @@ namespace AasxServerDB
             if (value.IsNullOrEmpty())
                 return string.Empty;
 
-            var valueType = shortValueType(dataType);
-            var withValueType = !valueType.IsNullOrEmpty();
-
-            if (valueType.Equals("S"))
+            if (shortValueType(dataType).Equals("S"))
             {
                 sValue = value;
                 return "S";
             }
 
-            var isInt64 = Int64.TryParse(value, out iValue);
-            if (isInt64 && (!withValueType || valueType.Equals("I")))
+            if (Int64.TryParse(value, out iValue))
                 return "I";
 
-            var isDouble = Double.TryParse(value, out dValue);
-            if (isDouble && (!withValueType || valueType.Equals("D")))
+            if (Double.TryParse(value, out dValue))
                 return "D";
 
             sValue = value;
@@ -215,7 +210,6 @@ namespace AasxServerDB
 
         private void setValues(ISubmodelElement sme, SMESet smeDB)
         {
-            System.IO.File.AppendAllText("C:\\Users\\Y97CO3\\OneDrive - PHOENIX CONTACT GmbH & Co. KG\\04_Abteilung_DI\\02_Projekte\\02_Aasx_Server\\01_AASX-Server_AASen\\aasx_bachelor\\missing.txt", sme.GetType().Name + System.Environment.NewLine);
             if (sme is Property prop)
             {
                 var value = prop.ValueAsText();
