@@ -580,20 +580,19 @@
                             <td>
                                 @if (smeDB.SMEType.Equals("MLP"))
                                 {
-                                    List<string> list = smeDB.getMLPValue();
+                                    var list = smeDB.getValue();
                                     <ul>
-                                        @for (int z = 0; z + 1 < list.Count; z++)
+                                        @for (int z = 0; z < list.Count; z++)
                                         {
                                             <li>
-                                                [@list[ z ]] @list[ z + 1 ]
+                                                [@list[ z ][ 1 ]] @list[ z ][ 0 ]
                                             </li>
-                                            z++;
                                         }
                                     </ul>
                                 }
                                 else
                                 {
-                                    @smeDB.getValue()
+                                    @smeDB.getValue().First()[0]
                                 }
                             </td>
                             <td style="word-break:keep-all">@smeDB.ValueType</td>
@@ -616,7 +615,7 @@
                                 {
                                     <a href="@($"{shorturl}/ivalue?smeid={smeDB.Id}")" target="_blank">ivalue</a>
                                 }
-                                @if (smeDB.ValueType.Equals("F"))
+                                @if (smeDB.ValueType.Equals("D"))
                                 {
                                     <a href="@($"{shorturl}/dvalue?smeid={smeDB.Id}")" target="_blank">fvalue</a>
                                 }
@@ -667,15 +666,14 @@
                         <span>
                             @if (smeDB.SMEType.Equals("MLP"))
                             {
-                                List<string> list = smeDB.getMLPValue();
+                                List<string[]> list = smeDB.getValue();
                                 if (list.Count > 0)
                                 {
                                     string mlp            = string.Empty;
                                     string seperateString = " | ";
-                                    @for (int z = 0; z + 1 < list.Count; z++)
+                                    @for (int z = 0; z < list.Count; z++)
                                     {
-                                        mlp += $"[{list[ z ]}] {list[ z + 1 ]}{seperateString}";
-                                        z++;
+                                            mlp += $"[{list[z][1]}] {list[z][0]}{seperateString}";
                                     }
 
                                     @mlp.Substring(0, mlp.Length - seperateString.Length)
@@ -683,7 +681,7 @@
                             }
                             else
                             {
-                                @smeDB.getValue()
+                                    @smeDB.getValue().First()[0]
                             }
                         </span>
                         <span style="background-color:blue;">&nbsp</span>
