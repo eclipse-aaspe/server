@@ -107,11 +107,13 @@ namespace AasxServerDB
                             globalAssetId: value.First()[0],
                             statements: new List<ISubmodelElement>());
                         break;
-                    /*case "Ref":
-                        nextSME = new ReferenceElement(value: new Reference(
-                                AasCore.Aas3_0.ReferenceTypes.ExternalReference,
-                                new List<IKey>() { new Key(KeyTypes.GlobalReference, value.First()[0]) }));
-                        break;*/
+                    case "Range":
+                        var findMin = value.Find(val => val[1].Equals("Min"));
+                        var findMax = value.Find(val => val[1].Equals("Max"));
+                        var minValue = findMin != null ? findMin[0] : string.Empty;
+                        var maxValue = findMax != null ? findMax[0] : string.Empty;
+                        nextSME = new AasCore.Aas3_0.Range(DataTypeDefXsd.String, min: minValue, max: maxValue);
+                        break;
                 }
 
                 if (nextSME == null)

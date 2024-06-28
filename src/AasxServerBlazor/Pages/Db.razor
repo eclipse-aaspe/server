@@ -590,6 +590,18 @@
                                         }
                                     </ul>
                                 }
+                                else if (smeDB.SMEType.Equals("Range"))
+                                {
+                                    var list = smeDB.getValue();
+                                    <ul>
+                                        @for (int z = 0; z < list.Count; z++)
+                                        {
+                                            <li>
+                                                [@list[ z ][ 1 ]] @list[ z ][ 0 ]
+                                            </li>
+                                        }
+                                    </ul>
+                                }
                                 else
                                 {
                                     @smeDB.getValue().First()[0]

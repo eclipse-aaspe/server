@@ -192,21 +192,16 @@ namespace AasxServerDB
             if (value.IsNullOrEmpty())
                 return string.Empty;
 
-            var valueType = shortValueType(dataType);
-            var withValueType = !valueType.IsNullOrEmpty();
-
-            if (valueType.Equals("S"))
+            if (shortValueType(dataType).Equals("S"))
             {
                 sValue = value;
                 return "S";
             }
 
-            var isInt64 = Int64.TryParse(value, out iValue);
-            if (isInt64 && (!withValueType || valueType.Equals("I")))
+            if (Int64.TryParse(value, out iValue))
                 return "I";
 
-            var isDouble = Double.TryParse(value, out dValue);
-            if (isDouble && (!withValueType || valueType.Equals("D")))
+            if (Double.TryParse(value, out dValue))
                 return "D";
 
             sValue = value;
@@ -215,7 +210,6 @@ namespace AasxServerDB
 
         private void setValues(ISubmodelElement sme, SMESet smeDB)
         {
-            System.IO.File.AppendAllText("C:\\Users\\Y97CO3\\OneDrive - PHOENIX CONTACT GmbH & Co. KG\\04_Abteilung_DI\\02_Projekte\\02_Aasx_Server\\01_AASX-Server_AASen\\aasx_bachelor\\missing.txt", sme.GetType().Name + System.Environment.NewLine);
             if (sme is Property prop)
             {
                 var value = prop.ValueAsText();
@@ -252,6 +246,60 @@ namespace AasxServerDB
             {
                 smeDB.ValueType = "S";
                 smeDB.SValueSets.Add(new SValueSet { Value = entity.GlobalAssetId, Annotation = entity.EntityType.ToString() });
+            }
+            else if (sme is AasCore.Aas3_0.Range range)
+            {
+                var withMin = !range.Min.IsNullOrEmpty();
+                var withMax = !range.Max.IsNullOrEmpty();
+                if (!withMin && !withMax)
+                    return;
+
+                var valueTypeMin = getValueAndType(range.Min, range.ValueType, out var sValueMin, out var iValueMin, out var dValueMin);
+                var valueTypeMax = getValueAndType(range.Max, range.ValueType, out var sValueMax, out var iValueMax, out var dValueMax);
+
+                if (valueTypeMin.Equals(valueTypeMax))
+                    smeDB.ValueType = valueTypeMin;
+                else if (valueTypeMin.IsNullOrEmpty() || valueTypeMax.IsNullOrEmpty())
+                    smeDB.ValueType = withMin ? valueTypeMin : valueTypeMax;
+                else if (valueTypeMin.Equals("S") || valueTypeMax.Equals("S"))
+                {
+                    smeDB.ValueType = "S";
+                    if (valueTypeMin.Equals("S"))
+                        sValueMax = valueTypeMax.Equals("I") ? iValueMax.ToString() : dValueMax.ToString();
+                    else if (valueTypeMax.Equals("S"))
+                        sValueMin = valueTypeMin.Equals("I") ? iValueMin.ToString() : dValueMin.ToString();
+                }
+                else
+                {
+                    smeDB.ValueType = "D";
+                    if (valueTypeMin.Equals("I"))
+                        dValueMin = Convert.ToDouble(iValueMin);
+                    else if (valueTypeMax.Equals("I"))
+                        dValueMax = Convert.ToDouble(iValueMax);
+                }
+
+
+                if (smeDB.ValueType.Equals("S"))
+                {
+                    if (withMin)
+                        smeDB.SValueSets.Add(new SValueSet { Value = sValueMin, Annotation = "Min" });
+                    if (withMax)
+                        smeDB.SValueSets.Add(new SValueSet { Value = sValueMax, Annotation = "Max" });
+                }
+                else if (smeDB.ValueType.Equals("I"))
+                {
+                    if (withMin)
+                        smeDB.IValueSets.Add(new IValueSet { Value = iValueMin, Annotation = "Min" });
+                    if (withMax)
+                        smeDB.IValueSets.Add(new IValueSet { Value = iValueMax, Annotation = "Max" });
+                }
+                else if (smeDB.ValueType.Equals("D"))
+                {
+                    if (withMin)
+                        smeDB.DValueSets.Add(new DValueSet { Value = dValueMin, Annotation = "Min" });
+                    if (withMax)
+                        smeDB.DValueSets.Add(new DValueSet { Value = dValueMax, Annotation = "Max" });
+                }
             }
         }
 
