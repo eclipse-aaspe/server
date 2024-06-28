@@ -12,7 +12,8 @@ public static class BlazorServerStarter
 {
     private const string AppSettingsFileName = "appsettings.json";
     private const string KestrelEndpointsHttpUrl = "Kestrel:Endpoints:Http:Url";
-    private const string DefaultUrl = "http://+:5001";
+    private const string DefaultPort = "5001";
+    private const string DefaultUrl = $"http://*:{DefaultPort}";
     private const char KestrelUrlSeparator = ':';
 
     public static void Main(string[] args)
@@ -45,17 +46,23 @@ public static class BlazorServerStarter
     private static IHostBuilder CreateHostBuilder(string[] args, IConfiguration config)
     {
         var url = config[KestrelEndpointsHttpUrl]?.Split(KestrelUrlSeparator);
-        if (url?[2] != null)
+        if (url?.Length > 2 && int.TryParse(url[2], out var port))
         {
-            Program.blazorPort = url[2];
+            // Use the dynamically retrieved port
+            Program.blazorPort = port.ToString();
         }
-
+        else
+        {
+            // Use default port if dynamic port retrieval fails
+            Program.blazorPort = DefaultPort;
+        }
+        
         return Host.CreateDefaultBuilder(args)
                    .ConfigureWebHostDefaults(webBuilder =>
                                              {
                                                  webBuilder
-                                                     .UseStartup<Startup>()
-                                                     .UseUrls(DefaultUrl);
+                                                     .UseUrls(DefaultUrl)
+                                                     .UseStartup<Startup>();
                                              });
     }
 
