@@ -18,6 +18,10 @@
 > [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo-arm64?label=aasx-server-blazor-for-demo-arm64)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm64)<br>
 > [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo-arm32?label=aasx-server-blazor-for-demo-arm32)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm32)<br>
 > [![Docker Pulls](https://img.shields.io/docker/pulls/adminshellio/aasx-server-blazor-for-demo?label=aasx-server-blazor-for-demo)](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo)<br>
+>
+> ### Important
+> We currently use Dotnet Version ![.NET Version](https://img.shields.io/badge/dotnet-8.0-blue)
+
 
 AASX Server is a companion app for the [AASX Package Explorer](). It provides a local service to host and serve Industrie 4.0 AASX packages. The Core version
 exposes endpoints for REST, OPC UA, and MQTT protocols. The GUI version offers the same functionality and additionally uses the Blazor Framework to provide a
@@ -55,12 +59,18 @@ export Kestrel__Endpoints__Http__Url=http://*:YOURPORT
 dotnet AasxServerBlazor.dll --no-security --data-path ./aasxs --external-blazor YOURURL  
 ```
 
-> Note: ASP.NET Core Runtime 6.0 can be downloaded [here](https://dotnet.microsoft.com/en-us/download/dotnet/6.0).
+> Note: ASP.NET Core Runtime 8.0 can be downloaded [here](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
 
 ### Running AASX Server with Docker
 
 You can use the Docker image available at:  
-`docker.io/adminshellio/aasx-server-blazor-for-demo:main`
+[`docker.io/adminshellio/aasx-server-blazor-for-demo`](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo)
+
+This image includes several tags for different purposes:
+- `latest`: Latest stable release version.
+- `main`: Nightly build from the main branch (unstable).
+- `develop`: Build from any development state (highly unstable and potentially broken).
+- Version-specific tags: You can pull a specific version of the container.
 
 Place your AASXs into the `./aasxs` directory and run the Docker container with:
 
@@ -345,33 +355,39 @@ For more information on continuous integration, see
 [.github/workflows/check-release.yml](.github/workflows/check-release.yml) for
 a workflow which is executed on each push to master branch.
 
-## Docker Containers for Demonstration
 
-We provide pre-built docker images meant for demonstration purposes at the
-following DockerHub repositories:
+# Docker Containers for Demonstration
 
+We provide pre-built Docker images for demonstration purposes at the following DockerHub repositories:
+
+### Blazor Variants
 * `blazor` [linux/amd64](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo)
 * `blazor` [linux/arm32](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm32)
 * `blazor` [linux/arm64](https://hub.docker.com/r/adminshellio/aasx-server-blazor-for-demo-arm64)
+
+### Core Variants
 * `core` [linux/amd64](https://hub.docker.com/r/adminshellio/aasx-server-core-for-demo)
 * `core` [linux/arm32](https://hub.docker.com/r/adminshellio/aasx-server-core-for-demo-arm32)
 * `core` [linux/arm64](https://hub.docker.com/r/adminshellio/aasx-server-core-for-demo-arm64)
 
-In case you want to deploy on Raspberry PI, you probably need to use ARM 32-bit.
+### Tags Information
+Each Docker image includes the following tags:
+- `latest`: Latest stable release version.
+- `main`: Nightly build from the main branch (unstable).
+- `develop`: Build from any development state (highly unstable and potentially broken).
+- Version-specific tags: You can pull a specific version of the container.
 
-Ideally, we would like to set up a multi-arch docker container (see [this article](
-https://www.docker.com/blog/multi-arch-build-and-images-the-simple-way/)). If you have experience with multi-arch
-images and would like to help, please let us know by [creating an issue](
-https://github.com/admin-shell-io/aasx-server/issues/new).
+### Multi-Architecture Support
+To facilitate deployment on Raspberry Pi or other architectures, we aim to create multi-arch Docker containers. If you have experience or would like to contribute, please let us know by [creating an issue](https://github.com/admin-shell-io/aasx-server/issues/new).
 
-For example, to pull the latest `core` variant of the server for the
-demonstration on an x86 64-bit machine (linux/amd64), invoke:
+### Example Usage
+For instance, to pull the latest `core` variant of the server for demonstration on an x86 64-bit machine (linux/amd64), use:
 
 ```shell
 docker pull adminshellio/aasx-server-core-for-demo
 ```
 
-You can then run the container with:
+Run the container with:
 
 ```shell
 docker run \
@@ -380,13 +396,13 @@ docker run \
     adminshellio/aasx-server-core-for-demo
 ```
 
-The server should be accessible now on your localhost. For example, curl:
+After running, you can access the server locally. For example, using curl:
 
 ```shell
 curl http://localhost:51310/server/listaas
 ```
 
-should give you something like this:
+You should receive a response similar to this JSON:
 
 ```json
 {

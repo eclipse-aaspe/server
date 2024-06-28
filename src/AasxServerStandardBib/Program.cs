@@ -113,6 +113,25 @@ namespace AasxServer
             Program.signalNewData(2);
         }
 
+        public static bool isLoadingDB = false;
+        static bool isLoaded = false;
+
+        public static void loadAllPackages()
+        {
+            if (!withDb || isLoadingDB || isLoaded)
+                return;
+
+            Program.isLoadingDB = true;
+            var aasIDDBList = new AasContext().AASSets.Select(aas => aas.Identifier).ToList();
+
+            foreach (var aasIDDB in aasIDDBList)
+                loadPackageForAas(aasIDDB, out _, out _);
+
+            isLoaded = true;
+            Program.isLoadingDB = false;
+            Program.signalNewData(2);
+        }
+
         public static bool loadPackageForAas(string aasIdentifier, out IAssetAdministrationShell output, out int packageIndex)
         {
             output       = null;
@@ -946,17 +965,6 @@ namespace AasxServer
 
             // MICHA MICHA
             AasxTimeSeries.TimeSeries.timeSeriesInit();
-
-            /* OZOZ
-            var _energyModelInstances = new List<EnergyModelInstance>();
-            foreach (var penv in AasxServer.Program.env)
-            {
-                EnergyModelInstance.TagAllAasAndSm(penv?.AasEnv, DateTime.UtcNow);
-                _energyModelInstances.AddRange(
-                    EnergyModelInstance.FindAllSmInstances(penv?.AasEnv));
-            }
-            EnergyModelInstance.StartAllAsOneThread(_energyModelInstances);
-            */
 
             AasxTask.taskInit();
 

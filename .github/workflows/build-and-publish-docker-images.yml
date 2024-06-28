@@ -12,6 +12,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Extract branch name
+        id: extract_branch
+        run: |
+          $branch = '${{ github.ref }}' -replace 'refs/heads/', ''
+          echo "branch=$branch" >> $env:GITHUB_OUTPUT
+          Write-Host "The current branch is: $branch"
+        shell: pwsh
+
+      - name: Generate Version Number
+        working-directory: src
+        id: generate_version_number
+        run: |
+          $branch = '${{ steps.extract_branch.outputs.branch }}'
+          $version = .\BuildVersionNumber.ps1 -suffix $VERSION_SUFFIX -branch $branch -githubRunNumber ${{ github.run_number }}
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "The version name to build is: $version"
+        shell: pwsh
+
+      - name: Set version number
+        id: set-version
+        run: echo "VERSION_NUMBER=$(echo ${{ steps.generate_version_number.outputs.version }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -24,56 +46,84 @@ jobs:
           username: adminshellio
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - name: Build and publish AasxServerBlazor
+      - name: Build and publish multi-architecture Docker image for AASX Server Blazor
         uses: docker/build-push-action@v6
         with:
           push: true
-          load: true
           file: ./src/docker/Dockerfile-AasxServerBlazor
-          tags: adminshellio/aasx-server-blazor-for-demo:latest
+          platforms: |
+            linux/amd64
+            linux/arm/v6
+            linux/arm/v7
+            linux/arm64
+          tags: |
+            adminshellio/aasx-server-blazor-for-demo:latest
+            adminshellio/aasx-server-blazor-for-demo:${{ env.VERSION_NUMBER }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          labels: "version =${{ env.VERSION_NUMBER }}"
+
+      - name: Build and publish multi-architecture Docker image for AasxServerCore
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          file: ./src/docker/Dockerfile-AasxServerAspNetCore
+          platforms: |
+            linux/amd64
+            linux/arm/v6
+            linux/arm/v7
+            linux/arm64
+          tags: |
+            adminshellio/aasx-server-aspnetcore-for-demo:latest
+            adminshellio/aasx-server-aspnetcore-for-demo:${{ env.VERSION_NUMBER }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          labels: "version =${{ env.VERSION_NUMBER }}"
+      
+      # --------------------------------------------------------------------------------------------------
+      # These are the old specific docker image builds. We need to decide, if we want to delete them 
+      # and only use the multi-platform builds                
+      # --------------------------------------------------------------------------------------------------
 
       - name: Build and publish AasxServerBlazor-arm32
         uses: docker/build-push-action@v6
         with:
           push: true
           load: true
-          file: ./src/docker/Dockerfile-AasxServerBlazor-arm32
+          file: ./src/docker/Dockerfile-AasxServerBlazor
+          platforms: linux/arm/v7
           tags: adminshellio/aasx-server-blazor-for-demo-arm32:latest
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          labels: "version =${{ env.VERSION_NUMBER }}"
 
       - name: Build and publish AasxServerBlazor-arm64
         uses: docker/build-push-action@v6
         with:
           push: true
           load: true
-          file: ./src/docker/Dockerfile-AasxServerBlazor-arm64
+          file: ./src/docker/Dockerfile-AasxServerBlazor
+          platforms: linux/arm64
           tags: adminshellio/aasx-server-blazor-for-demo-arm64:latest
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          labels: "version =${{ env.VERSION_NUMBER }}"
 
-
-      - name: Build and publish AasxServerCore
-        uses: docker/build-push-action@v6
-        with:
-          push: true
-          load: true
-          file: ./src/docker/Dockerfile-AasxServerAspNetCore
-          tags: adminshellio/aasx-server-aspnetcore-for-demo:latest
-          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and publish AasxServerCore-arm32
         uses: docker/build-push-action@v6
         with:
           push: true
           load: true
-          file: ./src/docker/Dockerfile-AasxServerAspNetCore-arm32
+          file: ./src/docker/Dockerfile-AasxServerAspNetCore
+          platforms: linux/arm/v7
           tags: adminshellio/aasx-server-aspnetcore-for-demo-arm32:latest
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          labels: "version =${{ env.VERSION_NUMBER }}"
 
       - name: Build and publish AasxServerCore-arm64
         uses: docker/build-push-action@v6
         with:
           push: true
           load: true
-          file: ./src/docker/Dockerfile-AasxServerAspNetCore-arm64
+          file: ./src/docker/Dockerfile-AasxServerAspNetCore
+          platforms: linux/arm64
           tags: adminshellio/aasx-server-aspnetcore-for-demo-arm64:latest
-          github-token: ${{ secrets.GITHUB_TOKEN }}"
-
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          labels: "version =${{ env.VERSION_NUMBER }}"
