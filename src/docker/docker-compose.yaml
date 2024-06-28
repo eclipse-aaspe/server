@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   aasx-server:
     container_name: aasx-server
@@ -15,4 +14,4 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5001
       - ASPNETCORE_HTTP_PORTS=5001
-    command: --start-index 0 --no-security --edit --data-path /usr/share/aasxs --external-blazor http://localhost:5001
+    command: --start-index 0 --no-security --edit --data-path /usr/share/aasxs --external-blazor http://+:5001

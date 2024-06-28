@@ -12,7 +12,7 @@ public static class BlazorServerStarter
 {
     private const string AppSettingsFileName = "appsettings.json";
     private const string KestrelEndpointsHttpUrl = "Kestrel:Endpoints:Http:Url";
-    private const string DefaultUrl = "http://localhost:5000";
+    private const string DefaultUrl = "http://+:5001";
     private const char KestrelUrlSeparator = ':';
 
     public static void Main(string[] args)
