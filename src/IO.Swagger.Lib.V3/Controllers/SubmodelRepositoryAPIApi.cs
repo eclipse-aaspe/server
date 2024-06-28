@@ -97,18 +97,24 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
+        }
+
         _logger.LogInformation($"Received a request to delete a file at {idShortPath} from the submodel {decodedSubmodelIdentifier}");
         if (!Program.noSecurity)
         {
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
-            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)};
+            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+            var claimsList = new List<Claim>(User.Claims);
+            claimsList.Add(new Claim("IdShortPath", $"{submodel.IdShort}.{idShortPath}"));
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -142,6 +148,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
+        }
+
         _logger.LogInformation($"Received a request to delete a submodel with id {decodedSubmodelIdentifier}");
         _submodelService.DeleteSubmodelById(decodedSubmodelIdentifier);
 
@@ -173,17 +184,23 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     public virtual IActionResult DeleteSubmodelElementByPathSubmodelRepo([FromRoute] [Required] string submodelIdentifier, [FromRoute] [Required] string idShortPath)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
+        }
+
         if (!Program.noSecurity)
         {
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
-            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)};
+            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -200,7 +217,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
     /// <param name="limit">The maximum number of elements in the response array</param>
     /// <param name="cursor">A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue</param>
-    /// <param name="level">Determines the structural depth of the respective resource content</param>
+    /// <param name="level">Determines the structural depth of the respective resource content. Default value is deep</param>
     /// <param name="extent">Determines to which extent the resource is being serialized</param>
     /// <param name="diff">Filters response, only elements changed after DateTime</param>
     /// <response code="200">List of found submodel elements</response>
@@ -222,12 +239,17 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetAllSubmodelElements([FromRoute] [Required] string submodelIdentifier,
-                                                        [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] [Required] LevelEnum level,
-                                                        [FromQuery] [Required] ExtentEnum extent,
+                                                        [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] LevelEnum level,
+                                                        [FromQuery] ExtentEnum extent,
                                                         [FromQuery] string? diff)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
+        }
+        
         _logger.LogInformation($"Received a request to get all the submodel elements from submodel with id {decodedSubmodelIdentifier}");
         if (!Program.noSecurity)
         {
@@ -235,35 +257,39 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
         var submodelElements = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
-        var      filtered = new List<ISubmodelElement>();
-        DateTime _diff;
-        if (diff != null && diff != "")
+        var filtered = new List<ISubmodelElement>();
+        if (!string.IsNullOrEmpty(diff))
         {
             try
             {
-                _diff    = DateTime.Parse(diff).ToUniversalTime();
+                var _diff = DateTime.Parse(diff).ToUniversalTime();
                 filtered = filterSubmodelElements(submodelElements, _diff);
             }
-            catch { }
+            catch
+            {
+                // ignored
+            }
         }
         else
+        {
             filtered = submodelElements;
+        }
 
         var smePaginatedList = _paginationService.GetPaginatedList(filtered, new PaginationParameters(cursor, limit));
-        var smeLevelList     = _levelExtentModifierService.ApplyLevelExtent(smePaginatedList.result ?? [], level, extent);
-        var output           = new PagedResult() {result = smeLevelList, paging_metadata = smePaginatedList.paging_metadata};
+        var smeLevelList     = _levelExtentModifierService.ApplyLevelExtent(smePaginatedList.result, level, extent);
+        var output           = new PagedResult {result = smeLevelList, paging_metadata = smePaginatedList.paging_metadata};
         return new ObjectResult(output);
     }
 
     List<ISubmodelElement> filterSubmodelElements(List<ISubmodelElement> submodelElements, DateTime diff)
     {
-        var                    output  = new List<ISubmodelElement>();
+        var output = new List<ISubmodelElement>();
 
         foreach (var sme in submodelElements.Where(sme => sme.TimeStampTree >= diff))
         {
@@ -283,8 +309,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                                                                 supplementalSemanticIds: smc.SupplementalSemanticIds,
                                                                 qualifiers: smc.Qualifiers,
                                                                 embeddedDataSpecifications: smc.EmbeddedDataSpecifications,
-                                                                value: smeDiff);
-                    smcDiff.Parent = smc.Parent;
+                                                                value: smeDiff) {Parent = smc.Parent};
                     output.Add(smcDiff);
                 }
                 else if (smc.TimeStamp >= diff)
@@ -294,7 +319,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
             else if (sme is SubmodelElementList sml)
             {
-                smeDiff = filterSubmodelElements(sml.Value??[], diff);
+                smeDiff = filterSubmodelElements(sml.Value ?? [], diff);
                 if (smeDiff.Count != 0)
                 {
                     var smlDiff = new SubmodelElementList(
@@ -308,8 +333,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                                                           supplementalSemanticIds: sml.SupplementalSemanticIds,
                                                           qualifiers: sml.Qualifiers,
                                                           embeddedDataSpecifications: sml.EmbeddedDataSpecifications,
-                                                          value: smeDiff);
-                    smlDiff.Parent = sml.Parent;
+                                                          value: smeDiff) {Parent = sml.Parent};
                     output.Add(smlDiff);
                 }
                 else if (sml.TimeStamp >= diff)
@@ -351,7 +375,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetAllSubmodelElementsMetadataSubmodelRepo([FromRoute] [Required] string submodelIdentifier,
-                                                                            [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] [Required] LevelEnum level,
+                                                                            [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] LevelEnum level,
                                                                             [FromQuery] string? diff)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -369,13 +393,12 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var smeList = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
-        var      filtered = new List<ISubmodelElement>();
-        DateTime _diff;
-        if (diff != null && diff != "")
+        var filtered = new List<ISubmodelElement>();
+        if (!string.IsNullOrEmpty(diff))
         {
             try
             {
-                _diff    = DateTime.Parse(diff).ToUniversalTime();
+                var _diff = DateTime.Parse(diff).ToUniversalTime();
                 filtered = filterSubmodelElements(smeList, _diff);
             }
             catch { }
@@ -384,7 +407,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             filtered = smeList;
 
         var smePagedList    = _paginationService.GetPaginatedList(filtered, new PaginationParameters(cursor, limit));
-        var smeListLevel    = _levelExtentModifierService.ApplyLevelExtent(smePagedList.result??[], level);
+        var smeListLevel    = _levelExtentModifierService.ApplyLevelExtent(smePagedList.result ?? [], level);
         var smeMetadataList = _mappingService.Map(smeListLevel, "metadata");
         var output          = new MetadataPagedResult() {result = smeMetadataList.ConvertAll(sme => (IMetadataDTO)sme), paging_metadata = smePagedList.paging_metadata};
         return new ObjectResult(output);
@@ -422,25 +445,30 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     {
         var decodedSubmodelIdentifier = _decoderService.Decode($"submodelIdentifier", submodelIdentifier);
         _logger.LogDebug($"Received request to get all the submodel elements from the submodel with id {decodedSubmodelIdentifier}");
+        
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
+        }
+        
         if (!Program.noSecurity)
         {
             var submodel   = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
             var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
         var submodelElementList = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
-        var      filtered = new List<ISubmodelElement>();
-        DateTime _diff;
-        if (diff != null && diff != "")
+        var filtered = new List<ISubmodelElement>();
+        if (!string.IsNullOrEmpty(diff))
         {
             try
             {
-                _diff    = DateTime.Parse(diff).ToUniversalTime();
+                var _diff = DateTime.Parse(diff).ToUniversalTime();
                 filtered = filterSubmodelElements(submodelElementList, _diff);
             }
             catch { }
@@ -448,8 +476,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         else
             filtered = submodelElementList;
 
-        // TODO (jtikekar, 2023-09-04): pagination and modifier
-        // TODO (jtikekar, 2023-09-04): not complete implemented
+        // TODO (jtikekar, 2023-09-04): pagination and modifier not completely implemented
         var output = _pathModifierService.ToIdShortPath(filtered);
         return new ObjectResult(output);
     }
@@ -460,7 +487,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
     /// <param name="limit">The maximum number of elements in the response array</param>
     /// <param name="cursor">A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue</param>
-    /// <param name="level">Determines the structural depth of the respective resource content</param>
+    /// <param name="level">Determines the structural depth of the respective resource content.</param>
     /// <response code="200">List of found submodel elements</response>
     /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
     /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
@@ -480,7 +507,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetAllSubmodelElementsReferenceSubmodelRepo([FromRoute] [Required] string submodelIdentifier, [FromQuery] int? limit,
-                                                                             [FromQuery] string? cursor, [FromQuery] string? level)
+                                                                             [FromQuery] string? cursor, [FromQuery] LevelEnum level)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -531,8 +558,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetAllSubmodelElementsValueOnlySubmodelRepo([FromRoute] [Required] string submodelIdentifier,
-                                                                             [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] [Required] LevelEnum level,
-                                                                             [FromQuery] [Required] ExtentEnum extent, [FromQuery] string? diff)
+                                                                             [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] LevelEnum level,
+                                                                             [FromQuery] ExtentEnum extent, [FromQuery] string? diff)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
         _logger.LogInformation($"Received request to get value of all the submodel elements from the submodel with id {decodedSubmodelIdentifier}");
@@ -548,13 +575,12 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var submodelElements = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
-        var      filtered = new List<ISubmodelElement>();
-        DateTime _diff;
-        if (diff != null && diff != "")
+        var filtered = new List<ISubmodelElement>();
+        if (!string.IsNullOrEmpty(diff))
         {
             try
             {
-                _diff    = DateTime.Parse(diff).ToUniversalTime();
+                var _diff = DateTime.Parse(diff).ToUniversalTime();
                 filtered = filterSubmodelElements(submodelElements, _diff);
             }
             catch { }
@@ -563,7 +589,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             filtered = submodelElements;
 
         var smePagedList   = _paginationService.GetPaginatedList(filtered, new PaginationParameters(cursor, limit));
-        var smeLevelExtent = _levelExtentModifierService.ApplyLevelExtent(smePagedList.result??[], level, extent);
+        var smeLevelExtent = _levelExtentModifierService.ApplyLevelExtent(smePagedList.result ?? [], level, extent);
         var smeValues      = _mappingService.Map(smeLevelExtent, "value");
         var output         = new ValueOnlyPagedResult() {result = smeValues.ConvertAll(sme => (IValueDTO)sme), paging_metadata = smePagedList.paging_metadata};
         return new ObjectResult(output);
@@ -595,8 +621,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetAllSubmodels([FromQuery] [StringLength(3072, MinimumLength = 1)] string? semanticId, [FromQuery] string? idShort,
-                                                 [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] [Required] LevelEnum level,
-                                                 [FromQuery] [Required] ExtentEnum extent)
+                                                 [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] LevelEnum level,
+                                                 [FromQuery] ExtentEnum extent)
     {
         _logger.LogInformation($"Received a request to get all the submodels.");
 
@@ -635,7 +661,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetAllSubmodelsMetadata([FromQuery] [StringLength(3072, MinimumLength = 1)] string? semanticId, [FromQuery] string? idShort,
-                                                         [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] [Required] LevelEnum level)
+                                                         [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] LevelEnum level)
     {
         _logger.LogInformation($"Received request to get the metadata of all the submodels.");
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
@@ -643,7 +669,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
         var submodelPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
-        var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelPagedList.result??[], level);
+        var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelPagedList.result ?? [], level);
         var smMetadataList    = _mappingService.Map(submodelLevelList, "metadata");
         var output            = new MetadataPagedResult() {result = smMetadataList.ConvertAll(sme => (IMetadataDTO)sme), paging_metadata = submodelPagedList.paging_metadata};
         return new ObjectResult(output);
@@ -673,8 +699,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult GetAllSubmodelsPath([FromQuery] [StringLength(3072, MinimumLength = 1)] string semanticId, [FromQuery] string? idShort,
-                                                     [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] [Required] LevelEnum level)
+    public virtual IActionResult GetAllSubmodelsPath([FromQuery] [StringLength(3072, MinimumLength = 1)] string? semanticId, [FromQuery] string? idShort,
+                                                     [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] LevelEnum level)
     {
         _logger.LogInformation($"Received request to get the metadata of all the submodels.");
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
@@ -682,7 +708,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
         var submodelPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
-        var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelPagedList.result??[], level);
+        var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelPagedList.result ?? [], level);
         // TODO (jtikekar, 2023-09-04): @Andreas, what if the first element is property, where path is not applicable
         var submodelsPath = _pathModifierService.ToIdShortPath(submodelLevelList.ConvertAll(sm => (ISubmodel)sm));
         var output        = new PathPagedResult() {result = submodelsPath, paging_metadata = submodelPagedList.paging_metadata};
@@ -714,7 +740,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetAllSubmodelsReference([FromQuery] [StringLength(3072, MinimumLength = 1)] string? semanticId, [FromQuery] string? idShort,
-                                                          [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] [Required] LevelEnum level)
+                                                          [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] LevelEnum level)
     {
         _logger.LogInformation($"Received a request to get all the submodels.");
 
@@ -756,8 +782,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetAllSubmodelsValueOnly([FromQuery] [StringLength(3072, MinimumLength = 1)] string? semanticId, [FromQuery] string? idShort,
-                                                          [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] [Required] LevelEnum level,
-                                                          [FromQuery] [Required] ExtentEnum extent)
+                                                          [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] LevelEnum level,
+                                                          [FromQuery] ExtentEnum extent)
     {
         _logger.LogInformation($"Received a request to get all the submodels.");
 
@@ -766,7 +792,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
         var submodelsPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
-        var submodelLevelList  = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result??[], level, extent);
+        var submodelLevelList  = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result ?? [], level, extent);
         var submodelsValue     = _mappingService.Map(submodelLevelList, "value");
         var output             = new ValueOnlyPagedResult() {result = submodelsValue.ConvertAll(sme => (IValueDTO)sme), paging_metadata = submodelsPagedList.paging_metadata};
         return new ObjectResult(output);
@@ -818,14 +844,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var fileName = _submodelService.GetFileByPath(decodedSubmodelIdentifier, idShortPath, out var content, out var fileSize);
 
-        //content-disposition so that the aasx file can be doenloaded from the web browser.
-        ContentDisposition contentDisposition = new()
-                                                {
-                                                    FileName = fileName ?? throw new ArgumentNullException(nameof(fileName)),
-                                                    Inline   = fileName.ToLower().EndsWith(".pdf")
-                                                };
+        //content-disposition so that the aasx file can be downloaded from the web browser.
+        ContentDisposition contentDisposition = new() {FileName = fileName ?? throw new ArgumentNullException(nameof(fileName)), Inline = fileName.ToLower().EndsWith(".pdf")};
 
-        HttpContext.Response.Headers.Add("Content-Disposition", contentDisposition.ToString());
+        HttpContext.Response.Headers.Append("Content-Disposition", contentDisposition.ToString());
         HttpContext.Response.ContentLength = fileSize;
         if (fileName.ToLower().EndsWith(".svg"))
             HttpContext.Response.ContentType = "image/svg+xml";
@@ -971,7 +993,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
         // return StatusCode(0, default(Result));
-        
+
         return new ObjectResult(JsonConvert.DeserializeObject<BaseOperationResult>(string.Empty));
     }
 
@@ -1053,7 +1075,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
         if (!authResult.Succeeded)
         {
-            var failedReason = authResult.Failure.FailureReasons.First();
+            var failedReason = authResult.Failure.FailureReasons.FirstOrDefault();
+
             if (failedReason != null)
             {
                 if (failedReason.Message != "")
@@ -1097,7 +1120,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult GetSubmodelByIdMetadata([FromRoute] [Required] string submodelIdentifier, [FromQuery] [Required] LevelEnum level)
+    public virtual IActionResult GetSubmodelByIdMetadata([FromRoute] [Required] string submodelIdentifier, [FromQuery] LevelEnum level)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
         _logger.LogInformation($"Received request to get the metadata of the submodel with id {decodedSubmodelIdentifier}");
@@ -1141,7 +1164,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult GetSubmodelByIdPath([FromRoute] [Required] string submodelIdentifier, [FromQuery] [Required] LevelEnum level)
+    public virtual IActionResult GetSubmodelByIdPath([FromRoute] [Required] string submodelIdentifier, [FromQuery] LevelEnum level)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
         _logger.LogInformation($"Received request to get the idShortPath of the submodel with id {decodedSubmodelIdentifier}");
@@ -1229,8 +1252,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult GetSubmodelByIdValueOnly([FromRoute] [Required] string submodelIdentifier, [FromQuery] [Required] LevelEnum level,
-                                                          [FromQuery] [Required] ExtentEnum extent)
+    public virtual IActionResult GetSubmodelByIdValueOnly([FromRoute] [Required] string submodelIdentifier, [FromQuery] LevelEnum level,
+                                                          [FromQuery] ExtentEnum extent)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
         _logger.LogInformation($"Received request to get value of submodel with id {decodedSubmodelIdentifier}");
@@ -1276,7 +1299,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetSubmodelElementByPathMetadataSubmodelRepo([FromRoute] [Required] string submodelIdentifier,
-                                                                              [FromRoute] [Required] string idShortPath, [FromQuery] [Required] LevelEnum level)
+                                                                              [FromRoute] [Required] string idShortPath, [FromQuery] LevelEnum level)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
         _logger.LogInformation($"Received request to get metadata of submodel element at {idShortPath} from the submodel with id {decodedSubmodelIdentifier}");
@@ -1327,7 +1350,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetSubmodelElementByPathPathSubmodelRepo([FromRoute] [Required] string submodelIdentifier, [FromRoute] [Required] string idShortPath,
-                                                                          [FromQuery] [Required] LevelEnum level)
+                                                                          [FromQuery] LevelEnum level)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
         _logger.LogInformation($"Received request to path of the submodel element at {idShortPath} from a submodel with id {decodedSubmodelIdentifier}");
@@ -1377,7 +1400,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetSubmodelElementByPathReferenceSubmodelRepo([FromRoute] [Required] string submodelIdentifier,
-                                                                               [FromRoute] [Required] string idShortPath, [FromQuery] [Required] LevelEnum level)
+                                                                               [FromRoute] [Required] string idShortPath, [FromQuery] LevelEnum level)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -1428,7 +1451,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetSubmodelElementByPathSubmodelRepo([FromRoute] [Required] string submodelIdentifier, [FromRoute] [Required] string idShortPath,
-                                                                      [FromQuery] [Required] LevelEnum level, [FromQuery] [Required] ExtentEnum extent)
+                                                                      [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -1479,8 +1502,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetSubmodelElementByPathValueOnlySubmodelRepo([FromRoute] [Required] string submodelIdentifier,
-                                                                               [FromRoute] [Required] string idShortPath, [FromQuery] [Required] LevelEnum level,
-                                                                               [FromQuery] [Required] ExtentEnum extent)
+                                                                               [FromRoute] [Required] string idShortPath, [FromQuery] LevelEnum level,
+                                                                               [FromQuery] ExtentEnum extent)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
         _logger.LogInformation($"Received request to get the value of the submodel element at {idShortPath} from the submodel with id {decodedSubmodelIdentifier}");
@@ -1721,7 +1744,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult PatchSubmodelById([FromBody] Submodel? body, [FromRoute] [Required] string submodelIdentifier, [FromQuery] [Required] LevelEnum level)
+    public virtual IActionResult PatchSubmodelById([FromBody] Submodel? body, [FromRoute] [Required] string submodelIdentifier, [FromQuery] LevelEnum level)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -1754,8 +1777,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult PatchSubmodelByIdMetadata([FromBody] SubmodelMetadata? body, [FromRoute] [Required] string? submodelIdentifier,
-                                                           [FromQuery] [Required] LevelEnum level)
+    public virtual IActionResult PatchSubmodelByIdMetadata([FromBody] SubmodelMetadata? body, [FromRoute] [Required] string submodelIdentifier,
+                                                           [FromQuery] LevelEnum level)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
         _logger.LogInformation($"Received Patch Request for submodel with id {decodedSubmodelIdentifier}");
@@ -1798,7 +1821,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult PatchSubmodelByIdValueOnly([FromBody] SubmodelValue? body, [FromRoute] [Required] string submodelIdentifier,
-                                                            [FromQuery] [Required] LevelEnum level)
+                                                            [FromQuery] LevelEnum level)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
         _logger.LogInformation($"Received request to update the submodel with id {decodedSubmodelIdentifier} by value.");
@@ -1841,7 +1864,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult PatchSubmodelElementByPathMetadataSubmodelRepo([FromBody] ISubmodelElementMetadata? body,
                                                                                 [FromRoute] [Required] string submodelIdentifier,
-                                                                                [FromRoute] [Required] string idShortPath, [FromQuery] [Required] LevelEnum level)
+                                                                                [FromRoute] [Required] string idShortPath, [FromQuery] LevelEnum level)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
         _logger.LogInformation($"Received request to update the submodel element at {idShortPath} in the submodel with id {decodedSubmodelIdentifier}");
@@ -1885,7 +1908,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult PatchSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement? body, [FromRoute] [Required] string submodelIdentifier,
-                                                                        [FromRoute] [Required] string idShortPath, [FromQuery] [Required] LevelEnum level)
+                                                                        [FromRoute] [Required] string idShortPath, [FromQuery] LevelEnum level)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -1920,7 +1943,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult PatchSubmodelElementByPathValueOnlySubmodelRepo([FromBody] ISubmodelElementValue? body, [FromRoute] [Required] string submodelIdentifier,
-                                                                                 [FromRoute] [Required] string idShortPath, [FromQuery] [Required] LevelEnum level)
+                                                                                 [FromRoute] [Required] string idShortPath, [FromQuery] LevelEnum level)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
         _logger.LogInformation($"Received an update request for a submodel element at {idShortPath} in the submodel with id {decodedSubmodelIdentifier}.");
@@ -2134,11 +2157,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult PutSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement? body, [FromRoute] [Required] string submodelIdentifier,
-                                                                      [FromRoute] [Required] string idShortPath, [FromQuery] string level)
+                                                                      [FromRoute] [Required] string idShortPath, [FromQuery] LevelEnum level)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
-        _logger.LogInformation($"Received request to replace a submodel element at {idShortPath} deom the submodel with id {decodedSubmodelIdentifier}.");
+        _logger.LogInformation($"Received request to replace a submodel element at {idShortPath} dom-object the submodel with id {decodedSubmodelIdentifier}.");
         if (!Program.noSecurity)
         {
             var submodel   = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
@@ -2175,7 +2198,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult PutFileByPathSubmodelRepo([FromRoute] [Required] string submodelIdentifier, [FromRoute] string idShortPath, IFormFile? file)
+    public virtual IActionResult PutFileByPathSubmodelRepo([FromRoute] [Required] string submodelIdentifier, [FromRoute] string? idShortPath, IFormFile? file)
     {
         var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 

@@ -3,559 +3,525 @@ using IO.Swagger.Models;
 using System.Collections.Generic;
 using static AasCore.Aas3_0.Visitation;
 
-namespace IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent
+namespace IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent;
+
+/// <inheritdoc />
+public class LevelExtentTransformer : AbstractTransformerWithContext<LevelExtentModifierContext, IClass>
 {
-    using System;
-    using AdminShellNS.Exceptions;
+    public override IClass TransformAdministrativeInformation(IAdministrativeInformation that, LevelExtentModifierContext context) => throw new System.NotImplementedException();
 
-    public class LevelExtentTransformer : AbstractTransformerWithContext<LevelExtentModifierContext, IClass>
+    public override IClass TransformAnnotatedRelationshipElement(IAnnotatedRelationshipElement that, LevelExtentModifierContext context)
     {
-        public override IClass TransformAdministrativeInformation(IAdministrativeInformation that, LevelExtentModifierContext context)
-        {
-            throw new System.NotImplementedException();
-        }
+        var output = Copying.Deep(that);
 
-        public override IClass TransformAnnotatedRelationshipElement(IAnnotatedRelationshipElement that, LevelExtentModifierContext context)
+        context.IsRoot = false;
+        if (context.IncludeChildren)
         {
-            var output = Copying.Deep(that);
-
-            if (output != null)
+            if (context.Level == LevelEnum.Core)
             {
-                context.IsRoot = false;
-                if (context.IncludeChildren)
+                if (that.Annotations == null)
                 {
-                    if (context.Level == LevelEnum.Core)
-                    {
-                        if (that.Annotations != null)
-                        {
-                            output.Annotations = new List<IDataElement>();
-                            foreach (var child in that.Annotations)
-                            {
-                                context.IncludeChildren = false;
-                                output.Annotations.Add((IDataElement)Transform(child, context));
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (that.Annotations != null)
-                        {
-                            output.Annotations = new List<IDataElement>();
-                            foreach (var child in that.Annotations)
-                            {
-                                output.Annotations.Add((IDataElement)Transform(child, context));
-                            }
-                        }
-                    }
+                    return output;
                 }
-                else
+
+                output.Annotations = new List<IDataElement>();
+                foreach (var child in that.Annotations)
                 {
-                    output.Annotations = null;
+                    context.IncludeChildren = false;
+                    output.Annotations.Add((IDataElement)Transform(child, context));
                 }
             }
-
-            return output;
-        }
-
-        public override IClass TransformAssetAdministrationShell(IAssetAdministrationShell that, LevelExtentModifierContext context)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public override IClass TransformAssetInformation(IAssetInformation that, LevelExtentModifierContext context)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public override IClass TransformBasicEventElement(IBasicEventElement that, LevelExtentModifierContext context)
-        {
-            if (context.IsRoot)
+            else
             {
-                if (context.Extent == ExtentEnum.WithBlobValue)
+                if (that.Annotations == null)
                 {
-                    throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
+                    return output;
                 }
-                if (context.Level == LevelEnum.Core)
+
+                output.Annotations = new List<IDataElement>();
+                foreach (var child in that.Annotations)
                 {
-                    throw new InvalidSerializationModifierException("Level", that.GetType().Name);
+                    output.Annotations.Add((IDataElement)Transform(child, context));
                 }
             }
+        }
+        else
+        {
+            output.Annotations = null;
+        }
+
+        return output;
+    }
+
+    public override IClass TransformAssetAdministrationShell(IAssetAdministrationShell that, LevelExtentModifierContext context) => throw new System.NotImplementedException();
+
+    public override IClass TransformAssetInformation(IAssetInformation that, LevelExtentModifierContext context) => throw new System.NotImplementedException();
+
+    public override IClass TransformBasicEventElement(IBasicEventElement that, LevelExtentModifierContext context)
+    {
+        if (!context.IsRoot)
+        {
             return Copying.Deep(that);
         }
 
-        public override IClass TransformBlob(IBlob that, LevelExtentModifierContext context)
+        if (context.Extent == ExtentEnum.WithBlobValue)
         {
-            if (context.IsRoot)
-            {
-                if (context.Level == LevelEnum.Core)
-                {
-                    throw new InvalidSerializationModifierException("Level", that.GetType().Name);
-                }
-            }
-            var output = Copying.Deep(that);
-            if (context.Extent == ExtentEnum.WithoutBlobValue)
-            {
-                output.Value = null;
-            }
-
-            return output;
+            throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
         }
 
-        public override IClass TransformCapability(ICapability that, LevelExtentModifierContext context)
+        if (context.Level == LevelEnum.Core)
         {
-            if (context.IsRoot)
-            {
-                if (context.Extent == ExtentEnum.WithBlobValue)
-                {
-                    throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
-                }
-                if (context.Level == LevelEnum.Core)
-                {
-                    throw new InvalidSerializationModifierException("Level", that.GetType().Name);
-                }
-            }
+            throw new InvalidSerializationModifierException("Level", that.GetType().Name);
+        }
+
+        return Copying.Deep(that);
+    }
+
+    public override IClass TransformBlob(IBlob that, LevelExtentModifierContext context)
+    {
+        if (context is {IsRoot: true, Level: LevelEnum.Core})
+        {
+            throw new InvalidSerializationModifierException("Level", that.GetType().Name);
+        }
+
+        var output = Copying.Deep(that);
+        if (context.Extent == ExtentEnum.WithoutBlobValue)
+        {
+            output.Value = null;
+        }
+
+        return output;
+    }
+
+    public override IClass TransformCapability(ICapability that, LevelExtentModifierContext context)
+    {
+        if (!context.IsRoot)
+        {
             return Copying.Deep(that);
         }
 
-        public override IClass TransformConceptDescription(IConceptDescription that, LevelExtentModifierContext context)
+        if (context.Extent == ExtentEnum.WithBlobValue)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
         }
 
-        public override IClass TransformDataSpecificationIec61360(IDataSpecificationIec61360 that, LevelExtentModifierContext context)
+        if (context.Level == LevelEnum.Core)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("Level", that.GetType().Name);
         }
 
-        public override IClass TransformEmbeddedDataSpecification(IEmbeddedDataSpecification that, LevelExtentModifierContext context)
-        {
-            throw new System.NotImplementedException();
-        }
+        return Copying.Deep(that);
+    }
 
-        public override IClass TransformEntity(IEntity that, LevelExtentModifierContext context)
-        {
-            var output = Copying.Deep(that);
+    public override IClass TransformConceptDescription(IConceptDescription that, LevelExtentModifierContext context) => throw new System.NotImplementedException();
 
-            if (output != null)
+    public override IClass TransformDataSpecificationIec61360(IDataSpecificationIec61360 that, LevelExtentModifierContext context) => throw new System.NotImplementedException();
+
+    public override IClass TransformEmbeddedDataSpecification(IEmbeddedDataSpecification that, LevelExtentModifierContext context) => throw new System.NotImplementedException();
+
+    public override IClass TransformEntity(IEntity that, LevelExtentModifierContext context)
+    {
+        var output = Copying.Deep(that);
+
+        context.IsRoot = false;
+        if (context.IncludeChildren)
+        {
+            if (context.Level == LevelEnum.Core)
             {
-                context.IsRoot = false;
-                if (context.IncludeChildren)
+                if (that.Statements == null)
                 {
-                    if (context.Level == LevelEnum.Core)
-                    {
-                        if (that.Statements != null)
-                        {
-                            output.Statements = new List<ISubmodelElement>();
-                            foreach (var child in that.Statements)
-                            {
-                                context.IncludeChildren = false;
-                                output.Statements.Add((ISubmodelElement)Transform(child, context));
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (that.Statements != null)
-                        {
-                            output.Statements = new List<ISubmodelElement>();
-                            foreach (var child in that.Statements)
-                            {
-                                output.Statements.Add((ISubmodelElement)Transform(child, context));
-                            }
-                        }
-                    }
+                    return output;
                 }
-                else
+
+                output.Statements = new List<ISubmodelElement>();
+                foreach (var child in that.Statements)
                 {
-                    output.Statements = null;
+                    context.IncludeChildren = false;
+                    output.Statements.Add((ISubmodelElement)Transform(child, context));
                 }
             }
-
-            return output;
-        }
-
-        public override IClass TransformEnvironment(IEnvironment that, LevelExtentModifierContext context)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public override IClass TransformEventPayload(IEventPayload that, LevelExtentModifierContext context)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public override IClass TransformExtension(IExtension that, LevelExtentModifierContext context)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public override IClass TransformFile(IFile that, LevelExtentModifierContext context)
-        {
-            if (context.IsRoot)
+            else
             {
-                if (context.Extent == ExtentEnum.WithBlobValue)
+                if (that.Statements == null)
                 {
-                    throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
+                    return output;
                 }
-                if (context.Level == LevelEnum.Core)
+
+                output.Statements = new List<ISubmodelElement>();
+                foreach (var child in that.Statements)
                 {
-                    throw new InvalidSerializationModifierException("Level", that.GetType().Name);
+                    output.Statements.Add((ISubmodelElement)Transform(child, context));
                 }
             }
+        }
+        else
+        {
+            output.Statements = null;
+        }
+
+        return output;
+    }
+
+    public override IClass TransformEnvironment(IEnvironment that, LevelExtentModifierContext context) => throw new System.NotImplementedException();
+
+    public override IClass TransformEventPayload(IEventPayload that, LevelExtentModifierContext context) => throw new System.NotImplementedException();
+
+    public override IClass TransformExtension(IExtension that, LevelExtentModifierContext context) => throw new System.NotImplementedException();
+
+    public override IClass TransformFile(IFile that, LevelExtentModifierContext context)
+    {
+        if (!context.IsRoot)
+        {
             return Copying.Deep(that);
         }
 
-        public override IClass TransformKey(IKey that, LevelExtentModifierContext context)
+        if (context.Extent == ExtentEnum.WithBlobValue)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
         }
 
-        public override IClass TransformLangStringDefinitionTypeIec61360(ILangStringDefinitionTypeIec61360 that, LevelExtentModifierContext context)
+        if (context.Level == LevelEnum.Core)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("Level", that.GetType().Name);
         }
 
-        public override IClass TransformLangStringNameType(ILangStringNameType that, LevelExtentModifierContext context)
-        {
-            throw new System.NotImplementedException();
-        }
+        return Copying.Deep(that);
+    }
 
-        public override IClass TransformLangStringPreferredNameTypeIec61360(ILangStringPreferredNameTypeIec61360 that, LevelExtentModifierContext context)
-        {
-            throw new System.NotImplementedException();
-        }
+    public override IClass TransformKey(IKey that, LevelExtentModifierContext context) => throw new System.NotImplementedException();
 
-        public override IClass TransformLangStringShortNameTypeIec61360(ILangStringShortNameTypeIec61360 that, LevelExtentModifierContext context)
-        {
-            throw new System.NotImplementedException();
-        }
+    public override IClass TransformLangStringDefinitionTypeIec61360(ILangStringDefinitionTypeIec61360 that, LevelExtentModifierContext context) =>
+        throw new System.NotImplementedException();
 
-        public override IClass TransformLangStringTextType(ILangStringTextType that, LevelExtentModifierContext context)
-        {
-            throw new System.NotImplementedException();
-        }
+    public override IClass TransformLangStringNameType(ILangStringNameType that, LevelExtentModifierContext context) => throw new System.NotImplementedException();
 
-        public override IClass TransformLevelType(ILevelType that, LevelExtentModifierContext context)
-        {
-            throw new System.NotImplementedException();
-        }
+    public override IClass TransformLangStringPreferredNameTypeIec61360(ILangStringPreferredNameTypeIec61360 that, LevelExtentModifierContext context) =>
+        throw new System.NotImplementedException();
 
-        public override IClass TransformMultiLanguageProperty(IMultiLanguageProperty that, LevelExtentModifierContext context)
+    public override IClass TransformLangStringShortNameTypeIec61360(ILangStringShortNameTypeIec61360 that, LevelExtentModifierContext context) =>
+        throw new System.NotImplementedException();
+
+    public override IClass TransformLangStringTextType(ILangStringTextType that, LevelExtentModifierContext context) => throw new System.NotImplementedException();
+
+    public override IClass TransformLevelType(ILevelType that, LevelExtentModifierContext context) => throw new System.NotImplementedException();
+
+    public override IClass TransformMultiLanguageProperty(IMultiLanguageProperty that, LevelExtentModifierContext context)
+    {
+        if (!context.IsRoot)
         {
-            if (context.IsRoot)
-            {
-                if (context.Extent == ExtentEnum.WithBlobValue)
-                {
-                    throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
-                }
-                if (context.Level == LevelEnum.Core)
-                {
-                    throw new InvalidSerializationModifierException("Level", that.GetType().Name);
-                }
-            }
             return Copying.Deep(that);
         }
 
-        public override IClass TransformOperation(IOperation that, LevelExtentModifierContext context)
+        if (context.Extent == ExtentEnum.WithBlobValue)
         {
-            var output = Copying.Deep(that);
-
-            if (output != null)
-            {
-                context.IsRoot = false;
-                if (context.Level == LevelEnum.Core)
-                {
-                    if (that.InputVariables != null)
-                    {
-                        output.InputVariables = new List<IOperationVariable>();
-                        foreach (var child in that.InputVariables)
-                        {
-                            context.IncludeChildren = false;
-                            output.InputVariables.Add((IOperationVariable)Transform(child, context));
-                        }
-                    }
-
-                    if (that.OutputVariables != null)
-                    {
-                        output.OutputVariables = new List<IOperationVariable>();
-                        foreach (var child in that.OutputVariables)
-                        {
-                            context.IncludeChildren = false;
-                            output.OutputVariables.Add((IOperationVariable)Transform(child, context));
-                        }
-                    }
-
-                    if (that.InoutputVariables != null)
-                    {
-                        output.InoutputVariables = new List<IOperationVariable>();
-                        foreach (var child in that.InoutputVariables)
-                        {
-                            context.IncludeChildren = false;
-                            output.OutputVariables.Add((IOperationVariable)Transform(child, context));
-                        }
-                    }
-                }
-                else
-                {
-                    if (that.InputVariables != null)
-                    {
-                        output.InputVariables = new List<IOperationVariable>();
-                        foreach (var child in that.InputVariables)
-                        {
-                            output.InputVariables.Add((IOperationVariable)Transform(child, context));
-                        }
-                    }
-
-                    if (that.OutputVariables != null)
-                    {
-                        output.OutputVariables = new List<IOperationVariable>();
-                        foreach (var child in that.OutputVariables)
-                        {
-                            output.OutputVariables.Add((IOperationVariable)Transform(child, context));
-                        }
-                    }
-
-                    if (that.InoutputVariables != null)
-                    {
-                        output.InoutputVariables = new List<IOperationVariable>();
-                        foreach (var child in that.InoutputVariables)
-                        {
-                            output.OutputVariables.Add((IOperationVariable)Transform(child, context));
-                        }
-                    }
-                }
-            }
-
-            return output;
+            throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
         }
 
-        public override IClass TransformOperationVariable(IOperationVariable that, LevelExtentModifierContext context)
+        if (context.Level == LevelEnum.Core)
         {
-            var output = Copying.Deep(that);
-            if (output != null)
+            throw new InvalidSerializationModifierException("Level", that.GetType().Name);
+        }
+
+        return Copying.Deep(that);
+    }
+
+    public override IClass TransformOperation(IOperation that, LevelExtentModifierContext context)
+    {
+        var output = Copying.Deep(that);
+
+        context.IsRoot = false;
+        if (context.Level == LevelEnum.Core)
+        {
+            if (that.InputVariables != null)
             {
-                output.Value = (ISubmodelElement)Transform(that.Value, context);
+                output.InputVariables = new List<IOperationVariable>();
+                foreach (var child in that.InputVariables)
+                {
+                    context.IncludeChildren = false;
+                    output.InputVariables.Add((IOperationVariable)Transform(child, context));
+                }
             }
 
-            if (output != null)
+            if (that.OutputVariables != null)
+            {
+                output.OutputVariables = new List<IOperationVariable>();
+                foreach (var child in that.OutputVariables)
+                {
+                    context.IncludeChildren = false;
+                    output.OutputVariables.Add((IOperationVariable)Transform(child, context));
+                }
+            }
+
+            if (that.InoutputVariables == null)
             {
                 return output;
             }
 
-            throw new ArgumentException($"{nameof(output)} must not be null in {nameof(TransformOperationVariable)}");
-        }
-
-        public override IClass TransformProperty(IProperty that, LevelExtentModifierContext context)
-        {
-            if (context.IsRoot)
             {
-                if (context.Extent == ExtentEnum.WithBlobValue)
+                output.InoutputVariables = new List<IOperationVariable>();
+                foreach (var child in that.InoutputVariables)
                 {
-                    throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
-                }
-                if (context.Level == LevelEnum.Core)
-                {
-                    throw new InvalidSerializationModifierException("Level", that.GetType().Name);
+                    context.IncludeChildren = false;
+                    output.OutputVariables?.Add((IOperationVariable)Transform(child, context));
                 }
             }
-            return Copying.Deep(that);
         }
-
-        public override IClass TransformQualifier(IQualifier that, LevelExtentModifierContext context)
+        else
         {
-            throw new System.NotImplementedException();
-        }
-
-        public override IClass TransformRange(IRange that, LevelExtentModifierContext context)
-        {
-            if (context.IsRoot)
+            if (that.InputVariables != null)
             {
-                if (context.Extent == ExtentEnum.WithBlobValue)
+                output.InputVariables = new List<IOperationVariable>();
+                foreach (var child in that.InputVariables)
                 {
-                    throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
-                }
-                if (context.Level == LevelEnum.Core)
-                {
-                    throw new InvalidSerializationModifierException("Level", that.GetType().Name);
-                }
-            }
-            return Copying.Deep(that);
-        }
-
-        public override IClass TransformReference(IReference that, LevelExtentModifierContext context)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public override IClass TransformReferenceElement(IReferenceElement that, LevelExtentModifierContext context)
-        {
-            if (context.IsRoot)
-            {
-                if (context.Extent == ExtentEnum.WithBlobValue)
-                {
-                    throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
-                }
-                if (context.Level == LevelEnum.Core)
-                {
-                    throw new InvalidSerializationModifierException("Level", that.GetType().Name);
-                }
-            }
-            return Copying.Deep(that);
-        }
-
-        public override IClass TransformRelationshipElement(IRelationshipElement that, LevelExtentModifierContext context)
-        {
-            if (context.IsRoot)
-            {
-                if (context.Extent == ExtentEnum.WithBlobValue)
-                {
-                    throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
-                }
-                if (context.Level == LevelEnum.Core)
-                {
-                    throw new InvalidSerializationModifierException("Level", that.GetType().Name);
-                }
-            }
-            return Copying.Deep(that);
-        }
-
-        public override IClass TransformResource(IResource that, LevelExtentModifierContext context)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public override IClass TransformSpecificAssetId(ISpecificAssetId that, LevelExtentModifierContext context)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public override IClass TransformSubmodel(ISubmodel that, LevelExtentModifierContext context)
-        {
-            var output = Copying.Deep(that);
-
-            if (output != null)
-            {
-                context.IsRoot = false;
-                if (context.Level == LevelEnum.Core)
-                {
-                    if (that.SubmodelElements != null)
-                    {
-                        output.SubmodelElements = new List<ISubmodelElement>();
-                        foreach (var child in that.SubmodelElements)
-                        {
-                            context.IncludeChildren = false;
-                            output.SubmodelElements.Add((ISubmodelElement)Transform(child, context));
-                        }
-                    }
-                }
-                else
-                {
-                    if (that.SubmodelElements != null)
-                    {
-                        output.SubmodelElements = new List<ISubmodelElement>();
-                        foreach (var child in that.SubmodelElements)
-                        {
-                            output.SubmodelElements.Add((ISubmodelElement)Transform(child, context));
-                        }
-                    }
+                    output.InputVariables.Add((IOperationVariable)Transform(child, context));
                 }
             }
 
-            return output;
-        }
-
-        public override IClass TransformSubmodelElementCollection(ISubmodelElementCollection that, LevelExtentModifierContext context)
-        {
-            var output = Copying.Deep(that);
-
-            if (output != null)
+            if (that.OutputVariables != null)
             {
-                context.IsRoot = false;
-                if (context.IncludeChildren)
+                output.OutputVariables = new List<IOperationVariable>();
+                foreach (var child in that.OutputVariables)
                 {
-                    if (context.Level == LevelEnum.Core)
-                    {
-                        if (that.Value != null)
-                        {
-                            output.Value = new List<ISubmodelElement>();
-                            foreach (var child in that.Value)
-                            {
-                                context.IncludeChildren = false;
-                                output.Value.Add((ISubmodelElement)Transform(child, context));
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (that.Value != null)
-                        {
-                            output.Value = new List<ISubmodelElement>();
-                            foreach (var child in that.Value)
-                            {
-                                output.Value.Add((ISubmodelElement)Transform(child, context));
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    output.Value = null;
+                    output.OutputVariables.Add((IOperationVariable)Transform(child, context));
                 }
             }
 
-
-            return output;
-        }
-
-        public override IClass TransformSubmodelElementList(ISubmodelElementList that, LevelExtentModifierContext context)
-        {
-            var output = Copying.Deep(that);
-            if (output != null)
+            if (that.InoutputVariables == null)
             {
-                context.IsRoot = false;
-                if (context.IncludeChildren)
-                {
-                    if (context.Level == LevelEnum.Core)
-                    {
-                        if (that.Value != null)
-                        {
-                            output.Value = new List<ISubmodelElement>();
-                            foreach (var child in that.Value)
-                            {
-                                context.IncludeChildren = false;
-                                output.Value.Add((ISubmodelElement)Transform(child, context));
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (that.Value != null)
-                        {
-                            output.Value = new List<ISubmodelElement>();
-                            foreach (var child in that.Value)
-                            {
-                                output.Value.Add((ISubmodelElement)Transform(child, context));
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    output.Value = null;
-                }
+                return output;
             }
 
-            return output;
+            {
+                output.InoutputVariables = new List<IOperationVariable>();
+                foreach (var child in that.InoutputVariables)
+                {
+                    output.OutputVariables?.Add((IOperationVariable)Transform(child, context));
+                }
+            }
         }
 
-        public override IClass TransformValueList(IValueList that, LevelExtentModifierContext context)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public override IClass TransformValueReferencePair(IValueReferencePair that, LevelExtentModifierContext context)
-        {
-            throw new System.NotImplementedException();
-        }
+        return output;
     }
+
+    public override IClass TransformOperationVariable(IOperationVariable that, LevelExtentModifierContext context)
+    {
+        var output = Copying.Deep(that);
+        output.Value = (ISubmodelElement)Transform(that.Value, context);
+
+        return output;
+    }
+
+    public override IClass TransformProperty(IProperty that, LevelExtentModifierContext context)
+    {
+        if (!context.IsRoot)
+        {
+            return Copying.Deep(that);
+        }
+
+        if (context.Extent == ExtentEnum.WithBlobValue)
+        {
+            throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
+        }
+
+        if (context.Level == LevelEnum.Core)
+        {
+            throw new InvalidSerializationModifierException("Level", that.GetType().Name);
+        }
+
+        return Copying.Deep(that);
+    }
+
+    public override IClass TransformQualifier(IQualifier that, LevelExtentModifierContext context) => throw new System.NotImplementedException();
+
+    public override IClass TransformRange(IRange that, LevelExtentModifierContext context)
+    {
+        if (!context.IsRoot)
+        {
+            return Copying.Deep(that);
+        }
+
+        if (context.Extent == ExtentEnum.WithBlobValue)
+        {
+            throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
+        }
+
+        if (context.Level == LevelEnum.Core)
+        {
+            throw new InvalidSerializationModifierException("Level", that.GetType().Name);
+        }
+
+        return Copying.Deep(that);
+    }
+
+    public override IClass TransformReference(IReference that, LevelExtentModifierContext context) => throw new System.NotImplementedException();
+
+    public override IClass TransformReferenceElement(IReferenceElement that, LevelExtentModifierContext context)
+    {
+        if (!context.IsRoot)
+        {
+            return Copying.Deep(that);
+        }
+
+        if (context.Extent == ExtentEnum.WithBlobValue)
+        {
+            throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
+        }
+
+        if (context.Level == LevelEnum.Core)
+        {
+            throw new InvalidSerializationModifierException("Level", that.GetType().Name);
+        }
+
+        return Copying.Deep(that);
+    }
+
+    public override IClass TransformRelationshipElement(IRelationshipElement that, LevelExtentModifierContext context)
+    {
+        if (!context.IsRoot)
+        {
+            return Copying.Deep(that);
+        }
+
+        if (context.Extent == ExtentEnum.WithBlobValue)
+        {
+            throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
+        }
+
+        if (context.Level == LevelEnum.Core)
+        {
+            throw new InvalidSerializationModifierException("Level", that.GetType().Name);
+        }
+
+        return Copying.Deep(that);
+    }
+
+    public override IClass TransformResource(IResource that, LevelExtentModifierContext context) => throw new System.NotImplementedException();
+
+    public override IClass TransformSpecificAssetId(ISpecificAssetId that, LevelExtentModifierContext context) => throw new System.NotImplementedException();
+
+    public override IClass TransformSubmodel(ISubmodel that, LevelExtentModifierContext context)
+    {
+        var output = Copying.Deep(that);
+
+        context.IsRoot = false;
+        if (context.Level == LevelEnum.Core)
+        {
+            if (that.SubmodelElements == null)
+            {
+                return output;
+            }
+
+            output.SubmodelElements = new List<ISubmodelElement>();
+            foreach (var child in that.SubmodelElements)
+            {
+                context.IncludeChildren = false;
+                output.SubmodelElements.Add((ISubmodelElement)Transform(child, context));
+            }
+        }
+        else
+        {
+            if (that.SubmodelElements == null)
+            {
+                return output;
+            }
+
+            output.SubmodelElements = new List<ISubmodelElement>();
+            foreach (var child in that.SubmodelElements)
+            {
+                output.SubmodelElements.Add((ISubmodelElement)Transform(child, context));
+            }
+        }
+
+        return output;
+    }
+
+    public override IClass TransformSubmodelElementCollection(ISubmodelElementCollection that, LevelExtentModifierContext context)
+    {
+        var output = Copying.Deep(that);
+
+        context.IsRoot = false;
+        if (context.IncludeChildren)
+        {
+            if (context.Level == LevelEnum.Core)
+            {
+                if (that.Value == null)
+                {
+                    return output;
+                }
+
+                output.Value = new List<ISubmodelElement>();
+                foreach (var child in that.Value)
+                {
+                    context.IncludeChildren = false;
+                    output.Value.Add((ISubmodelElement)Transform(child, context));
+                }
+            }
+            else
+            {
+                if (that.Value == null)
+                {
+                    return output;
+                }
+
+                output.Value = new List<ISubmodelElement>();
+                foreach (var child in that.Value)
+                {
+                    output.Value.Add((ISubmodelElement)Transform(child, context));
+                }
+            }
+        }
+        else
+        {
+            output.Value = null;
+        }
+
+
+        return output;
+    }
+
+    public override IClass TransformSubmodelElementList(ISubmodelElementList that, LevelExtentModifierContext context)
+    {
+        var output = Copying.Deep(that);
+        context.IsRoot = false;
+        if (context.IncludeChildren)
+        {
+            if (context.Level == LevelEnum.Core)
+            {
+                if (that.Value == null)
+                {
+                    return output;
+                }
+
+                output.Value = new List<ISubmodelElement>();
+                foreach (var child in that.Value)
+                {
+                    context.IncludeChildren = false;
+                    output.Value.Add((ISubmodelElement)Transform(child, context));
+                }
+            }
+            else
+            {
+                if (that.Value == null)
+                {
+                    return output;
+                }
+
+                output.Value = new List<ISubmodelElement>();
+                foreach (var child in that.Value)
+                {
+                    output.Value.Add((ISubmodelElement)Transform(child, context));
+                }
+            }
+        }
+        else
+        {
+            output.Value = null;
+        }
+
+        return output;
+    }
+
+    public override IClass TransformValueList(IValueList that, LevelExtentModifierContext context) => throw new System.NotImplementedException();
+
+    public override IClass TransformValueReferencePair(IValueReferencePair that, LevelExtentModifierContext context) => throw new System.NotImplementedException();
 }

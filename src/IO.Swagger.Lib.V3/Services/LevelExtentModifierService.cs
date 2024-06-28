@@ -1,42 +1,33 @@
-﻿using AasxServerStandardBib.Logging;
-using IO.Swagger.Lib.V3.Interfaces;
+﻿using IO.Swagger.Lib.V3.Interfaces;
 using IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent;
 using IO.Swagger.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
-namespace IO.Swagger.Lib.V3.Services
+namespace IO.Swagger.Lib.V3.Services;
+
+/// <inheritdoc />
+public class LevelExtentModifierService : ILevelExtentModifierService
 {
-    public class LevelExtentModifierService : ILevelExtentModifierService
+    private readonly LevelExtentTransformer _transformer = new();
+
+    /// <inheritdoc />
+    public IClass ApplyLevelExtent(IClass that, LevelEnum level = LevelEnum.Deep, ExtentEnum extent = ExtentEnum.WithoutBlobValue)
     {
-        private readonly IAppLogger<LevelExtentModifierService> _logger;
-        LevelExtentTransformer _transformer;
+        ArgumentNullException.ThrowIfNull(that);
 
-        public LevelExtentModifierService(IAppLogger<LevelExtentModifierService> logger)
-        {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _transformer = new LevelExtentTransformer();
-        }
+        var context = new LevelExtentModifierContext(level, extent);
+        return _transformer.Transform(that, context);
+    }
+    
+    /// <inheritdoc />
+    public List<IClass?> ApplyLevelExtent(List<IClass?> that, LevelEnum level = LevelEnum.Deep, ExtentEnum extent = ExtentEnum.WithoutBlobValue)
+    {
+        ArgumentNullException.ThrowIfNull(that);
 
-        public IClass ApplyLevelExtent(IClass that, LevelEnum level = LevelEnum.Deep, ExtentEnum extent = ExtentEnum.WithoutBlobValue)
-        {
-            if (that == null) { throw new ArgumentNullException(nameof(that)); }
+        var context = new LevelExtentModifierContext(level, extent);
 
-            var context = new LevelExtentModifierContext(level, extent);
-            return _transformer.Transform(that, context);
-        }
-
-        public List<IClass> ApplyLevelExtent(List<IClass> sourceList, LevelEnum level = LevelEnum.Deep, ExtentEnum extent = ExtentEnum.WithoutBlobValue)
-        {
-            if (sourceList == null) { throw new ArgumentNullException(nameof(sourceList)); }
-            var output = new List<IClass>();
-            var context = new LevelExtentModifierContext(level, extent);
-            foreach (var source in sourceList)
-            {
-                output.Add(_transformer.Transform(source, context));
-            }
-
-            return output;
-        }
+        return that.Select(source => source != null ? _transformer.Transform(source, context) : null).ToList();
     }
 }

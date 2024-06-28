@@ -125,4 +125,5 @@ public class PaginationParametersTests
         // Assert
         paginationParameters.Cursor.Should().Be(7);
     }
+
 }

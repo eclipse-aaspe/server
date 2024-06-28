@@ -1,65 +1,36 @@
-﻿namespace IO.Swagger.Models
+﻿namespace IO.Swagger.Models;
+
+public class PaginationParameters
 {
-    public class PaginationParameters
+    private const int MaxResultSize = 500;
+
+    private int _cursor;
+    private int _limit;
+
+    public PaginationParameters(string? cursor, int? limit)
     {
-        const int MAX_RESULT_SIZE = 500;
+        // Initialize cursor with default value if null or empty or not a valid integer
+        _cursor = string.IsNullOrEmpty(cursor) || !int.TryParse(cursor, out var parsedCursor) ? 0 : parsedCursor;
+        
+        // Set limit to provided value or default to MaxResultSize
+        _limit = limit ?? MaxResultSize;
+    }
 
+    /// <summary>
+    /// The maximum size of the result list.
+    /// </summary>
+    public int Limit
+    {
+        get => _limit;
+        set => _limit = value;
+    }
 
-
-        private int _cursor = 0;
-
-        private int _limit = MAX_RESULT_SIZE;
-
-        public PaginationParameters(string? cursor, int? limit)
-        {
-            if (string.IsNullOrEmpty(cursor))
-            {
-                Cursor = _cursor = 0;
-            }
-            else if (!string.IsNullOrEmpty(cursor))
-            {
-                int.TryParse(cursor, out _cursor);
-                Cursor = _cursor;
-            }
-
-            if (limit != null)
-            {
-                Limit = limit.Value;
-            }
-        }
-
-        /**
-        * The maximum size of the result list.
-        */
-        public int Limit
-        {
-            get
-            {
-                return _limit;
-            }
-            set
-            {
-                //_limit = (value > MAX_RESULT_SIZE) ? MAX_RESULT_SIZE : value;
-                _limit = value;
-            }
-        }
-
-        /**
-         * The position from which to resume a result listing.
-         */
-        public int Cursor
-        {
-            get
-            {
-                return _cursor;
-            }
-            set
-            {
-                // TODO (jtikekar, 2023-09-04): @Andreas about Base64Encoding. May need to decode
-
-                _cursor = value;
-            }
-        }
-
+    /// <summary>
+    /// The position from which to resume a result listing.
+    /// </summary>
+    public int Cursor
+    {
+        get => _cursor;
+        set => _cursor = value;
     }
 }
