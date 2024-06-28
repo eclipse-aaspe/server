@@ -58,35 +58,47 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build AasxServerBlazor
+      - name: Build multi-architecture Docker image for AasxServerBlazor
         uses: docker/build-push-action@v6
         with:
           push: false
-          load: true
+          outputs: type=cacheonly
+          platforms: |
+            linux/amd64
+            linux/arm/v6
+            linux/arm/v7
+            linux/arm64
           file: ./src/docker/Dockerfile-AasxServerBlazor
           tags: adminshellio/aasx-server-blazor:test
-
+          
       - name: Build AasxServerBlazor-arm32
         uses: docker/build-push-action@v6
         with:
           push: false
-          load: true
-          file: ./src/docker/Dockerfile-AasxServerBlazor-arm32
+          outputs: type=cacheonly
+          platforms: linux/arm/v7
+          file: ./src/docker/Dockerfile-AasxServerBlazor
           tags: adminshellio/aasx-server-blazor-arm32:test
 
       - name: Build AasxServerBlazor-arm64
         uses: docker/build-push-action@v6
         with:
           push: false
-          load: true
-          file: ./src/docker/Dockerfile-AasxServerBlazor-arm64
+          outputs: type=cacheonly
+          platforms: linux/arm64
+          file: ./src/docker/Dockerfile-AasxServerBlazor
           tags: adminshellio/aasx-server-blazor-arm64:test
 
-      - name: Build AasxServerCore
+      - name: Build multi-architecture Docker image for AasxServerCore
         uses: docker/build-push-action@v6
         with:
           push: false
-          load: true
+          outputs: type=cacheonly
+          platforms: |
+            linux/amd64
+            linux/arm/v6
+            linux/arm/v7
+            linux/arm64
           file: ./src/docker/Dockerfile-AasxServerAspNetCore
           tags: adminshellio/aasx-server-core:test
 
@@ -94,16 +106,18 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: false
-          load: true
-          file: ./src/docker/Dockerfile-AasxServerAspNetCore-arm32
+          outputs: type=cacheonly
+          platforms: linux/arm/v7
+          file: ./src/docker/Dockerfile-AasxServerAspNetCore
           tags: adminshellio/aasx-server-core-arm32:test
 
       - name: Build AasxServerCore-arm64
         uses: docker/build-push-action@v6
         with:
           push: false
-          load: true
-          file: ./src/docker/Dockerfile-AasxServerAspNetCore-arm64
+          outputs: type=cacheonly
+          platforms: linux/arm64
+          file: ./src/docker/Dockerfile-AasxServerAspNetCore
           tags: adminshellio/aasx-server-core-arm64:test
   
   check-release:
