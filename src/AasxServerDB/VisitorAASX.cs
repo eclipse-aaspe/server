@@ -215,6 +215,7 @@ namespace AasxServerDB
 
         private void setValues(ISubmodelElement sme, SMESet smeDB)
         {
+            System.IO.File.AppendAllText("C:\\Users\\Y97CO3\\OneDrive - PHOENIX CONTACT GmbH & Co. KG\\04_Abteilung_DI\\02_Projekte\\02_Aasx_Server\\01_AASX-Server_AASen\\aasx_bachelor\\missing.txt", sme.GetType().Name + System.Environment.NewLine);
             if (sme is Property prop)
             {
                 var value = prop.ValueAsText();
@@ -251,24 +252,7 @@ namespace AasxServerDB
             {
                 smeDB.ValueType = "S";
                 smeDB.SValueSets.Add(new SValueSet { Value = entity.GlobalAssetId, Annotation = entity.EntityType.ToString() });
-            }/*
-            else if (sme is ReferenceElement referenceElement)
-            {
-                if (referenceElement.Value == null || (referenceElement.Value.ReferredSemanticId == null && (referenceElement.Value.Keys == null || referenceElement.Value.Keys.Count < 1)))
-                    return;
-
-                smeDB.ValueType = "S";
-                var valueS = string.Empty;
-                if (referenceElement.Value.Type is ReferenceTypes.ExternalReference)
-                {
-                    valueS = referenceElement.Value.GetAsIdentifier();
-                }
-                else if (referenceElement.Value.Type is ReferenceTypes.ModelReference)
-                {
-                    valueS = referenceElement.Value.ReferredSemanticId.GetAsIdentifier();
-                }
-                smeDB.SValueSets.Add(new SValueSet { Value = valueS, Annotation = referenceElement.Value.Type.ToString() });
-            }*/
+            }
         }
 
         private SMESet collectSMEData(ISubmodelElement sme)

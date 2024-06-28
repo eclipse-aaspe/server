@@ -1428,7 +1428,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetSubmodelElementByPathSubmodelRepo([FromRoute] [Required] string submodelIdentifier, [FromRoute] [Required] string idShortPath,
-                                                                      [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
+                                                                      [FromQuery] [Required] LevelEnum level, [FromQuery] [Required] ExtentEnum extent)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
