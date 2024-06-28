@@ -54,7 +54,7 @@
             list = query.Get("parid");
             if (!list.IsNullOrEmpty())
                 parid = Convert.ToInt32(list);
-                list = query.Get("smidentifier");
+            list = query.Get("smidentifier");
             if (!list.IsNullOrEmpty())
                 smidentifier = list;
         }
@@ -678,7 +678,7 @@
                         <span>
                             @if (smeDB.SMEType.Equals("MLP"))
                             {
-                                List<string[]> list = smeDB.getValue();
+                                var list = smeDB.getValue();
                                 if (list.Count > 0)
                                 {
                                     string mlp            = string.Empty;
@@ -693,7 +693,7 @@
                             }
                             else
                             {
-                                    @smeDB.getValue().First()[0]
+                                @smeDB.getValue().First()[0]
                             }
                         </span>
                         <span style="background-color:blue;">&nbsp</span>
