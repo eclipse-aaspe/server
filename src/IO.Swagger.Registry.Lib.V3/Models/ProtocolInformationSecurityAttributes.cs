@@ -30,19 +30,19 @@ namespace IO.Swagger.Registry.Lib.V3.Models
         public enum TypeEnum
         {
             /// <summary>
-            /// Enum NONEEnum for NONE
+            /// Enum NONE for NONE
             /// </summary>
-            [EnumMember(Value = "NONE")] NONEEnum = 0,
+            [EnumMember(Value = "NONE")] NONE = 0,
 
             /// <summary>
-            /// Enum RFCTLSAEnum for RFC_TLSA
+            /// Enum RFCTLSA for RFC_TLSA
             /// </summary>
-            [EnumMember(Value = "RFC_TLSA")] RFCTLSAEnum = 1,
+            [EnumMember(Value = "RFC_TLSA")] RFCTLSA = 1,
 
             /// <summary>
-            /// Enum W3CDIDEnum for W3C_DID
+            /// Enum W3CDID for W3C_DID
             /// </summary>
-            [EnumMember(Value = "W3C_DID")] W3CDIDEnum = 2
+            [EnumMember(Value = "W3C_DID")] W3CDID = 2
         }
 
         /// <summary>

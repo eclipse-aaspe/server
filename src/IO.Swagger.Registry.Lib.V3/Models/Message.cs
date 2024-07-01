@@ -48,27 +48,27 @@ public class Message : IEquatable<Message>
         /// <summary>
         /// Enum Undefined for Undefined
         /// </summary>
-        [EnumMember(Value = "Undefined")] UndefinedEnum = 0,
+        [EnumMember(Value = "Undefined")] Undefined = 0,
 
         /// <summary>
         /// Enum Info for Info
         /// </summary>
-        [EnumMember(Value = "Info")] InfoEnum = 1,
+        [EnumMember(Value = "Info")] Info = 1,
 
         /// <summary>
         /// Enum Warning for Warning
         /// </summary>
-        [EnumMember(Value = "Warning")] WarningEnum = 2,
+        [EnumMember(Value = "Warning")] Warning = 2,
 
         /// <summary>
         /// Enum Error for Error
         /// </summary>
-        [EnumMember(Value = "Error")] ErrorEnum = 3,
+        [EnumMember(Value = "Error")] Error = 3,
 
         /// <summary>
         /// Enum Exception for Exception
         /// </summary>
-        [EnumMember(Value = "Exception")] ExceptionEnum = 4
+        [EnumMember(Value = "Exception")] Exception = 4
     }
 
     /// <summary>

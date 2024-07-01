@@ -31,100 +31,100 @@ namespace IO.Swagger.Models
         public enum ProfilesEnum
         {
             /// <summary>
-            /// Enum AssetAdministrationShellServiceSpecificationV30Enum for AssetAdministrationShellServiceSpecification/V3.0
+            /// Enum AssetAdministrationShellServiceSpecificationV30 for AssetAdministrationShellServiceSpecification/V3.0
             /// </summary>
             [EnumMember(Value = "AssetAdministrationShellServiceSpecification/V3.0")]
-            AssetAdministrationShellServiceSpecificationV30Enum = 0,
+            AssetAdministrationShellServiceSpecificationV30 = 0,
 
             /// <summary>
-            /// Enum AssetAdministrationShellServiceSpecificationV30MinimalProfileEnum for AssetAdministrationShellServiceSpecification/V3.0-MinimalProfile
+            /// Enum AssetAdministrationShellServiceSpecificationV30MinimalProfile for AssetAdministrationShellServiceSpecification/V3.0-MinimalProfile
             /// </summary>
             [EnumMember(Value = "AssetAdministrationShellServiceSpecification/V3.0-MinimalProfile")]
-            AssetAdministrationShellServiceSpecificationV30MinimalProfileEnum = 1,
+            AssetAdministrationShellServiceSpecificationV30MinimalProfile = 1,
 
             /// <summary>
-            /// Enum SubmodelServiceSpecificationV30Enum for SubmodelServiceSpecification/V3.0
+            /// Enum SubmodelServiceSpecificationV30 for SubmodelServiceSpecification/V3.0
             /// </summary>
             [EnumMember(Value = "SubmodelServiceSpecification/V3.0")]
-            SubmodelServiceSpecificationV30Enum = 2,
+            SubmodelServiceSpecificationV30 = 2,
 
             /// <summary>
-            /// Enum SubmodelServiceSpecificationV30ValueProfileEnum for SubmodelServiceSpecification/V3.0-ValueProfile
+            /// Enum SubmodelServiceSpecificationV30ValueProfile for SubmodelServiceSpecification/V3.0-ValueProfile
             /// </summary>
             [EnumMember(Value = "SubmodelServiceSpecification/V3.0-ValueProfile")]
-            SubmodelServiceSpecificationV30ValueProfileEnum = 3,
+            SubmodelServiceSpecificationV30ValueProfile = 3,
 
             /// <summary>
-            /// Enum SubmodelServiceSpecificationV30MinimalProfileEnum for SubmodelServiceSpecification/V3.0-MinimalProfile
+            /// Enum SubmodelServiceSpecificationV30MinimalProfile for SubmodelServiceSpecification/V3.0-MinimalProfile
             /// </summary>
             [EnumMember(Value = "SubmodelServiceSpecification/V3.0-MinimalProfile")]
-            SubmodelServiceSpecificationV30MinimalProfileEnum = 4,
+            SubmodelServiceSpecificationV30MinimalProfile = 4,
 
             /// <summary>
-            /// Enum AasxFileServerServiceSpecificationV30Enum for AasxFileServerServiceSpecification/V3.0
+            /// Enum AasxFileServerServiceSpecificationV30 for AasxFileServerServiceSpecification/V3.0
             /// </summary>
             [EnumMember(Value = "AasxFileServerServiceSpecification/V3.0")]
-            AasxFileServerServiceSpecificationV30Enum = 5,
+            AasxFileServerServiceSpecificationV30 = 5,
 
             /// <summary>
-            /// Enum RegistryServiceSpecificationV30Enum for RegistryServiceSpecification/V3.0
+            /// Enum RegistryServiceSpecificationV30 for RegistryServiceSpecification/V3.0
             /// </summary>
             [EnumMember(Value = "RegistryServiceSpecification/V3.0")]
-            RegistryServiceSpecificationV30Enum = 6,
+            RegistryServiceSpecificationV30 = 6,
 
             /// <summary>
-            /// Enum RegistryServiceSpecificationV30AssetAdministrationShellRegistryEnum for RegistryServiceSpecification/V3.0- AssetAdministrationShellRegistry
+            /// Enum RegistryServiceSpecificationV30AssetAdministrationShellRegistry for RegistryServiceSpecification/V3.0- AssetAdministrationShellRegistry
             /// </summary>
             [EnumMember(Value = "RegistryServiceSpecification/V3.0- AssetAdministrationShellRegistry")]
-            RegistryServiceSpecificationV30AssetAdministrationShellRegistryEnum = 7,
+            RegistryServiceSpecificationV30AssetAdministrationShellRegistry = 7,
 
             /// <summary>
-            /// Enum RegistryServiceSpecificationV30SubmodelRegistryEnum for RegistryServiceSpecification/V3.0-SubmodelRegistry
+            /// Enum RegistryServiceSpecificationV30SubmodelRegistry for RegistryServiceSpecification/V3.0-SubmodelRegistry
             /// </summary>
             [EnumMember(Value = "RegistryServiceSpecification/V3.0-SubmodelRegistry")]
-            RegistryServiceSpecificationV30SubmodelRegistryEnum = 8,
+            RegistryServiceSpecificationV30SubmodelRegistry = 8,
 
             /// <summary>
-            /// Enum RepositoryServiceSpecificationV30Enum for RepositoryServiceSpecification/V3.0
+            /// Enum RepositoryServiceSpecificationV30 for RepositoryServiceSpecification/V3.0
             /// </summary>
             [EnumMember(Value = "RepositoryServiceSpecification/V3.0")]
-            RepositoryServiceSpecificationV30Enum = 9,
+            RepositoryServiceSpecificationV30 = 9,
 
             /// <summary>
-            /// Enum RepositoryServiceSpecificationV30MinimalProfileEnum for RepositoryServiceSpecification/V3.0-MinimalProfile
+            /// Enum RepositoryServiceSpecificationV30MinimalProfile for RepositoryServiceSpecification/V3.0-MinimalProfile
             /// </summary>
             [EnumMember(Value = "RepositoryServiceSpecification/V3.0-MinimalProfile")]
-            RepositoryServiceSpecificationV30MinimalProfileEnum = 10,
+            RepositoryServiceSpecificationV30MinimalProfile = 10,
 
             /// <summary>
-            /// Enum AssetAdministrationShellRepositoryServiceSpecificationV30Enum for AssetAdministrationShellRepositoryServiceSpecification/V3.0
+            /// Enum AssetAdministrationShellRepositoryServiceSpecificationV30 for AssetAdministrationShellRepositoryServiceSpecification/V3.0
             /// </summary>
             [EnumMember(Value = "AssetAdministrationShellRepositoryServiceSpecification/V3.0")]
-            AssetAdministrationShellRepositoryServiceSpecificationV30Enum = 11,
+            AssetAdministrationShellRepositoryServiceSpecificationV30 = 11,
 
             /// <summary>
-            /// Enum AssetAdministrationShellRepositoryServiceSpecificationV30MinimalProfileEnum for AssetAdministrationShellRepositoryServiceSpecification/V3.0-MinimalProfile
+            /// Enum AssetAdministrationShellRepositoryServiceSpecificationV30MinimalProfile for AssetAdministrationShellRepositoryServiceSpecification/V3.0-MinimalProfile
             /// </summary>
             [EnumMember(Value = "AssetAdministrationShellRepositoryServiceSpecification/V3.0-MinimalProfile")]
-            AssetAdministrationShellRepositoryServiceSpecificationV30MinimalProfileEnum = 12,
+            AssetAdministrationShellRepositoryServiceSpecificationV30MinimalProfile = 12,
 
             /// <summary>
-            /// Enum SubmodelRepositoryServiceSpecificationV30Enum for SubmodelRepositoryServiceSpecification/V3.0
+            /// Enum SubmodelRepositoryServiceSpecificationV30 for SubmodelRepositoryServiceSpecification/V3.0
             /// </summary>
             [EnumMember(Value = "SubmodelRepositoryServiceSpecification/V3.0")]
-            SubmodelRepositoryServiceSpecificationV30Enum = 13,
+            SubmodelRepositoryServiceSpecificationV30 = 13,
 
             /// <summary>
-            /// Enum SubmodelRepositoryServiceSpecificationV30MinimalProfileEnum for SubmodelRepositoryServiceSpecification/V3.0-MinimalProfile
+            /// Enum SubmodelRepositoryServiceSpecificationV30MinimalProfile for SubmodelRepositoryServiceSpecification/V3.0-MinimalProfile
             /// </summary>
             [EnumMember(Value = "SubmodelRepositoryServiceSpecification/V3.0-MinimalProfile")]
-            SubmodelRepositoryServiceSpecificationV30MinimalProfileEnum = 14,
+            SubmodelRepositoryServiceSpecificationV30MinimalProfile = 14,
 
             /// <summary>
-            /// Enum RegistryAndDiscoveryServiceSpecificationV30Enum for RegistryAndDiscoveryServiceSpecification/V3.0
+            /// Enum RegistryAndDiscoveryServiceSpecificationV30 for RegistryAndDiscoveryServiceSpecification/V3.0
             /// </summary>
             [EnumMember(Value = "RegistryAndDiscoveryServiceSpecification/V3.0")]
-            RegistryAndDiscoveryServiceSpecificationV30Enum = 15
+            RegistryAndDiscoveryServiceSpecificationV30 = 15
         }
 
         /// <summary>

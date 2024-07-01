@@ -18,32 +18,32 @@ namespace IO.Swagger.Models;
 public enum ExecutionState
 {
     /// <summary>
-    /// Enum InitiatedEnum for Initiated
+    /// Enum Initiated for Initiated
     /// </summary>
-    [EnumMember(Value = "Initiated")] InitiatedEnum = 0,
+    [EnumMember(Value = "Initiated")] Initiated = 0,
 
     /// <summary>
-    /// Enum RunningEnum for Running
+    /// Enum Running for Running
     /// </summary>
-    [EnumMember(Value = "Running")] RunningEnum = 1,
+    [EnumMember(Value = "Running")] Running = 1,
 
     /// <summary>
-    /// Enum CompletedEnum for Completed
+    /// Enum Completed for Completed
     /// </summary>
-    [EnumMember(Value = "Completed")] CompletedEnum = 2,
+    [EnumMember(Value = "Completed")] Completed = 2,
 
     /// <summary>
-    /// Enum CanceledEnum for Canceled
+    /// Enum Canceled for Canceled
     /// </summary>
-    [EnumMember(Value = "Canceled")] CanceledEnum = 3,
+    [EnumMember(Value = "Canceled")] Canceled = 3,
 
     /// <summary>
-    /// Enum FailedEnum for Failed
+    /// Enum Failed for Failed
     /// </summary>
-    [EnumMember(Value = "Failed")] FailedEnum = 4,
+    [EnumMember(Value = "Failed")] Failed = 4,
 
     /// <summary>
-    /// Enum TimeoutEnum for Timeout
+    /// Enum Timeout for Timeout
     /// </summary>
-    [EnumMember(Value = "Timeout")] TimeoutEnum = 5
+    [EnumMember(Value = "Timeout")] Timeout = 5
 }
