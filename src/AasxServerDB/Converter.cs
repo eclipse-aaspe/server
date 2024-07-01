@@ -112,11 +112,17 @@ namespace AasxServerDB
                             statements: new List<ISubmodelElement>());
                         break;
                     case "Range":
+                        var valueType = new AasContext().SMESets.Where(smeDB => smeDB.Id == smel.Id).Select(smeDB => smeDB.ValueType).First();
+                        var dataType = DataTypeDefXsd.String;
+                        if (valueType != null && valueType.Equals("I"))
+                            dataType = DataTypeDefXsd.Integer;
+                        else if (valueType != null && valueType.Equals("D"))
+                            dataType = DataTypeDefXsd.Double;
                         var findMin = value.Find(val => val[1].Equals("Min"));
                         var findMax = value.Find(val => val[1].Equals("Max"));
                         var minValue = findMin != null ? findMin[0] : string.Empty;
                         var maxValue = findMax != null ? findMax[0] : string.Empty;
-                        nextSME = new AasCore.Aas3_0.Range(DataTypeDefXsd.String, min: minValue, max: maxValue);
+                        nextSME = new AasCore.Aas3_0.Range(dataType, min: minValue, max: maxValue);
                         break;
                 }
 

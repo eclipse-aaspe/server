@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AasxServerDB.Entities
 {
@@ -12,16 +12,5 @@ namespace AasxServerDB.Entities
 
         public long? Value { get; set; }
         public string? Annotation { get; set; }
-
-        public SValueSet asStringValue()
-        {
-            return new SValueSet
-            {
-                Id = Id,
-                SMEId = SMEId,
-                Annotation = Annotation,
-                Value = Value.ToString()
-            };
-        }
     }
 }
