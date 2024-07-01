@@ -117,7 +117,7 @@ public static class ServerConfiguration
         app.UseRouting();
         app.UseAuthorization();
         app.UseCors(CorsPolicyName);
-
+        
         app.UseEndpoints(ConfigureEndpoints);
     }
 

@@ -87,11 +87,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker", "Docker", "{9787F0
 		docker\docker-compose.yaml = docker\docker-compose.yaml
 		docker\docker-compose-demo.yaml = docker\docker-compose-demo.yaml
 		docker\Dockerfile-AasxServerAspNetCore = docker\Dockerfile-AasxServerAspNetCore
-		docker\Dockerfile-AasxServerAspNetCore-arm32 = docker\Dockerfile-AasxServerAspNetCore-arm32
-		docker\Dockerfile-AasxServerAspNetCore-arm64 = docker\Dockerfile-AasxServerAspNetCore-arm64
 		docker\Dockerfile-AasxServerBlazor = docker\Dockerfile-AasxServerBlazor
-		docker\Dockerfile-AasxServerBlazor-arm32 = docker\Dockerfile-AasxServerBlazor-arm32
-		docker\Dockerfile-AasxServerBlazor-arm64 = docker\Dockerfile-AasxServerBlazor-arm64
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AasSecurityTests", "AasSecurityTests\AasSecurityTests.csproj", "{716CC065-F58C-455E-8079-3A21C59D42E3}"

@@ -1090,6 +1090,7 @@
                 }
             }
 
+            AasxServer.Program.env[envProject].setWrite(true);
             Program.signalNewData(0);
         }
     }
@@ -1115,6 +1116,7 @@
                 }
             }
 
+            AasxServer.Program.env[envProject].setWrite(true);
             Program.signalNewData(0);
         }
     }
@@ -1130,6 +1132,7 @@
                 pZugehoerigesbetriebsmittelSeriennummer[loop].Value = a;
             }
 
+            AasxServer.Program.env[envProject].setWrite(true);
             Program.signalNewData(0);
         }
     }
@@ -1145,6 +1148,7 @@
                 pEigensicheresbetriebsmittelSeriennummer[loop].Value = a;
             }
 
+            AasxServer.Program.env[envProject].setWrite(true);
             Program.signalNewData(0);
         }
     }
@@ -1153,6 +1157,7 @@
     object lockNewDataMode = new object();
     static int init = 0;    
     int countProject = 0;
+    int envProject = -1;
     List<SubmodelElementCollection> project = null;
     List<string> projectName = null;
     List<double> cableLength = null;
@@ -1285,6 +1290,10 @@
                                         {
                                             if (s != null && s is SubmodelElementCollection smc)
                                             {
+                                                if (envProject == -1)
+                                                {
+                                                    envProject = i;
+                                                }
                                                 project.Add(s as SubmodelElementCollection);
                                                 projectName.Add("");
                                                 cableLength.Add(0);
