@@ -20606,7 +20606,7 @@ namespace AasCore.Aas3_0
             /// Thrown when the element is not a valid XML
             /// representation of Environment.
             /// </exception>
-            public static Environment? EnvironmentFrom(
+            public static Environment EnvironmentFrom(
                 Xml.XmlReader reader)
             {
                 Aas.Environment? result = (

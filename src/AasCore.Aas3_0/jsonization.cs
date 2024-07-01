@@ -15740,7 +15740,7 @@ namespace AasCore.Aas3_0
             /// Thrown when <paramref name="node" /> is not a valid JSON
             /// representation of Environment.
             /// </exception>
-            public static Environment? EnvironmentFrom(
+            public static Environment EnvironmentFrom(
                 Nodes.JsonNode node)
             {
                 Aas.Environment? result = DeserializeImplementation.EnvironmentFrom(
