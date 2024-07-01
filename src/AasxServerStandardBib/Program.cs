@@ -1473,11 +1473,8 @@ namespace AasxServer
                             aasDescriptor aasDsecritpor      = Program.creatAASDescriptor(Program.env[j]);
                             TransmitData  aasDsecritporTData = new TransmitData {source = connectNodeName};
                             aasDsecritporTData.type        = "register";
-                            aasDsecritporTData.destination = "VWS_AAS_Registry";var options = new JsonSerializerOptions
-                                                                                              {
-                                                                                                  WriteIndented    = true,
-                                                                                                  IgnoreNullValues = true
-                                                                                              };
+                            aasDsecritporTData.destination = "VWS_AAS_Registry";
+                            var options = new JsonSerializerOptions {WriteIndented = true, IgnoreNullValues = true};
 
                             var aasDescriptorJsonData = System.Text.Json.JsonSerializer.Serialize(aasDsecritpor, options);
 
@@ -1500,18 +1497,12 @@ namespace AasxServer
                         }
                     }
 
-                    string decriptorData = System.Text.Json.JsonSerializer.Serialize(descriptortf, new JsonSerializerOptions
-                                                                        {
-                                                                            WriteIndented = true,
-                                                                        });
+                    string decriptorData = System.Text.Json.JsonSerializer.Serialize(descriptortf, new JsonSerializerOptions {WriteIndented = true,});
                     Program.publishDescriptorData(decriptorData);
 
                     td = new TransmitData {source = connectNodeName};
 
-                    string json = System.Text.Json.JsonSerializer.Serialize(adp, new JsonSerializerOptions
-                                                                                 {
-                                                                                     WriteIndented = true,
-                                                                                 });
+                    string json = System.Text.Json.JsonSerializer.Serialize(adp, new JsonSerializerOptions {WriteIndented = true,});
                     td.type        = "directory";
                     td.destination = getDirectoryDestination;
                     td.publish.Add(json);
@@ -1545,10 +1536,7 @@ namespace AasxServer
                     res.fileType        = getaasxFile_fileType;
                     res.fileTransmitted = getaasxFile_fileTransmitted;
 
-                    string responseJson = System.Text.Json.JsonSerializer.Serialize(res, new JsonSerializerOptions
-                                                                        {
-                                                                            WriteIndented = true,
-                                                                        });
+                    string responseJson = System.Text.Json.JsonSerializer.Serialize(res, new JsonSerializerOptions {WriteIndented = true,});
                     td.destination = getaasxFile_destination;
                     td.type        = "getaasxBlock";
                     td.publish.Add(responseJson);
@@ -1611,10 +1599,7 @@ namespace AasxServer
                             {
                                 td = new TransmitData {source = connectNodeName};
 
-                                var json = System.Text.Json.JsonSerializer.Serialize(sm, new JsonSerializerOptions
-                                                                                         {
-                                                                                             WriteIndented = true,
-                                                                                         });
+                                var json = System.Text.Json.JsonSerializer.Serialize(sm, new JsonSerializerOptions {WriteIndented = true,});
                                 td.type = "submodel";
                                 td.publish.Add(json);
                                 tf.data.Add(td);
@@ -1625,12 +1610,9 @@ namespace AasxServer
 
                     envi++;
                 }
-                
-                string publish = System.Text.Json.JsonSerializer.Serialize(tf, new JsonSerializerOptions
-                                                                               {
-                                                                                   WriteIndented = true,
-                                                                               });
-                
+
+                string publish = System.Text.Json.JsonSerializer.Serialize(tf, new JsonSerializerOptions {WriteIndented = true,});
+
                 HttpClient httpClient;
                 if (clientHandler != null)
                 {
@@ -1692,10 +1674,7 @@ namespace AasxServer
                                     res.fileName = Path.GetFileName(Program.envFileName[aasIndex]);
                                     res.fileData = fileToken;
 
-                                    string responseJson = System.Text.Json.JsonSerializer.Serialize(res, new JsonSerializerOptions
-                                                                                                         {
-                                                                                                             WriteIndented = true,
-                                                                                                         });
+                                    string responseJson = System.Text.Json.JsonSerializer.Serialize(res, new JsonSerializerOptions {WriteIndented = true,});
 
                                     TransmitData tdp = new TransmitData();
 
@@ -1730,11 +1709,8 @@ namespace AasxServer
                                 {
                                     res.fileName = Path.GetFileName(Program.envFileName[aasIndex]);
                                     res.fileData = binaryBase64;
-                                    Byte[] fileBytes = Convert.FromBase64String(binaryBase64);
-                                    string responseJson = System.Text.Json.JsonSerializer.Serialize(res, new JsonSerializerOptions
-                                                                                                         {
-                                                                                                             WriteIndented = true,
-                                                                                                         });
+                                    Byte[] fileBytes    = Convert.FromBase64String(binaryBase64);
+                                    string responseJson = System.Text.Json.JsonSerializer.Serialize(res, new JsonSerializerOptions {WriteIndented = true,});
 
 
                                     TransmitData tdp = new TransmitData();
@@ -2210,17 +2186,12 @@ namespace AasxServer
                 Console.WriteLine("{0} PUT Submodel {1} from URL {2}.", countGetPut++, PUTSUBMODEL, PUTURL);
 
                 {
-                    
-                    var jsonOptions = new JsonSerializerOptions
-                                      {
-                                          WriteIndented = true
-                                      };
+                    var jsonOptions = new JsonSerializerOptions {WriteIndented = true};
                     foreach (var sm in env[0].AasEnv.Submodels)
                     {
                         if (sm != null && sm.IdShort != null && sm.IdShort == PUTSUBMODEL)
                         {
-                            
-                            var json = System.Text.Json.JsonSerializer.Serialize(sm,jsonOptions);
+                            var json = System.Text.Json.JsonSerializer.Serialize(sm, jsonOptions);
 
                             try
                             {
@@ -2615,13 +2586,9 @@ namespace AasxServer
                                                     var ref12 = env[i].AasEnv.FindReferableByReference(r12.GetModelReference());
                                                     if (ref12 is SubmodelElementCollection)
                                                     {
-                                                        var c1 = ref12 as SubmodelElementCollection;
-                                                        // if (c1.Value.Count == 0)
-                                                        {
-                                                            // dynamic model = JObject.Parse(response);
-                                                            var parsed = JsonDocument.Parse(response); // Parse your JSON string into JsonDocument
-                                                            ParseJson(c1, parsed, null);               // Call ParseJson with JsonDocument
-                                                        }
+                                                        var c1     = ref12 as SubmodelElementCollection;
+                                                        var parsed = JsonDocument.Parse(response);
+                                                        ParseJson(c1, parsed, null);
                                                     }
                                                 }
 
@@ -2801,7 +2768,7 @@ namespace AasxServer
                 var collection = sme as SubmodelElementCollection;
                 foreach (var t in collection.Value)
                 {
-                    var           newNodeIdBase = $"{nodePath}.{collection.IdShort}";
+                    var newNodeIdBase = $"{nodePath}.{collection.IdShort}";
                     WalkSubmodelElement(t, newNodeIdBase, serverNodePrefix, client, clientNamespace);
                 }
             }

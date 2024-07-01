@@ -145,14 +145,14 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
         if (!Program.noSecurity)
         {
             var submodel = _aasService.GetSubmodelById(decodedAasIdentifier, decodedSmIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
-            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)};
+            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+            var claimsList = new List<Claim>(User.Claims) {new("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -228,14 +228,14 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
         if (!Program.noSecurity)
         {
             var submodel = _aasService.GetSubmodelById(decodedAasIdentifier, decodedSmIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
-            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)};
+            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+            var claimsList = new List<Claim>(User.Claims) {new("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -408,8 +408,8 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetAllSubmodelElementsAasRepository([FromRoute] [Required] string aasIdentifier, [FromRoute] [Required] string? submodelIdentifier,
-                                                                     [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] [Required] LevelEnum level,
-                                                                     [FromQuery] [Required] ExtentEnum extent)
+                                                                     [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] LevelEnum level,
+                                                                     [FromQuery] ExtentEnum extent)
     {
         var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -421,7 +421,7 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
             var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -460,7 +460,7 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetAllSubmodelElementsMetadataAasRepository([FromRoute] [Required] string aasIdentifier, [FromRoute] [Required] string? submodelIdentifier,
-                                                                             [FromQuery] int? limit, [FromQuery] [Required] string cursor, [FromQuery] [Required] LevelEnum level)
+                                                                             [FromQuery] int? limit, [FromQuery] [Required] string cursor, [FromQuery] LevelEnum level)
     {
         var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -472,7 +472,7 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
             var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -513,8 +513,8 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetAllSubmodelElementsPathAasRepository([FromRoute] [Required] string aasIdentifier, [FromRoute] [Required] string? submodelIdentifier,
-                                                                         [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] [Required] LevelEnum level,
-                                                                         [FromQuery] [Required] ExtentEnum extent)
+                                                                         [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] LevelEnum level,
+                                                                         [FromQuery] ExtentEnum extent)
     {
         var decodedAasIdentifier      = _decoderService.Decode($"aasIdentifier", aasIdentifier);
         var decodedSubmodelIdentifier = _decoderService.Decode($"submodelIdentifier", submodelIdentifier);
@@ -526,7 +526,7 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
             var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -567,8 +567,8 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetAllSubmodelElementsReferenceAasRepository([FromRoute] [Required] string aasIdentifier, [FromRoute] [Required] string submodelIdentifier,
-                                                                              [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] [Required] LevelEnum level,
-                                                                              [FromQuery] [Required] ExtentEnum extent)
+                                                                              [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery]  LevelEnum level,
+                                                                              [FromQuery] ExtentEnum extent)
     {
         var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -580,7 +580,7 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
             var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -601,6 +601,7 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
     /// <param name="limit">The maximum number of elements in the response array</param>
     /// <param name="cursor">A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue</param>
     /// <param name="level">Determines the structural depth of the respective resource content</param>
+    /// <param name="extend"></param>
     /// <response code="200">List of found submodel elements in their ValueOnly representation</response>
     /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
     /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
@@ -620,8 +621,8 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetAllSubmodelElementsValueOnlyAasRepository([FromRoute] [Required] string aasIdentifier, [FromRoute] [Required] string submodelIdentifier,
-                                                                              [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] [Required] LevelEnum level,
-                                                                              [FromQuery] [Required] ExtentEnum extent)
+                                                                              [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] LevelEnum level,
+                                                                              [FromQuery]  ExtentEnum extend)
     {
         var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -633,7 +634,7 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
             var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -829,14 +830,14 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
         if (!Program.noSecurity)
         {
             var submodel = _aasService.GetSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
-            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)};
+            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+            var claimsList = new List<Claim>(User.Claims) {new("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -1072,7 +1073,7 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetSubmodelByIdMetadataAasRepository([FromRoute] [Required] string aasIdentifier, [FromRoute] [Required] string submodelIdentifier,
-                                                                      [FromQuery] [Required] LevelEnum level)
+                                                                      [FromQuery] LevelEnum level)
     {
         var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -1120,7 +1121,7 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetSubmodelByIdPathAasRepository([FromRoute] [Required] string aasIdentifier, [FromRoute] [Required] string submodelIdentifier,
-                                                                  [FromQuery] [Required] LevelEnum level)
+                                                                  [FromQuery] LevelEnum level)
     {
         var decodedAasIdentifier      = _decoderService.Decode($"aasIdentifier", aasIdentifier);
         var decodedSubmodelIdentifier = _decoderService.Decode($"submodelIdentifier", submodelIdentifier);
@@ -1214,7 +1215,7 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetSubmodelByIdValueOnlyAasRepository([FromRoute] [Required] string aasIdentifier, [FromRoute] [Required] string submodelIdentifier,
-                                                                       [FromQuery] [Required] LevelEnum level, [FromQuery] [Required] ExtentEnum extent)
+                                                                       [FromQuery] LevelEnum level, [FromQuery] ExtentEnum extent)
     {
         var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -1264,8 +1265,8 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetSubmodelElementByPathAasRepository([FromRoute] [Required] string aasIdentifier, [FromRoute] [Required] string submodelIdentifier,
-                                                                       [FromRoute] [Required] string idShortPath, [FromQuery] [Required] LevelEnum level,
-                                                                       [FromQuery] [Required] ExtentEnum extent)
+                                                                       [FromRoute] [Required] string idShortPath, [FromQuery] LevelEnum level,
+                                                                       [FromQuery]  ExtentEnum extent)
     {
         var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -1277,14 +1278,14 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
         if (!Program.noSecurity)
         {
             var submodel = _aasService.GetSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
-            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)};
+            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -1318,7 +1319,7 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetSubmodelElementByPathMetadataAasRepository([FromRoute] [Required] string aasIdentifier, [FromRoute] [Required] string submodelIdentifier,
-                                                                               [FromRoute] [Required] string idShortPath, [FromQuery] [Required] LevelEnum level)
+                                                                               [FromRoute] [Required] string idShortPath, [FromQuery] LevelEnum level)
     {
         var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -1329,14 +1330,14 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
         if (!Program.noSecurity)
         {
             var submodel = _aasService.GetSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
-            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)};
+            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -1371,7 +1372,7 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetSubmodelElementByPathPathAasRepository([FromRoute] [Required] string aasIdentifier, [FromRoute] [Required] string submodelIdentifier,
-                                                                           [FromRoute] [Required] string idShortPath, [FromQuery] [Required] LevelEnum level)
+                                                                           [FromRoute] [Required] string idShortPath, [FromQuery] LevelEnum level)
     {
         var decodedAasIdentifier      = _decoderService.Decode($"aasIdentifier", aasIdentifier);
         var decodedSubmodelIdentifier = _decoderService.Decode($"submodelIdentifier", submodelIdentifier);
@@ -1382,14 +1383,14 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
         if (!Program.noSecurity)
         {
             var submodel = _aasService.GetSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
-            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)};
+            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -1435,14 +1436,14 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
         if (!Program.noSecurity)
         {
             var submodel = _aasService.GetSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
-            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)};
+            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -1479,8 +1480,8 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetSubmodelElementByPathValueOnlyAasRepository([FromRoute] [Required] string aasIdentifier, [FromRoute] [Required] string submodelIdentifier,
-                                                                                [FromRoute] [Required] string idShortPath, [FromQuery] [Required] LevelEnum level,
-                                                                                [FromQuery] [Required] ExtentEnum extent)
+                                                                                [FromRoute] [Required] string idShortPath, [FromQuery] LevelEnum level,
+                                                                                [FromQuery] ExtentEnum extent)
     {
         var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -1491,14 +1492,14 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
         if (!Program.noSecurity)
         {
             var submodel = _aasService.GetSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
-            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)};
+            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -2079,7 +2080,7 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -2128,14 +2129,14 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
         if (!Program.noSecurity)
         {
             var submodel = _aasService.GetSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
-            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)};
+            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
