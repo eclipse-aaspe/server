@@ -601,7 +601,7 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
     /// <param name="limit">The maximum number of elements in the response array</param>
     /// <param name="cursor">A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue</param>
     /// <param name="level">Determines the structural depth of the respective resource content</param>
-    /// <param name="extend"></param>
+    /// <param name="extent"></param>
     /// <response code="200">List of found submodel elements in their ValueOnly representation</response>
     /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
     /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
@@ -622,7 +622,7 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetAllSubmodelElementsValueOnlyAasRepository([FromRoute] [Required] string aasIdentifier, [FromRoute] [Required] string submodelIdentifier,
                                                                               [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] LevelEnum level,
-                                                                              [FromQuery]  ExtentEnum extend)
+                                                                              [FromQuery]  ExtentEnum extent)
     {
         var decodedAasIdentifier      = _decoderService.Decode("aasIdentifier", aasIdentifier);
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
