@@ -96,6 +96,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
+        }
+
         _logger.LogInformation($"Received a request to delete a file at {idShortPath} from the submodel {decodedSubmodelIdentifier}");
         if (!Program.noSecurity)
         {
@@ -141,6 +146,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
+        }
+
         _logger.LogInformation($"Received a request to delete a submodel with id {decodedSubmodelIdentifier}");
         _submodelService.DeleteSubmodelById(decodedSubmodelIdentifier);
 
@@ -172,6 +182,12 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     public virtual IActionResult DeleteSubmodelElementByPathSubmodelRepo([FromRoute] [Required] string submodelIdentifier, [FromRoute] [Required] string idShortPath)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
+        }
+
         if (!Program.noSecurity)
         {
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
@@ -227,6 +243,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
+        }
+
         _logger.LogInformation($"Received a request to get all the submodel elements from submodel with id {decodedSubmodelIdentifier}");
         if (!Program.noSecurity)
         {
@@ -254,15 +275,15 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         else
             filtered = submodelElements;
 
-        var           smePaginatedList = _paginationService.GetPaginatedList(filtered, new PaginationParameters(cursor, limit));
+        var smePaginatedList = _paginationService.GetPaginatedList(filtered, new PaginationParameters(cursor, limit));
         var smeLevelList     = _levelExtentModifierService.ApplyLevelExtent(smePaginatedList.result ?? [], level, extent);
-        var           output           = new PagedResult() {result = smeLevelList, paging_metadata = smePaginatedList.paging_metadata};
+        var output           = new PagedResult() {result = smeLevelList, paging_metadata = smePaginatedList.paging_metadata};
         return new ObjectResult(output);
     }
 
     List<ISubmodelElement?> filterSubmodelElements(List<ISubmodelElement?> submodelElements, DateTime diff)
     {
-        var output  = new List<ISubmodelElement?>();
+        var output = new List<ISubmodelElement?>();
 
         foreach (var sme in submodelElements.Where(sme => sme.TimeStampTree >= diff))
         {
@@ -293,7 +314,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
             else if (sme is SubmodelElementList sml)
             {
-                smeDiff = filterSubmodelElements(sml.Value??[], diff);
+                smeDiff = filterSubmodelElements(sml.Value ?? [], diff);
                 if (smeDiff.Count != 0)
                 {
                     var smlDiff = new SubmodelElementList(
@@ -382,10 +403,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         else
             filtered = smeList;
 
-        var           smePagedList    = _paginationService.GetPaginatedList(filtered, new PaginationParameters(cursor, limit));
-        var smeListLevel    = _levelExtentModifierService.ApplyLevelExtent(smePagedList.result??[], level);
-        var           smeMetadataList = _mappingService.Map(smeListLevel, "metadata");
-        var           output          = new MetadataPagedResult() {result = smeMetadataList.ConvertAll(sme => (IMetadataDTO)sme), paging_metadata = smePagedList.paging_metadata};
+        var smePagedList    = _paginationService.GetPaginatedList(filtered, new PaginationParameters(cursor, limit));
+        var smeListLevel    = _levelExtentModifierService.ApplyLevelExtent(smePagedList.result ?? [], level);
+        var smeMetadataList = _mappingService.Map(smeListLevel, "metadata");
+        var output          = new MetadataPagedResult() {result = smeMetadataList.ConvertAll(sme => (IMetadataDTO)sme), paging_metadata = smePagedList.paging_metadata};
         return new ObjectResult(output);
     }
 
@@ -420,6 +441,12 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                                                                         [FromQuery] string? diff)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode($"submodelIdentifier", submodelIdentifier);
+
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
+        }
+
         _logger.LogDebug($"Received request to get all the submodel elements from the submodel with id {decodedSubmodelIdentifier}");
         if (!Program.noSecurity)
         {
@@ -561,10 +588,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         else
             filtered = submodelElements;
 
-        var           smePagedList   = _paginationService.GetPaginatedList(filtered, new PaginationParameters(cursor, limit));
-        var smeLevelExtent = _levelExtentModifierService.ApplyLevelExtent(smePagedList.result??[], level, extent);
-        var           smeValues      = _mappingService.Map(smeLevelExtent, "value");
-        var           output         = new ValueOnlyPagedResult() {result = smeValues.ConvertAll(sme => (IValueDTO)sme), paging_metadata = smePagedList.paging_metadata};
+        var smePagedList   = _paginationService.GetPaginatedList(filtered, new PaginationParameters(cursor, limit));
+        var smeLevelExtent = _levelExtentModifierService.ApplyLevelExtent(smePagedList.result ?? [], level, extent);
+        var smeValues      = _mappingService.Map(smeLevelExtent, "value");
+        var output         = new ValueOnlyPagedResult() {result = smeValues.ConvertAll(sme => (IValueDTO)sme), paging_metadata = smePagedList.paging_metadata};
         return new ObjectResult(output);
     }
 
@@ -603,9 +630,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
-        var           submodelsPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
+        var submodelsPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
         var smLevelList        = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result, level, extent);
-        var           output             = new PagedResult() {result = smLevelList, paging_metadata = submodelsPagedList.paging_metadata};
+        var output             = new PagedResult() {result = smLevelList, paging_metadata = submodelsPagedList.paging_metadata};
         return new ObjectResult(output);
     }
 
@@ -641,10 +668,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
-        var           submodelPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
-        var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelPagedList.result??[], level);
-        var           smMetadataList    = _mappingService.Map(submodelLevelList, "metadata");
-        var           output            = new MetadataPagedResult() {result = smMetadataList.ConvertAll(sme => (IMetadataDTO)sme), paging_metadata = submodelPagedList.paging_metadata};
+        var submodelPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
+        var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelPagedList.result ?? [], level);
+        var smMetadataList    = _mappingService.Map(submodelLevelList, "metadata");
+        var output            = new MetadataPagedResult() {result = smMetadataList.ConvertAll(sme => (IMetadataDTO)sme), paging_metadata = submodelPagedList.paging_metadata};
         return new ObjectResult(output);
     }
 
@@ -680,8 +707,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
-        var           submodelPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
-        var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelPagedList.result??[], level);
+        var submodelPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
+        var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelPagedList.result ?? [], level);
         // TODO (jtikekar, 2023-09-04): @Andreas, what if the first element is property, where path is not applicable
         var submodelsPath = _pathModifierService.ToIdShortPath(submodelLevelList.ConvertAll(sm => (ISubmodel)sm));
         var output        = new PathPagedResult() {result = submodelsPath, paging_metadata = submodelPagedList.paging_metadata};
@@ -764,10 +791,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
-        var           submodelsPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
-        var submodelLevelList  = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result??[], level, extent);
-        var           submodelsValue     = _mappingService.Map(submodelLevelList, "value");
-        var           output             = new ValueOnlyPagedResult() {result = submodelsValue.ConvertAll(sme => (IValueDTO)sme), paging_metadata = submodelsPagedList.paging_metadata};
+        var submodelsPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
+        var submodelLevelList  = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result ?? [], level, extent);
+        var submodelsValue     = _mappingService.Map(submodelLevelList, "value");
+        var output             = new ValueOnlyPagedResult() {result = submodelsValue.ConvertAll(sme => (IValueDTO)sme), paging_metadata = submodelsPagedList.paging_metadata};
         return new ObjectResult(output);
     }
 
@@ -818,11 +845,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var fileName = _submodelService.GetFileByPath(decodedSubmodelIdentifier, idShortPath, out var content, out var fileSize);
 
         //content-disposition so that the aasx file can be doenloaded from the web browser.
-        ContentDisposition contentDisposition = new()
-                                                {
-                                                    FileName = fileName ?? throw new ArgumentNullException(nameof(fileName)),
-                                                    Inline   = fileName.ToLower().EndsWith(".pdf")
-                                                };
+        ContentDisposition contentDisposition = new() {FileName = fileName ?? throw new ArgumentNullException(nameof(fileName)), Inline = fileName.ToLower().EndsWith(".pdf")};
 
         HttpContext.Response.Headers.Add("Content-Disposition", contentDisposition.ToString());
         HttpContext.Response.ContentLength = fileSize;
@@ -970,7 +993,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
         // return StatusCode(0, default(Result));
-        
+
         return new ObjectResult(System.Text.Json.JsonSerializer.Deserialize<BaseOperationResult>(string.Empty));
     }
 
