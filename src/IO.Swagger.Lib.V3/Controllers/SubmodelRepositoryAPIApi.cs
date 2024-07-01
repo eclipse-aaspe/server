@@ -270,14 +270,19 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 _diff    = DateTime.Parse(diff).ToUniversalTime();
                 filtered = filterSubmodelElements(submodelElements, _diff);
             }
-            catch { }
+            catch
+            {
+                // ignored
+            }
         }
         else
+        {
             filtered = submodelElements;
+        }
 
         var smePaginatedList = _paginationService.GetPaginatedList(filtered, new PaginationParameters(cursor, limit));
-        var smeLevelList     = _levelExtentModifierService.ApplyLevelExtent(smePaginatedList.result ?? [], level, extent);
-        var output           = new PagedResult() {result = smeLevelList, paging_metadata = smePaginatedList.paging_metadata};
+        var smeLevelList     = _levelExtentModifierService.ApplyLevelExtent(smePaginatedList.result, level, extent);
+        var output           = new PagedResult {result = smeLevelList, paging_metadata = smePaginatedList.paging_metadata};
         return new ObjectResult(output);
     }
 
@@ -285,60 +290,66 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     {
         var output = new List<ISubmodelElement?>();
 
-        foreach (var sme in submodelElements.Where(sme => sme.TimeStampTree >= diff))
+        foreach (var sme in submodelElements.Where(sme => sme != null && sme.TimeStampTree >= diff))
         {
             List<ISubmodelElement?> smeDiff;
-            if (sme is SubmodelElementCollection smc)
+            switch (sme)
             {
-                smeDiff = filterSubmodelElements(smc.Value ?? [], diff);
-                if (smeDiff.Count != 0)
+                case SubmodelElementCollection smc:
                 {
-                    var smcDiff = new SubmodelElementCollection(
-                                                                extensions: smc.Extensions,
-                                                                category: smc.Category,
-                                                                idShort: smc.IdShort,
-                                                                displayName: smc.DisplayName,
-                                                                description: smc.Description,
-                                                                semanticId: smc.SemanticId,
-                                                                supplementalSemanticIds: smc.SupplementalSemanticIds,
-                                                                qualifiers: smc.Qualifiers,
-                                                                embeddedDataSpecifications: smc.EmbeddedDataSpecifications,
-                                                                value: smeDiff);
-                    smcDiff.Parent = smc.Parent;
-                    output.Add(smcDiff);
+                    smeDiff = filterSubmodelElements(smc.Value ?? [], diff);
+                    if (smeDiff.Count != 0)
+                    {
+                        var smcDiff = new SubmodelElementCollection(
+                                                                    extensions: smc.Extensions,
+                                                                    category: smc.Category,
+                                                                    idShort: smc.IdShort,
+                                                                    displayName: smc.DisplayName,
+                                                                    description: smc.Description,
+                                                                    semanticId: smc.SemanticId,
+                                                                    supplementalSemanticIds: smc.SupplementalSemanticIds,
+                                                                    qualifiers: smc.Qualifiers,
+                                                                    embeddedDataSpecifications: smc.EmbeddedDataSpecifications,
+                                                                    value: smeDiff) {Parent = smc.Parent};
+                        output.Add(smcDiff);
+                    }
+                    else if (smc.TimeStamp >= diff)
+                    {
+                        output.Add(smc);
+                    }
+
+                    break;
                 }
-                else if (smc.TimeStamp >= diff)
+                case SubmodelElementList sml:
                 {
-                    output.Add(smc);
+                    smeDiff = filterSubmodelElements(sml.Value ?? [], diff);
+                    if (smeDiff.Count != 0)
+                    {
+                        var smlDiff = new SubmodelElementList(
+                                                              typeValueListElement: sml.TypeValueListElement,
+                                                              extensions: sml.Extensions,
+                                                              category: sml.Category,
+                                                              idShort: sml.IdShort,
+                                                              displayName: sml.DisplayName,
+                                                              description: sml.Description,
+                                                              semanticId: sml.SemanticId,
+                                                              supplementalSemanticIds: sml.SupplementalSemanticIds,
+                                                              qualifiers: sml.Qualifiers,
+                                                              embeddedDataSpecifications: sml.EmbeddedDataSpecifications,
+                                                              value: smeDiff) {Parent = sml.Parent};
+                        output.Add(smlDiff);
+                    }
+                    else if (sml.TimeStamp >= diff)
+                    {
+                        output.Add(sml);
+                    }
+
+                    break;
                 }
+                default:
+                    output.Add(sme);
+                    break;
             }
-            else if (sme is SubmodelElementList sml)
-            {
-                smeDiff = filterSubmodelElements(sml.Value ?? [], diff);
-                if (smeDiff.Count != 0)
-                {
-                    var smlDiff = new SubmodelElementList(
-                                                          typeValueListElement: sml.TypeValueListElement,
-                                                          extensions: sml.Extensions,
-                                                          category: sml.Category,
-                                                          idShort: sml.IdShort,
-                                                          displayName: sml.DisplayName,
-                                                          description: sml.Description,
-                                                          semanticId: sml.SemanticId,
-                                                          supplementalSemanticIds: sml.SupplementalSemanticIds,
-                                                          qualifiers: sml.Qualifiers,
-                                                          embeddedDataSpecifications: sml.EmbeddedDataSpecifications,
-                                                          value: smeDiff);
-                    smlDiff.Parent = sml.Parent;
-                    output.Add(smlDiff);
-                }
-                else if (sml.TimeStamp >= diff)
-                {
-                    output.Add(sml);
-                }
-            }
-            else
-                output.Add(sme);
         }
 
         return output;
@@ -376,6 +387,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
         _logger.LogInformation($"Received request to get the metadata of all the submodel elements from the submodel with id {decodedSubmodelIdentifier}");
         if (!Program.noSecurity)
         {
@@ -398,13 +413,18 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 _diff    = DateTime.Parse(diff).ToUniversalTime();
                 filtered = filterSubmodelElements(smeList, _diff);
             }
-            catch { }
+            catch
+            {
+                // ignored
+            }
         }
         else
+        {
             filtered = smeList;
+        }
 
         var smePagedList    = _paginationService.GetPaginatedList(filtered, new PaginationParameters(cursor, limit));
-        var smeListLevel    = _levelExtentModifierService.ApplyLevelExtent(smePagedList.result ?? [], level);
+        var smeListLevel    = _levelExtentModifierService.ApplyLevelExtent(smePagedList.result, level);
         var smeMetadataList = _mappingService.Map(smeListLevel, "metadata");
         var output          = new MetadataPagedResult() {result = smeMetadataList.ConvertAll(sme => (IMetadataDTO)sme), paging_metadata = smePagedList.paging_metadata};
         return new ObjectResult(output);
@@ -469,7 +489,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 _diff    = DateTime.Parse(diff).ToUniversalTime();
                 filtered = filterSubmodelElements(submodelElementList, _diff);
             }
-            catch { }
+            catch
+            {
+                // ignored
+            }
         }
         else
             filtered = submodelElementList;
@@ -506,7 +529,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetAllSubmodelElementsReferenceSubmodelRepo([FromRoute] [Required] string submodelIdentifier, [FromQuery] int? limit,
-                                                                             [FromQuery] string? cursor, [FromQuery] string? level)
+                                                                             [FromQuery] string? cursor, [FromQuery] LevelEnum level)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -562,7 +585,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetAllSubmodelElementsValueOnlySubmodelRepo([FromRoute] [Required] string submodelIdentifier,
-                                                                             [FromQuery] int? limit, [FromQuery] string cursor, [FromQuery] LevelEnum level,
+                                                                             [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] LevelEnum level,
                                                                              [FromQuery] ExtentEnum extent, [FromQuery] string? diff)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -644,11 +667,19 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
 
+        if (reqSemanticId == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(reqSemanticId)} is null"); 
+        }
+        if (idShort == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(idShort)} is null"); 
+        }
         var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
         var submodelsPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
         var smLevelList        = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result, level, extent);
-        var output             = new PagedResult() {result = smLevelList, paging_metadata = submodelsPagedList.paging_metadata};
+        var output             = new PagedResult {result = smLevelList, paging_metadata = submodelsPagedList.paging_metadata};
         return new ObjectResult(output);
     }
 
