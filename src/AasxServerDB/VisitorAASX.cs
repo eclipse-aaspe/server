@@ -13,6 +13,8 @@ using System.Runtime.InteropServices.JavaScript;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.X86;
 using System.ComponentModel.DataAnnotations;
+using System.Text;
+using System.Collections;
 
 namespace AasxServerDB
 {
@@ -226,11 +228,19 @@ namespace AasxServerDB
             }
             else if (sme is AasCore.Aas3_0.File file)
             {
-                if (file.Value.IsNullOrEmpty())
+                if (file.Value.IsNullOrEmpty() && file.ContentType.IsNullOrEmpty())
                     return;
 
                 smeDB.ValueType = "S";
-                smeDB.SValueSets.Add(new SValueSet { Value = file.Value, Annotation = string.Empty });
+                smeDB.SValueSets.Add(new SValueSet { Value = file.Value, Annotation = file.ContentType });
+            }
+            else if (sme is Blob blob)
+            {
+                if (blob.Value.IsNullOrEmpty() && blob.ContentType.IsNullOrEmpty())
+                    return;
+
+                smeDB.ValueType = "S";
+                smeDB.SValueSets.Add(new SValueSet { Value = blob.Value != null ? Encoding.ASCII.GetString(blob.Value) : string.Empty, Annotation = blob.ContentType });
             }
             else if (sme is MultiLanguageProperty mlp)
             {
@@ -375,10 +385,10 @@ namespace AasxServerDB
         }
         public override void VisitSubmodel(ISubmodel that)
         {
-            DateTime currentDataTime = DateTime.UtcNow;
-            DateTime timeStamp = (that.TimeStamp == default(DateTime)) ? currentDataTime : that.TimeStamp;
-            DateTime timeStampCreate = (that.TimeStampCreate == default(DateTime)) ? currentDataTime : that.TimeStampCreate;
-            DateTime timeStampTree = (that.TimeStampTree == default(DateTime)) ? currentDataTime : that.TimeStampTree;
+            var currentDataTime = DateTime.UtcNow;
+            var timeStamp = (that.TimeStamp == default) ? currentDataTime : that.TimeStamp;
+            var timeStampCreate = (that.TimeStampCreate == default) ? currentDataTime : that.TimeStampCreate;
+            var timeStampTree = (that.TimeStampTree == default) ? currentDataTime : that.TimeStampTree;
             var semanticId = that.SemanticId.GetAsIdentifier();
             if (semanticId.IsNullOrEmpty())
                 semanticId = string.Empty;
@@ -401,7 +411,7 @@ namespace AasxServerDB
         }
         public override void VisitSubmodelElementList(ISubmodelElementList that)
         {
-            SMESet smeSet = collectSMEData(that);
+            var smeSet = collectSMEData(that);
             smeSet.ParentSME = _parSME;
             _parSME          = smeSet;
             base.VisitSubmodelElementList(that);
@@ -410,7 +420,7 @@ namespace AasxServerDB
 
         public override void VisitSubmodelElementCollection(ISubmodelElementCollection that)
         {
-            SMESet smeSet = collectSMEData(that);
+            var smeSet = collectSMEData(that);
             smeSet.ParentSME = _parSME;
             _parSME          = smeSet;
             base.VisitSubmodelElementCollection(that);
@@ -427,7 +437,7 @@ namespace AasxServerDB
             collectSMEData(that);
             base.VisitMultiLanguageProperty(that);
         }
-        public override void VisitRange(AasCore.Aas3_0.IRange that)
+        public override void VisitRange(IRange that)
         {
             collectSMEData(that);
             base.VisitRange(that);
@@ -442,7 +452,7 @@ namespace AasxServerDB
             collectSMEData(that);
             base.VisitBlob(that);
         }
-        public override void VisitFile(AasCore.Aas3_0.IFile that)
+        public override void VisitFile(IFile that)
         {
             collectSMEData(that);
             base.VisitFile(that);
@@ -454,7 +464,7 @@ namespace AasxServerDB
         }
         public override void VisitEntity(IEntity that)
         {
-            SMESet smeSet = collectSMEData(that);
+            var smeSet = collectSMEData(that);
             smeSet.ParentSME = _parSME;
             _parSME = smeSet;
             base.VisitEntity(that);

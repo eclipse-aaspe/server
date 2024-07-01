@@ -1,3 +1,4 @@
+using System.Text;
 using AasCore.Aas3_0;
 using AasxServerDB.Entities;
 using AdminShellNS;
@@ -99,7 +100,10 @@ namespace AasxServerDB
                             value: value.ConvertAll<ILangStringTextType>(val => new LangStringTextType(val[1], val[0])));
                         break;
                     case "File":
-                        nextSME = new AasCore.Aas3_0.File("text", value: value.First()[0]);
+                        nextSME = new AasCore.Aas3_0.File(value.First()[1], value: value.First()[0]);
+                        break;
+                    case "Blob":
+                        nextSME = new Blob(value.First()[1], value: Encoding.ASCII.GetBytes(value.First()[0]));
                         break;
                     case "Ent":
                         nextSME = new Entity(
