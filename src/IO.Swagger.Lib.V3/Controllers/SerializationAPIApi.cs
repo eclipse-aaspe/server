@@ -22,6 +22,7 @@ namespace IO.Swagger.Controllers;
 
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using AasSecurity.Exceptions;
 using Environment = AasCore.Aas3_0.Environment;
 
 /// <summary>
@@ -67,6 +68,16 @@ public class SerializationAPIApiController : ControllerBase
     public virtual IActionResult GenerateSerializationByIds([FromQuery] List<string?>? aasIds, [FromQuery] List<string?>? submodelIds,
                                                             [FromQuery] bool includeConceptDescriptions = false)
     {
+        if (aasIds == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(aasIds)} is null");
+        }
+
+        if (submodelIds == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(submodelIds)} is null");
+        }
+
         var decodedAasIds = aasIds.Select(aasId => _decoderService.Decode("aasIdentifier", aasId)).ToList();
 
         var decodedSubmodelIds = submodelIds.Select(submodelId => _decoderService.Decode("submodelIdentifier", submodelId)).ToList();
@@ -80,7 +91,7 @@ public class SerializationAPIApiController : ControllerBase
         }
 
         var outputBuilder = new System.Text.StringBuilder();
-        var writer        = XmlWriter.Create(outputBuilder, new XmlWriterSettings() {Indent = true, OmitXmlDeclaration = true});
+        var writer        = XmlWriter.Create(outputBuilder, new XmlWriterSettings {Indent = true, OmitXmlDeclaration = true});
         Xmlization.Serialize.To(environment, writer);
         writer.Flush();
         writer.Close();
