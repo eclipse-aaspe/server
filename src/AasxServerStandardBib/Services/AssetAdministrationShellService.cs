@@ -183,7 +183,7 @@ namespace AasxServerStandardBib.Services
 
 
 
-        public List<IAssetAdministrationShell> GetAllAssetAdministrationShells(List<SpecificAssetId> assetIds = null, string idShort = null)
+        public List<IAssetAdministrationShell> GetAllAssetAdministrationShells(List<SpecificAssetId>? assetIds = null, string? idShort = null)
         {
             var output = _packageEnvService.GetAllAssetAdministrationShells();
 
