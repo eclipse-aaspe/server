@@ -64,30 +64,11 @@ public class Startup
                     })
             .AddJsonOptions(options =>
                             {
-                                // Configure System.Text.Json settings
                                 options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
                                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                                options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
                             })
             .AddXmlSerializerFormatters();
-
-
-        services.AddSwaggerGen(c =>
-                               {
-                                   // Other Swagger configuration...
-
-                                   c.MapType<MessageTypeEnum>(() => new OpenApiSchema
-                                                                    {
-                                                                        Type = "string",
-                                                                        Enum = new List<IOpenApiAny>
-                                                                               {
-                                                                                   new OpenApiString(MessageTypeEnum.UndefinedEnum.ToString()),
-                                                                                   new OpenApiString(MessageTypeEnum.InfoEnum.ToString()),
-                                                                                   new OpenApiString(MessageTypeEnum.WarningEnum.ToString()),
-                                                                                   new OpenApiString(MessageTypeEnum.ErrorEnum.ToString()),
-                                                                                   new OpenApiString(MessageTypeEnum.ExceptionEnum.ToString())
-                                                                               }
-                                                                    });
-                               });
 
         services
             .AddSwaggerGen(c =>
@@ -112,6 +93,19 @@ public class Startup
                                // Include DataAnnotation attributes on Controller Action parameters as Swagger validation rules (e.g required, pattern, ..)
                                // Use [ValidateModelState] on Actions to actually validate it in C# as well!
                                c.OperationFilter<GeneratePathParamsValidationFilter>();
+                               
+                               c.MapType<MessageTypeEnum>(() => new OpenApiSchema
+                                                                {
+                                                                    Type = "string",
+                                                                    Enum = new List<IOpenApiAny>
+                                                                           {
+                                                                               new OpenApiString(MessageTypeEnum.UndefinedEnum.ToString()),
+                                                                               new OpenApiString(MessageTypeEnum.InfoEnum.ToString()),
+                                                                               new OpenApiString(MessageTypeEnum.WarningEnum.ToString()),
+                                                                               new OpenApiString(MessageTypeEnum.ErrorEnum.ToString()),
+                                                                               new OpenApiString(MessageTypeEnum.ExceptionEnum.ToString())
+                                                                           }
+                                                                });
                            });
     }
 

@@ -56,21 +56,19 @@ public class Startup
     public void ConfigureServices(IServiceCollection services)
     {
         // Add framework services.
-        services
-            .AddMvc(options =>
-                    {
-                        // Remove System.Text.Json formatters
-                        options.InputFormatters.RemoveType<SystemTextJsonInputFormatter>();
-                        options.OutputFormatters.RemoveType<SystemTextJsonOutputFormatter>();
-                    })
-            .AddJsonOptions(options =>
-                            {
-                                // Configure System.Text.Json settings
-                                options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-                                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-                                options.JsonSerializerOptions.IgnoreNullValues = true;
-                            })
-            .AddXmlSerializerFormatters();
+        services.AddMvc(options =>
+                        {
+                            options.InputFormatters.RemoveType<SystemTextJsonInputFormatter>();
+                            options.OutputFormatters.RemoveType<SystemTextJsonOutputFormatter>();
+                        })
+                .AddJsonOptions(options =>
+                                {
+                                    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                                    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                                    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+                                })
+                .AddXmlSerializerFormatters();
+
 
         services.AddSwaggerGen(c =>
                                {
@@ -80,7 +78,7 @@ public class Startup
                                                     Version     = "V3.0",
                                                     Title       = "DotAAS Part 2 | HTTP/REST | Repository Service Specification",
                                                     Description = "DotAAS Part 2 | HTTP/REST | Repository Service Specification (ASP.NET Core 3.1)",
-                                                    Contact = new OpenApiContact()
+                                                    Contact = new OpenApiContact
                                                               {
                                                                   Name
                                                                       = "Constantin Ziesche, Andreas Orzelski, Florian Krebs, Bastian Rössl, Manuel Sauer, Jens Vialkowitsch, Michael Hoffmeister, Torben Miny, Sebastian Bader, Marko Ristin, Nico Braunisch",
@@ -93,11 +91,22 @@ public class Startup
                                    c.CustomSchemaIds(type => type.FullName);
                                    c.IncludeXmlComments($"{AppContext.BaseDirectory}{Path.DirectorySeparatorChar}{_hostingEnv.ApplicationName}.xml");
 
-                                   // Include DataAnnotation attributes on Controller Action parameters as Swagger validation rules
                                    c.OperationFilter<GeneratePathParamsValidationFilter>();
+
+                                   c.MapType<MessageTypeEnum>(() => new OpenApiSchema
+                                                                    {
+                                                                        Type = "string",
+                                                                        Enum = new List<IOpenApiAny>
+                                                                               {
+                                                                                   new OpenApiString(MessageTypeEnum.UndefinedEnum.ToString()),
+                                                                                   new OpenApiString(MessageTypeEnum.InfoEnum.ToString()),
+                                                                                   new OpenApiString(MessageTypeEnum.WarningEnum.ToString()),
+                                                                                   new OpenApiString(MessageTypeEnum.ErrorEnum.ToString()),
+                                                                                   new OpenApiString(MessageTypeEnum.ExceptionEnum.ToString())
+                                                                               }
+                                                                    });
                                });
     }
-
 
     /// <summary>
     /// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
