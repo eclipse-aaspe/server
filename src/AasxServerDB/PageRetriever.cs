@@ -46,7 +46,7 @@ namespace AasxServerDB
                 .ToList();
         }
 
-        static public List<SMESet> GetPageSMEData(int size = 1000, DateTime dateTime = new DateTime(), string searchLower = "", long smid = 0, long smeid = 0)
+        static public List<SMESet> GetPageSMEData(int size = 1000, DateTime dateTime = new DateTime(), string searchLower = "", long smid = 0, long smeid = 0, long parid = 0)
         {
             bool withDateTime = !dateTime.Equals(DateTime.MinValue);
             List<SMESet> data = null;
@@ -54,7 +54,7 @@ namespace AasxServerDB
             {
                 data = db.SMESets
                     .OrderBy(sme => sme.Id)
-                    .Where(sme => (smid == 0 || sme.SMId == smid) && (smeid == 0 || sme.Id == smeid) &&
+                    .Where(sme => (smid == 0 || sme.SMId == smid) && (smeid == 0 || sme.Id == smeid) && (parid == 0 || sme.ParentSMEId == parid) &&
                         (searchLower.IsNullOrEmpty() ||
                         (sme.IdShort != null  && sme.IdShort.ToLower().Contains(searchLower)) ||
                         (sme.SemanticId != null  && sme.SemanticId.ToLower().Contains(searchLower)) ||

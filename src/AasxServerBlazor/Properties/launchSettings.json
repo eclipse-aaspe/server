@@ -10,11 +10,11 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--no-security --external-blazor http://127.0.0.1:5001 --edit --data-path \"C:\\Users\\Y97CO3\\OneDrive - PHOENIX CONTACT GmbH & Co. KG\\04_Abteilung_DI\\02_Projekte\\02_Aasx_Server\\01_AASX-Server_AASen\\aasx_bachelor\\aasx_1\" --start-index 0 --with-db ",
+      "commandLineArgs": "--no-security --save-temp 5 --external-blazor http://127.0.0.1:5001 --edit --data-path \"C:\\Users\\Y97CO3\\OneDrive - PHOENIX CONTACT GmbH & Co. KG\\04_Abteilung_DI\\02_Projekte\\02_Aasx_Server\\01_AASX-Server_AASen\\aasx_bachelor\\aasx_10\" --start-index 0 --with-db",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "AASREGISTRY": "http://localhost:50005",
+        "AASREGISTRY": "http://localhost:50001",
         "IFRAMEPATH": "https://dpp40-2-v2.industrialdigitaltwin.org/dashboard/submodelViewV3.html"
       },
       "applicationUrl": "http://localhost:5001",
