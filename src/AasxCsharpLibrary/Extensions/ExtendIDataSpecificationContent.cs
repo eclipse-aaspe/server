@@ -43,7 +43,7 @@ namespace Extensions
             return null;
         }
 
-        public static ContentTypes GuessContentTypeFor(IReference rf)
+        public static ContentTypes GuessContentTypeFor(IReference? rf)
         {
             foreach (var v in AdminShellUtil.GetEnumValues<ContentTypes>(new[] { ContentTypes.NoInfo }))
                 if (rf?.MatchesExactlyOneKey(GetKeyFor(v)) == true)
@@ -51,7 +51,7 @@ namespace Extensions
             return ContentTypes.NoInfo;
         }
 
-        public static ContentTypes GuessContentTypeFor(IDataSpecificationContent content)
+        public static ContentTypes GuessContentTypeFor(IDataSpecificationContent? content)
         {
             if (content is DataSpecificationIec61360)
                 return ContentTypes.Iec61360;

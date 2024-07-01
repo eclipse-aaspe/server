@@ -1,6 +1,5 @@
 ﻿#define MICHA
 
-using AasCore.Aas3_0;
 using AasxMqttClient;
 using AasxServerDB;
 using AasxServer;
@@ -12,7 +11,6 @@ using Grapevine.Server;
 using Grapevine.Server.Attributes;
 using Grapevine.Shared;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -38,6 +36,8 @@ specification Details of the Administration Shell. The hereby stated approach is
 
 namespace AasxRestServerLibrary
 {
+    using System.Text.Json;
+
     public class AasxRestServer
     {
         static string translateURL(string url)
@@ -2219,13 +2219,22 @@ namespace AasxRestServerLibrary
 
             void sendJson(IHttpContext context, object o)
             {
-                var json = JsonConvert.SerializeObject(o, Formatting.Indented);
-                var buffer = context.Request.ContentEncoding.GetBytes(json);
+                // Serialize the object to JSON
+                var options = new JsonSerializerOptions
+                              {
+                                  WriteIndented = true // Formatting.Indented equivalent
+                              };
+                var json = JsonSerializer.Serialize(o, options);
+
+                // Convert JSON string to byte array
+                var buffer = Encoding.UTF8.GetBytes(json);
                 var length = buffer.Length;
 
                 context.Response.ContentType = ContentType.JSON;
                 context.Response.ContentEncoding = Encoding.UTF8;
                 context.Response.ContentLength64 = length;
+
+                // Send the response
                 context.Response.SendResponse(buffer);
             }
 
@@ -2279,11 +2288,11 @@ namespace AasxRestServerLibrary
                         {
                             case "Add":
                                 reason = AasPayloadStructuralChangeItem.ChangeReason.Create;
-                                json = JsonConvert.SerializeObject(smec, Newtonsoft.Json.Formatting.Indented,
-                                    new JsonSerializerSettings
-                                    {
-                                        NullValueHandling = NullValueHandling.Ignore
-                                    });
+                                json = JsonSerializer.Serialize(smec, new JsonSerializerOptions
+                                                                      {
+                                                                          WriteIndented    = true,
+                                                                          IgnoreNullValues = true
+                                                                      });
                                 break;
                             case "Remove":
                                 reason = AasPayloadStructuralChangeItem.ChangeReason.Delete;
@@ -2724,7 +2733,7 @@ namespace AasxRestServerLibrary
                                     AasPayloadStructuralChangeItem.ChangeReason.Create,
                                     path: p2,
                                     // Assumption: models will be serialized correctly
-                                    data: JsonConvert.SerializeObject(sme)));
+                                    data: JsonSerializer.Serialize(sme)));
                         }
                         else
                         {
@@ -2811,7 +2820,7 @@ namespace AasxRestServerLibrary
                                     AasPayloadStructuralChangeItem.ChangeReason.Create,
                                     path: p2,
                                     // Assumption: models will be serialized correctly
-                                    data: JsonConvert.SerializeObject(sme)));
+                                    data: JsonSerializer.Serialize(sme)));
                         }
                     }
                     else if (sme.TimeStamp > minimumDate && sme.TimeStamp != sme.TimeStampCreate)
@@ -2832,19 +2841,24 @@ namespace AasxRestServerLibrary
                 context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
             }
 
-            public static void SendJsonResponse(Grapevine.Interfaces.Server.IHttpContext context, object obj)
+            public static void SendJsonResponse(IHttpContext context, object obj)
             {
-                // make JSON
-                var settings = AasxIntegrationBase.AasxPluginOptionSerialization.GetDefaultJsonSettings(
-                    new[] {typeof(AdminShellEvents.AasEventMsgEnvelope)});
-                settings.TypeNameHandling = TypeNameHandling.Auto;
-                settings.Formatting = Formatting.Indented;
-                var json = JsonConvert.SerializeObject(obj, settings);
+                // Configure JSON serialization options
+                var options = AasxIntegrationBase.AasxPluginOptionSerialization.GetDefaultJsonOptions(
+                                                                                                      new[] { typeof(AdminShellEvents.AasEventMsgEnvelope) });
 
-                // build buffer
-                var buffer = context.Request.ContentEncoding.GetBytes(json);
+                // Additional options settings (not directly translatable to System.Text.Json)
+                // options.TypeNameHandling = TypeNameHandling.Auto; // No direct equivalent
+                // options.Formatting = Formatting.Indented; // Handled by JsonSerializerOptions
+
+                // Serialize the object to JSON
+                var json = JsonSerializer.Serialize(obj, options);
+
+                // Convert JSON string to byte array
+                var buffer = Encoding.UTF8.GetBytes(json);
                 var length = buffer.Length;
 
+                // Handle 'refresh' query parameter
                 var queryString = context.Request.QueryString;
                 string refresh = queryString[ "refresh" ];
                 if (refresh != null && refresh != "")
@@ -2853,14 +2867,17 @@ namespace AasxRestServerLibrary
                     context.Response.Headers.Add("Refresh", refresh);
                 }
 
+                // Set CORS headers (assuming allowCORS(context) handles this)
                 allowCORS(context);
 
                 context.Response.ContentType = ContentType.JSON;
                 context.Response.ContentEncoding = Encoding.UTF8;
                 context.Response.ContentLength64 = length;
+
+                // Send the response
                 context.Response.SendResponse(buffer);
             }
-
+            
             public class diffEntry
             {
                 public string mode = "";

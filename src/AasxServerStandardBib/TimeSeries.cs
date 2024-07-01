@@ -1,8 +1,5 @@
-
 using AasxServer;
 using Extensions;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Opc.Ua;
 using Org.Webpki.JsonCanonicalizer;
 using SampleClient;
@@ -18,6 +15,8 @@ using System.Threading;
 
 namespace AasxTimeSeries
 {
+    using System.Text.Json;
+
     public enum TimeSeriesDestFormat { Plain, TimeSeries10 }
 
     public static class TimeSeries
@@ -53,11 +52,15 @@ namespace AasxTimeSeries
             public List<Property> samplesProperties = null;
             public List<string> samplesValues = null;
             public string samplesTimeStamp = "";
+
             public int samplesValuesCount = 0;
+
             // public int totalSamples = 0;
             public Property totalSamples = null;
+
             // public int lowDataIndex = 0;
             public Property lowDataIndex = null;
+
             // public int highDataIndex = -1;
             public Property highDataIndex = null;
 
@@ -121,27 +124,29 @@ namespace AasxTimeSeries
                                                     // nextSme = true;
                                                     break;
                                                 }
+
                                                 j++;
                                             }
                                         }
+
                                         if (nextSme)
                                             continue;
 
-                                        var smec = sme as SubmodelElementCollection;
+                                        var smec      = sme as SubmodelElementCollection;
                                         int countSmec = smec.Value.Count;
 
                                         var tsb = new TimeSeriesBlock();
-                                        tsb.submodel = sm;
-                                        tsb.block = smec;
-                                        tsb.data = tsb.block;
+                                        tsb.submodel          = sm;
+                                        tsb.block             = smec;
+                                        tsb.data              = tsb.block;
                                         tsb.samplesProperties = new List<Property>();
-                                        tsb.samplesValues = new List<string>();
+                                        tsb.samplesValues     = new List<string>();
 
                                         for (int dataSections = 0; dataSections < 2; dataSections++)
                                         {
                                             for (int iSmec = 0; iSmec < countSmec; iSmec++)
                                             {
-                                                var sme2 = smec.Value[iSmec];
+                                                var sme2    = smec.Value[iSmec];
                                                 var idShort = sme2.IdShort;
                                                 if (idShort.Contains("opcNode"))
                                                     idShort = "opcNode";
@@ -154,12 +159,14 @@ namespace AasxTimeSeries
                                                         {
                                                             tsb.sourceType = (sme2 as Property).Value;
                                                         }
+
                                                         break;
                                                     case "sourceAddress":
                                                         if (sme2 is Property)
                                                         {
                                                             tsb.sourceAddress = (sme2 as Property).Value;
                                                         }
+
                                                         break;
                                                     case "sourceNames":
                                                         if (sme2 is Property)
@@ -171,6 +178,7 @@ namespace AasxTimeSeries
                                                                     tsb.sourceNames.Add(s);
                                                             }
                                                         }
+
                                                         break;
                                                     case "destFormat":
                                                         if (sme2 is Property)
@@ -186,116 +194,134 @@ namespace AasxTimeSeries
                                                                     break;
                                                             }
                                                         }
+
                                                         break;
                                                     case "username":
                                                         if (sme2 is Property)
                                                         {
                                                             tsb.username = (sme2 as Property).Value;
                                                         }
+
                                                         break;
                                                     case "password":
                                                         if (sme2 is Property)
                                                         {
                                                             tsb.password = (sme2 as Property).Value;
                                                         }
+
                                                         break;
                                                     case "plotRowOffset":
                                                         if (sme2 is Property)
                                                         {
                                                             tsb.plotRowOffset = Convert.ToInt32((sme2 as Property).Value);
                                                         }
+
                                                         break;
                                                     case "correctionMinutes":
                                                         if (sme2 is Property)
                                                         {
                                                             tsb.correctionMinutes = Convert.ToInt32((sme2 as Property).Value);
                                                         }
+
                                                         break;
                                                     case "data":
                                                         if (sme2 is SubmodelElementCollection)
                                                         {
                                                             tsb.data = sme2 as SubmodelElementCollection;
                                                         }
+
                                                         if (sme2 is ReferenceElement)
                                                         {
                                                             var refElement = Program.env[0].AasEnv.FindReferableByReference((sme2 as ReferenceElement).GetModelReference());
                                                             if (refElement is SubmodelElementCollection)
                                                                 tsb.data = refElement as SubmodelElementCollection;
                                                         }
+
                                                         break;
                                                     case "minDiffPercent":
                                                         if (sme2 is Property)
                                                         {
                                                             tsb.minDiffPercent = sme2 as Property;
                                                         }
+
                                                         break;
                                                     case "minDiffAbsolute":
                                                         if (sme2 is Property)
                                                         {
                                                             tsb.minDiffAbsolute = sme2 as Property;
                                                         }
+
                                                         break;
                                                     case "sampleStatus":
                                                         if (sme2 is Property)
                                                         {
                                                             tsb.sampleStatus = sme2 as Property;
                                                         }
+
                                                         break;
                                                     case "sampleMode":
                                                         if (sme2 is Property)
                                                         {
                                                             tsb.sampleMode = sme2 as Property;
                                                         }
+
                                                         break;
                                                     case "sampleRate":
                                                         if (sme2 is Property)
                                                         {
                                                             tsb.sampleRate = sme2 as Property;
                                                         }
+
                                                         break;
                                                     case "maxSamples":
                                                         if (sme2 is Property)
                                                         {
                                                             tsb.maxSamples = sme2 as Property;
                                                         }
+
                                                         break;
                                                     case "actualSamples":
                                                         if (sme2 is Property)
                                                         {
-                                                            tsb.actualSamples = sme2 as Property;
+                                                            tsb.actualSamples       = sme2 as Property;
                                                             tsb.actualSamples.Value = "0";
                                                         }
+
                                                         break;
                                                     case "maxSamplesInCollection":
                                                         if (sme2 is Property)
                                                         {
                                                             tsb.maxSamplesInCollection = sme2 as Property;
                                                         }
+
                                                         break;
                                                     case "actualSamplesInCollection":
                                                         if (sme2 is Property)
                                                         {
-                                                            tsb.actualSamplesInCollection = sme2 as Property;
+                                                            tsb.actualSamplesInCollection       = sme2 as Property;
                                                             tsb.actualSamplesInCollection.Value = "0";
                                                         }
+
                                                         break;
                                                     case "maxCollections":
                                                         if (sme2 is Property)
                                                         {
                                                             tsb.maxCollections = sme2 as Property;
                                                         }
+
                                                         break;
                                                     case "actualCollections":
                                                         if (sme2 is Property)
                                                         {
-                                                            tsb.actualCollections = sme2 as Property;
+                                                            tsb.actualCollections       = sme2 as Property;
                                                             tsb.actualCollections.Value = "0";
                                                         }
+
                                                         break;
                                                     case "opcNode":
                                                         if (sme2 is Property)
                                                         {
-                                                            string node = (sme2 as Property).Value;
+                                                            string   node  = (sme2 as Property).Value;
                                                             string[] split = node.Split(',');
                                                             if (tsb.opcNodes == null)
                                                                 tsb.opcNodes = new List<string>();
@@ -307,11 +333,12 @@ namespace AasxTimeSeries
                                                             p.SetTimeStamp(timeStamp);
                                                             tsb.samplesValues.Add("");
                                                         }
+
                                                         break;
                                                     case "modbusNode":
                                                         if (sme2 is Property)
                                                         {
-                                                            string node = (sme2 as Property).Value;
+                                                            string   node  = (sme2 as Property).Value;
                                                             string[] split = node.Split(',');
                                                             if (tsb.modbusNodes == null)
                                                                 tsb.modbusNodes = new List<string>();
@@ -323,8 +350,10 @@ namespace AasxTimeSeries
                                                             p.SetTimeStamp(timeStamp);
                                                             tsb.samplesValues.Add("");
                                                         }
+
                                                         break;
                                                 }
+
                                                 if (tsb.sourceType == "aas" && sme2 is ReferenceElement r)
                                                 {
                                                     var el = env.AasEnv.FindReferableByReference(r.GetModelReference());
@@ -335,6 +364,7 @@ namespace AasxTimeSeries
                                                     }
                                                 }
                                             }
+
                                             if (dataSections == 0)
                                             {
                                                 if (tsb.data != null)
@@ -342,6 +372,7 @@ namespace AasxTimeSeries
                                                 countSmec = smec.Value.Count;
                                             }
                                         }
+
                                         tsb.opcLastTimeStamp = DateTime.UtcNow + TimeSpan.FromMinutes(tsb.correctionMinutes) - TimeSpan.FromMinutes(2);
 
                                         if (tsb.data != null)
@@ -362,40 +393,45 @@ namespace AasxTimeSeries
                                                 tsb.latestData.Value.Add(latestDataProperty);
                                                 tsb.lowDataIndex = latestDataProperty as Property;
                                             }
+
                                             latestDataProperty.SetTimeStamp(timeStamp);
 
                                             latestDataProperty = tsb.latestData.FindFirstIdShortAs<Property>("highDataIndex");
                                             if (latestDataProperty == null)
                                             {
                                                 //latestDataProperty = new Property(DataTypeDefXsd.String,idShort:"highDataIndex");
-                                                latestDataProperty = new Property(DataTypeDefXsd.String, idShort: "highDataIndex", value: "-1");
+                                                latestDataProperty                 = new Property(DataTypeDefXsd.String, idShort: "highDataIndex", value: "-1");
                                                 latestDataProperty.TimeStampCreate = timeStamp;
                                                 tsb.latestData.Value.Add(latestDataProperty);
                                                 tsb.highDataIndex = latestDataProperty as Property;
                                             }
+
                                             latestDataProperty.SetTimeStamp(timeStamp);
 
                                             latestDataProperty = tsb.latestData.FindFirstIdShortAs<Property>("totalSamples");
                                             if (latestDataProperty == null)
                                             {
                                                 //latestDataProperty = new Property(DataTypeDefXsd.String,idShort:"totalSamples");
-                                                latestDataProperty = new Property(DataTypeDefXsd.String, idShort: "totalSamples", value: "0");
+                                                latestDataProperty                 = new Property(DataTypeDefXsd.String, idShort: "totalSamples", value: "0");
                                                 latestDataProperty.TimeStampCreate = timeStamp;
                                                 tsb.latestData.Value.Add(latestDataProperty);
                                                 tsb.totalSamples = latestDataProperty as Property;
                                             }
+
                                             latestDataProperty.SetTimeStamp(timeStamp);
 
                                             latestDataProperty = tsb.latestData.FindFirstIdShortAs<Property>("timeStamp");
                                             if (latestDataProperty == null)
                                             {
                                                 //latestDataProperty = new Property(DataTypeDefXsd.String,idShort:"timeStamp");
-                                                latestDataProperty = new Property(DataTypeDefXsd.String, idShort: "timeStamp");
+                                                latestDataProperty                 = new Property(DataTypeDefXsd.String, idShort: "timeStamp");
                                                 latestDataProperty.TimeStampCreate = timeStamp;
                                                 tsb.latestData.Value.Add(latestDataProperty);
                                             }
+
                                             latestDataProperty.SetTimeStamp(timeStamp);
                                         }
+
                                         if (tsb.sampleRate != null)
                                             tsb.threadCounter = Convert.ToInt32(tsb.sampleRate.Value);
                                         timeSeriesBlockList.Add(tsb);
@@ -414,6 +450,7 @@ namespace AasxTimeSeries
                 {
                     timeSeriesSampling(false);
                 }
+
                 timeSeriesSampling(true);
             }
             else
@@ -437,6 +474,7 @@ namespace AasxTimeSeries
 
         private static long opcClientRate = 0;
         private static long opcClientCount = 0;
+
         public static void SetOPCClientThread(double value)
         {
             opcClientRate = (long)value;
@@ -537,7 +575,7 @@ namespace AasxTimeSeries
             Console.WriteLine("Sign");
             //
             string certFile = "Andreas_Orzelski_Chain.pfx";
-            string certPW = "i40";
+            string certPW   = "i40";
             if (System.IO.File.Exists(certFile))
             {
                 // ServicePointManager.ServerCertificateValidationCallback =
@@ -581,14 +619,14 @@ namespace AasxTimeSeries
                     smec.Add(sigT);
                     smec.Add(signature);
                     string s = null;
-                    s = JsonConvert.SerializeObject(smc, Formatting.Indented);
+                    s          = System.Text.Json.JsonSerializer.Serialize(smc, new JsonSerializerOptions {WriteIndented = true});
                     json.Value = s;
 
                     Console.WriteLine("Canonicalize");
                     JsonCanonicalizer jsonCanonicalizer = new JsonCanonicalizer(s);
-                    string result = jsonCanonicalizer.GetEncodedString();
+                    string            result            = jsonCanonicalizer.GetEncodedString();
                     canonical.Value = result;
-                    subject.Value = certificate.Subject;
+                    subject.Value   = certificate.Subject;
 
                     X509Certificate2Collection xc = new X509Certificate2Collection();
                     xc.Import(certFile, certPW, X509KeyStorageFlags.PersistKeySet);
@@ -599,7 +637,7 @@ namespace AasxTimeSeries
                         Property c = new Property(DataTypeDefXsd.String, idShort: "certificate_" + (j + 1));
                         c.SetTimeStamp(timestamp);
                         c.TimeStampCreate = timestamp;
-                        c.Value = Convert.ToBase64String(xc[j].GetRawCertData());
+                        c.Value           = Convert.ToBase64String(xc[j].GetRawCertData());
                         x5c.Add(c);
                     }
 
@@ -612,10 +650,10 @@ namespace AasxTimeSeries
                                 return;
 
                             algorithm.Value = "RS256";
-                            byte[] data = Encoding.UTF8.GetBytes(result);
+                            byte[] data   = Encoding.UTF8.GetBytes(result);
                             byte[] signed = rsa.SignData(data, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
                             signature.Value = Convert.ToBase64String(signed);
-                            sigT.Value = DateTime.UtcNow.ToString("yyyy'-'MM'-'dd' 'HH':'mm':'ss");
+                            sigT.Value      = DateTime.UtcNow.ToString("yyyy'-'MM'-'dd' 'HH':'mm':'ss");
                         }
                     }
                     // ReSharper disable EmptyGeneralCatchClause
@@ -634,13 +672,13 @@ namespace AasxTimeSeries
         static void modbusByteSwap(Byte[] bytes)
         {
             int len = bytes.Length;
-            int i = 0;
+            int i   = 0;
             while (i < len - 1)
             {
                 byte b = bytes[i + 1];
-                bytes[i + 1] = bytes[i];
-                bytes[i] = b;
-                i += 2;
+                bytes[i + 1] =  bytes[i];
+                bytes[i]     =  b;
+                i            += 2;
             }
         }
 
@@ -663,7 +701,7 @@ namespace AasxTimeSeries
                 if (tsb.sampleStatus.Value == "stop")
                 {
                     tsb.sampleStatus.Value = "stopped";
-                    final = true;
+                    final                  = true;
                 }
                 else
                 {
@@ -680,10 +718,10 @@ namespace AasxTimeSeries
 
                 tsb.threadCounter = Convert.ToInt32(tsb.sampleRate.Value);
 
-                int actualSamples = Convert.ToInt32(tsb.actualSamples.Value);
-                int maxSamples = Convert.ToInt32(tsb.maxSamples.Value);
+                int actualSamples             = Convert.ToInt32(tsb.actualSamples.Value);
+                int maxSamples                = Convert.ToInt32(tsb.maxSamples.Value);
                 int actualSamplesInCollection = Convert.ToInt32(tsb.actualSamplesInCollection.Value);
-                int maxSamplesInCollection = Convert.ToInt32(tsb.maxSamplesInCollection.Value);
+                int maxSamplesInCollection    = Convert.ToInt32(tsb.maxSamplesInCollection.Value);
 
                 if (final || actualSamples < maxSamples)
                 {
@@ -697,12 +735,13 @@ namespace AasxTimeSeries
                                 tsb.block.FindFirstIdShortAs<SubmodelElementCollection>("jsonData");
                             if (c == null)
                             {
-                                c = new SubmodelElementCollection();
-                                c.IdShort = "jsonData";
+                                c                 = new SubmodelElementCollection();
+                                c.IdShort         = "jsonData";
                                 c.TimeStampCreate = timeStamp;
                                 tsb.block.Value.Add(c);
                                 c.SetTimeStamp(timeStamp);
                             }
+
                             if (parseJSON(tsb.sourceAddress, "", "", c, tsb.sourceNames, tsb.minDiffAbsolute, tsb.minDiffPercent))
                             {
                                 foreach (var el in c.Value)
@@ -722,6 +761,7 @@ namespace AasxTimeSeries
                                 valueCount = 0;
                             }
                         }
+
                         if (tsb.sourceType == "opchd" && tsb.sourceAddress != "")
                         {
                             GetHistory(tsb);
@@ -729,17 +769,19 @@ namespace AasxTimeSeries
                             if (table != null)
                                 valueCount = table.Count;
                         }
+
                         if (tsb.sourceType == "opcda" && tsb.sourceAddress != "")
                         {
                             valueCount = GetDAData(tsb);
                         }
+
                         if (tsb.sourceType == "modbus" && tsb.sourceAddress != "")
                         {
                             valueCount = GetModbus(tsb);
                         }
 
                         DateTime dt;
-                        int valueIndex = 0;
+                        int      valueIndex = 0;
                         while (valueIndex < valueCount)
                         {
                             if (tsb.sourceType == "opchd" && tsb.sourceAddress != "")
@@ -765,12 +807,12 @@ namespace AasxTimeSeries
                             {
                                 if (tsb.samplesTimeStamp == "")
                                 {
-                                    latestTimeStamp = TimeStamp.TimeStamp.DateTimeToString(dt);
+                                    latestTimeStamp      =  TimeStamp.TimeStamp.DateTimeToString(dt);
                                     tsb.samplesTimeStamp += latestTimeStamp;
                                 }
                                 else
                                 {
-                                    latestTimeStamp = dt.ToString("HH:mm:ss.fff");
+                                    latestTimeStamp      =  dt.ToString("HH:mm:ss.fff");
                                     tsb.samplesTimeStamp += "," + latestTimeStamp;
                                 }
                             }
@@ -782,11 +824,12 @@ namespace AasxTimeSeries
                             if (latestDataProperty == null)
                             {
                                 //latestDataProperty = new Property(DataTypeDefXsd.String,idShort:"lowDataIndex");
-                                latestDataProperty = new Property(DataTypeDefXsd.String, idShort: "lowDataIndex", value: "0");
+                                latestDataProperty                 = new Property(DataTypeDefXsd.String, idShort: "lowDataIndex", value: "0");
                                 latestDataProperty.TimeStampCreate = timeStamp;
                                 tsb.latestData.Value.Add(latestDataProperty);
                                 tsb.lowDataIndex = latestDataProperty as Property;
                             }
+
                             (latestDataProperty as Property).Value = "" + tsb.lowDataIndex.Value;
                             latestDataProperty.SetTimeStamp(timeStamp);
 
@@ -794,11 +837,12 @@ namespace AasxTimeSeries
                             if (latestDataProperty == null)
                             {
                                 //latestDataProperty = new Property(DataTypeDefXsd.String,idShort:"highDataIndex");
-                                latestDataProperty = new Property(DataTypeDefXsd.String, idShort: "highDataIndex", value: "-1");
+                                latestDataProperty                 = new Property(DataTypeDefXsd.String, idShort: "highDataIndex", value: "-1");
                                 latestDataProperty.TimeStampCreate = timeStamp;
                                 tsb.latestData.Value.Add(latestDataProperty);
                                 tsb.highDataIndex = latestDataProperty as Property;
                             }
+
                             // (latestDataProperty as Property).Value = "" + tsb.highDataIndex;
                             latestDataProperty.SetTimeStamp(timeStamp);
 
@@ -806,11 +850,12 @@ namespace AasxTimeSeries
                             if (latestDataProperty == null)
                             {
                                 //latestDataProperty = new Property(DataTypeDefXsd.String,idShort:"totalSamples");
-                                latestDataProperty = new Property(DataTypeDefXsd.String, idShort: "totalSamples", value: "0");
+                                latestDataProperty                 = new Property(DataTypeDefXsd.String, idShort: "totalSamples", value: "0");
                                 latestDataProperty.TimeStampCreate = timeStamp;
                                 tsb.latestData.Value.Add(latestDataProperty);
                                 tsb.totalSamples = latestDataProperty as Property;
                             }
+
                             // (latestDataProperty as Property).Value = "" + tsb.highDataIndex;
                             latestDataProperty.SetTimeStamp(timeStamp);
 
@@ -818,17 +863,18 @@ namespace AasxTimeSeries
                             if (latestDataProperty == null)
                             {
                                 //latestDataProperty = new Property(DataTypeDefXsd.String,idShort:"timeStamp");
-                                latestDataProperty = new Property(DataTypeDefXsd.String, idShort: "timeStamp");
+                                latestDataProperty                 = new Property(DataTypeDefXsd.String, idShort: "timeStamp");
                                 latestDataProperty.TimeStampCreate = timeStamp;
                                 tsb.latestData.Value.Add(latestDataProperty);
                             }
+
                             (latestDataProperty as Property).Value = TimeStamp.TimeStamp.DateTimeToString(dt);
                             latestDataProperty.SetTimeStamp(timeStamp);
 
                             updateMode = 1;
                             for (int i = 0; i < tsb.samplesProperties.Count; i++)
                             {
-                                string latestDataName = tsb.samplesProperties[i].IdShort;
+                                string latestDataName  = tsb.samplesProperties[i].IdShort;
                                 string latestDataValue = "";
 
                                 if (tsb.samplesValues[i] != "")
@@ -852,6 +898,7 @@ namespace AasxTimeSeries
                                                 latestDataValue = "0";
                                                 break;
                                         }
+
                                         if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
                                         {
                                             tsb.samplesValues[i] += $"[{tsb.totalSamples.Value}, {latestDataValue}]";
@@ -861,6 +908,7 @@ namespace AasxTimeSeries
                                             tsb.samplesValues[i] += latestDataValue;
                                         }
                                     }
+
                                     if (tsb.sourceType == "opcda")
                                     {
                                         latestDataValue = opcDAValues[i];
@@ -873,6 +921,7 @@ namespace AasxTimeSeries
                                                 latestDataValue = "0";
                                                 break;
                                         }
+
                                         if (tsb.destFormat == TimeSeriesDestFormat.TimeSeries10)
                                         {
                                             tsb.samplesValues[i] += $"[{tsb.totalSamples.Value}, {latestDataValue}]";
@@ -881,8 +930,10 @@ namespace AasxTimeSeries
                                         {
                                             tsb.samplesValues[i] += latestDataValue;
                                         }
+
                                         Console.WriteLine(tsb.opcNodes[i] + " " + opcDAValues[i]);
                                     }
+
                                     if (tsb.sourceType == "modbus")
                                     {
                                         latestDataValue = modbusValues[i];
@@ -894,6 +945,7 @@ namespace AasxTimeSeries
                                         {
                                             tsb.samplesValues[i] += latestDataValue;
                                         }
+
                                         Console.WriteLine(tsb.modbusNodes[i] + " " + modbusValues[i]);
                                     }
                                 }
@@ -916,7 +968,7 @@ namespace AasxTimeSeries
                                 if (latestDataProperty == null)
                                 {
                                     //latestDataProperty = new Property(DataTypeDefXsd.String,idShort:latestDataName);
-                                    latestDataProperty = new Property(DataTypeDefXsd.String, idShort: latestDataName);
+                                    latestDataProperty                 = new Property(DataTypeDefXsd.String, idShort: latestDataName);
                                     latestDataProperty.TimeStampCreate = timeStamp;
                                     string val =
                                         "{ grp:1, src: \"Event\"," +
@@ -933,15 +985,17 @@ namespace AasxTimeSeries
                                     latestDataProperty.Qualifiers.Add(q);
                                     tsb.latestData.Value.Add(latestDataProperty);
                                 }
+
                                 (latestDataProperty as Property).Value = latestDataValue;
                                 latestDataProperty.SetTimeStamp(timeStamp);
                             }
+
                             tsb.samplesValuesCount++;
                             actualSamples++;
                             // tsb.totalSamples++;
                             int totalSamples = Convert.ToInt32(tsb.totalSamples.Value);
                             totalSamples++;
-                            tsb.totalSamples.Value = totalSamples.ToString();
+                            tsb.totalSamples.Value  = totalSamples.ToString();
                             tsb.actualSamples.Value = "" + actualSamples;
                             tsb.actualSamples.SetTimeStamp(timeStamp);
                             actualSamplesInCollection++;
@@ -957,23 +1011,24 @@ namespace AasxTimeSeries
 
                                     var first =
                                         tsb.data.FindFirstIdShortAs<SubmodelElementCollection>(
-                                            firstName);
+                                                                                               firstName);
                                     if (first != null)
                                     {
-                                        actualSamples -= maxSamplesInCollection;
-                                        tsb.actualSamples.Value = "" + actualSamples;
+                                        actualSamples           -= maxSamplesInCollection;
+                                        tsb.actualSamples.Value =  "" + actualSamples;
                                         tsb.actualSamples.SetTimeStamp(timeStamp);
                                         AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
-                                            first, "Remove", tsb.submodel, (ulong)timeStamp.Ticks);
+                                                                                                           first, "Remove", tsb.submodel, (ulong)timeStamp.Ticks);
                                         tsb.data.Value.Remove(first);
                                         tsb.data.SetTimeStamp(timeStamp);
                                         // tsb.lowDataIndex++;
                                         int index = Convert.ToInt32(tsb.lowDataIndex.Value);
                                         tsb.lowDataIndex.Value = (index + 1).ToString();
-                                        updateMode = 1;
+                                        updateMode             = 1;
                                     }
                                 }
                             }
+
                             if (actualSamplesInCollection >= maxSamplesInCollection)
                             {
                                 if (actualSamplesInCollection > 0)
@@ -994,9 +1049,12 @@ namespace AasxTimeSeries
                                             semanticIdKey: PrefTimeSeries10.CD_TimeSeriesSegment.Value);
                                         */
                                         nextCollection = new SubmodelElementCollection(idShort: "Segment_" + tsb.highDataIndex.Value,
-                                            value: new List<ISubmodelElement>());
+                                                                                       value: new List<ISubmodelElement>());
                                         nextCollection.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
-                                            new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_TimeSeriesSegment.Value) });
+                                                                                  new List<IKey>()
+                                                                                  {
+                                                                                      new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_TimeSeriesSegment.Value)
+                                                                                  });
                                         nextCollection.SetTimeStamp(timeStamp);
 
                                         /*
@@ -1005,9 +1063,9 @@ namespace AasxTimeSeries
                                             "TSvariable_timeStamp", semanticIdKey: PrefTimeSeries10.CD_TimeSeriesVariable.Value);
                                         */
                                         var smcvar = new SubmodelElementCollection(idShort: "TSvariable_timeStamp",
-                                            value: new List<ISubmodelElement>());
+                                                                                   value: new List<ISubmodelElement>());
                                         smcvar.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
-                                            new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_TimeSeriesVariable.Value) });
+                                                                          new List<IKey>() {new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_TimeSeriesVariable.Value)});
                                         smcvar.SetTimeStamp(timeStamp);
                                         nextCollection.Value.Add(smcvar);
 
@@ -1018,7 +1076,7 @@ namespace AasxTimeSeries
                                         */
                                         var newSme1 = new Property(DataTypeDefXsd.String, idShort: "RecordId");
                                         newSme1.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
-                                            new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_RecordId.Value) });
+                                                                           new List<IKey>() {new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_RecordId.Value)});
                                         newSme1.SetTimeStamp(timeStamp);
                                         (newSme1 as Property).Value = "timeStamp";
                                         smcvar.Value.Add(newSme1);
@@ -1028,7 +1086,8 @@ namespace AasxTimeSeries
                                             "UtcTime", semanticIdKey: PrefTimeSeries10.CD_UtcTime.Value);
                                         */
                                         var newSme2 = new Property(DataTypeDefXsd.String, idShort: "UtcTime");
-                                        newSme2.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_UtcTime.Value) });
+                                        newSme2.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
+                                                                           new List<IKey>() {new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_UtcTime.Value)});
                                         newSme2.SetTimeStamp(timeStamp);
                                         smcvar.Value.Add(newSme2);
 
@@ -1038,7 +1097,8 @@ namespace AasxTimeSeries
                                             smeValue: tsb.samplesTimeStamp);
                                         */
                                         var newSme3 = new Blob("BLOB", idShort: "timeStamp");
-                                        newSme3.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_ValueArray.Value) });
+                                        newSme3.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
+                                                                           new List<IKey>() {new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_ValueArray.Value)});
                                         newSme3.SetTimeStamp(timeStamp);
                                         (newSme3 as Blob).Value = Encoding.ASCII.GetBytes(tsb.samplesTimeStamp);
                                         smcvar.Value.Add(newSme3);
@@ -1071,8 +1131,9 @@ namespace AasxTimeSeries
                                                 semanticIdKey: PrefTimeSeries10.CD_TimeSeriesVariable.Value);
                                             */
                                             var smcvar = new SubmodelElementCollection(idShort: "TSvariable_" + tsb.samplesProperties[i].IdShort,
-                                                value: new List<ISubmodelElement>());
-                                            smcvar.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_TimeSeriesVariable.Value) });
+                                                                                       value: new List<ISubmodelElement>());
+                                            smcvar.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
+                                                                              new List<IKey>() {new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_TimeSeriesVariable.Value)});
                                             smcvar.SetTimeStamp(timeStamp);
                                             nextCollection.Value.Add(smcvar);
 
@@ -1082,7 +1143,8 @@ namespace AasxTimeSeries
                                                 smeValue: "" + tsb.samplesProperties[i].IdShort);
                                             */
                                             var newSme = new Property(DataTypeDefXsd.String, idShort: "RecordId");
-                                            newSme.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_RecordId.Value) });
+                                            newSme.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
+                                                                              new List<IKey>() {new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_RecordId.Value)});
                                             newSme.SetTimeStamp(timeStamp);
                                             (newSme as Property).Value = "" + tsb.samplesProperties[i].IdShort;
                                             smcvar.Value.Add(newSme);
@@ -1095,7 +1157,8 @@ namespace AasxTimeSeries
                                                     semanticIdKey: PrefTimeSeries10.CD_GeneratedFloat.Value);
                                                 */
                                                 var newSme2 = new Property(DataTypeDefXsd.String, idShort: "" + tsb.samplesProperties[i].IdShort);
-                                                newSme2.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_GeneratedFloat.Value) });
+                                                newSme2.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
+                                                                                   new List<IKey>() {new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_GeneratedFloat.Value)});
                                                 newSme2.SetTimeStamp(timeStamp);
                                                 smcvar.Value.Add(newSme2);
                                             }
@@ -1107,7 +1170,11 @@ namespace AasxTimeSeries
                                                     semanticIdKey: PrefTimeSeries10.CD_GeneratedInteger.Value);
                                                 */
                                                 var newSme2 = new Property(DataTypeDefXsd.String, idShort: "" + tsb.samplesProperties[i].IdShort);
-                                                newSme2.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_GeneratedInteger.Value) });
+                                                newSme2.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
+                                                                                   new List<IKey>()
+                                                                                   {
+                                                                                       new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_GeneratedInteger.Value)
+                                                                                   });
                                                 newSme2.SetTimeStamp(timeStamp);
                                                 smcvar.Value.Add(newSme2);
                                             }
@@ -1118,7 +1185,8 @@ namespace AasxTimeSeries
                                                 smeValue: tsb.samplesValues[i]);
                                             */
                                             var newSme3 = new Blob("BLOB", idShort: "ValueArray");
-                                            newSme3.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_ValueArray.Value) });
+                                            newSme3.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
+                                                                               new List<IKey>() {new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_ValueArray.Value)});
                                             newSme3.SetTimeStamp(timeStamp);
                                             (newSme3 as Blob).Value = Encoding.ASCII.GetBytes(tsb.samplesValues[i]);
                                             smcvar.Value.Add(newSme3);
@@ -1135,27 +1203,28 @@ namespace AasxTimeSeries
 
                                         tsb.samplesValues[i] = "";
                                     }
+
                                     Sign(nextCollection, timeStamp);
                                     tsb.data.Add(nextCollection);
                                     tsb.data.SetTimeStamp(timeStamp);
                                     AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
-                                        nextCollection, "Add", tsb.submodel, (ulong)timeStamp.Ticks);
-                                    tsb.samplesValuesCount = 0;
-                                    actualSamplesInCollection = 0;
+                                                                                                       nextCollection, "Add", tsb.submodel, (ulong)timeStamp.Ticks);
+                                    tsb.samplesValuesCount              = 0;
+                                    actualSamplesInCollection           = 0;
                                     tsb.actualSamplesInCollection.Value = "" + actualSamplesInCollection;
                                     tsb.actualSamplesInCollection.SetTimeStamp(timeStamp);
                                     updateMode = 1;
-                                    var json = JsonConvert.SerializeObject(nextCollection, Newtonsoft.Json.Formatting.Indented,
-                                                                        new JsonSerializerSettings
-                                                                        {
-                                                                            NullValueHandling = NullValueHandling.Ignore
-                                                                        });
+                                    var options = new JsonSerializerOptions {WriteIndented = true, IgnoreNullValues = true};
+
+                                    var json = JsonSerializer.Serialize(nextCollection, options);
                                     Program.connectPublish(tsb.block.IdShort + "." + nextCollection.IdShort, json);
                                 }
                             }
+
                             valueIndex++;
                         }
                     }
+
                     if (final || actualSamplesInCollection >= maxSamplesInCollection)
                     {
                         if (actualSamplesInCollection > 0)
@@ -1175,8 +1244,9 @@ namespace AasxTimeSeries
                                     semanticIdKey: PrefTimeSeries10.CD_TimeSeriesSegment.Value);
                                 */
                                 nextCollection = new SubmodelElementCollection(idShort: "Segment_" + tsb.highDataIndex.Value,
-                                    value: new List<ISubmodelElement>());
-                                nextCollection.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_TimeSeriesSegment.Value) });
+                                                                               value: new List<ISubmodelElement>());
+                                nextCollection.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
+                                                                          new List<IKey>() {new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_TimeSeriesSegment.Value)});
                                 nextCollection.SetTimeStamp(timeStamp);
 
                                 /*
@@ -1185,8 +1255,9 @@ namespace AasxTimeSeries
                                     "TSvariable_timeStamp", semanticIdKey: PrefTimeSeries10.CD_TimeSeriesVariable.Value);
                                 */
                                 var smcvar = new SubmodelElementCollection(idShort: "TSvariable_timeStamp",
-                                    value: new List<ISubmodelElement>());
-                                smcvar.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_TimeSeriesVariable.Value) });
+                                                                           value: new List<ISubmodelElement>());
+                                smcvar.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
+                                                                  new List<IKey>() {new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_TimeSeriesVariable.Value)});
                                 smcvar.SetTimeStamp(timeStamp);
                                 nextCollection.Value.Add(smcvar);
 
@@ -1196,7 +1267,8 @@ namespace AasxTimeSeries
                                     smeValue: "timeStamp");
                                 */
                                 var newSme = new Property(DataTypeDefXsd.String, idShort: "RecordId");
-                                newSme.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_RecordId.Value) });
+                                newSme.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
+                                                                  new List<IKey>() {new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_RecordId.Value)});
                                 newSme.SetTimeStamp(timeStamp);
                                 (newSme as Property).Value = "timeStamp";
                                 smcvar.Value.Add(newSme);
@@ -1206,7 +1278,8 @@ namespace AasxTimeSeries
                                     "UtcTime", semanticIdKey: PrefTimeSeries10.CD_UtcTime.Value);
                                 */
                                 var newSme2 = new Property(DataTypeDefXsd.String, idShort: "UtcTime");
-                                newSme2.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_UtcTime.Value) });
+                                newSme2.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
+                                                                   new List<IKey>() {new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_UtcTime.Value)});
                                 newSme2.SetTimeStamp(timeStamp);
                                 smcvar.Value.Add(newSme2);
 
@@ -1216,7 +1289,8 @@ namespace AasxTimeSeries
                                     smeValue: tsb.samplesTimeStamp);
                                 */
                                 var newSme3 = new Blob("BLOB", idShort: "timeStamp");
-                                newSme3.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_ValueArray.Value) });
+                                newSme3.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
+                                                                   new List<IKey>() {new Key(KeyTypes.GlobalReference, PrefTimeSeries10.CD_ValueArray.Value)});
                                 newSme3.SetTimeStamp(timeStamp);
                                 (newSme3 as Blob).Value = Encoding.ASCII.GetBytes(tsb.samplesTimeStamp);
                                 smcvar.Value.Add(newSme3);
@@ -1229,33 +1303,36 @@ namespace AasxTimeSeries
                                 var p = new Property(DataTypeDefXsd.String, idShort: "timeStamp");
                                 p.Value = tsb.samplesTimeStamp;
                                 p.SetTimeStamp(timeStamp);
-                                p.TimeStampCreate = timeStamp;
+                                p.TimeStampCreate    = timeStamp;
                                 tsb.samplesTimeStamp = "";
                                 nextCollection.Value.Add(p);
                                 nextCollection.SetTimeStamp(timeStamp);
                                 nextCollection.TimeStampCreate = timeStamp;
                             }
+
                             for (int i = 0; i < tsb.samplesProperties.Count; i++)
                             {
                                 var p = new Property(DataTypeDefXsd.String, idShort: tsb.samplesProperties[i].IdShort);
                                 p.Value = tsb.samplesValues[i];
                                 p.SetTimeStamp(timeStamp);
-                                p.TimeStampCreate = timeStamp;
+                                p.TimeStampCreate    = timeStamp;
                                 tsb.samplesValues[i] = "";
                                 nextCollection.Value.Add(p);
                             }
+
                             Sign(nextCollection, timeStamp);
                             tsb.data.Add(nextCollection);
                             tsb.data.SetTimeStamp(timeStamp);
                             AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
-                                nextCollection, "Add", tsb.submodel, (ulong)timeStamp.Ticks);
-                            tsb.samplesValuesCount = 0;
-                            actualSamplesInCollection = 0;
+                                                                                               nextCollection, "Add", tsb.submodel, (ulong)timeStamp.Ticks);
+                            tsb.samplesValuesCount              = 0;
+                            actualSamplesInCollection           = 0;
                             tsb.actualSamplesInCollection.Value = "" + actualSamplesInCollection;
                             tsb.actualSamplesInCollection.SetTimeStamp(timeStamp);
                             updateMode = 1;
                         }
                     }
+
                     //// if (updateMode != 0)
                     Program.signalNewData(updateMode);
                 }
@@ -1268,7 +1345,7 @@ namespace AasxTimeSeries
         }
 
         static bool parseJSON(string url, string username, string password, SubmodelElementCollection c,
-            List<string> filter, Property minDiffAbsolute, Property minDiffPercent)
+                              List<string> filter, Property minDiffAbsolute, Property minDiffPercent)
         {
             if (url == "posttimeseries")
             {
@@ -1278,16 +1355,18 @@ namespace AasxTimeSeries
                     AasxRestServerLibrary.AasxRestServer.TestResource.posttimeseriesPayload = "";
                     try
                     {
-                        JObject parsed = JObject.Parse(payload);
-                        if (Program.parseJson(c, parsed, filter, minDiffAbsolute, minDiffPercent))
+                        var parsed = JsonDocument.Parse(payload);
+                        if (Program.ParseJson(c, parsed, filter, minDiffAbsolute, minDiffPercent))
                             return true;
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine("GetJSON() expection: " + ex.Message);
                     }
+
                     return false;
                 }
+
                 return false;
             }
 
@@ -1299,7 +1378,7 @@ namespace AasxTimeSeries
             {
                 var authToken = System.Text.Encoding.ASCII.GetBytes(username + ":" + password);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
-                        Convert.ToBase64String(authToken));
+                                                                                           Convert.ToBase64String(authToken));
             }
 
             Console.WriteLine("GetJSON: " + url);
@@ -1310,8 +1389,8 @@ namespace AasxTimeSeries
 
                 if (response != "")
                 {
-                    JObject parsed = JObject.Parse(response);
-                    if (Program.parseJson(c, parsed, filter, minDiffAbsolute, minDiffPercent))
+                    var parsed = JsonDocument.Parse(response);
+                    if (Program.ParseJson(c, parsed, filter, minDiffAbsolute, minDiffPercent))
                         return true;
                 }
             }
@@ -1319,6 +1398,7 @@ namespace AasxTimeSeries
             {
                 Console.WriteLine("GetJSON() expection: " + ex.Message);
             }
+
             return false;
         }
 
@@ -1336,7 +1416,7 @@ namespace AasxTimeSeries
         public static int GetModbus(TimeSeriesBlock tsb)
         {
             int minDiffAbsolute = 1;
-            int minDiffPercent = 0;
+            int minDiffPercent  = 0;
             if (tsb.minDiffAbsolute != null)
                 minDiffAbsolute = Convert.ToInt32(tsb.minDiffAbsolute.Value);
             if (tsb.minDiffPercent != null)
@@ -1360,20 +1440,21 @@ namespace AasxTimeSeries
                     {
                         string[] split = tsb.modbusNodes[i].Split(',');
                         byte[] modbusValue = mbClient.Read(
-                            (byte)Convert.ToInt32(split[0]),
-                            Modbus.ModbusTCPClient.FunctionCode.ReadHoldingRegisters,
-                            (ushort)Convert.ToInt32(split[1]),
-                            (ushort)Convert.ToInt32(split[2]));
+                                                           (byte)Convert.ToInt32(split[0]),
+                                                           Modbus.ModbusTCPClient.FunctionCode.ReadHoldingRegisters,
+                                                           (ushort)Convert.ToInt32(split[1]),
+                                                           (ushort)Convert.ToInt32(split[2]));
                         modbusByteSwap(modbusValue);
                         switch (split[3])
                         {
                             case "float":
-                                float f = BitConverter.ToSingle(modbusValue, 0);
+                                float  f     = BitConverter.ToSingle(modbusValue, 0);
                                 string value = Convert.ToInt32(f).ToString();
                                 modbusValues.Add(value);
                                 break;
                         }
                     }
+
                     if (lastModbusValues == null)
                     {
                         lastModbusValues = new List<string>(modbusValues);
@@ -1384,12 +1465,13 @@ namespace AasxTimeSeries
                         bool keep = false;
                         for (int i = 0; i < modbusValues.Count; i++)
                         {
-                            int v = Convert.ToInt32(modbusValues[i]);
+                            int v     = Convert.ToInt32(modbusValues[i]);
                             int lastv = Convert.ToInt32(lastModbusValues[i]);
                             int delta = Math.Abs(v - lastv);
                             if (delta >= minDiffAbsolute && delta >= lastv * minDiffPercent / 100)
                                 keep = true;
                         }
+
                         if (keep)
                         {
                             lastModbusValues = new List<string>(modbusValues);
@@ -1426,7 +1508,7 @@ namespace AasxTimeSeries
                     for (int i = 0; i < tsb.opcNodes.Count; i++)
                     {
                         string[] split = tsb.opcNodes[i].Split(',');
-                        string value = opc.ReadSubmodelElementValue(split[1], (ushort)Convert.ToInt32(split[0]));
+                        string   value = opc.ReadSubmodelElementValue(split[1], (ushort)Convert.ToInt32(split[0]));
                         opcDAValues.Add(value);
                     }
                 }
@@ -1466,7 +1548,7 @@ namespace AasxTimeSeries
                 session?.Close();
                 session?.Dispose();
                 session = null;
-                opc = null;
+                opc     = null;
             }
             /*
             session?.Close();
@@ -1474,6 +1556,7 @@ namespace AasxTimeSeries
             session = null;
             */
         }
+
         public static void Connect(TimeSeriesBlock tsb)
         {
             Console.WriteLine("Connect OPC UA");
@@ -1484,51 +1567,52 @@ namespace AasxTimeSeries
             if (session == null)
             {
                 Console.WriteLine("ERROR: Session not connected "
-                    + tsb.sourceAddress + " " + tsb.username + " " + tsb.password);
+                                  + tsb.sourceAddress + " " + tsb.username + " " + tsb.password);
             }
             else
             {
                 // get current time on server
-                tsb.opcLastTimeStamp = (DateTime)session.ReadValue(new NodeId(2258, 0)).Value;
+                tsb.opcLastTimeStamp =  (DateTime)session.ReadValue(new NodeId(2258, 0)).Value;
                 tsb.opcLastTimeStamp -= TimeSpan.FromMinutes(1);
             }
         }
+
         public static void GetData(TimeSeriesBlock tsb)
         {
             if (session != null)
             {
                 ReadRawModifiedDetails details = new ReadRawModifiedDetails();
-                details.StartTime = startTime;
-                details.EndTime = endTime;
+                details.StartTime        = startTime;
+                details.EndTime          = endTime;
                 details.NumValuesPerNode = 0;
-                details.IsReadModified = false;
-                details.ReturnBounds = true;
+                details.IsReadModified   = false;
+                details.ReturnBounds     = true;
 
                 var nodesToRead = new HistoryReadValueIdCollection();
                 for (int i = 0; i < tsb.opcNodes.Count; i++)
                 {
-                    var nodeToRead = new HistoryReadValueId();
-                    string[] split = tsb.opcNodes[i].Split(',');
+                    var      nodeToRead = new HistoryReadValueId();
+                    string[] split      = tsb.opcNodes[i].Split(',');
                     nodeToRead.NodeId = new NodeId(split[1], (ushort)Convert.ToInt32(split[0]));
                     nodesToRead.Add(nodeToRead);
                 }
 
                 table = new List<List<object>>();
 
-                HistoryReadResultCollection results = null;
-                DiagnosticInfoCollection diagnosticInfos = null;
+                HistoryReadResultCollection results         = null;
+                DiagnosticInfoCollection    diagnosticInfos = null;
 
                 bool loop = true;
                 while (loop)
                 {
                     session.HistoryRead(
-                        null,
-                        new ExtensionObject(details),
-                        TimestampsToReturn.Both,
-                        false,
-                        nodesToRead,
-                        out results,
-                        out diagnosticInfos);
+                                        null,
+                                        new ExtensionObject(details),
+                                        TimestampsToReturn.Both,
+                                        false,
+                                        nodesToRead,
+                                        out results,
+                                        out diagnosticInfos);
 
                     ClientBase.ValidateResponse(results, nodesToRead);
                     ClientBase.ValidateDiagnosticInfos(diagnosticInfos, nodesToRead);
@@ -1556,7 +1640,7 @@ namespace AasxTimeSeries
                             if (sourceTimeStamp >= startTime)
                             {
                                 bool isValid = true;
-                                var row = new List<object>();
+                                var  row     = new List<object>();
                                 row.Add(sourceTimeStamp);
 
                                 foreach (HistoryData historyData in historyDatas)
@@ -1572,6 +1656,7 @@ namespace AasxTimeSeries
                                         break;
                                     }
                                 }
+
                                 if (isValid)
                                 {
                                     table.Add(row);
@@ -1588,6 +1673,7 @@ namespace AasxTimeSeries
                             loop = false;
                             break;
                         }
+
                         nodesToRead[i].ContinuationPoint = results[i].ContinuationPoint;
                     }
                 }

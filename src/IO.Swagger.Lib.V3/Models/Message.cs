@@ -21,33 +21,32 @@ namespace IO.Swagger.Models
     /// <summary>
     /// Enum for Message Types
     /// </summary>
-    [Newtonsoft.Json.JsonConverter(typeof(JsonStringEnumConverter))]
     public enum MessageTypeEnum
     {
         /// <summary>
         /// Undefined MessageType
         /// </summary>
-        [EnumMember(Value = "Undefined")] UndefinedEnum = 0,
+        [EnumMember(Value = "Undefined")] Undefined = 0,
 
         /// <summary>
         /// Info MessageType
         /// </summary>
-        [EnumMember(Value = "Info")] InfoEnum = 1,
+        [EnumMember(Value = "Info")] Info = 1,
 
         /// <summary>
         /// Warning MessageType
         /// </summary>
-        [EnumMember(Value = "Warning")] WarningEnum = 2,
+        [EnumMember(Value = "Warning")] Warning = 2,
 
         /// <summary>
         /// Error MessageType
         /// </summary>
-        [EnumMember(Value = "Error")] ErrorEnum = 3,
+        [EnumMember(Value = "Error")] Error = 3,
 
         /// <summary>
         /// Exception MessageType
         /// </summary>
-        [EnumMember(Value = "Exception")] ExceptionEnum = 4
+        [EnumMember(Value = "Exception")] Exception = 4
     }
 
     /// <summary>

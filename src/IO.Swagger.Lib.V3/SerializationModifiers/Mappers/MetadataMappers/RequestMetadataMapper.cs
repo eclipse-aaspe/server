@@ -207,7 +207,7 @@ public static class RequestMetadataMapper
         return references.Select(reference => TransformReference(reference)).ToList();
     }
 
-    private static IReference TransformReference(ReferenceDTO referenceDTO)
+    private static IReference? TransformReference(ReferenceDTO referenceDTO)
     {
         var transformedKeys = TransformKeys(referenceDTO.keys);
         var transformedSemanticId = referenceDTO.referredSemanticId != null ? 

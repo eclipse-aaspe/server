@@ -11,14 +11,14 @@ namespace Extensions
             blob.Value = value;
         }
 
-        public static Blob ConvertFromV10(this Blob blob, AasxCompatibilityModels.AdminShellV10.Blob sourceBlob)
+        public static Blob? ConvertFromV10(this Blob? blob, AasxCompatibilityModels.AdminShellV10.Blob sourceBlob)
         {
             blob.ContentType = sourceBlob.mimeType;
             blob.Value = Encoding.ASCII.GetBytes(sourceBlob.value);
             return blob;
         }
 
-        public static Blob ConvertFromV20(this Blob blob, AasxCompatibilityModels.AdminShellV20.Blob sourceBlob)
+        public static Blob? ConvertFromV20(this Blob? blob, AasxCompatibilityModels.AdminShellV20.Blob sourceBlob)
         {
             blob.ContentType = sourceBlob.mimeType;
             blob.Value = Encoding.ASCII.GetBytes(sourceBlob.value);

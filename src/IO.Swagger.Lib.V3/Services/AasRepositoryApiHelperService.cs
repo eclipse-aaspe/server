@@ -24,7 +24,7 @@ namespace IO.Swagger.Lib.V3.Services
                 return null;
             }
 
-            var result = new List<Reference>();
+            var result = new List<Reference?>();
             foreach (var aas in aasList)
             {
                 result.Add(aas.GetReference());

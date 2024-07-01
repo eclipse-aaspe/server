@@ -10,14 +10,14 @@ namespace Extensions
             return "" + range.Min + " .. " + range.Max;
         }
 
-        public static AasCore.Aas3_0.Range ConvertFromV20(this AasCore.Aas3_0.Range range, AasxCompatibilityModels.AdminShellV20.Range sourceRange)
+        public static AAS.Range? ConvertFromV20(this AAS.Range? range, AasxCompatibilityModels.AdminShellV20.Range sourceRange)
         {
             if (sourceRange == null)
             {
                 return null;
             }
 
-            var propertyType = AAS.Stringification.DataTypeDefXsdFromString("xs:" + sourceRange.valueType);
+            var propertyType = Stringification.DataTypeDefXsdFromString("xs:" + sourceRange.valueType);
             if (propertyType != null)
             {
                 range.ValueType = (AAS.DataTypeDefXsd)propertyType;

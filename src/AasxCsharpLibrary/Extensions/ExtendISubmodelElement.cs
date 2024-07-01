@@ -27,7 +27,7 @@ namespace Extensions
             return res;
         }
 
-        public static object AddChild(this ISubmodelElement submodelElement, ISubmodelElement childSubmodelElement, EnumerationPlacmentBase placement = null)
+        public static object? AddChild(this ISubmodelElement submodelElement, ISubmodelElement? childSubmodelElement, EnumerationPlacmentBase placement = null)
         {
             if (submodelElement is AnnotatedRelationshipElement annotatedRelationshipElement)
             {
@@ -119,7 +119,7 @@ namespace Extensions
         }
 
         public static IEnumerable<IReferable> FindAllParentsWithSemanticId(
-            this ISubmodelElement submodelElement, Reference semId,
+            this ISubmodelElement submodelElement, Reference? semId,
             bool includeThis = false, bool includeSubmodel = false, bool passOverMiss = false)
         {
             return (FindAllParents(submodelElement,
@@ -172,7 +172,7 @@ namespace Extensions
             return null;
         }
 
-        public static Reference GetModelReference(this ISubmodelElement sme, bool includeParents = true)
+        public static Reference? GetModelReference(this ISubmodelElement sme, bool includeParents = true)
         {
             // this will be the tail of our chain
             var keyList = new List<IKey>();
@@ -248,9 +248,9 @@ namespace Extensions
             //}
         }
 
-        public static ISubmodelElement ConvertFromV10(this ISubmodelElement submodelElement, AdminShellV10.SubmodelElement sourceSubmodelElement, bool shallowCopy = false)
+        public static ISubmodelElement? ConvertFromV10(this ISubmodelElement? submodelElement, AdminShellV10.SubmodelElement sourceSubmodelElement, bool shallowCopy = false)
         {
-            ISubmodelElement outputSubmodelElement = null;
+            ISubmodelElement? outputSubmodelElement = null;
             if (sourceSubmodelElement != null)
             {
                 if (sourceSubmodelElement is AdminShellV10.SubmodelElementCollection collection)
@@ -279,7 +279,7 @@ namespace Extensions
                 }
                 else if (sourceSubmodelElement is AdminShellV10.RelationshipElement sourceRelationshipElement)
                 {
-                    var newFirst = ExtensionsUtil.ConvertReferenceFromV10(sourceRelationshipElement.first, ReferenceTypes.ModelReference);
+                    var newFirst  = ExtensionsUtil.ConvertReferenceFromV10(sourceRelationshipElement.first, ReferenceTypes.ModelReference);
                     var newSecond = ExtensionsUtil.ConvertReferenceFromV10(sourceRelationshipElement.second, ReferenceTypes.ModelReference);
                     outputSubmodelElement = new RelationshipElement(newFirst, newSecond);
                 }
@@ -294,7 +294,7 @@ namespace Extensions
                         {
                             if (inputVariable.value.submodelElement != null)
                             {
-                                ISubmodelElement newSubmodelElement = null;
+                                ISubmodelElement? newSubmodelElement = null;
                                 newSubmodelElement = newSubmodelElement.ConvertFromV10(inputVariable.value.submodelElement);
                                 var newOpVariable = new OperationVariable(newSubmodelElement);
                                 newInputVariables.Add(newOpVariable);
@@ -308,7 +308,7 @@ namespace Extensions
                         {
                             if (outputVariable.value.submodelElement != null)
                             {
-                                ISubmodelElement newSubmodelElement = null;
+                                ISubmodelElement? newSubmodelElement = null;
                                 newSubmodelElement = newSubmodelElement.ConvertFromV10(outputVariable.value.submodelElement);
                                 var newOpVariable = new OperationVariable(newSubmodelElement);
                                 newOutputVariables.Add(newOpVariable);
@@ -326,7 +326,7 @@ namespace Extensions
             return outputSubmodelElement;
         }
 
-        private static void BasicConversionFromV10(this ISubmodelElement submodelElement, AdminShellV10.SubmodelElement sourceSubmodelElement)
+        private static void BasicConversionFromV10(this ISubmodelElement? submodelElement, AdminShellV10.SubmodelElement sourceSubmodelElement)
         {
             if (!string.IsNullOrEmpty(sourceSubmodelElement.idShort))
             {
@@ -398,9 +398,9 @@ namespace Extensions
             }
         }
 
-        public static ISubmodelElement ConvertFromV20(this ISubmodelElement submodelElement, AdminShellV20.SubmodelElement sourceSubmodelElement, bool shallowCopy = false)
+        public static ISubmodelElement? ConvertFromV20(this ISubmodelElement? submodelElement, AdminShellV20.SubmodelElement sourceSubmodelElement, bool shallowCopy = false)
         {
-            ISubmodelElement outputSubmodelElement = null;
+            ISubmodelElement? outputSubmodelElement = null;
             if (sourceSubmodelElement != null)
             {
                 if (sourceSubmodelElement is AdminShellV20.SubmodelElementCollection collection)
@@ -440,14 +440,14 @@ namespace Extensions
                 }
                 else if (sourceSubmodelElement is AdminShellV20.AnnotatedRelationshipElement sourceAnnotedRelationshipElement)
                 {
-                    var newFirst = ExtensionsUtil.ConvertReferenceFromV20(sourceAnnotedRelationshipElement.first, ReferenceTypes.ModelReference);
-                    var newSecond = ExtensionsUtil.ConvertReferenceFromV20(sourceAnnotedRelationshipElement.second, ReferenceTypes.ModelReference);
-                    var newAnnotedRelElement = new AnnotatedRelationshipElement(newFirst, newSecond);
+                    var newFirst             = ExtensionsUtil.ConvertReferenceFromV20(sourceAnnotedRelationshipElement.first, ReferenceTypes.ModelReference);
+                    var newSecond            = ExtensionsUtil.ConvertReferenceFromV20(sourceAnnotedRelationshipElement.second, ReferenceTypes.ModelReference);
+                    var        newAnnotedRelElement = new AnnotatedRelationshipElement(newFirst, newSecond);
                     outputSubmodelElement = newAnnotedRelElement.ConvertAnnotationsFromV20(sourceAnnotedRelationshipElement);
                 }
                 else if (sourceSubmodelElement is AdminShellV20.RelationshipElement sourceRelationshipElement)
                 {
-                    var newFirst = ExtensionsUtil.ConvertReferenceFromV20(sourceRelationshipElement.first, ReferenceTypes.ModelReference);
+                    var newFirst  = ExtensionsUtil.ConvertReferenceFromV20(sourceRelationshipElement.first, ReferenceTypes.ModelReference);
                     var newSecond = ExtensionsUtil.ConvertReferenceFromV20(sourceRelationshipElement.second, ReferenceTypes.ModelReference);
                     outputSubmodelElement = new RelationshipElement(newFirst, newSecond);
                 }
@@ -474,7 +474,7 @@ namespace Extensions
                         {
                             if (inputVariable.value.submodelElement != null)
                             {
-                                ISubmodelElement newSubmodelElement = null;
+                                ISubmodelElement? newSubmodelElement = null;
                                 newSubmodelElement = newSubmodelElement.ConvertFromV20(inputVariable.value.submodelElement);
                                 var newOpVariable = new OperationVariable(newSubmodelElement);
                                 newInputVariables.Add(newOpVariable);
@@ -488,7 +488,7 @@ namespace Extensions
                         {
                             if (outputVariable.value.submodelElement != null)
                             {
-                                ISubmodelElement newSubmodelElement = null;
+                                ISubmodelElement? newSubmodelElement = null;
                                 newSubmodelElement = newSubmodelElement.ConvertFromV20(outputVariable.value.submodelElement);
                                 var newOpVariable = new OperationVariable(newSubmodelElement);
                                 newOutputVariables.Add(newOpVariable);
@@ -502,7 +502,7 @@ namespace Extensions
                         {
                             if (inOutVariable.value.submodelElement != null)
                             {
-                                ISubmodelElement newSubmodelElement = null;
+                                ISubmodelElement? newSubmodelElement = null;
                                 newSubmodelElement = newSubmodelElement.ConvertFromV20(inOutVariable.value.submodelElement);
                                 var newOpVariable = new OperationVariable(newSubmodelElement);
                                 newInOutVariables.Add(newOpVariable);
@@ -526,7 +526,7 @@ namespace Extensions
             return outputSubmodelElement;
         }
 
-        private static void BasicConversionFromV20(this ISubmodelElement submodelElement, AdminShellV20.SubmodelElement sourceSubmodelElement)
+        private static void BasicConversionFromV20(this ISubmodelElement? submodelElement, AdminShellV20.SubmodelElement sourceSubmodelElement)
         {
             if (!string.IsNullOrEmpty(sourceSubmodelElement.idShort))
                 submodelElement.IdShort = sourceSubmodelElement.idShort;
@@ -662,7 +662,7 @@ namespace Extensions
             return null;
         }
 
-        public static IEnumerable<T> FindDeep<T>(this List<ISubmodelElement> submodelElements, Predicate<T> match = null) where T : ISubmodelElement
+        public static IEnumerable<T> FindDeep<T>(this List<ISubmodelElement?> submodelElements, Predicate<T> match = null) where T : ISubmodelElement
         {
             foreach (var smw in submodelElements)
             {
@@ -694,7 +694,7 @@ namespace Extensions
 
                 if (current is Operation op)
                 {
-                    var operationVariables = new List<ISubmodelElement>();
+                    var operationVariables = new List<ISubmodelElement?>();
                     foreach (var opVariable in op.InputVariables)
                     {
                         operationVariables.Add(opVariable.Value);
@@ -1013,7 +1013,7 @@ namespace Extensions
         }
 
         public static IEnumerable<T> FindAllSemanticIdAs<T>(this List<ISubmodelElement> submodelELements,
-            Reference semId, MatchMode matchMode = MatchMode.Strict)
+            Reference? semId, MatchMode matchMode = MatchMode.Strict)
             where T : ISubmodelElement
         {
             foreach (var submodelElement in submodelELements)
@@ -1031,7 +1031,7 @@ namespace Extensions
         }
 
         public static T FindFirstSemanticIdAs<T>(this List<ISubmodelElement> submodelElements,
-            Reference semId, MatchMode matchMode = MatchMode.Strict)
+            Reference? semId, MatchMode matchMode = MatchMode.Strict)
             where T : ISubmodelElement
         {
             return submodelElements.FindAllSemanticIdAs<T>(semId, matchMode).FirstOrDefault<T>();

@@ -29,7 +29,7 @@ namespace IO.Swagger.Lib.V3.Services
             return output;
         }
 
-        public IReference GetReferenceResult(IReferable referable)
+        public IReference? GetReferenceResult(IReferable referable)
         {
             return referable.GetReference();
         }

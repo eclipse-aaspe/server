@@ -23,13 +23,15 @@ using System.Threading.Tasks;
 
 namespace IO.Swagger.Registry.Lib.V3.Services
 {
+    using Environment = AasCore.Aas3_0.Environment;
+
     public class RegistryInitializerService : IRegistryInitializerService
     {
         static bool init;
         static ISubmodel? aasRegistry;
         static ISubmodel? submodelRegistry;
         static int initiallyEmpty = 0;
-        static AasCore.Aas3_0.Environment envRegistry;
+        static Environment? envRegistry;
         static List<string> getRegistry = [];
         static List<string> postRegistry = [];
         static List<string?> federatedElemensSemanticId = [];
@@ -1084,18 +1086,13 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                         try
                         {
                             federatedElementsCount++;
-                            /*
-                            var sme = Newtonsoft.Json.JsonConvert.DeserializeObject<ISubmodelElement>(
-                                fe, new AdminShellConverters.JsonAasxConverter("modelType", "name"));
-                            */
+                            
                             MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(fe));
                             JsonNode     node  = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
                             var          sme   = Jsonization.Deserialize.ISubmodelElementFrom(node);
 
-                            // p = AdminShell.Property.CreateNew("federatedElement" + federatedElementsCount);
                             sme.TimeStampCreate = timestamp;
                             sme.TimeStamp       = timestamp;
-                            // p.value = fe;
                             smc.Value.Add(sme);
                         }
                         catch

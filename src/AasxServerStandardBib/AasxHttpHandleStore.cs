@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 /* Copyright (c) 2018-2019 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>, author: Michael Hoffmeister
@@ -15,17 +14,18 @@ specification Details of the Administration Shell. The hereby stated approach is
 
 namespace AasxRestServerLibrary
 {
+    using System.Text.Json.Serialization;
+
     /// <summary>
     /// Describes a handle to a Identification or Reference to be used in HTTP REST APIs
     /// </summary>
     public abstract class AasxHttpHandle
     {
-        [JsonProperty(PropertyName = "key")]
-        public string Key;
-        [JsonIgnore]
-        public DateTime ExpiresInternal;
-        [JsonProperty(PropertyName = "expires")]
-        public string Expires; // http-date, see https://stackoverflow.com/questions/21120882/the-date-time-format-used-in-http-headers
+        [JsonPropertyName("key")] public string Key { get; set; }
+
+        [JsonIgnore] public DateTime ExpiresInternal { get; set; }
+
+        [JsonPropertyName("expires")] public string Expires { get; set; } // http-date, see https://stackoverflow.com/questions/21120882/the-date-time-format-used-in-http-headers
     }
 
     /// <summary>
@@ -44,7 +44,7 @@ namespace AasxRestServerLibrary
             else
                 this.Key = keyPreset;
             this.ExpiresInternal = DateTime.UtcNow.AddMinutes(60);
-            this.Expires = this.ExpiresInternal.ToString("R");
+            this.Expires         = this.ExpiresInternal.ToString("R");
             //this.identification = new IIdentifiable(src);
             this.identification = src;
         }

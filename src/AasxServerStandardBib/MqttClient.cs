@@ -28,6 +28,8 @@ MQTTnet Copyright (c) 2016-2019 Christian Kratky
 
 namespace AasxMqttClient
 {
+    using System.Text.Json;
+
     public class MqttClient
     {
         public MqttClient()
@@ -69,7 +71,7 @@ namespace AasxMqttClient
 
                                 var message2 = new MqttApplicationMessageBuilder()
                                                 .WithTopic("Submodel_" + sm.IdShort)
-                                                .WithPayload(Newtonsoft.Json.JsonConvert.SerializeObject(sm))
+                                                .WithPayload(JsonSerializer.Serialize(sm))
                                                 .WithExactlyOnceQoS()
                                                 .WithRetainFlag()
                                                 .Build();

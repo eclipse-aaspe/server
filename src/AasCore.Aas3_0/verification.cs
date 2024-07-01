@@ -1960,7 +1960,7 @@ namespace AasCore.Aas3_0
         /// Check that the target of the model reference matches the <paramref name="expectedType" />.
         /// </summary>
         public static bool IsModelReferenceTo(
-            IReference reference,
+            IReference? reference,
             KeyTypes expectedType
         )
         {
@@ -1973,7 +1973,7 @@ namespace AasCore.Aas3_0
         /// Check that the target of the reference matches a <see cref="Aas.Constants.AasReferables" />.
         /// </summary>
         public static bool IsModelReferenceToReferable(
-            IReference reference
+            IReference? reference
         )
         {
             return reference.Type == ReferenceTypes.ModelReference
@@ -9615,7 +9615,7 @@ namespace AasCore.Aas3_0
         /// <param name="that">
         /// The instance of the meta-model to be verified
         /// </param>
-        public static IEnumerable<Reporting.Error> Verify(Aas.IClass that)
+        public static IEnumerable<Reporting.Error> Verify(IClass? that)
         {
             foreach (var error in _transformer.Transform(that))
             {

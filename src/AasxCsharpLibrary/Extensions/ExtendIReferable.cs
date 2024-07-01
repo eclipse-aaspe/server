@@ -131,7 +131,7 @@ namespace Extensions
             return rf.IdShort.Trim();
         }
 
-        public static Reference GetReference(this IReferable referable)
+        public static Reference? GetReference(this IReferable referable)
         {
             if (referable is IIdentifiable identifiable)
             {
@@ -325,9 +325,9 @@ namespace Extensions
             }
         }
 
-        public static void SetTimeStamp(this IReferable referable, DateTime timeStamp)
+        public static void SetTimeStamp(this IReferable? referable, DateTime timeStamp)
         {
-            IReferable newReferable = referable;
+            IReferable? newReferable = referable;
             newReferable.TimeStamp = timeStamp;
             do
             {
@@ -347,7 +347,7 @@ namespace Extensions
             return (num > 0);
         }
 
-        public static IEnumerable<ISubmodelElement> EnumerateChildren(this IReferable referable)
+        public static IEnumerable<ISubmodelElement?> EnumerateChildren(this IReferable? referable)
         {
             if (referable is Submodel submodel && submodel.SubmodelElements != null)
             {
@@ -426,7 +426,7 @@ namespace Extensions
         }
 
 
-        public static void SetAllParentsAndTimestamps(this IReferable referable, IReferable parent, DateTime timeStamp, DateTime timeStampCreate)
+        public static void SetAllParentsAndTimestamps(this IReferable? referable, IReferable? parent, DateTime timeStamp, DateTime timeStampCreate)
         {
             // if (parent == null)
             //    return;
@@ -498,7 +498,7 @@ namespace Extensions
             return new Key(sd.KeyType.Value, rf.IdShort);
         }
 
-        public static System.Text.Json.Nodes.JsonNode ToJsonObject(List<IClass> classes)
+        public static System.Text.Json.Nodes.JsonNode ToJsonObject(List<IClass?> classes)
         {
             var jar = new System.Text.Json.Nodes.JsonArray();
             if (classes != null)
@@ -556,7 +556,7 @@ namespace Extensions
             return null;
         }
 
-        public static Extension Add(this IReferable rf, Extension ext)
+        public static Extension Add(this IReferable? rf, Extension ext)
         {
             if (rf.Extensions == null)
                 rf.Extensions = new List<IExtension>();
@@ -564,7 +564,7 @@ namespace Extensions
             return ext;
         }
 
-        public static void MigrateV20QualifiersToExtensions(this IReferable rf)
+        public static void MigrateV20QualifiersToExtensions(this IReferable? rf)
         {
             // access
             if (!(rf is IQualifiable iq) || iq.Qualifiers == null || !(rf is IHasExtensions ihe))

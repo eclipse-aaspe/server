@@ -73,7 +73,10 @@ public class ConceptDescriptionRepositoryAPIApiController : ControllerBase
     public virtual IActionResult DeleteConceptDescriptionById([FromRoute] [Required] string cdIdentifier)
     {
         var decodedCdIdentifier = _decoderService.Decode("cdIdentifier", cdIdentifier);
-
+        if (decodedCdIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedCdIdentifier)} is null");
+        }
         _logger.LogInformation($"Received request to delete concept description with id {decodedCdIdentifier}");
 
         _cdService.DeleteConceptDescriptionById(decodedCdIdentifier);
@@ -98,7 +101,6 @@ public class ConceptDescriptionRepositoryAPIApiController : ControllerBase
     [Route("/concept-descriptions")]
     [ValidateModelState]
     [SwaggerOperation("GetAllConceptDescriptions")]
-    //[SwaggerResponse(statusCode: 200, type: typeof(GetConceptDescriptionsResult), description: "Requested Concept Descriptions")]
     [SwaggerResponse(statusCode: 200, type: typeof(List<ConceptDescription>), description: "Requested Concept Descriptions")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
     [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
@@ -113,7 +115,9 @@ public class ConceptDescriptionRepositoryAPIApiController : ControllerBase
 
         var cdList = new List<IConceptDescription>();
         if (reqDataSpecificationRef != null)
+        {
             cdList = _cdService.GetAllConceptDescriptions(idShort, reqIsCaseOf, reqDataSpecificationRef);
+        }
 
         var authResult = _authorizationService.AuthorizeAsync(User, cdList, "SecurityPolicy").Result;
         if (!authResult.Succeeded)

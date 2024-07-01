@@ -44,7 +44,7 @@ namespace Extensions
             }
         }
 
-        public static object AddChild(this SubmodelElementCollection submodelElementCollection, ISubmodelElement childSubmodelElement, EnumerationPlacmentBase placement = null)
+        public static object? AddChild(this SubmodelElementCollection submodelElementCollection, ISubmodelElement? childSubmodelElement, EnumerationPlacmentBase placement = null)
         {
             if (childSubmodelElement == null)
                 return null;
@@ -65,7 +65,7 @@ namespace Extensions
             return (T)submodelElement;
         }
 
-        public static SubmodelElementCollection ConvertFromV10(this SubmodelElementCollection submodelElementCollection, AasxCompatibilityModels.AdminShellV10.SubmodelElementCollection sourceSmeCollection, bool shallowCopy = false)
+        public static SubmodelElementCollection? ConvertFromV10(this SubmodelElementCollection? submodelElementCollection, AasxCompatibilityModels.AdminShellV10.SubmodelElementCollection sourceSmeCollection, bool shallowCopy = false)
         {
             if (sourceSmeCollection == null)
                 return null;
@@ -81,8 +81,8 @@ namespace Extensions
                 {
                     foreach (var submodelElementWrapper in sourceSmeCollection.value)
                     {
-                        var sourceSubmodelElement = submodelElementWrapper.submodelElement;
-                        ISubmodelElement outputSubmodelElement = null;
+                        var               sourceSubmodelElement = submodelElementWrapper.submodelElement;
+                        ISubmodelElement? outputSubmodelElement = null;
                         if (sourceSubmodelElement != null)
                         {
                             outputSubmodelElement = outputSubmodelElement.ConvertFromV10(sourceSubmodelElement, shallowCopy);
@@ -96,7 +96,7 @@ namespace Extensions
             return submodelElementCollection;
         }
 
-        public static SubmodelElementCollection ConvertFromV20(this SubmodelElementCollection submodelElementCollection, AasxCompatibilityModels.AdminShellV20.SubmodelElementCollection sourceSmeCollection, bool shallowCopy = false)
+        public static SubmodelElementCollection? ConvertFromV20(this SubmodelElementCollection? submodelElementCollection, AasxCompatibilityModels.AdminShellV20.SubmodelElementCollection sourceSmeCollection, bool shallowCopy = false)
         {
             if (sourceSmeCollection == null)
                 return null;
@@ -112,8 +112,8 @@ namespace Extensions
                 {
                     foreach (var submodelElementWrapper in sourceSmeCollection.value)
                     {
-                        var sourceSubmodelElement = submodelElementWrapper.submodelElement;
-                        ISubmodelElement outputSubmodelElement = null;
+                        var               sourceSubmodelElement = submodelElementWrapper.submodelElement;
+                        ISubmodelElement? outputSubmodelElement = null;
                         if (sourceSubmodelElement != null)
                         {
                             outputSubmodelElement = outputSubmodelElement.ConvertFromV20(sourceSubmodelElement, shallowCopy);

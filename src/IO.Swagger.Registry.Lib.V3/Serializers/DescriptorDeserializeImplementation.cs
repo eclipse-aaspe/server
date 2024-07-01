@@ -792,7 +792,7 @@ namespace IO.Swagger.Registry.Lib.V3.Serializers
                 return null;
             }
 
-            ProtocolInformationSecurityAttributes.TypeEnum type  = ProtocolInformationSecurityAttributes.TypeEnum.NONEEnum;
+            ProtocolInformationSecurityAttributes.TypeEnum type  = ProtocolInformationSecurityAttributes.TypeEnum.NONE;
             string?                                        key   = null;
             string                                         value = null;
 

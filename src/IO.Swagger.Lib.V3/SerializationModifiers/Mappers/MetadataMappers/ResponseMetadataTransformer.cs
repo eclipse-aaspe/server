@@ -11,7 +11,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
 
     internal class ResponseMetadataTransformer : ITransformer<IDTO>
     {
-        public IDTO Transform(IClass that) => that.Transform(this);
+        public IDTO Transform(IClass? that) => that.Transform(this);
 
         public IDTO TransformAdministrativeInformation(IAdministrativeInformation that) =>
             new AdministrativeInformationDTO(TransformEmbeddedDataSpecList(that.EmbeddedDataSpecifications), that.Version, that.Revision, (ReferenceDTO)Transform(that.Creator),
@@ -61,7 +61,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
 
         public IDTO TransformDataSpecificationIec61360(IDataSpecificationIec61360 that) => throw new System.NotImplementedException();
 
-        internal List<EmbeddedDataSpecificationDTO>? TransformEmbeddedDataSpecList(List<IEmbeddedDataSpecification> that)
+        internal List<EmbeddedDataSpecificationDTO>? TransformEmbeddedDataSpecList(List<IEmbeddedDataSpecification?> that)
         {
             List<EmbeddedDataSpecificationDTO>? output = null;
             if (!that.IsNullOrEmpty())
@@ -100,7 +100,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
 
         public IDTO TransformEventPayload(IEventPayload that) => throw new System.NotImplementedException();
 
-        public List<ExtensionDTO> TransformExtensionList(List<IExtension> that)
+        public List<ExtensionDTO> TransformExtensionList(List<IExtension?> that)
         {
             List<ExtensionDTO> extensions = null;
             if (that != null)
@@ -125,7 +125,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
                                     TransformEmbeddedDataSpecList(that.EmbeddedDataSpecifications));
         }
 
-        internal List<KeyDTO>? TransformKeyList(List<IKey>? keyList)
+        internal List<KeyDTO>? TransformKeyList(List<IKey?>? keyList)
         {
             List<KeyDTO>? output = null;
 
@@ -145,7 +145,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
 
         public IDTO TransformLangStringDefinitionTypeIec61360(ILangStringDefinitionTypeIec61360 that) => throw new System.NotImplementedException();
 
-        public List<LangStringNameTypeDTO> TransformLangStringNameTypeList(List<ILangStringNameType> that)
+        public List<LangStringNameTypeDTO> TransformLangStringNameTypeList(List<ILangStringNameType?> that)
         {
             List<LangStringNameTypeDTO> langStrings = null;
             if (that != null)
@@ -164,7 +164,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
 
         public IDTO TransformLangStringShortNameTypeIec61360(ILangStringShortNameTypeIec61360 that) => throw new System.NotImplementedException();
 
-        public List<LangStringTextTypeDTO> TransformLangStringTextTypeList(List<ILangStringTextType> that)
+        public List<LangStringTextTypeDTO> TransformLangStringTextTypeList(List<ILangStringTextType?> that)
         {
             List<LangStringTextTypeDTO> langStrings = null;
 
@@ -223,7 +223,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
                                  TransformReferenceList(that.SupplementalSemanticIds), TransformQualifierList(that.Qualifiers),
                                  TransformEmbeddedDataSpecList(that.EmbeddedDataSpecifications));
 
-        internal List<QualifierDTO> TransformQualifierList(List<IQualifier> qualifierList)
+        internal List<QualifierDTO> TransformQualifierList(List<IQualifier?> qualifierList)
         {
             List<QualifierDTO> output = null;
             return (qualifierList.IsNullOrEmpty() ? output : qualifierList.Select(qualifier => (QualifierDTO)Transform(qualifier)).ToList()) ?? [];
@@ -239,7 +239,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
                               TransformReferenceList(that.SupplementalSemanticIds), TransformQualifierList(that.Qualifiers),
                               TransformEmbeddedDataSpecList(that.EmbeddedDataSpecifications));
 
-        internal List<ReferenceDTO> TransformReferenceList(List<IReference> that)
+        internal List<ReferenceDTO> TransformReferenceList(List<IReference?> that)
         {
             List<ReferenceDTO> output = null;
             if (!that.IsNullOrEmpty())

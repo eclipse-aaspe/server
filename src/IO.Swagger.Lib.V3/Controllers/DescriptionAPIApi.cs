@@ -42,12 +42,12 @@ public class DescriptionAPIApiController : ControllerBase
                      {
                          Profiles = new List<ProfilesEnum>
                                     {
-                                        ProfilesEnum.AasxFileServerServiceSpecificationSSP001Enum,
-                                        ProfilesEnum.SubmodelRepositoryServiceSpecificationSSP001Enum,
-                                        ProfilesEnum.AssetAdministrationShellRepositoryServiceSpecificationSSP001Enum,
-                                        ProfilesEnum.AssetAdministrationShellRegistryServiceSpecificationSSP001Enum,
-                                        ProfilesEnum.DiscoveryServiceSpecificationSSP001Enum,
-                                        ProfilesEnum.ConceptDescriptionServiceSpecificationSSP001Enum
+                                        ProfilesEnum.AasxFileServerServiceSpecificationSSP001,
+                                        ProfilesEnum.SubmodelRepositoryServiceSpecificationSSP001,
+                                        ProfilesEnum.AssetAdministrationShellRepositoryServiceSpecificationSSP001,
+                                        ProfilesEnum.AssetAdministrationShellRegistryServiceSpecificationSSP001,
+                                        ProfilesEnum.DiscoveryServiceSpecificationSSP001,
+                                        ProfilesEnum.ConceptDescriptionServiceSpecificationSSP001
                                     }
                      };
         return new ObjectResult(output);

@@ -92,7 +92,7 @@ namespace Extensions
         //    return conceptDescription.EmbeddedDataSpecifications?.GetPhysicalUnitContent();
         //}
 
-        public static IEnumerable<Reference> FindAllReferences(this IConceptDescription conceptDescription)
+        public static IEnumerable<Reference?> FindAllReferences(this IConceptDescription conceptDescription)
         {
             yield break;
         }

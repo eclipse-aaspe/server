@@ -10,8 +10,6 @@ This source code may use other Open Source software components (see LICENSE.txt)
 
 
 using Extensions;
-using Newtonsoft.Json;
-// using ScottPlot.Drawing.Colormaps;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -26,6 +24,9 @@ using System.Xml.Serialization;
 
 namespace AdminShellNS
 {
+    using System.Text.Json;
+    using Environment = AasCore.Aas3_0.Environment;
+
     /// <summary>
     /// This class lets an outer functionality keep track on the supplementary files, which are in or
     /// are pending to be added or deleted to an Package.
@@ -142,10 +143,10 @@ namespace AdminShellNS
         /// </summary>
         /// <param name="s">Open for read stream</param>
         /// <returns></returns>
-        public static AasCore.Aas3_0.Environment DeserializeXmlFromStreamWithCompat(Stream s)
+        public static Environment? DeserializeXmlFromStreamWithCompat(Stream s)
         {
             // not sure
-            AasCore.Aas3_0.Environment res = null;
+            Environment? res = null;
 
             // try get first element
             var nsuri = TryReadXmlFirstElementNamespaceURI(s);
@@ -260,7 +261,7 @@ namespace AdminShellNS
 
         private string _tempFn = null;
 
-        private AasCore.Aas3_0.Environment _aasEnv = new AasCore.Aas3_0.Environment(new List<IAssetAdministrationShell>(), new List<ISubmodel>(), new List<IConceptDescription>());
+        private Environment? _aasEnv = new AasCore.Aas3_0.Environment(new List<IAssetAdministrationShell>(), new List<ISubmodel>(), new List<IConceptDescription>());
         private Package _openPackage = null;
         private string _envXml = null;
         private readonly ListOfAasSupplementaryFile _pendingFilesToAdd = new ListOfAasSupplementaryFile();
@@ -285,7 +286,7 @@ namespace AdminShellNS
             return _envXml;
         }
 
-        public AdminShellPackageEnv(AasCore.Aas3_0.Environment env)
+        public AdminShellPackageEnv(Environment? env)
         {
             if (env != null)
                 _aasEnv = env;
@@ -318,7 +319,7 @@ namespace AdminShellNS
             }
         }
 
-        public AasCore.Aas3_0.Environment AasEnv
+        public Environment? AasEnv
         {
             get
             {
@@ -326,7 +327,7 @@ namespace AdminShellNS
             }
         }
 
-        private static AasCore.Aas3_0.Environment LoadXml(string fn)
+        private static Environment? LoadXml(string fn)
         {
             try
             {
@@ -348,7 +349,7 @@ namespace AdminShellNS
             }
         }
 
-        private static AasCore.Aas3_0.Environment LoadJson(string fn)
+        private static Environment? LoadJson(string fn)
         {
             try
             {
@@ -363,7 +364,7 @@ namespace AdminShellNS
                     //var aasEnv = (AasCore.Aas3_0_RC02.Environment)serializer.Deserialize(
                     //    file, typeof(AasCore.Aas3_0_RC02.Environment));
 
-                    var node = System.Text.Json.Nodes.JsonNode.Parse(file);
+                    var          node   = System.Text.Json.Nodes.JsonNode.Parse(file);
                     var aasEnv = Jsonization.Deserialize.EnvironmentFrom(node);
 
                     return aasEnv;
@@ -379,7 +380,7 @@ namespace AdminShellNS
         /// <remarks><paramref name="fn"/> is unequal <paramref name="fnToLoad"/> if indirectLoadSave is used.</remarks>
         private static (AasCore.Aas3_0.Environment, Package, String) LoadPackageAasx(string fn, string fnToLoad, bool loadXml = false)
         {
-            AasCore.Aas3_0.Environment aasEnv;
+            Environment? aasEnv;
             Package openPackage = null;
             string envXml = null;
 
@@ -642,6 +643,13 @@ namespace AdminShellNS
             }
         }
 
+        private JsonSerializerOptions _jsonSerializerOptions = new()
+                                                {
+                                                    WriteIndented          = true,
+                                                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+                                                    ReferenceHandler       = System.Text.Json.Serialization.ReferenceHandler.Preserve
+                                                };
+        
         public void LoadFromAasEnvString(string content)
         {
             try
@@ -739,28 +747,6 @@ namespace AdminShellNS
 
                     try
                     {
-                        //// TODO (Michael Hoffmeister, 2020-08-01): use a unified function to create a serializer
-                        //JsonSerializer serializer = new JsonSerializer()
-                        //{
-                        //    NullValueHandling = NullValueHandling.Ignore,
-                        //    ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
-                        //    Formatting = Newtonsoft.Json.Formatting.Indented
-                        //};
-
-                        //var sw = new StreamWriter(s);
-                        //var writer = new JsonTextWriter(sw);
-
-                        //serializer.Serialize(writer, _aasEnv);
-                        //writer.Flush();
-                        //sw.Flush();
-                        //s.Flush();
-
-                        //if (useMemoryStream == null)
-                        //{
-                        //    writer.Close();
-                        //    sw.Close();
-                        //}
-
                         using (var wr = new System.Text.Json.Utf8JsonWriter(s))
                         {
                             Jsonization.Serialize.ToJsonObject(_aasEnv).WriteTo(wr,
@@ -973,20 +959,10 @@ namespace AdminShellNS
                     // now, specPart shall be != null!
                     if (specPart.Uri.ToString().ToLower().Trim().EndsWith("json"))
                     {
-                        using (var s = specPart.GetStream(FileMode.Create))
-                        {
-                            JsonSerializer serializer = new JsonSerializer();
-                            serializer.NullValueHandling = NullValueHandling.Ignore;
-                            serializer.ReferenceLoopHandling = ReferenceLoopHandling.Serialize;
-                            serializer.Formatting = Newtonsoft.Json.Formatting.Indented;
-                            using (var sw = new StreamWriter(s))
-                            {
-                                using (JsonWriter writer = new JsonTextWriter(sw))
-                                {
-                                    serializer.Serialize(writer, _aasEnv);
-                                }
-                            }
-                        }
+                        using var s          = specPart.GetStream(FileMode.Create);
+                        using var sw         = new StreamWriter(s);
+                        var       jsonString = JsonSerializer.Serialize(_aasEnv, _jsonSerializerOptions);
+                        sw.Write(jsonString);
                     }
                     else
                     {

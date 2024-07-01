@@ -20606,7 +20606,7 @@ namespace AasCore.Aas3_0
             /// Thrown when the element is not a valid XML
             /// representation of Environment.
             /// </exception>
-            public static Aas.Environment EnvironmentFrom(
+            public static Environment EnvironmentFrom(
                 Xml.XmlReader reader)
             {
                 Aas.Environment? result = (
@@ -21330,7 +21330,7 @@ namespace AasCore.Aas3_0
             }
 
             private void AssetInformationToSequence(
-                Aas.IAssetInformation that,
+                IAssetInformation? that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -21402,7 +21402,7 @@ namespace AasCore.Aas3_0
             }  // private void AssetInformationToSequence
 
             public override void VisitAssetInformation(
-                Aas.IAssetInformation that,
+                IAssetInformation? that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -24648,7 +24648,7 @@ namespace AasCore.Aas3_0
             }
 
             private void ReferenceToSequence(
-                Aas.IReference that,
+                IReference? that,
                 Xml.XmlWriter writer)
             {
                 if (that == null)
@@ -24700,7 +24700,7 @@ namespace AasCore.Aas3_0
             }  // private void ReferenceToSequence
 
             public override void VisitReference(
-                Aas.IReference that,
+                IReference? that,
                 Xml.XmlWriter writer)
             {
                 writer.WriteStartElement(
@@ -25377,7 +25377,7 @@ namespace AasCore.Aas3_0
             /// Serialize an instance of the meta-model to XML.
             /// </summary>
             public static void To(
-                Aas.IClass that,
+                IClass? that,
                 Xml.XmlWriter writer)
             {
                 Serialize._visitorWithWriter.Visit(

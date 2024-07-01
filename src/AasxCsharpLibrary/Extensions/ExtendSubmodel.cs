@@ -70,7 +70,7 @@ namespace Extensions
         public static IEnumerable<LocatedReference> FindAllReferences(this ISubmodel submodel)
         {
             // not nice: use temp list
-            var temp = new List<IReference>();
+            var temp = new List<IReference?>();
 
             // recurse
             submodel.RecurseOnSubmodelElements(null, (state, parents, sme) =>
@@ -186,8 +186,8 @@ namespace Extensions
 
                 foreach (var submodelElementWrapper in sourceSubmodel.submodelElements)
                 {
-                    var sourceSubmodelELement = submodelElementWrapper.submodelElement;
-                    ISubmodelElement outputSubmodelElement = null;
+                    var               sourceSubmodelELement = submodelElementWrapper.submodelElement;
+                    ISubmodelElement? outputSubmodelElement = null;
                     if (sourceSubmodelELement != null)
                     {
                         outputSubmodelElement = outputSubmodelElement.ConvertFromV10(sourceSubmodelELement, shallowCopy);
@@ -275,8 +275,8 @@ namespace Extensions
 
                 foreach (var submodelElementWrapper in srcSM.submodelElements)
                 {
-                    var sourceSubmodelELement = submodelElementWrapper.submodelElement;
-                    ISubmodelElement outputSubmodelElement = null;
+                    var               sourceSubmodelELement = submodelElementWrapper.submodelElement;
+                    ISubmodelElement? outputSubmodelElement = null;
                     if (sourceSubmodelELement != null)
                     {
                         outputSubmodelElement = outputSubmodelElement.ConvertFromV20(sourceSubmodelELement, shallowCopy);
@@ -373,14 +373,14 @@ namespace Extensions
             }
         }
 
-        public static void SetAllParents(this ISubmodel submodel, DateTime timestamp)
+        public static void SetAllParents(this ISubmodel? submodel, DateTime timestamp)
         {
             if (submodel.SubmodelElements != null)
                 foreach (var sme in submodel.SubmodelElements)
                     SetParentsForSME(submodel, sme, timestamp);
         }
 
-        public static void SetParentsForSME(IReferable parent, ISubmodelElement submodelElement, DateTime timestamp)
+        public static void SetParentsForSME(IReferable? parent, ISubmodelElement? submodelElement, DateTime timestamp)
         {
             if (submodelElement == null)
                 return;
@@ -396,7 +396,7 @@ namespace Extensions
             }
         }
 
-        public static void SetParentsForSME(IReferable parent, ISubmodelElement submodelElement)
+        public static void SetParentsForSME(IReferable? parent, ISubmodelElement? submodelElement)
         {
             if (submodelElement == null)
                 return;
@@ -409,18 +409,18 @@ namespace Extensions
             }
         }
 
-        public static void SetAllParents(this ISubmodel submodel)
+        public static void SetAllParents(this ISubmodel? submodel)
         {
             if (submodel.SubmodelElements != null)
                 foreach (var sme in submodel.SubmodelElements)
                     SetParentsForSME(submodel, sme);
         }
 
-        public static void SetParentAndTimestamp(this ISubmodel submodel)
+        public static void SetParentAndTimestamp(this ISubmodel? submodel)
         {
             SetParentAndTimestamp(submodel, DateTime.UtcNow);
         }
-        public static void SetParentAndTimestamp(this ISubmodel submodel, DateTime timeStamp)
+        public static void SetParentAndTimestamp(this ISubmodel? submodel, DateTime timeStamp)
         {
             submodel.SetTimeStamp(timeStamp);
 

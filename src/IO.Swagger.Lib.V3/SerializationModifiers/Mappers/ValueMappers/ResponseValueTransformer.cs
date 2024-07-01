@@ -106,7 +106,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             return new FileValue(that.IdShort, that.ContentType, that.Value);
         }
 
-        internal List<KeyDTO>? TransformKeyList(List<IKey>? keyList)
+        internal List<KeyDTO>? TransformKeyList(List<IKey?>? keyList)
         {
             List<KeyDTO>? output = null;
 

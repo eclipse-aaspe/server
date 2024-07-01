@@ -13,7 +13,7 @@ namespace Extensions
         }
 
         #endregion
-        public static Reference GetReference(this IIdentifiable identifiable)
+        public static Reference? GetReference(this IIdentifiable identifiable)
         {
             var key = new Key(ExtensionsUtil.GetKeyType(identifiable), identifiable.Id);
             // TODO (jtikekar, 2023-09-04): if model or Global reference?

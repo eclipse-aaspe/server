@@ -55,7 +55,7 @@ namespace Extensions
             }
         }
 
-        public static object AddChild(this SubmodelElementList submodelElementList, ISubmodelElement childSubmodelElement, EnumerationPlacmentBase placement = null)
+        public static object? AddChild(this SubmodelElementList submodelElementList, ISubmodelElement? childSubmodelElement, EnumerationPlacmentBase placement = null)
         {
             if (childSubmodelElement == null)
                 return null;
