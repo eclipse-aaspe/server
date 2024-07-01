@@ -98,11 +98,11 @@ public class Startup
                                                                         Type = "string",
                                                                         Enum = new List<IOpenApiAny>
                                                                                {
-                                                                                   new OpenApiString(MessageTypeEnum.UndefinedEnum.ToString()),
-                                                                                   new OpenApiString(MessageTypeEnum.InfoEnum.ToString()),
-                                                                                   new OpenApiString(MessageTypeEnum.WarningEnum.ToString()),
-                                                                                   new OpenApiString(MessageTypeEnum.ErrorEnum.ToString()),
-                                                                                   new OpenApiString(MessageTypeEnum.ExceptionEnum.ToString())
+                                                                                   new OpenApiString(MessageTypeEnum.Undefined.ToString()),
+                                                                                   new OpenApiString(MessageTypeEnum.Info.ToString()),
+                                                                                   new OpenApiString(MessageTypeEnum.Warning.ToString()),
+                                                                                   new OpenApiString(MessageTypeEnum.Error.ToString()),
+                                                                                   new OpenApiString(MessageTypeEnum.Exception.ToString())
                                                                                }
                                                                     });
                                });

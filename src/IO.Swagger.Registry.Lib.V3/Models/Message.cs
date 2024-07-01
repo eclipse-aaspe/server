@@ -46,27 +46,27 @@ public class Message : IEquatable<Message>
     public enum MessageTypeEnum
     {
         /// <summary>
-        /// Enum UndefinedEnum for Undefined
+        /// Enum Undefined for Undefined
         /// </summary>
         [EnumMember(Value = "Undefined")] UndefinedEnum = 0,
 
         /// <summary>
-        /// Enum InfoEnum for Info
+        /// Enum Info for Info
         /// </summary>
         [EnumMember(Value = "Info")] InfoEnum = 1,
 
         /// <summary>
-        /// Enum WarningEnum for Warning
+        /// Enum Warning for Warning
         /// </summary>
         [EnumMember(Value = "Warning")] WarningEnum = 2,
 
         /// <summary>
-        /// Enum ErrorEnum for Error
+        /// Enum Error for Error
         /// </summary>
         [EnumMember(Value = "Error")] ErrorEnum = 3,
 
         /// <summary>
-        /// Enum ExceptionEnum for Exception
+        /// Enum Exception for Exception
         /// </summary>
         [EnumMember(Value = "Exception")] ExceptionEnum = 4
     }
