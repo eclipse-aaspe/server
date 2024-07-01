@@ -342,7 +342,7 @@ namespace AasxServerDB
         }
         public override void VisitRelationshipElement(IRelationshipElement that)
         {
-            SMESet smeSet = collectSMEData(that);
+            collectSMEData(that);
             base.VisitRelationshipElement(that);
         }
         public override void VisitSubmodelElementList(ISubmodelElementList that)
@@ -365,37 +365,37 @@ namespace AasxServerDB
 
         public override void VisitProperty(IProperty that)
         {
-            SMESet smeSet = collectSMEData(that);
+            collectSMEData(that);
             base.VisitProperty(that);
         }
         public override void VisitMultiLanguageProperty(IMultiLanguageProperty that)
         {
-            SMESet smeSet = collectSMEData(that);
+            collectSMEData(that);
             base.VisitMultiLanguageProperty(that);
         }
         public override void VisitRange(AasCore.Aas3_0.IRange that)
         {
-            SMESet smeSet = collectSMEData(that);
+            collectSMEData(that);
             base.VisitRange(that);
         }
         public override void VisitReferenceElement(IReferenceElement that)
         {
-            SMESet smeSet = collectSMEData(that);
+            collectSMEData(that);
             base.VisitReferenceElement(that);
         }
         public override void VisitBlob(IBlob that)
         {
-            SMESet smeSet = collectSMEData(that);
+            collectSMEData(that);
             base.VisitBlob(that);
         }
         public override void VisitFile(AasCore.Aas3_0.IFile that)
         {
-            SMESet smeSet = collectSMEData(that);
+            collectSMEData(that);
             base.VisitFile(that);
         }
         public override void VisitAnnotatedRelationshipElement(IAnnotatedRelationshipElement that)
         {
-            SMESet smeSet = collectSMEData(that);
+            collectSMEData(that);
             base.VisitAnnotatedRelationshipElement(that);
         }
         public override void VisitEntity(IEntity that)
@@ -412,12 +412,12 @@ namespace AasxServerDB
         }
         public override void VisitBasicEventElement(IBasicEventElement that)
         {
-            SMESet smeSet = collectSMEData(that);
+            collectSMEData(that);
             base.VisitBasicEventElement(that);
         }
         public override void VisitOperation(IOperation that)
         {
-            SMESet smeSet = collectSMEData(that);
+            collectSMEData(that);
             base.VisitOperation(that);
         }
         public override void VisitOperationVariable(IOperationVariable that)
@@ -426,7 +426,7 @@ namespace AasxServerDB
         }
         public override void VisitCapability(ICapability that)
         {
-            SMESet smeSet = collectSMEData(that);
+            collectSMEData(that);
             base.VisitCapability(that);
         }
         public override void VisitConceptDescription(IConceptDescription that)
