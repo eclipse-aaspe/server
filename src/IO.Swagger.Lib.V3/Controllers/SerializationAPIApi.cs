@@ -80,7 +80,7 @@ public class SerializationAPIApiController : ControllerBase
 
         var decodedSubmodelIds = submodelIds.Select(submodelId => _decoderService.Decode("submodelIdentifier", submodelId)).ToList();
 
-        var environment = _serializationService.GenerateSerializationByIds(decodedAasIds, decodedSubmodelIds, (bool)includeConceptDescriptions);
+        var environment = _serializationService.GenerateSerializationByIds(decodedAasIds, decodedSubmodelIds);
 
         HttpContext.Request.Headers.TryGetValue("Content-Type", out var contentType);
         if (!contentType.Equals("application/xml"))
