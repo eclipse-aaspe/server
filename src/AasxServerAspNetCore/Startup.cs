@@ -17,6 +17,7 @@ using IO.Swagger.Lib.V3.Middleware;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers;
 using IO.Swagger.Lib.V3.Services;
+using IO.Swagger.Models;
 using IO.Swagger.Registry.Lib.V3.Formatters;
 using IO.Swagger.Registry.Lib.V3.Interfaces;
 using IO.Swagger.Registry.Lib.V3.Services;
@@ -90,6 +91,7 @@ internal class Startup
         services.AddTransient<IAasxFileServerInterfaceService, AasxFileServerInterfaceService>();
         services.AddTransient<IGenerateSerializationService, GenerateSerializationService>();
         services.AddTransient<ISecurityService, SecurityService>();
+        services.AddTransient<IServiceDescription, ServiceDescription>();
         services.AddTransient<IAasRegistryService, AasRegistryService>();
         services.AddTransient<IAasDescriptorPaginationService, AasDescriptorPaginationService>();
 

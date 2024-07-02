@@ -1,7 +1,8 @@
 /*
  * DotAAS Part 2 | HTTP/REST | Asset Administration Shell Registry Service Specification
  *
- * The Full Profile of the Asset Administration Shell Registry Service Specification as part of the [Specification of the Asset Administration Shell: Part 2](http://industrialdigitaltwin.org/en/content-hub).   Publisher: Industrial Digital Twin Association (IDTA) 2023
+ * The Full Profile of the Asset Administration Shell Registry Service Specification as part of the [Specification of the Asset Administration Shell: Part 2](http://industrialdigitaltwin.org/en/content-hub).
+ * Publisher: Industrial Digital Twin Association (IDTA) 2023
  *
  * OpenAPI spec version: V3.0.1_SSP-001
  * Contact: info@idtwin.org
@@ -13,29 +14,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
-
-namespace IO.Swagger.Models;
-
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-/// <summary>
-/// The Description object enables servers to present their capabilities to the clients, in particular which profiles they implement. At least one defined profile is required. Additional, proprietary attributes might be included. Nevertheless, the server must not expect that a regular client understands them.
-/// </summary>
-[DataContract]
-public partial class ServiceDescription : IEquatable<ServiceDescription>
-{
-    /// <summary>
-    /// Gets or Sets Profiles
-    /// </summary>
+namespace IO.Swagger.Models;
 
+/// <inheritdoc cref="IO.Swagger.Models.IServiceDescription" />
+[DataContract]
+public partial class ServiceDescription : IEquatable<ServiceDescription>, IServiceDescription
+{
+    /// <inheritdoc />
     [DataMember(Name = "profiles")]
     public List<ServiceProfiles>? Profiles { get; set; }
 
-    /// <summary>
-    /// Returns the string presentation of the object
-    /// </summary>
-    /// <returns>String presentation of the object</returns>
+    /// <inheritdoc cref="IServiceDescription.ToString" />
     public override string ToString()
     {
         var sb = new StringBuilder();
@@ -45,10 +37,8 @@ public partial class ServiceDescription : IEquatable<ServiceDescription>
         return sb.ToString();
     }
 
-    /// <summary>
-    /// Returns the JSON string presentation of the object
-    /// </summary>
-    /// <returns>JSON string presentation of the object</returns>
+    
+    /// <inheritdoc />
     public string ToJson() => JsonSerializer.Serialize(this, Options);
 
     private static readonly JsonSerializerOptions Options = new()
@@ -59,11 +49,7 @@ public partial class ServiceDescription : IEquatable<ServiceDescription>
                                                             };
 
 
-    /// <summary>
-    /// Returns true if objects are equal
-    /// </summary>
-    /// <param name="obj">Object to be compared</param>
-    /// <returns>Boolean</returns>
+    /// <inheritdoc cref="IServiceDescription.Equals(object?)" />
     public override bool Equals(object? obj)
     {
         if (ReferenceEquals(null, obj))
@@ -79,11 +65,8 @@ public partial class ServiceDescription : IEquatable<ServiceDescription>
         return obj.GetType() == GetType() && Equals((ServiceDescription)obj);
     }
 
-    /// <summary>
-    /// Returns true if ServiceDescription instances are equal
-    /// </summary>
-    /// <param name="other">Instance of ServiceDescription to be compared</param>
-    /// <returns>Boolean</returns>
+
+    /// <inheritdoc cref="IServiceDescription.Equals(IO.Swagger.Models.ServiceDescription?)" />
     public bool Equals(ServiceDescription? other)
     {
         if (ReferenceEquals(null, other))
@@ -102,10 +85,8 @@ public partial class ServiceDescription : IEquatable<ServiceDescription>
                                         Profiles.SequenceEqual(other.Profiles)));
     }
 
-    /// <summary>
-    /// Gets the hash code
-    /// </summary>
-    /// <returns>Hash code</returns>
+
+    /// <inheritdoc cref="IServiceDescription.GetHashCode" />
     public override int GetHashCode()
     {
         unchecked // Overflow is fine, just wrap
