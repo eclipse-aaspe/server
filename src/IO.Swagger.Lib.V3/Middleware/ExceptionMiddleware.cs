@@ -13,14 +13,14 @@ using System.Threading.Tasks;
 
 namespace IO.Swagger.Lib.V3.Middleware
 {
+    using System.Globalization;
+    using System.Linq;
+
     public class ExceptionMiddleware
     {
         private readonly RequestDelegate _next;
 
-        public ExceptionMiddleware(RequestDelegate next)
-        {
-            _next = next;
-        }
+        public ExceptionMiddleware(RequestDelegate next) => _next = next;
 
         public async Task InvokeAsync(HttpContext httpContext, IAppLogger<ExceptionMiddleware> logger)
         {
@@ -42,16 +42,16 @@ namespace IO.Swagger.Lib.V3.Middleware
             context.Response.ContentType = "application/json";
             var result = new Result();
             var message = new Message();
-
+            var currentDateTime = DateTime.Now.ToString(CultureInfo.InvariantCulture);
             switch (exception)
             {
                 case DuplicateException ex:
                     {
                         context.Response.StatusCode = (int)HttpStatusCode.Conflict;
-                        message.Code = HttpStatusCode.Conflict.ToString();
-                        message.Text = ex.Message;
-                        message.Timestamp = DateTime.Now.ToString();
-                        message.MessageType = MessageTypeEnum.Error;
+                        message.Code                = HttpStatusCode.Conflict.ToString();
+                        message.Text                = ex.Message;
+                        message.Timestamp           = currentDateTime;
+                        message.MessageType         = MessageTypeEnum.Error;
                         break;
                     }
                 case FileNotFoundException:
@@ -60,7 +60,7 @@ namespace IO.Swagger.Lib.V3.Middleware
                         context.Response.StatusCode = (int)HttpStatusCode.NotFound;
                         message.Code = HttpStatusCode.NotFound.ToString();
                         message.Text = exception.Message;
-                        message.Timestamp = DateTime.Now.ToString();
+                        message.Timestamp = currentDateTime;
                         message.MessageType = MessageTypeEnum.Error;
                         break;
                     }
@@ -69,23 +69,22 @@ namespace IO.Swagger.Lib.V3.Middleware
                         context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
                         message.Code = HttpStatusCode.Forbidden.ToString();
                         message.Text = exception.Message;
-                        message.Timestamp = DateTime.Now.ToString();
+                        message.Timestamp = currentDateTime;
                         message.MessageType = MessageTypeEnum.Error;
                         break;
                     }
                 case MetamodelVerificationException ex:
                     {
                         //Print the errors in debug level
-                        foreach (var error in ex.ErrorList)
+                        foreach (var errorText in ex.ErrorList.Select(error => $"{Reporting.GenerateJsonPath(error.PathSegments)}:{error.Cause}"))
                         {
-                            var errorText = $"{Reporting.GenerateJsonPath(error.PathSegments)}:{error.Cause}";
                             logger.LogDebug(errorText);
                         }
 
                         context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
                         message.Code = HttpStatusCode.BadRequest.ToString();
                         message.Text = exception.Message;
-                        message.Timestamp = DateTime.Now.ToString();
+                        message.Timestamp = currentDateTime;
                         message.MessageType = MessageTypeEnum.Error;
                         break;
                     }
@@ -103,7 +102,7 @@ namespace IO.Swagger.Lib.V3.Middleware
                         context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
                         message.Code = HttpStatusCode.BadRequest.ToString();
                         message.Text = exception.Message;
-                        message.Timestamp = DateTime.Now.ToString();
+                        message.Timestamp = currentDateTime;
                         message.MessageType = MessageTypeEnum.Error;
                         break;
                     }
@@ -112,7 +111,7 @@ namespace IO.Swagger.Lib.V3.Middleware
                         context.Response.StatusCode = (int)HttpStatusCode.MethodNotAllowed;
                         message.Code = HttpStatusCode.MethodNotAllowed.ToString();
                         message.Text = exception.Message;
-                        message.Timestamp = DateTime.Now.ToString();
+                        message.Timestamp = currentDateTime;
                         message.MessageType = MessageTypeEnum.Error;
                         break;
                     }
@@ -121,7 +120,7 @@ namespace IO.Swagger.Lib.V3.Middleware
                         context.Response.StatusCode = (int)HttpStatusCode.NotImplemented;
                         message.Code = HttpStatusCode.NotImplemented.ToString();
                         message.Text = exception.Message;
-                        message.Timestamp = DateTime.Now.ToString();
+                        message.Timestamp = currentDateTime;
                         message.MessageType = MessageTypeEnum.Error;
                         break;
                     }
@@ -130,7 +129,7 @@ namespace IO.Swagger.Lib.V3.Middleware
                         context.Response.StatusCode = (int)HttpStatusCode.UnprocessableEntity;
                         message.Code = HttpStatusCode.UnprocessableEntity.ToString();
                         message.Text = exception.Message;
-                        message.Timestamp = DateTime.Now.ToString();
+                        message.Timestamp = currentDateTime;
                         message.MessageType = MessageTypeEnum.Error;
                         break;
                     }
@@ -139,7 +138,7 @@ namespace IO.Swagger.Lib.V3.Middleware
                         context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                         message.Code = HttpStatusCode.InternalServerError.ToString();
                         message.Text = exception.Message;
-                        message.Timestamp = DateTime.Now.ToString();
+                        message.Timestamp = currentDateTime;
                         message.MessageType = MessageTypeEnum.Error;
                         break;
                     }
