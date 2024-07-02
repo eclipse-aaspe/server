@@ -28,7 +28,7 @@ namespace IO.Swagger.Controllers
     /// <summary>
     /// 
     /// </summary>
-    [ ApiController ]
+    [ApiController]
     public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
     {
         private readonly IAppLogger<AssetAdministrationShellRegistryAPIApiController> _logger;
@@ -38,13 +38,14 @@ namespace IO.Swagger.Controllers
         private readonly IAasDescriptorPaginationService _paginationService;
 
         public AssetAdministrationShellRegistryAPIApiController(IAppLogger<AssetAdministrationShellRegistryAPIApiController> logger, IBase64UrlDecoderService decoderService,
-            IAasRegistryService aasRegistryService, IRegistryInitializerService registryInitializerService, IAasDescriptorPaginationService paginationService)
+                                                                IAasRegistryService aasRegistryService, IRegistryInitializerService registryInitializerService,
+                                                                IAasDescriptorPaginationService paginationService)
         {
-            _logger = logger;
-            _decoderService = decoderService;
-            _aasRegistryService = aasRegistryService;
+            _logger                     = logger;
+            _decoderService             = decoderService;
+            _aasRegistryService         = aasRegistryService;
             _registryInitializerService = registryInitializerService;
-            _paginationService = paginationService;
+            _paginationService          = paginationService;
         }
 
         /// <summary>
@@ -56,15 +57,15 @@ namespace IO.Swagger.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        [ HttpDelete ]
-        [ Route("/shell-descriptors/{aasIdentifier}") ]
-        [ ValidateModelState ]
-        [ SwaggerOperation("DeleteAssetAdministrationShellDescriptorById") ]
-        [ SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.") ]
-        [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
-        [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
-        [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult DeleteAssetAdministrationShellDescriptorById([ FromRoute ] [ Required ] byte[] aasIdentifier)
+        [HttpDelete]
+        [Route("/shell-descriptors/{aasIdentifier}")]
+        [ValidateModelState]
+        [SwaggerOperation("DeleteAssetAdministrationShellDescriptorById")]
+        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public virtual IActionResult DeleteAssetAdministrationShellDescriptorById([FromRoute] [Required] byte[] aasIdentifier)
         {
             //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(204);
@@ -94,16 +95,16 @@ namespace IO.Swagger.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        [ HttpDelete ]
-        [ Route("/shell-descriptors/{aasIdentifier}/submodel-descriptors/{submodelIdentifier}") ]
-        [ ValidateModelState ]
-        [ SwaggerOperation("DeleteSubmodelDescriptorByIdThroughSuperpath") ]
-        [ SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.") ]
-        [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
-        [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
-        [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult DeleteSubmodelDescriptorByIdThroughSuperpath([ FromRoute ] [ Required ] string aasIdentifier,
-            [ FromRoute ] [ Required ] string submodelIdentifier)
+        [HttpDelete]
+        [Route("/shell-descriptors/{aasIdentifier}/submodel-descriptors/{submodelIdentifier}")]
+        [ValidateModelState]
+        [SwaggerOperation("DeleteSubmodelDescriptorByIdThroughSuperpath")]
+        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public virtual IActionResult DeleteSubmodelDescriptorByIdThroughSuperpath([FromRoute] [Required] string aasIdentifier,
+                                                                                  [FromRoute] [Required] string submodelIdentifier)
         {
             //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(204);
@@ -135,27 +136,24 @@ namespace IO.Swagger.Controllers
         /// <response code="403">Forbidden</response>
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        [ HttpGet ]
-        [ Route("/shell-descriptors") ]
-        [ ValidateModelState ]
-        [ SwaggerOperation("GetAllAssetAdministrationShellDescriptors") ]
-        [ SwaggerResponse(statusCode: 200, type: typeof(List<AssetAdministrationShellDescriptor>), description: "Requested Asset Administration Shell Descriptors") ]
-        [ SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.") ]
-        [ SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden") ]
-        [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
-        [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetAllAssetAdministrationShellDescriptors([ FromQuery ] int? limit, [ FromQuery ] string? cursor, [ FromQuery ] string? assetKind,
-            [ FromQuery ] string? assetType)
+        [HttpGet]
+        [Route("/shell-descriptors")]
+        [ValidateModelState]
+        [SwaggerOperation("GetAllAssetAdministrationShellDescriptors")]
+        [SwaggerResponse(statusCode: 200, type: typeof(List<AssetAdministrationShellDescriptor>), description: "Requested Asset Administration Shell Descriptors")]
+        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+        [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public virtual IActionResult GetAllAssetAdministrationShellDescriptors([FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] string? assetKind,
+                                                                               [FromQuery] string? assetType)
         {
             // TODO (jtikekar, 2023-09-04): AssetType resembles GlobalAssetId from old Implementation
             List<string?>? assetList = new List<string?>();
             if (!string.IsNullOrEmpty(assetType))
             {
                 var decodedAssetType = _decoderService.Decode("assetType", assetType);
-                assetList = new List<string?>()
-                {
-                    decodedAssetType
-                };
+                assetList = new List<string?>() {decodedAssetType};
             }
 
             List<AssetAdministrationShellDescriptor> aasDescriptors;
@@ -197,18 +195,18 @@ namespace IO.Swagger.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        [ HttpGet ]
-        [ Route("/shell-descriptors/{aasIdentifier}/submodel-descriptors") ]
-        [ ValidateModelState ]
-        [ SwaggerOperation("GetAllSubmodelDescriptorsThroughSuperpath") ]
-        [ SwaggerResponse(statusCode: 200, type: typeof(List<SubmodelDescriptor>), description: "Requested Submodel Descriptors") ]
-        [ SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.") ]
-        [ SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden") ]
-        [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
-        [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
-        [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetAllSubmodelDescriptorsThroughSuperpath([ FromRoute ] [ Required ] string aasIdentifier, [ FromQuery ] int? limit,
-            [ FromQuery ] string cursor)
+        [HttpGet]
+        [Route("/shell-descriptors/{aasIdentifier}/submodel-descriptors")]
+        [ValidateModelState]
+        [SwaggerOperation("GetAllSubmodelDescriptorsThroughSuperpath")]
+        [SwaggerResponse(statusCode: 200, type: typeof(List<SubmodelDescriptor>), description: "Requested Submodel Descriptors")]
+        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+        [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public virtual IActionResult GetAllSubmodelDescriptorsThroughSuperpath([FromRoute] [Required] string aasIdentifier, [FromQuery] int? limit,
+                                                                               [FromQuery] string cursor)
         {
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, default(GetSubmodelDescriptorsResult));
@@ -243,17 +241,17 @@ namespace IO.Swagger.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        [ HttpGet ]
-        [ Route("/shell-descriptors/{aasIdentifier}") ]
-        [ ValidateModelState ]
-        [ SwaggerOperation("GetAssetAdministrationShellDescriptorById") ]
-        [ SwaggerResponse(statusCode: 200, type: typeof(AssetAdministrationShellDescriptor), description: "Requested Asset Administration Shell Descriptor") ]
-        [ SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.") ]
-        [ SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden") ]
-        [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
-        [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
-        [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetAssetAdministrationShellDescriptorById([ FromRoute ] [ Required ] string aasIdentifier)
+        [HttpGet]
+        [Route("/shell-descriptors/{aasIdentifier}")]
+        [ValidateModelState]
+        [SwaggerOperation("GetAssetAdministrationShellDescriptorById")]
+        [SwaggerResponse(statusCode: 200, type: typeof(AssetAdministrationShellDescriptor), description: "Requested Asset Administration Shell Descriptor")]
+        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+        [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public virtual IActionResult GetAssetAdministrationShellDescriptorById([FromRoute] [Required] string aasIdentifier)
         {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             _logger.LogInformation($"Received request to get the AAS Descriptor by Id");
@@ -295,18 +293,18 @@ namespace IO.Swagger.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        [ HttpGet ]
-        [ Route("/shell-descriptors/{aasIdentifier}/submodel-descriptors/{submodelIdentifier}") ]
-        [ ValidateModelState ]
-        [ SwaggerOperation("GetSubmodelDescriptorByIdThroughSuperpath") ]
-        [ SwaggerResponse(statusCode: 200, type: typeof(SubmodelDescriptor), description: "Requested Submodel Descriptor") ]
-        [ SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.") ]
-        [ SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden") ]
-        [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
-        [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
-        [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult GetSubmodelDescriptorByIdThroughSuperpath([ FromRoute ] [ Required ] string aasIdentifier,
-            [ FromRoute ] [ Required ] string submodelIdentifier)
+        [HttpGet]
+        [Route("/shell-descriptors/{aasIdentifier}/submodel-descriptors/{submodelIdentifier}")]
+        [ValidateModelState]
+        [SwaggerOperation("GetSubmodelDescriptorByIdThroughSuperpath")]
+        [SwaggerResponse(statusCode: 200, type: typeof(SubmodelDescriptor), description: "Requested Submodel Descriptor")]
+        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+        [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public virtual IActionResult GetSubmodelDescriptorByIdThroughSuperpath([FromRoute] [Required] string aasIdentifier,
+                                                                               [FromRoute] [Required] string submodelIdentifier)
         {
             //TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(200, default(SubmodelDescriptor));
@@ -339,19 +337,19 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         //TODO (jtikekar, 2023-09-04): Routes are different than old impl
-        [ HttpPost ]
-        [ Route("/shell-descriptors") ]
-        [ ValidateModelState ]
-        [ SwaggerOperation("PostAssetAdministrationShellDescriptor") ]
-        [ SwaggerResponse(statusCode: 201, type: typeof(AssetAdministrationShellDescriptor), description: "Asset Administration Shell Descriptor created successfully") ]
-        [ SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.") ]
-        [ SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden") ]
-        [ SwaggerResponse(statusCode: 409, type: typeof(Result),
-            description:
-            "Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.") ]
-        [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
-        [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult PostAssetAdministrationShellDescriptor([ FromBody ] AssetAdministrationShellDescriptor body)
+        [HttpPost]
+        [Route("/shell-descriptors")]
+        [ValidateModelState]
+        [SwaggerOperation("PostAssetAdministrationShellDescriptor")]
+        [SwaggerResponse(statusCode: 201, type: typeof(AssetAdministrationShellDescriptor), description: "Asset Administration Shell Descriptor created successfully")]
+        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+        [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+        [SwaggerResponse(statusCode: 409, type: typeof(Result),
+                            description:
+                            "Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.")]
+        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public virtual IActionResult PostAssetAdministrationShellDescriptor([FromBody] AssetAdministrationShellDescriptor body)
         {
             var timestamp = DateTime.UtcNow;
 
@@ -385,20 +383,20 @@ namespace IO.Swagger.Controllers
         /// <response code="409">Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.</response>
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        [ HttpPost ]
-        [ Route("/shell-descriptors/{aasIdentifier}/submodel-descriptors") ]
-        [ ValidateModelState ]
-        [ SwaggerOperation("PostSubmodelDescriptorThroughSuperpath") ]
-        [ SwaggerResponse(statusCode: 201, type: typeof(SubmodelDescriptor), description: "Submodel Descriptor created successfully") ]
-        [ SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.") ]
-        [ SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden") ]
-        [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
-        [ SwaggerResponse(statusCode: 409, type: typeof(Result),
-            description:
-            "Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.") ]
-        [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
-        [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult PostSubmodelDescriptorThroughSuperpath([ FromBody ] SubmodelDescriptor body, [ FromRoute ] [ Required ] string aasIdentifier)
+        [HttpPost]
+        [Route("/shell-descriptors/{aasIdentifier}/submodel-descriptors")]
+        [ValidateModelState]
+        [SwaggerOperation("PostSubmodelDescriptorThroughSuperpath")]
+        [SwaggerResponse(statusCode: 201, type: typeof(SubmodelDescriptor), description: "Submodel Descriptor created successfully")]
+        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+        [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+        [SwaggerResponse(statusCode: 409, type: typeof(Result),
+                            description:
+                            "Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.")]
+        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public virtual IActionResult PostSubmodelDescriptorThroughSuperpath([FromBody] SubmodelDescriptor body, [FromRoute] [Required] string aasIdentifier)
         {
             //TODO: Uncomment the next line to return response 201 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(201, default(SubmodelDescriptor));
@@ -434,17 +432,17 @@ namespace IO.Swagger.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        [ HttpPut ]
-        [ Route("/shell-descriptors/{aasIdentifier}") ]
-        [ ValidateModelState ]
-        [ SwaggerOperation("PutAssetAdministrationShellDescriptorById") ]
-        [ SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.") ]
-        [ SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden") ]
-        [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
-        [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
-        [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult PutAssetAdministrationShellDescriptorById([ FromBody ] AssetAdministrationShellDescriptor body,
-            [ FromRoute ] [ Required ] byte[] aasIdentifier)
+        [HttpPut]
+        [Route("/shell-descriptors/{aasIdentifier}")]
+        [ValidateModelState]
+        [SwaggerOperation("PutAssetAdministrationShellDescriptorById")]
+        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+        [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public virtual IActionResult PutAssetAdministrationShellDescriptorById([FromBody] AssetAdministrationShellDescriptor body,
+                                                                               [FromRoute] [Required] byte[] aasIdentifier)
         {
             //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(204);
@@ -479,17 +477,17 @@ namespace IO.Swagger.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
-        [ HttpPut ]
-        [ Route("/shell-descriptors/{aasIdentifier}/submodel-descriptors/{submodelIdentifier}") ]
-        [ ValidateModelState ]
-        [ SwaggerOperation("PutSubmodelDescriptorByIdThroughSuperpath") ]
-        [ SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.") ]
-        [ SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden") ]
-        [ SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found") ]
-        [ SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error") ]
-        [ SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes") ]
-        public virtual IActionResult PutSubmodelDescriptorByIdThroughSuperpath([ FromBody ] SubmodelDescriptor body, [ FromRoute ] [ Required ] string aasIdentifier,
-            [ FromRoute ] [ Required ] string submodelIdentifier)
+        [HttpPut]
+        [Route("/shell-descriptors/{aasIdentifier}/submodel-descriptors/{submodelIdentifier}")]
+        [ValidateModelState]
+        [SwaggerOperation("PutSubmodelDescriptorByIdThroughSuperpath")]
+        [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+        [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+        [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+        [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+        [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        public virtual IActionResult PutSubmodelDescriptorByIdThroughSuperpath([FromBody] SubmodelDescriptor body, [FromRoute] [Required] string aasIdentifier,
+                                                                               [FromRoute] [Required] string submodelIdentifier)
         {
             //TODO: Uncomment the next line to return response 204 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
             // return StatusCode(204);
@@ -512,12 +510,12 @@ namespace IO.Swagger.Controllers
             throw new NotImplementedException();
         }
 
-        [ HttpPost ]
-        [ Route("/overwrite-shell-descriptors") ]
-        [ ValidateModelState ]
-        [ SwaggerOperation("PostMultipleAssetAdministrationShellDescriptors") ]
-        [ SwaggerResponse(statusCode: 201, type: typeof(List<AssetAdministrationShellDescriptor>), description: "Asset Administration Shell Descriptors created successfully") ]
-        public virtual IActionResult PostMultipleAssetAdministrationShellDescriptor([ FromBody ] List<AssetAdministrationShellDescriptor> body)
+        [HttpPost]
+        [Route("/overwrite-shell-descriptors")]
+        [ValidateModelState]
+        [SwaggerOperation("PostMultipleAssetAdministrationShellDescriptors")]
+        [SwaggerResponse(statusCode: 201, type: typeof(List<AssetAdministrationShellDescriptor>), description: "Asset Administration Shell Descriptors created successfully")]
+        public virtual IActionResult PostMultipleAssetAdministrationShellDescriptor([FromBody] List<AssetAdministrationShellDescriptor> body)
         {
             var timestamp = DateTime.UtcNow;
 
@@ -534,14 +532,14 @@ namespace IO.Swagger.Controllers
         /// <param name="assetIds">The key-value-pair of an Asset identifier (BASE64-URL-encoded JSON-serialized key-value-pairs)</param>
         /// <param name="assetId">An Asset identifier (BASE64-URL-encoded identifier)</param>
         /// <response code="200">Requested Asset Administration Shell ids</response>
-        [ HttpGet ]
-        [ Route("/lookup/shells") ]
-        [ ValidateModelState ]
-        [ SwaggerOperation("GetAllAssetAdministrationShellIdsByAssetLink") ]
-        [ SwaggerResponse(statusCode: 200, type: typeof(List<string>), description: "Requested Asset Administration Shell ids") ]
+        [HttpGet]
+        [Route("/lookup/shells")]
+        [ValidateModelState]
+        [SwaggerOperation("GetAllAssetAdministrationShellIdsByAssetLink")]
+        [SwaggerResponse(statusCode: 200, type: typeof(List<string>), description: "Requested Asset Administration Shell ids")]
         public virtual IActionResult GetAllAssetAdministrationShellIdsByAssetLink(
-            [ FromQuery ] List<SpecificAssetId> assetIds,
-            [ FromQuery ] string? assetId)
+            [FromQuery] List<SpecificAssetId> assetIds,
+            [FromQuery] string? assetId)
         {
             try
             {
