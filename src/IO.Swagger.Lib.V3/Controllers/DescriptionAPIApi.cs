@@ -40,14 +40,14 @@ public class DescriptionAPIApiController : ControllerBase
     {
         var output = new ServiceDescription
                      {
-                         Profiles = new List<ProfilesEnum>
+                         Profiles = new List<ServiceProfiles>
                                     {
-                                        ProfilesEnum.AasxFileServerServiceSpecificationSSP001,
-                                        ProfilesEnum.SubmodelRepositoryServiceSpecificationSSP001,
-                                        ProfilesEnum.AssetAdministrationShellRepositoryServiceSpecificationSSP001,
-                                        ProfilesEnum.AssetAdministrationShellRegistryServiceSpecificationSSP001,
-                                        ProfilesEnum.DiscoveryServiceSpecificationSSP001,
-                                        ProfilesEnum.ConceptDescriptionServiceSpecificationSSP001
+                                        ServiceProfiles.AasxFileServerServiceSpecificationSSP001,
+                                        ServiceProfiles.SubmodelRepositoryServiceSpecificationSSP001,
+                                        ServiceProfiles.AssetAdministrationShellRepositoryServiceSpecificationSSP001,
+                                        ServiceProfiles.AssetAdministrationShellRegistryServiceSpecificationSSP001,
+                                        ServiceProfiles.DiscoveryServiceSpecificationSSP001,
+                                        ServiceProfiles.ConceptDescriptionServiceSpecificationSSP001
                                     }
                      };
         return new ObjectResult(output);

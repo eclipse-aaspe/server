@@ -14,221 +14,122 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 
-namespace IO.Swagger.Models
+namespace IO.Swagger.Models;
+
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+/// <summary>
+/// The Description object enables servers to present their capabilities to the clients, in particular which profiles they implement. At least one defined profile is required. Additional, proprietary attributes might be included. Nevertheless, the server must not expect that a regular client understands them.
+/// </summary>
+[DataContract]
+public partial class ServiceDescription : IEquatable<ServiceDescription>
 {
-    using System.Text.Json;
-    using System.Text.Json.Serialization;
+    /// <summary>
+    /// Gets or Sets Profiles
+    /// </summary>
+
+    [DataMember(Name = "profiles")]
+    public List<ServiceProfiles>? Profiles { get; set; }
 
     /// <summary>
-    /// The Description object enables servers to present their capabilities to the clients, in particular which profiles they implement. At least one defined profile is required. Additional, proprietary attributes might be included. Nevertheless, the server must not expect that a regular client understands them.
+    /// Returns the string presentation of the object
     /// </summary>
-    [DataContract]
-    public partial class ServiceDescription : IEquatable<ServiceDescription>
+    /// <returns>String presentation of the object</returns>
+    public override string ToString()
     {
-        /// <summary>
-        /// Gets or Sets Profiles
-        /// </summary>
-        public enum ProfilesEnum
+        var sb = new StringBuilder();
+        sb.Append("class ServiceDescription {\n");
+        sb.Append("  Profiles: ").Append(Profiles).Append('\n');
+        sb.Append("}\n");
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Returns the JSON string presentation of the object
+    /// </summary>
+    /// <returns>JSON string presentation of the object</returns>
+    public string ToJson() => JsonSerializer.Serialize(this, Options);
+
+    private static readonly JsonSerializerOptions Options = new()
+                                                            {
+                                                                WriteIndented          = true,
+                                                                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                                                                Converters             = {new JsonStringEnumConverter()}
+                                                            };
+
+
+    /// <summary>
+    /// Returns true if objects are equal
+    /// </summary>
+    /// <param name="obj">Object to be compared</param>
+    /// <returns>Boolean</returns>
+    public override bool Equals(object? obj)
+    {
+        if (ReferenceEquals(null, obj))
         {
-            /// <summary>
-            /// Enum AssetAdministrationShellServiceSpecificationSSP001 for https://admin-shell.io/aas/API/3/0/AssetAdministrationShellServiceSpecification/SSP-001
-            /// </summary>
-            [EnumMember(Value = "https://admin-shell.io/aas/API/3/0/AssetAdministrationShellServiceSpecification/SSP-001")]
-            AssetAdministrationShellServiceSpecificationSSP001 = 0,
-
-            /// <summary>
-            /// Enum AssetAdministrationShellServiceSpecificationSSP002 for https://admin-shell.io/aas/API/3/0/AssetAdministrationShellServiceSpecification/SSP-002
-            /// </summary>
-            [EnumMember(Value = "https://admin-shell.io/aas/API/3/0/AssetAdministrationShellServiceSpecification/SSP-002")]
-            AssetAdministrationShellServiceSpecificationSSP002 = 1,
-
-            /// <summary>
-            /// Enum SubmodelServiceSpecificationSSP001 for https://admin-shell.io/aas/API/3/0/SubmodelServiceSpecification/SSP-001
-            /// </summary>
-            [EnumMember(Value = "https://admin-shell.io/aas/API/3/0/SubmodelServiceSpecification/SSP-001")]
-            SubmodelServiceSpecificationSSP001 = 2,
-
-            /// <summary>
-            /// Enum SubmodelServiceSpecificationSSP002 for https://admin-shell.io/aas/API/3/0/SubmodelServiceSpecification/SSP-002
-            /// </summary>
-            [EnumMember(Value = "https://admin-shell.io/aas/API/3/0/SubmodelServiceSpecification/SSP-002")]
-            SubmodelServiceSpecificationSSP002 = 3,
-
-            /// <summary>
-            /// Enum SubmodelServiceSpecificationSSP003 for https://admin-shell.io/aas/API/3/0/SubmodelServiceSpecification/SSP-003
-            /// </summary>
-            [EnumMember(Value = "https://admin-shell.io/aas/API/3/0/SubmodelServiceSpecification/SSP-003")]
-            SubmodelServiceSpecificationSSP003 = 4,
-
-            /// <summary>
-            /// Enum AasxFileServerServiceSpecificationSSP001 for https://admin-shell.io/aas/API/3/0/AasxFileServerServiceSpecification/SSP-001
-            /// </summary>
-            [EnumMember(Value = "https://admin-shell.io/aas/API/3/0/AasxFileServerServiceSpecification/SSP-001")]
-            AasxFileServerServiceSpecificationSSP001 = 5,
-
-            /// <summary>
-            /// Enum AssetAdministrationShellRegistryServiceSpecificationSSP001 for https://admin-shell.io/aas/API/3/0/AssetAdministrationShellRegistryServiceSpecification/SSP-001
-            /// </summary>
-            [EnumMember(Value = "https://admin-shell.io/aas/API/3/0/AssetAdministrationShellRegistryServiceSpecification/SSP-001")]
-            AssetAdministrationShellRegistryServiceSpecificationSSP001 = 6,
-
-            /// <summary>
-            /// Enum AssetAdministrationShellRegistryServiceSpecificationSSP002 for https://admin-shell.io/aas/API/3/0/AssetAdministrationShellRegistryServiceSpecification/SSP-002
-            /// </summary>
-            [EnumMember(Value = "https://admin-shell.io/aas/API/3/0/AssetAdministrationShellRegistryServiceSpecification/SSP-002")]
-            AssetAdministrationShellRegistryServiceSpecificationSSP002 = 7,
-
-            /// <summary>
-            /// Enum SubmodelRegistryServiceSpecificationSSP001 for https://admin-shell.io/aas/API/3/0/SubmodelRegistryServiceSpecification/SSP-001
-            /// </summary>
-            [EnumMember(Value = "https://admin-shell.io/aas/API/3/0/SubmodelRegistryServiceSpecification/SSP-001")]
-            SubmodelRegistryServiceSpecificationSSP001 = 8,
-
-            /// <summary>
-            /// Enum SubmodelRegistryServiceSpecificationSSP002 for https://admin-shell.io/aas/API/3/0/SubmodelRegistryServiceSpecification/SSP-002
-            /// </summary>
-            [EnumMember(Value = "https://admin-shell.io/aas/API/3/0/SubmodelRegistryServiceSpecification/SSP-002")]
-            SubmodelRegistryServiceSpecificationSSP002 = 9,
-
-            /// <summary>
-            /// Enum DiscoveryServiceSpecificationSSP001 for https://admin-shell.io/aas/API/3/0/DiscoveryServiceSpecification/SSP-001
-            /// </summary>
-            [EnumMember(Value = "https://admin-shell.io/aas/API/3/0/DiscoveryServiceSpecification/SSP-001")]
-            DiscoveryServiceSpecificationSSP001 = 10,
-
-            /// <summary>
-            /// Enum AssetAdministrationShellRepositoryServiceSpecificationSSP001 for https://admin-shell.io/aas/API/3/0/AssetAdministrationShellRepositoryServiceSpecification/SSP-001
-            /// </summary>
-            [EnumMember(Value = "https://admin-shell.io/aas/API/3/0/AssetAdministrationShellRepositoryServiceSpecification/SSP-001")]
-            AssetAdministrationShellRepositoryServiceSpecificationSSP001 = 11,
-
-            /// <summary>
-            /// Enum AssetAdministrationShellRepositoryServiceSpecificationSSP002 for https://admin-shell.io/aas/API/3/0/AssetAdministrationShellRepositoryServiceSpecification/SSP-002
-            /// </summary>
-            [EnumMember(Value = "https://admin-shell.io/aas/API/3/0/AssetAdministrationShellRepositoryServiceSpecification/SSP-002")]
-            AssetAdministrationShellRepositoryServiceSpecificationSSP002 = 12,
-
-            /// <summary>
-            /// Enum SubmodelRepositoryServiceSpecificationSSP001 for https://admin-shell.io/aas/API/3/0/SubmodelRepositoryServiceSpecification/SSP-001
-            /// </summary>
-            [EnumMember(Value = "https://admin-shell.io/aas/API/3/0/SubmodelRepositoryServiceSpecification/SSP-001")]
-            SubmodelRepositoryServiceSpecificationSSP001 = 13,
-
-            /// <summary>
-            /// Enum SubmodelRepositoryServiceSpecificationSSP002 for https://admin-shell.io/aas/API/3/0/SubmodelRepositoryServiceSpecification/SSP-002
-            /// </summary>
-            [EnumMember(Value = "https://admin-shell.io/aas/API/3/0/SubmodelRepositoryServiceSpecification/SSP-002")]
-            SubmodelRepositoryServiceSpecificationSSP002 = 14,
-
-            /// <summary>
-            /// Enum SubmodelRepositoryServiceSpecificationSSP003 for https://admin-shell.io/aas/API/3/0/SubmodelRepositoryServiceSpecification/SSP-003
-            /// </summary>
-            [EnumMember(Value = "https://admin-shell.io/aas/API/3/0/SubmodelRepositoryServiceSpecification/SSP-003")]
-            SubmodelRepositoryServiceSpecificationSSP003 = 15,
-
-            /// <summary>
-            /// Enum SubmodelRepositoryServiceSpecificationSSP004 for https://admin-shell.io/aas/API/3/0/SubmodelRepositoryServiceSpecification/SSP-004
-            /// </summary>
-            [EnumMember(Value = "https://admin-shell.io/aas/API/3/0/SubmodelRepositoryServiceSpecification/SSP-004")]
-            SubmodelRepositoryServiceSpecificationSSP004 = 16,
-
-            /// <summary>
-            /// Enum ConceptDescriptionServiceSpecificationSSP001 for https://admin-shell.io/aas/API/3/0/ConceptDescriptionServiceSpecification/SSP-001
-            /// </summary>
-            [EnumMember(Value = "https://admin-shell.io/aas/API/3/0/ConceptDescriptionServiceSpecification/SSP-001")]
-            ConceptDescriptionServiceSpecificationSSP001 = 17
+            return false;
         }
 
-        /// <summary>
-        /// Gets or Sets Profiles
-        /// </summary>
-
-        [DataMember(Name = "profiles")]
-        public List<ProfilesEnum>? Profiles { get; set; }
-
-        /// <summary>
-        /// Returns the string presentation of the object
-        /// </summary>
-        /// <returns>String presentation of the object</returns>
-        public override string ToString()
+        if (ReferenceEquals(this, obj))
         {
-            var sb = new StringBuilder();
-            sb.Append("class ServiceDescription {\n");
-            sb.Append("  Profiles: ").Append(Profiles).Append("\n");
-            sb.Append("}\n");
-            return sb.ToString();
+            return true;
         }
 
-        /// <summary>
-        /// Returns the JSON string presentation of the object
-        /// </summary>
-        /// <returns>JSON string presentation of the object</returns>
-        public string ToJson() => JsonSerializer.Serialize(this, options);
+        return obj.GetType() == GetType() && Equals((ServiceDescription)obj);
+    }
 
-        private static readonly JsonSerializerOptions options = new() {WriteIndented = true, IgnoreNullValues = true, Converters = {new JsonStringEnumConverter()}};
-
-
-        /// <summary>
-        /// Returns true if objects are equal
-        /// </summary>
-        /// <param name="obj">Object to be compared</param>
-        /// <returns>Boolean</returns>
-        public override bool Equals(object? obj)
+    /// <summary>
+    /// Returns true if ServiceDescription instances are equal
+    /// </summary>
+    /// <param name="other">Instance of ServiceDescription to be compared</param>
+    /// <returns>Boolean</returns>
+    public bool Equals(ServiceDescription? other)
+    {
+        if (ReferenceEquals(null, other))
         {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            return obj.GetType() == GetType() && Equals((ServiceDescription)obj);
+            return false;
         }
 
-        /// <summary>
-        /// Returns true if ServiceDescription instances are equal
-        /// </summary>
-        /// <param name="other">Instance of ServiceDescription to be compared</param>
-        /// <returns>Boolean</returns>
-        public bool Equals(ServiceDescription? other)
+        if (ReferenceEquals(this, other))
         {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-
-            return
-                Profiles == other.Profiles ||
-                (Profiles != null &&
-                 Profiles.SequenceEqual(other.Profiles))
-                ;
+            return true;
         }
 
-        /// <summary>
-        /// Gets the hash code
-        /// </summary>
-        /// <returns>Hash code</returns>
-        public override int GetHashCode()
+        return
+            other.Profiles != null && (Profiles == other.Profiles ||
+                                       (Profiles != null &&
+                                        Profiles.SequenceEqual(other.Profiles)));
+    }
+
+    /// <summary>
+    /// Gets the hash code
+    /// </summary>
+    /// <returns>Hash code</returns>
+    public override int GetHashCode()
+    {
+        unchecked // Overflow is fine, just wrap
         {
-            unchecked // Overflow is fine, just wrap
+            var hashCode = 41;
+            // Suitable nullity checks etc., of course :)
+            if (Profiles != null)
             {
-                var hashCode = 41;
-                // Suitable nullity checks etc., of course :)
-                if (Profiles != null)
-                    hashCode = (hashCode * 59) + Profiles.GetHashCode();
-                return hashCode;
+                hashCode = (hashCode * 59) + Profiles.GetHashCode();
             }
-        }
 
-        #region Operators
+            return hashCode;
+        }
+    }
+
+    #region Operators
 
 #pragma warning disable 1591
 
-        public static bool operator ==(ServiceDescription left, ServiceDescription right)
-        {
-            return Equals(left, right);
-        }
+    public static bool operator ==(ServiceDescription left, ServiceDescription right) => Equals(left, right);
 
-        public static bool operator !=(ServiceDescription left, ServiceDescription right)
-        {
-            return !Equals(left, right);
-        }
+    public static bool operator !=(ServiceDescription left, ServiceDescription right) => !Equals(left, right);
 
 #pragma warning restore 1591
 
-        #endregion Operators
-    }
+    #endregion Operators
 }
