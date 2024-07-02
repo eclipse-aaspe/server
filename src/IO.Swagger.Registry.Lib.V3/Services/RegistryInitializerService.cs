@@ -23,21 +23,19 @@ using System.Threading.Tasks;
 namespace IO.Swagger.Registry.Lib.V3.Services;
 
 using System.Globalization;
-using Environment = AasCore.Aas3_0.Environment;
 
 public class RegistryInitializerService : IRegistryInitializerService
 {
     private const string AasxFilesChainPfx = "/aasx/files/Andreas_Orzelski_Chain.pfx";
-    static bool init;
-    static ISubmodel? aasRegistry;
-    static ISubmodel? submodelRegistry;
-    static int initiallyEmpty = 0;
-    static Environment? envRegistry;
-    static List<string> getRegistry = [];
-    static List<string> postRegistry = [];
-    static List<string?> federatedElemensSemanticId = [];
-    static int submodelRegistryCount;
-    static List<AssetAdministrationShellDescriptor> aasDescriptorsForSubmodelView = new List<AssetAdministrationShellDescriptor>();
+    private static bool init;
+    private static ISubmodel? aasRegistry;
+    private static ISubmodel? submodelRegistry;
+    private static int initiallyEmpty;
+    private static List<string> getRegistry = [];
+    private static List<string> postRegistry = [];
+    private static List<string?> federatedElemensSemanticId = [];
+    private static int submodelRegistryCount;
+    private static List<AssetAdministrationShellDescriptor> aasDescriptorsForSubmodelView = [];
 
     public List<string> GetRegistryList() => getRegistry;
 
@@ -45,7 +43,7 @@ public class RegistryInitializerService : IRegistryInitializerService
 
     public List<AssetAdministrationShellDescriptor> GetAasDescriptorsForSubmodelView() => aasDescriptorsForSubmodelView;
 
-    public static X509Certificate2? certificate = null;
+    public static X509Certificate2? Certificate;
 
     public async Task InitRegistry(List<AasxCredentialsEntry> cList, DateTime timestamp, bool initAgain = false)
     {
@@ -81,7 +79,6 @@ public class RegistryInitializerService : IRegistryInitializerService
                     continue;
                 }
 
-                envRegistry = env.AasEnv;
                 if (aas.Submodels == null || aas.Submodels.Count <= 0)
                 {
                     continue;
@@ -207,7 +204,7 @@ public class RegistryInitializerService : IRegistryInitializerService
                     s2.CopyTo(m);
                     var b = m.GetBuffer();
                     xc.Import(b, certificatePassword, X509KeyStorageFlags.PersistKeySet);
-                    certificate = new X509Certificate2(b, certificatePassword);
+                    Certificate = new X509Certificate2(b, certificatePassword);
                     Console.WriteLine($"Client certificate: {AasxFilesChainPfx}");
                     s2.Close();
                 }
@@ -522,7 +519,7 @@ public class RegistryInitializerService : IRegistryInitializerService
 
                                                     if (policy != "")
                                                     {
-                                                        var          credential = new X509SigningCredentials(certificate);
+                                                        var          credential = new X509SigningCredentials(Certificate);
                                                         const string clientId   = "client.jwt";
                                                         var          now        = DateTime.UtcNow;
                                                         var claimList =
@@ -904,11 +901,11 @@ public class RegistryInitializerService : IRegistryInitializerService
         Program.signalNewData(2);
     }
 
-    static void AddAasDescriptorToRegistry(AssetAdministrationShellDescriptor ad, DateTime timestamp, bool initial = false)
+    private static void AddAasDescriptorToRegistry(AssetAdministrationShellDescriptor ad, DateTime timestamp, bool initial = false)
     {
         var aasID    = ad.Id;
         var assetID  = ad.GlobalAssetId;
-        var endpoint = $"";
+        var endpoint = string.Empty;
         if (ad.Endpoints != null && ad.Endpoints.Count != 0)
         {
             endpoint = ad.Endpoints[0].ProtocolInformation?.Href;
@@ -941,19 +938,17 @@ public class RegistryInitializerService : IRegistryInitializerService
                             found++;
                         }
 
-                        if (ep.IdShort == "assetID" && ep.Value == assetID)
+                        switch (ep.IdShort)
                         {
-                            found++;
-                        }
-
-                        if (ep.IdShort == "descriptorJSON")
-                        {
-                            pjson = ep;
-                        }
-
-                        if (ep.IdShort == "endpoint")
-                        {
-                            pep = ep;
+                            case "assetID" when ep.Value == assetID:
+                                found++;
+                                break;
+                            case "descriptorJSON":
+                                pjson = ep;
+                                break;
+                            case "endpoint":
+                                pep = ep;
+                                break;
                         }
                     }
                 }
