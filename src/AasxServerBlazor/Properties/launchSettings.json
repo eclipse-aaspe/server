@@ -14,7 +14,7 @@
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "AASREGISTRY": "http://localhost:50001",
+        "AASREGISTRY": "http://localhost:5001",
         "IFRAMEPATH": "https://dpp40-2-v2.industrialdigitaltwin.org/dashboard/submodelViewV3.html"
       },
       "applicationUrl": "http://localhost:5001",

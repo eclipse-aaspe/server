@@ -15,6 +15,10 @@ using System.Runtime.Intrinsics.X86;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Collections;
+using System.Security.AccessControl;
+using TimeStamp;
+using System.Collections.Generic;
+using System.Xml.Linq;
 
 namespace AasxServerDB
 {
@@ -23,6 +27,8 @@ namespace AasxServerDB
         AASXSet? _aasxDB;
         SMSet? _smDB;
         SMESet? _parSME = null;
+        /* 1. Version
+        string _oprPrefix = string.Empty;*/
 
         public VisitorAASX(AASXSet? aasxDB = null)
         {
@@ -130,19 +136,20 @@ namespace AasxServerDB
         {
             return sme switch
                    {
-                       Capability                   => "Cap",
+                       RelationshipElement          => "Rel",
+                       AnnotatedRelationshipElement => "RelA",
                        Property                     => "Prop",
                        MultiLanguageProperty        => "MLP",
                        AasCore.Aas3_0.Range         => "Range",
-                       Entity                       => "Ent",
-                       AasCore.Aas3_0.File          => "File",
                        Blob                         => "Blob",
-                       Operation                    => "Opr",
+                       AasCore.Aas3_0.File          => "File",
                        ReferenceElement             => "Ref",
-                       RelationshipElement          => "Rel",
-                       AnnotatedRelationshipElement => "RelA",
-                       SubmodelElementCollection    => "SMC",
+                       Capability                   => "Cap",
                        SubmodelElementList          => "SML",
+                       SubmodelElementCollection    => "SMC",
+                       Entity                       => "Ent",
+                       BasicEventElement            => "Evt",
+                       Operation                    => "Opr",
                        _                            => string.Empty
                    };
         }
@@ -226,22 +233,6 @@ namespace AasxServerDB
                 else if (smeDB.ValueType.Equals("D"))
                     smeDB.DValueSets.Add(new DValueSet { Value = dValue, Annotation = string.Empty });
             }
-            else if (sme is AasCore.Aas3_0.File file)
-            {
-                if (file.Value.IsNullOrEmpty() && file.ContentType.IsNullOrEmpty())
-                    return;
-
-                smeDB.ValueType = "S";
-                smeDB.SValueSets.Add(new SValueSet { Value = file.Value, Annotation = file.ContentType });
-            }
-            else if (sme is Blob blob)
-            {
-                if (blob.Value.IsNullOrEmpty() && blob.ContentType.IsNullOrEmpty())
-                    return;
-
-                smeDB.ValueType = "S";
-                smeDB.SValueSets.Add(new SValueSet { Value = blob.Value != null ? Encoding.ASCII.GetString(blob.Value) : string.Empty, Annotation = blob.ContentType });
-            }
             else if (sme is MultiLanguageProperty mlp)
             {
                 if (mlp.Value == null || mlp.Value.Count == 0)
@@ -251,11 +242,6 @@ namespace AasxServerDB
                 if (mlp.Value != null)
                     foreach (var sValueMLP in mlp.Value)
                         smeDB.SValueSets.Add(new SValueSet() { Annotation = sValueMLP.Language, Value = sValueMLP.Text });
-            }
-            else if (sme is Entity entity)
-            {
-                smeDB.ValueType = "S";
-                smeDB.SValueSets.Add(new SValueSet { Value = entity.GlobalAssetId, Annotation = entity.EntityType.ToString() });
             }
             else if (sme is AasCore.Aas3_0.Range range)
             {
@@ -311,16 +297,37 @@ namespace AasxServerDB
                         smeDB.DValueSets.Add(new DValueSet { Value = dValueMax, Annotation = "Max" });
                 }
             }
+            else if (sme is Blob blob)
+            {
+                if (blob.Value.IsNullOrEmpty() && blob.ContentType.IsNullOrEmpty())
+                    return;
+
+                smeDB.ValueType = "S";
+                smeDB.SValueSets.Add(new SValueSet { Value = blob.Value != null ? Encoding.ASCII.GetString(blob.Value) : string.Empty, Annotation = blob.ContentType });
+            }
+            else if (sme is AasCore.Aas3_0.File file)
+            {
+                if (file.Value.IsNullOrEmpty() && file.ContentType.IsNullOrEmpty())
+                    return;
+
+                smeDB.ValueType = "S";
+                smeDB.SValueSets.Add(new SValueSet { Value = file.Value, Annotation = file.ContentType });
+            }
+            else if (sme is Entity entity)
+            {
+                smeDB.ValueType = "S";
+                smeDB.SValueSets.Add(new SValueSet { Value = entity.GlobalAssetId, Annotation = entity.EntityType.ToString() });
+            }
         }
 
         private SMESet collectSMEData(ISubmodelElement sme)
         {
             var semanticId = sme.SemanticId.GetAsIdentifier() ?? string.Empty;
 
-            DateTime currentDataTime = DateTime.UtcNow;
-            DateTime timeStamp = (sme.TimeStamp == default(DateTime)) ? currentDataTime : sme.TimeStamp;
-            DateTime timeStampCreate = (sme.TimeStampCreate == default(DateTime)) ? currentDataTime : sme.TimeStampCreate;
-            DateTime timeStampTree = (sme.TimeStampTree == default(DateTime)) ? currentDataTime : sme.TimeStampTree;
+            var currentDataTime = DateTime.UtcNow;
+            var timeStamp = (sme.TimeStamp == default) ? currentDataTime : sme.TimeStamp;
+            var timeStampCreate = (sme.TimeStampCreate == default) ? currentDataTime : sme.TimeStampCreate;
+            var timeStampTree = (sme.TimeStampTree == default) ? currentDataTime : sme.TimeStampTree;
 
             var smeType = shortSMEType(sme);
             var smeDB = new SMESet
@@ -329,7 +336,7 @@ namespace AasxServerDB
                             SMEType    = smeType,
                             ValueType  = string.Empty,
                             SemanticId = semanticId,
-                            IdShort    = sme.IdShort,
+                            IdShort = /* 1. Version _oprPrefix +*/ sme.IdShort,
                             TimeStamp = timeStamp,
                             TimeStampCreate = timeStampCreate,
                             TimeStampTree = timeStampTree
@@ -354,10 +361,11 @@ namespace AasxServerDB
         }
         public override void VisitAssetAdministrationShell(IAssetAdministrationShell that)
         {
-            DateTime currentDataTime = DateTime.UtcNow;
-            DateTime timeStamp = (that.TimeStamp == default(DateTime))? currentDataTime : that.TimeStamp;
-            DateTime timeStampCreate = (that.TimeStampCreate == default(DateTime)) ? currentDataTime : that.TimeStampCreate;
-            DateTime timeStampTree = (that.TimeStampTree == default(DateTime)) ? currentDataTime : that.TimeStampTree;
+            var currentDataTime = DateTime.UtcNow;
+            var timeStamp = (that.TimeStamp == default)? currentDataTime : that.TimeStamp;
+            var timeStampCreate = (that.TimeStampCreate == default) ? currentDataTime : that.TimeStampCreate;
+            var timeStampTree = (that.TimeStampTree == default) ? currentDataTime : that.TimeStampTree;
+
             var aasDB = new AASSet
                         {
                             Identifier    = that.Id,
@@ -389,6 +397,7 @@ namespace AasxServerDB
             var timeStamp = (that.TimeStamp == default) ? currentDataTime : that.TimeStamp;
             var timeStampCreate = (that.TimeStampCreate == default) ? currentDataTime : that.TimeStampCreate;
             var timeStampTree = (that.TimeStampTree == default) ? currentDataTime : that.TimeStampTree;
+
             var semanticId = that.SemanticId.GetAsIdentifier();
             if (semanticId.IsNullOrEmpty())
                 semanticId = string.Empty;
@@ -412,7 +421,6 @@ namespace AasxServerDB
         public override void VisitSubmodelElementList(ISubmodelElementList that)
         {
             var smeSet = collectSMEData(that);
-            smeSet.ParentSME = _parSME;
             _parSME          = smeSet;
             base.VisitSubmodelElementList(that);
             _parSME = smeSet.ParentSME;
@@ -421,7 +429,6 @@ namespace AasxServerDB
         public override void VisitSubmodelElementCollection(ISubmodelElementCollection that)
         {
             var smeSet = collectSMEData(that);
-            smeSet.ParentSME = _parSME;
             _parSME          = smeSet;
             base.VisitSubmodelElementCollection(that);
             _parSME = smeSet.ParentSME;
@@ -459,13 +466,14 @@ namespace AasxServerDB
         }
         public override void VisitAnnotatedRelationshipElement(IAnnotatedRelationshipElement that)
         {
-            collectSMEData(that);
+            var smeSet = collectSMEData(that);
+            _parSME = smeSet;
             base.VisitAnnotatedRelationshipElement(that);
+            _parSME = smeSet.ParentSME;
         }
         public override void VisitEntity(IEntity that)
         {
             var smeSet = collectSMEData(that);
-            smeSet.ParentSME = _parSME;
             _parSME = smeSet;
             base.VisitEntity(that);
             _parSME = smeSet.ParentSME;
@@ -481,8 +489,57 @@ namespace AasxServerDB
         }
         public override void VisitOperation(IOperation that)
         {
-            collectSMEData(that);
-            base.VisitOperation(that);
+            /* 1. Version
+            var smeSet = collectSMEData(that);
+            _parSME = smeSet;
+            _oprPrefix = "Input_";
+            foreach (var item in that.InputVariables)
+                base.VisitOperationVariable(item);
+            _oprPrefix = "Output_";
+            foreach (var item in that.OutputVariables)
+                base.VisitOperationVariable(item);
+            _oprPrefix = "Inoutput_";
+            foreach (var item in that.InoutputVariables)
+                base.VisitOperationVariable(item);
+            _oprPrefix = string.Empty;
+            _parSME = smeSet.ParentSME;
+            */
+
+            /* 2. Version */
+            var smeSet = collectSMEData(that);
+            _parSME = smeSet;
+            SetOperationVariable(smeSet, that.InputVariables, "InputVariables");
+            SetOperationVariable(smeSet, that.OutputVariables, "OutputVariables");
+            SetOperationVariable(smeSet, that.InoutputVariables, "InoutputVariables");
+            _parSME = smeSet.ParentSME;
+        }
+        public void SetOperationVariable(SMESet smeOpr, List<IOperationVariable>? listOpr, string name)
+        {
+            if (listOpr == null || listOpr.Count == 0)
+                return;
+
+            var currentDataTime = DateTime.UtcNow;
+            var timeStamp = (smeOpr.TimeStamp == default) ? currentDataTime : smeOpr.TimeStamp;
+            var timeStampCreate = (smeOpr.TimeStampCreate == default) ? currentDataTime : smeOpr.TimeStampCreate;
+            var timeStampTree = (smeOpr.TimeStampTree == default) ? currentDataTime : smeOpr.TimeStampTree;
+
+            var smeDB = new SMESet
+            {
+                ParentSME = _parSME,
+                IdShort = name,
+                SMEType = "OperationVariable",
+                TimeStamp = timeStamp,
+                TimeStampCreate = timeStampCreate,
+                TimeStampTree = timeStampTree
+            };
+            _smDB?.SMESets.Add(smeDB);
+
+            _parSME = smeDB;
+
+            foreach (var item in listOpr)
+                base.VisitOperationVariable(item);
+
+            _parSME = smeDB.ParentSME;
         }
         public override void VisitOperationVariable(IOperationVariable that)
         {

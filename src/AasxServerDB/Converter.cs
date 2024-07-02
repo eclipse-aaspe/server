@@ -54,6 +54,7 @@ namespace AasxServerDB
                         return null;
                     smDB = smList.First();
                 }
+
                 if (smDB == null)
                     return null;
 
@@ -62,13 +63,13 @@ namespace AasxServerDB
                     .Where(sme => sme.SMId == smDB.Id)
                     .ToList();
 
-                Submodel submodel = new Submodel(smDB.Identifier);
+                var submodel = new Submodel(smDB.Identifier);
                 submodel.IdShort = smDB.IdShort;
                 submodel.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
                     new List<IKey>() { new Key(KeyTypes.GlobalReference, smDB.SemanticId) });
                 submodel.SubmodelElements = new List<ISubmodelElement>();
 
-                LoadSME(submodel, null, null, SMEList, null);
+                LoadSME(submodel, null, null, SMEList);
 
                 submodel.TimeStampCreate = smDB.TimeStampCreate;
                 submodel.TimeStamp = smDB.TimeStamp;
@@ -76,91 +77,163 @@ namespace AasxServerDB
                 submodel.SetAllParents();
 
                 return submodel;
-            }           
+            }
         }
 
-        static private void LoadSME(Submodel submodel, ISubmodelElement? sme, string? SMEType, List<SMESet> SMEList, int? smeId)
+        static private void LoadSME(Submodel submodel, ISubmodelElement? sme, SMESet? smeSet, List<SMESet> SMEList)
         {
-            var smeLevel = SMEList.Where(s => s.ParentSMEId == smeId).OrderBy(s => s.IdShort).ToList();
+            var smeSets = SMEList.Where(s => s.ParentSMEId == (smeSet != null ? smeSet.Id : null)).OrderBy(s => s.IdShort).ToList();
 
-            foreach (var smel in smeLevel)
+            foreach (var smel in smeSets)
             {
-                ISubmodelElement? nextSME = null;
-                var value = smel.getValue();
-                switch (smel.SMEType)
-                {
-                    case "Prop":
-                        nextSME = new Property(DataTypeDefXsd.String, value: value.First()[0]);
-                        break;
-                    case "SMC":
-                        nextSME = new SubmodelElementCollection(value: new List<ISubmodelElement>());
-                        break;
-                    case "MLP":
-                        nextSME = new MultiLanguageProperty(
-                            value: value.ConvertAll<ILangStringTextType>(val => new LangStringTextType(val[1], val[0])));
-                        break;
-                    case "File":
-                        nextSME = new AasCore.Aas3_0.File(value.First()[1], value: value.First()[0]);
-                        break;
-                    case "Blob":
-                        nextSME = new Blob(value.First()[1], value: Encoding.ASCII.GetBytes(value.First()[0]));
-                        break;
-                    case "Ent":
-                        nextSME = new Entity(
-                            value.First()[1].Equals("SelfManagedEntity") ? EntityType.SelfManagedEntity : EntityType.CoManagedEntity,
-                            globalAssetId: value.First()[0],
-                            statements: new List<ISubmodelElement>());
-                        break;
-                    case "Range":
-                        var valueType = new AasContext().SMESets.Where(smeDB => smeDB.Id == smel.Id).Select(smeDB => smeDB.ValueType).First();
-                        var dataType = DataTypeDefXsd.String;
-                        if (valueType != null && valueType.Equals("I"))
-                            dataType = DataTypeDefXsd.Integer;
-                        else if (valueType != null && valueType.Equals("D"))
-                            dataType = DataTypeDefXsd.Double;
-                        var findMin = value.Find(val => val[1].Equals("Min"));
-                        var findMax = value.Find(val => val[1].Equals("Max"));
-                        var minValue = findMin != null ? findMin[0] : string.Empty;
-                        var maxValue = findMax != null ? findMax[0] : string.Empty;
-                        nextSME = new AasCore.Aas3_0.Range(dataType, min: minValue, max: maxValue);
-                        break;
-                }
+                // create SME from database
+                ISubmodelElement nextSME = createSME(smel);
 
-                if (nextSME == null)
-                    continue;
-
-                nextSME.IdShort = smel.IdShort;
-                if (!smel.SemanticId.IsNullOrEmpty())
-                {
-                    nextSME.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
-                        new List<IKey>() { new Key(KeyTypes.GlobalReference, smel.SemanticId) });
-                }
-                nextSME.TimeStamp = smel.TimeStamp;
-                nextSME.TimeStampCreate = smel.TimeStampCreate;
-                nextSME.TimeStampTree = smel.TimeStampTree;
-
+                // add sme to sm or sme 
                 if (sme == null)
                 {
                     submodel.Add(nextSME);
                 }
                 else
                 {
-                    switch (SMEType)
+                    switch (smeSet.SMEType)
                     {
+                        case "RelA":
+                            (sme as AnnotatedRelationshipElement).Annotations.Add((IDataElement) nextSME);
+                            break;
+                        case "SML":
+                            (sme as SubmodelElementList).Value.Add(nextSME);
+                            break;
                         case "SMC":
                             (sme as SubmodelElementCollection).Value.Add(nextSME);
                             break;
                         case "Ent":
                             (sme as Entity).Statements.Add(nextSME);
                             break;
+                        /* 1. Version 
+                        case "Opr":
+                            if (nextSME.IdShort.StartsWith("Input_"))
+                                (sme as Operation).InputVariables.Add(new OperationVariable(nextSME));
+                            else if (nextSME.IdShort.StartsWith("Output_"))
+                                (sme as Operation).OutputVariables.Add(new OperationVariable(nextSME));
+                            else if (nextSME.IdShort.StartsWith("Inoutput_"))
+                                (sme as Operation).InoutputVariables.Add(new OperationVariable(nextSME));
+                            break;*/
+                        /* 2. Version */
+                        case "OperationVariable":
+                            switch (smeSet.IdShort)
+                            {
+                                case "InputVariables":
+                                    (sme as Operation).InputVariables.Add(new OperationVariable(nextSME));
+                                    break;
+                                case "OutputVariables":
+                                    (sme as Operation).OutputVariables.Add(new OperationVariable(nextSME));
+                                    break;
+                                case "InoutputVariables":
+                                    (sme as Operation).InoutputVariables.Add(new OperationVariable(nextSME));
+                                    break;
+                            }
+                            break;
                     }
                 }
 
-                if (smel.SMEType.Equals("SMC") || smel.SMEType.Equals("Ent"))
+                // recursiv, call for child sme's
+                switch (smel.SMEType)
                 {
-                    LoadSME(submodel, nextSME, smel.SMEType, SMEList, smel.Id);
+                    case "RelA":
+                    case "SML":
+                    case "SMC":
+                    case "Ent":
+                    /* case "Opr": 1. Version */
+                        LoadSME(submodel, nextSME, smel, SMEList);
+                        break;
+                    /* 2. Version */
+                    case "Opr":
+                        var smeOprVar = SMEList.Where(s => s.ParentSMEId == smel.Id).ToList();
+                        foreach (var oprVar in smeOprVar)
+                            LoadSME(submodel, nextSME, oprVar, SMEList);
+                        break;
                 }
             }
+        }
+
+        static private ISubmodelElement createSME(SMESet smeSet)
+        {
+            ISubmodelElement? sme = null;
+            var value = smeSet.getValue();
+            switch (smeSet.SMEType)
+            {
+                case "Rel":
+                    sme = new RelationshipElement(first: null, second: null);
+                    break;
+                case "RelA":
+                    sme = new AnnotatedRelationshipElement(first: null, second: null, annotations: new List<IDataElement>());
+                    break;
+                case "Prop":
+                    sme = new Property(DataTypeDefXsd.String, value: value.First()[0]);
+                    break;
+                case "MLP":
+                    sme = new MultiLanguageProperty(
+                        value: value.ConvertAll<ILangStringTextType>(val => new LangStringTextType(val[1], val[0])));
+                    break;
+                case "Range":
+                    var valueType = new AasContext().SMESets.Where(smeDB => smeDB.Id == smeSet.Id).Select(smeDB => smeDB.ValueType).First();
+                    var dataType = DataTypeDefXsd.String;
+                    if (valueType != null && valueType.Equals("I"))
+                        dataType = DataTypeDefXsd.Integer;
+                    else if (valueType != null && valueType.Equals("D"))
+                        dataType = DataTypeDefXsd.Double;
+                    var findMin = value.Find(val => val[1].Equals("Min"));
+                    var findMax = value.Find(val => val[1].Equals("Max"));
+                    var minValue = findMin != null ? findMin[0] : string.Empty;
+                    var maxValue = findMax != null ? findMax[0] : string.Empty;
+                    sme = new AasCore.Aas3_0.Range(dataType, min: minValue, max: maxValue);
+                    break;
+                case "Blob":
+                    sme = new Blob(value.First()[1], value: Encoding.ASCII.GetBytes(value.First()[0]));
+                    break;
+                case "File":
+                    sme = new AasCore.Aas3_0.File(value.First()[1], value: value.First()[0]);
+                    break;
+                case "Ref":
+                    sme = new ReferenceElement();
+                    break;
+                case "Cap":
+                    sme = new Capability();
+                    break;
+                case "SML":
+                    sme = new SubmodelElementList(AasSubmodelElements.SubmodelElement, value: new List<ISubmodelElement>());
+                    break;
+                case "SMC":
+                    sme = new SubmodelElementCollection(value: new List<ISubmodelElement>());
+                    break;
+                case "Ent":
+                    sme = new Entity(
+                        value.First()[1].Equals("SelfManagedEntity") ? EntityType.SelfManagedEntity : EntityType.CoManagedEntity,
+                        globalAssetId: value.First()[0],
+                        statements: new List<ISubmodelElement>());
+                    break;
+                case "Evt":
+                    sme = new BasicEventElement(observed: null, direction: Direction.Input, state: StateOfEvent.Off);
+                    break;
+                case "Opr":
+                    sme = new Operation(inputVariables: new List<IOperationVariable>(), outputVariables: new List<IOperationVariable>(), inoutputVariables: new List<IOperationVariable>());
+                    break;
+            }
+
+            if (sme == null)
+                return null;
+
+            sme.IdShort = smeSet.IdShort;
+            if (!smeSet.SemanticId.IsNullOrEmpty())
+            {
+                sme.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
+                    new List<IKey>() { new Key(KeyTypes.GlobalReference, smeSet.SemanticId) });
+            }
+            sme.TimeStamp = smeSet.TimeStamp;
+            sme.TimeStampCreate = smeSet.TimeStampCreate;
+            sme.TimeStampTree = smeSet.TimeStampTree;
+            return sme;
         }
 
         static public string GetAASXPath(string aasId = "", string submodelId = "")

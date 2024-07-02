@@ -327,8 +327,8 @@
                     @for (int i = 0; i < data.Count && i < 1000; i++)
                     {
                         var    aasDB = data[ i ];
-                        string aas64 = Base64UrlEncoder.Encode(aasDB.Identifier);
-                        string link  = $"{AasxServer.Program.externalBlazor}/shells/{aas64}";
+                        var aas64 = Base64UrlEncoder.Encode(aasDB.Identifier);
+                        var link  = $"{AasxServer.Program.externalBlazor}/shells/{aas64}";
                         <tr>
                             <td style="word-break:keep-all">@aasDB.AASXId</td>
                             <td style="word-break:keep-all">
@@ -363,8 +363,8 @@
                     @for (int i = 1000; i < data.Count; i++)
                     {
                         var    aasDB = data[ i ];
-                        string aas64 = Base64UrlEncoder.Encode(aasDB.Identifier);
-                        string link  = $"{AasxServer.Program.externalBlazor}/shells/{aas64}";
+                        var aas64 = Base64UrlEncoder.Encode(aasDB.Identifier);
+                        var link  = $"{AasxServer.Program.externalBlazor}/shells/{aas64}";
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@aasDB.AASXId</span>
                         <span style="background-color:blue;">&nbsp</span>
@@ -431,10 +431,10 @@
                     <tbody>
                     @for (int i = 0; i < data.Count && i < 1000; i++)
                     {
-                        var    smDB       = data[ i ];
-                        string submodel64 = Base64UrlEncoder.Encode(smDB.Identifier);
-                        string link       = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}";
-                        int    smeCount   = db.SMESets.Where(sme => sme.SMId == smDB.Id).Count();
+                        var smDB       = data[ i ];
+                        var submodel64 = Base64UrlEncoder.Encode(smDB.Identifier);
+                        var link       = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}";
+                        var smeCount   = db.SMESets.Where(sme => sme.SMId == smDB.Id).Count();
 
                         <tr>
                             <td style="word-break:keep-all">@smDB.AASXId</td>
@@ -470,10 +470,10 @@
                     <br/>
                     @for (int i = 1000; i < data.Count; i++)
                     {
-                        var    smDB       = data[ i ];
-                        string submodel64 = Base64UrlEncoder.Encode(smDB.Identifier);
-                        string link       = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}";
-                        int    smeCount   = db.SMESets.Where(sme => sme.SMId == smDB.Id).Count();
+                        var smDB       = data[ i ];
+                        var submodel64 = Base64UrlEncoder.Encode(smDB.Identifier);
+                        var link       = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}";
+                        var smeCount   = db.SMESets.Where(sme => sme.SMId == smDB.Id).Count();
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smDB.AASXId</span>
                         <span style="background-color:blue;">&nbsp</span>
@@ -564,18 +564,29 @@
                     @for (int i = 0; i < data.Count && i < 1000; i++)
                     {
                         var    smeDB = data[ i ];
-                        string path  = smeDB.IdShort;
-                        int?   pnum  = smeDB.ParentSMEId;
-                        while (pnum != null)
+                        string path  = string.Empty;
+                        if (!smeDB.SMEType.Equals("OperationVariable"))
                         {
-                            var smeDBP = db.SMESets.Where(s => s.Id == pnum).First();
-                            path = $"{smeDBP.IdShort}.{path}";
-                            pnum = smeDBP.ParentSMEId;
+                            path = smeDB.IdShort;
+                            int?   pId  = smeDB.ParentSMEId;
+                            while (pId != null)
+                            {
+                                var smeDBP = db.SMESets.Where(s => s.Id == pId).First();
+                                if (smeDBP.SMEType != null && smeDBP.SMEType.Equals("OperationVariable"))
+                                {
+                                    path = string.Empty;
+                                    break; 
+                                }
+                                path = $"{smeDBP.IdShort}.{path}";
+                                pId = smeDBP.ParentSMEId;
+                            }       
                         }
 
-                        var    smDB       = db.SMSets.Where(s => s.Id == smeDB.SMId).First();
-                        string submodel64 = Base64UrlEncoder.Encode(smDB.Identifier);
-                        string link       = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}/submodel-elements/{path}";
+                        var smDB       = db.SMSets.Where(s => s.Id == smeDB.SMId).First();
+                        var submodel64 = Base64UrlEncoder.Encode(smDB.Identifier);
+                        var link       = string.Empty;
+                        if (!path.IsNullOrEmpty())
+                            link = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}/submodel-elements/{path}";
                         <tr>
                             <td style="word-break:keep-all">@smeDB.SMId</td>
                             <td style="word-break:keep-all">@smeDB.ParentSMEId</td>
@@ -586,19 +597,7 @@
                             <td>@smeDB.IdShort</td>
                             <td>@smeDB.SemanticId</td>
                             <td>
-                                @if (smeDB.SMEType.Equals("MLP"))
-                                {
-                                    var list = smeDB.getValue();
-                                    <ul>
-                                        @for (int z = 0; z < list.Count; z++)
-                                        {
-                                            <li>
-                                                [@list[ z ][ 1 ]] @list[ z ][ 0 ]
-                                            </li>
-                                        }
-                                    </ul>
-                                }
-                                else if (smeDB.SMEType.Equals("Range"))
+                                @if (smeDB.SMEType != null && (smeDB.SMEType.Equals("MLP") || smeDB.SMEType.Equals("Range")))
                                 {
                                     var list = smeDB.getValue();
                                     <ul>
@@ -631,21 +630,28 @@
                                 {
                                     <a href="@($"{shorturl}/sme?parid={smeDB.Id}")" target="_blank">children </a>
                                 }
-                                @if (smeDB.ValueType.Equals("S"))
+                                @if (smeDB.ValueType != null)
                                 {
-                                    <a href="@($"{shorturl}/svalue?smeid={smeDB.Id}")" target="_blank">svalue </a>
+                                    if(smeDB.ValueType.Equals("S"))
+                                    {
+                                        <a href="@($"{shorturl}/svalue?smeid={smeDB.Id}")" target="_blank">svalue </a>
+                                    }
+                                    else if (smeDB.ValueType.Equals("I"))
+                                    {
+                                        <a href="@($"{shorturl}/ivalue?smeid={smeDB.Id}")" target="_blank">ivalue </a>
+                                    }
+                                    else if (smeDB.ValueType.Equals("D"))
+                                    {
+                                        <a href="@($"{shorturl}/dvalue?smeid={smeDB.Id}")" target="_blank">dvalue </a>
+                                    }  
                                 }
-                                else if (smeDB.ValueType.Equals("I"))
-                                {
-                                    <a href="@($"{shorturl}/ivalue?smeid={smeDB.Id}")" target="_blank">ivalue </a>
-                                }
-                                else if (smeDB.ValueType.Equals("D"))
-                                {
-                                    <a href="@($"{shorturl}/dvalue?smeid={smeDB.Id}")" target="_blank">dvalue </a>
-                                }
+                                        
                             </td>
                             <td>
-                                <a href="@link" target="_blank">@link</a>
+                                @if (!link.IsNullOrEmpty())
+                                {
+                                    <a href="@link" target="_blank">@link</a>
+                                }
                             </td>
                         </tr>
                     }
@@ -660,18 +666,29 @@
                     @for (int i = 1000; i < data.Count; i++)
                     {
                         var    smeDB = data[ i ];
-                        string path  = smeDB.IdShort;
-                        int?   pnum  = smeDB.ParentSMEId;
-                        while (pnum != null)
+                        string path  = string.Empty;
+                        if (!smeDB.SMEType.Equals("OperationVariable"))
                         {
-                            var smeDBP = db.SMESets.Where(s => s.Id == pnum).First();
-                            path = $"{smeDBP.IdShort}.{path}";
-                            pnum = smeDBP.ParentSMEId;
+                            path = smeDB.IdShort;
+                            int?   pId  = smeDB.ParentSMEId;
+                            while (pId != null)
+                            {
+                                var smeDBP = db.SMESets.Where(s => s.Id == pId).First();
+                                if (smeDBP.SMEType != null && smeDBP.SMEType.Equals("OperationVariable"))
+                                {
+                                    path = string.Empty;
+                                    break; 
+                                }
+                                path = $"{smeDBP.IdShort}.{path}";
+                                    pId = smeDBP.ParentSMEId;
+                                }       
                         }
 
-                        var    smDB       = db.SMSets.Where(s => s.Id == smeDB.SMId).First();
-                        string submodel64 = Base64UrlEncoder.Encode(smDB.Identifier);
-                        string link       = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}/submodel-elements/{path}";
+                        var smDB       = db.SMSets.Where(s => s.Id == smeDB.SMId).First();
+                        var submodel64 = Base64UrlEncoder.Encode(smDB.Identifier);
+                        var link       = string.Empty;
+                        if (!path.IsNullOrEmpty())
+                            link = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}/submodel-elements/{path}";
 
                         <span>@smeDB.SMId</span>
                         <span style="background-color:blue;">&nbsp</span>
@@ -688,20 +705,16 @@
                         <span>@smeDB.SemanticId</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>
-                            @if (smeDB.SMEType.Equals("MLP"))
+                            @if (smeDB.SMEType != null && (smeDB.SMEType.Equals("MLP") || smeDB.SMEType.Equals("Range")))
                             {
                                 var list = smeDB.getValue();
-                                if (list.Count > 0)
+                                string mul            = string.Empty;
+                                string seperateString = " | ";
+                                @for (int z = 0; z < list.Count; z++)
                                 {
-                                    string mlp            = string.Empty;
-                                    string seperateString = " | ";
-                                    @for (int z = 0; z < list.Count; z++)
-                                    {
-                                        mlp += $"[{list[z][1]}] {list[z][0]}{seperateString}";
-                                    }
-
-                                    @mlp.Substring(0, mlp.Length - seperateString.Length)
+                                    mul += $"[{list[z][1]}] {list[z][0]}{seperateString}";
                                 }
+                                @mul.Substring(0, mul.Length - seperateString.Length)
                             }
                             else
                             {
@@ -724,20 +737,26 @@
                         {
                             <a href="@($"{shorturl}/sme?parid={smeDB.Id}")" target="_blank">children </a>
                         }
-                        @if (smeDB.ValueType.Equals("S"))
+                        @if (smeDB.ValueType != null)
                         {
-                            <a href="@($"{shorturl}/svalue?smeid={smeDB.Id}")" target="_blank">svalue </a>
-                        }
-                        else if (smeDB.ValueType.Equals("I"))
-                        {
-                            <a href="@($"{shorturl}/ivalue?smeid={smeDB.Id}")" target="_blank">ivalue </a>
-                        }
-                        else if (smeDB.ValueType.Equals("D"))
-                        {
-                            <a href="@($"{shorturl}/dvalue?smeid={smeDB.Id}")" target="_blank">dvalue </a>
+                            if (smeDB.ValueType.Equals("S"))
+                            {
+                                <a href="@($"{shorturl}/svalue?smeid={smeDB.Id}")" target="_blank">svalue </a>
+                            }
+                            else if (smeDB.ValueType.Equals("I"))
+                            {
+                                <a href="@($"{shorturl}/ivalue?smeid={smeDB.Id}")" target="_blank">ivalue </a>
+                            }
+                            else if (smeDB.ValueType.Equals("D"))
+                            {
+                                <a href="@($"{shorturl}/dvalue?smeid={smeDB.Id}")" target="_blank">dvalue </a>
+                            }
                         }
                         <span style="background-color:blue;">&nbsp</span>
-                        <a href="@link" target="_blank">@link</a>
+                        @if (!link.IsNullOrEmpty())
+                        {
+                            <a href="@link" target="_blank">@link</a>
+                        }
                         <br/>
                     }
 

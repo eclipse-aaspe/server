@@ -50,7 +50,7 @@ namespace AasxServerDB.Entities
                         break;
                 }
             }
-            if (list.Count > 0 || SMEType.Equals("MLP"))
+            if (list.Count > 0 || (SMEType != null && SMEType.Equals("MLP")))
                 return list;
             return [[string.Empty, string.Empty]];
         }

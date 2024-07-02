@@ -340,7 +340,7 @@ namespace AasxServerDB
             public string? value;
         }
 
-        private List<SMEWithValue> GetSMEWithValue( string smSemanticId = "", string smIdentifier = "", string semanticId = "", string diff = "", string contains = "", string equal = "", string lower = "", string upper = "")
+        private List<SMEWithValue> GetSMEWithValue(string smSemanticId = "", string smIdentifier = "", string semanticId = "", string diff = "", string contains = "", string equal = "", string lower = "", string upper = "")
         {
             var result = new List<SMEWithValue>();
 
@@ -490,20 +490,30 @@ namespace AasxServerDB
                 sme =>
                 {
                     var identifier = (sme != null && sme.sm.Identifier != null) ? sme.sm.Identifier : "";
-                    var path = sme.sme.IdShort;
-                    int? pId = sme.sme.ParentSMEId;
-                    while (pId != null)
+                    string path = string.Empty;
+                    if (!sme.sme.SMEType.Equals("OperationVariable"))
                     {
-                        var smeDB = db.SMESets.Where(s => s.Id == pId).First();
-                        path = $"{smeDB.IdShort}.{path}";
-                        pId = smeDB.ParentSMEId;
+                        path = sme.sme.IdShort;
+                        int? pId = sme.sme.ParentSMEId;
+                        while (pId != null)
+                        {
+                            var smeDBP = db.SMESets.Where(s => s.Id == pId).First();
+                            if (smeDBP.SMEType != null && smeDBP.SMEType.Equals("OperationVariable"))
+                            {
+                                path = string.Empty;
+                                break;
+                            }
+                            path = $"{smeDBP.IdShort}.{path}";
+                            pId = smeDBP.ParentSMEId;
+                        }
                     }
+
                     return new SMEResult()
                     {
                         smId = identifier,
                         value = sme.value,
                         idShortPath = path,
-                        url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(identifier)}/submodel-elements/{path}",
+                        url = !path.IsNullOrEmpty() ? $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(identifier)}/submodel-elements/{path}" : string.Empty,
                         timeStamp = TimeStamp.TimeStamp.DateTimeToString(sme.sme.TimeStamp)
                     };
                 }
