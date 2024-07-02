@@ -779,7 +779,7 @@ namespace AasxServer
                     // try
                     {
                         fn = fileNames[ fi ];
-                        if (fn.ToLower().Contains("globalsecurity"))
+                        if (fn.ToLower().Contains("globalsecurity") || fn.ToLower().Contains("registry"))
                         {
                             envFileName[ envi ] = fn;
                             env[ envi ]         = new AdminShellPackageEnv(fn, true, false);

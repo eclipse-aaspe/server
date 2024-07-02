@@ -1,10 +1,12 @@
 using AasxServer;
+using AasxServerDB;
 using Extensions;
 using IdentityModel;
 using IdentityModel.Client;
 using IO.Swagger.Registry.Lib.V3.Interfaces;
 using IO.Swagger.Registry.Lib.V3.Models;
 using IO.Swagger.Registry.Lib.V3.Serializers;
+using IO.Swagger.Registry.Lib.V3.Services;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
@@ -20,6 +22,7 @@ using System.Security.Policy;
 using System.Text;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using static AasxServer.Program;
 
 namespace IO.Swagger.Registry.Lib.V3.Services
 {
@@ -158,45 +161,62 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                         }
                     }
 
-                    foreach (AdminShellNS.AdminShellPackageEnv env in AasxServer.Program.env)
+                    if (Program.withDb)
                     {
-                        if (env != null)
+                        using (AasContext db = new AasContext())
+                        {
+                            foreach (var aasDB in db.AASSets)
+                            {
+                                if (aasDB.IdShort != "REGISTRY" && aasDB.IdShort != "myAASwithGlobalSecurityMetaModel")
+                                {
+                                    var aasDesc = AasRegistryService.GlobalCreateAasDescriptorFromDB(aasDB);
+                                    AddAasToRegistry(null, aasDesc, timestamp);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        foreach (AdminShellNS.AdminShellPackageEnv env in AasxServer.Program.env)
                         {
                             if (env != null)
                             {
-                                var aas = env.AasEnv.AssetAdministrationShells[ 0 ];
-                                if (aas.IdShort != "REGISTRY" && aas.IdShort != "myAASwithGlobalSecurityMetaModel")
+                                if (env != null)
                                 {
-                                    AddAasToRegistry(env, timestamp);
-                                }
-
-                                if (aas.IdShort == "PcfViewTask")
-                                {
-                                    string certificatePassword = "i40";
-                                    Stream s2                  = null;
-                                    try
+                                    var aas = env.AasEnv.AssetAdministrationShells[0];
+                                    if (aas.IdShort != "REGISTRY" && aas.IdShort != "myAASwithGlobalSecurityMetaModel")
                                     {
-                                        s2 = env.GetLocalStreamFromPackage("/aasx/files/Andreas_Orzelski_Chain.pfx", access: FileAccess.Read);
-                                    }
-                                    catch
-                                    {
+                                        AddAasToRegistry(env, null, timestamp);
                                     }
 
-                                    if (s2 == null)
+                                    if (aas.IdShort == "PcfViewTask")
                                     {
-                                        Console.WriteLine("Stream error!");
-                                        continue;
-                                    }
+                                        string certificatePassword = "i40";
+                                        Stream s2 = null;
+                                        try
+                                        {
+                                            s2 = env.GetLocalStreamFromPackage("/aasx/files/Andreas_Orzelski_Chain.pfx", access: FileAccess.Read);
+                                        }
+                                        catch
+                                        {
+                                        }
 
-                                    X509Certificate2Collection xc = new X509Certificate2Collection();
-                                    using (var m = new System.IO.MemoryStream())
-                                    {
-                                        s2.CopyTo(m);
-                                        var b = m.GetBuffer();
-                                        xc.Import(b, certificatePassword, X509KeyStorageFlags.PersistKeySet);
-                                        certificate = new X509Certificate2(b, certificatePassword);
-                                        Console.WriteLine("Client certificate: " + "/aasx/files/Andreas_Orzelski_Chain.pfx");
-                                        s2.Close();
+                                        if (s2 == null)
+                                        {
+                                            Console.WriteLine("Stream error!");
+                                            continue;
+                                        }
+
+                                        X509Certificate2Collection xc = new X509Certificate2Collection();
+                                        using (var m = new System.IO.MemoryStream())
+                                        {
+                                            s2.CopyTo(m);
+                                            var b = m.GetBuffer();
+                                            xc.Import(b, certificatePassword, X509KeyStorageFlags.PersistKeySet);
+                                            certificate = new X509Certificate2(b, certificatePassword);
+                                            Console.WriteLine("Client certificate: " + "/aasx/files/Andreas_Orzelski_Chain.pfx");
+                                            s2.Close();
+                                        }
                                     }
                                 }
                             }
@@ -683,112 +703,120 @@ namespace IO.Swagger.Registry.Lib.V3.Services
             return url;
         }
 
-        static void AddAasToRegistry(AdminShellNS.AdminShellPackageEnv env, DateTime timestamp)
+        static void AddAasToRegistry(AdminShellNS.AdminShellPackageEnv? env, AssetAdministrationShellDescriptor? aasDesc, DateTime timestamp)
 #pragma warning restore IDE1006 // Benennungsstile
         {
-            var aas = env.AasEnv.AssetAdministrationShells[ 0 ];
+            AssetAdministrationShellDescriptor ad = new AssetAdministrationShellDescriptor();
 
-            AssetAdministrationShellDescriptor ad            = new AssetAdministrationShellDescriptor();
-            string?                            globalAssetId = aas.AssetInformation.GlobalAssetId!;
-
-            // ad.Administration.Version = aas.administration.version;
-            // ad.Administration.Revision = aas.administration.revision;
-            ad.IdShort = aas.IdShort!;
-            ad.Id      = aas.Id;
-            var e = new Endpoint();
-            e.ProtocolInformation = new ProtocolInformation();
-            e.ProtocolInformation.Href =
-                Program.externalRepository + "/shells/" +
-                Base64UrlEncoder.Encode(ad.Id);
-            Console.WriteLine("AAS " + ad.IdShort + " " + e.ProtocolInformation.Href);
-            e.Interface  = "AAS-1.0";
-            ad.Endpoints = new List<Endpoint>();
-            ad.Endpoints.Add(e);
-            ad.GlobalAssetId = globalAssetId;
-            //
-            var extSubjId       = new Reference(ReferenceTypes.ExternalReference, new List<IKey>() {new Key(KeyTypes.GlobalReference, "assetKind")});
-            var specificAssetId = new SpecificAssetId("assetKind", aas.AssetInformation.AssetKind.ToString(), externalSubjectId: extSubjId);
-            ad.SpecificAssetIds = new List<SpecificAssetId> {specificAssetId};
-
-            // Submodels
-            if (aas.Submodels != null && aas.Submodels.Count > 0)
+            if (aasDesc != null)
             {
-                ad.SubmodelDescriptors = new List<SubmodelDescriptor>();
-                foreach (var smr in aas.Submodels)
+                ad = aasDesc;
+            }
+            else
+            {
+                var aas = env.AasEnv.AssetAdministrationShells[0];
+
+                string? globalAssetId = aas.AssetInformation.GlobalAssetId!;
+
+                // ad.Administration.Version = aas.administration.version;
+                // ad.Administration.Revision = aas.administration.revision;
+                ad.IdShort = aas.IdShort!;
+                ad.Id = aas.Id;
+                var e = new Endpoint();
+                e.ProtocolInformation = new ProtocolInformation();
+                e.ProtocolInformation.Href =
+                    Program.externalRepository + "/shells/" +
+                    Base64UrlEncoder.Encode(ad.Id);
+                Console.WriteLine("AAS " + ad.IdShort + " " + e.ProtocolInformation.Href);
+                e.Interface = "AAS-1.0";
+                ad.Endpoints = new List<Endpoint>();
+                ad.Endpoints.Add(e);
+                ad.GlobalAssetId = globalAssetId;
+                //
+                var extSubjId = new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, "assetKind") });
+                var specificAssetId = new SpecificAssetId("assetKind", aas.AssetInformation.AssetKind.ToString(), externalSubjectId: extSubjId);
+                ad.SpecificAssetIds = new List<SpecificAssetId> { specificAssetId };
+
+                // Submodels
+                if (aas.Submodels != null && aas.Submodels.Count > 0)
                 {
-                    var sm = env.AasEnv.FindSubmodel(smr);
-                    if (sm != null && sm.IdShort != null)
+                    ad.SubmodelDescriptors = new List<SubmodelDescriptor>();
+                    foreach (var smr in aas.Submodels)
                     {
-                        SubmodelDescriptor sd = new SubmodelDescriptor();
-                        sd.IdShort = sm.IdShort;
-                        sd.Id      = sm.Id;
-                        var esm = new Models.Endpoint();
-                        esm.ProtocolInformation = new ProtocolInformation();
-                        esm.ProtocolInformation.Href =
-                            AasxServer.Program.externalRepository + "/shells/" +
-                            Base64UrlEncoder.Encode(ad.Id) + "/submodels/" +
-                            Base64UrlEncoder.Encode(sd.Id);
-                        // Console.WriteLine("SM " + sd.IdShort + " " + esm.ProtocolInformation.EndpointAddress);
-                        esm.Interface = "SUBMODEL-1.0";
-                        sd.Endpoints  = new List<Models.Endpoint>();
-                        sd.Endpoints.Add(esm);
-                        if (sm.SemanticId != null)
+                        var sm = env.AasEnv.FindSubmodel(smr);
+                        if (sm != null && sm.IdShort != null)
                         {
-                            var sid = sm.SemanticId.GetAsExactlyOneKey();
-                            if (sid != null)
-                            {
-                                var semanticId = new Reference(ReferenceTypes.ExternalReference, new List<IKey>() {new Key(KeyTypes.GlobalReference, sid.Value)});
-                                sd.SemanticId = semanticId;
-                            }
-                        }
-
-                        // add searchData for registry
-                        if (sm.SubmodelElements != null)
-                            foreach (var se in sm.SubmodelElements)
-                            {
-                                var  sme      = se;
-                                bool federate = false;
-                                if (sme.SemanticId != null && sme.SemanticId.Keys != null && sme.SemanticId.Keys.Count != 0 && sme.SemanticId.Keys[ 0 ] != null)
-                                {
-                                    if (federatedElemensSemanticId.Contains(sme.SemanticId.Keys[ 0 ].Value))
-                                        federate = true;
-                                }
-
-                                if (sme.Qualifiers != null && sme.Qualifiers.Count != 0)
-                                {
-                                    if (sme.Qualifiers[ 0 ].Type == "federatedElement")
-                                        federate = true;
-                                }
-                            }
-
-                        ad.SubmodelDescriptors.Add(sd);
-                        if (sm.IdShort.ToLower() == "nameplate")
-                        {
-                            // Add special entry for verifiable credentials
-                            sd                      = new SubmodelDescriptor();
-                            sd.IdShort              = "NameplateVC";
-                            sd.Id                   = sm.Id + "_VC";
-                            esm                     = new Models.Endpoint();
+                            SubmodelDescriptor sd = new SubmodelDescriptor();
+                            sd.IdShort = sm.IdShort;
+                            sd.Id = sm.Id;
+                            var esm = new Models.Endpoint();
                             esm.ProtocolInformation = new ProtocolInformation();
-                            // TODO (jtikekar, 2023-09-04): @Andreas why hardcoded=> Verifiable creditentials
                             esm.ProtocolInformation.Href =
-                                "https://nameplate.h2894164.stratoserver.net/demo/selfdescriptiononthefly/" +
-                                "aHR0cHM6Ly9yZWdpc3RyeS5oMjg5NDE2NC5zdHJhdG9zZXJ2ZXIubmV0/" +
-                                Base64UrlEncoder.Encode(ad.Id);
-                            esm.Interface = "VC-1.0";
-                            sd.Endpoints  = new List<Models.Endpoint>();
+                                AasxServer.Program.externalRepository + "/shells/" +
+                                Base64UrlEncoder.Encode(ad.Id) + "/submodels/" +
+                                Base64UrlEncoder.Encode(sd.Id);
+                            // Console.WriteLine("SM " + sd.IdShort + " " + esm.ProtocolInformation.EndpointAddress);
+                            esm.Interface = "SUBMODEL-1.0";
+                            sd.Endpoints = new List<Models.Endpoint>();
                             sd.Endpoints.Add(esm);
                             if (sm.SemanticId != null)
                             {
                                 var sid = sm.SemanticId.GetAsExactlyOneKey();
                                 if (sid != null)
                                 {
-                                    var semanticId = new Reference(ReferenceTypes.ExternalReference, new List<IKey>() {new Key(KeyTypes.GlobalReference, sid.Value)});
+                                    var semanticId = new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, sid.Value) });
                                     sd.SemanticId = semanticId;
                                 }
                             }
 
+                            // add searchData for registry
+                            if (sm.SubmodelElements != null)
+                                foreach (var se in sm.SubmodelElements)
+                                {
+                                    var sme = se;
+                                    bool federate = false;
+                                    if (sme.SemanticId != null && sme.SemanticId.Keys != null && sme.SemanticId.Keys.Count != 0 && sme.SemanticId.Keys[0] != null)
+                                    {
+                                        if (federatedElemensSemanticId.Contains(sme.SemanticId.Keys[0].Value))
+                                            federate = true;
+                                    }
+
+                                    if (sme.Qualifiers != null && sme.Qualifiers.Count != 0)
+                                    {
+                                        if (sme.Qualifiers[0].Type == "federatedElement")
+                                            federate = true;
+                                    }
+                                }
+
                             ad.SubmodelDescriptors.Add(sd);
+                            if (sm.IdShort.ToLower() == "nameplate")
+                            {
+                                // Add special entry for verifiable credentials
+                                sd = new SubmodelDescriptor();
+                                sd.IdShort = "NameplateVC";
+                                sd.Id = sm.Id + "_VC";
+                                esm = new Models.Endpoint();
+                                esm.ProtocolInformation = new ProtocolInformation();
+                                // TODO (jtikekar, 2023-09-04): @Andreas why hardcoded=> Verifiable creditentials
+                                esm.ProtocolInformation.Href =
+                                    "https://nameplate.h2894164.stratoserver.net/demo/selfdescriptiononthefly/" +
+                                    "aHR0cHM6Ly9yZWdpc3RyeS5oMjg5NDE2NC5zdHJhdG9zZXJ2ZXIubmV0/" +
+                                    Base64UrlEncoder.Encode(ad.Id);
+                                esm.Interface = "VC-1.0";
+                                sd.Endpoints = new List<Models.Endpoint>();
+                                sd.Endpoints.Add(esm);
+                                if (sm.SemanticId != null)
+                                {
+                                    var sid = sm.SemanticId.GetAsExactlyOneKey();
+                                    if (sid != null)
+                                    {
+                                        var semanticId = new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, sid.Value) });
+                                        sd.SemanticId = semanticId;
+                                    }
+                                }
+
+                                ad.SubmodelDescriptors.Add(sd);
+                            }
                         }
                     }
                 }
