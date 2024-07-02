@@ -243,7 +243,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
 
 #pragma warning disable 1591
 
-        public static bool operator ==(AssetAdministrationShellDescriptor left, AssetAdministrationShellDescriptor right)
+        public static bool operator ==(AssetAdministrationShellDescriptor? left, AssetAdministrationShellDescriptor? right)
         {
             return Equals(left, right);
         }
