@@ -17,10 +17,8 @@ namespace IO.Swagger.Registry.Lib.V3.Models;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Swagger.Models;
 
-/// <summary>
-/// 
-/// </summary>
 [DataContract]
 public class Message : IEquatable<Message>
 {
@@ -40,37 +38,7 @@ public class Message : IEquatable<Message>
     [DataMember(Name = "correlationId")]
     public string? CorrelationId { get; set; }
 
-    /// <summary>
-    /// Gets or Sets MessageType
-    /// </summary>
-    public enum MessageTypeEnum
-    {
-        /// <summary>
-        /// Enum Undefined for Undefined
-        /// </summary>
-        [EnumMember(Value = "Undefined")] Undefined = 0,
-
-        /// <summary>
-        /// Enum Info for Info
-        /// </summary>
-        [EnumMember(Value = "Info")] Info = 1,
-
-        /// <summary>
-        /// Enum Warning for Warning
-        /// </summary>
-        [EnumMember(Value = "Warning")] Warning = 2,
-
-        /// <summary>
-        /// Enum Error for Error
-        /// </summary>
-        [EnumMember(Value = "Error")] Error = 3,
-
-        /// <summary>
-        /// Enum Exception for Exception
-        /// </summary>
-        [EnumMember(Value = "Exception")] Exception = 4
-    }
-
+    
     /// <summary>
     /// Gets or Sets MessageType
     /// </summary>

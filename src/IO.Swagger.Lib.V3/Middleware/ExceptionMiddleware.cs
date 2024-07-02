@@ -38,7 +38,7 @@ namespace IO.Swagger.Lib.V3.Middleware
         private async Task HandleExceptionAsync(HttpContext context, Exception exception, IAppLogger<ExceptionMiddleware> logger)
         {
             logger.LogError(exception.Message);
-            logger.LogDebug(exception.StackTrace);
+            logger.LogDebug(exception.StackTrace ?? $"No Stacktrace for {exception}");
             context.Response.ContentType = "application/json";
             var result = new Result();
             var message = new Message();
@@ -78,7 +78,7 @@ namespace IO.Swagger.Lib.V3.Middleware
                         //Print the errors in debug level
                         foreach (var error in ex.ErrorList)
                         {
-                            var errorText = Reporting.GenerateJsonPath(error.PathSegments) + ":" + error.Cause;
+                            var errorText = $"{Reporting.GenerateJsonPath(error.PathSegments)}:{error.Cause}";
                             logger.LogDebug(errorText);
                         }
 

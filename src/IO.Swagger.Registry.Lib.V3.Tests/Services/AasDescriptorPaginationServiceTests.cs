@@ -5,6 +5,8 @@ using IO.Swagger.Registry.Lib.V3.Services;
 
 namespace IO.Swagger.Registry.Lib.V3.Tests.Services;
 
+using Microsoft.OpenApi.Any;
+
 public class AasDescriptorPaginationServiceTests
 {
     private readonly IFixture _fixture;
@@ -18,6 +20,17 @@ public class AasDescriptorPaginationServiceTests
         _service    = _fixture.Create<AasDescriptorPaginationService>();
     }
 
+    [Fact]
+    public void asdf()
+    {
+        var x = Enum.GetNames(typeof(MessageTypeEnum))
+                    .Select(enumName => new OpenApiString(enumName))
+                    .Cast<IOpenApiAny>()
+                    .ToList();
+        x.Should().NotBeEmpty();
+
+    }
+    
     [Fact]
     public void Constructor_WithNullLogger_ThrowsArgumentNullException()
     {

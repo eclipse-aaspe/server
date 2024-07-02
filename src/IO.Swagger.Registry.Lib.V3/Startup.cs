@@ -23,10 +23,13 @@ using Microsoft.OpenApi.Any;
 
 namespace IO.Swagger;
 
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Models;
+using Registry.Lib.V3.Models;
 
 /// <summary>
 /// Startup
@@ -67,9 +70,22 @@ public class Startup
                                 options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
                                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                                 options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+                                options.JsonSerializerOptions.ReferenceHandler       = ReferenceHandler.Preserve;
                             })
             .AddXmlSerializerFormatters();
 
+        services.Configure<JsonOptions>(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+        services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
+                                                                       {
+                                                                           options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+                                                                           options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                                                                       });
+
+        services.Configure<JsonOptions>(options =>
+                                        {
+                                            options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+                                            options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                                        });
         services
             .AddSwaggerGen(c =>
                            {
@@ -90,21 +106,17 @@ public class Startup
                                c.CustomSchemaIds(type => type.FullName);
                                c.IncludeXmlComments($"{AppContext.BaseDirectory}{Path.DirectorySeparatorChar}{_hostingEnv.ApplicationName}.xml");
 
-                               // Include DataAnnotation attributes on Controller Action parameters as Swagger validation rules (e.g required, pattern, ..)
+                               // Include DataAnnotation attributes on Controller Action parameters as Swagger validation rules (e.g. required, pattern, ..)
                                // Use [ValidateModelState] on Actions to actually validate it in C# as well!
                                c.OperationFilter<GeneratePathParamsValidationFilter>();
-                               
+
                                c.MapType<MessageTypeEnum>(() => new OpenApiSchema
                                                                 {
                                                                     Type = "string",
-                                                                    Enum = new List<IOpenApiAny>
-                                                                           {
-                                                                               new OpenApiString(MessageTypeEnum.Undefined.ToString()),
-                                                                               new OpenApiString(MessageTypeEnum.Info.ToString()),
-                                                                               new OpenApiString(MessageTypeEnum.Warning.ToString()),
-                                                                               new OpenApiString(MessageTypeEnum.Error.ToString()),
-                                                                               new OpenApiString(MessageTypeEnum.Exception.ToString())
-                                                                           }
+                                                                    Enum = Enum.GetNames(typeof(MessageTypeEnum))
+                                                                               .Select(enumName => new OpenApiString(enumName))
+                                                                               .Cast<IOpenApiAny>()
+                                                                               .ToList()
                                                                 });
                            });
     }

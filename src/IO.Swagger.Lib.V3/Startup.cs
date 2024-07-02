@@ -23,8 +23,10 @@ using IO.Swagger.Filters;
 namespace IO.Swagger;
 
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.OpenApi.Any;
 using Models;
@@ -66,10 +68,20 @@ public class Startup
                                     options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
                                     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                                     options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+                                    options.JsonSerializerOptions.ReferenceHandler       = ReferenceHandler.Preserve;
                                 })
                 .AddXmlSerializerFormatters();
 
-
+        services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
+                                                                       {
+                                                                           options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+                                                                           options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                                                                       });
+        services.Configure<JsonOptions>(options =>
+                                                                 {
+                                                                     options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+                                                                     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                                                                 });
         services.AddSwaggerGen(c =>
                                {
                                    c.SwaggerDoc("V3.0",
@@ -96,14 +108,11 @@ public class Startup
                                    c.MapType<MessageTypeEnum>(() => new OpenApiSchema
                                                                     {
                                                                         Type = "string",
-                                                                        Enum = new List<IOpenApiAny>
-                                                                               {
-                                                                                   new OpenApiString(MessageTypeEnum.Undefined.ToString()),
-                                                                                   new OpenApiString(MessageTypeEnum.Info.ToString()),
-                                                                                   new OpenApiString(MessageTypeEnum.Warning.ToString()),
-                                                                                   new OpenApiString(MessageTypeEnum.Error.ToString()),
-                                                                                   new OpenApiString(MessageTypeEnum.Exception.ToString())
-                                                                               }
+                                                                        Enum = Enum.GetNames(typeof(MessageTypeEnum))
+                                                                                   .Select(enumName => new OpenApiString(enumName))
+                                                                                   .Cast<IOpenApiAny>()
+                                                                                   .ToList(),
+                                                                        Nullable = false
                                                                     });
                                });
     }
