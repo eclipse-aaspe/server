@@ -565,12 +565,12 @@
                     {
                         var smeDB = data[i];
                         string path = smeDB.IdShort;
-                        int? pnum = smeDB.ParentSMEId;
-                        while (pnum != null)
+                        int? pId = smeDB.ParentSMEId;
+                        while (pId != null)
                         {
-                            var smeDBP = db.SMESets.Where(s => s.Id == pnum).First();
+                            var smeDBP = db.SMESets.Where(s => s.Id == pId).First();
                             path = $"{smeDBP.IdShort}.{path}";
-                            pnum = smeDBP.ParentSMEId;
+                            pId = smeDBP.ParentSMEId;
                         }
 
                         var smDB = db.SMSets.Where(s => s.Id == smeDB.SMId).First();
@@ -622,15 +622,15 @@
                                 }
                                 @if (smeDB.ValueType != null)
                                 {
-                                    if (smeDB.ValueType.Equals("S"))
+                                    if (AasxServerDB.ConverterDataType.FromTableToDataType(DataTypeDefXsd.String).Contains(smeDB.ValueType))
                                     {
                                         <a href="@($"{shorturl}/svalue?smeid={smeDB.Id}")" target="_blank">svalue </a>
                                     }
-                                    else if (smeDB.ValueType.Equals("I"))
+                                    else if (AasxServerDB.ConverterDataType.FromTableToDataType(DataTypeDefXsd.Integer).Contains(smeDB.ValueType))
                                     {
                                         <a href="@($"{shorturl}/ivalue?smeid={smeDB.Id}")" target="_blank">ivalue </a>
                                     }
-                                    else if (smeDB.ValueType.Equals("D"))
+                                    else if (AasxServerDB.ConverterDataType.FromTableToDataType(DataTypeDefXsd.Double).Contains(smeDB.ValueType))
                                     {
                                         <a href="@($"{shorturl}/dvalue?smeid={smeDB.Id}")" target="_blank">dvalue </a>
                                     }  
@@ -654,12 +654,12 @@
                     {
                         var    smeDB = data[ i ];
                         string path  = smeDB.IdShort;
-                        int?   pnum  = smeDB.ParentSMEId;
-                        while (pnum != null)
+                        int?   pId  = smeDB.ParentSMEId;
+                        while (pId != null)
                         {
-                            var smeDBP = db.SMESets.Where(s => s.Id == pnum).First();
+                            var smeDBP = db.SMESets.Where(s => s.Id == pId).First();
                             path = $"{smeDBP.IdShort}.{path}";
-                            pnum = smeDBP.ParentSMEId;
+                            pId = smeDBP.ParentSMEId;
                         }
 
                         var    smDB       = db.SMSets.Where(s => s.Id == smeDB.SMId).First();
@@ -715,15 +715,15 @@
                         }
                         @if (smeDB.ValueType != null)
                         {
-                            if (smeDB.ValueType.Equals("S"))
+                            if (AasxServerDB.ConverterDataType.FromTableToDataType(DataTypeDefXsd.String).Contains(smeDB.ValueType))
                             {
                                 <a href="@($"{shorturl}/svalue?smeid={smeDB.Id}")" target="_blank">svalue </a>
                             }
-                            else if (smeDB.ValueType.Equals("I"))
+                            else if (AasxServerDB.ConverterDataType.FromTableToDataType(DataTypeDefXsd.Integer).Contains(smeDB.ValueType))
                             {
                                 <a href="@($"{shorturl}/ivalue?smeid={smeDB.Id}")" target="_blank">ivalue </a>
                             }
-                            else if (smeDB.ValueType.Equals("D"))
+                            else if (AasxServerDB.ConverterDataType.FromTableToDataType(DataTypeDefXsd.Double).Contains(smeDB.ValueType))
                             {
                                 <a href="@($"{shorturl}/dvalue?smeid={smeDB.Id}")" target="_blank">dvalue </a>
                             }

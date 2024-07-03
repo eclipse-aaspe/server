@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Extensions;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Collections.Generic;
+using AasCore.Aas3_0;
 
 namespace AasxServerDB.Entities
 {
@@ -34,17 +35,22 @@ namespace AasxServerDB.Entities
             var list = new List<string[]>();
             using (AasContext db = new AasContext())
             {
-                switch (ValueType)
+                var dataType = ConverterDataType.StringToDataType(ValueType);
+                if (dataType == null)
+                    return [[string.Empty, string.Empty]];
+
+                var tableDataType = ConverterDataType.DataTypeToTable[(DataTypeDefXsd) dataType];
+                switch (tableDataType)
                 {
-                    case "S":
+                    case DataTypeDefXsd.String:
                         list = db.SValueSets.Where(s => s.SMEId == Id).ToList()
                             .ConvertAll<string[]>(valueDB => [valueDB.Value ?? string.Empty, valueDB.Annotation ?? string.Empty]);
                         break;
-                    case "I":
+                    case DataTypeDefXsd.Integer:
                         list = db.IValueSets.Where(s => s.SMEId == Id).ToList()
                             .ConvertAll<string[]>(valueDB => [valueDB.Value == null ? string.Empty : valueDB.Value.ToString(), valueDB.Annotation ?? string.Empty]);
                         break;
-                    case "D":
+                    case DataTypeDefXsd.Double:
                         list = db.DValueSets.Where(s => s.SMEId == Id).ToList()
                             .ConvertAll<string[]>(valueDB => [valueDB.Value == null ? string.Empty : valueDB.Value.ToString(), valueDB.Annotation ?? string.Empty]);
                         break;

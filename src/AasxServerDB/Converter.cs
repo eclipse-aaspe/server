@@ -159,7 +159,7 @@ namespace AasxServerDB
                     break;
                 case "Prop":
                     sme = new Property(
-                        valueType: GetDataTypeDefXsd(smeSet.ValueType),
+                        valueType: ConverterDataType.StringToDataType(smeSet.ValueType) ?? DataTypeDefXsd.String,
                         value: value.First()[0]/*,
                         valueId: new Reference(ReferenceTypes.ExternalReference, new List<IKey>())*/);
                     break;
@@ -172,7 +172,7 @@ namespace AasxServerDB
                     var findMin = value.Find(val => val[1].Equals("Min"));
                     var findMax = value.Find(val => val[1].Equals("Max"));
                     sme = new AasCore.Aas3_0.Range(
-                        valueType: GetDataTypeDefXsd(smeSet.ValueType),
+                        valueType: ConverterDataType.StringToDataType(smeSet.ValueType) ?? DataTypeDefXsd.String,
                         min: findMin != null ? findMin[0] : string.Empty,
                         max: findMax != null ? findMax[0] : string.Empty);
                     break;
@@ -244,17 +244,6 @@ namespace AasxServerDB
             sme.TimeStampCreate = smeSet.TimeStampCreate;
             sme.TimeStampTree = smeSet.TimeStampTree;
             return sme;
-        }
-
-        static private DataTypeDefXsd GetDataTypeDefXsd(string dataTypeString)
-        {
-            return dataTypeString switch
-            {
-                "S" => DataTypeDefXsd.String,
-                "D" => DataTypeDefXsd.Double,
-                "I" => DataTypeDefXsd.Integer,
-                _ => DataTypeDefXsd.String
-            };
         }
 
         static public string GetAASXPath(string aasId = "", string submodelId = "")

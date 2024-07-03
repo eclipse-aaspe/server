@@ -6,6 +6,7 @@ using System.IO.Compression;
 using Microsoft.IdentityModel.Tokens;
 using AasxServerDB.Entities;
 using System.Text;
+using System.ComponentModel.DataAnnotations;
 
 namespace AasxServerDB
 {
@@ -140,83 +141,68 @@ namespace AasxServerDB
                    };
         }
 
-        private string shortValueType(DataTypeDefXsd? dataType)
+        private bool GetValueAndDataType(string value, ref DataTypeDefXsd dataType, out DataTypeDefXsd tableDataType, out string sValue, out long iValue, out double dValue)
         {
-            return dataType switch
-                    {
-                        DataTypeDefXsd.AnyUri => "S",
-                        DataTypeDefXsd.Base64Binary => "S",
-                        DataTypeDefXsd.Boolean => "S",
-                        DataTypeDefXsd.Byte => "I",
-                        DataTypeDefXsd.Date => "S",
-                        DataTypeDefXsd.DateTime => "S",
-                        DataTypeDefXsd.Decimal => "S",
-                        DataTypeDefXsd.Double => "D",
-                        DataTypeDefXsd.Duration => "S",
-                        DataTypeDefXsd.Float => "D",
-                        DataTypeDefXsd.GDay => "S",
-                        DataTypeDefXsd.GMonth => "S",
-                        DataTypeDefXsd.GMonthDay => "S",
-                        DataTypeDefXsd.GYear => "S",
-                        DataTypeDefXsd.GYearMonth => "S",
-                        DataTypeDefXsd.HexBinary => "S",
-                        DataTypeDefXsd.Int => "I",
-                        DataTypeDefXsd.Integer => "I",
-                        DataTypeDefXsd.Long => "I",
-                        DataTypeDefXsd.NegativeInteger => "I",
-                        DataTypeDefXsd.NonNegativeInteger => "I",
-                        DataTypeDefXsd.NonPositiveInteger => "I",
-                        DataTypeDefXsd.PositiveInteger => "I",
-                        DataTypeDefXsd.Short => "I",
-                        DataTypeDefXsd.String => "S",
-                        DataTypeDefXsd.Time => "S",
-                        DataTypeDefXsd.UnsignedByte => "I",
-                        DataTypeDefXsd.UnsignedInt => "I",
-                        DataTypeDefXsd.UnsignedLong => "I",
-                        DataTypeDefXsd.UnsignedShort => "I",
-                        _ => string.Empty
-                    };
-        }
-
-        private string getValueAndType(string? value, DataTypeDefXsd? dataType, out string sValue, out long iValue, out double dValue)
-        {
+            tableDataType = ConverterDataType.DataTypeToTable[dataType];
             sValue = string.Empty;
             iValue = 0;
             dValue = 0;
 
             if (value.IsNullOrEmpty())
-                return string.Empty;
+                return false;
 
-            if (shortValueType(dataType).Equals("S"))
+            // correct table type
+            switch (tableDataType)
             {
-                sValue = value;
-                return "S";
+                case DataTypeDefXsd.String:
+                    sValue = value;
+                    return true;
+                case DataTypeDefXsd.Integer:
+                    if (Int64.TryParse(value, out iValue))
+                        return true;
+                    break;
+                case DataTypeDefXsd.Double:
+                    if (Double.TryParse(value, out dValue))
+                        return true;
+                    break;
             }
 
+            // incorrect table type
             if (Int64.TryParse(value, out iValue))
-                return "I";
+            {
+                dataType = DataTypeDefXsd.Integer;
+                tableDataType = DataTypeDefXsd.Integer;
+                return true;
+            }
 
             if (Double.TryParse(value, out dValue))
-                return "D";
+            {
+                dataType = DataTypeDefXsd.Double;
+                tableDataType = DataTypeDefXsd.Double;
+                return true;
+            }
 
             sValue = value;
-            return "S";
+            dataType = DataTypeDefXsd.String;
+            tableDataType = DataTypeDefXsd.String;
+            return true;
         }
 
         private void setValues(ISubmodelElement sme, SMESet smeDB)
         {
             if (sme is Property prop)
             {
-                var value = prop.ValueAsText();
-                if (value.IsNullOrEmpty())
+                var dataType = prop.ValueType;
+                var hasValue = GetValueAndDataType(prop.ValueAsText(), ref dataType, out var tableDataType, out var sValue, out var iValue, out var dValue);
+                if (!hasValue)
                     return;
 
-                smeDB.ValueType = getValueAndType(value, prop.ValueType, out var sValue, out var iValue, out var dValue);
-                if (smeDB.ValueType.Equals("S"))
+                smeDB.ValueType = dataType.ToString();
+                if (tableDataType == DataTypeDefXsd.String)
                     smeDB.SValueSets.Add(new SValueSet { Value = sValue, Annotation = string.Empty });
-                else if (smeDB.ValueType.Equals("I"))
+                else if (tableDataType == DataTypeDefXsd.Integer)
                     smeDB.IValueSets.Add(new IValueSet { Value = iValue, Annotation = string.Empty });
-                else if (smeDB.ValueType.Equals("D"))
+                else if (tableDataType == DataTypeDefXsd.Double)
                     smeDB.DValueSets.Add(new DValueSet { Value = dValue, Annotation = string.Empty });
             }
             else if (sme is MultiLanguageProperty mlp)
@@ -224,62 +210,80 @@ namespace AasxServerDB
                 if (mlp.Value == null || mlp.Value.Count == 0)
                     return;
 
-                smeDB.ValueType = "S";
+                smeDB.ValueType = DataTypeDefXsd.String.ToString();
                 if (mlp.Value != null)
                     foreach (var sValueMLP in mlp.Value)
                         smeDB.SValueSets.Add(new SValueSet() { Annotation = sValueMLP.Language, Value = sValueMLP.Text });
             }
             else if (sme is AasCore.Aas3_0.Range range)
             {
-                var withMin = !range.Min.IsNullOrEmpty();
-                var withMax = !range.Max.IsNullOrEmpty();
-                if (!withMin && !withMax)
+                var dataTypeMin = range.ValueType;
+                var dataTypeMax = range.ValueType;
+                var hasValueMin = GetValueAndDataType(range.Min, ref dataTypeMin, out var tableDataTypeMin, out var sValueMin, out var iValueMin, out var dValueMin);
+                var hasValueMax = GetValueAndDataType(range.Max, ref dataTypeMax, out var tableDataTypeMax, out var sValueMax, out var iValueMax, out var dValueMax);
+
+                // determine which data types apply
+                var dataType = range.ValueType;
+                var tableDataType = DataTypeDefXsd.String;
+                if (!hasValueMin && !hasValueMax) // no value is given
                     return;
-
-                var valueTypeMin = getValueAndType(range.Min, range.ValueType, out var sValueMin, out var iValueMin, out var dValueMin);
-                var valueTypeMax = getValueAndType(range.Max, range.ValueType, out var sValueMax, out var iValueMax, out var dValueMax);
-
-                if (valueTypeMin.Equals(valueTypeMax))
-                    smeDB.ValueType = valueTypeMin;
-                else if (valueTypeMin.IsNullOrEmpty() || valueTypeMax.IsNullOrEmpty())
-                    smeDB.ValueType = withMin ? valueTypeMin : valueTypeMax;
-                else if (valueTypeMin.Equals("S") || valueTypeMax.Equals("S"))
+                else if (hasValueMin && !hasValueMax) // only min is given
                 {
-                    smeDB.ValueType = "S";
-                    if (valueTypeMin.Equals("S"))
-                        sValueMax = valueTypeMax.Equals("I") ? iValueMax.ToString() : dValueMax.ToString();
-                    else if (valueTypeMax.Equals("S"))
-                        sValueMin = valueTypeMin.Equals("I") ? iValueMin.ToString() : dValueMin.ToString();
+                    dataType = dataTypeMin;
+                    tableDataType = tableDataTypeMin;
                 }
-                else
+                else if (!hasValueMin && hasValueMax) // only max is given
                 {
-                    smeDB.ValueType = "D";
-                    if (valueTypeMin.Equals("I"))
-                        dValueMin = Convert.ToDouble(iValueMin);
-                    else if (valueTypeMax.Equals("I"))
-                        dValueMax = Convert.ToDouble(iValueMax);
+                    dataType = dataTypeMax;
+                    tableDataType = tableDataTypeMax;
+                }
+                else if (hasValueMin && hasValueMax) // both values are given
+                {
+                    if (dataTypeMin == dataTypeMax) // dataType did not change
+                    {
+                        dataType = dataTypeMin;
+                        tableDataType = tableDataTypeMin;
+                    }
+                    else if (tableDataTypeMin != DataTypeDefXsd.String && tableDataTypeMax != DataTypeDefXsd.String) // both a number
+                    {
+                        dataType = DataTypeDefXsd.Double;
+                        tableDataType = DataTypeDefXsd.Double;
+                        if (tableDataTypeMin == DataTypeDefXsd.Integer)
+                            dValueMin = Convert.ToDouble(iValueMin);
+                        else if (tableDataTypeMax == DataTypeDefXsd.Integer)
+                            dValueMax = Convert.ToDouble(iValueMax);
+                    }
+                    else // default: save in string
+                    {
+                        dataType = DataTypeDefXsd.String;
+                        tableDataType = DataTypeDefXsd.String;
+                        if (tableDataTypeMin != DataTypeDefXsd.String)
+                            sValueMin = tableDataTypeMin == DataTypeDefXsd.Integer ? iValueMin.ToString() : dValueMin.ToString();
+                        if (tableDataTypeMax != DataTypeDefXsd.String)
+                            sValueMax = tableDataTypeMax == DataTypeDefXsd.Integer ? iValueMax.ToString() : dValueMax.ToString();
+                    }
                 }
 
-
-                if (smeDB.ValueType.Equals("S"))
+                smeDB.ValueType = dataType.ToString();
+                if (tableDataType == DataTypeDefXsd.String)
                 {
-                    if (withMin)
+                    if (hasValueMin)
                         smeDB.SValueSets.Add(new SValueSet { Value = sValueMin, Annotation = "Min" });
-                    if (withMax)
+                    if (hasValueMax)
                         smeDB.SValueSets.Add(new SValueSet { Value = sValueMax, Annotation = "Max" });
                 }
-                else if (smeDB.ValueType.Equals("I"))
+                else if (tableDataType == DataTypeDefXsd.Integer)
                 {
-                    if (withMin)
+                    if (hasValueMin)
                         smeDB.IValueSets.Add(new IValueSet { Value = iValueMin, Annotation = "Min" });
-                    if (withMax)
+                    if (hasValueMax)
                         smeDB.IValueSets.Add(new IValueSet { Value = iValueMax, Annotation = "Max" });
                 }
-                else if (smeDB.ValueType.Equals("D"))
+                else if (tableDataType == DataTypeDefXsd.Double)
                 {
-                    if (withMin)
+                    if (hasValueMin)
                         smeDB.DValueSets.Add(new DValueSet { Value = dValueMin, Annotation = "Min" });
-                    if (withMax)
+                    if (hasValueMax)
                         smeDB.DValueSets.Add(new DValueSet { Value = dValueMax, Annotation = "Max" });
                 }
             }
@@ -288,7 +292,7 @@ namespace AasxServerDB
                 if (blob.Value.IsNullOrEmpty() && blob.ContentType.IsNullOrEmpty())
                     return;
 
-                smeDB.ValueType = "S";
+                smeDB.ValueType = DataTypeDefXsd.String.ToString();
                 smeDB.SValueSets.Add(new SValueSet { Value = blob.Value != null ? Encoding.ASCII.GetString(blob.Value) : string.Empty, Annotation = blob.ContentType });
             }
             else if (sme is AasCore.Aas3_0.File file)
@@ -296,12 +300,12 @@ namespace AasxServerDB
                 if (file.Value.IsNullOrEmpty() && file.ContentType.IsNullOrEmpty())
                     return;
 
-                smeDB.ValueType = "S";
+                smeDB.ValueType = DataTypeDefXsd.String.ToString();
                 smeDB.SValueSets.Add(new SValueSet { Value = file.Value, Annotation = file.ContentType });
             }
             else if (sme is Entity entity)
             {
-                smeDB.ValueType = "S";
+                smeDB.ValueType = DataTypeDefXsd.String.ToString();
                 smeDB.SValueSets.Add(new SValueSet { Value = entity.GlobalAssetId, Annotation = entity.EntityType.ToString() });
             }
         }
