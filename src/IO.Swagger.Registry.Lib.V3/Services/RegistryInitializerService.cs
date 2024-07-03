@@ -34,9 +34,13 @@ public class RegistryInitializerService : IRegistryInitializerService
     private static List<string> getRegistry = [];
     private static List<string> postRegistry = [];
     private static List<string?> federatedElemensSemanticId = [];
-    private static int submodelRegistryCount;
     private static List<AssetAdministrationShellDescriptor> aasDescriptorsForSubmodelView = [];
 
+    public RegistryInitializerService(IAasDescriptorWritingService aasDescriptorWritingService)
+    {
+        _aasDescriptorWritingService = aasDescriptorWritingService;
+    }
+    
     public List<string> GetRegistryList() => getRegistry;
 
     public ISubmodel? GetAasRegistry() => aasRegistry;
@@ -44,6 +48,7 @@ public class RegistryInitializerService : IRegistryInitializerService
     public List<AssetAdministrationShellDescriptor> GetAasDescriptorsForSubmodelView() => aasDescriptorsForSubmodelView;
 
     public static X509Certificate2? Certificate;
+    private readonly IAasDescriptorWritingService _aasDescriptorWritingService;
 
     public async Task InitRegistry(List<AasxCredentialsEntry> cList, DateTime timestamp, bool initAgain = false)
     {
@@ -444,7 +449,6 @@ public class RegistryInitializerService : IRegistryInitializerService
                                         if (s2.Length == 2)
                                         {
                                             idEncoded = s2[1].Replace("/submodel/", "");
-                                            ;
                                             endpoint = s1[0] + "/submodels/" + idEncoded;
                                         }
                                     }
@@ -710,7 +714,7 @@ public class RegistryInitializerService : IRegistryInitializerService
         return url;
     }
 
-    static async Task AddAasToRegistry(AdminShellNS.AdminShellPackageEnv env, DateTime timestamp)
+    private void AddAasToRegistry(AdminShellNS.AdminShellPackageEnv env, DateTime timestamp)
 #pragma warning restore IDE1006
     {
         var aas = env.AasEnv?.AssetAdministrationShells?[0];
@@ -765,25 +769,6 @@ public class RegistryInitializerService : IRegistryInitializerService
                     }
                 }
 
-                // add searchData for registry
-                if (sm.SubmodelElements != null)
-                    foreach (var se in sm.SubmodelElements)
-                    {
-                        if (se.SemanticId != null && se.SemanticId.Keys != null && se.SemanticId.Keys.Count != 0)
-                        {
-                            if (federatedElemensSemanticId.Contains(se.SemanticId.Keys[0].Value))
-                            {
-                            }
-                        }
-
-                        if (se.Qualifiers != null && se.Qualifiers.Count != 0)
-                        {
-                            if (se.Qualifiers[0].Type == "federatedElement")
-                            {
-                            }
-                        }
-                    }
-
                 ad.SubmodelDescriptors.Add(sd);
                 if (!sm.IdShort.Equals("nameplate", StringComparison.CurrentCultureIgnoreCase))
                 {
@@ -797,10 +782,8 @@ public class RegistryInitializerService : IRegistryInitializerService
                 esm                     = new Endpoint();
                 esm.ProtocolInformation = new ProtocolInformation();
                 // TODO (jtikekar, 2023-09-04): @Andreas why hardcoded=> Verifiable credentials
-                esm.ProtocolInformation.Href =
-                    "https://nameplate.h2894164.stratoserver.net/demo/selfdescriptiononthefly/" +
-                    "aHR0cHM6Ly9yZWdpc3RyeS5oMjg5NDE2NC5zdHJhdG9zZXJ2ZXIubmV0/" +
-                    Base64UrlEncoder.Encode(ad.Id);
+                esm.ProtocolInformation.Href = $"https://nameplate.h2894164.stratoserver.net/demo/selfdescriptiononthefly/" +
+                                               $"aHR0cHM6Ly9yZWdpc3RyeS5oMjg5NDE2NC5zdHJhdG9zZXJ2ZXIubmV0/{Base64UrlEncoder.Encode(ad.Id)}";
                 esm.Interface = "VC-1.0";
                 sd.Endpoints  = new List<Endpoint>();
                 sd.Endpoints.Add(esm);
@@ -817,7 +800,9 @@ public class RegistryInitializerService : IRegistryInitializerService
 
         // add to internal registry
         if (postRegistry.Contains("this"))
-            AddAasDescriptorToRegistry(ad, timestamp, true);
+        {
+            CreateAssetAdministrationShellDescriptor(ad, timestamp, true);
+        }
 
         // POST Descriptor to Registry
         foreach (var pr in postRegistry)
@@ -885,7 +870,7 @@ public class RegistryInitializerService : IRegistryInitializerService
 
                 if (error)
                 {
-                    var r = $"ERROR POST; {response.StatusCode} ; {requestPath} ; {await response.Content.ReadAsStringAsync()}";
+                    var r = $"ERROR POST; {response.StatusCode} ; {requestPath} ; {response.Content}";
                     Console.WriteLine(r);
                 }
             }
@@ -897,248 +882,27 @@ public class RegistryInitializerService : IRegistryInitializerService
 
     public void CreateAssetAdministrationShellDescriptor(AssetAdministrationShellDescriptor newAasDesc, DateTime timestamp, bool initial = false)
     {
-        AddAasDescriptorToRegistry(newAasDesc, timestamp, initial);
-        Program.signalNewData(2);
-    }
-
-    private static void AddAasDescriptorToRegistry(AssetAdministrationShellDescriptor ad, DateTime timestamp, bool initial = false)
-    {
-        var aasID    = ad.Id;
-        var assetID  = ad.GlobalAssetId;
+        var aasID    = newAasDesc.Id;
+        var assetID  = newAasDesc.GlobalAssetId;
         var endpoint = string.Empty;
-        if (ad.Endpoints != null && ad.Endpoints.Count != 0)
+        if (newAasDesc.Endpoints != null && newAasDesc.Endpoints.Count != 0)
         {
-            endpoint = ad.Endpoints[0].ProtocolInformation?.Href;
+            endpoint = newAasDesc.Endpoints[0].ProtocolInformation?.Href;
         }
 
-        // overwrite existing entry, if assetID AND aasID are identical
-        if (!initial && aasRegistry?.SubmodelElements is not null)
+        if (aasRegistry != null && _aasDescriptorWritingService.OverwriteExistingEntryForEdenticalIds(newAasDesc, aasRegistry, timestamp, initial, aasID, assetID, endpoint))
         {
-            foreach (var e in aasRegistry.SubmodelElements)
-            {
-                if (e is not SubmodelElementCollection ec)
-                {
-                    continue;
-                }
-
-                var       found = 0;
-                Property? pjson = null;
-                Property? pep   = null;
-                if (ec.Value != null)
-                {
-                    foreach (var e2 in ec.Value)
-                    {
-                        if (e2 is not Property ep)
-                        {
-                            continue;
-                        }
-
-                        if (ep.IdShort != null && ep.IdShort == "aasID" && ep.Value == aasID)
-                        {
-                            found++;
-                        }
-
-                        switch (ep.IdShort)
-                        {
-                            case "assetID" when ep.Value == assetID:
-                                found++;
-                                break;
-                            case "descriptorJSON":
-                                pjson = ep;
-                                break;
-                            case "endpoint":
-                                pep = ep;
-                                break;
-                        }
-                    }
-                }
-
-                if (found != 2 || pjson == null)
-                {
-                    continue;
-                }
-
-                var s = DescriptorSerializer.ToJsonObject(ad)?.ToJsonString();
-                {
-                    pjson.TimeStampCreate = timestamp;
-                    pjson.TimeStamp       = timestamp;
-                    pjson.Value           = s;
-                    if (pep != null)
-                    {
-                        pep.TimeStampCreate = timestamp;
-                        pep.TimeStamp       = timestamp;
-                        pep.Value           = endpoint;
-                    }
-
-                    Console.WriteLine("Replace Descriptor:");
-                    Console.WriteLine(s);
-                }
-                return;
-            }
+            return;
         }
 
-        // add new entry
-        if (aasRegistry is {SubmodelElements: not null})
+        if (aasRegistry != null && submodelRegistry != null)
         {
-            var c = new SubmodelElementCollection(
-                                                  idShort: $"ShellDescriptor_{aasRegistry.SubmodelElements.Count}",
-                                                  value: new List<ISubmodelElement>());
-            c.TimeStampCreate = timestamp;
-            c.TimeStamp       = timestamp;
-            var p = new Property(DataTypeDefXsd.String, idShort: "idShort");
-            p.TimeStampCreate = timestamp;
-            p.TimeStamp       = timestamp;
-            p.Value           = ad.IdShort;
-            c.Value?.Add(p);
-            p                 = new Property(DataTypeDefXsd.String, idShort: "aasID");
-            p.TimeStampCreate = timestamp;
-            p.TimeStamp       = timestamp;
-            p.Value           = aasID;
-            c.Value?.Add(p);
-            p                 = new Property(DataTypeDefXsd.String, idShort: "assetID");
-            p.TimeStampCreate = timestamp;
-            p.TimeStamp       = timestamp;
-            if (assetID != "")
-            {
-                p.Value = assetID;
-            }
+            _aasDescriptorWritingService.AddNewEntry(newAasDesc, aasRegistry, submodelRegistry, timestamp, aasID, assetID, endpoint);
 
-            c.Value?.Add(p);
-            p                 = new Property(DataTypeDefXsd.String, idShort: "endpoint");
-            p.TimeStampCreate = timestamp;
-            p.TimeStamp       = timestamp;
-            p.Value           = endpoint;
-            c.Value?.Add(p);
-            p                 = new Property(DataTypeDefXsd.String, idShort: "descriptorJSON");
-            p.TimeStampCreate = timestamp;
-            p.TimeStamp       = timestamp;
-            p.Value           = DescriptorSerializer.ToJsonObject(ad)?.ToJsonString();
-            c.Value?.Add(p);
-            aasRegistry?.SubmodelElements.Add(c);
-
-            // iterate submodels
-            var iSubmodel = 0;
-            if (ad.SubmodelDescriptors != null)
-            {
-                foreach (var sd in ad.SubmodelDescriptors)
-                {
-                    // add new entry
-                    var cs = new SubmodelElementCollection(
-                                                           idShort: "SubmodelDescriptor_" + submodelRegistryCount++,
-                                                           value: new List<ISubmodelElement>());
-                    cs.TimeStampCreate = timestamp;
-                    cs.TimeStamp       = timestamp;
-                    var ps = new Property(DataTypeDefXsd.String, idShort: "idShort");
-                    ps.TimeStampCreate = timestamp;
-                    ps.TimeStamp       = timestamp;
-                    ps.Value           = sd.IdShort;
-                    cs.Value?.Add(ps);
-                    ps                 = new Property(DataTypeDefXsd.String, idShort: "submodelID");
-                    ps.TimeStampCreate = timestamp;
-                    ps.TimeStamp       = timestamp;
-                    ps.Value           = sd.Id;
-                    cs.Value?.Add(ps);
-                    ps                 = new Property(DataTypeDefXsd.String, idShort: "semanticID");
-                    ps.TimeStampCreate = timestamp;
-                    ps.TimeStamp       = timestamp;
-                    if (sd.SemanticId != null && sd.SemanticId.GetAsExactlyOneKey().Value != null)
-                        ps.Value = sd.SemanticId.GetAsExactlyOneKey().Value;
-                    cs.Value?.Add(ps);
-                    if (sd.Endpoints != null && sd.Endpoints.Count != 0)
-                    {
-                        endpoint = sd.Endpoints[0].ProtocolInformation?.Href;
-                    }
-
-                    ps                 = new Property(DataTypeDefXsd.String, idShort: "endpoint");
-                    ps.TimeStampCreate = timestamp;
-                    ps.TimeStamp       = timestamp;
-                    ps.Value           = endpoint;
-                    cs.Value?.Add(ps);
-                    ps                 = new Property(DataTypeDefXsd.String, idShort: "descriptorJSON");
-                    ps.TimeStampCreate = timestamp;
-                    ps.TimeStamp       = timestamp;
-
-                    ps.Value = DescriptorSerializer.ToJsonObject(sd)?.ToJsonString();
-                    cs.Value?.Add(ps);
-                    // iterate submodels
-                    var smc = new SubmodelElementCollection(
-                                                            idShort: "federatedElements",
-                                                            value: new List<ISubmodelElement>());
-                    smc.TimeStampCreate = timestamp;
-                    smc.TimeStamp       = timestamp;
-                    cs.Value?.Add(smc);
-                    if (submodelRegistry != null && submodelRegistry.SubmodelElements == null)
-                        submodelRegistry.SubmodelElements = new List<ISubmodelElement>();
-                    submodelRegistry?.SubmodelElements?.Add(cs);
-                    submodelRegistry?.SetAllParents(timestamp);
-                    var r = new ReferenceElement(idShort: $"ref_Submodel_{iSubmodel++}");
-                    r.TimeStampCreate = timestamp;
-                    r.TimeStamp       = timestamp;
-                    var mr = cs.GetModelReference(true);
-                    r.Value = mr;
-                    // revert order in references
-                    var first = 0;
-                    if (r.Value != null && r.Value.Keys != null)
-                    {
-                        var last = r.Value.Keys.Count - 1;
-                        while (first < last)
-                        {
-                            var temp = r.Value.Keys[first];
-                            r.Value.Keys[first] = r.Value.Keys[last];
-                            r.Value.Keys[last]  = temp;
-                            first++;
-                            last--;
-                        }
-                    }
-
-                    c.Value?.Add(r);
-
-                    if (sd.IdShort == "NameplateVC")
-                    {
-                        if (sd.Endpoints != null && sd.Endpoints.Count > 0)
-                        {
-                            var ep = sd.Endpoints[0].ProtocolInformation?.Href;
-                            p                 = new Property(DataTypeDefXsd.String, idShort: "NameplateVC");
-                            p.TimeStampCreate = timestamp;
-                            p.TimeStamp       = timestamp;
-                            p.Value           = ep;
-                            cs.Value?.Add(p);
-                        }
-                    }
-
-                    // TODO (jtikekar, 2023-09-04): @Andreas
-                    if (sd.FederatedElements == null || sd.FederatedElements.Count == 0)
-                    {
-                        continue;
-                    }
-
-                    foreach (var fe in sd.FederatedElements)
-                    {
-                        try
-                        {
-                            var mStrm = new MemoryStream(Encoding.UTF8.GetBytes(fe));
-                            var node  = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
-                            var sme   = Jsonization.Deserialize.ISubmodelElementFrom(node);
-
-                            if (sme == null)
-                            {
-                                continue;
-                            }
-
-                            sme.TimeStampCreate = timestamp;
-                            sme.TimeStamp       = timestamp;
-                            smc.Value?.Add(sme);
-                        }
-                        catch
-                        {
-                            // ignored
-                        }
-                    }
-                }
-            }
+            aasRegistry.SetAllParents();
         }
 
-        aasRegistry?.SetAllParents();
+        Program.signalNewData(2);
     }
 
     public void CreateMultipleAssetAdministrationShellDescriptor(List<AssetAdministrationShellDescriptor> body, DateTime timestamp)
@@ -1149,7 +913,7 @@ public class RegistryInitializerService : IRegistryInitializerService
         {
             lock (Program.changeAasxFile)
             {
-                AddAasDescriptorToRegistry(ad, timestamp);
+                CreateAssetAdministrationShellDescriptor(ad, timestamp);
             }
         }
 

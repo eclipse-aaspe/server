@@ -19,17 +19,6 @@ public class AasDescriptorPaginationServiceTests
         _mockLogger = _fixture.Freeze<Mock<IAppLogger<AasDescriptorPaginationService>>>();
         _service    = _fixture.Create<AasDescriptorPaginationService>();
     }
-
-    [Fact]
-    public void asdf()
-    {
-        var x = Enum.GetNames(typeof(MessageTypeEnum))
-                    .Select(enumName => new OpenApiString(enumName))
-                    .Cast<IOpenApiAny>()
-                    .ToList();
-        x.Should().NotBeEmpty();
-
-    }
     
     [Fact]
     public void Constructor_WithNullLogger_ThrowsArgumentNullException()
