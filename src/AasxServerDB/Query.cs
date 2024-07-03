@@ -491,14 +491,14 @@ namespace AasxServerDB
                 {
                     var identifier = (sme != null && sme.sm.Identifier != null) ? sme.sm.Identifier : "";
                     string path = string.Empty;
-                    if (!sme.sme.SMEType.Equals("OperationVariable"))
+                    if (!sme.sme.SMEType.Equals("OprVar"))
                     {
                         path = sme.sme.IdShort;
                         int? pId = sme.sme.ParentSMEId;
                         while (pId != null)
                         {
                             var smeDBP = db.SMESets.Where(s => s.Id == pId).First();
-                            if (smeDBP.SMEType != null && smeDBP.SMEType.Equals("OperationVariable"))
+                            if (smeDBP.SMEType != null && smeDBP.SMEType.Equals("OprVar"))
                             {
                                 path = string.Empty;
                                 break;

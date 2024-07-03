@@ -421,7 +421,7 @@ namespace AasxServerDB
         public override void VisitSubmodelElementList(ISubmodelElementList that)
         {
             var smeSet = collectSMEData(that);
-            _parSME          = smeSet;
+            _parSME = smeSet;
             base.VisitSubmodelElementList(that);
             _parSME = smeSet.ParentSME;
         }
@@ -429,7 +429,7 @@ namespace AasxServerDB
         public override void VisitSubmodelElementCollection(ISubmodelElementCollection that)
         {
             var smeSet = collectSMEData(that);
-            _parSME          = smeSet;
+            _parSME = smeSet;
             base.VisitSubmodelElementCollection(that);
             _parSME = smeSet.ParentSME;
         }
@@ -513,6 +513,7 @@ namespace AasxServerDB
             SetOperationVariable(smeSet, that.InoutputVariables, "InoutputVariables");
             _parSME = smeSet.ParentSME;
         }
+
         public void SetOperationVariable(SMESet smeOpr, List<IOperationVariable>? listOpr, string name)
         {
             if (listOpr == null || listOpr.Count == 0)
@@ -527,7 +528,7 @@ namespace AasxServerDB
             {
                 ParentSME = _parSME,
                 IdShort = name,
-                SMEType = "OperationVariable",
+                SMEType = "OprVar",
                 TimeStamp = timeStamp,
                 TimeStampCreate = timeStampCreate,
                 TimeStampTree = timeStampTree
@@ -541,6 +542,7 @@ namespace AasxServerDB
 
             _parSME = smeDB.ParentSME;
         }
+
         public override void VisitOperationVariable(IOperationVariable that)
         {
             // base.VisitOperationVariable(that);

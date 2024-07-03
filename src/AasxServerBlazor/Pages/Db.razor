@@ -565,15 +565,15 @@
                     {
                         var    smeDB = data[ i ];
                         string path  = string.Empty;
-                        if (!smeDB.SMEType.Equals("OperationVariable"))
-                        {
+                                if (!smeDB.SMEType.Equals("OprVar"))
+                                {
                             path = smeDB.IdShort;
                             int?   pId  = smeDB.ParentSMEId;
                             while (pId != null)
                             {
                                 var smeDBP = db.SMESets.Where(s => s.Id == pId).First();
-                                if (smeDBP.SMEType != null && smeDBP.SMEType.Equals("OperationVariable"))
-                                {
+                                        if (smeDBP.SMEType != null && smeDBP.SMEType.Equals("OprVar"))
+                                        {
                                     path = string.Empty;
                                     break; 
                                 }
@@ -632,7 +632,7 @@
                                 }
                                 @if (smeDB.ValueType != null)
                                 {
-                                    if(smeDB.ValueType.Equals("S"))
+                                    if (smeDB.ValueType.Equals("S"))
                                     {
                                         <a href="@($"{shorturl}/svalue?smeid={smeDB.Id}")" target="_blank">svalue </a>
                                     }
@@ -667,15 +667,15 @@
                     {
                         var    smeDB = data[ i ];
                         string path  = string.Empty;
-                        if (!smeDB.SMEType.Equals("OperationVariable"))
+                        if (!smeDB.SMEType.Equals("OprVar"))
                         {
                             path = smeDB.IdShort;
                             int?   pId  = smeDB.ParentSMEId;
                             while (pId != null)
                             {
                                 var smeDBP = db.SMESets.Where(s => s.Id == pId).First();
-                                if (smeDBP.SMEType != null && smeDBP.SMEType.Equals("OperationVariable"))
-                                {
+                                    if (smeDBP.SMEType != null && smeDBP.SMEType.Equals("OprVar"))
+                                    {
                                     path = string.Empty;
                                     break; 
                                 }

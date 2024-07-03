@@ -1,8 +1,10 @@
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 using AasCore.Aas3_0;
 using AasxServerDB.Entities;
 using AdminShellNS;
 using Extensions;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 
 namespace AasxServerDB
@@ -87,7 +89,7 @@ namespace AasxServerDB
             foreach (var smel in smeSets)
             {
                 // create SME from database
-                ISubmodelElement nextSME = createSME(smel);
+                var nextSME = createSME(smel);
 
                 // add sme to sm or sme 
                 if (sme == null)
@@ -120,7 +122,7 @@ namespace AasxServerDB
                                 (sme as Operation).InoutputVariables.Add(new OperationVariable(nextSME));
                             break;*/
                         /* 2. Version */
-                        case "OperationVariable":
+                        case "OprVar":
                             switch (smeSet.IdShort)
                             {
                                 case "InputVariables":
@@ -157,67 +159,94 @@ namespace AasxServerDB
             }
         }
 
-        static private ISubmodelElement createSME(SMESet smeSet)
+        static private ISubmodelElement? createSME(SMESet smeSet)
         {
             ISubmodelElement? sme = null;
             var value = smeSet.getValue();
             switch (smeSet.SMEType)
             {
                 case "Rel":
-                    sme = new RelationshipElement(first: null, second: null);
+                    sme = new RelationshipElement(
+                        first: new Reference(ReferenceTypes.ExternalReference, new List<IKey>()),
+                        second: new Reference(ReferenceTypes.ExternalReference, new List<IKey>()));
                     break;
                 case "RelA":
-                    sme = new AnnotatedRelationshipElement(first: null, second: null, annotations: new List<IDataElement>());
+                    sme = new AnnotatedRelationshipElement(
+                        first: new Reference(ReferenceTypes.ExternalReference, new List<IKey>()),
+                        second: new Reference(ReferenceTypes.ExternalReference, new List<IKey>()),
+                        annotations: new List<IDataElement>());
                     break;
                 case "Prop":
-                    sme = new Property(DataTypeDefXsd.String, value: value.First()[0]);
+                    sme = new Property(
+                        valueType: GetDataTypeDefXsd(smeSet.ValueType),
+                        value: value.First()[0]/*,
+                        valueId: new Reference(ReferenceTypes.ExternalReference, new List<IKey>())*/);
                     break;
                 case "MLP":
                     sme = new MultiLanguageProperty(
-                        value: value.ConvertAll<ILangStringTextType>(val => new LangStringTextType(val[1], val[0])));
+                        value: value.ConvertAll<ILangStringTextType>(val => new LangStringTextType(val[1], val[0]))/*,
+                        valueId: new Reference(ReferenceTypes.ExternalReference, new List<IKey>())*/);
                     break;
                 case "Range":
-                    var valueType = new AasContext().SMESets.Where(smeDB => smeDB.Id == smeSet.Id).Select(smeDB => smeDB.ValueType).First();
-                    var dataType = DataTypeDefXsd.String;
-                    if (valueType != null && valueType.Equals("I"))
-                        dataType = DataTypeDefXsd.Integer;
-                    else if (valueType != null && valueType.Equals("D"))
-                        dataType = DataTypeDefXsd.Double;
                     var findMin = value.Find(val => val[1].Equals("Min"));
                     var findMax = value.Find(val => val[1].Equals("Max"));
-                    var minValue = findMin != null ? findMin[0] : string.Empty;
-                    var maxValue = findMax != null ? findMax[0] : string.Empty;
-                    sme = new AasCore.Aas3_0.Range(dataType, min: minValue, max: maxValue);
+                    sme = new AasCore.Aas3_0.Range(
+                        valueType: GetDataTypeDefXsd(smeSet.ValueType),
+                        min: findMin != null ? findMin[0] : string.Empty,
+                        max: findMax != null ? findMax[0] : string.Empty);
                     break;
                 case "Blob":
-                    sme = new Blob(value.First()[1], value: Encoding.ASCII.GetBytes(value.First()[0]));
+                    sme = new Blob(
+                        value: Encoding.ASCII.GetBytes(value.First()[0]),
+                        contentType: value.First()[1]);
                     break;
                 case "File":
-                    sme = new AasCore.Aas3_0.File(value.First()[1], value: value.First()[0]);
+                    sme = new AasCore.Aas3_0.File(
+                        value: value.First()[0],
+                        contentType: value.First()[1]);
                     break;
                 case "Ref":
-                    sme = new ReferenceElement();
+                    sme = new ReferenceElement(
+                        value: new Reference(ReferenceTypes.ExternalReference, new List<IKey>()));
                     break;
                 case "Cap":
                     sme = new Capability();
                     break;
                 case "SML":
-                    sme = new SubmodelElementList(AasSubmodelElements.SubmodelElement, value: new List<ISubmodelElement>());
+                    sme = new SubmodelElementList(
+                        orderRelevant: true,
+                        semanticIdListElement: null,
+                        typeValueListElement: AasSubmodelElements.SubmodelElement,
+                        valueTypeListElement: null,
+                        value: new List<ISubmodelElement>());
                     break;
                 case "SMC":
-                    sme = new SubmodelElementCollection(value: new List<ISubmodelElement>());
+                    sme = new SubmodelElementCollection(
+                        value: new List<ISubmodelElement>());
                     break;
                 case "Ent":
                     sme = new Entity(
-                        value.First()[1].Equals("SelfManagedEntity") ? EntityType.SelfManagedEntity : EntityType.CoManagedEntity,
+                        statements: new List<ISubmodelElement>(),
+                        entityType: value.First()[1].Equals("SelfManagedEntity") ? EntityType.SelfManagedEntity : EntityType.CoManagedEntity,
                         globalAssetId: value.First()[0],
-                        statements: new List<ISubmodelElement>());
+                        specificAssetIds: null);
                     break;
                 case "Evt":
-                    sme = new BasicEventElement(observed: null, direction: Direction.Input, state: StateOfEvent.Off);
+                    sme = new BasicEventElement(
+                        observed: new Reference(ReferenceTypes.ExternalReference, new List<IKey>()),
+                        direction: Direction.Input,
+                        state: StateOfEvent.Off,
+                        messageTopic: null,
+                        messageBroker: null,
+                        lastUpdate: null,
+                        minInterval: null,
+                        maxInterval: null);
                     break;
                 case "Opr":
-                    sme = new Operation(inputVariables: new List<IOperationVariable>(), outputVariables: new List<IOperationVariable>(), inoutputVariables: new List<IOperationVariable>());
+                    sme = new Operation(
+                        inputVariables: new List<IOperationVariable>(),
+                        outputVariables: new List<IOperationVariable>(),
+                        inoutputVariables: new List<IOperationVariable>());
                     break;
             }
 
@@ -234,6 +263,17 @@ namespace AasxServerDB
             sme.TimeStampCreate = smeSet.TimeStampCreate;
             sme.TimeStampTree = smeSet.TimeStampTree;
             return sme;
+        }
+
+        static private DataTypeDefXsd GetDataTypeDefXsd(string dataTypeString)
+        {
+            return dataTypeString switch
+            {
+                "S" => DataTypeDefXsd.String,
+                "D" => DataTypeDefXsd.Double,
+                "I" => DataTypeDefXsd.Integer,
+                _ => DataTypeDefXsd.String
+            };
         }
 
         static public string GetAASXPath(string aasId = "", string submodelId = "")
