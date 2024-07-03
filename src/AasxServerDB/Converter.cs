@@ -1,10 +1,8 @@
-using System.ComponentModel.DataAnnotations;
 using System.Text;
 using AasCore.Aas3_0;
 using AasxServerDB.Entities;
 using AdminShellNS;
 using Extensions;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 
 namespace AasxServerDB
@@ -88,6 +86,11 @@ namespace AasxServerDB
 
             foreach (var smel in smeSets)
             {
+                // prefix of operation
+                var split = smel.SMEType.Split("-");
+                var oprPrefix = split.Length == 2 ? split[0] : string.Empty;
+                smel.SMEType  = split.Length == 2 ? split[1] : split[0];
+
                 // create SME from database
                 var nextSME = createSME(smel);
 
@@ -112,29 +115,13 @@ namespace AasxServerDB
                         case "Ent":
                             (sme as Entity).Statements.Add(nextSME);
                             break;
-                        /* 1. Version 
                         case "Opr":
-                            if (nextSME.IdShort.StartsWith("Input_"))
+                            if (oprPrefix.Equals("In"))
                                 (sme as Operation).InputVariables.Add(new OperationVariable(nextSME));
-                            else if (nextSME.IdShort.StartsWith("Output_"))
+                            else if (oprPrefix.Equals("Out"))
                                 (sme as Operation).OutputVariables.Add(new OperationVariable(nextSME));
-                            else if (nextSME.IdShort.StartsWith("Inoutput_"))
+                            else if (oprPrefix.Equals("I/O"))
                                 (sme as Operation).InoutputVariables.Add(new OperationVariable(nextSME));
-                            break;*/
-                        /* 2. Version */
-                        case "OprVar":
-                            switch (smeSet.IdShort)
-                            {
-                                case "InputVariables":
-                                    (sme as Operation).InputVariables.Add(new OperationVariable(nextSME));
-                                    break;
-                                case "OutputVariables":
-                                    (sme as Operation).OutputVariables.Add(new OperationVariable(nextSME));
-                                    break;
-                                case "InoutputVariables":
-                                    (sme as Operation).InoutputVariables.Add(new OperationVariable(nextSME));
-                                    break;
-                            }
                             break;
                     }
                 }
@@ -146,14 +133,8 @@ namespace AasxServerDB
                     case "SML":
                     case "SMC":
                     case "Ent":
-                    /* case "Opr": 1. Version */
-                        LoadSME(submodel, nextSME, smel, SMEList);
-                        break;
-                    /* 2. Version */
                     case "Opr":
-                        var smeOprVar = SMEList.Where(s => s.ParentSMEId == smel.Id).ToList();
-                        foreach (var oprVar in smeOprVar)
-                            LoadSME(submodel, nextSME, oprVar, SMEList);
+                        LoadSME(submodel, nextSME, smel, SMEList);
                         break;
                 }
             }

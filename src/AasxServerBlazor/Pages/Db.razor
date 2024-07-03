@@ -563,30 +563,20 @@
                     <tbody>
                     @for (int i = 0; i < data.Count && i < 1000; i++)
                     {
-                        var    smeDB = data[ i ];
-                        string path  = string.Empty;
-                                if (!smeDB.SMEType.Equals("OprVar"))
-                                {
-                            path = smeDB.IdShort;
-                            int?   pId  = smeDB.ParentSMEId;
-                            while (pId != null)
-                            {
-                                var smeDBP = db.SMESets.Where(s => s.Id == pId).First();
-                                        if (smeDBP.SMEType != null && smeDBP.SMEType.Equals("OprVar"))
-                                        {
-                                    path = string.Empty;
-                                    break; 
-                                }
-                                path = $"{smeDBP.IdShort}.{path}";
-                                pId = smeDBP.ParentSMEId;
-                            }       
+                        var smeDB = data[i];
+                        string path = smeDB.IdShort;
+                        int? pnum = smeDB.ParentSMEId;
+                        while (pnum != null)
+                        {
+                            var smeDBP = db.SMESets.Where(s => s.Id == pnum).First();
+                            path = $"{smeDBP.IdShort}.{path}";
+                            pnum = smeDBP.ParentSMEId;
                         }
 
-                        var smDB       = db.SMSets.Where(s => s.Id == smeDB.SMId).First();
-                        var submodel64 = Base64UrlEncoder.Encode(smDB.Identifier);
-                        var link       = string.Empty;
-                        if (!path.IsNullOrEmpty())
-                            link = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}/submodel-elements/{path}";
+                        var smDB = db.SMSets.Where(s => s.Id == smeDB.SMId).First();
+                        string submodel64 = Base64UrlEncoder.Encode(smDB.Identifier);
+                        string link = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}/submodel-elements/{path}";
+
                         <tr>
                             <td style="word-break:keep-all">@smeDB.SMId</td>
                             <td style="word-break:keep-all">@smeDB.ParentSMEId</td>
@@ -648,10 +638,7 @@
                                         
                             </td>
                             <td>
-                                @if (!link.IsNullOrEmpty())
-                                {
-                                    <a href="@link" target="_blank">@link</a>
-                                }
+                                <a href="@link" target="_blank">@link</a>
                             </td>
                         </tr>
                     }
@@ -666,29 +653,18 @@
                     @for (int i = 1000; i < data.Count; i++)
                     {
                         var    smeDB = data[ i ];
-                        string path  = string.Empty;
-                        if (!smeDB.SMEType.Equals("OprVar"))
+                        string path  = smeDB.IdShort;
+                        int?   pnum  = smeDB.ParentSMEId;
+                        while (pnum != null)
                         {
-                            path = smeDB.IdShort;
-                            int?   pId  = smeDB.ParentSMEId;
-                            while (pId != null)
-                            {
-                                var smeDBP = db.SMESets.Where(s => s.Id == pId).First();
-                                    if (smeDBP.SMEType != null && smeDBP.SMEType.Equals("OprVar"))
-                                    {
-                                    path = string.Empty;
-                                    break; 
-                                }
-                                path = $"{smeDBP.IdShort}.{path}";
-                                    pId = smeDBP.ParentSMEId;
-                                }       
+                            var smeDBP = db.SMESets.Where(s => s.Id == pnum).First();
+                            path = $"{smeDBP.IdShort}.{path}";
+                            pnum = smeDBP.ParentSMEId;
                         }
 
-                        var smDB       = db.SMSets.Where(s => s.Id == smeDB.SMId).First();
-                        var submodel64 = Base64UrlEncoder.Encode(smDB.Identifier);
-                        var link       = string.Empty;
-                        if (!path.IsNullOrEmpty())
-                            link = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}/submodel-elements/{path}";
+                        var    smDB       = db.SMSets.Where(s => s.Id == smeDB.SMId).First();
+                        string submodel64 = Base64UrlEncoder.Encode(smDB.Identifier);
+                        string link       = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}/submodel-elements/{path}";
 
                         <span>@smeDB.SMId</span>
                         <span style="background-color:blue;">&nbsp</span>
@@ -753,10 +729,7 @@
                             }
                         }
                         <span style="background-color:blue;">&nbsp</span>
-                        @if (!link.IsNullOrEmpty())
-                        {
-                            <a href="@link" target="_blank">@link</a>
-                        }
+                        <a href="@link" target="_blank">@link</a>
                         <br/>
                     }
 
