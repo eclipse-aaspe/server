@@ -32,6 +32,7 @@ public static class DependencyRegistry
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddSingleton<IRegistryInitializerService, RegistryInitializerService>();
         services.AddTransient<IAasDescriptorPaginationService, AasDescriptorPaginationService>();
+        services.AddTransient<IAasDescriptorWritingService, AasDescriptorWritingService>();
         services.AddTransient<IAasRegistryService, AasRegistryService>();
         services.AddTransient<IAasRepositoryApiHelperService, AasRepositoryApiHelperService>();
         services.AddTransient<IAasxFileServerInterfaceService, AasxFileServerInterfaceService>();
@@ -50,6 +51,7 @@ public static class DependencyRegistry
         services.AddTransient<IReferenceModifierService, ReferenceModifierService>();
         services.AddTransient<ISecurityService, SecurityService>();
         services.AddTransient<IServiceDescription, ServiceDescription>();
+        services.AddTransient<ISubmodelPropertyExtractionService, SubmodelPropertyExtractionService>();
         services.AddTransient<ISubmodelService, SubmodelService>();
         services.AddTransient<IValueOnlyJsonDeserializer, ValueOnlyJsonDeserializer>();
     }
