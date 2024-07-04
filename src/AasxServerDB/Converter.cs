@@ -87,12 +87,12 @@ namespace AasxServerDB
             foreach (var smel in smeSets)
             {
                 // prefix of operation
-                var split = smel.SMEType.Split("-");
-                var oprPrefix = split.Length == 2 ? split[0] : string.Empty;
-                smel.SMEType  = split.Length == 2 ? split[1] : split[0];
+                var split = smel.SMEType != null ? smel.SMEType.Split("-") : [ string.Empty ];
+                var oprPrefix = split.Length == 2 ? split[ 0 ] : string.Empty;
+                smel.SMEType  = split.Length == 2 ? split[ 1 ] : split[ 0 ];
 
                 // create SME from database
-                var nextSME = createSME(smel);
+                var nextSME = CreateSME(smel);
 
                 // add sme to sm or sme 
                 if (sme == null)
@@ -140,7 +140,7 @@ namespace AasxServerDB
             }
         }
 
-        static private ISubmodelElement? createSME(SMESet smeSet)
+        static private ISubmodelElement? CreateSME(SMESet smeSet)
         {
             ISubmodelElement? sme = null;
             var value = smeSet.getValue();
@@ -235,14 +235,13 @@ namespace AasxServerDB
                 return null;
 
             sme.IdShort = smeSet.IdShort;
-            if (!smeSet.SemanticId.IsNullOrEmpty())
-            {
-                sme.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
-                    new List<IKey>() { new Key(KeyTypes.GlobalReference, smeSet.SemanticId) });
-            }
             sme.TimeStamp = smeSet.TimeStamp;
             sme.TimeStampCreate = smeSet.TimeStampCreate;
             sme.TimeStampTree = smeSet.TimeStampTree;
+            if (!smeSet.SemanticId.IsNullOrEmpty())
+                sme.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
+                    new List<IKey>() { new Key(KeyTypes.GlobalReference, smeSet.SemanticId) });
+
             return sme;
         }
 
@@ -256,20 +255,23 @@ namespace AasxServerDB
                 if (submodelDBList.Count() > 0)
                     aasxId = submodelDBList.First().AASXId;
             }
+
             if (!aasId.IsNullOrEmpty())
             {
                 var aasDBList = db.AASSets.Where(a => a.Identifier == aasId);
                 if (aasDBList.Any())
                     aasxId = aasDBList.First().AASXId;
             }
+
             if (aasxId == null)
                 return string.Empty;
+
             var aasxDBList = db.AASXSets.Where(a => a.Id == aasxId);
             if (!aasxDBList.Any())
                 return string.Empty;
+
             var aasxDB = aasxDBList.First();
             return aasxDB.AASX;
-
         }
     }
 }

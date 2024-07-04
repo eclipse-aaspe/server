@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using AasCore.Aas3_0;
 using AasxServerDB.Entities;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json.Linq;
 
 namespace AasxServerDB
 {
@@ -91,38 +92,30 @@ namespace AasxServerDB
 
         static public List<IValueSet> GetPageIValueData(int size = 1000, string searchLower = "", long smeid = 0)
         {
-            long iEqual = 0;
-            try
-            {
-                iEqual = Convert.ToInt64(searchLower);
-            }
-            catch { }
+            if (!Int64.TryParse(searchLower, out var iEqual))
+                iEqual = 0;
 
             return new AasContext().IValueSets
                 .OrderBy(v => v.SMEId)
                 .Where(v => (smeid == 0 || v.SMEId == smeid) &&
-                       (searchLower.IsNullOrEmpty() ||
-                       (v.Annotation != null && v.Annotation.ToLower().Contains(searchLower))) ||
-                       (iEqual == 0 || v.Value == iEqual))
+                            (searchLower.IsNullOrEmpty() ||
+                            (v.Annotation != null && v.Annotation.ToLower().Contains(searchLower)) ||
+                            (iEqual == 0 || v.Value == iEqual)))
                 .Take(size)
                 .ToList();
         }
 
         static public List<DValueSet> GetPageDValueData(int size = 1000, string searchLower = "", long smeid = 0)
         {
-            double fEqual = 0;
-            try
-            {
-                fEqual = Convert.ToDouble(searchLower);
-            }
-            catch { }
+            if (!Double.TryParse(searchLower, out var dEqual))
+                dEqual = 0;
 
             return new AasContext().DValueSets
                 .OrderBy(v => v.SMEId)
                 .Where(v => (smeid == 0 || v.SMEId == smeid) &&
-                    (searchLower.IsNullOrEmpty() ||
-                    (v.Annotation != null && v.Annotation.ToLower().Contains(searchLower))) ||
-                    (fEqual == 0 || v.Value == fEqual))
+                            (searchLower.IsNullOrEmpty() ||
+                            (v.Annotation != null && v.Annotation.ToLower().Contains(searchLower)) ||
+                            (dEqual == 0 || v.Value == dEqual)))
                 .Take(size)
                 .ToList();
         }

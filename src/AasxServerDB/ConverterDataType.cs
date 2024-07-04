@@ -62,7 +62,7 @@ public static class ConverterDataType
         return TableToDataType[key];
     }
 
-    static public DataTypeDefXsd? StringToDataType(string tableDataType)
+    static public DataTypeDefXsd? StringToDataType(string? tableDataType)
     {
         if (tableDataType.IsNullOrEmpty())
             return null;
