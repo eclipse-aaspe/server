@@ -78,10 +78,10 @@ public class RegistryInitializerService : IRegistryInitializerService
 
         if (aasRegistry == null || submodelRegistry == null)
         {
-            foreach (AdminShellNS.AdminShellPackageEnv env in Program.env)
+            foreach (var env in Program.env)
             {
-                var aas = env.AasEnv.AssetAdministrationShells[0];
-                if (aas.IdShort != "REGISTRY")
+                var aas = env.AasEnv?.AssetAdministrationShells?[0];
+                if (aas?.IdShort != "REGISTRY")
                 {
                     continue;
                 }
@@ -177,7 +177,7 @@ public class RegistryInitializerService : IRegistryInitializerService
 
                 if (Program.withDb)
                 {
-                    using (AasContext db = new AasContext())
+                    await using (var db = new AasContext())
                     {
                         foreach (var aasDB in db.AASSets)
                         {
@@ -213,7 +213,7 @@ public class RegistryInitializerService : IRegistryInitializerService
                         }
                         catch
                         {
-                            // Well? It seems like an Orzelski problem...
+                            // Well? It seems like a problem with the certificate...
                         }
 
                         if (s2 == null)
@@ -224,7 +224,7 @@ public class RegistryInitializerService : IRegistryInitializerService
 
                         var       xc = new X509Certificate2Collection();
                         using var m  = new MemoryStream();
-                        s2.CopyTo(m);
+                        await s2.CopyToAsync(m);
                         var b = m.GetBuffer();
                         xc.Import(b, certificatePassword, X509KeyStorageFlags.PersistKeySet);
                         Certificate = new X509Certificate2(b, certificatePassword);
@@ -494,7 +494,7 @@ public class RegistryInitializerService : IRegistryInitializerService
                                         }
 
                                         Program.submodelAPIcount++;
-                                        string clientToken = null;
+                                        string? clientToken = null;
 
                                         switch (sd.IdShort)
                                         {
@@ -525,14 +525,14 @@ public class RegistryInitializerService : IRegistryInitializerService
                                                         var          policyRequestedResource = string.Empty;
                                                         foreach (var kvp in response.Headers)
                                                         {
-                                                            if (kvp.Key == "policy")
+                                                            switch (kvp.Key)
                                                             {
-                                                                policy = kvp.Value.FirstOrDefault();
-                                                            }
-
-                                                            if (kvp.Key == "policyRequestedResource")
-                                                            {
-                                                                policyRequestedResource = kvp.Value.FirstOrDefault() ?? string.Empty;
+                                                                case "policy":
+                                                                    policy = kvp.Value.FirstOrDefault();
+                                                                    break;
+                                                                case "policyRequestedResource":
+                                                                    policyRequestedResource = kvp.Value.FirstOrDefault() ?? string.Empty;
+                                                                    break;
                                                             }
                                                         }
 
