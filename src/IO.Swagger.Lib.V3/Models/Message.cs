@@ -13,199 +13,228 @@ using System.Text;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
 
-namespace IO.Swagger.Models
+namespace IO.Swagger.Models;
+
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+/// <summary>
+/// Enum for Message Types
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum MessageTypeEnum
 {
-    using System.Text.Json;
-    using System.Text.Json.Serialization;
+    /// <summary>
+    /// Undefined MessageType
+    /// </summary>
+    [EnumMember(Value = "Undefined")] Undefined = 0,
 
     /// <summary>
-    /// Enum for Message Types
+    /// Info MessageType
     /// </summary>
-    [Newtonsoft.Json.JsonConverter(typeof(JsonStringEnumConverter))]
-    public enum MessageTypeEnum
+    [EnumMember(Value = "Info")] Info = 1,
+
+    /// <summary>
+    /// Warning MessageType
+    /// </summary>
+    [EnumMember(Value = "Warning")] Warning = 2,
+
+    /// <summary>
+    /// Error MessageType
+    /// </summary>
+    [EnumMember(Value = "Error")] Error = 3,
+
+    /// <summary>
+    /// Exception MessageType
+    /// </summary>
+    [EnumMember(Value = "Exception")] Exception = 4
+}
+
+/// <summary>
+/// 
+/// </summary>
+[DataContract]
+public partial class Message : IEquatable<Message>
+{
+    private readonly JsonSerializerOptions options = new();
+
+    /// <summary>
+    /// Gets or Sets Code
+    /// </summary>
+    [StringLength(32, MinimumLength = 1)]
+    [DataMember(Name = "code")]
+    public string? Code { get; set; }
+
+    /// <summary>
+    /// Gets or Sets CorrelationId
+    /// </summary>
+    [StringLength(128, MinimumLength = 1)]
+    [DataMember(Name = "correlationId")]
+    public string? CorrelationId { get; set; }
+
+    /// <summary>
+    /// Gets or Sets MessageType
+    /// </summary>
+
+    [DataMember(Name = "messageType")]
+    public MessageTypeEnum? MessageType { get; set; }
+
+    /// <summary>
+    /// Gets or Sets Text
+    /// </summary>
+
+    [DataMember(Name = "text")]
+    public string? Text { get; set; }
+
+    /// <summary>
+    /// Gets or Sets Timestamp
+    /// </summary>
+    [RegularExpression(
+                          @"/^-?(([1-9][0-9][0-9][0-9]+)|(0[0-9][0-9][0-9]))-((0[1-9])|(1[0-2]))-((0[1-9])|([12][0-9])|(3[01]))T(((([01][0-9])|(2[0-3])):[0-5][0-9]:([0-5][0-9])(\.[0-9]+)?)|24:00:00(\.0+)?)(Z|\+00:00|-00:00)$/")]
+    [DataMember(Name = "timestamp")]
+    public string? Timestamp { get; set; }
+
+    /// <summary>
+    /// Returns the string presentation of the object
+    /// </summary>
+    /// <returns>String presentation of the object</returns>
+    public override string ToString()
     {
-        /// <summary>
-        /// Undefined MessageType
-        /// </summary>
-        [EnumMember(Value = "Undefined")] UndefinedEnum = 0,
-
-        /// <summary>
-        /// Info MessageType
-        /// </summary>
-        [EnumMember(Value = "Info")] InfoEnum = 1,
-
-        /// <summary>
-        /// Warning MessageType
-        /// </summary>
-        [EnumMember(Value = "Warning")] WarningEnum = 2,
-
-        /// <summary>
-        /// Error MessageType
-        /// </summary>
-        [EnumMember(Value = "Error")] ErrorEnum = 3,
-
-        /// <summary>
-        /// Exception MessageType
-        /// </summary>
-        [EnumMember(Value = "Exception")] ExceptionEnum = 4
+        var sb = new StringBuilder();
+        sb.Append("class Message {\n");
+        sb.Append("  Code: ").Append(Code).Append('\n');
+        sb.Append("  CorrelationId: ").Append(CorrelationId).Append('\n');
+        sb.Append("  MessageType: ").Append(MessageType).Append('\n');
+        sb.Append("  Text: ").Append(Text).Append('\n');
+        sb.Append("  Timestamp: ").Append(Timestamp).Append('\n');
+        sb.Append("}\n");
+        return sb.ToString();
     }
 
     /// <summary>
-    /// 
+    /// Returns the JSON string presentation of the object
     /// </summary>
-    [DataContract]
-    public partial class Message : IEquatable<Message>
+    /// <returns>JSON string presentation of the object</returns>
+    public string ToJson()
     {
-        private JsonSerializerOptions options = new(); 
-        
-        /// <summary>
-        /// Gets or Sets Code
-        /// </summary>
-        [StringLength(32, MinimumLength = 1)]
-        [DataMember(Name = "code")]
-        public string? Code { get; set; }
+        options.WriteIndented = true;
+        options.Converters.Add(new JsonStringEnumConverter());
+        return JsonSerializer.Serialize(this, options);
+    }
 
-        /// <summary>
-        /// Gets or Sets CorrelationId
-        /// </summary>
-        [StringLength(128, MinimumLength = 1)]
-        [DataMember(Name = "correlationId")]
-        public string? CorrelationId { get; set; }
-
-        /// <summary>
-        /// Gets or Sets MessageType
-        /// </summary>
-
-        [DataMember(Name = "messageType")]
-        public MessageTypeEnum? MessageType { get; set; }
-
-        /// <summary>
-        /// Gets or Sets Text
-        /// </summary>
-
-        [DataMember(Name = "text")]
-        public string? Text { get; set; }
-
-        /// <summary>
-        /// Gets or Sets Timestamp
-        /// </summary>
-        [RegularExpression(
-                              @"/^-?(([1-9][0-9][0-9][0-9]+)|(0[0-9][0-9][0-9]))-((0[1-9])|(1[0-2]))-((0[1-9])|([12][0-9])|(3[01]))T(((([01][0-9])|(2[0-3])):[0-5][0-9]:([0-5][0-9])(\.[0-9]+)?)|24:00:00(\.0+)?)(Z|\+00:00|-00:00)$/")]
-        [DataMember(Name = "timestamp")]
-        public string? Timestamp { get; set; }
-
-        /// <summary>
-        /// Returns the string presentation of the object
-        /// </summary>
-        /// <returns>String presentation of the object</returns>
-        public override string ToString()
+    /// <summary>
+    /// Returns true if objects are equal
+    /// </summary>
+    /// <param name="obj">Object to be compared</param>
+    /// <returns>Boolean</returns>
+    public override bool Equals(object? obj)
+    {
+        if (ReferenceEquals(null, obj))
         {
-            var sb = new StringBuilder();
-            sb.Append("class Message {\n");
-            sb.Append("  Code: ").Append(Code).Append('\n');
-            sb.Append("  CorrelationId: ").Append(CorrelationId).Append('\n');
-            sb.Append("  MessageType: ").Append(MessageType).Append('\n');
-            sb.Append("  Text: ").Append(Text).Append('\n');
-            sb.Append("  Timestamp: ").Append(Timestamp).Append('\n');
-            sb.Append("}\n");
-            return sb.ToString();
+            return false;
         }
 
-        /// <summary>
-        /// Returns the JSON string presentation of the object
-        /// </summary>
-        /// <returns>JSON string presentation of the object</returns>
-        public string ToJson()
+        if (ReferenceEquals(this, obj))
         {
-            options.WriteIndented = true;
-            options.Converters.Add(new JsonStringEnumConverter());
-            return JsonSerializer.Serialize(this, options);
+            return true;
         }
 
-        /// <summary>
-        /// Returns true if objects are equal
-        /// </summary>
-        /// <param name="obj">Object to be compared</param>
-        /// <returns>Boolean</returns>
-        public override bool Equals(object? obj)
+        return obj.GetType() == GetType() && Equals((Message)obj);
+    }
+
+    /// <summary>
+    /// Returns true if Message instances are equal
+    /// </summary>
+    /// <param name="other">Instance of Message to be compared</param>
+    /// <returns>Boolean</returns>
+    public bool Equals(Message? other)
+    {
+        if (ReferenceEquals(null, other))
         {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            return obj.GetType() == GetType() && Equals((Message)obj);
+            return false;
         }
 
-        /// <summary>
-        /// Returns true if Message instances are equal
-        /// </summary>
-        /// <param name="other">Instance of Message to be compared</param>
-        /// <returns>Boolean</returns>
-        public bool Equals(Message? other)
+        if (ReferenceEquals(this, other))
         {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-
-            return
-                (
-                    Code == other.Code ||
-                    (Code != null &&
-                     Code.Equals(other.Code, StringComparison.Ordinal))
-                ) &&
-                (
-                    CorrelationId == other.CorrelationId ||
-                    (CorrelationId != null &&
-                     CorrelationId.Equals(other.CorrelationId, StringComparison.Ordinal))
-                ) &&
-                (
-                    MessageType == other.MessageType ||
-                    (MessageType != null &&
-                     MessageType.Equals(other.MessageType))
-                ) &&
-                (
-                    Text == other.Text ||
-                    (Text != null &&
-                     Text.Equals(other.Text, StringComparison.Ordinal))
-                ) &&
-                (
-                    Timestamp == other.Timestamp ||
-                    (Timestamp != null &&
-                     Timestamp.Equals(other.Timestamp, StringComparison.Ordinal))
-                );
+            return true;
         }
 
-        /// <summary>
-        /// Gets the hash code
-        /// </summary>
-        /// <returns>Hash code</returns>
-        public override int GetHashCode()
+        return
+            (
+                Code == other.Code ||
+                (Code != null &&
+                 Code.Equals(other.Code, StringComparison.Ordinal))
+            ) &&
+            (
+                CorrelationId == other.CorrelationId ||
+                (CorrelationId != null &&
+                 CorrelationId.Equals(other.CorrelationId, StringComparison.Ordinal))
+            ) &&
+            (
+                MessageType == other.MessageType ||
+                (MessageType != null &&
+                 MessageType.Equals(other.MessageType))
+            ) &&
+            (
+                Text == other.Text ||
+                (Text != null &&
+                 Text.Equals(other.Text, StringComparison.Ordinal))
+            ) &&
+            (
+                Timestamp == other.Timestamp ||
+                (Timestamp != null &&
+                 Timestamp.Equals(other.Timestamp, StringComparison.Ordinal))
+            );
+    }
+
+    /// <summary>
+    /// Gets the hash code
+    /// </summary>
+    /// <returns>Hash code</returns>
+    public override int GetHashCode()
+    {
+        unchecked // Overflow is fine, just wrap
         {
-            unchecked // Overflow is fine, just wrap
+            var hashCode = 41;
+            // Suitable nullity checks etc., of course :)
+            if (Code != null)
             {
-                var hashCode = 41;
-                // Suitable nullity checks etc, of course :)
-                if (Code != null)
-                    hashCode = (hashCode * 59) + Code.GetHashCode();
-                if (CorrelationId != null)
-                    hashCode = (hashCode * 59) + CorrelationId.GetHashCode();
-                if (MessageType != null)
-                    hashCode = (hashCode * 59) + MessageType.GetHashCode();
-                if (Text != null)
-                    hashCode = (hashCode * 59) + Text.GetHashCode();
-                if (Timestamp != null)
-                    hashCode = (hashCode * 59) + Timestamp.GetHashCode();
-                return hashCode;
+                hashCode = (hashCode * 59) + Code.GetHashCode();
             }
+
+            if (CorrelationId != null)
+            {
+                hashCode = (hashCode * 59) + CorrelationId.GetHashCode();
+            }
+
+            if (MessageType != null)
+            {
+                hashCode = (hashCode * 59) + MessageType.GetHashCode();
+            }
+
+            if (Text != null)
+            {
+                hashCode = (hashCode * 59) + Text.GetHashCode();
+            }
+
+            if (Timestamp != null)
+            {
+                hashCode = (hashCode * 59) + Timestamp.GetHashCode();
+            }
+
+            return hashCode;
         }
-        
-        #region Operators
+    }
+
+    #region Operators
 
 #pragma warning disable 1591
 
-        public static bool operator ==(Message left, Message right) => Equals(left, right);
+    public static bool operator ==(Message left, Message right) => Equals(left, right);
 
-        public static bool operator !=(Message left, Message right) => !Equals(left, right);
+    public static bool operator !=(Message left, Message right) => !Equals(left, right);
 
 #pragma warning restore 1591
 
-        #endregion Operators
-    }
+    #endregion Operators
 }

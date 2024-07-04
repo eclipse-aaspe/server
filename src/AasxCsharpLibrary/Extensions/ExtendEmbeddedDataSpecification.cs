@@ -74,7 +74,7 @@ namespace Extensions
             return embeddedDataSpecification;
         }
 
-        public static EmbeddedDataSpecification CreateIec61360WithContent(DataSpecificationIec61360 content = null)
+        public static EmbeddedDataSpecification CreateIec61360WithContent(DataSpecificationIec61360? content = null)
         {
             if (content == null)
                 content = new DataSpecificationIec61360(null);

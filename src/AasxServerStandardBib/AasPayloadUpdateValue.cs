@@ -11,12 +11,13 @@ This source code may use other Open Source software components (see LICENSE.txt)
 // #define UseMarkup 
 
 using AasxIntegrationBase;
-using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Xml.Serialization;
 
 namespace AdminShellEvents
 {
+    using System.Text.Json.Serialization;
+
     /// <summary>
     /// Single item of a update value payload.
     /// The element denoted by <c>Path</c> is changed in its value and shall not be devided into further

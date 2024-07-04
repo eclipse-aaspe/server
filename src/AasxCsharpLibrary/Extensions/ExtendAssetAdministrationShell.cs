@@ -51,7 +51,7 @@ namespace Extensions
         }
 
 
-        public static bool HasSubmodelReference(this IAssetAdministrationShell assetAdministrationShell, Reference submodelReference)
+        public static bool HasSubmodelReference(this IAssetAdministrationShell assetAdministrationShell, Reference? submodelReference)
         {
             if (submodelReference == null)
             {
@@ -69,7 +69,7 @@ namespace Extensions
             return false;
         }
 
-        public static void AddSubmodelReference(this IAssetAdministrationShell assetAdministrationShell, Reference newSubmodelReference)
+        public static void AddSubmodelReference(this IAssetAdministrationShell assetAdministrationShell, Reference? newSubmodelReference)
         {
             if (assetAdministrationShell.Submodels == null)
             {

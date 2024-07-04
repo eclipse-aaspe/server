@@ -35,7 +35,6 @@
         </PackageReference>
         <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.6.2" />
         <PackageReference Include="MQTTnet.NETStandard" Version="3.0.8"/>
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
         <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua" Version="1.4.371.60"/>
         <PackageReference Include="QRCoder" Version="1.4.1"/>

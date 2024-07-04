@@ -17,15 +17,19 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Serialization;
 using IO.Swagger.Registry.Lib.V3.Filters;
 using System.Collections.Generic;
 using Microsoft.OpenApi.Any;
 
 namespace IO.Swagger;
 
+using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using Models;
+using Registry.Lib.V3.Models;
 
 /// <summary>
 /// Startup
@@ -57,35 +61,31 @@ public class Startup
         services
             .AddMvc(options =>
                     {
-                        options.InputFormatters.RemoveType<Microsoft.AspNetCore.Mvc.Formatters.SystemTextJsonInputFormatter>();
-                        options.OutputFormatters.RemoveType<Microsoft.AspNetCore.Mvc.Formatters.SystemTextJsonOutputFormatter>();
+                        // Remove System.Text.Json formatters
+                        options.InputFormatters.RemoveType<SystemTextJsonInputFormatter>();
+                        options.OutputFormatters.RemoveType<SystemTextJsonOutputFormatter>();
                     })
-            .AddNewtonsoftJson(opts =>
-                               {
-                                   opts.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
-                                   opts.SerializerSettings.Converters.Add(new StringEnumConverter(new CamelCaseNamingStrategy()));
-                               })
+            .AddJsonOptions(options =>
+                            {
+                                options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                                options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+                                options.JsonSerializerOptions.ReferenceHandler       = ReferenceHandler.Preserve;
+                            })
             .AddXmlSerializerFormatters();
 
+        services.Configure<JsonOptions>(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+        services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
+                                                                       {
+                                                                           options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+                                                                           options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                                                                       });
 
-        services.AddSwaggerGen(c =>
-                               {
-                                   // Other Swagger configuration...
-
-                                   c.MapType<MessageTypeEnum>(() => new OpenApiSchema
-                                                                    {
-                                                                        Type = "string",
-                                                                        Enum = new List<IOpenApiAny>
-                                                                               {
-                                                                                   new OpenApiString(MessageTypeEnum.UndefinedEnum.ToString()),
-                                                                                   new OpenApiString(MessageTypeEnum.InfoEnum.ToString()),
-                                                                                   new OpenApiString(MessageTypeEnum.WarningEnum.ToString()),
-                                                                                   new OpenApiString(MessageTypeEnum.ErrorEnum.ToString()),
-                                                                                   new OpenApiString(MessageTypeEnum.ExceptionEnum.ToString())
-                                                                               }
-                                                                    });
-                               });
-
+        services.Configure<JsonOptions>(options =>
+                                        {
+                                            options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+                                            options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                                        });
         services
             .AddSwaggerGen(c =>
                            {
@@ -106,9 +106,18 @@ public class Startup
                                c.CustomSchemaIds(type => type.FullName);
                                c.IncludeXmlComments($"{AppContext.BaseDirectory}{Path.DirectorySeparatorChar}{_hostingEnv.ApplicationName}.xml");
 
-                               // Include DataAnnotation attributes on Controller Action parameters as Swagger validation rules (e.g required, pattern, ..)
+                               // Include DataAnnotation attributes on Controller Action parameters as Swagger validation rules (e.g. required, pattern, ..)
                                // Use [ValidateModelState] on Actions to actually validate it in C# as well!
                                c.OperationFilter<GeneratePathParamsValidationFilter>();
+
+                               c.MapType<MessageTypeEnum>(() => new OpenApiSchema
+                                                                {
+                                                                    Type = "string",
+                                                                    Enum = Enum.GetNames(typeof(MessageTypeEnum))
+                                                                               .Select(enumName => new OpenApiString(enumName))
+                                                                               .Cast<IOpenApiAny>()
+                                                                               .ToList()
+                                                                });
                            });
     }
 

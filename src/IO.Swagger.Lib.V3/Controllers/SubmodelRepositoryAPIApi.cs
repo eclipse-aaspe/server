@@ -24,7 +24,6 @@ using IO.Swagger.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Annotations;
 using System;
 using System.Collections.Generic;
@@ -35,6 +34,10 @@ using System.Net.Mime;
 using System.Security.Claims;
 
 namespace IO.Swagger.Controllers;
+
+using System.Globalization;
+using System.Threading.Tasks;
+using AdminShellNS.Exceptions;
 
 /// <summary>
 /// 
@@ -107,8 +110,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         {
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
             User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
-            var claimsList = new List<Claim>(User.Claims);
-            claimsList.Add(new Claim("IdShortPath", $"{submodel.IdShort}.{idShortPath}"));
+            var claimsList = new List<Claim>(User.Claims) {new("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
@@ -194,7 +196,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         {
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
             User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
-            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
+            var claimsList = new List<Claim>(User.Claims) {new("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
@@ -217,7 +219,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
     /// <param name="limit">The maximum number of elements in the response array</param>
     /// <param name="cursor">A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue</param>
-    /// <param name="level">Determines the structural depth of the respective resource content. Default value is deep</param>
+    /// <param name="level">Determines the structural depth of the respective resource content</param>
     /// <param name="extent">Determines to which extent the resource is being serialized</param>
     /// <param name="diff">Filters response, only elements changed after DateTime</param>
     /// <response code="200">List of found submodel elements</response>
@@ -249,7 +251,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         {
             throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
         }
-        
+
         _logger.LogInformation($"Received a request to get all the submodel elements from submodel with id {decodedSubmodelIdentifier}");
         if (!Program.noSecurity)
         {
@@ -263,12 +265,13 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var submodelElements = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
-        var filtered = new List<ISubmodelElement>();
-        if (!string.IsNullOrEmpty(diff))
+        var      filtered = new List<ISubmodelElement>();
+        DateTime _diff;
+        if (diff != null && diff != "")
         {
             try
             {
-                var _diff = DateTime.Parse(diff).ToUniversalTime();
+                _diff    = DateTime.Parse(diff).ToUniversalTime();
                 filtered = filterSubmodelElements(submodelElements, _diff);
             }
             catch
@@ -287,62 +290,70 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         return new ObjectResult(output);
     }
 
-    List<ISubmodelElement> filterSubmodelElements(List<ISubmodelElement> submodelElements, DateTime diff)
+    List<ISubmodelElement?> filterSubmodelElements(List<ISubmodelElement?> submodelElements, DateTime diff)
     {
-        var output = new List<ISubmodelElement>();
+        var output = new List<ISubmodelElement?>();
 
-        foreach (var sme in submodelElements.Where(sme => sme.TimeStampTree >= diff))
+        foreach (var sme in submodelElements.Where(sme => sme != null && sme.TimeStampTree >= diff))
         {
-            List<ISubmodelElement> smeDiff;
-            if (sme is SubmodelElementCollection smc)
+            List<ISubmodelElement?> smeDiff;
+            switch (sme)
             {
-                smeDiff = filterSubmodelElements(smc.Value ?? [], diff);
-                if (smeDiff.Count != 0)
+                case SubmodelElementCollection smc:
                 {
-                    var smcDiff = new SubmodelElementCollection(
-                                                                extensions: smc.Extensions,
-                                                                category: smc.Category,
-                                                                idShort: smc.IdShort,
-                                                                displayName: smc.DisplayName,
-                                                                description: smc.Description,
-                                                                semanticId: smc.SemanticId,
-                                                                supplementalSemanticIds: smc.SupplementalSemanticIds,
-                                                                qualifiers: smc.Qualifiers,
-                                                                embeddedDataSpecifications: smc.EmbeddedDataSpecifications,
-                                                                value: smeDiff) {Parent = smc.Parent};
-                    output.Add(smcDiff);
+                    smeDiff = filterSubmodelElements(smc.Value ?? [], diff);
+                    if (smeDiff.Count != 0)
+                    {
+                        var smcDiff = new SubmodelElementCollection(
+                                                                    extensions: smc.Extensions,
+                                                                    category: smc.Category,
+                                                                    idShort: smc.IdShort,
+                                                                    displayName: smc.DisplayName,
+                                                                    description: smc.Description,
+                                                                    semanticId: smc.SemanticId,
+                                                                    supplementalSemanticIds: smc.SupplementalSemanticIds,
+                                                                    qualifiers: smc.Qualifiers,
+                                                                    embeddedDataSpecifications: smc.EmbeddedDataSpecifications,
+                                                                    value: smeDiff) {Parent = smc.Parent};
+                        output.Add(smcDiff);
+                    }
+                    else if (smc.TimeStamp >= diff)
+                    {
+                        output.Add(smc);
+                    }
+
+                    break;
                 }
-                else if (smc.TimeStamp >= diff)
+                case SubmodelElementList sml:
                 {
-                    output.Add(smc);
+                    smeDiff = filterSubmodelElements(sml.Value ?? [], diff);
+                    if (smeDiff.Count != 0)
+                    {
+                        var smlDiff = new SubmodelElementList(
+                                                              typeValueListElement: sml.TypeValueListElement,
+                                                              extensions: sml.Extensions,
+                                                              category: sml.Category,
+                                                              idShort: sml.IdShort,
+                                                              displayName: sml.DisplayName,
+                                                              description: sml.Description,
+                                                              semanticId: sml.SemanticId,
+                                                              supplementalSemanticIds: sml.SupplementalSemanticIds,
+                                                              qualifiers: sml.Qualifiers,
+                                                              embeddedDataSpecifications: sml.EmbeddedDataSpecifications,
+                                                              value: smeDiff) {Parent = sml.Parent};
+                        output.Add(smlDiff);
+                    }
+                    else if (sml.TimeStamp >= diff)
+                    {
+                        output.Add(sml);
+                    }
+
+                    break;
                 }
+                default:
+                    output.Add(sme);
+                    break;
             }
-            else if (sme is SubmodelElementList sml)
-            {
-                smeDiff = filterSubmodelElements(sml.Value ?? [], diff);
-                if (smeDiff.Count != 0)
-                {
-                    var smlDiff = new SubmodelElementList(
-                                                          typeValueListElement: sml.TypeValueListElement,
-                                                          extensions: sml.Extensions,
-                                                          category: sml.Category,
-                                                          idShort: sml.IdShort,
-                                                          displayName: sml.DisplayName,
-                                                          description: sml.Description,
-                                                          semanticId: sml.SemanticId,
-                                                          supplementalSemanticIds: sml.SupplementalSemanticIds,
-                                                          qualifiers: sml.Qualifiers,
-                                                          embeddedDataSpecifications: sml.EmbeddedDataSpecifications,
-                                                          value: smeDiff) {Parent = sml.Parent};
-                    output.Add(smlDiff);
-                }
-                else if (sml.TimeStamp >= diff)
-                {
-                    output.Add(sml);
-                }
-            }
-            else
-                output.Add(sme);
         }
 
         return output;
@@ -380,6 +391,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
+
         _logger.LogInformation($"Received request to get the metadata of all the submodel elements from the submodel with id {decodedSubmodelIdentifier}");
         if (!Program.noSecurity)
         {
@@ -387,27 +403,33 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
         var smeList = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
-        var filtered = new List<ISubmodelElement>();
-        if (!string.IsNullOrEmpty(diff))
+        var      filtered = new List<ISubmodelElement>();
+        DateTime _diff;
+        if (diff != null && diff != "")
         {
             try
             {
-                var _diff = DateTime.Parse(diff).ToUniversalTime();
+                _diff    = DateTime.Parse(diff).ToUniversalTime();
                 filtered = filterSubmodelElements(smeList, _diff);
             }
-            catch { }
+            catch
+            {
+                // ignored
+            }
         }
         else
+        {
             filtered = smeList;
+        }
 
         var smePagedList    = _paginationService.GetPaginatedList(filtered, new PaginationParameters(cursor, limit));
-        var smeListLevel    = _levelExtentModifierService.ApplyLevelExtent(smePagedList.result ?? [], level);
+        var smeListLevel    = _levelExtentModifierService.ApplyLevelExtent(smePagedList.result, level);
         var smeMetadataList = _mappingService.Map(smeListLevel, "metadata");
         var output          = new MetadataPagedResult() {result = smeMetadataList.ConvertAll(sme => (IMetadataDTO)sme), paging_metadata = smePagedList.paging_metadata};
         return new ObjectResult(output);
@@ -444,13 +466,13 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                                                                         [FromQuery] string? diff)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode($"submodelIdentifier", submodelIdentifier);
-        _logger.LogDebug($"Received request to get all the submodel elements from the submodel with id {decodedSubmodelIdentifier}");
-        
+
         if (decodedSubmodelIdentifier == null)
         {
             throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
         }
-        
+
+        _logger.LogDebug($"Received request to get all the submodel elements from the submodel with id {decodedSubmodelIdentifier}");
         if (!Program.noSecurity)
         {
             var submodel   = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
@@ -463,20 +485,25 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var submodelElementList = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
-        var filtered = new List<ISubmodelElement>();
-        if (!string.IsNullOrEmpty(diff))
+        var      filtered = new List<ISubmodelElement?>();
+        DateTime _diff;
+        if (diff != null && diff != "")
         {
             try
             {
-                var _diff = DateTime.Parse(diff).ToUniversalTime();
+                _diff    = DateTime.Parse(diff).ToUniversalTime();
                 filtered = filterSubmodelElements(submodelElementList, _diff);
             }
-            catch { }
+            catch
+            {
+                // ignored
+            }
         }
         else
             filtered = submodelElementList;
 
-        // TODO (jtikekar, 2023-09-04): pagination and modifier not completely implemented
+        // TODO (jtikekar, 2023-09-04): pagination and modifier
+        // TODO (jtikekar, 2023-09-04): not complete implemented
         var output = _pathModifierService.ToIdShortPath(filtered);
         return new ObjectResult(output);
     }
@@ -487,7 +514,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
     /// <param name="limit">The maximum number of elements in the response array</param>
     /// <param name="cursor">A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue</param>
-    /// <param name="level">Determines the structural depth of the respective resource content.</param>
+    /// <param name="level">Determines the structural depth of the respective resource content</param>
     /// <response code="200">List of found submodel elements</response>
     /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
     /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
@@ -511,6 +538,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
+        }
+
         _logger.LogInformation($"Received a request to get all the submodel elements from submodel with id {decodedSubmodelIdentifier}");
         if (!Program.noSecurity)
         {
@@ -518,7 +550,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -562,6 +594,12 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                                                                              [FromQuery] ExtentEnum extent, [FromQuery] string? diff)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
+        }
+
         _logger.LogInformation($"Received request to get value of all the submodel elements from the submodel with id {decodedSubmodelIdentifier}");
         if (!Program.noSecurity)
         {
@@ -569,24 +607,30 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
         var submodelElements = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
-        var filtered = new List<ISubmodelElement>();
-        if (!string.IsNullOrEmpty(diff))
+        var      filtered = new List<ISubmodelElement>();
+        DateTime _diff;
+        if (diff != null && diff != "")
         {
             try
             {
-                var _diff = DateTime.Parse(diff).ToUniversalTime();
+                _diff    = DateTime.Parse(diff).ToUniversalTime();
                 filtered = filterSubmodelElements(submodelElements, _diff);
             }
-            catch { }
+            catch
+            {
+                // ignored
+            }
         }
         else
+        {
             filtered = submodelElements;
+        }
 
         var smePagedList   = _paginationService.GetPaginatedList(filtered, new PaginationParameters(cursor, limit));
         var smeLevelExtent = _levelExtentModifierService.ApplyLevelExtent(smePagedList.result ?? [], level, extent);
@@ -628,11 +672,21 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
 
+        if (reqSemanticId == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(reqSemanticId)} is null");
+        }
+
+        if (idShort == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(idShort)} is null");
+        }
+
         var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
         var submodelsPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
         var smLevelList        = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result, level, extent);
-        var output             = new PagedResult() {result = smLevelList, paging_metadata = submodelsPagedList.paging_metadata};
+        var output             = new PagedResult {result = smLevelList, paging_metadata = submodelsPagedList.paging_metadata};
         return new ObjectResult(output);
     }
 
@@ -664,7 +718,16 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                                                          [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] LevelEnum level)
     {
         _logger.LogInformation($"Received request to get the metadata of all the submodels.");
+        if (idShort == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(idShort)} is null");
+        }
+
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
+        if (reqSemanticId == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(reqSemanticId)} is null");
+        }
 
         var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
@@ -699,16 +762,25 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult GetAllSubmodelsPath([FromQuery] [StringLength(3072, MinimumLength = 1)] string? semanticId, [FromQuery] string? idShort,
+    public virtual IActionResult GetAllSubmodelsPath([FromQuery] [StringLength(3072, MinimumLength = 1)] string semanticId, [FromQuery] string? idShort,
                                                      [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] LevelEnum level)
     {
         _logger.LogInformation($"Received request to get the metadata of all the submodels.");
+        if (idShort == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(idShort)} is null");
+        }
+
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
+        if (reqSemanticId == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(reqSemanticId)} is null");
+        }
 
         var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
         var submodelPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
-        var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelPagedList.result ?? [], level);
+        var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelPagedList.result, level);
         // TODO (jtikekar, 2023-09-04): @Andreas, what if the first element is property, where path is not applicable
         var submodelsPath = _pathModifierService.ToIdShortPath(submodelLevelList.ConvertAll(sm => (ISubmodel)sm));
         var output        = new PathPagedResult() {result = submodelsPath, paging_metadata = submodelPagedList.paging_metadata};
@@ -743,8 +815,16 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                                                           [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] LevelEnum level)
     {
         _logger.LogInformation($"Received a request to get all the submodels.");
+        if (idShort == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(idShort)} is null");
+        }
 
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
+        if (reqSemanticId == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(reqSemanticId)} is null");
+        }
 
         var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
@@ -786,15 +866,23 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                                                           [FromQuery] ExtentEnum extent)
     {
         _logger.LogInformation($"Received a request to get all the submodels.");
+        if (idShort == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(idShort)} is null");
+        }
 
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
+        if (reqSemanticId == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(reqSemanticId)} is null");
+        }
 
         var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
         var submodelsPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
-        var submodelLevelList  = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result ?? [], level, extent);
+        var submodelLevelList  = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result, level, extent);
         var submodelsValue     = _mappingService.Map(submodelLevelList, "value");
-        var output             = new ValueOnlyPagedResult() {result = submodelsValue.ConvertAll(sme => (IValueDTO)sme), paging_metadata = submodelsPagedList.paging_metadata};
+        var output             = new ValueOnlyPagedResult {result = submodelsValue.ConvertAll(sme => (IValueDTO)sme), paging_metadata = submodelsPagedList.paging_metadata};
         return new ObjectResult(output);
     }
 
@@ -823,37 +911,52 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 405, type: typeof(Result), description: "Method not allowed - Download only valid for File submodel element")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult GetFileByPathSubmodelRepo([FromRoute] [Required] string submodelIdentifier, [FromRoute] [Required] string idShortPath)
+    public virtual async Task<IActionResult> GetFileByPathSubmodelRepo([FromRoute] [Required] string submodelIdentifier, [FromRoute] [Required] string idShortPath)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
         _logger.LogInformation($"Received a request to get file at {idShortPath} from submodel with id {decodedSubmodelIdentifier}");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
+
         if (!Program.noSecurity)
         {
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
-            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)};
+            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
         var fileName = _submodelService.GetFileByPath(decodedSubmodelIdentifier, idShortPath, out var content, out var fileSize);
 
         //content-disposition so that the aasx file can be downloaded from the web browser.
-        ContentDisposition contentDisposition = new() {FileName = fileName ?? throw new ArgumentNullException(nameof(fileName)), Inline = fileName.ToLower().EndsWith(".pdf")};
+        ContentDisposition contentDisposition = new()
+                                                {
+                                                    FileName = fileName ?? throw new NullValueException(nameof(fileName)),
+                                                    Inline   = fileName.EndsWith(".pdf", StringComparison.InvariantCulture)
+                                                };
 
         HttpContext.Response.Headers.Append("Content-Disposition", contentDisposition.ToString());
         HttpContext.Response.ContentLength = fileSize;
-        if (fileName.ToLower().EndsWith(".svg"))
+        if (fileName.EndsWith(".svg", StringComparison.InvariantCulture))
+        {
             HttpContext.Response.ContentType = "image/svg+xml";
-        if (fileName.ToLower().EndsWith(".pdf"))
+        }
+
+        if (fileName.EndsWith(".pdf", StringComparison.InvariantCulture))
+        {
             HttpContext.Response.ContentType = "application/pdf";
-        HttpContext.Response.Body.WriteAsync(content);
+        }
+
+        await HttpContext.Response.Body.WriteAsync(content);
         return new EmptyResult();
     }
 
@@ -908,7 +1011,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         exampleJson = "\"\"";
 
         var example = exampleJson != null
-                          ? JsonConvert.DeserializeObject<OperationResult>(exampleJson)
+                          ? System.Text.Json.JsonSerializer.Deserialize<OperationResult>(exampleJson)
                           : default(OperationResult); //TODO: Change the data returned
         return new ObjectResult(example);
     }
@@ -994,7 +1097,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
         // return StatusCode(0, default(Result));
 
-        return new ObjectResult(JsonConvert.DeserializeObject<BaseOperationResult>(string.Empty));
+        return new ObjectResult(System.Text.Json.JsonSerializer.Deserialize<BaseOperationResult>(string.Empty));
     }
 
     //TODO:jtikekar @Andreas the route is same as GetSubmodelById
@@ -1025,7 +1128,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
         _logger.LogInformation($"Received head request to get the submodel policy for id {decodedSubmodelIdentifier}");
-        Console.WriteLine($"Received head request to get the submodel policy for id {decodedSubmodelIdentifier}");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
 
         var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
 
@@ -1070,24 +1176,22 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
         _logger.LogInformation($"Received request to get the submodel with id {decodedSubmodelIdentifier}");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
 
         var submodel   = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
         var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
         if (!authResult.Succeeded)
         {
-            var failedReason = authResult.Failure.FailureReasons.FirstOrDefault();
-
-            if (failedReason != null)
+            var failedReason = authResult.Failure.FailureReasons.First();
+            if (failedReason.Message != "")
             {
-                if (failedReason.Message != "")
-                {
-                    throw new NotAllowed(failedReason.Message);
-                }
-                else
-                {
-                    throw new NotAllowed("Policy incorrect!");
-                }
+                throw new NotAllowed(failedReason.Message);
             }
+
+            throw new NotAllowed("Policy incorrect!");
         }
 
         var output = _levelExtentModifierService.ApplyLevelExtent(submodel, level, extent);
@@ -1124,6 +1228,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
         _logger.LogInformation($"Received request to get the metadata of the submodel with id {decodedSubmodelIdentifier}");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
 
         var submodel   = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
         var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
@@ -1168,6 +1276,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
         _logger.LogInformation($"Received request to get the idShortPath of the submodel with id {decodedSubmodelIdentifier}");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
 
         var submodel   = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
         var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
@@ -1212,6 +1324,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
         _logger.LogInformation($"Received request to get the submodel with id {decodedSubmodelIdentifier}");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
 
         var submodel   = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
         var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
@@ -1257,6 +1373,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
         _logger.LogInformation($"Received request to get value of submodel with id {decodedSubmodelIdentifier}");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
 
         var submodel   = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
         var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
@@ -1303,19 +1423,23 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
         _logger.LogInformation($"Received request to get metadata of submodel element at {idShortPath} from the submodel with id {decodedSubmodelIdentifier}");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
 
         var submodelElement = _submodelService.GetSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath);
         if (!Program.noSecurity)
         {
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
-            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)};
+            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -1354,19 +1478,23 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
         _logger.LogInformation($"Received request to path of the submodel element at {idShortPath} from a submodel with id {decodedSubmodelIdentifier}");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
 
         var submodelElement = _submodelService.GetSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath);
         if (!Program.noSecurity)
         {
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
-            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)};
+            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -1405,17 +1533,23 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
         _logger.LogInformation($"Received request to get reference of the submodel element atv{idShortPath} from the submodel with id {decodedSubmodelIdentifier}");
+
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
+
         if (!Program.noSecurity)
         {
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
-            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)};
+            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -1456,17 +1590,23 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
         _logger.LogInformation($"Received request to get the submodel element at {idShortPath} from the submodel with id {decodedSubmodelIdentifier}");
+
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
+
         if (!Program.noSecurity)
         {
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
-            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)};
+            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -1502,22 +1642,28 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetSubmodelElementByPathValueOnlySubmodelRepo([FromRoute] [Required] string submodelIdentifier,
-                                                                               [FromRoute] [Required] string idShortPath, [FromQuery] LevelEnum level,
+                                                                               [FromRoute] [Required] string idShortPath,
+                                                                               [FromQuery] LevelEnum level,
                                                                                [FromQuery] ExtentEnum extent)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
         _logger.LogInformation($"Received request to get the value of the submodel element at {idShortPath} from the submodel with id {decodedSubmodelIdentifier}");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
+
         if (!Program.noSecurity)
         {
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
-            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)};
+            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -1687,7 +1833,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         //TODO: Uncomment the next line to return response 0 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
         // return StatusCode(0, default(Result));
-        return new ObjectResult(JsonConvert.DeserializeObject<OperationResult>(string.Empty));
+        return new ObjectResult(System.Text.Json.JsonSerializer.Deserialize<OperationResult>(string.Empty));
     }
 
     /// <summary>
@@ -1746,9 +1892,19 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult PatchSubmodelById([FromBody] Submodel? body, [FromRoute] [Required] string submodelIdentifier, [FromQuery] LevelEnum level)
     {
+        if (body == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
+        }
+
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
         _logger.LogInformation($"Received request to update the submodel with id {decodedSubmodelIdentifier}.");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
+
         _submodelService.UpdateSubmodelById(decodedSubmodelIdentifier, body);
 
         return NoContent();
@@ -1777,19 +1933,26 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult PatchSubmodelByIdMetadata([FromBody] SubmodelMetadata? body, [FromRoute] [Required] string submodelIdentifier,
+    public virtual IActionResult PatchSubmodelByIdMetadata([FromBody] SubmodelMetadata? body, [FromRoute] [Required] string? submodelIdentifier,
                                                            [FromQuery] LevelEnum level)
     {
-        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
-        _logger.LogInformation($"Received Patch Request for submodel with id {decodedSubmodelIdentifier}");
-
-        //Reverse mapping from Metadata to submodel element
         if (body == null)
         {
-            return NoContent();
+            throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
+        }
+
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+        _logger.LogInformation($"Received Patch Request for submodel with id {decodedSubmodelIdentifier}");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
         }
 
         var submodel = _mappingService.Map(body, "metadata") as ISubmodel;
+        if (submodel == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(submodel)} is null");
+        }
 
         //Update
         _submodelService.UpdateSubmodelById(decodedSubmodelIdentifier, submodel);
@@ -1823,15 +1986,24 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     public virtual IActionResult PatchSubmodelByIdValueOnly([FromBody] SubmodelValue? body, [FromRoute] [Required] string submodelIdentifier,
                                                             [FromQuery] LevelEnum level)
     {
-        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
-        _logger.LogInformation($"Received request to update the submodel with id {decodedSubmodelIdentifier} by value.");
-
         if (body == null)
         {
-            return NoContent();
+            throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
         }
 
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
+
+        _logger.LogInformation($"Received request to update the submodel with id {decodedSubmodelIdentifier} by value.");
+
         var submodel = _mappingService.Map(body, "value") as Submodel;
+        if (submodel == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(submodel)} is null");
+        }
 
         _submodelService.UpdateSubmodelById(decodedSubmodelIdentifier, submodel);
 
@@ -1864,18 +2036,27 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult PatchSubmodelElementByPathMetadataSubmodelRepo([FromBody] ISubmodelElementMetadata? body,
                                                                                 [FromRoute] [Required] string submodelIdentifier,
-                                                                                [FromRoute] [Required] string idShortPath, [FromQuery] LevelEnum level)
+                                                                                [FromRoute] [Required] string idShortPath,
+                                                                                [FromQuery] LevelEnum level)
     {
-        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
-        _logger.LogInformation($"Received request to update the submodel element at {idShortPath} in the submodel with id {decodedSubmodelIdentifier}");
-
-        //Reverse mapping from Metadata to submodel element
         if (body == null)
         {
-            return NoContent();
+            throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
         }
 
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+        _logger.LogInformation($"Received request to update the submodel element at {idShortPath} in the submodel with id {decodedSubmodelIdentifier}");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
+
+        //Reverse mapping from Metadata to submodel element
         var submodelElement = _mappingService.Map(body, "metadata") as ISubmodelElement;
+        if (submodelElement == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(submodelElement)} is null");
+        }
 
         //Update
         _submodelService.UpdateSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath, submodelElement);
@@ -1910,7 +2091,16 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     public virtual IActionResult PatchSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement? body, [FromRoute] [Required] string submodelIdentifier,
                                                                         [FromRoute] [Required] string idShortPath, [FromQuery] LevelEnum level)
     {
+        if (body == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
+        }
+
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
 
         _logger.LogInformation($"Received request to update the submodel element at {idShortPath} from submodel with id {decodedSubmodelIdentifier}.");
         _submodelService.UpdateSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath, body);
@@ -1942,18 +2132,27 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult PatchSubmodelElementByPathValueOnlySubmodelRepo([FromBody] ISubmodelElementValue? body, [FromRoute] [Required] string submodelIdentifier,
-                                                                                 [FromRoute] [Required] string idShortPath, [FromQuery] LevelEnum level)
+    public virtual IActionResult PatchSubmodelElementByPathValueOnlySubmodelRepo([FromBody] ISubmodelElementValue? body,
+                                                                                 [FromRoute] [Required] string submodelIdentifier,
+                                                                                 [FromRoute] [Required] string idShortPath,
+                                                                                 [FromQuery] LevelEnum level)
     {
-        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
-        _logger.LogInformation($"Received an update request for a submodel element at {idShortPath} in the submodel with id {decodedSubmodelIdentifier}.");
-
         if (body == null)
         {
-            return NoContent();
+            throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
         }
 
-        var submodelElement = _mappingService.Map(body, "value") as ISubmodelElement;
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+        _logger.LogInformation($"Received an update request for a submodel element at {idShortPath} in the submodel with id {decodedSubmodelIdentifier}.");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
+
+        if (_mappingService.Map(body, "value") is not ISubmodelElement submodelElement)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(submodelElement)} is null");
+        }
 
         //Update
         _submodelService.UpdateSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath, submodelElement);
@@ -1988,10 +2187,20 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult PostSubmodel([FromBody] Submodel? body, [FromQuery] string? aasIdentifier)
     {
+        if (body == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
+        }
+
         _logger.LogInformation($"Received request to create a submodel.");
 
         var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
-        var output               = _submodelService.CreateSubmodel(body, decodedAasIdentifier);
+        if (decodedAasIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedAasIdentifier)} is null");
+        }
+
+        var output = _submodelService.CreateSubmodel(body, decodedAasIdentifier);
 
         return CreatedAtAction("PostSubmodel", output);
     }
@@ -2025,22 +2234,34 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                         "Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult PostSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement? body, [FromRoute] [Required] string submodelIdentifier,
-                                                                       [FromRoute] [Required] string idShortPath, bool first)
+    public virtual IActionResult PostSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement? body,
+                                                                       [FromRoute] [Required] string submodelIdentifier,
+                                                                       [FromRoute] [Required] string idShortPath,
+                                                                       bool first)
     {
+        if (body == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
+        }
+
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
+
         _logger.LogInformation($"Received request to create a new submodel element at {idShortPath} in the submodel with id {decodedSubmodelIdentifier}");
         if (!Program.noSecurity)
         {
             var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", submodel.IdShort + "." + idShortPath));
-            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", submodel.IdShort + "." + idShortPath)};
+            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+            var claimsList = new List<Claim>(User.Claims) {new("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -2077,20 +2298,32 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                         "Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult PostSubmodelElementSubmodelRepo([FromBody] ISubmodelElement? body, [FromRoute] [Required] string submodelIdentifier, bool first)
+    public virtual IActionResult PostSubmodelElementSubmodelRepo([FromBody] ISubmodelElement? body,
+                                                                 [FromRoute] [Required] string submodelIdentifier,
+                                                                 bool first)
     {
+        if (body == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
+        }
+
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
         _logger.LogInformation($"Received request to create a new submodel element in the submodel with id {decodedSubmodelIdentifier}");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
+
         if (!Program.noSecurity)
         {
             var submodel   = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
-            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", submodel.IdShort + "." + body?.IdShort)};
+            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", $"{submodel.IdShort}.{body.IdShort}")};
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -2124,9 +2357,19 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult PutSubmodelById([FromBody] Submodel? body, [FromRoute] [Required] string submodelIdentifier)
     {
+        if (body == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
+        }
+
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
         _logger.LogInformation($"Received request to replace a submodel {decodedSubmodelIdentifier}");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
+
         _submodelService.ReplaceSubmodelById(decodedSubmodelIdentifier, body);
 
         return NoContent();
@@ -2156,22 +2399,34 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult PutSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement? body, [FromRoute] [Required] string submodelIdentifier,
-                                                                      [FromRoute] [Required] string idShortPath, [FromQuery] LevelEnum level)
+    public virtual IActionResult PutSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement? body,
+                                                                      [FromRoute] [Required] string submodelIdentifier,
+                                                                      [FromRoute] [Required] string idShortPath,
+                                                                      [FromQuery] LevelEnum level)
     {
+        if (body == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
+        }
+
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
-        _logger.LogInformation($"Received request to replace a submodel element at {idShortPath} dom-object the submodel with id {decodedSubmodelIdentifier}.");
+        _logger.LogInformation($"Received request to replace a submodel element at {idShortPath} deom the submodel with id {decodedSubmodelIdentifier}.");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
+
         if (!Program.noSecurity)
         {
             var submodel   = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
-            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", submodel.IdShort + "." + body?.IdShort)};
+            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", $"{submodel.IdShort}.{body.IdShort}")};
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
-                throw new NotAllowed(authResult.Failure.FailureReasons.First().Message);
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
 
@@ -2200,14 +2455,32 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult PutFileByPathSubmodelRepo([FromRoute] [Required] string submodelIdentifier, [FromRoute] string? idShortPath, IFormFile? file)
     {
-        var decodedSubmodelId = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+        if (idShortPath == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(idShortPath)} is null");
+        }
+
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
 
         var stream = new MemoryStream();
         file?.CopyTo(stream);
         var fileName    = file?.FileName;
         var contentType = file?.ContentType;
+        if (fileName == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(fileName)} is null");
+        }
 
-        _submodelService.ReplaceFileByPath(decodedSubmodelId, idShortPath, fileName, contentType, stream);
+        if (contentType == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(contentType)} is null");
+        }
+
+        _submodelService.ReplaceFileByPath(decodedSubmodelIdentifier, idShortPath, fileName, contentType, stream);
 
         return NoContent();
     }

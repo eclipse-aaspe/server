@@ -8,163 +8,99 @@ This source code may use other Open Source software components (see LICENSE.txt)
 */
 
 using System;
-using System.Reflection;
 using AasxCompatibilityModels;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
 
-//namespace AdminShellNS
-namespace AdminShell_V20
+namespace AdminShell_V20;
+
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+public static class AdminShellConverters
 {
-    public static class AdminShellConverters
+    /// <summary>
+    /// This converter is used for reading JSON files; it claims to be responsible for
+    /// "Referable" (the base class)
+    /// and decides, which subclass of the base class shall be populated.
+    /// If the object is SubmodelElement, the decision, which special subclass to create is done in a factory
+    /// AdminShell.SubmodelElementWrapper.CreateAdequateType(),
+    /// in order to have all subclass specific decisions in one place (SubmodelElementWrapper)
+    /// Remark: There is a NuGet package JsonSubTypes, which could have done the job, except the fact of having
+    /// "modelType" being a class property with a contained property "name".
+    /// </summary>
+    public class JsonAasxConverter : JsonConverter<AdminShell.Referable>
     {
-        /// <summary>
-        /// This converter is used for reading JSON files; it claims to be responsible for
-        /// "Referable" (the base class)
-        /// and decides, which sub-class of the base class shall be populated.
-        /// If the object is SubmodelElement, the decision, shich special sub-class to create is done in a factory
-        /// AdminShell.SubmodelElementWrapper.CreateAdequateType(),
-        /// in order to have all sub-class specific decisions in one place (SubmodelElementWrapper)
-        /// Remark: There is a NuGet package JsonSubTypes, which could have done the job, except the fact of having
-        /// "modelType" being a class property with a contained property "name".
-        /// </summary>
-        public class JsonAasxConverter : JsonConverter
+        public override AdminShellV20.Referable Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            private string UpperClassProperty = "modelType";
-            private string LowerClassProperty = "name";
+            using var doc  = JsonDocument.ParseValue(ref reader);
+            var       root = doc.RootElement;
 
-            public JsonAasxConverter() : base()
+            var target = new AdminShellV20.Referable();
+
+            // Check if the root element has the necessary properties
+            if (root.TryGetProperty("idShort", out JsonElement idShortElement))
             {
+                target.idShort = idShortElement.GetString();
             }
 
-            public JsonAasxConverter(string UpperClassProperty, string LowerClassProperty) : base()
+            if (root.TryGetProperty("category", out JsonElement categoryElement))
             {
-                this.UpperClassProperty = UpperClassProperty;
-                this.LowerClassProperty = LowerClassProperty;
+                target.category = categoryElement.GetString();
             }
 
-            public override bool CanConvert(Type objectType)
+            if (!root.TryGetProperty("description", out JsonElement descriptionElement))
             {
-                // Info MIHO 21 APR 2020: changed this from SubmodelElement to Referable
-                if (typeof(AdminShell.Referable).IsAssignableFrom(objectType))
-                    return true;
-                return false;
-            }
-
-            public override bool CanWrite
-            {
-                get { return false; }
-            }
-
-            public override object ReadJson(JsonReader reader,
-                                            Type objectType,
-                                             object existingValue,
-                                             JsonSerializer serializer)
-            {
-                // Load JObject from stream
-                JObject jObject = JObject.Load(reader);
-
-                // Create target object based on JObject
-                object target = new AdminShell.Referable();
-
-                if (jObject.ContainsKey(UpperClassProperty))
-                {
-                    var j2 = jObject[UpperClassProperty];
-                    if (j2 != null)
-                        foreach (var c in j2.Children())
-                        {
-                            var cprop = c as Newtonsoft.Json.Linq.JProperty;
-                            if (cprop == null)
-                                continue;
-                            if (cprop.Name == LowerClassProperty && cprop.Value.Type.ToString() == "String")
-                            {
-                                var cpval = cprop.Value.ToObject<string>();
-                                if (cpval == null)
-                                    continue;
-                                // Info MIHO 21 APR 2020: use Referable.CreateAdequateType instead of SMW...
-                                var o = AdminShell.Referable.CreateAdequateType(cpval);
-                                if (o != null)
-                                    target = o;
-                            }
-                        }
-                }
-
-                // Populate the object properties
-                serializer.Populate(jObject.CreateReader(), target);
-
                 return target;
             }
 
-            /// <summary>
-            /// Introduced for JSON serialization, can create Referables based on a string name
-            /// </summary>
-            /// <param name="elementName">string name (standard PascalCased)</param>
+            var langStringArray = descriptionElement.GetProperty("langString").EnumerateArray();
 
-
-            public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+            foreach (var langString in langStringArray)
             {
-                throw new NotImplementedException();
+                var lang = langString.GetProperty("lang").GetString();
+                var str  = langString.GetProperty("str").GetString();
+                target.AddDescription(lang, str);
             }
-        }
 
-        /// <summary>
-        /// This converter / contract resolver for Json.NET adaptively filters different levels of depth
-        /// of nested AASX structures.
-        /// </summary>
-        public class AdaptiveFilterContractResolver : DefaultContractResolver
+            return target;
+        }
+        
+        public override void Write(Utf8JsonWriter writer, AdminShellV20.Referable value, JsonSerializerOptions options) => throw new NotImplementedException();
+
+        public override bool CanConvert(Type typeToConvert) => typeof(AdminShellV20.Referable).IsAssignableFrom(typeToConvert);
+    }
+
+    public class AdaptiveFilterContractResolver : JsonConverter<AdminShell.AdministrationShell>
+    {
+        public bool AasHasViews = true;
+        public bool BlobHasValue = true;
+        public bool SubmodelHasElements = true;
+        public bool SmcHasValue = true;
+        public bool OpHasVariables = true;
+
+        public AdaptiveFilterContractResolver() { }
+
+        public AdaptiveFilterContractResolver(bool deep = true, bool complete = true)
         {
-            public bool AasHasViews = true;
-            public bool BlobHasValue = true;
-            public bool SubmodelHasElements = true;
-            public bool SmcHasValue = true;
-            public bool OpHasVariables = true;
-
-            public AdaptiveFilterContractResolver() { }
-
-            public AdaptiveFilterContractResolver(bool deep = true, bool complete = true)
+            if (!deep)
             {
-                if (!deep)
-                {
-                    this.SubmodelHasElements = false;
-                    this.SmcHasValue = false;
-                    this.OpHasVariables = false;
-                }
-                if (!complete)
-                {
-                    this.AasHasViews = false;
-                    this.BlobHasValue = false;
-                }
-
+                SubmodelHasElements = false;
+                SmcHasValue         = false;
+                OpHasVariables      = false;
             }
 
-            protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
+            if (complete)
             {
-                JsonProperty property = base.CreateProperty(member, memberSerialization);
-
-                if (!BlobHasValue && property.DeclaringType == typeof(AdminShell.Blob) &&
-                    property.PropertyName == "value")
-                    property.ShouldSerialize = instance => { return false; };
-
-                if (!SubmodelHasElements && property.DeclaringType == typeof(AdminShell.Submodel) &&
-                    property.PropertyName == "submodelElements")
-                    property.ShouldSerialize = instance => { return false; };
-
-                if (!SmcHasValue && property.DeclaringType == typeof(AdminShell.SubmodelElementCollection) &&
-                    property.PropertyName == "value")
-                    property.ShouldSerialize = instance => { return false; };
-
-                if (!OpHasVariables && property.DeclaringType == typeof(AdminShell.Operation) &&
-                    (property.PropertyName == "in" || property.PropertyName == "out"))
-                    property.ShouldSerialize = instance => { return false; };
-
-                if (!AasHasViews && property.DeclaringType == typeof(AdminShell.AdministrationShell) &&
-                    property.PropertyName == "views")
-                    property.ShouldSerialize = instance => { return false; };
-
-                return property;
+                return;
             }
+
+            AasHasViews  = false;
+            BlobHasValue = false;
         }
 
+        public override AdminShellV20.AdministrationShell Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) => throw new NotImplementedException();
+
+        public override void Write(Utf8JsonWriter writer, AdminShellV20.AdministrationShell value, JsonSerializerOptions options) => throw new NotImplementedException();
+
+        public override bool CanConvert(Type typeToConvert) => typeof(AdminShellV20.AdministrationShell).IsAssignableFrom(typeToConvert);
     }
 }

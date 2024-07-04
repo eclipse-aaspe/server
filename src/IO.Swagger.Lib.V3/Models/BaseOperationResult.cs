@@ -9,36 +9,32 @@
  */
 
 using System;
-using System.Linq;
-using System.IO;
 using System.Text;
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
-using Newtonsoft.Json;
 
 namespace IO.Swagger.Models
 {
+    using System.Text.Json;
+    using System.Text.Json.Serialization;
+
     /// <summary>
     /// 
     /// </summary>
-    [ DataContract ]
+    [DataContract]
     public partial class BaseOperationResult : Result, IEquatable<BaseOperationResult>
     {
         /// <summary>
         /// Gets or Sets ExecutionState
         /// </summary>
 
-        [ DataMember(Name = "executionState") ]
+        [DataMember(Name = "executionState")]
         public ExecutionState ExecutionState { get; set; }
 
         /// <summary>
         /// Gets or Sets Success
         /// </summary>
 
-        [ DataMember(Name = "success") ]
+        [DataMember(Name = "success")]
         public bool? Success { get; set; }
 
         /// <summary>
@@ -59,10 +55,9 @@ namespace IO.Swagger.Models
         /// Returns the JSON string presentation of the object
         /// </summary>
         /// <returns>JSON string presentation of the object</returns>
-        public new string ToJson()
-        {
-            return JsonConvert.SerializeObject(this, Formatting.Indented);
-        }
+        public new string ToJson() => JsonSerializer.Serialize(this, options);
+
+        private static readonly JsonSerializerOptions options = new() {WriteIndented = true, IgnoreNullValues = true, Converters = {new JsonStringEnumConverter()}};
 
         /// <summary>
         /// Returns true if objects are equal
@@ -73,7 +68,7 @@ namespace IO.Swagger.Models
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
-            return obj.GetType() == GetType() && Equals((BaseOperationResult) obj);
+            return obj.GetType() == GetType() && Equals((BaseOperationResult)obj);
         }
 
         /// <summary>

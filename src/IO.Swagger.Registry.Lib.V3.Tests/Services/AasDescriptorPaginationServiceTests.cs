@@ -5,6 +5,8 @@ using IO.Swagger.Registry.Lib.V3.Services;
 
 namespace IO.Swagger.Registry.Lib.V3.Tests.Services;
 
+using Microsoft.OpenApi.Any;
+
 public class AasDescriptorPaginationServiceTests
 {
     private readonly IFixture _fixture;
@@ -17,7 +19,7 @@ public class AasDescriptorPaginationServiceTests
         _mockLogger = _fixture.Freeze<Mock<IAppLogger<AasDescriptorPaginationService>>>();
         _service    = _fixture.Create<AasDescriptorPaginationService>();
     }
-
+    
     [Fact]
     public void Constructor_WithNullLogger_ThrowsArgumentNullException()
     {

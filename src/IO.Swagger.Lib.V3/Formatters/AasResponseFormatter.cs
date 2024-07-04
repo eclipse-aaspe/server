@@ -100,9 +100,9 @@ namespace IO.Swagger.Lib.V3.Formatters
             else if (IsGenericListOfIClass(context.Object))
             {
 
-                var jsonArray = new JsonArray();
-                IList genericList = (IList)context.Object;
-                List<IClass> contextObjectType = new List<IClass>();
+                var           jsonArray         = new JsonArray();
+                IList         genericList       = (IList)context.Object;
+                List<IClass?> contextObjectType = new List<IClass?>();
                 foreach (var generic in genericList)
                 {
                     contextObjectType.Add((IClass)generic);

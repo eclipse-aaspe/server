@@ -8,7 +8,7 @@ namespace Extensions
     {
         #region AasxPackageExplorer
 
-        public static object AddChild(this Operation operation, ISubmodelElement childSubmodelElement, EnumerationPlacmentBase placement = null)
+        public static object? AddChild(this Operation operation, ISubmodelElement? childSubmodelElement, EnumerationPlacmentBase placement = null)
         {
             // not enough information to select list of children?
             var pl = placement as EnumerationPlacmentOperationVariable;
