@@ -7,6 +7,9 @@ using Microsoft.IdentityModel.Tokens;
 using AasxServerDB.Entities;
 using System.Text;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
+using Newtonsoft.Json;
+using System.Data;
 
 namespace AasxServerDB
 {
@@ -188,9 +191,19 @@ namespace AasxServerDB
             return true;
         }
 
-        private void setValues(ISubmodelElement sme, SMESet smeDB)
+        private void SetValues(ISubmodelElement sme, SMESet smeDB)
         {
-            if (sme is Property prop)
+            if (sme is RelationshipElement rel)
+            {
+                smeDB.OValueSets.Add(new OValueSet { Attribute = "First", Value = rel.First });
+                smeDB.OValueSets.Add(new OValueSet { Attribute = "Second", Value = rel.Second });
+            }
+            else if (sme is AnnotatedRelationshipElement relA)
+            {
+                smeDB.OValueSets.Add(new OValueSet { Attribute = "First", Value = relA.First });
+                smeDB.OValueSets.Add(new OValueSet { Attribute = "Second", Value = relA.Second });
+            }
+            else if (sme is Property prop)
             {
                 var dataType = prop.ValueType;
                 var hasValue = GetValueAndDataType(prop.ValueAsText(), ref dataType, out var tableDataType, out var sValue, out var iValue, out var dValue);
@@ -198,12 +211,16 @@ namespace AasxServerDB
                     return;
 
                 smeDB.ValueType = dataType.ToString();
+
                 if (tableDataType == DataTypeDefXsd.String)
                     smeDB.SValueSets.Add(new SValueSet { Value = sValue, Annotation = string.Empty });
                 else if (tableDataType == DataTypeDefXsd.Integer)
                     smeDB.IValueSets.Add(new IValueSet { Value = iValue, Annotation = string.Empty });
                 else if (tableDataType == DataTypeDefXsd.Double)
                     smeDB.DValueSets.Add(new DValueSet { Value = dValue, Annotation = string.Empty });
+
+                if (prop.ValueId != null)
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "ValueId", Value = prop.ValueId });
             }
             else if (sme is MultiLanguageProperty mlp)
             {
@@ -214,6 +231,9 @@ namespace AasxServerDB
                 if (mlp.Value != null)
                     foreach (var sValueMLP in mlp.Value)
                         smeDB.SValueSets.Add(new SValueSet() { Annotation = sValueMLP.Language, Value = sValueMLP.Text });
+
+                if (mlp.ValueId != null)
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "ValueId", Value = mlp.ValueId });
             }
             else if (sme is AasCore.Aas3_0.Range range)
             {
@@ -303,14 +323,56 @@ namespace AasxServerDB
                 smeDB.ValueType = DataTypeDefXsd.String.ToString();
                 smeDB.SValueSets.Add(new SValueSet { Value = file.Value, Annotation = file.ContentType });
             }
-            else if (sme is Entity entity)
+            else if (sme is ReferenceElement refEle)
+            {
+                if (refEle.Value != null)
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "Value", Value = refEle.Value });
+            }
+            else if (sme is SubmodelElementList sml)
+            {
+                if (sml.OrderRelevant != null)
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "OrderRelevant", Value = sml.OrderRelevant });
+
+                if (sml.SemanticIdListElement != null)
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "SemanticIdListElement", Value = sml.SemanticIdListElement });
+
+                smeDB.OValueSets.Add(new OValueSet { Attribute = "TypeValueListElement", Value = sml.TypeValueListElement });
+
+                if (sml.ValueTypeListElement != null)
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "ValueTypeListElement", Value = sml.ValueTypeListElement });
+            }
+            else if (sme is Entity ent)
             {
                 smeDB.ValueType = DataTypeDefXsd.String.ToString();
-                smeDB.SValueSets.Add(new SValueSet { Value = entity.GlobalAssetId, Annotation = entity.EntityType.ToString() });
+                smeDB.SValueSets.Add(new SValueSet { Value = ent.GlobalAssetId, Annotation = ent.EntityType.ToString() });
+
+                if (ent.SpecificAssetIds != null)
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "SpecificAssetIds", Value = ent.SpecificAssetIds });
+            }
+            else if (sme is BasicEventElement evt)
+            {
+                smeDB.OValueSets.Add(new OValueSet { Attribute = "Observed", Value = evt.Observed });
+                smeDB.OValueSets.Add(new OValueSet { Attribute = "Direction", Value = evt.Direction });
+                smeDB.OValueSets.Add(new OValueSet { Attribute = "State", Value = evt.State });
+
+                if (evt.MessageTopic != null)
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "MessageTopic", Value = evt.MessageTopic });
+
+                if (evt.MessageBroker != null)
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "MessageBroker", Value = evt.MessageBroker });
+
+                if (evt.LastUpdate != null)
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "LastUpdate", Value = evt.LastUpdate });
+
+                if (evt.MinInterval != null)
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "MinInterval", Value = evt.MinInterval });
+
+                if (evt.MaxInterval != null)
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "MaxInterval", Value = evt.MaxInterval });
             }
         }
 
-        private SMESet collectSMEData(ISubmodelElement sme)
+        private SMESet CollectSMEData(ISubmodelElement sme)
         {
             var semanticId = sme.SemanticId.GetAsIdentifier() ?? string.Empty;
 
@@ -330,7 +392,7 @@ namespace AasxServerDB
                             TimeStampCreate = timeStampCreate,
                             TimeStampTree   = timeStampTree
                         };
-            setValues(sme, smeDB);
+            SetValues(sme, smeDB);
             _smDB?.SMESets.Add(smeDB);
 
             return smeDB;
@@ -351,7 +413,7 @@ namespace AasxServerDB
         public override void VisitAssetAdministrationShell(IAssetAdministrationShell that)
         {
             var currentDataTime = DateTime.UtcNow;
-            var timeStamp = (that.TimeStamp == default)? currentDataTime : that.TimeStamp;
+            var timeStamp = (that.TimeStamp == default) ? currentDataTime : that.TimeStamp;
             var timeStampCreate = (that.TimeStampCreate == default) ? currentDataTime : that.TimeStampCreate;
             var timeStampTree = (that.TimeStampTree == default) ? currentDataTime : that.TimeStampTree;
 
@@ -405,12 +467,12 @@ namespace AasxServerDB
         }
         public override void VisitRelationshipElement(IRelationshipElement that)
         {
-            collectSMEData(that);
+            CollectSMEData(that);
             base.VisitRelationshipElement(that);
         }
         public override void VisitSubmodelElementList(ISubmodelElementList that)
         {
-            var smeSet = collectSMEData(that);
+            var smeSet = CollectSMEData(that);
             _parSME = smeSet;
             base.VisitSubmodelElementList(that);
             _parSME = smeSet.ParentSME;
@@ -418,7 +480,7 @@ namespace AasxServerDB
 
         public override void VisitSubmodelElementCollection(ISubmodelElementCollection that)
         {
-            var smeSet = collectSMEData(that);
+            var smeSet = CollectSMEData(that);
             _parSME = smeSet;
             base.VisitSubmodelElementCollection(that);
             _parSME = smeSet.ParentSME;
@@ -426,44 +488,44 @@ namespace AasxServerDB
 
         public override void VisitProperty(IProperty that)
         {
-            collectSMEData(that);
+            CollectSMEData(that);
             base.VisitProperty(that);
         }
         public override void VisitMultiLanguageProperty(IMultiLanguageProperty that)
         {
-            collectSMEData(that);
+            CollectSMEData(that);
             base.VisitMultiLanguageProperty(that);
         }
         public override void VisitRange(IRange that)
         {
-            collectSMEData(that);
+            CollectSMEData(that);
             base.VisitRange(that);
         }
         public override void VisitReferenceElement(IReferenceElement that)
         {
-            collectSMEData(that);
+            CollectSMEData(that);
             base.VisitReferenceElement(that);
         }
         public override void VisitBlob(IBlob that)
         {
-            collectSMEData(that);
+            CollectSMEData(that);
             base.VisitBlob(that);
         }
         public override void VisitFile(IFile that)
         {
-            collectSMEData(that);
+            CollectSMEData(that);
             base.VisitFile(that);
         }
         public override void VisitAnnotatedRelationshipElement(IAnnotatedRelationshipElement that)
         {
-            var smeSet = collectSMEData(that);
+            var smeSet = CollectSMEData(that);
             _parSME = smeSet;
             base.VisitAnnotatedRelationshipElement(that);
             _parSME = smeSet.ParentSME;
         }
         public override void VisitEntity(IEntity that)
         {
-            var smeSet = collectSMEData(that);
+            var smeSet = CollectSMEData(that);
             _parSME = smeSet;
             base.VisitEntity(that);
             _parSME = smeSet.ParentSME;
@@ -474,12 +536,12 @@ namespace AasxServerDB
         }
         public override void VisitBasicEventElement(IBasicEventElement that)
         {
-            collectSMEData(that);
+            CollectSMEData(that);
             base.VisitBasicEventElement(that);
         }
         public override void VisitOperation(IOperation that)
         {
-            var smeSet = collectSMEData(that);
+            var smeSet = CollectSMEData(that);
             _parSME = smeSet;
 
             if (that.InputVariables != null)
@@ -512,7 +574,7 @@ namespace AasxServerDB
         }
         public override void VisitCapability(ICapability that)
         {
-            collectSMEData(that);
+            CollectSMEData(that);
             base.VisitCapability(that);
         }
         public override void VisitConceptDescription(IConceptDescription that)

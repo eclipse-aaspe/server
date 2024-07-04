@@ -18,7 +18,7 @@ namespace AasxServerDB.Migrations.Postgres
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    AASX = table.Column<string>(type: "text", nullable: false)
+                    AASX = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -93,7 +93,7 @@ namespace AasxServerDB.Migrations.Postgres
                     SMEType = table.Column<string>(type: "text", nullable: true),
                     ValueType = table.Column<string>(type: "text", nullable: true),
                     SemanticId = table.Column<string>(type: "text", nullable: true),
-                    IdShort = table.Column<string>(type: "text", nullable: true),
+                    IdShort = table.Column<string>(type: "text", nullable: false),
                     TimeStampCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     TimeStamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     TimeStampTree = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
@@ -157,6 +157,27 @@ namespace AasxServerDB.Migrations.Postgres
                 });
 
             migrationBuilder.CreateTable(
+                name: "OValueSets",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SMEId = table.Column<int>(type: "integer", nullable: false),
+                    Attribute = table.Column<string>(type: "text", nullable: false),
+                    Value = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OValueSets", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_OValueSets_SMESets_SMEId",
+                        column: x => x.SMEId,
+                        principalTable: "SMESets",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "SValueSets",
                 columns: table => new
                 {
@@ -193,6 +214,11 @@ namespace AasxServerDB.Migrations.Postgres
                 column: "SMEId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_OValueSets_SMEId",
+                table: "OValueSets",
+                column: "SMEId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_SMESets_ParentSMEId",
                 table: "SMESets",
                 column: "ParentSMEId");
@@ -226,6 +252,9 @@ namespace AasxServerDB.Migrations.Postgres
 
             migrationBuilder.DropTable(
                 name: "IValueSets");
+
+            migrationBuilder.DropTable(
+                name: "OValueSets");
 
             migrationBuilder.DropTable(
                 name: "SValueSets");

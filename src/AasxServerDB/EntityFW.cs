@@ -1,8 +1,13 @@
+using System.Reflection;
+using System.Text.Json;
 using AasxServerDB;
 using AasxServerDB.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 
 /*
  * https://learn.microsoft.com/en-us/ef/core/get-started/overview/first-app?tabs=netcore-cli
@@ -22,6 +27,12 @@ namespace AasxServerDB
 {
     public class AasContext : DbContext
     {
+        static public JsonSerializerSettings _jsonSerializerSettings = new JsonSerializerSettings
+        {
+            TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto,
+            NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore,
+        };
+
         public static IConfiguration? _con       { get; set; }
         public static string?         _dataPath  { get; set; }
         public static bool            IsPostgres { get; set; }
@@ -33,6 +44,7 @@ namespace AasxServerDB
         public DbSet<SValueSet> SValueSets { get; set; }
         public DbSet<IValueSet> IValueSets { get; set; }
         public DbSet<DValueSet> DValueSets { get; set; }
+        public DbSet<OValueSet> OValueSets { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
@@ -77,6 +89,15 @@ namespace AasxServerDB
 
             // Save changes to the database
             SaveChanges();
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<OValueSet>()
+                .Property(e => e.Value)
+                .HasConversion(
+                    v => JsonConvert.SerializeObject(v, v.GetType(), _jsonSerializerSettings),
+                    v => JsonConvert.DeserializeObject(v, _jsonSerializerSettings));
         }
     }
 }

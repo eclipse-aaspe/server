@@ -589,7 +589,7 @@
                             <td>
                                 @if (smeDB.SMEType != null && (smeDB.SMEType.Equals("MLP") || smeDB.SMEType.Equals("Range")))
                                 {
-                                    var list = smeDB.getValue();
+                                    var list = smeDB.GetValue();
                                     <ul>
                                         @for (int z = 0; z < list.Count; z++)
                                         {
@@ -601,7 +601,7 @@
                                 }
                                 else
                                 {
-                                    @smeDB.getValue().First()[0]
+                                    @smeDB.GetValue().First()[0]
                                 }
                             </td>
                             <td style="word-break:keep-all">@smeDB.ValueType</td>
@@ -683,7 +683,7 @@
                         <span>
                             @if (smeDB.SMEType != null && (smeDB.SMEType.Equals("MLP") || smeDB.SMEType.Equals("Range")))
                             {
-                                var list = smeDB.getValue();
+                                var list = smeDB.GetValue();
                                 string mul            = string.Empty;
                                 string seperateString = " | ";
                                 @for (int z = 0; z < list.Count; z++)
@@ -694,7 +694,7 @@
                             }
                             else
                             {
-                                @smeDB.getValue().First()[0]
+                                @smeDB.GetValue().First()[0]
                             }
                         </span>
                         <span style="background-color:blue;">&nbsp</span>
