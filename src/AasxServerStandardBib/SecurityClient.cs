@@ -1580,6 +1580,7 @@ namespace AasxServer
 
         public static cfpNode root = null;
         public static string asbuilt_total = null;
+        public static Property pCO2eqTotal = null;
         public static bool cfpValid = false;
         public static DateTime lastCreateTimestamp = new DateTime();
         public static bool credentialsChanged = false;
@@ -1755,6 +1756,7 @@ namespace AasxServer
             // cfpNode root = new cfpNode();
             aascount = AasxServer.Program.env.Length;
             root = null;
+            ISubmodel co2eqSubmodel = null;
 
             // Collect data from all AAS into cfpNode(s)
             for (int i = 0; i < aascount; i++)
@@ -1790,6 +1792,7 @@ namespace AasxServer
 
                                     if (sm.SubmodelElements != null)
                                     {
+                                        co2eqSubmodel = sm;
                                         foreach (var v in sm.SubmodelElements)
                                         {
                                             if (v is SubmodelElementCollection c)
@@ -1874,6 +1877,7 @@ namespace AasxServer
 
                                     if (sm.SubmodelElements != null)
                                     {
+                                        co2eqSubmodel = sm;
                                         foreach (var v in sm.SubmodelElements)
                                         {
                                             if (v is SubmodelElementCollection c)
@@ -2112,6 +2116,25 @@ namespace AasxServer
                             //TODO: elements need proper deep clone method implemented within AAS metamodel classes
                             if (asbuilt_total == null)
                                 asbuilt_total = new String(root.cradleToGateCombination.Value);
+                            if (co2eqSubmodel != null)
+                            {
+                                pCO2eqTotal = null;
+                                foreach (var sme in co2eqSubmodel.SubmodelElements)
+                                {
+                                    if (sme is Property p && p.IdShort == "CO2eqTotal")
+                                    {
+                                        pCO2eqTotal = p;
+                                    }
+                                }
+                                if (pCO2eqTotal == null)
+                                {
+                                    pCO2eqTotal = new Property(DataTypeDefXsd.String, idShort: "CO2eqTotal");
+                                    co2eqSubmodel.SubmodelElements.Add(pCO2eqTotal);
+                                    pCO2eqTotal.SetAllParentsAndTimestamps(co2eqSubmodel, timeStamp, co2eqSubmodel.TimeStampCreate);
+                                    pCO2eqTotal.SetTimeStamp(timeStamp);
+                                    pCO2eqTotal.Value = "0";
+                                }
+                            }
                         }
 
                         if (Program.showWeight && root.weightCombination != null)
@@ -2339,6 +2362,10 @@ namespace AasxServer
                 }
             }
 
+            if (pCO2eqTotal != null)
+            {
+                pCO2eqTotal.Value = root.cradleToGateCombination.Value;
+            }
             // once = true;
             // if (root != null && root.bomTimestamp > lastCreateTimestamp)
             if (changed || credentialsChanged)
