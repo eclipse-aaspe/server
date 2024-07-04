@@ -778,7 +778,8 @@ namespace AasxServer
                     // try
                     {
                         fn = fileNames[fi];
-                        if (fn.ToLower().Contains("globalsecurity"))
+                        if (fn.ToLower(System.Globalization.CultureInfo.CurrentCulture).Contains("globalsecurity", StringComparison.InvariantCulture) ||
+                            fn.ToLower(System.Globalization.CultureInfo.CurrentCulture).Contains("registry", StringComparison.InvariantCulture))
                         {
                             envFileName[envi] = fn;
                             env[envi]         = new AdminShellPackageEnv(fn, true, false);

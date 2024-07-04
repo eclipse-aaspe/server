@@ -248,7 +248,7 @@ namespace IO.Swagger.Registry.Lib.V3.Models
             return Equals(left, right);
         }
 
-        public static bool operator !=(AssetAdministrationShellDescriptor left, AssetAdministrationShellDescriptor right)
+        public static bool operator !=(AssetAdministrationShellDescriptor? left, AssetAdministrationShellDescriptor right)
         {
             return !Equals(left, right);
         }

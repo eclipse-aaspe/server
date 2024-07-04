@@ -23,6 +23,8 @@ using System.Threading.Tasks;
 namespace IO.Swagger.Registry.Lib.V3.Services;
 
 using System.Globalization;
+using AasxServerDB;
+using AdminShellNS;
 
 public class RegistryInitializerService : IRegistryInitializerService
 {
@@ -40,7 +42,7 @@ public class RegistryInitializerService : IRegistryInitializerService
     {
         _aasDescriptorWritingService = aasDescriptorWritingService;
     }
-    
+
     public List<string> GetRegistryList() => getRegistry;
 
     public ISubmodel? GetAasRegistry() => aasRegistry;
@@ -173,521 +175,536 @@ public class RegistryInitializerService : IRegistryInitializerService
                     }
                 }
 
-                foreach (var env in Program.env)
+                if (Program.withDb)
                 {
-                    var aas = env.AasEnv?.AssetAdministrationShells?[0];
-                    if (aas?.IdShort != null && aas.IdShort.Equals("REGISTRY", StringComparison.Ordinal) &&
-                        (bool)aas.IdShort.Equals("myAASwithGlobalSecurityMetaModel", StringComparison.InvariantCulture))
+                    using (AasContext db = new AasContext())
                     {
-                        AddAasToRegistry(env, timestamp);
-                    }
-
-                    if (aas?.IdShort != "PcfViewTask")
-                    {
-                        continue;
-                    }
-
-                    const string certificatePassword = "i40";
-                    Stream?      s2                  = null;
-                    try
-                    {
-                        s2 = env.GetLocalStreamFromPackage(AasxFilesChainPfx, access: FileAccess.Read);
-                    }
-                    catch
-                    {
-                        // Well? It seems like an Orzelski problem...
-                    }
-
-                    if (s2 == null)
-                    {
-                        Console.WriteLine("Stream error!");
-                        continue;
-                    }
-
-                    var       xc = new X509Certificate2Collection();
-                    using var m  = new MemoryStream();
-                    s2.CopyTo(m);
-                    var b = m.GetBuffer();
-                    xc.Import(b, certificatePassword, X509KeyStorageFlags.PersistKeySet);
-                    Certificate = new X509Certificate2(b, certificatePassword);
-                    Console.WriteLine($"Client certificate: {AasxFilesChainPfx}");
-                    s2.Close();
-                }
-            }
-
-            if (getRegistry.Count != 0)
-            {
-                var submodelDescriptors = new List<SubmodelDescriptor>();
-                var submodelRegistryUrl = System.Environment.GetEnvironmentVariable("SUBMODELREGISTRY");
-                if (submodelRegistryUrl != null)
-                {
-                    string? accessToken = null;
-
-                    submodelRegistryUrl = submodelRegistryUrl.Replace("\r", "");
-                    submodelRegistryUrl = submodelRegistryUrl.Replace("\n", "");
-
-                    // basyx with Submodel Registry: read submodel descriptors
-                    var requestPath = $"{submodelRegistryUrl}/submodel-descriptors";
-
-                    if (AasxCredentials.get(cs.credentials, requestPath, out _, out _, out _, out var replace) && !string.IsNullOrEmpty(replace))
-                    {
-                        requestPath = replace;
-                    }
-
-                    var handler = new HttpClientHandler() {ServerCertificateCustomValidationCallback = delegate { return true; }};
-
-                    if (!requestPath.Contains("localhost"))
-                    {
-                        handler.Proxy = AasxTask.proxy;
-                    }
-
-                    var client = new HttpClient(handler);
-                    client.Timeout = TimeSpan.FromSeconds(10);
-                    if (accessToken != null)
-                    {
-                        client.SetBearerToken(accessToken);
-                    }
-
-                    var error    = false;
-                    var response = new HttpResponseMessage();
-                    try
-                    {
-                        Console.WriteLine($"GET {requestPath}");
-                        var task = Task.Run(async () => { response = await client.GetAsync(requestPath); });
-                        task.Wait();
-                        var json = response.Content.ReadAsStringAsync().Result;
-                        if (!string.IsNullOrEmpty(json))
+                        foreach (var aasDB in db.AASSets)
                         {
-                            var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(json));
-                            var node         = await System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(memoryStream);
-                            if (node is JsonObject jo)
-                            {
-                                if (jo.ContainsKey("result"))
-                                {
-                                    node = jo["result"];
-                                    if (node is JsonArray a)
-                                    {
-                                        submodelDescriptors.AddRange(a.OfType<JsonNode>().Select(jsonNode => DescriptorDeserializer.SubmodelDescriptorFrom(jsonNode)));
-                                    }
-                                }
-                            }
-                        }
-
-                        error = !response.IsSuccessStatusCode;
-                    }
-                    catch
-                    {
-                        error = true;
-                    }
-
-                    if (error)
-                    {
-                        var r = $"ERROR GET; {response.StatusCode}";
-                        r += $" ; {requestPath}";
-                        r += $" ; {response.Content.ReadAsStringAsync().Result}";
-                        Console.WriteLine(r);
-                    }
-                }
-
-                foreach (var greg in getRegistry)
-                {
-                    var aasDescriptors = new List<AssetAdministrationShellDescriptor>();
-
-                    string? json        = null;
-                    string? accessToken = null;
-                    var     requestPath = $"{greg}/shell-descriptors";
-                    string  userPW;
-                    string  urlEdcWrapper;
-                    string  replace;
-
-                    if (AasxCredentials.get(cs.credentials, requestPath, out var queryPara, out userPW, out urlEdcWrapper, out replace) && !string.IsNullOrEmpty(replace))
-                    {
-                        requestPath = replace;
-                    }
-
-                    var handler = new HttpClientHandler {ServerCertificateCustomValidationCallback = delegate { return true; }};
-
-                    if (!requestPath.Contains("localhost"))
-                    {
-                        if (AasxTask.proxy != null)
-                        {
-                            handler.Proxy = AasxTask.proxy;
-                        }
-                        else
-                        {
-                            handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
-                        }
-                    }
-
-                    var client = new HttpClient(handler);
-                    client.Timeout = TimeSpan.FromSeconds(10);
-                    if (accessToken != null)
-                        client.SetBearerToken(accessToken);
-
-                    var error    = false;
-                    var response = new HttpResponseMessage();
-                    try
-                    {
-                        Console.WriteLine($"GET {requestPath}");
-                        var path = requestPath;
-                        var task = Task.Run(async () => { response = await client.GetAsync(path); });
-                        task.Wait();
-                        json = response.Content.ReadAsStringAsync().Result;
-                        if (!string.IsNullOrEmpty(json))
-                        {
-                            var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(json));
-                            var node         = await System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(memoryStream);
-                            if (node is JsonObject jo)
-                            {
-                                if (jo.ContainsKey("result"))
-                                {
-                                    node = jo["result"];
-                                    if (node is JsonArray a)
-                                    {
-                                        foreach (var jsonNode in a)
-                                        {
-                                            if (jsonNode == null)
-                                            {
-                                                continue;
-                                            }
-
-                                            var ad = DescriptorDeserializer.AssetAdministrationShellDescriptorFrom(jsonNode);
-                                            aasDescriptors.Add(ad);
-                                            if (ad.SubmodelDescriptors == null)
-                                            {
-                                                ad.SubmodelDescriptors = new List<SubmodelDescriptor>();
-                                            }
-
-                                            if (ad.SubmodelDescriptors.Count != 0)
-                                            {
-                                                continue;
-                                            }
-
-                                            requestPath = ad.Endpoints?[0].ProtocolInformation?.Href;
-                                            Console.WriteLine($"GET {requestPath}");
-                                            var path1 = requestPath;
-                                            task = Task.Run(async () => { response = await client.GetAsync(path1); });
-                                            task.Wait();
-                                            json         = response.Content.ReadAsStringAsync().Result;
-                                            memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(json));
-                                            node         = await System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(memoryStream);
-                                            var aas = Jsonization.Deserialize.AssetAdministrationShellFrom(node);
-
-                                            var ids = (from s in aas?.Submodels select s.Keys[0].Value).ToList();
-
-                                            foreach (var sd in submodelDescriptors.Where(sd => ids.Contains(sd.Id)))
-                                            {
-                                                ad.SubmodelDescriptors.Add(sd);
-                                            }
-
-                                            aasDescriptorsForSubmodelView.Add(ad);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        error = !response.IsSuccessStatusCode;
-                    }
-                    catch
-                    {
-                        error = true;
-                    }
-
-                    if (error)
-                    {
-                        var r = $"ERROR GET; {response.StatusCode} ; {requestPath} ; {response.Content.ReadAsStringAsync().Result}";
-                        Console.WriteLine(r);
-                    }
-                    else
-                    {
-                        var i = 0;
-                        while (i < Program.env.Length)
-                        {
-                            var env = Program.env[i];
-
-                            i++;
-                        }
-
-                        initiallyEmpty = i;
-                        foreach (var ad in aasDescriptors)
-                        {
-                            if (ad.IdShort != null && (ad.IdShort.Equals("REGISTRY", StringComparison.Ordinal) ||
-                                                       ad.IdShort.Equals("myAASwithGlobalSecurityMetaModel", StringComparison.Ordinal)))
+                            if (aasDB.IdShort == "REGISTRY" || aasDB.IdShort == "myAASwithGlobalSecurityMetaModel")
                             {
                                 continue;
                             }
 
-                            var watch = System.Diagnostics.Stopwatch.StartNew();
+                            var aasDesc = AasRegistryService.GlobalCreateAasDescriptorFromDB(aasDB);
+                            AddAasToRegistry(null, timestamp, aasDesc);
+                        }
+                    }
 
-                            // check, if AAS is existing and must be replaced
-                            var extensions = new List<IExtension> {new Extension("endpoint", value: ad.Endpoints?[0].ProtocolInformation?.Href)};
-                            var aas = new AssetAdministrationShell(ad.Id, new AssetInformation(AssetKind.Instance, ad.GlobalAssetId), extensions,
-                                                                   idShort: $"{ad.IdShort} - EXTERNAL");
-                            aas.TimeStamp       = timestamp;
-                            aas.TimeStampCreate = timestamp;
-                            var newEnv = new AdminShellNS.AdminShellPackageEnv();
-                            newEnv.AasEnv?.AssetAdministrationShells?.Add(aas);
+                    foreach (var env in Program.env)
+                    {
+                        var aas = env.AasEnv?.AssetAdministrationShells?[0];
+                        if (aas?.IdShort != null && aas.IdShort.Equals("REGISTRY", StringComparison.Ordinal) &&
+                            (bool)aas.IdShort.Equals("myAASwithGlobalSecurityMetaModel", StringComparison.InvariantCulture))
+                        {
+                            AddAasToRegistry(env, timestamp);
+                        }
 
-                            if (ad.SubmodelDescriptors != null)
+                        if (aas?.IdShort != "PcfViewTask")
+                        {
+                            continue;
+                        }
+
+                        const string certificatePassword = "i40";
+                        Stream?      s2                  = null;
+                        try
+                        {
+                            s2 = env.GetLocalStreamFromPackage(AasxFilesChainPfx, access: FileAccess.Read);
+                        }
+                        catch
+                        {
+                            // Well? It seems like an Orzelski problem...
+                        }
+
+                        if (s2 == null)
+                        {
+                            Console.WriteLine("Stream error!");
+                            continue;
+                        }
+
+                        var       xc = new X509Certificate2Collection();
+                        using var m  = new MemoryStream();
+                        s2.CopyTo(m);
+                        var b = m.GetBuffer();
+                        xc.Import(b, certificatePassword, X509KeyStorageFlags.PersistKeySet);
+                        Certificate = new X509Certificate2(b, certificatePassword);
+                        Console.WriteLine($"Client certificate: {AasxFilesChainPfx}");
+                        s2.Close();
+                    }
+                }
+
+                if (getRegistry.Count != 0)
+                {
+                    var submodelDescriptors = new List<SubmodelDescriptor>();
+                    var submodelRegistryUrl = System.Environment.GetEnvironmentVariable("SUBMODELREGISTRY");
+                    if (submodelRegistryUrl != null)
+                    {
+                        string? accessToken = null;
+
+                        submodelRegistryUrl = submodelRegistryUrl.Replace("\r", "");
+                        submodelRegistryUrl = submodelRegistryUrl.Replace("\n", "");
+
+                        // basyx with Submodel Registry: read submodel descriptors
+                        var requestPath = $"{submodelRegistryUrl}/submodel-descriptors";
+
+                        if (AasxCredentials.get(cs.credentials, requestPath, out _, out _, out _, out var replace) && !string.IsNullOrEmpty(replace))
+                        {
+                            requestPath = replace;
+                        }
+
+                        var handler = new HttpClientHandler() {ServerCertificateCustomValidationCallback = delegate { return true; }};
+
+                        if (!requestPath.Contains("localhost"))
+                        {
+                            handler.Proxy = AasxTask.proxy;
+                        }
+
+                        var client = new HttpClient(handler);
+                        client.Timeout = TimeSpan.FromSeconds(10);
+                        if (accessToken != null)
+                        {
+                            client.SetBearerToken(accessToken);
+                        }
+
+                        var error    = false;
+                        var response = new HttpResponseMessage();
+                        try
+                        {
+                            Console.WriteLine($"GET {requestPath}");
+                            var task = Task.Run(async () => { response = await client.GetAsync(requestPath); });
+                            task.Wait();
+                            var json = response.Content.ReadAsStringAsync().Result;
+                            if (!string.IsNullOrEmpty(json))
                             {
-                                foreach (var sd in ad.SubmodelDescriptors)
+                                var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+                                var node         = await System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(memoryStream);
+                                if (node is JsonObject jo)
                                 {
-                                    if (sd.IdShort != null && sd.IdShort.Equals("NameplateVC", StringComparison.Ordinal))
+                                    if (jo.ContainsKey("result"))
                                     {
-                                        continue;
-                                    }
-
-                                    var    success  = false;
-                                    var    external = false;
-                                    string idEncoded;
-                                    var    endpoint = sd.Endpoints?[0].ProtocolInformation?.Href;
-                                    var    s1       = endpoint?.Split("/shells/");
-                                    if (s1 != null && s1.Length == 2)
-                                    {
-                                        var s2 = s1[1].Split("/submodels/");
-                                        if (s2.Length == 2)
+                                        node = jo["result"];
+                                        if (node is JsonArray a)
                                         {
-                                            idEncoded = s2[1].Replace("/submodel/", "");
-                                            endpoint = s1[0] + "/submodels/" + idEncoded;
+                                            submodelDescriptors.AddRange(a.OfType<JsonNode>().Select(jsonNode => DescriptorDeserializer.SubmodelDescriptorFrom(jsonNode)));
                                         }
-                                    }
-
-                                    requestPath = endpoint;
-                                    client.DefaultRequestHeaders.Clear();
-                                    if (requestPath != null && AasxCredentials.get(cList, requestPath, out queryPara, out userPW, out urlEdcWrapper, out replace))
-                                    {
-                                        if (replace != "")
-                                        {
-                                            requestPath = replace;
-                                        }
-
-                                        if (queryPara != "")
-                                        {
-                                            queryPara = "?" + queryPara;
-                                        }
-
-                                        if (userPW != "")
-                                        {
-                                            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", userPW);
-                                        }
-
-                                        if (urlEdcWrapper != "")
-                                        {
-                                            requestPath = urlEdcWrapper;
-                                        }
-                                    }
-
-                                    Program.submodelAPIcount++;
-                                    string clientToken = null;
-
-                                    switch (sd.IdShort)
-                                    {
-                                        case "BillOfMaterial":
-                                        case "ProductCarbonFootprint":
-                                        case "CarbonFootprint":
-                                        case "TechnicalData":
-                                        case "Nameplate":
-                                        case "WeightInformation":
-                                            // copy specific submodels locally
-                                            try
-                                            {
-                                                requestPath += queryPara;
-                                                // HEAD to get policy for submodel
-                                                if (Program.withPolicy)
-                                                {
-                                                    // requestPath += queryPara;
-                                                    Console.WriteLine($"HEAD Submodel {requestPath}");
-                                                    var path = requestPath;
-                                                    var task = Task.Run(async () =>
-                                                                        {
-                                                                            response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Head, path));
-                                                                        });
-                                                    task.Wait();
-
-                                                    const string userName                = "aorzelski@phoenixcontact.com";
-                                                    var          policy                  = string.Empty;
-                                                    var          policyRequestedResource = string.Empty;
-                                                    foreach (var kvp in response.Headers)
-                                                    {
-                                                        if (kvp.Key == "policy")
-                                                        {
-                                                            policy = kvp.Value.FirstOrDefault();
-                                                        }
-
-                                                        if (kvp.Key == "policyRequestedResource")
-                                                        {
-                                                            policyRequestedResource = kvp.Value.FirstOrDefault() ?? string.Empty;
-                                                        }
-                                                    }
-
-                                                    if (policy != "")
-                                                    {
-                                                        var          credential = new X509SigningCredentials(Certificate);
-                                                        const string clientId   = "client.jwt";
-                                                        var          now        = DateTime.UtcNow;
-                                                        var claimList =
-                                                            new List<Claim>()
-                                                            {
-                                                                new(JwtClaimTypes.JwtId, Guid.NewGuid().ToString()),
-                                                                new(JwtClaimTypes.Subject, clientId),
-                                                                new(JwtClaimTypes.IssuedAt, now.ToEpochTime().ToString(CultureInfo.InvariantCulture), ClaimValueTypes.Integer64),
-                                                                new("userName", userName)
-                                                            };
-                                                        if (policy != "")
-                                                            if (policy != null)
-                                                            {
-                                                                claimList.Add(new Claim("policy", policy, ClaimValueTypes.String));
-                                                            }
-
-                                                        if (policyRequestedResource != "")
-                                                            claimList.Add(new Claim("policyRequestedResource", policyRequestedResource, ClaimValueTypes.String));
-                                                        var token = new JwtSecurityToken(
-                                                                                         clientId,
-                                                                                         policyRequestedResource,
-                                                                                         claimList,
-                                                                                         now,
-                                                                                         now.AddDays(1),
-                                                                                         credential)
-                                                            ;
-                                                        var tokenHandler = new JwtSecurityTokenHandler();
-                                                        clientToken = tokenHandler.WriteToken(token);
-                                                        client.SetBearerToken(clientToken);
-                                                    }
-                                                }
-
-                                                Console.WriteLine("GET Submodel " + requestPath);
-                                                var task1 = Task.Run(async () => { response = await client.GetAsync(requestPath); });
-                                                task1.Wait();
-                                                if (response.IsSuccessStatusCode)
-                                                {
-                                                    json = response.Content.ReadAsStringAsync().Result;
-                                                    Submodel sm;
-                                                    try
-                                                    {
-                                                        var mStrm = new MemoryStream(Encoding.UTF8.GetBytes(json));
-                                                        var node  = await System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm);
-                                                        sm = Jsonization.Deserialize.SubmodelFrom(node);
-
-                                                        if (sm != null)
-                                                        {
-                                                            sm.IdShort += " - COPY";
-                                                        }
-
-                                                        if (sm != null)
-                                                        {
-                                                            sm.Extensions = new List<IExtension>
-                                                                            {
-                                                                                new Extension("endpoint", value: sd.Endpoints?[0].ProtocolInformation?.Href),
-                                                                                new Extension("clientToken", value: clientToken)
-                                                                            };
-                                                            sm.SetAllParentsAndTimestamps(null, timestamp, timestamp);
-                                                            aas.AddSubmodelReference(sm.GetReference());
-                                                            newEnv.AasEnv?.Submodels.Add(sm);
-                                                        }
-
-                                                        success = true;
-                                                    }
-                                                    catch (Exception ex)
-                                                    {
-                                                        Console.WriteLine($"ERROR Deserialization {requestPath} {ex.Message}");
-
-                                                        success = false;
-                                                    }
-                                                }
-                                            }
-                                            catch
-                                            {
-                                                success = false;
-                                            }
-
-                                            break;
-                                        default:
-                                            // test if submodel is accessible
-                                            try
-                                            {
-                                                if (urlEdcWrapper == "")
-                                                {
-                                                    if (queryPara == "")
-                                                    {
-                                                        queryPara = "?level=core";
-                                                    }
-                                                    else
-                                                    {
-                                                        queryPara += "&level=core";
-                                                    }
-                                                }
-
-                                                requestPath += queryPara;
-                                                Console.WriteLine("GET Submodel Core " + requestPath);
-                                                var path  = requestPath;
-                                                var task2 = Task.Run(async () => { response = await client.GetAsync(path); });
-                                                task2.Wait();
-                                                if (response.IsSuccessStatusCode)
-                                                {
-                                                    success  = true;
-                                                    external = true;
-                                                }
-                                            }
-                                            catch
-                                            {
-                                                success = false;
-                                            }
-
-                                            break;
-                                    }
-
-                                    if (success && !external)
-                                    {
-                                        continue;
-                                    }
-
-                                    {
-                                        var sm = new Submodel(sd.Id);
-                                        if (!success)
-                                        {
-                                            sm.IdShort = $"{sd.IdShort} - NO ACCESS";
-                                        }
-                                        else
-                                        {
-                                            if (external)
-                                                sm.IdShort = $"{sd.IdShort} - EXTERNAL";
-                                        }
-
-                                        sm.Extensions = new List<IExtension>
-                                                        {
-                                                            new Extension("endpoint", value: sd.Endpoints?[0].ProtocolInformation.Href),
-                                                            new Extension("clientToken", value: clientToken)
-                                                        };
-                                        sm.SetAllParentsAndTimestamps(null, timestamp, timestamp);
-                                        aas.AddSubmodelReference(sm.GetReference());
-                                        newEnv.AasEnv.Submodels?.Add(sm);
                                     }
                                 }
                             }
 
-                            watch.Stop();
-                            Console.WriteLine($"{watch.ElapsedMilliseconds} ms");
+                            error = !response.IsSuccessStatusCode;
+                        }
+                        catch
+                        {
+                            error = true;
+                        }
 
-                            Program.env[i] = newEnv;
-                            i++;
+                        if (error)
+                        {
+                            var r = $"ERROR GET; {response.StatusCode}";
+                            r += $" ; {requestPath}";
+                            r += $" ; {response.Content.ReadAsStringAsync().Result}";
+                            Console.WriteLine(r);
+                        }
+                    }
+
+                    foreach (var greg in getRegistry)
+                    {
+                        var aasDescriptors = new List<AssetAdministrationShellDescriptor>();
+
+                        string? json        = null;
+                        string? accessToken = null;
+                        var     requestPath = $"{greg}/shell-descriptors";
+                        string  userPW;
+                        string  urlEdcWrapper;
+                        string  replace;
+
+                        if (AasxCredentials.get(cs.credentials, requestPath, out var queryPara, out userPW, out urlEdcWrapper, out replace) && !string.IsNullOrEmpty(replace))
+                        {
+                            requestPath = replace;
+                        }
+
+                        var handler = new HttpClientHandler {ServerCertificateCustomValidationCallback = delegate { return true; }};
+
+                        if (!requestPath.Contains("localhost"))
+                        {
+                            if (AasxTask.proxy != null)
+                            {
+                                handler.Proxy = AasxTask.proxy;
+                            }
+                            else
+                            {
+                                handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                            }
+                        }
+
+                        var client = new HttpClient(handler);
+                        client.Timeout = TimeSpan.FromSeconds(10);
+                        if (accessToken != null)
+                            client.SetBearerToken(accessToken);
+
+                        var error    = false;
+                        var response = new HttpResponseMessage();
+                        try
+                        {
+                            Console.WriteLine($"GET {requestPath}");
+                            var path = requestPath;
+                            var task = Task.Run(async () => { response = await client.GetAsync(path); });
+                            task.Wait();
+                            json = response.Content.ReadAsStringAsync().Result;
+                            if (!string.IsNullOrEmpty(json))
+                            {
+                                var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+                                var node         = await System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(memoryStream);
+                                if (node is JsonObject jo)
+                                {
+                                    if (jo.ContainsKey("result"))
+                                    {
+                                        node = jo["result"];
+                                        if (node is JsonArray a)
+                                        {
+                                            foreach (var jsonNode in a)
+                                            {
+                                                if (jsonNode == null)
+                                                {
+                                                    continue;
+                                                }
+
+                                                var ad = DescriptorDeserializer.AssetAdministrationShellDescriptorFrom(jsonNode);
+                                                aasDescriptors.Add(ad);
+                                                ad.SubmodelDescriptors ??= [];
+
+                                                if (ad.SubmodelDescriptors.Count != 0)
+                                                {
+                                                    continue;
+                                                }
+
+                                                requestPath = ad.Endpoints?[0].ProtocolInformation?.Href;
+                                                Console.WriteLine($"GET {requestPath}");
+                                                var path1 = requestPath;
+                                                task = Task.Run(async () => { response = await client.GetAsync(path1); });
+                                                task.Wait();
+                                                json         = response.Content.ReadAsStringAsync().Result;
+                                                memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+                                                node         = await System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(memoryStream);
+                                                var aas = Jsonization.Deserialize.AssetAdministrationShellFrom(node);
+
+                                                var ids = (from s in aas?.Submodels select s.Keys[0].Value).ToList();
+
+                                                foreach (var sd in submodelDescriptors.Where(sd => ids.Contains(sd.Id)))
+                                                {
+                                                    ad.SubmodelDescriptors.Add(sd);
+                                                }
+
+                                                aasDescriptorsForSubmodelView.Add(ad);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            error = !response.IsSuccessStatusCode;
+                        }
+                        catch
+                        {
+                            error = true;
+                        }
+
+                        if (error)
+                        {
+                            var r = $"ERROR GET; {response.StatusCode} ; {requestPath} ; {response.Content.ReadAsStringAsync().Result}";
+                            Console.WriteLine(r);
+                        }
+                        else
+                        {
+                            var i = 0;
+                            while (i < Program.env.Length)
+                            {
+                                var env = Program.env[i];
+
+                                i++;
+                            }
+
+                            initiallyEmpty = i;
+                            foreach (var ad in aasDescriptors)
+                            {
+                                if (ad.IdShort != null && (ad.IdShort.Equals("REGISTRY", StringComparison.Ordinal) ||
+                                                           ad.IdShort.Equals("myAASwithGlobalSecurityMetaModel", StringComparison.Ordinal)))
+                                {
+                                    continue;
+                                }
+
+                                var watch = System.Diagnostics.Stopwatch.StartNew();
+
+                                // check, if AAS is existing and must be replaced
+                                var extensions = new List<IExtension> {new Extension("endpoint", value: ad.Endpoints?[0].ProtocolInformation?.Href)};
+                                var aas = new AssetAdministrationShell(ad.Id, new AssetInformation(AssetKind.Instance, ad.GlobalAssetId), extensions,
+                                                                       idShort: $"{ad.IdShort} - EXTERNAL");
+                                aas.TimeStamp       = timestamp;
+                                aas.TimeStampCreate = timestamp;
+                                var newEnv = new AdminShellNS.AdminShellPackageEnv();
+                                newEnv.AasEnv?.AssetAdministrationShells?.Add(aas);
+
+                                if (ad.SubmodelDescriptors != null)
+                                {
+                                    foreach (var sd in ad.SubmodelDescriptors)
+                                    {
+                                        if (sd.IdShort != null && sd.IdShort.Equals("NameplateVC", StringComparison.Ordinal))
+                                        {
+                                            continue;
+                                        }
+
+                                        var    success  = false;
+                                        var    external = false;
+                                        string idEncoded;
+                                        var    endpoint = sd.Endpoints?[0].ProtocolInformation?.Href;
+                                        var    s1       = endpoint?.Split("/shells/");
+                                        if (s1 != null && s1.Length == 2)
+                                        {
+                                            var s2 = s1[1].Split("/submodels/");
+                                            if (s2.Length == 2)
+                                            {
+                                                idEncoded = s2[1].Replace("/submodel/", "");
+                                                endpoint  = s1[0] + "/submodels/" + idEncoded;
+                                            }
+                                        }
+
+                                        requestPath = endpoint;
+                                        client.DefaultRequestHeaders.Clear();
+                                        if (requestPath != null && AasxCredentials.get(cList, requestPath, out queryPara, out userPW, out urlEdcWrapper, out replace))
+                                        {
+                                            if (replace != "")
+                                            {
+                                                requestPath = replace;
+                                            }
+
+                                            if (queryPara != "")
+                                            {
+                                                queryPara = "?" + queryPara;
+                                            }
+
+                                            if (userPW != "")
+                                            {
+                                                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", userPW);
+                                            }
+
+                                            if (urlEdcWrapper != "")
+                                            {
+                                                requestPath = urlEdcWrapper;
+                                            }
+                                        }
+
+                                        Program.submodelAPIcount++;
+                                        string clientToken = null;
+
+                                        switch (sd.IdShort)
+                                        {
+                                            case "BillOfMaterial":
+                                            case "ProductCarbonFootprint":
+                                            case "CarbonFootprint":
+                                            case "TechnicalData":
+                                            case "Nameplate":
+                                            case "WeightInformation":
+                                                // copy specific submodels locally
+                                                try
+                                                {
+                                                    requestPath += queryPara;
+                                                    // HEAD to get policy for submodel
+                                                    if (Program.withPolicy)
+                                                    {
+                                                        // requestPath += queryPara;
+                                                        Console.WriteLine($"HEAD Submodel {requestPath}");
+                                                        var path = requestPath;
+                                                        var task = Task.Run(async () =>
+                                                                            {
+                                                                                response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Head, path));
+                                                                            });
+                                                        task.Wait();
+
+                                                        const string userName                = "aorzelski@phoenixcontact.com";
+                                                        var          policy                  = string.Empty;
+                                                        var          policyRequestedResource = string.Empty;
+                                                        foreach (var kvp in response.Headers)
+                                                        {
+                                                            if (kvp.Key == "policy")
+                                                            {
+                                                                policy = kvp.Value.FirstOrDefault();
+                                                            }
+
+                                                            if (kvp.Key == "policyRequestedResource")
+                                                            {
+                                                                policyRequestedResource = kvp.Value.FirstOrDefault() ?? string.Empty;
+                                                            }
+                                                        }
+
+                                                        if (policy != "")
+                                                        {
+                                                            var          credential = new X509SigningCredentials(Certificate);
+                                                            const string clientId   = "client.jwt";
+                                                            var          now        = DateTime.UtcNow;
+                                                            var claimList =
+                                                                new List<Claim>()
+                                                                {
+                                                                    new(JwtClaimTypes.JwtId, Guid.NewGuid().ToString()),
+                                                                    new(JwtClaimTypes.Subject, clientId),
+                                                                    new(JwtClaimTypes.IssuedAt, now.ToEpochTime().ToString(CultureInfo.InvariantCulture),
+                                                                        ClaimValueTypes.Integer64),
+                                                                    new("userName", userName)
+                                                                };
+                                                            if (policy != "")
+                                                                if (policy != null)
+                                                                {
+                                                                    claimList.Add(new Claim("policy", policy, ClaimValueTypes.String));
+                                                                }
+
+                                                            if (policyRequestedResource != "")
+                                                                claimList.Add(new Claim("policyRequestedResource", policyRequestedResource, ClaimValueTypes.String));
+                                                            var token = new JwtSecurityToken(
+                                                                                             clientId,
+                                                                                             policyRequestedResource,
+                                                                                             claimList,
+                                                                                             now,
+                                                                                             now.AddDays(1),
+                                                                                             credential)
+                                                                ;
+                                                            var tokenHandler = new JwtSecurityTokenHandler();
+                                                            clientToken = tokenHandler.WriteToken(token);
+                                                            client.SetBearerToken(clientToken);
+                                                        }
+                                                    }
+
+                                                    Console.WriteLine("GET Submodel " + requestPath);
+                                                    var task1 = Task.Run(async () => { response = await client.GetAsync(requestPath); });
+                                                    task1.Wait();
+                                                    if (response.IsSuccessStatusCode)
+                                                    {
+                                                        json = response.Content.ReadAsStringAsync().Result;
+                                                        Submodel sm;
+                                                        try
+                                                        {
+                                                            var mStrm = new MemoryStream(Encoding.UTF8.GetBytes(json));
+                                                            var node  = await System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm);
+                                                            sm = Jsonization.Deserialize.SubmodelFrom(node);
+
+                                                            if (sm != null)
+                                                            {
+                                                                sm.IdShort += " - COPY";
+                                                            }
+
+                                                            if (sm != null)
+                                                            {
+                                                                sm.Extensions = new List<IExtension>
+                                                                                {
+                                                                                    new Extension("endpoint", value: sd.Endpoints?[0].ProtocolInformation?.Href),
+                                                                                    new Extension("clientToken", value: clientToken)
+                                                                                };
+                                                                sm.SetAllParentsAndTimestamps(null, timestamp, timestamp);
+                                                                aas.AddSubmodelReference(sm.GetReference());
+                                                                newEnv.AasEnv?.Submodels.Add(sm);
+                                                            }
+
+                                                            success = true;
+                                                        }
+                                                        catch (Exception ex)
+                                                        {
+                                                            Console.WriteLine($"ERROR Deserialization {requestPath} {ex.Message}");
+
+                                                            success = false;
+                                                        }
+                                                    }
+                                                }
+                                                catch
+                                                {
+                                                    success = false;
+                                                }
+
+                                                break;
+                                            default:
+                                                // test if submodel is accessible
+                                                try
+                                                {
+                                                    if (urlEdcWrapper == "")
+                                                    {
+                                                        if (queryPara == "")
+                                                        {
+                                                            queryPara = "?level=core";
+                                                        }
+                                                        else
+                                                        {
+                                                            queryPara += "&level=core";
+                                                        }
+                                                    }
+
+                                                    requestPath += queryPara;
+                                                    Console.WriteLine("GET Submodel Core " + requestPath);
+                                                    var path  = requestPath;
+                                                    var task2 = Task.Run(async () => { response = await client.GetAsync(path); });
+                                                    task2.Wait();
+                                                    if (response.IsSuccessStatusCode)
+                                                    {
+                                                        success  = true;
+                                                        external = true;
+                                                    }
+                                                }
+                                                catch
+                                                {
+                                                    success = false;
+                                                }
+
+                                                break;
+                                        }
+
+                                        if (success && !external)
+                                        {
+                                            continue;
+                                        }
+
+                                        {
+                                            var sm = new Submodel(sd.Id);
+                                            if (!success)
+                                            {
+                                                sm.IdShort = $"{sd.IdShort} - NO ACCESS";
+                                            }
+                                            else
+                                            {
+                                                if (external)
+                                                    sm.IdShort = $"{sd.IdShort} - EXTERNAL";
+                                            }
+
+                                            sm.Extensions = new List<IExtension>
+                                                            {
+                                                                new Extension("endpoint", value: sd.Endpoints?[0].ProtocolInformation.Href),
+                                                                new Extension("clientToken", value: clientToken)
+                                                            };
+                                            sm.SetAllParentsAndTimestamps(null, timestamp, timestamp);
+                                            aas.AddSubmodelReference(sm.GetReference());
+                                            newEnv.AasEnv.Submodels?.Add(sm);
+                                        }
+                                    }
+                                }
+
+                                watch.Stop();
+                                Console.WriteLine($"{watch.ElapsedMilliseconds} ms");
+
+                                Program.env[i] = newEnv;
+                                i++;
+                            }
                         }
                     }
                 }
             }
-        }
 
-        Program.signalNewData(2);
+            Program.signalNewData(2);
 
-        Program.initializingRegistry = false;
+            Program.initializingRegistry = false;
 
-        if (aasRegistry != null && aasRegistry.SubmodelElements != null)
-        {
-            Console.WriteLine($"Registry initialization complete.{aasRegistry.SubmodelElements.Count}");
-        }
-        else
-        {
-            Console.WriteLine($"Registry is empty");
+            if (aasRegistry != null && aasRegistry.SubmodelElements != null)
+            {
+                Console.WriteLine($"Registry initialization complete.{aasRegistry.SubmodelElements.Count}");
+            }
+            else
+            {
+                Console.WriteLine($"Registry is empty");
+            }
         }
     }
 
@@ -714,87 +731,94 @@ public class RegistryInitializerService : IRegistryInitializerService
         return url;
     }
 
-    private void AddAasToRegistry(AdminShellNS.AdminShellPackageEnv env, DateTime timestamp)
-#pragma warning restore IDE1006
+    void AddAasToRegistry(AdminShellPackageEnv? env, DateTime timestamp, AssetAdministrationShellDescriptor? aasDesc = null)
     {
-        var aas = env.AasEnv?.AssetAdministrationShells?[0];
+        var aas = env?.AasEnv?.AssetAdministrationShells?[0];
 
-        var ad            = new AssetAdministrationShellDescriptor();
-        var globalAssetId = aas?.AssetInformation?.GlobalAssetId!;
+        var ad = new AssetAdministrationShellDescriptor();
 
-        ad.IdShort = aas?.IdShort;
-        ad.Id      = aas?.Id;
-        var e = new Endpoint();
-        e.ProtocolInformation = new ProtocolInformation();
-        e.ProtocolInformation.Href =
-            $"{Program.externalRepository}/shells/{Base64UrlEncoder.Encode(ad.Id)}";
-        Console.WriteLine($"AAS {ad.IdShort} {e.ProtocolInformation.Href}");
-        e.Interface  = "AAS-1.0";
-        ad.Endpoints = new List<Endpoint>();
-        ad.Endpoints.Add(e);
-        ad.GlobalAssetId = globalAssetId;
-        //
-        var extSubjId       = new Reference(ReferenceTypes.ExternalReference, new List<IKey> {new Key(KeyTypes.GlobalReference, "assetKind")});
-        var specificAssetId = new SpecificAssetId("assetKind", aas?.AssetInformation?.AssetKind.ToString(CultureInfo.InvariantCulture), externalSubjectId: extSubjId);
-        ad.SpecificAssetIds = new List<SpecificAssetId> {specificAssetId};
-
-        // Submodels
-        if (aas?.Submodels != null && aas.Submodels.Count > 0)
+        if (aasDesc != null)
         {
-            ad.SubmodelDescriptors = new List<SubmodelDescriptor>();
-            foreach (var sm in aas.Submodels.Select(smr => env.AasEnv.FindSubmodel(smr)))
+            ad = aasDesc;
+        }
+        else
+        {
+            var globalAssetId = aas?.AssetInformation?.GlobalAssetId!;
+
+            ad.IdShort = aas?.IdShort;
+            ad.Id      = aas?.Id;
+            var e = new Endpoint();
+            e.ProtocolInformation = new ProtocolInformation();
+            e.ProtocolInformation.Href =
+                $"{Program.externalRepository}/shells/{Base64UrlEncoder.Encode(ad.Id)}";
+            Console.WriteLine($"AAS {ad.IdShort} {e.ProtocolInformation.Href}");
+            e.Interface  = "AAS-1.0";
+            ad.Endpoints = new List<Endpoint>();
+            ad.Endpoints.Add(e);
+            ad.GlobalAssetId = globalAssetId;
+            //
+            var extSubjId       = new Reference(ReferenceTypes.ExternalReference, new List<IKey> {new Key(KeyTypes.GlobalReference, "assetKind")});
+            var specificAssetId = new SpecificAssetId("assetKind", aas?.AssetInformation?.AssetKind.ToString(CultureInfo.InvariantCulture), externalSubjectId: extSubjId);
+            ad.SpecificAssetIds = new List<SpecificAssetId> {specificAssetId};
+
+            // Submodels
+            if (aas?.Submodels != null && aas.Submodels.Count > 0)
             {
-                if (sm.IdShort == null)
+                ad.SubmodelDescriptors = new List<SubmodelDescriptor>();
+                foreach (var sm in aas.Submodels.Select(smr => env.AasEnv.FindSubmodel(smr)))
                 {
-                    continue;
-                }
-
-                var sd = new SubmodelDescriptor();
-                sd.IdShort = sm.IdShort;
-                sd.Id      = sm.Id;
-                var esm = new Models.Endpoint();
-                esm.ProtocolInformation = new ProtocolInformation();
-                esm.ProtocolInformation.Href =
-                    $"{Program.externalRepository}/shells/{Base64UrlEncoder.Encode(ad.Id)}/submodels/{Base64UrlEncoder.Encode(sd.Id)}";
-
-                esm.Interface = "SUBMODEL-1.0";
-                sd.Endpoints  = new List<Models.Endpoint>();
-                sd.Endpoints.Add(esm);
-                if (sm.SemanticId != null)
-                {
-                    var sid = sm.SemanticId.GetAsExactlyOneKey();
+                    if (sm.IdShort == null)
                     {
-                        var semanticId = new Reference(ReferenceTypes.ExternalReference, new List<IKey> {new Key(KeyTypes.GlobalReference, sid.Value)});
+                        continue;
+                    }
+
+                    var sd = new SubmodelDescriptor();
+                    sd.IdShort = sm.IdShort;
+                    sd.Id      = sm.Id;
+                    var esm = new Models.Endpoint();
+                    esm.ProtocolInformation = new ProtocolInformation();
+                    esm.ProtocolInformation.Href =
+                        $"{Program.externalRepository}/shells/{Base64UrlEncoder.Encode(ad.Id)}/submodels/{Base64UrlEncoder.Encode(sd.Id)}";
+
+                    esm.Interface = "SUBMODEL-1.0";
+                    sd.Endpoints  = new List<Models.Endpoint>();
+                    sd.Endpoints.Add(esm);
+                    if (sm.SemanticId != null)
+                    {
+                        var sid = sm.SemanticId.GetAsExactlyOneKey();
+                        {
+                            var semanticId = new Reference(ReferenceTypes.ExternalReference, new List<IKey> {new Key(KeyTypes.GlobalReference, sid.Value)});
+                            sd.SemanticId = semanticId;
+                        }
+                    }
+
+                    ad.SubmodelDescriptors.Add(sd);
+                    if (!sm.IdShort.Equals("nameplate", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    // Add special entry for verifiable credentials
+                    sd                      = new SubmodelDescriptor();
+                    sd.IdShort              = "NameplateVC";
+                    sd.Id                   = $"{sm.Id}_VC";
+                    esm                     = new Endpoint();
+                    esm.ProtocolInformation = new ProtocolInformation();
+                    // TODO (jtikekar, 2023-09-04): @Andreas why hardcoded=> Verifiable credentials
+                    esm.ProtocolInformation.Href = $"https://nameplate.h2894164.stratoserver.net/demo/selfdescriptiononthefly/" +
+                                                   $"aHR0cHM6Ly9yZWdpc3RyeS5oMjg5NDE2NC5zdHJhdG9zZXJ2ZXIubmV0/{Base64UrlEncoder.Encode(ad.Id)}";
+                    esm.Interface = "VC-1.0";
+                    sd.Endpoints  = new List<Endpoint>();
+                    sd.Endpoints.Add(esm);
+                    if (sm.SemanticId != null)
+                    {
+                        var sid        = sm.SemanticId.GetAsExactlyOneKey();
+                        var semanticId = new Reference(ReferenceTypes.ExternalReference, new List<IKey>() {new Key(KeyTypes.GlobalReference, sid.Value)});
                         sd.SemanticId = semanticId;
                     }
-                }
 
-                ad.SubmodelDescriptors.Add(sd);
-                if (!sm.IdShort.Equals("nameplate", StringComparison.CurrentCultureIgnoreCase))
-                {
-                    continue;
+                    ad.SubmodelDescriptors.Add(sd);
                 }
-
-                // Add special entry for verifiable credentials
-                sd                      = new SubmodelDescriptor();
-                sd.IdShort              = "NameplateVC";
-                sd.Id                   = $"{sm.Id}_VC";
-                esm                     = new Endpoint();
-                esm.ProtocolInformation = new ProtocolInformation();
-                // TODO (jtikekar, 2023-09-04): @Andreas why hardcoded=> Verifiable credentials
-                esm.ProtocolInformation.Href = $"https://nameplate.h2894164.stratoserver.net/demo/selfdescriptiononthefly/" +
-                                               $"aHR0cHM6Ly9yZWdpc3RyeS5oMjg5NDE2NC5zdHJhdG9zZXJ2ZXIubmV0/{Base64UrlEncoder.Encode(ad.Id)}";
-                esm.Interface = "VC-1.0";
-                sd.Endpoints  = new List<Endpoint>();
-                sd.Endpoints.Add(esm);
-                if (sm.SemanticId != null)
-                {
-                    var sid        = sm.SemanticId.GetAsExactlyOneKey();
-                    var semanticId = new Reference(ReferenceTypes.ExternalReference, new List<IKey>() {new Key(KeyTypes.GlobalReference, sid.Value)});
-                    sd.SemanticId = semanticId;
-                }
-
-                ad.SubmodelDescriptors.Add(sd);
             }
         }
 
