@@ -201,43 +201,46 @@ public class RegistryInitializerService : IRegistryInitializerService
                 {
                     foreach (var env in Program.env)
                     {
-                        var aas = env.AasEnv?.AssetAdministrationShells?[0];
-                        if (aas?.IdShort != null && aas.IdShort.Equals("REGISTRY", StringComparison.Ordinal) &&
-                            (bool)aas.IdShort.Equals("myAASwithGlobalSecurityMetaModel", StringComparison.InvariantCulture))
+                        if (env != null)
                         {
-                            AddAasToRegistry(env, timestamp);
-                        }
+                            var aas = env.AasEnv?.AssetAdministrationShells?[0];
+                            if (aas?.IdShort != null && !aas.IdShort.Equals("REGISTRY", StringComparison.Ordinal) &&
+                                !aas.IdShort.Equals("myAASwithGlobalSecurityMetaModel", StringComparison.InvariantCulture))
+                            {
+                                AddAasToRegistry(env, timestamp);
+                            }
 
-                        if (aas?.IdShort != "PcfViewTask")
-                        {
-                            continue;
-                        }
+                            if (aas?.IdShort != "PcfViewTask")
+                            {
+                                continue;
+                            }
 
-                        const string certificatePassword = "i40";
-                        Stream?      s2                  = null;
-                        try
-                        {
-                            s2 = env.GetLocalStreamFromPackage(AasxFilesChainPfx, access: FileAccess.Read);
-                        }
-                        catch
-                        {
-                            // Well? It seems like a problem with the certificate...
-                        }
+                            const string certificatePassword = "i40";
+                            Stream? s2 = null;
+                            try
+                            {
+                                s2 = env.GetLocalStreamFromPackage(AasxFilesChainPfx, access: FileAccess.Read);
+                            }
+                            catch
+                            {
+                                // Well? It seems like a problem with the certificate...
+                            }
 
-                        if (s2 == null)
-                        {
-                            Console.WriteLine("Stream error!");
-                            continue;
-                        }
+                            if (s2 == null)
+                            {
+                                Console.WriteLine("Stream error!");
+                                continue;
+                            }
 
-                        var       xc = new X509Certificate2Collection();
-                        using var m  = new MemoryStream();
-                        await s2.CopyToAsync(m);
-                        var b = m.GetBuffer();
-                        xc.Import(b, certificatePassword, X509KeyStorageFlags.PersistKeySet);
-                        Certificate = new X509Certificate2(b, certificatePassword);
-                        Console.WriteLine($"Client certificate: {AasxFilesChainPfx}");
-                        s2.Close();
+                            var xc = new X509Certificate2Collection();
+                            using var m = new MemoryStream();
+                            await s2.CopyToAsync(m);
+                            var b = m.GetBuffer();
+                            xc.Import(b, certificatePassword, X509KeyStorageFlags.PersistKeySet);
+                            Certificate = new X509Certificate2(b, certificatePassword);
+                            Console.WriteLine($"Client certificate: {AasxFilesChainPfx}");
+                            s2.Close();
+                        }
                     }
                 }
 
