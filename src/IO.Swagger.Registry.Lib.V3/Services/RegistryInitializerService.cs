@@ -431,7 +431,10 @@ public class RegistryInitializerService : IRegistryInitializerService
                             while (i < Program.env.Length)
                             {
                                 var env = Program.env[i];
-
+                                if (env == null)
+                                {
+                                    break;
+                                }
                                 i++;
                             }
 
