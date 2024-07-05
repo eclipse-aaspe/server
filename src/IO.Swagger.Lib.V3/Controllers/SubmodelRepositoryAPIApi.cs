@@ -56,22 +56,25 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     private readonly ILevelExtentModifierService _levelExtentModifierService;
     private readonly IPaginationService _paginationService;
     private readonly IAuthorizationService _authorizationService;
+    private readonly IAdminShellPackageEnvironmentService _adminShellPackageEnvironmentService;
 
     public SubmodelRepositoryAPIApiController(IAppLogger<SubmodelRepositoryAPIApiController> logger, IBase64UrlDecoderService decoderService, ISubmodelService submodelService,
                                               IReferenceModifierService referenceModifierService, IJsonQueryDeserializer jsonQueryDeserializer, IMappingService mappingService,
                                               IPathModifierService pathModifierService, ILevelExtentModifierService levelExtentModifierService,
-                                              IPaginationService paginationService, IAuthorizationService authorizationService)
+                                              IPaginationService paginationService, IAuthorizationService authorizationService,
+                                              IAdminShellPackageEnvironmentService adminShellPackageEnvironmentService)
     {
-        _logger                     = logger ?? throw new ArgumentNullException(nameof(logger));
-        _decoderService             = decoderService ?? throw new ArgumentNullException(nameof(decoderService));
-        _submodelService            = submodelService ?? throw new ArgumentNullException(nameof(submodelService));
-        _referenceModifierService   = referenceModifierService ?? throw new ArgumentNullException(nameof(referenceModifierService));
-        _jsonQueryDeserializer      = jsonQueryDeserializer ?? throw new ArgumentNullException(nameof(jsonQueryDeserializer));
-        _mappingService             = mappingService ?? throw new ArgumentNullException(nameof(mappingService));
-        _pathModifierService        = pathModifierService ?? throw new ArgumentNullException(nameof(pathModifierService));
-        _levelExtentModifierService = levelExtentModifierService ?? throw new ArgumentNullException(nameof(levelExtentModifierService));
-        _paginationService          = paginationService ?? throw new ArgumentNullException(nameof(paginationService));
-        _authorizationService       = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
+        _logger                              = logger ?? throw new ArgumentNullException(nameof(logger));
+        _decoderService                      = decoderService ?? throw new ArgumentNullException(nameof(decoderService));
+        _submodelService                     = submodelService ?? throw new ArgumentNullException(nameof(submodelService));
+        _referenceModifierService            = referenceModifierService ?? throw new ArgumentNullException(nameof(referenceModifierService));
+        _jsonQueryDeserializer               = jsonQueryDeserializer ?? throw new ArgumentNullException(nameof(jsonQueryDeserializer));
+        _mappingService                      = mappingService ?? throw new ArgumentNullException(nameof(mappingService));
+        _pathModifierService                 = pathModifierService ?? throw new ArgumentNullException(nameof(pathModifierService));
+        _levelExtentModifierService          = levelExtentModifierService ?? throw new ArgumentNullException(nameof(levelExtentModifierService));
+        _paginationService                   = paginationService ?? throw new ArgumentNullException(nameof(paginationService));
+        _authorizationService                = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
+        _adminShellPackageEnvironmentService = adminShellPackageEnvironmentService ?? throw new ArgumentNullException(nameof(adminShellPackageEnvironmentService));
     }
 
     /// <summary>
@@ -672,17 +675,17 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
 
-        if (reqSemanticId == null)
+        var submodelList = new List<ISubmodel>();
+
+        if (reqSemanticId != null)
         {
-            throw new NotAllowed($"Cannot proceed as {nameof(reqSemanticId)} is null");
+            submodelList.AddRange(_adminShellPackageEnvironmentService.GetSubmodelsBySemanticId(reqSemanticId));
         }
 
-        if (idShort == null)
+        if (idShort != null)
         {
-            throw new NotAllowed($"Cannot proceed as {nameof(idShort)} is null");
+            submodelList.AddRange(_adminShellPackageEnvironmentService.GetSubmodelsByIdShort(idShort));
         }
-
-        var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
         var submodelsPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
         var smLevelList        = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result, level, extent);
@@ -718,18 +721,20 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                                                          [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] LevelEnum level)
     {
         _logger.LogInformation($"Received request to get the metadata of all the submodels.");
-        if (idShort == null)
-        {
-            throw new NotAllowed($"Cannot proceed as {nameof(idShort)} is null");
-        }
 
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
-        if (reqSemanticId == null)
+
+        var submodelList = new List<ISubmodel>();
+
+        if (reqSemanticId != null)
         {
-            throw new NotAllowed($"Cannot proceed as {nameof(reqSemanticId)} is null");
+            submodelList.AddRange(_adminShellPackageEnvironmentService.GetSubmodelsBySemanticId(reqSemanticId));
         }
 
-        var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
+        if (idShort != null)
+        {
+            submodelList.AddRange(_adminShellPackageEnvironmentService.GetSubmodelsByIdShort(idShort));
+        }
 
         var submodelPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
         var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelPagedList.result ?? [], level);
@@ -766,18 +771,20 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                                                      [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] LevelEnum level)
     {
         _logger.LogInformation($"Received request to get the metadata of all the submodels.");
-        if (idShort == null)
-        {
-            throw new NotAllowed($"Cannot proceed as {nameof(idShort)} is null");
-        }
 
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
-        if (reqSemanticId == null)
+
+        var submodelList = new List<ISubmodel>();
+
+        if (reqSemanticId != null)
         {
-            throw new NotAllowed($"Cannot proceed as {nameof(reqSemanticId)} is null");
+            submodelList.AddRange(_adminShellPackageEnvironmentService.GetSubmodelsBySemanticId(reqSemanticId));
         }
 
-        var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
+        if (idShort != null)
+        {
+            submodelList.AddRange(_adminShellPackageEnvironmentService.GetSubmodelsByIdShort(idShort));
+        }
 
         var submodelPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
         var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelPagedList.result, level);
@@ -815,18 +822,20 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                                                           [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] LevelEnum level)
     {
         _logger.LogInformation($"Received a request to get all the submodels.");
-        if (idShort == null)
-        {
-            throw new NotAllowed($"Cannot proceed as {nameof(idShort)} is null");
-        }
 
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
-        if (reqSemanticId == null)
+
+        var submodelList = new List<ISubmodel>();
+
+        if (reqSemanticId != null)
         {
-            throw new NotAllowed($"Cannot proceed as {nameof(reqSemanticId)} is null");
+            submodelList.AddRange(_adminShellPackageEnvironmentService.GetSubmodelsBySemanticId(reqSemanticId));
         }
 
-        var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
+        if (idShort != null)
+        {
+            submodelList.AddRange(_adminShellPackageEnvironmentService.GetSubmodelsByIdShort(idShort));
+        }
 
         var submodelsPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
         var smReferences       = _referenceModifierService.GetReferenceResult(submodelsPagedList.result.ConvertAll(sm => (IReferable)sm));
@@ -866,18 +875,20 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                                                           [FromQuery] ExtentEnum extent)
     {
         _logger.LogInformation($"Received a request to get all the submodels.");
-        if (idShort == null)
-        {
-            throw new NotAllowed($"Cannot proceed as {nameof(idShort)} is null");
-        }
 
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
-        if (reqSemanticId == null)
+
+        var submodelList = new List<ISubmodel>();
+
+        if (reqSemanticId != null)
         {
-            throw new NotAllowed($"Cannot proceed as {nameof(reqSemanticId)} is null");
+            submodelList.AddRange(_adminShellPackageEnvironmentService.GetSubmodelsBySemanticId(reqSemanticId));
         }
 
-        var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
+        if (idShort != null)
+        {
+            submodelList.AddRange(_adminShellPackageEnvironmentService.GetSubmodelsByIdShort(idShort));
+        }
 
         var submodelsPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
         var submodelLevelList  = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result, level, extent);

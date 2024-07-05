@@ -48,7 +48,7 @@ public class GenerateSerializationServiceTests
     {
         // Arrange
         _mockAasService.Setup(x => x.GetAllAssetAdministrationShells(It.IsAny<List<SpecificAssetId>?>(), It.IsAny<string?>())).Returns([]);
-        _mockSubmodelService.Setup(x => x.GetAllSubmodels(It.IsAny<IReference>(), It.IsAny<string>())).Returns([]);
+        _mockSubmodelService.Setup(x => x.GetAllSubmodels()).Returns([]);
 
         // Act
         var result = _service.GenerateSerializationByIds();
@@ -67,7 +67,7 @@ public class GenerateSerializationServiceTests
         mockAas.SetupGet(x => x.Id).Returns(aasId);
 
         _mockAasService.Setup(x => x.GetAllAssetAdministrationShells(It.IsAny<List<SpecificAssetId>?>(), It.IsAny<string?>())).Returns([mockAas.Object]);
-        _mockSubmodelService.Setup(x => x.GetAllSubmodels(It.IsAny<IReference>(), It.IsAny<string>())).Returns([]);
+        _mockSubmodelService.Setup(x => x.GetAllSubmodels()).Returns([]);
 
         // Act
         var result = _service.GenerateSerializationByIds(new List<string> {aasId});
@@ -86,7 +86,7 @@ public class GenerateSerializationServiceTests
         mockSubmodel.SetupGet(x => x.Id).Returns(submodelId);
 
         _mockAasService.Setup(x => x.GetAllAssetAdministrationShells(It.IsAny<List<SpecificAssetId>?>(), It.IsAny<string?>())).Returns([]);
-        _mockSubmodelService.Setup(x => x.GetAllSubmodels(It.IsAny<IReference>(),It.IsAny<string>())).Returns([mockSubmodel.Object]);
+        _mockSubmodelService.Setup(x => x.GetAllSubmodels()).Returns([mockSubmodel.Object]);
 
         // Act
         var result = _service.GenerateSerializationByIds(null, new List<string> {submodelId});
@@ -110,7 +110,7 @@ public class GenerateSerializationServiceTests
         mockSubmodel.SetupGet(x => x.Id).Returns(submodelId);
 
         _mockAasService.Setup(x => x.GetAllAssetAdministrationShells(It.IsAny<List<SpecificAssetId>?>(), It.IsAny<string?>())).Returns([mockAas.Object]);
-        _mockSubmodelService.Setup(x => x.GetAllSubmodels(It.IsAny<IReference>(),It.IsAny<string>())).Returns([mockSubmodel.Object]);
+        _mockSubmodelService.Setup(x => x.GetAllSubmodels()).Returns([mockSubmodel.Object]);
 
         // Act
         var result = _service.GenerateSerializationByIds(new List<string> {aasId}, new List<string> {submodelId});
