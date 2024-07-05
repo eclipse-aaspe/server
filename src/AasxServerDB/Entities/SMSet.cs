@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AasxServerDB.Entities
 {
@@ -7,7 +7,7 @@ namespace AasxServerDB.Entities
         public int Id { get; set; }
 
         [ForeignKey("AASXSet")]
-        public int AASXId { get;               set; }
+        public int AASXId { get; set; }
         public virtual AASXSet? AASXSet { get; set; }
 
         [ForeignKey("AASSet")]
@@ -16,7 +16,7 @@ namespace AasxServerDB.Entities
 
         public string? SemanticId { get; set; }
         public string? Identifier { get; set; }
-        public string? IdShort    { get; set; }
+        public string? IdShort { get; set; }
 
         public DateTime TimeStampCreate { get; set; }
         public DateTime TimeStamp { get; set; }

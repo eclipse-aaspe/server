@@ -160,7 +160,6 @@ namespace AasxServerDB.Migrations.Postgres
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("IdShort")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int?>("ParentSMEId")
@@ -175,6 +174,9 @@ namespace AasxServerDB.Migrations.Postgres
                     b.Property<string>("SemanticId")
                         .HasColumnType("text");
 
+                    b.Property<string>("TValue")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("TimeStamp")
                         .HasColumnType("timestamp with time zone");
 
@@ -183,9 +185,6 @@ namespace AasxServerDB.Migrations.Postgres
 
                     b.Property<DateTime>("TimeStampTree")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ValueType")
-                        .HasColumnType("text");
 
                     b.HasKey("Id");
 

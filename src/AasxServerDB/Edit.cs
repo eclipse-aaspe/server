@@ -1,4 +1,4 @@
-﻿using AdminShellNS;
+using AdminShellNS;
 using Microsoft.EntityFrameworkCore;
 using AasxServerDB.Entities;
 
@@ -34,5 +34,5 @@ namespace AasxServerDB
             }
             env.setWrite(false);
         }
-    }    
+    }
 }

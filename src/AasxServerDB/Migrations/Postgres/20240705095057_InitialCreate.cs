@@ -1,9 +1,10 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace AasxServerDB.Migrations.Sqlite
+namespace AasxServerDB.Migrations.Postgres
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
@@ -15,9 +16,9 @@ namespace AasxServerDB.Migrations.Sqlite
                 name: "AASXSets",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    AASX = table.Column<string>(type: "TEXT", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    AASX = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -28,16 +29,16 @@ namespace AasxServerDB.Migrations.Sqlite
                 name: "AASSets",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    AASXId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Identifier = table.Column<string>(type: "TEXT", nullable: true),
-                    IdShort = table.Column<string>(type: "TEXT", nullable: true),
-                    AssetKind = table.Column<string>(type: "TEXT", nullable: true),
-                    GlobalAssetId = table.Column<string>(type: "TEXT", nullable: true),
-                    TimeStampCreate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    TimeStamp = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    TimeStampTree = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    AASXId = table.Column<int>(type: "integer", nullable: false),
+                    Identifier = table.Column<string>(type: "text", nullable: true),
+                    IdShort = table.Column<string>(type: "text", nullable: true),
+                    AssetKind = table.Column<string>(type: "text", nullable: true),
+                    GlobalAssetId = table.Column<string>(type: "text", nullable: true),
+                    TimeStampCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStampTree = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -54,16 +55,16 @@ namespace AasxServerDB.Migrations.Sqlite
                 name: "SMSets",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    AASXId = table.Column<int>(type: "INTEGER", nullable: false),
-                    AASId = table.Column<int>(type: "INTEGER", nullable: true),
-                    SemanticId = table.Column<string>(type: "TEXT", nullable: true),
-                    Identifier = table.Column<string>(type: "TEXT", nullable: true),
-                    IdShort = table.Column<string>(type: "TEXT", nullable: true),
-                    TimeStampCreate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    TimeStamp = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    TimeStampTree = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    AASXId = table.Column<int>(type: "integer", nullable: false),
+                    AASId = table.Column<int>(type: "integer", nullable: true),
+                    SemanticId = table.Column<string>(type: "text", nullable: true),
+                    Identifier = table.Column<string>(type: "text", nullable: true),
+                    IdShort = table.Column<string>(type: "text", nullable: true),
+                    TimeStampCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStampTree = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -85,17 +86,17 @@ namespace AasxServerDB.Migrations.Sqlite
                 name: "SMESets",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    SMId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ParentSMEId = table.Column<int>(type: "INTEGER", nullable: true),
-                    SMEType = table.Column<string>(type: "TEXT", nullable: true),
-                    ValueType = table.Column<string>(type: "TEXT", nullable: true),
-                    SemanticId = table.Column<string>(type: "TEXT", nullable: true),
-                    IdShort = table.Column<string>(type: "TEXT", nullable: false),
-                    TimeStampCreate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    TimeStamp = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    TimeStampTree = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SMId = table.Column<int>(type: "integer", nullable: false),
+                    ParentSMEId = table.Column<int>(type: "integer", nullable: true),
+                    SMEType = table.Column<string>(type: "text", nullable: true),
+                    TValue = table.Column<string>(type: "text", nullable: true),
+                    SemanticId = table.Column<string>(type: "text", nullable: true),
+                    IdShort = table.Column<string>(type: "text", nullable: true),
+                    TimeStampCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStampTree = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -117,11 +118,11 @@ namespace AasxServerDB.Migrations.Sqlite
                 name: "DValueSets",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    SMEId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Value = table.Column<double>(type: "REAL", nullable: true),
-                    Annotation = table.Column<string>(type: "TEXT", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SMEId = table.Column<int>(type: "integer", nullable: false),
+                    Value = table.Column<double>(type: "double precision", nullable: true),
+                    Annotation = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -138,11 +139,11 @@ namespace AasxServerDB.Migrations.Sqlite
                 name: "IValueSets",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    SMEId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Value = table.Column<long>(type: "INTEGER", nullable: true),
-                    Annotation = table.Column<string>(type: "TEXT", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SMEId = table.Column<int>(type: "integer", nullable: false),
+                    Value = table.Column<long>(type: "bigint", nullable: true),
+                    Annotation = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -159,11 +160,11 @@ namespace AasxServerDB.Migrations.Sqlite
                 name: "OValueSets",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    SMEId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Attribute = table.Column<string>(type: "TEXT", nullable: false),
-                    Value = table.Column<string>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SMEId = table.Column<int>(type: "integer", nullable: false),
+                    Attribute = table.Column<string>(type: "text", nullable: false),
+                    Value = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -180,11 +181,11 @@ namespace AasxServerDB.Migrations.Sqlite
                 name: "SValueSets",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    SMEId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Value = table.Column<string>(type: "TEXT", nullable: true),
-                    Annotation = table.Column<string>(type: "TEXT", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SMEId = table.Column<int>(type: "integer", nullable: false),
+                    Value = table.Column<string>(type: "text", nullable: true),
+                    Annotation = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {

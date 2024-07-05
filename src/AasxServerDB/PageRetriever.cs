@@ -51,14 +51,10 @@ namespace AasxServerDB
 
         public static List<SMESet> GetPageSMEData(int size = 1000, DateTime dateTime = new DateTime(), string searchLower = "", long smid = 0, long smeid = 0, long parid = 0)
         {
-            bool withDateTime = !dateTime.Equals(DateTime.MinValue);
-            List<SMESet> data = null;
+            var withDateTime = !dateTime.Equals(DateTime.MinValue);
+            var data = new List<SMESet>();
             using (AasContext db = new AasContext())
             {
-                var listS = ConverterDataType.FromTableToDataType((DataTypeDefXsd?) DataTypeDefXsd.String);
-                var listI = ConverterDataType.FromTableToDataType((DataTypeDefXsd?) DataTypeDefXsd.Integer);
-                var listD = ConverterDataType.FromTableToDataType((DataTypeDefXsd?) DataTypeDefXsd.Double);
-
                 data = db.SMESets
                     .OrderBy(sme => sme.Id)
                     .Where(sme => (smid == 0 || sme.SMId == smid) && (smeid == 0 || sme.Id == smeid) && (parid == 0 || sme.ParentSMEId == parid) &&
@@ -66,13 +62,13 @@ namespace AasxServerDB
                         (sme.IdShort != null  && sme.IdShort.ToLower().Contains(searchLower)) ||
                         (sme.SemanticId != null  && sme.SemanticId.ToLower().Contains(searchLower)) ||
                         (sme.SMEType != null  && sme.SMEType.ToLower().Contains(searchLower)) ||
-                        (sme.ValueType != null  && sme.ValueType.ToLower().Contains(searchLower)) ||
+                        (sme.TValue != null  && sme.TValue.ToLower().Contains(searchLower)) ||
                         (withDateTime && sme.TimeStamp.CompareTo(dateTime) > 0) ||
                         db.OValueSets.Any(sv => sv.SMEId == sme.Id && (sv.Attribute.ToLower().Contains(searchLower) || ((string) sv.Value).ToLower().Contains(searchLower))) ||
-                        (sme.ValueType != null && (
-                            (listS.Contains(sme.ValueType) && db.SValueSets.Any(sv => sv.SMEId == sme.Id && ((sv.Annotation != null && sv.Annotation.ToLower().Contains(searchLower)) || (sv.Value != null && sv.Value.ToLower().Contains(searchLower))))) ||
-                            (listI.Contains(sme.ValueType) && db.IValueSets.Any(sv => sv.SMEId == sme.Id && ((sv.Annotation != null && sv.Annotation.ToLower().Contains(searchLower)) || (sv.Value != null && sv.Value.ToString().ToLower().Contains(searchLower))))) ||
-                            (listD.Contains(sme.ValueType) && db.DValueSets.Any(sv => sv.SMEId == sme.Id && ((sv.Annotation != null && sv.Annotation.ToLower().Contains(searchLower)) || (sv.Value != null && sv.Value.ToString().ToLower().Contains(searchLower)))))))))
+                        (sme.TValue != null && (
+                            (sme.TValue.Equals("S") && db.SValueSets.Any(sv => sv.SMEId == sme.Id && ((sv.Annotation != null && sv.Annotation.ToLower().Contains(searchLower)) || (sv.Value != null && sv.Value.ToLower().Contains(searchLower))))) ||
+                            (sme.TValue.Equals("I") && db.IValueSets.Any(sv => sv.SMEId == sme.Id && ((sv.Annotation != null && sv.Annotation.ToLower().Contains(searchLower)) || (sv.Value != null && sv.Value.ToString().ToLower().Contains(searchLower))))) ||
+                            (sme.TValue.Equals("D") && db.DValueSets.Any(sv => sv.SMEId == sme.Id && ((sv.Annotation != null && sv.Annotation.ToLower().Contains(searchLower)) || (sv.Value != null && sv.Value.ToString().ToLower().Contains(searchLower)))))))))
                     .Take(size)
                     .ToList();
             }

@@ -143,7 +143,6 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("IdShort")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("ParentSMEId")
@@ -158,6 +157,9 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Property<string>("SemanticId")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("TValue")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("TimeStamp")
                         .HasColumnType("TEXT");
 
@@ -165,9 +167,6 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("TimeStampTree")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ValueType")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using AasxServerDB;
 using AasxServerDB.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -97,8 +98,8 @@ namespace AasxServerDB
             modelBuilder.Entity<OValueSet>()
                 .Property(e => e.Value)
                 .HasConversion(
-                    v => JsonConvert.SerializeObject(v, v.GetType(), _jsonSerializerSettings),
-                    v => v);
+                    v => v.ToJsonString(null),
+                    v => JsonNode.Parse(v, null, default));
         }
     }
 }

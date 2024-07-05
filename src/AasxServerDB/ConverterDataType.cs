@@ -8,59 +8,38 @@ using Microsoft.IdentityModel.Tokens;
 
 public static class ConverterDataType
 {
-    public static Dictionary<DataTypeDefXsd, DataTypeDefXsd> DataTypeToTable = new Dictionary<DataTypeDefXsd, DataTypeDefXsd>() {
-        { DataTypeDefXsd.AnyUri, DataTypeDefXsd.String },
-        { DataTypeDefXsd.Base64Binary, DataTypeDefXsd.String },
-        { DataTypeDefXsd.Boolean, DataTypeDefXsd.String },
-        { DataTypeDefXsd.Byte, DataTypeDefXsd.Integer },
-        { DataTypeDefXsd.Date, DataTypeDefXsd.String },
-        { DataTypeDefXsd.DateTime, DataTypeDefXsd.String },
-        { DataTypeDefXsd.Decimal, DataTypeDefXsd.String },
-        { DataTypeDefXsd.Double, DataTypeDefXsd.Double },
-        { DataTypeDefXsd.Duration, DataTypeDefXsd.String },
-        { DataTypeDefXsd.Float, DataTypeDefXsd.Double },
-        { DataTypeDefXsd.GDay, DataTypeDefXsd.String },
-        { DataTypeDefXsd.GMonth, DataTypeDefXsd.String },
-        { DataTypeDefXsd.GMonthDay, DataTypeDefXsd.String },
-        { DataTypeDefXsd.GYear, DataTypeDefXsd.String },
-        { DataTypeDefXsd.GYearMonth, DataTypeDefXsd.String },
-        { DataTypeDefXsd.HexBinary, DataTypeDefXsd.String },
-        { DataTypeDefXsd.Int, DataTypeDefXsd.Integer },
-        { DataTypeDefXsd.Integer, DataTypeDefXsd.Integer },
-        { DataTypeDefXsd.Long, DataTypeDefXsd.Integer },
-        { DataTypeDefXsd.NegativeInteger, DataTypeDefXsd.Integer },
-        { DataTypeDefXsd.NonNegativeInteger, DataTypeDefXsd.Integer },
-        { DataTypeDefXsd.NonPositiveInteger, DataTypeDefXsd.Integer },
-        { DataTypeDefXsd.PositiveInteger, DataTypeDefXsd.Integer },
-        { DataTypeDefXsd.Short, DataTypeDefXsd.Integer },
-        { DataTypeDefXsd.String, DataTypeDefXsd.String },
-        { DataTypeDefXsd.Time, DataTypeDefXsd.String },
-        { DataTypeDefXsd.UnsignedByte, DataTypeDefXsd.Integer },
-        { DataTypeDefXsd.UnsignedInt, DataTypeDefXsd.Integer },
-        { DataTypeDefXsd.UnsignedLong, DataTypeDefXsd.Integer },
-        { DataTypeDefXsd.UnsignedShort, DataTypeDefXsd.Integer }
+    public static Dictionary<DataTypeDefXsd, string> DataTypeToTable = new Dictionary<DataTypeDefXsd, string>() {
+        { DataTypeDefXsd.AnyUri, "S" },
+        { DataTypeDefXsd.Base64Binary, "S" },
+        { DataTypeDefXsd.Boolean, "S" },
+        { DataTypeDefXsd.Byte, "I" },
+        { DataTypeDefXsd.Date, "S" },
+        { DataTypeDefXsd.DateTime, "S" },
+        { DataTypeDefXsd.Decimal, "S" },
+        { DataTypeDefXsd.Double, "D" },
+        { DataTypeDefXsd.Duration, "S" },
+        { DataTypeDefXsd.Float, "D" },
+        { DataTypeDefXsd.GDay, "S" },
+        { DataTypeDefXsd.GMonth, "S" },
+        { DataTypeDefXsd.GMonthDay, "S" },
+        { DataTypeDefXsd.GYear, "S" },
+        { DataTypeDefXsd.GYearMonth, "S" },
+        { DataTypeDefXsd.HexBinary, "S" },
+        { DataTypeDefXsd.Int, "I" },
+        { DataTypeDefXsd.Integer, "I" },
+        { DataTypeDefXsd.Long, "I" },
+        { DataTypeDefXsd.NegativeInteger, "I" },
+        { DataTypeDefXsd.NonNegativeInteger, "I" },
+        { DataTypeDefXsd.NonPositiveInteger, "I" },
+        { DataTypeDefXsd.PositiveInteger, "I" },
+        { DataTypeDefXsd.Short, "I" },
+        { DataTypeDefXsd.String, "S" },
+        { DataTypeDefXsd.Time, "S" },
+        { DataTypeDefXsd.UnsignedByte, "I" },
+        { DataTypeDefXsd.UnsignedInt, "I" },
+        { DataTypeDefXsd.UnsignedLong, "I" },
+        { DataTypeDefXsd.UnsignedShort, "I" }
     };
-
-    private static Dictionary<DataTypeDefXsd, List<string>> TableToDataType = new Dictionary<DataTypeDefXsd, List<string>>();
-
-    public static List<string> FromTableToDataType(DataTypeDefXsd? tableDataTypeD = null, string? tableDataTypeS = null)
-    {
-        if (tableDataTypeD == null && tableDataTypeS == null)
-            return new List<string>();
-
-        var key = (DataTypeDefXsd) (tableDataTypeD ?? StringToDataType(tableDataTypeS));
-
-        if (!TableToDataType.ContainsKey(key))
-        {
-            TableToDataType[key] = new List<string>();
-
-            foreach (var item in Enum.GetValues<DataTypeDefXsd>())
-                if (DataTypeToTable[item] == key)
-                    TableToDataType[key].Add(item.ToString());
-        }
-
-        return TableToDataType[key];
-    }
 
     public static DataTypeDefXsd? StringToDataType(string? tableDataType)
     {

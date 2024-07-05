@@ -565,7 +565,7 @@
                         <th style="word-break:keep-all">Type</th>
                         <th style="word-break:keep-all">IdShort</th>
                         <th style="word-break:keep-all">SemanticId</th>
-                        <th style="word-break:keep-all">ValueType</th>
+                        <th style="word-break:keep-all">TValue</th>
                         <th style="word-break:keep-all">Value</th>
                         <th style="word-break:keep-all">Additional Attributes</th>
                         <th style="word-break:keep-all">TimeStamp</th>
@@ -589,6 +589,7 @@
                         var smDB = db.SMSets.Where(s => s.Id == smeDB.SMId).First();
                         string submodel64 = Base64UrlEncoder.Encode(smDB.Identifier);
                         string link = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}/submodel-elements/{path}";
+                        var value = smeDB.GetValue();
 
                         <tr>
                             <td style="word-break:keep-all">@smeDB.SMId</td>
@@ -599,34 +600,62 @@
                             <td style="word-break:keep-all">@smeDB.SMEType</td>
                             <td>@smeDB.IdShort</td>
                             <td>@smeDB.SemanticId</td>
-                            <td style="word-break:keep-all">@smeDB.ValueType</td>
+                            <td style="word-break:keep-all">@smeDB.TValue</td>
                             <td>
-                                @if (smeDB.SMEType != null && (smeDB.SMEType.Equals("MLP") || smeDB.SMEType.Equals("Range")))
+                                @if (smeDB.SMEType != null && smeDB.SMEType.Equals("MLP"))
                                 {
-                                    var list = smeDB.GetValue();
                                     <ul>
-                                        @for (int z = 0; z < list.Count; z++)
+                                        @for (int z = 0; z < value.Count; z++)
                                         {
                                             <li>
-                                                [@list[ z ][ 1 ]] @list[ z ][ 0 ]
+                                                [@value[z][1]] @value[z][0]
                                             </li>
                                         }
                                     </ul>
                                 }
+                                else if (smeDB.SMEType != null && smeDB.SMEType.Equals("Range"))
+                                {
+                                    <ul>
+                                        @{
+                                            var valueType = (string) db.OValueSets.Where(ovalue => ovalue.SMEId == smeDB.Id && ovalue.Attribute.Equals("ValueType")).Select(ovalue => ovalue.Value).FirstOrDefault();
+                                            if (!valueType.IsNullOrEmpty())
+                                            {
+                                                <li>
+                                                    (@valueType)
+                                                </li>
+                                            }
+                                        }
+                                        
+                                        @for (int z = 0; z < value.Count; z++)
+                                        {
+                                            <li>
+                                                [@value[z][1]] @value[z][0]
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+                                else if (smeDB.SMEType != null && (smeDB.SMEType.Equals("Prop")))
+                                {
+                                    <ul>
+                                        <li>
+                                            (@value[0][1]) @value[0][0]
+                                        </li>
+                                    </ul>
+                                }
                                 else
                                 {
-                                    @smeDB.GetValue().First()[0]
+                                    @value.First()[0]
                                 }
                             </td>
                             <td style="word-break:keep-all;font-size:small;max-width:200px">
                                 @if (db.OValueSets.Where(value => value.SMEId == smeDB.Id).Any())
                                 {
-                                    var dic = smeDB.GetOValueDictionary();
+                                    var dic = smeDB.GetOValue();
                                     <ul>
-                                        @foreach(KeyValuePair<string, string> value in dic)
+                                        @foreach(KeyValuePair<string, string> dicValue in dic)
                                         {
                                             <li>
-                                                @value.Key = @value.Value
+                                                @dicValue.Key = @dicValue.Value
                                             </li>
                                         }
                                     </ul>
@@ -647,17 +676,17 @@
                                 {
                                     <a href="@($"{shorturl}/sme?parid={smeDB.Id}")" target="_blank">children </a>
                                 }
-                                @if (smeDB.ValueType != null)
+                                @if (smeDB.TValue != null)
                                 {
-                                    if (AasxServerDB.ConverterDataType.FromTableToDataType(DataTypeDefXsd.String).Contains(smeDB.ValueType))
+                                    if (smeDB.TValue.Equals("S"))
                                     {
                                         <a href="@($"{shorturl}/svalue?smeid={smeDB.Id}")" target="_blank">svalue </a>
                                     }
-                                    else if (AasxServerDB.ConverterDataType.FromTableToDataType(DataTypeDefXsd.Integer).Contains(smeDB.ValueType))
+                                    else if (smeDB.TValue.Equals("I"))
                                     {
                                         <a href="@($"{shorturl}/ivalue?smeid={smeDB.Id}")" target="_blank">ivalue </a>
                                     }
-                                    else if (AasxServerDB.ConverterDataType.FromTableToDataType(DataTypeDefXsd.Double).Contains(smeDB.ValueType))
+                                    else if (smeDB.TValue.Equals("D"))
                                     {
                                         <a href="@($"{shorturl}/dvalue?smeid={smeDB.Id}")" target="_blank">dvalue </a>
                                     }
@@ -710,7 +739,7 @@
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smeDB.SemanticId</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@smeDB.ValueType</span>
+                        <span>@smeDB.TValue</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>
                             @if (smeDB.SMEType != null && (smeDB.SMEType.Equals("MLP") || smeDB.SMEType.Equals("Range")))
@@ -733,7 +762,7 @@
                         <td style="word-break:keep-all">
                             @if (db.OValueSets.Where(value => value.SMEId == smeDB.Id).Any())
                             {
-                                var dic = smeDB.GetOValueDictionary();
+                                var dic = smeDB.GetOValue();
                                 <ul>
                                     @foreach (KeyValuePair<string, string> value in dic)
                                     {
@@ -758,17 +787,17 @@
                         {
                             <a href="@($"{shorturl}/sme?parid={smeDB.Id}")" target="_blank">children </a>
                         }
-                        @if (smeDB.ValueType != null)
+                        @if (smeDB.TValue != null)
                         {
-                            if (AasxServerDB.ConverterDataType.FromTableToDataType(DataTypeDefXsd.String).Contains(smeDB.ValueType))
+                            if (smeDB.TValue.Equals("S"))
                             {
                                 <a href="@($"{shorturl}/svalue?smeid={smeDB.Id}")" target="_blank">svalue </a>
                             }
-                            else if (AasxServerDB.ConverterDataType.FromTableToDataType(DataTypeDefXsd.Integer).Contains(smeDB.ValueType))
+                            else if (smeDB.TValue.Equals("I"))
                             {
                                 <a href="@($"{shorturl}/ivalue?smeid={smeDB.Id}")" target="_blank">ivalue </a>
                             }
-                            else if (AasxServerDB.ConverterDataType.FromTableToDataType(DataTypeDefXsd.Double).Contains(smeDB.ValueType))
+                            else if (smeDB.TValue.Equals("D"))
                             {
                                 <a href="@($"{shorturl}/dvalue?smeid={smeDB.Id}")" target="_blank">dvalue </a>
                             }

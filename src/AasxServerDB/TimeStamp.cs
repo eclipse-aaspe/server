@@ -1,8 +1,8 @@
-﻿namespace TimeStamp
+namespace TimeStamp
 {
-    static public class TimeStamp
+    public static class TimeStamp
     {
-        static public DateTime StringToDateTime(string stringDateTime)
+        public static DateTime StringToDateTime(string stringDateTime)
         {
             try
             {
@@ -14,7 +14,7 @@
             }
         }
 
-        static public string DateTimeToString(DateTime dateTime)
+        public static string DateTimeToString(DateTime dateTime)
         {
             return dateTime.ToString("yyyy-MM-dd HH:mm:ss.fff");
         }
