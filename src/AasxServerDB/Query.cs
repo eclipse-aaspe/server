@@ -360,6 +360,7 @@ namespace AasxServerDB
             GetSValue(ref result, semanticId, dateTime, contains, equal);
             GetIValue(ref result, semanticId, dateTime, equal, lower, upper);
             GetDValue(ref result, semanticId, dateTime, equal, lower, upper);
+            GetOValue(ref result, semanticId, dateTime, contains, equal);
             SelectSM(ref result, smSemanticId, smIdentifier);
             return result;
         }
@@ -466,6 +467,29 @@ namespace AasxServerDB
                             (!withSME || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) &&
                             (!withDiff || sme.TimeStamp.CompareTo(diff) > 0))),
                     v => v.SMEId, sme => sme.Id, (v, sme) => new SMEWithValue { sme = sme, value = v.Value.ToString() })
+                .ToList());
+        }
+
+        private void GetOValue(ref List<SMEWithValue> smeValue, string semanticId = "", DateTime diff = new(), string contains = "", string equal = "")
+        {
+            var withSME = !semanticId.IsNullOrEmpty();
+            var withDiff = !diff.Equals(DateTime.MinValue);
+            var withContains = !contains.IsNullOrEmpty();
+            var withEqual = !equal.IsNullOrEmpty();
+            if (!withDiff && !withContains && !withEqual)
+                return;
+
+            using AasContext db = new();
+            smeValue.AddRange(db.OValueSets
+                .Where(v => v.Value != null &&
+                    (!withContains || ((string) v.Value).Contains(contains)) &&
+                    (!withEqual || ((string) v.Value).Equals(equal)))
+                .Join(
+                    (db.SMESets
+                        .Where(sme =>
+                            (!withSME || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) &&
+                            (!withDiff || sme.TimeStamp.CompareTo(diff) > 0))),
+                    v => v.SMEId, sme => sme.Id, (v, sme) => new SMEWithValue { sme = sme, value = ((string)v.Value) })
                 .ToList());
         }
 

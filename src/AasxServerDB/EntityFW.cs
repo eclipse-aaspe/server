@@ -81,7 +81,8 @@ namespace AasxServerDB
                 SMESets.ExecuteDeleteAsync(),
                 IValueSets.ExecuteDeleteAsync(),
                 SValueSets.ExecuteDeleteAsync(),
-                DValueSets.ExecuteDeleteAsync()
+                DValueSets.ExecuteDeleteAsync(),
+                OValueSets.ExecuteDeleteAsync()
             };
 
             // Wait for all delete tasks to complete
@@ -97,7 +98,7 @@ namespace AasxServerDB
                 .Property(e => e.Value)
                 .HasConversion(
                     v => JsonConvert.SerializeObject(v, v.GetType(), _jsonSerializerSettings),
-                    v => JsonConvert.DeserializeObject(v, _jsonSerializerSettings));
+                    v => v);
         }
     }
 }

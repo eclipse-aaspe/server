@@ -8,7 +8,7 @@ namespace AasxServerDB
 {
     public class PageRetriever
     {
-        static public List<AASXSet> GetPageAASXData(int size = 1000, string searchLower = "", long aasxid = 0)
+        public static List<AASXSet> GetPageAASXData(int size = 1000, string searchLower = "", long aasxid = 0)
         {
             return new AasContext().AASXSets
                 .OrderBy(a => a.Id)
@@ -18,8 +18,8 @@ namespace AasxServerDB
                 .ToList();
         }
 
-        static public List<AASSet> GetPageAASData(int size = 1000, DateTime dateTime = new DateTime(), string searchLower = "", long aasxid = 0, long aasid = 0)
-        {            
+        public static List<AASSet> GetPageAASData(int size = 1000, DateTime dateTime = new DateTime(), string searchLower = "", long aasxid = 0, long aasid = 0)
+        {
             bool withDateTime = !dateTime.Equals(DateTime.MinValue);
             return new AasContext().AASSets
                 .OrderBy(a => a.Id)
@@ -34,7 +34,7 @@ namespace AasxServerDB
                 .ToList();
         }
 
-        static public List<SMSet> GetPageSMData(int size = 1000, DateTime dateTime = new DateTime(), string searchLower = "", long aasxid = 0, long aasid = 0, long smid = 0)
+        public static List<SMSet> GetPageSMData(int size = 1000, DateTime dateTime = new DateTime(), string searchLower = "", long aasxid = 0, long aasid = 0, long smid = 0)
         {
             bool withDateTime = !dateTime.Equals(DateTime.MinValue);
             return new AasContext().SMSets
@@ -49,7 +49,7 @@ namespace AasxServerDB
                 .ToList();
         }
 
-        static public List<SMESet> GetPageSMEData(int size = 1000, DateTime dateTime = new DateTime(), string searchLower = "", long smid = 0, long smeid = 0, long parid = 0)
+        public static List<SMESet> GetPageSMEData(int size = 1000, DateTime dateTime = new DateTime(), string searchLower = "", long smid = 0, long smeid = 0, long parid = 0)
         {
             bool withDateTime = !dateTime.Equals(DateTime.MinValue);
             List<SMESet> data = null;
@@ -68,6 +68,7 @@ namespace AasxServerDB
                         (sme.SMEType != null  && sme.SMEType.ToLower().Contains(searchLower)) ||
                         (sme.ValueType != null  && sme.ValueType.ToLower().Contains(searchLower)) ||
                         (withDateTime && sme.TimeStamp.CompareTo(dateTime) > 0) ||
+                        db.OValueSets.Any(sv => sv.SMEId == sme.Id && (sv.Attribute.ToLower().Contains(searchLower) || ((string) sv.Value).ToLower().Contains(searchLower))) ||
                         (sme.ValueType != null && (
                             (listS.Contains(sme.ValueType) && db.SValueSets.Any(sv => sv.SMEId == sme.Id && ((sv.Annotation != null && sv.Annotation.ToLower().Contains(searchLower)) || (sv.Value != null && sv.Value.ToLower().Contains(searchLower))))) ||
                             (listI.Contains(sme.ValueType) && db.IValueSets.Any(sv => sv.SMEId == sme.Id && ((sv.Annotation != null && sv.Annotation.ToLower().Contains(searchLower)) || (sv.Value != null && sv.Value.ToString().ToLower().Contains(searchLower))))) ||
@@ -78,7 +79,7 @@ namespace AasxServerDB
             return data;
         }
 
-        static public List<SValueSet> GetPageSValueData(int size = 1000, string searchLower = "", long smeid = 0)
+        public static List<SValueSet> GetPageSValueData(int size = 1000, string searchLower = "", long smeid = 0)
         {
             return new AasContext().SValueSets
                 .OrderBy(v => v.SMEId)
@@ -90,7 +91,7 @@ namespace AasxServerDB
                 .ToList();
         }
 
-        static public List<IValueSet> GetPageIValueData(int size = 1000, string searchLower = "", long smeid = 0)
+        public static List<IValueSet> GetPageIValueData(int size = 1000, string searchLower = "", long smeid = 0)
         {
             if (!Int64.TryParse(searchLower, out var iEqual))
                 iEqual = 0;
@@ -105,9 +106,9 @@ namespace AasxServerDB
                 .ToList();
         }
 
-        static public List<DValueSet> GetPageDValueData(int size = 1000, string searchLower = "", long smeid = 0)
+        public static List<DValueSet> GetPageDValueData(int size = 1000, string searchLower = "", long smeid = 0)
         {
-            if (!Double.TryParse(searchLower, out var dEqual))
+            if (!double.TryParse(searchLower, out var dEqual))
                 dEqual = 0;
 
             return new AasContext().DValueSets
@@ -116,6 +117,18 @@ namespace AasxServerDB
                             (searchLower.IsNullOrEmpty() ||
                             (v.Annotation != null && v.Annotation.ToLower().Contains(searchLower)) ||
                             (dEqual == 0 || v.Value == dEqual)))
+                .Take(size)
+                .ToList();
+        }
+
+        public static List<OValueSet> GetPageOValueData(int size = 1000, string searchLower = "", long smeid = 0)
+        {
+            return new AasContext().OValueSets
+                .OrderBy(v => v.SMEId)
+                .Where(v => (smeid == 0 || v.SMEId == smeid) &&
+                    (searchLower.IsNullOrEmpty() ||
+                    (v.Attribute != null && v.Attribute.ToLower().Contains(searchLower)) ||
+                    (v.Value != null && ((string) v.Value).ToLower().Contains(searchLower))))
                 .Take(size)
                 .ToList();
         }

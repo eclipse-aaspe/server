@@ -14,7 +14,7 @@ namespace AasxServerDB
 {
     public class Converter
     {
-        static public AdminShellPackageEnv? GetPackageEnv(string path, AASSet? aasDB) 
+        public static AdminShellPackageEnv? GetPackageEnv(string path, AASSet? aasDB) 
         {
             using (AasContext db = new AasContext())
             {
@@ -48,7 +48,7 @@ namespace AasxServerDB
             }
         }
 
-        static public Submodel? GetSubmodel(SMSet? smDB = null, string smIdentifier = "")
+        public static Submodel? GetSubmodel(SMSet? smDB = null, string smIdentifier = "")
         {
             using (AasContext db = new AasContext())
             {
@@ -85,7 +85,7 @@ namespace AasxServerDB
             }
         }
 
-        static private void LoadSME(Submodel submodel, ISubmodelElement? sme, SMESet? smeSet, List<SMESet> SMEList)
+        private static void LoadSME(Submodel submodel, ISubmodelElement? sme, SMESet? smeSet, List<SMESet> SMEList)
         {
             var smeSets = SMEList.Where(s => s.ParentSMEId == (smeSet != null ? smeSet.Id : null)).OrderBy(s => s.IdShort).ToList();
 
@@ -145,11 +145,11 @@ namespace AasxServerDB
             }
         }
 
-        static private ISubmodelElement? CreateSME(SMESet smeSet)
+        private static ISubmodelElement? CreateSME(SMESet smeSet)
         {
             ISubmodelElement? sme = null;
             var value = smeSet.GetValue();
-            var oValue = smeSet.GetOValue();
+            var oValue = smeSet.GetOValueDictionary();
 
             switch (smeSet.SMEType)
             {
@@ -204,8 +204,8 @@ namespace AasxServerDB
                     sme = new SubmodelElementList(
                         orderRelevant: oValue.ContainsKey("OrderRelevant") ? Convert.ToBoolean(oValue["OrderRelevant"]) : true,
                         semanticIdListElement: oValue.ContainsKey("SemanticIdListElement") ? CreateReferenceFromObject(oValue["SemanticIdListElement"]) : null,
-                        typeValueListElement: oValue.ContainsKey("TypeValueListElement") ? JsonConvert.DeserializeObject<AasSubmodelElements>(oValue["TypeValueListElement"].ToString(), AasContext._jsonSerializerSettings) : AasSubmodelElements.SubmodelElement,
-                        valueTypeListElement: oValue.ContainsKey("ValueTypeListElement") ? JsonConvert.DeserializeObject<DataTypeDefXsd>(oValue["ValueTypeListElement"].ToString(), AasContext._jsonSerializerSettings) : null,
+                        typeValueListElement: oValue.ContainsKey("TypeValueListElement") ? JsonConvert.DeserializeObject<AasSubmodelElements>(oValue["TypeValueListElement"], AasContext._jsonSerializerSettings) : AasSubmodelElements.SubmodelElement,
+                        valueTypeListElement: oValue.ContainsKey("ValueTypeListElement") ? JsonConvert.DeserializeObject<DataTypeDefXsd>(oValue["ValueTypeListElement"], AasContext._jsonSerializerSettings) : null,
                         value: new List<ISubmodelElement>());
                     break;
                 case "SMC":
@@ -217,18 +217,18 @@ namespace AasxServerDB
                         statements: new List<ISubmodelElement>(),
                         entityType: value.First()[1].Equals("SelfManagedEntity") ? EntityType.SelfManagedEntity : EntityType.CoManagedEntity,
                         globalAssetId: value.First()[0],
-                        specificAssetIds: oValue.ContainsKey("SpecificAssetIds") ? JsonConvert.DeserializeObject<List<ISpecificAssetId>>(oValue["SpecificAssetIds"].ToString(), AasContext._jsonSerializerSettings) : null);
+                        specificAssetIds: oValue.ContainsKey("SpecificAssetIds") ? JsonConvert.DeserializeObject<List<ISpecificAssetId>>(oValue["SpecificAssetIds"], AasContext._jsonSerializerSettings) : null);
                     break;
                 case "Evt":
                     sme = new BasicEventElement(
                         observed: CreateReferenceFromObject(oValue["Observed"]),
-                        direction: JsonConvert.DeserializeObject<Direction>(oValue["Direction"].ToString(), AasContext._jsonSerializerSettings),
-                        state: JsonConvert.DeserializeObject<StateOfEvent>(oValue["State"].ToString(), AasContext._jsonSerializerSettings),
-                        messageTopic: oValue.ContainsKey("MessageTopic") ? oValue["MessageTopic"].ToString() : null,
+                        direction: JsonConvert.DeserializeObject<Direction>(oValue["Direction"], AasContext._jsonSerializerSettings),
+                        state: JsonConvert.DeserializeObject<StateOfEvent>(oValue["State"], AasContext._jsonSerializerSettings),
+                        messageTopic: oValue.ContainsKey("MessageTopic") ? oValue["MessageTopic"] : null,
                         messageBroker: oValue.ContainsKey("MessageBroker") ? CreateReferenceFromObject(oValue["MessageBroker"]) : null,
-                        lastUpdate: oValue.ContainsKey("LastUpdate") ? oValue["LastUpdate"].ToString() : null,
-                        minInterval: oValue.ContainsKey("MinInterval") ? oValue["MinInterval"].ToString() : null,
-                        maxInterval: oValue.ContainsKey("MaxInterval") ? oValue["MaxInterval"].ToString() : null);
+                        lastUpdate: oValue.ContainsKey("LastUpdate") ? oValue["LastUpdate"] : null,
+                        minInterval: oValue.ContainsKey("MinInterval") ? oValue["MinInterval"] : null,
+                        maxInterval: oValue.ContainsKey("MaxInterval") ? oValue["MaxInterval"] : null);
                     break;
                 case "Opr":
                     sme = new Operation(
@@ -252,11 +252,11 @@ namespace AasxServerDB
             return sme;
         }
 
-        static private Reference CreateReferenceFromObject(object obj)
+        private static Reference CreateReferenceFromObject(string obj)
         {
             try
             {
-                return JsonConvert.DeserializeObject<Reference>(obj.ToString(), AasContext._jsonSerializerSettings);
+                return JsonConvert.DeserializeObject<Reference>(obj, AasContext._jsonSerializerSettings);
             }
             catch
             {
@@ -264,7 +264,7 @@ namespace AasxServerDB
             }
         }
 
-        static public string GetAASXPath(string aasId = "", string submodelId = "")
+        public static string GetAASXPath(string aasId = "", string submodelId = "")
         {
             using AasContext db = new AasContext();
             int? aasxId = null;

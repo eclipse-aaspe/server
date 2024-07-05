@@ -336,10 +336,10 @@ namespace AasxServerDB
                 if (sml.SemanticIdListElement != null)
                     smeDB.OValueSets.Add(new OValueSet { Attribute = "SemanticIdListElement", Value = sml.SemanticIdListElement });
 
-                smeDB.OValueSets.Add(new OValueSet { Attribute = "TypeValueListElement", Value = sml.TypeValueListElement });
+                smeDB.OValueSets.Add(new OValueSet { Attribute = "TypeValueListElement", Value = sml.TypeValueListElement.ToString() });
 
                 if (sml.ValueTypeListElement != null)
-                    smeDB.OValueSets.Add(new OValueSet { Attribute = "ValueTypeListElement", Value = sml.ValueTypeListElement });
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "ValueTypeListElement", Value = sml.ValueTypeListElement.ToString() });
             }
             else if (sme is Entity ent)
             {
@@ -352,8 +352,8 @@ namespace AasxServerDB
             else if (sme is BasicEventElement evt)
             {
                 smeDB.OValueSets.Add(new OValueSet { Attribute = "Observed", Value = evt.Observed });
-                smeDB.OValueSets.Add(new OValueSet { Attribute = "Direction", Value = evt.Direction });
-                smeDB.OValueSets.Add(new OValueSet { Attribute = "State", Value = evt.State });
+                smeDB.OValueSets.Add(new OValueSet { Attribute = "Direction", Value = evt.Direction.ToString() });
+                smeDB.OValueSets.Add(new OValueSet { Attribute = "State", Value = evt.State.ToString() });
 
                 if (evt.MessageTopic != null)
                     smeDB.OValueSets.Add(new OValueSet { Attribute = "MessageTopic", Value = evt.MessageTopic });

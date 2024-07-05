@@ -8,7 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 
 public static class ConverterDataType
 {
-    static public Dictionary<DataTypeDefXsd, DataTypeDefXsd> DataTypeToTable = new Dictionary<DataTypeDefXsd, DataTypeDefXsd>() {
+    public static Dictionary<DataTypeDefXsd, DataTypeDefXsd> DataTypeToTable = new Dictionary<DataTypeDefXsd, DataTypeDefXsd>() {
         { DataTypeDefXsd.AnyUri, DataTypeDefXsd.String },
         { DataTypeDefXsd.Base64Binary, DataTypeDefXsd.String },
         { DataTypeDefXsd.Boolean, DataTypeDefXsd.String },
@@ -41,14 +41,14 @@ public static class ConverterDataType
         { DataTypeDefXsd.UnsignedShort, DataTypeDefXsd.Integer }
     };
 
-    static private Dictionary<DataTypeDefXsd, List<string>> TableToDataType = new Dictionary<DataTypeDefXsd, List<string>>();
+    private static Dictionary<DataTypeDefXsd, List<string>> TableToDataType = new Dictionary<DataTypeDefXsd, List<string>>();
 
-    static public List<string> FromTableToDataType(DataTypeDefXsd? tableDataTypeD = null, string? tableDataTypeS = null)
+    public static List<string> FromTableToDataType(DataTypeDefXsd? tableDataTypeD = null, string? tableDataTypeS = null)
     {
         if (tableDataTypeD == null && tableDataTypeS == null)
             return new List<string>();
 
-        var key = (DataTypeDefXsd)(tableDataTypeD ?? StringToDataType(tableDataTypeS));
+        var key = (DataTypeDefXsd) (tableDataTypeD ?? StringToDataType(tableDataTypeS));
 
         if (!TableToDataType.ContainsKey(key))
         {
@@ -62,7 +62,7 @@ public static class ConverterDataType
         return TableToDataType[key];
     }
 
-    static public DataTypeDefXsd? StringToDataType(string? tableDataType)
+    public static DataTypeDefXsd? StringToDataType(string? tableDataType)
     {
         if (tableDataType.IsNullOrEmpty())
             return null;

@@ -62,7 +62,7 @@ namespace AasxServerDB.Entities
             return [[string.Empty, string.Empty]];
         }
 
-        public List<string[]> GetValueDictionary()
+        public List<string[]> GetValueAll()
         {
             var db = new AasContext();
             var list = db.SValueSets.Where(s => s.SMEId == Id).ToList()
@@ -76,12 +76,12 @@ namespace AasxServerDB.Entities
             return [[string.Empty, string.Empty]];
         }
 
-        public Dictionary<string, object> GetOValue()
+        public Dictionary<string, string> GetOValueDictionary()
         {
-            var dic = new AasContext().OValueSets.Where(s => s.SMEId == Id).ToList().ToDictionary(valueDB => valueDB.Attribute, valueDB => valueDB.Value);
+            var dic = new AasContext().OValueSets.Where(s => s.SMEId == Id).ToList().ToDictionary(valueDB => valueDB.Attribute, valueDB => valueDB.Value.ToString());
             if (dic != null)
                 return dic;
-            return new Dictionary<string, object>();
+            return new Dictionary<string, string>();
         }
     }
 }

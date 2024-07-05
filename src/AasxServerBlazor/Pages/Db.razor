@@ -7,6 +7,7 @@
 @page "/db/svalue";
 @page "/db/ivalue";
 @page "/db/dvalue";
+@page "/db/ovalue";
 @using AasxServer
 @using AasxServerDB
 @using Microsoft.AspNetCore.Html;
@@ -61,8 +62,8 @@
 
         // change parameters to input window
         if (url.EndsWith("/aasx") || url.EndsWith("/aas") || url.EndsWith("/sm")
-            || url.EndsWith("/sme") || url.EndsWith("/svalue") || url.EndsWith("/ivalue") || url.EndsWith("/dvalue"))
-        {
+            || url.EndsWith("/sme") || url.EndsWith("/svalue") || url.EndsWith("/ivalue") || url.EndsWith("/dvalue") || url.EndsWith("/ovalue"))
+            {
             <input @bind="CurrentValue" style="width:200px; border-width: 1px; border-color: black;"/>
                 @code {
                     private string CurrentValue { get; set; }
@@ -120,8 +121,8 @@
         using (AasContext db = new AasContext())
         {
             if (!(url.EndsWith("/aasx") || url.EndsWith("/aas") || url.EndsWith("/sm") || url.EndsWith("/smjson")
-                  || url.EndsWith("/sme") || url.EndsWith("/svalue") || url.EndsWith("/ivalue") || url.EndsWith("/dvalue")))
-            {
+                || url.EndsWith("/sme") || url.EndsWith("/svalue") || url.EndsWith("/ivalue") || url.EndsWith("/dvalue") || url.EndsWith("/ovalue")))
+                {
                 if (AasContext.IsPostgres)
                 {
                     <span>PostgreSQL database</span>
@@ -218,6 +219,17 @@
                         </td>
                         <td>
                             <a href="@($"{url}/dvalue")" target="_blank">dvalue</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span>OValue#:</span>
+                        </td>
+                        <td>
+                            <span>@db.OValueSets.Count()</span>
+                        </td>
+                        <td>
+                            <a href="@($"{url}/ovalue")" target="_blank">ovalue</a>
                         </td>
                     </tr>
                     </tbody>
@@ -553,8 +565,9 @@
                         <th style="word-break:keep-all">Type</th>
                         <th style="word-break:keep-all">IdShort</th>
                         <th style="word-break:keep-all">SemanticId</th>
-                        <th style="word-break:keep-all">Value</th>
                         <th style="word-break:keep-all">ValueType</th>
+                        <th style="word-break:keep-all">Value</th>
+                        <th style="word-break:keep-all">Additional Attributes</th>
                         <th style="word-break:keep-all">TimeStamp</th>
                         <th style="word-break:keep-all">Links</th>
                         <th style="word-break:keep-all">API</th>
@@ -586,6 +599,7 @@
                             <td style="word-break:keep-all">@smeDB.SMEType</td>
                             <td>@smeDB.IdShort</td>
                             <td>@smeDB.SemanticId</td>
+                            <td style="word-break:keep-all">@smeDB.ValueType</td>
                             <td>
                                 @if (smeDB.SMEType != null && (smeDB.SMEType.Equals("MLP") || smeDB.SMEType.Equals("Range")))
                                 {
@@ -604,7 +618,20 @@
                                     @smeDB.GetValue().First()[0]
                                 }
                             </td>
-                            <td style="word-break:keep-all">@smeDB.ValueType</td>
+                            <td style="word-break:keep-all;font-size:small;max-width:200px">
+                                @if (db.OValueSets.Where(value => value.SMEId == smeDB.Id).Any())
+                                {
+                                    var dic = smeDB.GetOValueDictionary();
+                                    <ul>
+                                        @foreach(KeyValuePair<string, string> value in dic)
+                                        {
+                                            <li>
+                                                @value.Key = @value.Value
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+                            </td>
                             <td style="word-break:keep-all;color:lightgray;font-size:x-small">
                                 @($"UPDATE {TimeStamp.DateTimeToString(smeDB.TimeStamp)}")<br/>
                                 @($"CREATE {TimeStamp.DateTimeToString(smeDB.TimeStampCreate)}")<br/>
@@ -633,10 +660,13 @@
                                     else if (AasxServerDB.ConverterDataType.FromTableToDataType(DataTypeDefXsd.Double).Contains(smeDB.ValueType))
                                     {
                                         <a href="@($"{shorturl}/dvalue?smeid={smeDB.Id}")" target="_blank">dvalue </a>
-                                    }  
+                                    }
                                 }
-                                        
-                            </td>
+                                @if (db.OValueSets.Where(value => value.SMEId == smeDB.Id).Any())
+                                {
+                                    <a href="@($"{shorturl}/ovalue?smeid={smeDB.Id}")" target="_blank">ovalue </a>
+                                }
+                                </td>
                             <td>
                                 <a href="@link" target="_blank">@link</a>
                             </td>
@@ -680,6 +710,8 @@
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smeDB.SemanticId</span>
                         <span style="background-color:blue;">&nbsp</span>
+                        <span>@smeDB.ValueType</span>
+                        <span style="background-color:blue;">&nbsp</span>
                         <span>
                             @if (smeDB.SMEType != null && (smeDB.SMEType.Equals("MLP") || smeDB.SMEType.Equals("Range")))
                             {
@@ -698,7 +730,20 @@
                             }
                         </span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@smeDB.ValueType</span>
+                        <td style="word-break:keep-all">
+                            @if (db.OValueSets.Where(value => value.SMEId == smeDB.Id).Any())
+                            {
+                                var dic = smeDB.GetOValueDictionary();
+                                <ul>
+                                    @foreach (KeyValuePair<string, string> value in dic)
+                                    {
+                                        <li>
+                                            @value.Key = @value.Value
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                        </td>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@($"UPDATE {TimeStamp.DateTimeToString(smeDB.TimeStamp)}")</span>
                         <span>@($"CREATE {TimeStamp.DateTimeToString(smeDB.TimeStampCreate)}")</span>
@@ -727,6 +772,10 @@
                             {
                                 <a href="@($"{shorturl}/dvalue?smeid={smeDB.Id}")" target="_blank">dvalue </a>
                             }
+                        }
+                        @if (db.OValueSets.Where(value => value.SMEId == smeDB.Id).Any())
+                        {
+                            <a href="@($"{shorturl}/ovalue?smeid={smeDB.Id}")" target="_blank">ovalue </a>
                         }
                         <span style="background-color:blue;">&nbsp</span>
                         <a href="@link" target="_blank">@link</a>
@@ -774,10 +823,7 @@
                             <td style="word-break:keep-all">@smeDB.Value</td>
                             <td style="word-break:keep-all">@smeDB.Annotation</td>
                             <td style="word-break:keep-all">
-                                @if (smeDB.SMEId != null)
-                                {
-                                    <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
-                                }
+                            <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
                             </td>
                         </tr>
                     }
@@ -799,11 +845,7 @@
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smeDB.Annotation</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        @if (smeDB.SMEId != null)
-                        {
-                            <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
-                        }
-
+                        <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
                         <br/>
                     }
 
@@ -848,10 +890,7 @@
                             <td style="word-break:keep-all">@smeDB.Value</td>
                             <td style="word-break:keep-all">@smeDB.Annotation</td>
                             <td style="word-break:keep-all">
-                                @if (smeDB.SMEId != null)
-                                {
-                                    <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
-                                }
+                            <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
                             </td>
                         </tr>
                     }
@@ -873,11 +912,7 @@
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smeDB.Annotation</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        @if (smeDB.SMEId != null)
-                        {
-                            <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
-                        }
-
+                        <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
                         <br/>
                     }
 
@@ -922,10 +957,7 @@
                             <td style="word-break:keep-all">@smeDB.Value</td>
                             <td style="word-break:keep-all">@smeDB.Annotation</td>
                             <td style="word-break:keep-all">
-                                @if (smeDB.SMEId != null)
-                                {
-                                    <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
-                                }
+                            <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
                             </td>
                         </tr>
                     }
@@ -947,11 +979,7 @@
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smeDB.Annotation</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        @if (smeDB.SMEId != null)
-                        {
-                            <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par </a>
-                        }
-
+                        <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par </a>
                         <br/>
                     }
 
@@ -960,6 +988,73 @@
 
                 <span>@($"Count: {data.Count}")</span>
                 <br/>
+            }
+
+            if (url.EndsWith("/ovalue"))
+            {
+                List<OValueSet> data = PageRetriever.GetPageOValueData(size, searchLower, smeid);
+                <span>
+                    &nbsp&nbsp@($"OValue#: {data.Count}/{db.OValueSets.Count()} size={size} search={search} smeid={smeid}")
+                </span>
+                <br />
+                <br />
+                @if (size > 1000 && data.Count > 1000)
+                {
+                    <b>
+                        <span style="color:red;">First 1000 as TABLE</span>
+                    </b>
+                    <br />
+                }
+
+                <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
+                    <thead>
+                        <tr>
+                            <th style="word-break:keep-all">Par#</th>
+                            <th style="word-break:keep-all">Attribute</th>
+                            <th style="word-break:keep-all">Value</th>
+                            <th style="word-break:keep-all">Links</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < data.Count && i < 1000; i++)
+                        {
+                            var smeDB = data[i];
+                            <tr>
+                                <td style="word-break:keep-all">@smeDB.SMEId</td>
+                                <td style="word-break:keep-all">@smeDB.Attribute</td>
+                                <td style="word-break:keep-all">@smeDB.Value</td>
+                                <td style="word-break:keep-all">
+                                <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                @if (size > 1000 && data.Count > 1000)
+                {
+                    <b>
+                        <span style="color:red;">All other as text</span>
+                    </b>
+                    <br />
+                    @for (int i = 1000; i < data.Count; i++)
+                    {
+                        var smeDB = data[i];
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smeDB.SMEId</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smeDB.Attribute</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smeDB.Value</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par </a>
+                        <br />
+                    }
+
+                    <br />
+                }
+
+                <span>@($"Count: {data.Count}")</span>
+                <br />
             }
 
             watch.Stop();
