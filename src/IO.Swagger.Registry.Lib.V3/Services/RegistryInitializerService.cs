@@ -80,6 +80,12 @@ public class RegistryInitializerService : IRegistryInitializerService
         {
             foreach (var env in Program.env)
             {
+                // Keep this null check as the env is initialized with 1000 null elements
+                if (env == null)
+                {
+                    continue;
+                }
+                
                 var aas = env.AasEnv?.AssetAdministrationShells?[0];
                 if (aas?.IdShort != "REGISTRY")
                 {
