@@ -196,7 +196,9 @@ public class RegistryInitializerService : IRegistryInitializerService
                             AddAasToRegistry(null, timestamp, aasDesc);
                         }
                     }
-
+                }
+                else
+                {
                     foreach (var env in Program.env)
                     {
                         var aas = env.AasEnv?.AssetAdministrationShells?[0];
