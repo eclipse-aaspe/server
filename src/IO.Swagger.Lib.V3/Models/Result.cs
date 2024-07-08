@@ -13,21 +13,22 @@ using System.Linq;
 using System.Text;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
-using Newtonsoft.Json;
 
 namespace IO.Swagger.Models
 {
+    using System.Text.Json;
+
     /// <summary>
     /// 
     /// </summary>
-    [ DataContract ]
+    [DataContract]
     public partial class Result : IEquatable<Result>
     {
         /// <summary>
         /// Gets or Sets Messages
         /// </summary>
 
-        [ DataMember(Name = "messages") ]
+        [DataMember(Name = "messages")]
         public List<Message>? Messages { get; set; }
 
         /// <summary>
@@ -43,14 +44,13 @@ namespace IO.Swagger.Models
             return sb.ToString();
         }
 
+        private JsonSerializerOptions? serializerOptions = new() {WriteIndented = true};
+
         /// <summary>
         /// Returns the JSON string presentation of the object
         /// </summary>
         /// <returns>JSON string presentation of the object</returns>
-        public string ToJson()
-        {
-            return JsonConvert.SerializeObject(this, Formatting.Indented);
-        }
+        public string ToJson() => JsonSerializer.Serialize(this, serializerOptions);
 
         /// <summary>
         /// Returns true if objects are equal
@@ -61,7 +61,7 @@ namespace IO.Swagger.Models
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
-            return obj.GetType() == GetType() && Equals((Result) obj);
+            return obj.GetType() == GetType() && Equals((Result)obj);
         }
 
         /// <summary>
@@ -75,9 +75,9 @@ namespace IO.Swagger.Models
             if (ReferenceEquals(this, other)) return true;
 
             return
-            Messages == other.Messages ||
-            (Messages != null &&
-             Messages.SequenceEqual(other.Messages));
+                Messages == other.Messages ||
+                (Messages != null &&
+                 Messages.SequenceEqual(other.Messages));
         }
 
         /// <summary>

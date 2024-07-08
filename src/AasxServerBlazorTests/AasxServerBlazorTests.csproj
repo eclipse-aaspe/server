@@ -34,6 +34,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\AasxServerBlazor\AasxServerBlazor.csproj" />
+      <ProjectReference Include="..\IO.Swagger.Lib.V3\IO.Swagger.Lib.V3.csproj" />
     </ItemGroup>
 
 </Project>

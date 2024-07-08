@@ -23,7 +23,7 @@ namespace Extensions
             return "" + multiLanguageProperty.Value?.GetDefaultString(defaultLang);
         }
 
-        public static MultiLanguageProperty ConvertFromV20(this MultiLanguageProperty property, AasxCompatibilityModels.AdminShellV20.MultiLanguageProperty sourceProperty)
+        public static MultiLanguageProperty? ConvertFromV20(this MultiLanguageProperty? property, AasxCompatibilityModels.AdminShellV20.MultiLanguageProperty sourceProperty)
         {
             if (sourceProperty == null)
             {

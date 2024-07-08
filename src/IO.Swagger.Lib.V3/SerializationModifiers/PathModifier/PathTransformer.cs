@@ -6,7 +6,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 {
     public class PathTransformer : ITransformerWithContext<PathModifierContext, List<string>>
     {
-        public List<string> Transform(IClass that, PathModifierContext context)
+        public List<string> Transform(IClass? that, PathModifierContext context)
         {
             return that.Transform(this, context);
         }
@@ -24,13 +24,13 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
             }
             else
             {
-                context.IdShortPaths.Add(context.ParentPath + "." + that.IdShort);
+                context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
             }
 
             if (that.Annotations != null)
             {
                 var currentParentPath = string.IsNullOrEmpty(context.ParentPath) ? that.IdShort : $"{context.ParentPath}.{that.IdShort}";
-                foreach (ISubmodelElement item in that.Annotations)
+                foreach (ISubmodelElement? item in that.Annotations)
                 {
                     context.ParentPath = currentParentPath;
                     Transform(item, context);
@@ -55,7 +55,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
             if (context.ParentPath == null)
                 throw new InvalidSerializationModifierException("Path", that.GetType().Name);
 
-            context.IdShortPaths.Add(context.ParentPath + "." + that.IdShort);
+            context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
             return context.IdShortPaths;
         }
 
@@ -64,7 +64,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
             if (context.ParentPath == null)
                 throw new InvalidSerializationModifierException("Path", that.GetType().Name);
 
-            context.IdShortPaths.Add(context.ParentPath + "." + that.IdShort);
+            context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
             return context.IdShortPaths;
         }
 
@@ -73,7 +73,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
             if (context.ParentPath == null)
                 throw new InvalidSerializationModifierException("Path", that.GetType().Name);
 
-            context.IdShortPaths.Add(context.ParentPath + "." + that.IdShort);
+            context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
             return context.IdShortPaths;
         }
 
@@ -100,7 +100,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
             }
             else
             {
-                context.IdShortPaths.Add(context.ParentPath + "." + that.IdShort);
+                context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
             }
 
             if (that.Statements != null)
@@ -136,7 +136,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
             if (context.ParentPath == null)
                 throw new InvalidSerializationModifierException("Path", that.GetType().Name);
 
-            context.IdShortPaths.Add(context.ParentPath + "." + that.IdShort);
+            context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
             return context.IdShortPaths;
         }
 
@@ -180,7 +180,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
             if (context.ParentPath == null)
                 throw new InvalidSerializationModifierException("Path", that.GetType().Name);
 
-            context.IdShortPaths.Add(context.ParentPath + "." + that.IdShort);
+            context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
             return context.IdShortPaths;
         }
 
@@ -230,7 +230,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
         {
             if (context.ParentPath == null)
                 throw new InvalidSerializationModifierException("Path", that.GetType().Name);
-            context.IdShortPaths.Add(context.ParentPath + "." + that.IdShort);
+            context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
             return context.IdShortPaths;
         }
 
@@ -244,7 +244,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
             if (context.ParentPath == null)
                 throw new InvalidSerializationModifierException("Path", that.GetType().Name);
 
-            context.IdShortPaths.Add(context.ParentPath + "." + that.IdShort);
+            context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
             return context.IdShortPaths;
         }
 
@@ -258,7 +258,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
             if (context.ParentPath == null)
                 throw new InvalidSerializationModifierException("Path", that.GetType().Name);
 
-            context.IdShortPaths.Add(context.ParentPath + "." + that.IdShort);
+            context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
             return context.IdShortPaths;
         }
 
@@ -267,7 +267,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
             if (context.ParentPath == null)
                 throw new InvalidSerializationModifierException("Path", that.GetType().Name);
 
-            context.IdShortPaths.Add(context.ParentPath + "." + that.IdShort);
+            context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
             return context.IdShortPaths;
         }
 
@@ -305,7 +305,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
             }
             else
             {
-                context.IdShortPaths.Add(context.ParentPath + "." + that.IdShort);
+                context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
             }
 
             if (that.Value != null)
@@ -334,7 +334,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
                     }
                     else
                     {
-                        context.IdShortPaths.Add(context.ParentPath + "." + that.IdShort + $"[{i}]");
+                        context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}" + $"[{i}]");
                     }
                 }
             }

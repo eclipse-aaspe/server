@@ -140,7 +140,7 @@ namespace Extensions
             return false;
         }
 
-        public static bool Matches(this IReference reference, IReference otherReference, MatchMode matchMode = MatchMode.Strict)
+        public static bool Matches(this IReference? reference, IReference? otherReference, MatchMode matchMode = MatchMode.Strict)
         {
             if (reference.Keys == null || reference.Keys.Count == 0 || otherReference?.Keys == null || otherReference.Keys.Count == 0)
             {
@@ -196,7 +196,7 @@ namespace Extensions
             return output;
         }
 
-        public static Key GetAsExactlyOneKey(this IReference reference)
+        public static Key GetAsExactlyOneKey(this IReference? reference)
         {
             if (reference.Keys == null || reference.Keys.Count != 1)
             {

@@ -11,13 +11,13 @@ namespace IO.Swagger.Lib.V3.Services
         /// <summary>
         /// Serialize an instance of the meta-model into a JSON object.
         /// </summary>
-        public List<string> ToIdShortPath(IClass that)
+        public List<string> ToIdShortPath(IClass? that)
         {
             var context = new PathModifierContext();
             return _pathTransformer.Transform(that, context);
         }
 
-        public List<List<string>> ToIdShortPath(List<ISubmodel> submodelList)
+        public List<List<string>> ToIdShortPath(List<ISubmodel?> submodelList)
         {
             var output = new List<List<string>>();
 
@@ -31,7 +31,7 @@ namespace IO.Swagger.Lib.V3.Services
             return output;
         }
 
-        public List<List<string>> ToIdShortPath(List<ISubmodelElement> submodelElementList)
+        public List<List<string>> ToIdShortPath(List<ISubmodelElement?> submodelElementList)
         {
             var output = new List<List<string>>();
 
