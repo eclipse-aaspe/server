@@ -5,6 +5,7 @@ using AdminShellNS;
 using Extensions;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using Nodes = System.Text.Json.Nodes;
 
 namespace AasxServerDB
 {
@@ -151,13 +152,13 @@ namespace AasxServerDB
             {
                 case "Rel":
                     sme = new RelationshipElement(
-                        first: CreateReferenceFromObject(oValue["First"]),
-                        second: CreateReferenceFromObject(oValue["Second"]));
+                        first: oValue.ContainsKey("First") ? CreateReferenceFromObject(oValue["First"]) : new Reference(ReferenceTypes.ExternalReference, new List<IKey>()),
+                        second: oValue.ContainsKey("Second") ? CreateReferenceFromObject(oValue["Second"]) : new Reference(ReferenceTypes.ExternalReference, new List<IKey>()));
                     break;
                 case "RelA":
                     sme = new AnnotatedRelationshipElement(
-                        first: CreateReferenceFromObject(oValue["First"]),
-                        second: CreateReferenceFromObject(oValue["Second"]),
+                        first: oValue.ContainsKey("First") ? CreateReferenceFromObject(oValue["First"]) : new Reference(ReferenceTypes.ExternalReference, new List<IKey>()),
+                        second: oValue.ContainsKey("Second") ? CreateReferenceFromObject(oValue["Second"]) : new Reference(ReferenceTypes.ExternalReference, new List<IKey>()),
                         annotations: new List<IDataElement>());
                     break;
                 case "Prop":
@@ -198,7 +199,7 @@ namespace AasxServerDB
                     break;
                 case "SML":
                     sme = new SubmodelElementList(
-                        orderRelevant: oValue.ContainsKey("OrderRelevant") ? Convert.ToBoolean(oValue["OrderRelevant"]) : true,
+                        orderRelevant: oValue.ContainsKey("OrderRelevant") ? (bool?)oValue["OrderRelevant"] : true,
                         semanticIdListElement: oValue.ContainsKey("SemanticIdListElement") ? CreateReferenceFromObject(oValue["SemanticIdListElement"]) : null,
                         typeValueListElement: Jsonization.Deserialize.AasSubmodelElementsFrom(oValue["TypeValueListElement"]),
                         valueTypeListElement: oValue.ContainsKey("ValueTypeListElement") ? Jsonization.Deserialize.DataTypeDefXsdFrom(oValue["ValueTypeListElement"]) : null,
@@ -211,7 +212,7 @@ namespace AasxServerDB
                 case "Ent":
                     var spec = new List<ISpecificAssetId>();
                     if (oValue.ContainsKey("SpecificAssetIds"))
-                        foreach (var item in oValue["SpecificAssetIds"])
+                        foreach (var item in (Nodes.JsonArray) oValue["SpecificAssetIds"])
                             spec.Add(Jsonization.Deserialize.SpecificAssetIdFrom(item));
                     sme = new Entity(
                         statements: new List<ISubmodelElement>(),
@@ -221,14 +222,14 @@ namespace AasxServerDB
                     break;
                 case "Evt":
                     sme = new BasicEventElement(
-                        observed: CreateReferenceFromObject(oValue["Observed"]),
+                        observed: oValue.ContainsKey("Observed") ? CreateReferenceFromObject(oValue["Observed"]) : new Reference(ReferenceTypes.ExternalReference, new List<IKey>()),
                         direction: Jsonization.Deserialize.DirectionFrom(oValue["Direction"]),
                         state: Jsonization.Deserialize.StateOfEventFrom(oValue["State"]),
-                        messageTopic: oValue.GetValueOrDefault("MessageTopic"),
+                        messageTopic: oValue.ContainsKey("MessageTopic") ? oValue["MessageTopic"].ToString() : null,
                         messageBroker: oValue.ContainsKey("MessageBroker") ? CreateReferenceFromObject(oValue["MessageBroker"]) : null,
-                        lastUpdate: oValue.GetValueOrDefault("LastUpdate"),
-                        minInterval: oValue.GetValueOrDefault("MinInterval"),
-                        maxInterval: oValue.GetValueOrDefault("MaxInterval"));
+                        lastUpdate: oValue.ContainsKey("LastUpdate") ? oValue["LastUpdate"].ToString() : null,
+                        minInterval: oValue.ContainsKey("MinInterval") ? oValue["MinInterval"].ToString() : null,
+                        maxInterval: oValue.ContainsKey("MaxInterval") ? oValue["MaxInterval"].ToString() : null);
                     break;
                 case "Opr":
                     sme = new Operation(
@@ -246,13 +247,13 @@ namespace AasxServerDB
             sme.TimeStampCreate = smeSet.TimeStampCreate;
             sme.TimeStampTree = smeSet.TimeStampTree;
             if (!smeSet.SemanticId.IsNullOrEmpty())
-                sme.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
+                sme.SemanticId = new Reference(ReferenceTypes.ExternalReference,
                     new List<IKey>() { new Key(KeyTypes.GlobalReference, smeSet.SemanticId) });
 
             return sme;
         }
 
-        private static Reference CreateReferenceFromObject(string obj)
+        private static Reference CreateReferenceFromObject(Nodes.JsonNode obj)
         {
             var result = Jsonization.Deserialize.ReferenceFrom(obj);
             if (result != null)
@@ -263,7 +264,7 @@ namespace AasxServerDB
 
         public static string GetAASXPath(string aasId = "", string submodelId = "")
         {
-            using AasContext db = new AasContext();
+            using var db = new AasContext();
             int? aasxId = null;
             if (!submodelId.IsNullOrEmpty())
             {

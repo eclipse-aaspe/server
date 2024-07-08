@@ -6,6 +6,7 @@ using AasCore.Aas3_0;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using Microsoft.IdentityModel.Tokens;
+using Nodes = System.Text.Json.Nodes;
 
 namespace AasxServerDB.Entities
 {
@@ -62,12 +63,12 @@ namespace AasxServerDB.Entities
             return [[string.Empty, string.Empty]];
         }
 
-        public Dictionary<string, string> GetOValue()
+        public Dictionary<string, Nodes.JsonNode> GetOValue()
         {
-            var dic = new AasContext().OValueSets.Where(s => s.SMEId == Id).ToList().ToDictionary(valueDB => valueDB.Attribute, valueDB => valueDB.Value.ToString());
+            var dic = new AasContext().OValueSets.Where(s => s.SMEId == Id).ToList().ToDictionary(valueDB => valueDB.Attribute, valueDB => valueDB.Value);
             if (dic != null)
                 return dic;
-            return new Dictionary<string, string>();
+            return new Dictionary<string, Nodes.JsonNode>();
         }
     }
 }

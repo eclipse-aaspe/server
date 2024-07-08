@@ -146,9 +146,42 @@ namespace AasxServerDB
                    };
         }
 
+        public static Dictionary<DataTypeDefXsd, string> DataTypeToTable = new Dictionary<DataTypeDefXsd, string>() {
+            { DataTypeDefXsd.AnyUri, "S" },
+            { DataTypeDefXsd.Base64Binary, "S" },
+            { DataTypeDefXsd.Boolean, "S" },
+            { DataTypeDefXsd.Byte, "I" },
+            { DataTypeDefXsd.Date, "S" },
+            { DataTypeDefXsd.DateTime, "S" },
+            { DataTypeDefXsd.Decimal, "S" },
+            { DataTypeDefXsd.Double, "D" },
+            { DataTypeDefXsd.Duration, "S" },
+            { DataTypeDefXsd.Float, "D" },
+            { DataTypeDefXsd.GDay, "S" },
+            { DataTypeDefXsd.GMonth, "S" },
+            { DataTypeDefXsd.GMonthDay, "S" },
+            { DataTypeDefXsd.GYear, "S" },
+            { DataTypeDefXsd.GYearMonth, "S" },
+            { DataTypeDefXsd.HexBinary, "S" },
+            { DataTypeDefXsd.Int, "I" },
+            { DataTypeDefXsd.Integer, "I" },
+            { DataTypeDefXsd.Long, "I" },
+            { DataTypeDefXsd.NegativeInteger, "I" },
+            { DataTypeDefXsd.NonNegativeInteger, "I" },
+            { DataTypeDefXsd.NonPositiveInteger, "I" },
+            { DataTypeDefXsd.PositiveInteger, "I" },
+            { DataTypeDefXsd.Short, "I" },
+            { DataTypeDefXsd.String, "S" },
+            { DataTypeDefXsd.Time, "S" },
+            { DataTypeDefXsd.UnsignedByte, "I" },
+            { DataTypeDefXsd.UnsignedInt, "I" },
+            { DataTypeDefXsd.UnsignedLong, "I" },
+            { DataTypeDefXsd.UnsignedShort, "I" }
+        };
+
         private static bool GetValueAndDataType(string value, DataTypeDefXsd dataType, out string tableDataType, out string sValue, out long iValue, out double dValue)
         {
-            tableDataType = ConverterDataType.DataTypeToTable[dataType];
+            tableDataType = DataTypeToTable[dataType];
             sValue = string.Empty;
             iValue = 0;
             dValue = 0;
