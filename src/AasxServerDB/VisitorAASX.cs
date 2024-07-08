@@ -129,11 +129,7 @@ namespace AasxServerDB
                         new VisitorAASX(aasxDB: aasxDB).Visit(cd);
         }
 
-<<<<<<< HEAD
         private string ShortSMEType(ISubmodelElement sme)
-=======
-        private string shortSMEType(ISubmodelElement sme)
->>>>>>> eclipse-server/main
         {
             return _oprPrefix + sme switch
                    {
@@ -147,18 +143,14 @@ namespace AasxServerDB
                        ReferenceElement             => "Ref",
                        Capability                   => "Cap",
                        SubmodelElementList          => "SML",
-<<<<<<< HEAD
                        SubmodelElementCollection    => "SMC",
                        Entity                       => "Ent",
                        BasicEventElement            => "Evt",
                        Operation                    => "Opr",
-=======
->>>>>>> eclipse-server/main
                        _                            => string.Empty
                    };
         }
 
-<<<<<<< HEAD
         public static Dictionary<DataTypeDefXsd, string> DataTypeToTable = new Dictionary<DataTypeDefXsd, string>() {
             { DataTypeDefXsd.AnyUri, "S" },
             { DataTypeDefXsd.Base64Binary, "S" },
@@ -439,134 +431,6 @@ namespace AasxServerDB
                             TimeStampTree   = timeStampTree
                         };
             SetValues(sme, smeDB);
-=======
-        private string shortValueType(DataTypeDefXsd? dataType)
-        {
-            return dataType switch
-                    {
-                        DataTypeDefXsd.AnyUri => "S",
-                        DataTypeDefXsd.Base64Binary => "S",
-                        DataTypeDefXsd.Boolean => "S",
-                        DataTypeDefXsd.Byte => "I",
-                        DataTypeDefXsd.Date => "S",
-                        DataTypeDefXsd.DateTime => "S",
-                        DataTypeDefXsd.Decimal => "S",
-                        DataTypeDefXsd.Double => "D",
-                        DataTypeDefXsd.Duration => "S",
-                        DataTypeDefXsd.Float => "D",
-                        DataTypeDefXsd.GDay => "S",
-                        DataTypeDefXsd.GMonth => "S",
-                        DataTypeDefXsd.GMonthDay => "S",
-                        DataTypeDefXsd.GYear => "S",
-                        DataTypeDefXsd.GYearMonth => "S",
-                        DataTypeDefXsd.HexBinary => "S",
-                        DataTypeDefXsd.Int => "I",
-                        DataTypeDefXsd.Integer => "I",
-                        DataTypeDefXsd.Long => "I",
-                        DataTypeDefXsd.NegativeInteger => "I",
-                        DataTypeDefXsd.NonNegativeInteger => "I",
-                        DataTypeDefXsd.NonPositiveInteger => "I",
-                        DataTypeDefXsd.PositiveInteger => "I",
-                        DataTypeDefXsd.Short => "I",
-                        DataTypeDefXsd.String => "S",
-                        DataTypeDefXsd.Time => "S",
-                        DataTypeDefXsd.UnsignedByte => "I",
-                        DataTypeDefXsd.UnsignedInt => "I",
-                        DataTypeDefXsd.UnsignedLong => "I",
-                        DataTypeDefXsd.UnsignedShort => "I",
-                        _ => string.Empty
-                    };
-        }
-
-        private string getValueAndType(string? value, DataTypeDefXsd? dataType, out string sValue, out long iValue, out double dValue)
-        {
-            sValue = string.Empty;
-            iValue = 0;
-            dValue = 0;
-
-            if (value.IsNullOrEmpty())
-                return string.Empty;
-
-            if (shortValueType(dataType).Equals("S"))
-            {
-                sValue = value;
-                return "S";
-            }
-
-            if (Int64.TryParse(value, out iValue))
-                return "I";
-
-            if (Double.TryParse(value, out dValue))
-                return "D";
-
-            sValue = value;
-            return "S";
-        }
-
-        private void setValues(ISubmodelElement sme, SMESet smeDB)
-        {
-            if (sme is Property prop)
-            {
-                var value = prop.ValueAsText();
-                if (value.IsNullOrEmpty())
-                    return;
-
-                smeDB.ValueType = getValueAndType(value, prop.ValueType, out var sValue, out var iValue, out var dValue);
-                if (smeDB.ValueType.Equals("S"))
-                    smeDB.SValueSets.Add(new SValueSet { Value = sValue, Annotation = string.Empty });
-                else if (smeDB.ValueType.Equals("I"))
-                    smeDB.IValueSets.Add(new IValueSet { Value = iValue, Annotation = string.Empty });
-                else if (smeDB.ValueType.Equals("D"))
-                    smeDB.DValueSets.Add(new DValueSet { Value = dValue, Annotation = string.Empty });
-            }
-            else if (sme is AasCore.Aas3_0.File file)
-            {
-                if (file.Value.IsNullOrEmpty())
-                    return;
-
-                smeDB.ValueType = "S";
-                smeDB.SValueSets.Add(new SValueSet { Value = file.Value, Annotation = string.Empty });
-            }
-            else if (sme is MultiLanguageProperty mlp)
-            {
-                if (mlp.Value == null || mlp.Value.Count == 0)
-                    return;
-
-                smeDB.ValueType = "S";
-                if (mlp.Value != null)
-                    foreach (var sValueMLP in mlp.Value)
-                        smeDB.SValueSets.Add(new SValueSet() { Annotation = sValueMLP.Language, Value = sValueMLP.Text });
-            }
-            else if (sme is Entity entity)
-            {
-                smeDB.ValueType = "S";
-                smeDB.SValueSets.Add(new SValueSet { Value = entity.GlobalAssetId, Annotation = entity.EntityType.ToString() });
-            }
-        }
-
-        private SMESet collectSMEData(ISubmodelElement sme)
-        {
-            var semanticId = sme.SemanticId.GetAsIdentifier() ?? string.Empty;
-
-            DateTime currentDataTime = DateTime.UtcNow;
-            DateTime timeStamp = (sme.TimeStamp == default(DateTime)) ? currentDataTime : sme.TimeStamp;
-            DateTime timeStampCreate = (sme.TimeStampCreate == default(DateTime)) ? currentDataTime : sme.TimeStampCreate;
-            DateTime timeStampTree = (sme.TimeStampTree == default(DateTime)) ? currentDataTime : sme.TimeStampTree;
-
-            var smeType = shortSMEType(sme);
-            var smeDB = new SMESet
-                        {
-                            ParentSME  = _parSME,
-                            SMEType    = smeType,
-                            ValueType  = string.Empty,
-                            SemanticId = semanticId,
-                            IdShort    = sme.IdShort,
-                            TimeStamp = timeStamp,
-                            TimeStampCreate = timeStampCreate,
-                            TimeStampTree = timeStampTree
-                        };
-            setValues(sme, smeDB);
->>>>>>> eclipse-server/main
             _smDB?.SMESets.Add(smeDB);
 
             return smeDB;
@@ -641,11 +505,7 @@ namespace AasxServerDB
         }
         public override void VisitRelationshipElement(IRelationshipElement that)
         {
-<<<<<<< HEAD
             CollectSMEData(that);
-=======
-            collectSMEData(that);
->>>>>>> eclipse-server/main
             base.VisitRelationshipElement(that);
         }
         public override void VisitSubmodelElementList(ISubmodelElementList that)
@@ -666,77 +526,44 @@ namespace AasxServerDB
 
         public override void VisitProperty(IProperty that)
         {
-<<<<<<< HEAD
             CollectSMEData(that);
-=======
-            collectSMEData(that);
->>>>>>> eclipse-server/main
             base.VisitProperty(that);
         }
         public override void VisitMultiLanguageProperty(IMultiLanguageProperty that)
         {
-<<<<<<< HEAD
             CollectSMEData(that);
-=======
-            collectSMEData(that);
->>>>>>> eclipse-server/main
             base.VisitMultiLanguageProperty(that);
         }
         public override void VisitRange(IRange that)
         {
-<<<<<<< HEAD
             CollectSMEData(that);
-=======
-            collectSMEData(that);
->>>>>>> eclipse-server/main
             base.VisitRange(that);
         }
         public override void VisitReferenceElement(IReferenceElement that)
         {
-<<<<<<< HEAD
             CollectSMEData(that);
-=======
-            collectSMEData(that);
->>>>>>> eclipse-server/main
             base.VisitReferenceElement(that);
         }
         public override void VisitBlob(IBlob that)
         {
-<<<<<<< HEAD
             CollectSMEData(that);
-=======
-            collectSMEData(that);
->>>>>>> eclipse-server/main
             base.VisitBlob(that);
         }
         public override void VisitFile(IFile that)
         {
-<<<<<<< HEAD
             CollectSMEData(that);
-=======
-            collectSMEData(that);
->>>>>>> eclipse-server/main
             base.VisitFile(that);
         }
         public override void VisitAnnotatedRelationshipElement(IAnnotatedRelationshipElement that)
         {
-<<<<<<< HEAD
             var smeSet = CollectSMEData(that);
             _parSME = smeSet;
-=======
-            collectSMEData(that);
->>>>>>> eclipse-server/main
             base.VisitAnnotatedRelationshipElement(that);
             _parSME = smeSet.ParentSME;
         }
         public override void VisitEntity(IEntity that)
         {
-<<<<<<< HEAD
             var smeSet = CollectSMEData(that);
-=======
-            SMESet smeSet = collectSMEData(that);
-            smeSet.ParentSME = _parSME;
->>>>>>> eclipse-server/main
             _parSME = smeSet;
             base.VisitEntity(that);
             _parSME = smeSet.ParentSME;
@@ -747,16 +574,11 @@ namespace AasxServerDB
         }
         public override void VisitBasicEventElement(IBasicEventElement that)
         {
-<<<<<<< HEAD
             CollectSMEData(that);
-=======
-            collectSMEData(that);
->>>>>>> eclipse-server/main
             base.VisitBasicEventElement(that);
         }
         public override void VisitOperation(IOperation that)
         {
-<<<<<<< HEAD
             var smeSet = CollectSMEData(that);
             _parSME = smeSet;
 
@@ -783,10 +605,6 @@ namespace AasxServerDB
 
             _oprPrefix = string.Empty;
             _parSME = smeSet.ParentSME;
-=======
-            collectSMEData(that);
-            base.VisitOperation(that);
->>>>>>> eclipse-server/main
         }
         public override void VisitOperationVariable(IOperationVariable that)
         {
@@ -794,11 +612,7 @@ namespace AasxServerDB
         }
         public override void VisitCapability(ICapability that)
         {
-<<<<<<< HEAD
             CollectSMEData(that);
-=======
-            collectSMEData(that);
->>>>>>> eclipse-server/main
             base.VisitCapability(that);
         }
         public override void VisitConceptDescription(IConceptDescription that)
