@@ -753,43 +753,35 @@
                         <span>
                             @if (smeTypeWithoutOperation != null && smeTypeWithoutOperation.Equals("MLP"))
                             {
-                                <ul>
-                                    @for (int z = 0; z < value.Count; z++)
-                                    {
-                                        <li>
-                                            [@value[z][1]] @value[z][0]
-                                        </li>
-                                    }
-                                </ul>
+                                @for (int z = 0; z < value.Count; z++)
+                                {
+                                    <span>
+                                        [@value[z][1]] @value[z][0] 
+                                    </span>
+                                }
                             }
                             else if (smeTypeWithoutOperation != null && smeTypeWithoutOperation.Equals("Range"))
                             {
-                                <ul>
-                                    @{
-                                        var valueType = (string)db.OValueSets.Where(ovalue => ovalue.SMEId == smeDB.Id && ovalue.Attribute.Equals("ValueType")).Select(ovalue => ovalue.Value).FirstOrDefault();
-                                        if (!valueType.IsNullOrEmpty())
-                                        {
-                                            <li>
-                                                (@valueType)
-                                            </li>
-                                        }
-                                    }
+                                var valueType = (string)db.OValueSets.Where(ovalue => ovalue.SMEId == smeDB.Id && ovalue.Attribute.Equals("ValueType")).Select(ovalue => ovalue.Value).FirstOrDefault();
+                                if (!valueType.IsNullOrEmpty())
+                                {
+                                    <span>
+                                        (@valueType)
+                                    </span>
+                                }
 
-                                    @for (int z = 0; z < value.Count; z++)
-                                    {
-                                        <li>
-                                            [@value[z][1]] @value[z][0]
-                                        </li>
-                                    }
-                                </ul>
+                                for (int z = 0; z < value.Count; z++)
+                                {
+                                    <span>
+                                        [@value[z][1]] @value[z][0]
+                                    </span>
+                                }
                             }
                             else if (smeTypeWithoutOperation != null && (smeTypeWithoutOperation.Equals("Prop") || smeTypeWithoutOperation.Equals("File") || smeTypeWithoutOperation.Equals("Blob")))
                             {
-                                <ul>
-                                    <li>
-                                        (@value[0][1]) @value[0][0]
-                                    </li>
-                                </ul>
+                                <span>
+                                    (@value[0][1]) @value[0][0]
+                                </span>
                             }
                             else
                             {
@@ -797,20 +789,20 @@
                             }
                         </span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <td style="word-break:keep-all">
+                        <span>
                             @if (db.OValueSets.Where(value => value.SMEId == smeDB.Id).Any())
                             {
                                 var dic = smeDB.GetOValue();
-                                <ul>
+                                <span>
                                     @foreach (KeyValuePair<string, Nodes.JsonNode> valueDic in dic)
                                     {
-                                        <li>
-                                                @valueDic.Key = @valueDic.Value.ToString()
-                                        </li>
+                                        <span>
+                                            @valueDic.Key = @valueDic.Value.ToString()
+                                        </span>
                                     }
-                                </ul>
+                                </span>
                             }
-                        </td>
+                        </span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@($"UPDATE {TimeStamp.DateTimeToString(smeDB.TimeStamp)}")</span>
                         <span>@($"CREATE {TimeStamp.DateTimeToString(smeDB.TimeStampCreate)}")</span>
