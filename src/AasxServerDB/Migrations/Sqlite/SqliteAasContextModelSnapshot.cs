@@ -15,9 +15,9 @@ namespace AasxServerDB.Migrations.Sqlite
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "7.0.5");
+            modelBuilder.HasAnnotation("ProductVersion", "8.0.6");
 
-            modelBuilder.Entity("AasxServerDB.AASSet", b =>
+            modelBuilder.Entity("AasxServerDB.Entities.AASSet", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -54,14 +54,13 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.ToTable("AASSets");
                 });
 
-            modelBuilder.Entity("AasxServerDB.AASXSet", b =>
+            modelBuilder.Entity("AasxServerDB.Entities.AASXSet", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("AASX")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -69,7 +68,7 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.ToTable("AASXSets");
                 });
 
-            modelBuilder.Entity("AasxServerDB.DValueSet", b =>
+            modelBuilder.Entity("AasxServerDB.Entities.DValueSet", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -91,7 +90,7 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.ToTable("DValueSets");
                 });
 
-            modelBuilder.Entity("AasxServerDB.IValueSet", b =>
+            modelBuilder.Entity("AasxServerDB.Entities.IValueSet", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -113,7 +112,31 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.ToTable("IValueSets");
                 });
 
-            modelBuilder.Entity("AasxServerDB.SMESet", b =>
+            modelBuilder.Entity("AasxServerDB.Entities.OValueSet", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Attribute")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SMEId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SMEId");
+
+                    b.ToTable("OValueSets");
+                });
+
+            modelBuilder.Entity("AasxServerDB.Entities.SMESet", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -134,6 +157,9 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Property<string>("SemanticId")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("TValue")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("TimeStamp")
                         .HasColumnType("TEXT");
 
@@ -141,9 +167,6 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("TimeStampTree")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ValueType")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -155,7 +178,7 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.ToTable("SMESets");
                 });
 
-            modelBuilder.Entity("AasxServerDB.SMSet", b =>
+            modelBuilder.Entity("AasxServerDB.Entities.SMSet", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -194,7 +217,7 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.ToTable("SMSets");
                 });
 
-            modelBuilder.Entity("AasxServerDB.SValueSet", b =>
+            modelBuilder.Entity("AasxServerDB.Entities.SValueSet", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -216,9 +239,9 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.ToTable("SValueSets");
                 });
 
-            modelBuilder.Entity("AasxServerDB.AASSet", b =>
+            modelBuilder.Entity("AasxServerDB.Entities.AASSet", b =>
                 {
-                    b.HasOne("AasxServerDB.AASXSet", "AASXSet")
+                    b.HasOne("AasxServerDB.Entities.AASXSet", "AASXSet")
                         .WithMany("AASSets")
                         .HasForeignKey("AASXId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -227,9 +250,9 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Navigation("AASXSet");
                 });
 
-            modelBuilder.Entity("AasxServerDB.DValueSet", b =>
+            modelBuilder.Entity("AasxServerDB.Entities.DValueSet", b =>
                 {
-                    b.HasOne("AasxServerDB.SMESet", "SMESet")
+                    b.HasOne("AasxServerDB.Entities.SMESet", "SMESet")
                         .WithMany("DValueSets")
                         .HasForeignKey("SMEId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -238,9 +261,9 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Navigation("SMESet");
                 });
 
-            modelBuilder.Entity("AasxServerDB.IValueSet", b =>
+            modelBuilder.Entity("AasxServerDB.Entities.IValueSet", b =>
                 {
-                    b.HasOne("AasxServerDB.SMESet", "SMESet")
+                    b.HasOne("AasxServerDB.Entities.SMESet", "SMESet")
                         .WithMany("IValueSets")
                         .HasForeignKey("SMEId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -249,13 +272,24 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Navigation("SMESet");
                 });
 
-            modelBuilder.Entity("AasxServerDB.SMESet", b =>
+            modelBuilder.Entity("AasxServerDB.Entities.OValueSet", b =>
                 {
-                    b.HasOne("AasxServerDB.SMESet", "ParentSME")
+                    b.HasOne("AasxServerDB.Entities.SMESet", "SMESet")
+                        .WithMany("OValueSets")
+                        .HasForeignKey("SMEId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SMESet");
+                });
+
+            modelBuilder.Entity("AasxServerDB.Entities.SMESet", b =>
+                {
+                    b.HasOne("AasxServerDB.Entities.SMESet", "ParentSME")
                         .WithMany()
                         .HasForeignKey("ParentSMEId");
 
-                    b.HasOne("AasxServerDB.SMSet", "SMSet")
+                    b.HasOne("AasxServerDB.Entities.SMSet", "SMSet")
                         .WithMany("SMESets")
                         .HasForeignKey("SMId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -266,13 +300,13 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Navigation("SMSet");
                 });
 
-            modelBuilder.Entity("AasxServerDB.SMSet", b =>
+            modelBuilder.Entity("AasxServerDB.Entities.SMSet", b =>
                 {
-                    b.HasOne("AasxServerDB.AASSet", "AASSet")
+                    b.HasOne("AasxServerDB.Entities.AASSet", "AASSet")
                         .WithMany("SMSets")
                         .HasForeignKey("AASId");
 
-                    b.HasOne("AasxServerDB.AASXSet", "AASXSet")
+                    b.HasOne("AasxServerDB.Entities.AASXSet", "AASXSet")
                         .WithMany("SMSets")
                         .HasForeignKey("AASXId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -283,9 +317,9 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Navigation("AASXSet");
                 });
 
-            modelBuilder.Entity("AasxServerDB.SValueSet", b =>
+            modelBuilder.Entity("AasxServerDB.Entities.SValueSet", b =>
                 {
-                    b.HasOne("AasxServerDB.SMESet", "SMESet")
+                    b.HasOne("AasxServerDB.Entities.SMESet", "SMESet")
                         .WithMany("SValueSets")
                         .HasForeignKey("SMEId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -294,28 +328,30 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Navigation("SMESet");
                 });
 
-            modelBuilder.Entity("AasxServerDB.AASSet", b =>
+            modelBuilder.Entity("AasxServerDB.Entities.AASSet", b =>
                 {
                     b.Navigation("SMSets");
                 });
 
-            modelBuilder.Entity("AasxServerDB.AASXSet", b =>
+            modelBuilder.Entity("AasxServerDB.Entities.AASXSet", b =>
                 {
                     b.Navigation("AASSets");
 
                     b.Navigation("SMSets");
                 });
 
-            modelBuilder.Entity("AasxServerDB.SMESet", b =>
+            modelBuilder.Entity("AasxServerDB.Entities.SMESet", b =>
                 {
                     b.Navigation("DValueSets");
 
                     b.Navigation("IValueSets");
 
+                    b.Navigation("OValueSets");
+
                     b.Navigation("SValueSets");
                 });
 
-            modelBuilder.Entity("AasxServerDB.SMSet", b =>
+            modelBuilder.Entity("AasxServerDB.Entities.SMSet", b =>
                 {
                     b.Navigation("SMESets");
                 });

@@ -1,8 +1,11 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Nodes;
+using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Nodes;
 
 namespace AasxServerDB.Entities
 {
-    public class IValueSet
+    public class OValueSet
     {
         public int Id { get; set; }
 
@@ -10,7 +13,7 @@ namespace AasxServerDB.Entities
         public         int     SMEId  { get; set; }
         public virtual SMESet? SMESet { get; set; }
 
-        public long?   Value { get; set; }
-        public string? Annotation { get; set; }
+        public string Attribute { get; set; }
+        public JsonNode Value   { get; set; }
     }
 }
