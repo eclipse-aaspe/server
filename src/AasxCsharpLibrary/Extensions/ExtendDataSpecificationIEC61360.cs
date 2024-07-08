@@ -4,7 +4,7 @@ namespace Extensions
 {
     public static class ExtendDataSpecificationIEC61360
     {
-        public static DataSpecificationIec61360 ConvertFromV20(this DataSpecificationIec61360 ds61360, AasxCompatibilityModels.AdminShellV20.DataSpecificationIEC61360 src616360)
+        public static DataSpecificationIec61360? ConvertFromV20(this DataSpecificationIec61360? ds61360, AasxCompatibilityModels.AdminShellV20.DataSpecificationIEC61360 src616360)
         {
             if (src616360.preferredName != null)
                 ds61360.PreferredName = new List<ILangStringPreferredNameTypeIec61360>().ConvertFromV20(src616360.preferredName);

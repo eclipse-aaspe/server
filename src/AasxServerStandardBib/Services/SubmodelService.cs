@@ -475,10 +475,7 @@ namespace AasxServerStandardBib.Services
             }
         }
 
-        public List<ISubmodel> GetAllSubmodels(IReference reqSemanticId = null, string idShort = null)
-        {
-            return _packageEnvService.GetAllSubmodels(reqSemanticId, idShort);
-        }
+        public List<ISubmodel> GetAllSubmodels() => _packageEnvService.GetAllSubmodels();
 
         public ISubmodel CreateSubmodel(ISubmodel newSubmodel, string aasIdentifier)
         {

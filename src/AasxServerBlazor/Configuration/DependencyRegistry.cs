@@ -15,6 +15,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AasxServerBlazor.Configuration;
 
+using IO.Swagger.Models;
+
 public static class DependencyRegistry
 {
     public static void Register(IServiceCollection services)
@@ -30,6 +32,7 @@ public static class DependencyRegistry
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddSingleton<IRegistryInitializerService, RegistryInitializerService>();
         services.AddTransient<IAasDescriptorPaginationService, AasDescriptorPaginationService>();
+        services.AddTransient<IAasDescriptorWritingService, AasDescriptorWritingService>();
         services.AddTransient<IAasRegistryService, AasRegistryService>();
         services.AddTransient<IAasRepositoryApiHelperService, AasRepositoryApiHelperService>();
         services.AddTransient<IAasxFileServerInterfaceService, AasxFileServerInterfaceService>();
@@ -47,6 +50,8 @@ public static class DependencyRegistry
         services.AddTransient<IPathModifierService, PathModifierService>();
         services.AddTransient<IReferenceModifierService, ReferenceModifierService>();
         services.AddTransient<ISecurityService, SecurityService>();
+        services.AddTransient<IServiceDescription, ServiceDescription>();
+        services.AddTransient<ISubmodelPropertyExtractionService, SubmodelPropertyExtractionService>();
         services.AddTransient<ISubmodelService, SubmodelService>();
         services.AddTransient<IValueOnlyJsonDeserializer, ValueOnlyJsonDeserializer>();
     }

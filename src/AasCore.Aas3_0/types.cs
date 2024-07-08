@@ -3,7 +3,6 @@
  * Do NOT edit or append.
  */
 
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;          // can't alias
@@ -12,6 +11,8 @@ using EnumMemberAttribute = System.Runtime.Serialization.EnumMemberAttribute;
 
 namespace AasCore.Aas3_0
 {
+    using System.Text.Json.Serialization;
+
     /// <summary>
     /// Represent a general class of an AAS model.
     /// </summary>
@@ -1233,7 +1234,7 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Meta-information about the asset the AAS is representing.
         /// </summary>
-        public IAssetInformation AssetInformation { get; set; }
+        public IAssetInformation? AssetInformation { get; set; }
 
         /// <summary>
         /// References to submodels of the AAS.
@@ -1345,7 +1346,7 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Meta-information about the asset the AAS is representing.
         /// </summary>
-        public IAssetInformation AssetInformation { get; set; }
+        public IAssetInformation? AssetInformation { get; set; }
 
         /// <summary>
         /// References to submodels of the AAS.
@@ -1629,7 +1630,7 @@ namespace AasCore.Aas3_0
 
         public AssetAdministrationShell(
             string? id,
-            IAssetInformation assetInformation,
+            IAssetInformation? assetInformation,
             List<IExtension>? extensions = null,
             string? category = null,
             string? idShort = null,
@@ -2893,12 +2894,12 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Reference to the first element in the relationship taking the role of the subject.
         /// </summary>
-        public IReference First { get; set; }
+        public IReference? First { get; set; }
 
         /// <summary>
         /// Reference to the second element in the relationship taking the role of the object.
         /// </summary>
-        public IReference Second { get; set; }
+        public IReference? Second { get; set; }
     }
 
     /// <summary>
@@ -3006,12 +3007,12 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Reference to the first element in the relationship taking the role of the subject.
         /// </summary>
-        public IReference First { get; set; }
+        public IReference? First { get; set; }
 
         /// <summary>
         /// Reference to the second element in the relationship taking the role of the object.
         /// </summary>
-        public IReference Second { get; set; }
+        public IReference? Second { get; set; }
 
         #region Parent
 
@@ -3303,8 +3304,8 @@ namespace AasCore.Aas3_0
         }
 
         public RelationshipElement(
-            IReference first,
-            IReference second,
+            IReference? first,
+            IReference? second,
             List<IExtension>? extensions = null,
             string? category = null,
             string? idShort = null,
@@ -7499,12 +7500,12 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Reference to the first element in the relationship taking the role of the subject.
         /// </summary>
-        public IReference First { get; set; }
+        public IReference? First { get; set; }
 
         /// <summary>
         /// Reference to the second element in the relationship taking the role of the object.
         /// </summary>
-        public IReference Second { get; set; }
+        public IReference? Second { get; set; }
 
         /// <summary>
         /// A data element that represents an annotation that holds for the relationship
@@ -7833,8 +7834,8 @@ namespace AasCore.Aas3_0
         }
 
         public AnnotatedRelationshipElement(
-            IReference first,
-            IReference second,
+            IReference? first,
+            IReference? second,
             List<IExtension>? extensions = null,
             string? category = null,
             string? idShort = null,
@@ -8494,7 +8495,7 @@ namespace AasCore.Aas3_0
         /// <see cref="Aas.AssetAdministrationShell" />, <see cref="Aas.Submodel" />,
         /// <see cref="Aas.ISubmodelElement" />'s.
         /// </summary>
-        public IReference Source { get; set; }
+        public IReference? Source { get; set; }
 
         /// <summary>
         /// <see cref="Aas.IHasSemantics.SemanticId" /> of the source event element, if available
@@ -8511,7 +8512,7 @@ namespace AasCore.Aas3_0
         /// Can be <see cref="Aas.AssetAdministrationShell" />, <see cref="Aas.Submodel" /> or
         /// <see cref="Aas.ISubmodelElement" />.
         /// </remarks>
-        public IReference ObservableReference { get; set; }
+        public IReference? ObservableReference { get; set; }
 
         /// <summary>
         /// <see cref="Aas.IHasSemantics.SemanticId" /> of the referable which defines the scope of
@@ -8561,7 +8562,7 @@ namespace AasCore.Aas3_0
         /// <see cref="Aas.AssetAdministrationShell" />, <see cref="Aas.Submodel" />,
         /// <see cref="Aas.ISubmodelElement" />'s.
         /// </summary>
-        public IReference Source { get; set; }
+        public IReference? Source { get; set; }
 
         /// <summary>
         /// <see cref="Aas.IHasSemantics.SemanticId" /> of the source event element, if available
@@ -8578,7 +8579,7 @@ namespace AasCore.Aas3_0
         /// Can be <see cref="Aas.AssetAdministrationShell" />, <see cref="Aas.Submodel" /> or
         /// <see cref="Aas.ISubmodelElement" />.
         /// </remarks>
-        public IReference ObservableReference { get; set; }
+        public IReference? ObservableReference { get; set; }
 
         /// <summary>
         /// <see cref="Aas.IHasSemantics.SemanticId" /> of the referable which defines the scope of
@@ -8735,8 +8736,8 @@ namespace AasCore.Aas3_0
         }
 
         public EventPayload(
-            IReference source,
-            IReference observableReference,
+            IReference? source,
+            IReference? observableReference,
             string? timeStamp,
             IReference? sourceSemanticId = null,
             IReference? observableSemanticId = null,
@@ -8785,7 +8786,7 @@ namespace AasCore.Aas3_0
         /// Reference to a referable, e.g., a data element or
         /// a submodel, that is being observed.
         /// </remarks>
-        public IReference Observed { get; set; }
+        public IReference? Observed { get; set; }
 
         /// <summary>
         /// Direction of event.
@@ -8973,7 +8974,7 @@ namespace AasCore.Aas3_0
         /// Reference to a referable, e.g., a data element or
         /// a submodel, that is being observed.
         /// </remarks>
-        public IReference Observed { get; set; }
+        public IReference? Observed { get; set; }
 
         /// <summary>
         /// Direction of event.
@@ -9342,7 +9343,7 @@ namespace AasCore.Aas3_0
         }
 
         public BasicEventElement(
-            IReference observed,
+            IReference? observed,
             Direction direction,
             StateOfEvent state,
             List<IExtension>? extensions = null,
@@ -9960,7 +9961,7 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Describes an argument or result of an operation via a submodel element
         /// </summary>
-        public ISubmodelElement Value { get; set; }
+        public ISubmodelElement? Value { get; set; }
     }
 
     /// <summary>
@@ -9972,7 +9973,7 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Describes an argument or result of an operation via a submodel element
         /// </summary>
-        public ISubmodelElement Value { get; set; }
+        public ISubmodelElement? Value { get; set; }
 
         /// <summary>
         /// Iterate over all the class instances referenced from this instance
@@ -10037,7 +10038,7 @@ namespace AasCore.Aas3_0
             return transformer.TransformOperationVariable(this, context);
         }
 
-        public OperationVariable(ISubmodelElement value)
+        public OperationVariable(ISubmodelElement? value)
         {
             Value = value;
         }
@@ -12097,12 +12098,12 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Reference to the data specification
         /// </summary>
-        public IReference DataSpecification { get; set; }
+        public IReference? DataSpecification { get; set; }
 
         /// <summary>
         /// Actual content of the data specification
         /// </summary>
-        public IDataSpecificationContent DataSpecificationContent { get; set; }
+        public IDataSpecificationContent? DataSpecificationContent { get; set; }
     }
 
     /// <summary>
@@ -12113,12 +12114,12 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Reference to the data specification
         /// </summary>
-        public IReference DataSpecification { get; set; }
+        public IReference? DataSpecification { get; set; }
 
         /// <summary>
         /// Actual content of the data specification
         /// </summary>
-        public IDataSpecificationContent DataSpecificationContent { get; set; }
+        public IDataSpecificationContent? DataSpecificationContent { get; set; }
 
         /// <summary>
         /// Iterate over all the class instances referenced from this instance
@@ -12194,8 +12195,8 @@ namespace AasCore.Aas3_0
         }
 
         public EmbeddedDataSpecification(
-            IReference dataSpecification,
-            IDataSpecificationContent dataSpecificationContent)
+            IReference? dataSpecification,
+            IDataSpecificationContent? dataSpecificationContent)
         {
             DataSpecification        = dataSpecification;
             DataSpecificationContent = dataSpecificationContent;
@@ -12591,7 +12592,7 @@ namespace AasCore.Aas3_0
         /// <remarks>
         /// It is recommended to use a global reference.
         /// </remarks>
-        public IReference ValueId { get; set; }
+        public IReference? ValueId { get; set; }
     }
 
     /// <summary>
@@ -12611,7 +12612,7 @@ namespace AasCore.Aas3_0
         /// <remarks>
         /// It is recommended to use a global reference.
         /// </remarks>
-        public IReference ValueId { get; set; }
+        public IReference? ValueId { get; set; }
 
         /// <summary>
         /// Iterate over all the class instances referenced from this instance
@@ -12678,7 +12679,7 @@ namespace AasCore.Aas3_0
 
         public ValueReferencePair(
             string? value,
-            IReference valueId)
+            IReference? valueId)
         {
             Value   = value;
             ValueId = valueId;

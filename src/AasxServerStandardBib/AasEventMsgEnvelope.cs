@@ -13,13 +13,14 @@ This source code may use other Open Source software components (see LICENSE.txt)
 
 using AasxIntegrationBase;
 using Extensions;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 
 namespace AdminShellEvents
 {
+    using System.Text.Json.Serialization;
+
     /// <summary>
     /// Outer class for any AAS event. AAS events shall interoperably exchage asynchronous information between
     /// different execution environments "operating" AASes. This basic event class is described in AASiD Part 1.

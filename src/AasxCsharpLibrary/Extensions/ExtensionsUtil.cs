@@ -7,9 +7,9 @@ namespace Extensions;
 
 public static class ExtensionsUtil
 {
-    public static Reference ConvertReferenceFromV10(AdminShellV10.Reference sourceReference, ReferenceTypes referenceTypes)
+    public static Reference? ConvertReferenceFromV10(AdminShellV10.Reference sourceReference, ReferenceTypes referenceTypes)
     {
-        Reference outputReference = null;
+        Reference? outputReference = null;
         if (sourceReference != null && !sourceReference.IsEmpty)
         {
             var keyList = new List<IKey>();
@@ -32,9 +32,9 @@ public static class ExtensionsUtil
         return outputReference;
     }
 
-    public static Reference ConvertReferenceFromV20(AdminShellV20.Reference sourceReference, ReferenceTypes referenceTypes)
+    public static Reference? ConvertReferenceFromV20(AdminShellV20.Reference sourceReference, ReferenceTypes referenceTypes)
     {
-        Reference outputReference = null;
+        Reference? outputReference = null;
         if (sourceReference != null && !sourceReference.IsEmpty)
         {
             var keyList = new List<IKey>();

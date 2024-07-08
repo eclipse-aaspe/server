@@ -33,7 +33,7 @@ namespace Extensions
             }
         }
 
-        public static object AddChild(this Entity entity, ISubmodelElement childSubmodelElement, EnumerationPlacmentBase placement = null)
+        public static object? AddChild(this Entity entity, ISubmodelElement? childSubmodelElement, EnumerationPlacmentBase placement = null)
         {
             if (childSubmodelElement == null)
                 return null;
@@ -47,7 +47,7 @@ namespace Extensions
 
         #endregion
 
-        public static Entity ConvertFromV20(this Entity entity, AasxCompatibilityModels.AdminShellV20.Entity sourceEntity)
+        public static Entity? ConvertFromV20(this Entity? entity, AasxCompatibilityModels.AdminShellV20.Entity sourceEntity)
         {
             if (sourceEntity == null)
             {
@@ -59,8 +59,8 @@ namespace Extensions
                 entity.Statements ??= new List<ISubmodelElement>();
                 foreach (var submodelElementWrapper in sourceEntity.statements)
                 {
-                    var sourceSubmodelElement = submodelElementWrapper.submodelElement;
-                    ISubmodelElement outputSubmodelElement = null;
+                    var               sourceSubmodelElement = submodelElementWrapper.submodelElement;
+                    ISubmodelElement? outputSubmodelElement = null;
                     if (sourceSubmodelElement != null)
                     {
                         outputSubmodelElement = outputSubmodelElement.ConvertFromV20(sourceSubmodelElement);

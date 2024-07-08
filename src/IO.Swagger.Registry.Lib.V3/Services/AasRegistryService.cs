@@ -11,6 +11,7 @@ using System.Text.Json.Nodes;
 using static AasxServer.Program;
 using AasxServerDB;
 using AasxServerDB.Entities;
+using System;
 
 namespace IO.Swagger.Registry.Lib.V3.Services
 { 
@@ -27,6 +28,11 @@ namespace IO.Swagger.Registry.Lib.V3.Services
 
         public AssetAdministrationShellDescriptor CreateAasDescriptorFromDB(AASSet aasDB)
         {
+            return GlobalCreateAasDescriptorFromDB(aasDB);
+        }
+
+        public static AssetAdministrationShellDescriptor GlobalCreateAasDescriptorFromDB(AASSet aasDB)
+        {
             AssetAdministrationShellDescriptor ad = new AssetAdministrationShellDescriptor();
             //string asset = aas.assetRef?[0].Value;
             var globalAssetId = aasDB.GlobalAssetId;
@@ -42,7 +48,8 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                 e.ProtocolInformation.Href =
                     AasxServer.Program.externalRepository + "/shells/" +
                     Base64UrlEncoder.Encode(ad.Id);
-                _logger.LogDebug("AAS " + ad.IdShort + " " + e.ProtocolInformation.Href);
+                // _logger.LogDebug("AAS " + ad.IdShort + " " + e.ProtocolInformation.Href);
+                Console.WriteLine("AAS " + ad.IdShort + " " + e.ProtocolInformation.Href);
                 e.Interface = "AAS-1.0";
                 ad.Endpoints = new List<Models.Endpoint>
                 {

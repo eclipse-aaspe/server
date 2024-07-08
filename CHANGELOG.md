@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - I40Languages.cs and I40Messages.cs removed (@Freezor)
+- References and usings of Newtonsoft in favor of a complete usage of System.Text.Json in the whole project. (@Freezor)
 
 ### Updated
 

@@ -3,13 +3,14 @@ using AasxIntegrationBase;
 using AdminShellNS;
 using Extensions;
 using Grapevine.Client;
-using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
 using System.Net;
 
 namespace AasxRestServerLibrary
 {
+    using System.Text.Json;
+
     public class AasxRestClient : IAasxOnlineConnection
     {
         // Instance management
@@ -183,8 +184,8 @@ namespace AasxRestServerLibrary
                 throw new Exception($"REST {respose.ResponseUri} response {respose.StatusCode} with {respose.StatusDescription}");
 
             var json = respose.GetContent();
-            var parsed = JObject.Parse(json);
-            var value = parsed.SelectToken("value").Value<string>();
+            var parsed = JsonDocument.Parse(json);
+            var value = parsed.RootElement.GetProperty("value").GetString();
             return value;
         }
     }

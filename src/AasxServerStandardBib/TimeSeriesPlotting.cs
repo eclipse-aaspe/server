@@ -1,18 +1,15 @@
-﻿
-using AdminShellNS;
+﻿using AdminShellNS;
 using Extensions;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using ScottPlot;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
-using System.Text;
-//using static AdminShellNS.AdminShellV20;
 
 namespace AasxServerStandardBib
 {
+    using System.Text.Json;
+    
     public class TimeSeriesPlotting
     {
         public enum TimeSeriesTimeAxis { None, Utc, Tai, Plain, Duration }
@@ -52,6 +49,7 @@ namespace AasxServerStandardBib
                     res.Position.Add(pos);
                     pos += 1.0;
                 }
+
                 return res;
             }
 
@@ -107,7 +105,7 @@ namespace AasxServerStandardBib
                     // which kind of chart?
                     if (tsd.Args != null &&
                         (tsd.Args.type == PlotArguments.Type.Bars
-                            || tsd.Args.type == PlotArguments.Type.Pie))
+                         || tsd.Args.type == PlotArguments.Type.Pie))
                     {
                         //
                         // Cumulative plots (e.g. the last sample, bars, pie, ..)
@@ -129,8 +127,8 @@ namespace AasxServerStandardBib
 
                         // generate cumulative data
                         //var cum = tsd.DataSet.GenerateCumulativeData(pvc.LatestSamplePosition);
-                        var cum = tsd.DataSet.GenerateCumulativeData(10); // TODO: Hardcoded value -1 instead of using LatestSamplePosition
-                        var cumdi = GenerateCumulativeDataItems(cum, defaultLang);
+                        var cum       = tsd.DataSet.GenerateCumulativeData(10); // TODO: Hardcoded value -1 instead of using LatestSamplePosition
+                        var cumdi     = GenerateCumulativeDataItems(cum, defaultLang);
                         var plottable = GenerateCumulativePlottable(plt, cumdi, tsd.Args);
                         if (plottable == null)
                             continue;
@@ -138,7 +136,7 @@ namespace AasxServerStandardBib
 
                         // render the plottable into panel
                         //panel.Children.Add(pvc);
-                        plt.Render(/* skipIfCurrentlyRendering: true */);
+                        plt.Render( /* skipIfCurrentlyRendering: true */);
 
                         plt.SaveFig("wwwroot/images/scottplot/smc_timeseries_clientid" + sessionNumber + ".png");
 
@@ -167,8 +165,8 @@ namespace AasxServerStandardBib
                         PlotHelpers.SetOverallPlotProperties(null, plt, tsd.Args, defPlotHeight);
 
                         ScottPlot.Plot lastPlot = null;
-                        var xLabels = "Time ( ";
-                        int yAxisNum = 0;
+                        var            xLabels  = "Time ( ";
+                        int            yAxisNum = 0;
 
                         // TODO: wpfPlot name variable
                         var wpfPlot = plt;
@@ -180,7 +178,7 @@ namespace AasxServerStandardBib
                         var moveOrder = new List<Tuple<TimeSeriesDataSet, int?>>();
 
                         // for each signal
-                        double? yMin = null, yMax = null;
+                        double?           yMin           = null, yMax = null;
                         TimeSeriesDataSet lastTimeRecord = null;
 
                         foreach (var tsds in tsd.DataSet)
@@ -192,8 +190,8 @@ namespace AasxServerStandardBib
                             // if its a time axis, skip but remember for following axes
                             if (tsds.TimeAxis != TimeSeriesTimeAxis.None)
                             {
-                                lastTimeRecord = tsds;
-                                xLabels += "" + tsds.DataSetId + " ";
+                                lastTimeRecord =  tsds;
+                                xLabels        += "" + tsds.DataSetId + " ";
                                 continue;
                             }
 
@@ -249,15 +247,15 @@ namespace AasxServerStandardBib
 
                             // factory new Plottable
 
-                            ScottPlot.Plottable.BarPlot bars = null;
+                            ScottPlot.Plottable.BarPlot     bars    = null;
                             ScottPlot.Plottable.ScatterPlot scatter = null;
 
                             if (tsds.Args != null && tsds.Args.type == PlotArguments.Type.Bars)
                             {
                                 // Bars
                                 bars = wpfPlot.AddBar(
-                                    positions: timeDStoUse.RenderDataToLimits(),
-                                    values: tsds.RenderDataToLimits());
+                                                      positions: timeDStoUse.RenderDataToLimits(),
+                                                      values: tsds.RenderDataToLimits());
 
                                 PlotHelpers.SetPlottableProperties(scatter, tsds.Args);
 
@@ -266,7 +264,7 @@ namespace AasxServerStandardBib
                                 {
                                     // Note: pretty trivial approach, yet
                                     var timeDelta = (timeDStoUse.Data[1] - timeDStoUse.Data[0]);
-                                    var bw = timeDelta * .8;
+                                    var bw        = timeDelta * .8;
 
                                     // apply bar width?
                                     if (tsds.Args?.barwidth != null)
@@ -288,8 +286,8 @@ namespace AasxServerStandardBib
                                 }
 
                                 bars.Label = PlotHelpers.EvalDisplayText("" + tsds.DataSetId,
-                                    tsds.DataPoint, tsds.DataPointCD,
-                                    addMinimalTxt: true, defaultLang: defaultLang, useIdShort: false);
+                                                                         tsds.DataPoint, tsds.DataPointCD,
+                                                                         addMinimalTxt: true, defaultLang: defaultLang, useIdShort: false);
 
                                 tsds.Plottable = bars;
                             }
@@ -299,13 +297,13 @@ namespace AasxServerStandardBib
                                 {
                                     // Default: Scatter plot
                                     scatter = wpfPlot.AddScatter(
-                                        //xs: timeDStoUse.Data,
-                                        //ys: tsds.Data,
-                                        xs: xsFilteredList.ToArray(),
-                                        ys: ysFilteredList.ToArray(),
-                                        label: PlotHelpers.EvalDisplayText("" + tsds.DataSetId,
-                                            tsds.DataPoint, tsds.DataPointCD,
-                                            addMinimalTxt: true, defaultLang: defaultLang, useIdShort: false));
+                                                                 //xs: timeDStoUse.Data,
+                                                                 //ys: tsds.Data,
+                                                                 xs: xsFilteredList.ToArray(),
+                                                                 ys: ysFilteredList.ToArray(),
+                                                                 label: PlotHelpers.EvalDisplayText("" + tsds.DataSetId,
+                                                                                                    tsds.DataPoint, tsds.DataPointCD,
+                                                                                                    addMinimalTxt: true, defaultLang: defaultLang, useIdShort: false));
 
                                     PlotHelpers.SetPlottableProperties(scatter, tsds.Args);
 
@@ -318,15 +316,15 @@ namespace AasxServerStandardBib
                             }
 
                             // axis treatment?
-                            bool sameAxis = (tsds.Args?.sameaxis == true) && (yAxisNum != 0);
-                            int assignAxis = -1;
-                            ScottPlot.Renderable.Axis yAxis3 = null;
+                            bool                      sameAxis   = (tsds.Args?.sameaxis == true) && (yAxisNum != 0);
+                            int                       assignAxis = -1;
+                            ScottPlot.Renderable.Axis yAxis3     = null;
                             if (!sameAxis)
                             {
                                 yAxisNum++;
                                 if (yAxisNum >= 2)
                                 {
-                                    yAxis3 = wpfPlot.AddAxis(ScottPlot.Renderable.Edge.Right, axisIndex: yAxisNum);
+                                    yAxis3     = wpfPlot.AddAxis(ScottPlot.Renderable.Edge.Right, axisIndex: yAxisNum);
                                     assignAxis = yAxisNum;
                                 }
                             }
@@ -376,7 +374,7 @@ namespace AasxServerStandardBib
                         // time axis
                         if (lastTimeRecord != null &&
                             (lastTimeRecord.TimeAxis == TimeSeriesTimeAxis.Utc
-                                || lastTimeRecord.TimeAxis == TimeSeriesTimeAxis.Tai))
+                             || lastTimeRecord.TimeAxis == TimeSeriesTimeAxis.Tai))
                         {
                             wpfPlot.XAxis.DateTimeFormat(true);
                         }
@@ -684,6 +682,7 @@ namespace AasxServerStandardBib
                     if (tsd.TimeAxis == TimeSeriesTimeAxis.Tai && findTai)
                         return tsd;
                 }
+
                 return null;
             }
         }
@@ -703,7 +702,7 @@ namespace AasxServerStandardBib
             public TimeSeriesMinMaxDouble ValueLimits = TimeSeriesMinMaxDouble.Invalid;
 
             protected TimeSeriesMinMaxInt _dataLimits;
-            protected double[] data = new[] { 0.0 };
+            protected double[] data = new[] {0.0};
             public double[] Data { get { return data; } }
 
             public ScottPlot.Plottable.IPlottable Plottable;
@@ -723,7 +722,7 @@ namespace AasxServerStandardBib
 
                 // now, if the first time, start with good limits
                 if (_dataLimits == null)
-                    _dataLimits = new TimeSeriesMinMaxInt() { Min = tempLimits.Min, Max = tempLimits.Min };
+                    _dataLimits = new TimeSeriesMinMaxInt() {Min = tempLimits.Min, Max = tempLimits.Min};
 
                 // extend to the left?
                 if (tempLimits.Min < _dataLimits.Min)
@@ -757,7 +756,7 @@ namespace AasxServerStandardBib
                 if (fillTimeGaps && temp[0].Value.HasValue)
                 {
                     var startIndex = temp[0].Index;
-                    var startVal = temp[0].Value.Value;
+                    var startVal   = temp[0].Value.Value;
                     for (int i = startIndex - 1; i >= _dataLimits.Min; i--)
                     {
                         // data to the left present? -> stop
@@ -791,7 +790,7 @@ namespace AasxServerStandardBib
             {
                 // now, if the first time, start with good limits
                 if (_dataLimits == null)
-                    _dataLimits = new TimeSeriesMinMaxInt() { Min = index, Max = index };
+                    _dataLimits = new TimeSeriesMinMaxInt() {Min = index, Max = index};
 
                 // extend to the left?
                 if (index < _dataLimits.Min)
@@ -921,21 +920,21 @@ namespace AasxServerStandardBib
                     if (dp.Index > res.Max)
                         res.Max = dp.Index;
                 }
+
                 return res;
             }
 
             public void Add(string json, TimeSeriesTimeAxis timeAxis)
             {
                 // simple state machine approch to pseudo parse-json
-                var state = 0;
-                int i = 0;
-                var err = false;
+                var state    = 0;
+                int i        = 0;
+                var err      = false;
                 var bufIndex = "";
                 var bufValue = "";
 
                 while (!err && i < json.Length)
                 {
-
                     switch (state)
                     {
                         // expecting inner '['
@@ -943,12 +942,11 @@ namespace AasxServerStandardBib
                             if (json[i] == '[')
                             {
                                 // prepare first buffer
-                                state = 1;
+                                state    = 1;
                                 bufIndex = "";
                                 i++;
                             }
-                            else
-                            if (json[i] == ',' || Char.IsWhiteSpace(json[i]))
+                            else if (json[i] == ',' || Char.IsWhiteSpace(json[i]))
                             {
                                 // ignore whitespace
                                 i++;
@@ -958,6 +956,7 @@ namespace AasxServerStandardBib
                                 // break with error
                                 err = true;
                             }
+
                             break;
 
                         // parsing 1st buffer: index
@@ -965,18 +964,16 @@ namespace AasxServerStandardBib
                             if (json[i] == ',')
                             {
                                 // prepare second buffer
-                                state = 2;
+                                state    = 2;
                                 bufValue = "";
                                 i++;
                             }
-                            else
-                            if ("0123456789-+.TZ\"".IndexOf(json[i]) >= 0)
+                            else if ("0123456789-+.TZ\"".IndexOf(json[i]) >= 0)
                             {
                                 bufIndex += json[i];
                                 i++;
                             }
-                            else
-                            if (Char.IsWhiteSpace(json[i]))
+                            else if (Char.IsWhiteSpace(json[i]))
                             {
                                 // ignore whitespace
                                 i++;
@@ -986,6 +983,7 @@ namespace AasxServerStandardBib
                                 // break with error
                                 err = true;
                             }
+
                             break;
 
                         // parsing 2nd buffer: value
@@ -995,18 +993,14 @@ namespace AasxServerStandardBib
                                 // ok, finalize
                                 if (int.TryParse(bufIndex, out int iIndex))
                                 {
-                                    var dp = new TimeSeriesDataPoint()
-                                    {
-                                        Index = iIndex,
-                                        ValStr = bufValue
-                                    };
+                                    var dp = new TimeSeriesDataPoint() {Index = iIndex, ValStr = bufValue};
 
                                     if (timeAxis == TimeSeriesTimeAxis.Utc || timeAxis == TimeSeriesTimeAxis.Tai)
                                     {
                                         // strict time string
                                         if (DateTime.TryParseExact(bufValue,
-                                            "yyyy-MM-dd'T'HH:mm:ss.FFFFFFF'Z'", CultureInfo.InvariantCulture,
-                                            DateTimeStyles.AdjustToUniversal, out DateTime dt))
+                                                                   "yyyy-MM-dd'T'HH:mm:ss.FFFFFFF'Z'", CultureInfo.InvariantCulture,
+                                                                   DateTimeStyles.AdjustToUniversal, out DateTime dt))
                                         {
                                             dp.Value = dt.ToOADate();
                                         }
@@ -1019,9 +1013,10 @@ namespace AasxServerStandardBib
                                     {
                                         // plain time or plain value
                                         if (double.TryParse(bufValue, NumberStyles.Float,
-                                                CultureInfo.InvariantCulture, out double fValue))
+                                                            CultureInfo.InvariantCulture, out double fValue))
                                             dp.Value = fValue;
                                     }
+
                                     this.Add(dp);
                                 }
 
@@ -1029,14 +1024,12 @@ namespace AasxServerStandardBib
                                 state = 0;
                                 i++;
                             }
-                            else
-                            if ("0123456789-+.:TZ\"".IndexOf(json[i]) >= 0)
+                            else if ("0123456789-+.:TZ\"".IndexOf(json[i]) >= 0)
                             {
                                 bufValue += json[i];
                                 i++;
                             }
-                            else
-                            if (Char.IsWhiteSpace(json[i]))
+                            else if (Char.IsWhiteSpace(json[i]))
                             {
                                 // ignore whitespace
                                 i++;
@@ -1046,11 +1039,10 @@ namespace AasxServerStandardBib
                                 // break with error
                                 err = true;
                             }
+
                             break;
                     }
-
                 }
-
             }
         }
 
@@ -1058,10 +1050,11 @@ namespace AasxServerStandardBib
         {
             public double Min;
             public double Max;
-            public bool IsValid { get { return Min != double.MaxValue && Max != double.MinValue; } }
-            public double Span { get { return Max - Min; } }
+            public bool   IsValid { get { return Min != double.MaxValue && Max != double.MinValue; } }
+            public double Span    { get { return Max - Min; } }
+
             public static TimeSeriesMinMaxDouble Invalid =>
-                new TimeSeriesMinMaxDouble() { Min = double.MaxValue, Max = double.MinValue };
+                new TimeSeriesMinMaxDouble() {Min = double.MaxValue, Max = double.MinValue};
         }
 
         public class TimeSeriesMinMaxInt
@@ -1069,9 +1062,10 @@ namespace AasxServerStandardBib
             public int Min;
             public int Max;
             public bool IsValid { get { return Min != int.MaxValue && Max != int.MinValue; } }
-            public int Span { get { return Max - Min; } }
+            public int  Span    { get { return Max - Min; } }
+
             public static TimeSeriesMinMaxInt Invalid =>
-                new TimeSeriesMinMaxInt() { Min = int.MaxValue, Max = int.MinValue };
+                new TimeSeriesMinMaxInt() {Min = int.MaxValue, Max = int.MinValue};
         }
 
         public class ListOfTimeSeriesDataSet : List<TimeSeriesDataSet>
@@ -1234,7 +1228,7 @@ namespace AasxServerStandardBib
 
                 try
                 {
-                    var res = Newtonsoft.Json.JsonConvert.DeserializeObject<PlotArguments>(json);
+                    var res = JsonSerializer.Deserialize<PlotArguments>(json);
                     return res;
                 }
                 catch (Exception ex)
@@ -1265,10 +1259,10 @@ namespace AasxServerStandardBib
         }
 
         public static void TimeSeriesAddSegmentData(
-        ZveiTimeSeriesDataV10 pcts,
-        //AdminShell.Key.MatchMode mm,
-        TimeSeriesData tsd,
-        SubmodelElementCollection smcseg)
+            ZveiTimeSeriesDataV10 pcts,
+            //AdminShell.Key.MatchMode mm,
+            TimeSeriesData tsd,
+            SubmodelElementCollection smcseg)
         {
             // access
             if (pcts == null || smcseg == null)
@@ -1276,34 +1270,35 @@ namespace AasxServerStandardBib
 
             // challenge is to select SMes, which are NOT from a known semantic id!
             var tsvAllowed = new[]
-            {
-            //pcts.CD_RecordId.Id,
-            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/RecordId/1/0" /*pcts.CD_RecordId.Id*/,
-            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/UtcTime/1/0" /*pcts.CD_UtcTime.Id*/,
-            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TaiTime/1/0" /*pcts.CD_TaiTime.Id*/,
-            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/Time/1/0" /*pcts.CD_Time.Id*/,
-            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeDuration/1/0" /*pcts.CD_TimeDuration.Id*/,
-            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/ValueArray/1/0" /*pcts.CD_ValueArray.Id*/,
-            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/ExternalDataFile/1/0" /*pcts.CD_ExternalDataFile.Id*/
-            };
+                             {
+                                 //pcts.CD_RecordId.Id,
+                                 "https://admin-shell.io/sandbox/zvei/TimeSeriesData/RecordId/1/0" /*pcts.CD_RecordId.Id*/,
+                                 "https://admin-shell.io/sandbox/zvei/TimeSeriesData/UtcTime/1/0" /*pcts.CD_UtcTime.Id*/,
+                                 "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TaiTime/1/0" /*pcts.CD_TaiTime.Id*/,
+                                 "https://admin-shell.io/sandbox/zvei/TimeSeriesData/Time/1/0" /*pcts.CD_Time.Id*/,
+                                 "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeDuration/1/0" /*pcts.CD_TimeDuration.Id*/,
+                                 "https://admin-shell.io/sandbox/zvei/TimeSeriesData/ValueArray/1/0" /*pcts.CD_ValueArray.Id*/,
+                                 "https://admin-shell.io/sandbox/zvei/TimeSeriesData/ExternalDataFile/1/0" /*pcts.CD_ExternalDataFile.Id*/
+                             };
 
             var tsrAllowed = new[]
-            {
-            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/RecordId/1/0" /*pcts.CD_RecordId.Id*/,
-            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/UtcTime/1/0" /*pcts.CD_UtcTime.Id*/,
-            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TaiTime/1/0" /*pcts.CD_TaiTime.Id*/,
-            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/Time/1/0" /*pcts.CD_Time.Id*/,
-            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeDuration/1/0" /*pcts.CD_TimeDuration.Id*/,
-            "https://admin-shell.io/sandbox/zvei/TimeSeriesData/ValueArray/1/0" /*pcts.CD_ValueArray.Id*/
-            };
+                             {
+                                 "https://admin-shell.io/sandbox/zvei/TimeSeriesData/RecordId/1/0" /*pcts.CD_RecordId.Id*/,
+                                 "https://admin-shell.io/sandbox/zvei/TimeSeriesData/UtcTime/1/0" /*pcts.CD_UtcTime.Id*/,
+                                 "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TaiTime/1/0" /*pcts.CD_TaiTime.Id*/,
+                                 "https://admin-shell.io/sandbox/zvei/TimeSeriesData/Time/1/0" /*pcts.CD_Time.Id*/,
+                                 "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeDuration/1/0" /*pcts.CD_TimeDuration.Id*/,
+                                 "https://admin-shell.io/sandbox/zvei/TimeSeriesData/ValueArray/1/0" /*pcts.CD_ValueArray.Id*/
+                             };
 
             // find variables?
             foreach (var smcvar in smcseg.Value.FindAllSemanticIdAs<SubmodelElementCollection>(
-                "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesVariable/1/0" /*pcts.CD_TimeSeriesVariable.Id*/))
+                                                                                               "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesVariable/1/0" /*pcts.CD_TimeSeriesVariable.Id*/))
             {
                 // makes only sense with record id
                 var recid = "" + smcvar.Value.FindFirstSemanticIdAs<Property>(
-                    "https://admin-shell.io/sandbox/zvei/TimeSeriesData/RecordId/1/0" /*pcts.CD_RecordId.Id*/)?.Value?.Trim();
+                                                                              "https://admin-shell.io/sandbox/zvei/TimeSeriesData/RecordId/1/0" /*pcts.CD_RecordId.Id*/)?.Value
+                                       ?.Trim();
                 if (recid.Length < 1)
                     continue;
 
@@ -1311,7 +1306,7 @@ namespace AasxServerStandardBib
                 //var valarr = "" + smcvar.Value.FindFirstSemanticIdAs<Blob>(pcts.CD_ValueArray.Id)?.Value?.Trim();
                 var vv = smcvar.Value.FindFirstSemanticIdAs<Blob>("https://admin-shell.io/sandbox/zvei/TimeSeriesData/ValueArray/1/0");
                 var valarr = "" + smcvar.Value.FindFirstSemanticIdAs<Blob>("https://admin-shell.io/sandbox/zvei/TimeSeriesData/ValueArray/1/0"
-                    /*pcts.CD_ValueArray.Id*/).Value.ToString().Trim();
+                                                                           /*pcts.CD_ValueArray.Id*/).Value.ToString().Trim();
                 valarr = System.Text.Encoding.ASCII.GetString(vv.Value);
                 if (valarr.Length < 1)
                     continue;
@@ -1321,7 +1316,7 @@ namespace AasxServerStandardBib
                 if (ds == null)
                 {
                     // add
-                    ds = new TimeSeriesDataSet() { DataSetId = recid };
+                    ds = new TimeSeriesDataSet() {DataSetId = recid};
                     tsd.DataSet.Add(ds);
 
                     // at this very moment, check if this is a time series
@@ -1347,11 +1342,12 @@ namespace AasxServerStandardBib
 
             // find records?
             foreach (var smcrec in smcseg.Value.FindAllSemanticIdAs<SubmodelElementCollection>(
-                "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesRecord/1/0" /*pcts.CD_TimeSeriesRecord.Id)*/))
+                                                                                               "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesRecord/1/0" /*pcts.CD_TimeSeriesRecord.Id)*/))
             {
                 // makes only sense with a numerical record id
                 var recid = "" + smcrec.Value.FindFirstSemanticIdAs<Property>(
-                    "https://admin-shell.io/sandbox/zvei/TimeSeriesData/RecordId/1/0" /*pcts.CD_RecordId.Id*/)?.Value?.Trim();
+                                                                              "https://admin-shell.io/sandbox/zvei/TimeSeriesData/RecordId/1/0" /*pcts.CD_RecordId.Id*/)?.Value
+                                       ?.Trim();
                 if (recid.Length < 1)
                     continue;
                 if (!int.TryParse(recid, out var dataIndex))
@@ -1380,7 +1376,7 @@ namespace AasxServerStandardBib
                     if (ds == null)
                     {
                         // add
-                        ds = new TimeSeriesDataSet() { DataSetId = dsid };
+                        ds = new TimeSeriesDataSet() {DataSetId = dsid};
                         tsd.DataSet.Add(ds);
 
                         // find a DataPoint description? .. store it!
@@ -1396,10 +1392,7 @@ namespace AasxServerStandardBib
                         else
                         {
                             // create this
-                            ds.AssignedTimeDS = new TimeSeriesDataSet()
-                            {
-                                DataSetId = "Time_" + timeSpec.Item1.ToString()
-                            };
+                            ds.AssignedTimeDS                = new TimeSeriesDataSet() {DataSetId = "Time_" + timeSpec.Item1.ToString()};
                             tsd.TimeDsLookup[timeSpec.Item1] = ds.AssignedTimeDS;
                         }
 
@@ -1409,7 +1402,7 @@ namespace AasxServerStandardBib
 
                     // now access the value of the data point as float value
                     if (!double.TryParse(pdp.Value, NumberStyles.Float,
-                            CultureInfo.InvariantCulture, out var dataValue))
+                                         CultureInfo.InvariantCulture, out var dataValue))
                         continue;
 
                     // TimeDS and time is required
@@ -1434,8 +1427,8 @@ namespace AasxServerStandardBib
             {
                 // strict time string
                 if (DateTime.TryParseExact(bufValue,
-                    "yyyy-MM-dd'T'HH:mm:ssZ", CultureInfo.InvariantCulture,
-                    DateTimeStyles.AdjustToUniversal, out DateTime dt))
+                                           "yyyy-MM-dd'T'HH:mm:ssZ", CultureInfo.InvariantCulture,
+                                           DateTimeStyles.AdjustToUniversal, out DateTime dt))
                 {
                     return dt.ToOADate();
                 }
@@ -1443,7 +1436,7 @@ namespace AasxServerStandardBib
 
             // plain time or plain value
             if (double.TryParse(bufValue, NumberStyles.Float,
-                    CultureInfo.InvariantCulture, out double fValue))
+                                CultureInfo.InvariantCulture, out double fValue))
                 return fValue;
 
             // no?
@@ -1484,16 +1477,16 @@ namespace AasxServerStandardBib
 
                 // Referable
                 this.ReadLibrary(
-                    Assembly.GetExecutingAssembly(), "Resources." + "ZveiTimeSeriesDataV10.json");
+                                 Assembly.GetExecutingAssembly(), "Resources." + "ZveiTimeSeriesDataV10.json");
                 // this.RetrieveEntriesFromLibraryByReflection(typeof(ZveiTimeSeriesDataV10), useFieldNames: true);
             }
         }
 
         protected static Tuple<TimeSeriesTimeAxis, Property>
-        DetectTimeSpecifier(
-            ZveiTimeSeriesDataV10 pcts,
-            //AdminShell.Key.MatchMode mm,
-            SubmodelElementCollection smc)
+            DetectTimeSpecifier(
+                ZveiTimeSeriesDataV10 pcts,
+                //AdminShell.Key.MatchMode mm,
+                SubmodelElementCollection smc)
         {
             // access
             if (smc?.Value == null || pcts == null)
@@ -1533,9 +1526,10 @@ namespace AasxServerStandardBib
                 public string contents = "";
 
                 public LibraryEntry() { }
+
                 public LibraryEntry(string name, string contents)
                 {
-                    this.name = name;
+                    this.name     = name;
                     this.contents = contents;
                 }
             }
@@ -1556,52 +1550,34 @@ namespace AasxServerStandardBib
 
             public AasxDefinitionBase() { }
 
-            public AasxDefinitionBase(Assembly assembly, string resourceName)
-            {
-                this.theLibrary = BuildLibrary(assembly, resourceName);
-            }
+            public AasxDefinitionBase(Assembly assembly, string resourceName) => theLibrary = BuildLibrary(assembly, resourceName);
 
             //
             // Rest
             //
 
-            public void ReadLibrary(Assembly assembly, string resourceName)
-            {
-                this.theLibrary = BuildLibrary(assembly, resourceName);
-            }
+            public void ReadLibrary(Assembly assembly, string resourceName) => theLibrary = BuildLibrary(assembly, resourceName);
 
             protected Dictionary<string, LibraryEntry> BuildLibrary(Assembly assembly, string resourceName)
             {
                 // empty result
                 var res = new Dictionary<string, LibraryEntry>();
 
-                // access resource
-                //var stream = assembly.GetManifestResourceStream(resourceName);
-                //if (stream == null)
-                //    return res;
-
                 // read text
-                //TextReader tr = new StreamReader(stream);
-                //var jsonStr = tr.ReadToEnd();
-                var jsonStr = "{ \"SM_TimeSeriesData\": { \"semanticId\": { \"keys\": [ { \"type\": \"GlobalReference\", \"local\": false, \"value\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/1/0\", \"index\": 0, \"idType\": \"IRI\" } ] }, \"qualifiers\": [], \"hasDataSpecification\": [], \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"TimeSeriesData\", \"category\": null, \"modelType\": { \"name\": \"Submodel\" }, \"kind\": \"Template\", \"descriptions\": [ { \"language\": \"de\", \"text\": \"Enthält Zeitreihendaten und Referenzen auf Zeitreihendaten, um diese entlang des Asset Lebenszyklus aufzufinden und semantisch zu beschreiben.\" }, { \"language\": \"en\", \"text\": \"Contains time series data and references to time series data to discover and semantically describe them along the asset lifecycle.\" } ] }, \"CD_TimeSeries\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeries/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"TimeSeries\", \"category\": null, \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Zeitreihe\" }, { \"language\": \"en\", \"text\": \"Time series\" } ], \"shortName\": [ { \"language\": \"de\", \"text\": \"Zeitreihe\" }, { \"language\": \"en\", \"text\": \"TimeSeries\" } ], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"\", \"definition\": [ { \"language\": \"de\", \"text\": \"Abfolge von Datenpunkten in aufeinanderfolgender Reihenfolge über einen bestimmten Zeitraum.\" }, { \"language\": \"en\", \"text\": \"Sequence of data points in successive order over a specified period of time.\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_Name\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/Name/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"Name\", \"category\": \"PARAMETER\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Name der Zeitreihe\" }, { \"language\": \"en\", \"text\": \"Name of the time series\" } ], \"shortName\": [ { \"language\": \"de\", \"text\": \"Name\" }, { \"language\": \"en\", \"text\": \"Name\" } ], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"STRING_TRANSLATABLE\", \"definition\": [ { \"language\": \"de\", \"text\": \"Aussagekräftiger Name zur Beschriftung.\" }, { \"language\": \"en\", \"text\": \"Meaningful name for labeling\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_Description\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/Description/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"Description\", \"category\": \"PARAMETER\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Beschreibung der Zeitreihe\" }, { \"language\": \"en\", \"text\": \"Description of the time series\" } ], \"shortName\": [ { \"language\": \"de\", \"text\": \"Beschreibung\" }, { \"language\": \"en\", \"text\": \"Description\" } ], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"STRING_TRANSLATABLE\", \"definition\": [ { \"language\": \"de\", \"text\": \"Kurze Beschreibung der Zeitreihendaten.\" }, { \"language\": \"en\", \"text\": \"Short description of the time series.\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_TimeSeriesSegment\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"TimeSeriesSegment\", \"category\": null, \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Zeitreihensegment\" }, { \"language\": \"en\", \"text\": \"Time series segment\" } ], \"shortName\": [ { \"language\": \"de\", \"text\": \"Segment\" }, { \"language\": \"en\", \"text\": \"Segment\" } ], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"\", \"definition\": [ { \"language\": \"de\", \"text\": \"Abfolge von Datenpunkten in aufeinanderfolgender Reihenfolge über einen bestimmten Zeitraum.\" }, { \"language\": \"en\", \"text\": \"Sequence of data points in successive order over a specified period of time.\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_RecordCount\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/RecordCount/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"RecordCount\", \"category\": \"VARIABLE\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Anzahl der Datensätze\" }, { \"language\": \"en\", \"text\": \"Record count\" } ], \"shortName\": [], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"REAL_COUNT\", \"definition\": [ { \"language\": \"de\", \"text\": \"Gibt an, wie viele Datensätze in einem Segment vorhanden sind.\" }, { \"language\": \"en\", \"text\": \"Indicates how many records are present in a segment.\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_StartTime\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/StartTime/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"StartTime\", \"category\": \"VARIABLE\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Startzeit\" }, { \"language\": \"en\", \"text\": \"Start time\" } ], \"shortName\": [], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"\", \"definition\": [ { \"language\": \"de\", \"text\": \"Enthält den ersten aufgezeichneten Zeitstempel des Zeitreihensegments und stellt somit den Anfang einer Zeitreihe dar. Zeitformat und -skala entspricht dem der Zeitreihe.\" }, { \"language\": \"en\", \"text\": \"Contains the first recorded timestamp of the time series segment and thus represents the beginning of a time series. Time format and scale corresponds to that of the time series.\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_EndTime\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/EndTime/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"EndTime\", \"category\": \"VARIABLE\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Endzeit\" }, { \"language\": \"en\", \"text\": \"End time\" } ], \"shortName\": [], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"\", \"definition\": [ { \"language\": \"de\", \"text\": \"Enthält den letzten aufgezeichneten Zeitstempel des Zeitreihensegments und stellt somit das Ende einer Zeitreihe dar. Zeitformat und -skala entspricht dem der Zeitreihe.\" }, { \"language\": \"en\", \"text\": \"Contains the last recorded timestamp of the time series segment and thus represents the end of a time series. Time format and scale corresponds to that of the time series.\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_SamplingInterval\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/SamplingInterval/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"SamplingInterval\", \"category\": \"PARAMETER\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Abtastintervall\" }, { \"language\": \"en\", \"text\": \"Sampling interval\" } ], \"shortName\": [], \"unit\": \"s\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": \"t\", \"dataType\": \"REAL_MEASURE\", \"definition\": [ { \"language\": \"de\", \"text\": \"Der zeitliche Abstand zwischen zwei Datenpunkten (Länge eines Zyklus).\" }, { \"language\": \"en\", \"text\": \"The time period between two time series records (Length of cycle).\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_SamplingRate\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/SamplingRate/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"SamplingRate\", \"category\": \"VARIABLE\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Abtastrate\" }, { \"language\": \"en\", \"text\": \"Sampling rate\" } ], \"shortName\": [], \"unit\": \"Hz\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"REAL_MEASURE\", \"definition\": [ { \"language\": \"de\", \"text\": \"Definiert die Anzahl der Abtastungen pro Sekunde für eine regelmäßige Zeitreihe in Hz.\" }, { \"language\": \"en\", \"text\": \"Defines the number of samples per second for a regular time series in Hz.\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_TimeSeriesRecord\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesRecord/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"TimeSeriesRecord\", \"category\": null, \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Zeitreihen-Datensatz\" }, { \"language\": \"en\", \"text\": \"Time series record\" } ], \"shortName\": [], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"\", \"definition\": [ { \"language\": \"de\", \"text\": \"Ein Zeitreihen-Datensatz ist durch seine ID innerhalb der Zeitreihe eindeutig und beinhaltet die auf die ID referenzierten Zeitstempel und Variablenwerte. Vergleichbar mit einer Zeile in einer Tabelle.\" }, { \"language\": \"en\", \"text\": \"A time series record is unique by its ID within the time series and contains the timestamps and variable values referenced to the ID. Similar to a row in a table.\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_RecordId\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/RecordId/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"RecordId\", \"category\": \"PARAMETER\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"ID\" }, { \"language\": \"en\", \"text\": \"ID\" } ], \"shortName\": [], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"STRING\", \"definition\": [ { \"language\": \"en\", \"text\": \"Labels the record within a time series with a unique ID.\" }, { \"language\": \"de\", \"text\": \"Kennzeichnet den Datensatz innerhalb einer Zeitreihe mit einer eindeutigen ID. \" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_UtcTime\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/UtcTime/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"UtcTime\", \"category\": \"VARIABLE\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Zeitstempel UTC\" }, { \"language\": \"en\", \"text\": \"timestamp UTC\" } ], \"shortName\": [ { \"language\": \"de\", \"text\": \"Zeitstempel UTC\" }, { \"language\": \"en\", \"text\": \"timestamp UTC\" } ], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"TIMESTAMP\", \"definition\": [ { \"language\": \"de\", \"text\": \"Zeitstempel nach ISO 8601 auf der Zeitskala der koordinierten Weltzeit (UTC).\" }, { \"language\": \"en\", \"text\": \"Timestamp according to ISO 8601 on the timescale ccordinated universal time (UTC).\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_TaiTime\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/TaiTime/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"TaiTime\", \"category\": \"VARIABLE\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Zeitstempel TAI\" }, { \"language\": \"en\", \"text\": \"timestamp TAI\" } ], \"shortName\": [], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"TIMESTAMP\", \"definition\": [ { \"language\": \"de\", \"text\": \"Zeitstempel nach ISO 8601 auf der Zeitskala internationale Atomzeit (TAI).\" }, { \"language\": \"en\", \"text\": \"Timestamp according to ISO 8601 on the timescale international atomic time (TAI).\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_Time\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/Time/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"Time\", \"category\": \"VARIABLE\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Zeitstempel\" }, { \"language\": \"en\", \"text\": \"Timestamp\" } ], \"shortName\": [], \"unit\": \"s\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": \"t\", \"dataType\": \"REAL_MEASURE\", \"definition\": [ { \"language\": \"de\", \"text\": \"Zeitpunktangabe in Sekunden. Zeitpunkte referenzieren auf die Startzeit des Zeitreihensegments.\" }, { \"language\": \"en\", \"text\": \"Point of Time in seconds. Time points refer to the start time of the time series segment.\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_TimeDuration\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeDuration/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"TimeDuration\", \"category\": \"VARIABLE\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Zeitdauer\" }, { \"language\": \"en\", \"text\": \"Timeduration\" } ], \"shortName\": [], \"unit\": \"s\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": \"\", \"dataType\": \"REAL_MEASURE\", \"definition\": [ { \"language\": \"de\", \"text\": \"Angabe der zeitlichen Dauer in Sekunden (Anzahl der Sekunden). Zeitdauern referenzieren auf den jeweils vorangegangenen Eintrag im Zeitreihensegment.\" }, { \"language\": \"en\", \"text\": \"Time duration specification in seconds. (number of seconds). Time durations refer to the previous entry in the time series segment.\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_TimeSeriesVariable\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesVariable/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"TimeSeriesVariable\", \"category\": null, \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Zeitreihenvariable\" }, { \"language\": \"en\", \"text\": \"Time series variable\" } ], \"shortName\": [], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"\", \"definition\": [ { \"language\": \"de\", \"text\": \"Eine Zeitreihenvariable bildet eine Wertereihe, bestehend aus RecordID und einer weiteren Dimension der Zeitreihe, als Array ab. Vergleichbar einer Spalte in einer Tabelle. Variablen können Zeitstempel oder Datenpunkte sein.\" }, { \"language\": \"en\", \"text\": \"A time series variable contains the sequence of values, consisting of RecordID and another dimension of the time series, as an array. Similar to a column in a table. Variables can be timestamps or data points.\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_ValueArray\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/ValueArray/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"ValueArray\", \"category\": \"PARAMETER\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Wertereihe\" }, { \"language\": \"en\", \"text\": \"Value Array\" } ], \"shortName\": [], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"\", \"definition\": [ { \"language\": \"de\", \"text\": \"Wertereihe einer einer Zeitreihe. Die Reihenfolge der Dimensionen und deren semantische Beueutung ergibt sich aus den Definitionen innerhalb der Zeitreihenvariable.  \" }, { \"language\": \"en\", \"text\": \"Values of a time series. The order of the dimensions and their semantic meaning results from the definitions within the time series variable.  \" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_ExternalDataFile\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/ExternalDataFile/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"ExternalDataFile\", \"category\": null, \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Externe Datendatei\" }, { \"language\": \"en\", \"text\": \"External data file\" } ], \"shortName\": [], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"\", \"definition\": [ { \"language\": \"de\", \"text\": \"Externe Datendatei, welche Zeitreihendaten in einem beliebigen Format beinhaltet.\" }, { \"language\": \"en\", \"text\": \"External data file containing time series data in any format.\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null } }";
-                //stream.Close();
+                var jsonStr
+                    = "{ \"SM_TimeSeriesData\": { \"semanticId\": { \"keys\": [ { \"type\": \"GlobalReference\", \"local\": false, \"value\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/1/0\", \"index\": 0, \"idType\": \"IRI\" } ] }, \"qualifiers\": [], \"hasDataSpecification\": [], \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"TimeSeriesData\", \"category\": null, \"modelType\": { \"name\": \"Submodel\" }, \"kind\": \"Template\", \"descriptions\": [ { \"language\": \"de\", \"text\": \"Enthält Zeitreihendaten und Referenzen auf Zeitreihendaten, um diese entlang des Asset Lebenszyklus aufzufinden und semantisch zu beschreiben.\" }, { \"language\": \"en\", \"text\": \"Contains time series data and references to time series data to discover and semantically describe them along the asset lifecycle.\" } ] }, \"CD_TimeSeries\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeries/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"TimeSeries\", \"category\": null, \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Zeitreihe\" }, { \"language\": \"en\", \"text\": \"Time series\" } ], \"shortName\": [ { \"language\": \"de\", \"text\": \"Zeitreihe\" }, { \"language\": \"en\", \"text\": \"TimeSeries\" } ], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"\", \"definition\": [ { \"language\": \"de\", \"text\": \"Abfolge von Datenpunkten in aufeinanderfolgender Reihenfolge über einen bestimmten Zeitraum.\" }, { \"language\": \"en\", \"text\": \"Sequence of data points in successive order over a specified period of time.\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_Name\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/Name/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"Name\", \"category\": \"PARAMETER\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Name der Zeitreihe\" }, { \"language\": \"en\", \"text\": \"Name of the time series\" } ], \"shortName\": [ { \"language\": \"de\", \"text\": \"Name\" }, { \"language\": \"en\", \"text\": \"Name\" } ], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"STRING_TRANSLATABLE\", \"definition\": [ { \"language\": \"de\", \"text\": \"Aussagekräftiger Name zur Beschriftung.\" }, { \"language\": \"en\", \"text\": \"Meaningful name for labeling\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_Description\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/Description/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"Description\", \"category\": \"PARAMETER\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Beschreibung der Zeitreihe\" }, { \"language\": \"en\", \"text\": \"Description of the time series\" } ], \"shortName\": [ { \"language\": \"de\", \"text\": \"Beschreibung\" }, { \"language\": \"en\", \"text\": \"Description\" } ], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"STRING_TRANSLATABLE\", \"definition\": [ { \"language\": \"de\", \"text\": \"Kurze Beschreibung der Zeitreihendaten.\" }, { \"language\": \"en\", \"text\": \"Short description of the time series.\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_TimeSeriesSegment\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"TimeSeriesSegment\", \"category\": null, \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Zeitreihensegment\" }, { \"language\": \"en\", \"text\": \"Time series segment\" } ], \"shortName\": [ { \"language\": \"de\", \"text\": \"Segment\" }, { \"language\": \"en\", \"text\": \"Segment\" } ], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"\", \"definition\": [ { \"language\": \"de\", \"text\": \"Abfolge von Datenpunkten in aufeinanderfolgender Reihenfolge über einen bestimmten Zeitraum.\" }, { \"language\": \"en\", \"text\": \"Sequence of data points in successive order over a specified period of time.\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_RecordCount\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/RecordCount/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"RecordCount\", \"category\": \"VARIABLE\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Anzahl der Datensätze\" }, { \"language\": \"en\", \"text\": \"Record count\" } ], \"shortName\": [], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"REAL_COUNT\", \"definition\": [ { \"language\": \"de\", \"text\": \"Gibt an, wie viele Datensätze in einem Segment vorhanden sind.\" }, { \"language\": \"en\", \"text\": \"Indicates how many records are present in a segment.\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_StartTime\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/StartTime/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"StartTime\", \"category\": \"VARIABLE\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Startzeit\" }, { \"language\": \"en\", \"text\": \"Start time\" } ], \"shortName\": [], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"\", \"definition\": [ { \"language\": \"de\", \"text\": \"Enthält den ersten aufgezeichneten Zeitstempel des Zeitreihensegments und stellt somit den Anfang einer Zeitreihe dar. Zeitformat und -skala entspricht dem der Zeitreihe.\" }, { \"language\": \"en\", \"text\": \"Contains the first recorded timestamp of the time series segment and thus represents the beginning of a time series. Time format and scale corresponds to that of the time series.\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_EndTime\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/EndTime/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"EndTime\", \"category\": \"VARIABLE\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Endzeit\" }, { \"language\": \"en\", \"text\": \"End time\" } ], \"shortName\": [], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"\", \"definition\": [ { \"language\": \"de\", \"text\": \"Enthält den letzten aufgezeichneten Zeitstempel des Zeitreihensegments und stellt somit das Ende einer Zeitreihe dar. Zeitformat und -skala entspricht dem der Zeitreihe.\" }, { \"language\": \"en\", \"text\": \"Contains the last recorded timestamp of the time series segment and thus represents the end of a time series. Time format and scale corresponds to that of the time series.\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_SamplingInterval\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/SamplingInterval/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"SamplingInterval\", \"category\": \"PARAMETER\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Abtastintervall\" }, { \"language\": \"en\", \"text\": \"Sampling interval\" } ], \"shortName\": [], \"unit\": \"s\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": \"t\", \"dataType\": \"REAL_MEASURE\", \"definition\": [ { \"language\": \"de\", \"text\": \"Der zeitliche Abstand zwischen zwei Datenpunkten (Länge eines Zyklus).\" }, { \"language\": \"en\", \"text\": \"The time period between two time series records (Length of cycle).\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_SamplingRate\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/SamplingRate/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"SamplingRate\", \"category\": \"VARIABLE\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Abtastrate\" }, { \"language\": \"en\", \"text\": \"Sampling rate\" } ], \"shortName\": [], \"unit\": \"Hz\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"REAL_MEASURE\", \"definition\": [ { \"language\": \"de\", \"text\": \"Definiert die Anzahl der Abtastungen pro Sekunde für eine regelmäßige Zeitreihe in Hz.\" }, { \"language\": \"en\", \"text\": \"Defines the number of samples per second for a regular time series in Hz.\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_TimeSeriesRecord\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesRecord/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"TimeSeriesRecord\", \"category\": null, \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Zeitreihen-Datensatz\" }, { \"language\": \"en\", \"text\": \"Time series record\" } ], \"shortName\": [], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"\", \"definition\": [ { \"language\": \"de\", \"text\": \"Ein Zeitreihen-Datensatz ist durch seine ID innerhalb der Zeitreihe eindeutig und beinhaltet die auf die ID referenzierten Zeitstempel und Variablenwerte. Vergleichbar mit einer Zeile in einer Tabelle.\" }, { \"language\": \"en\", \"text\": \"A time series record is unique by its ID within the time series and contains the timestamps and variable values referenced to the ID. Similar to a row in a table.\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_RecordId\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/RecordId/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"RecordId\", \"category\": \"PARAMETER\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"ID\" }, { \"language\": \"en\", \"text\": \"ID\" } ], \"shortName\": [], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"STRING\", \"definition\": [ { \"language\": \"en\", \"text\": \"Labels the record within a time series with a unique ID.\" }, { \"language\": \"de\", \"text\": \"Kennzeichnet den Datensatz innerhalb einer Zeitreihe mit einer eindeutigen ID. \" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_UtcTime\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/UtcTime/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"UtcTime\", \"category\": \"VARIABLE\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Zeitstempel UTC\" }, { \"language\": \"en\", \"text\": \"timestamp UTC\" } ], \"shortName\": [ { \"language\": \"de\", \"text\": \"Zeitstempel UTC\" }, { \"language\": \"en\", \"text\": \"timestamp UTC\" } ], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"TIMESTAMP\", \"definition\": [ { \"language\": \"de\", \"text\": \"Zeitstempel nach ISO 8601 auf der Zeitskala der koordinierten Weltzeit (UTC).\" }, { \"language\": \"en\", \"text\": \"Timestamp according to ISO 8601 on the timescale ccordinated universal time (UTC).\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_TaiTime\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/TaiTime/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"TaiTime\", \"category\": \"VARIABLE\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Zeitstempel TAI\" }, { \"language\": \"en\", \"text\": \"timestamp TAI\" } ], \"shortName\": [], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"TIMESTAMP\", \"definition\": [ { \"language\": \"de\", \"text\": \"Zeitstempel nach ISO 8601 auf der Zeitskala internationale Atomzeit (TAI).\" }, { \"language\": \"en\", \"text\": \"Timestamp according to ISO 8601 on the timescale international atomic time (TAI).\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_Time\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/Time/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"Time\", \"category\": \"VARIABLE\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Zeitstempel\" }, { \"language\": \"en\", \"text\": \"Timestamp\" } ], \"shortName\": [], \"unit\": \"s\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": \"t\", \"dataType\": \"REAL_MEASURE\", \"definition\": [ { \"language\": \"de\", \"text\": \"Zeitpunktangabe in Sekunden. Zeitpunkte referenzieren auf die Startzeit des Zeitreihensegments.\" }, { \"language\": \"en\", \"text\": \"Point of Time in seconds. Time points refer to the start time of the time series segment.\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_TimeDuration\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeDuration/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"TimeDuration\", \"category\": \"VARIABLE\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Zeitdauer\" }, { \"language\": \"en\", \"text\": \"Timeduration\" } ], \"shortName\": [], \"unit\": \"s\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": \"\", \"dataType\": \"REAL_MEASURE\", \"definition\": [ { \"language\": \"de\", \"text\": \"Angabe der zeitlichen Dauer in Sekunden (Anzahl der Sekunden). Zeitdauern referenzieren auf den jeweils vorangegangenen Eintrag im Zeitreihensegment.\" }, { \"language\": \"en\", \"text\": \"Time duration specification in seconds. (number of seconds). Time durations refer to the previous entry in the time series segment.\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_TimeSeriesVariable\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesVariable/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"TimeSeriesVariable\", \"category\": null, \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Zeitreihenvariable\" }, { \"language\": \"en\", \"text\": \"Time series variable\" } ], \"shortName\": [], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"\", \"definition\": [ { \"language\": \"de\", \"text\": \"Eine Zeitreihenvariable bildet eine Wertereihe, bestehend aus RecordID und einer weiteren Dimension der Zeitreihe, als Array ab. Vergleichbar einer Spalte in einer Tabelle. Variablen können Zeitstempel oder Datenpunkte sein.\" }, { \"language\": \"en\", \"text\": \"A time series variable contains the sequence of values, consisting of RecordID and another dimension of the time series, as an array. Similar to a column in a table. Variables can be timestamps or data points.\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_ValueArray\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/ValueArray/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"ValueArray\", \"category\": \"PARAMETER\", \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Wertereihe\" }, { \"language\": \"en\", \"text\": \"Value Array\" } ], \"shortName\": [], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"\", \"definition\": [ { \"language\": \"de\", \"text\": \"Wertereihe einer einer Zeitreihe. Die Reihenfolge der Dimensionen und deren semantische Beueutung ergibt sich aus den Definitionen innerhalb der Zeitreihenvariable.  \" }, { \"language\": \"en\", \"text\": \"Values of a time series. The order of the dimensions and their semantic meaning results from the definitions within the time series variable.  \" } ] } } ], \"isCaseOf\": [], \"descriptions\": null }, \"CD_ExternalDataFile\": { \"identification\": { \"idType\": \"IRI\", \"id\": \"https://admin-shell.io/sandbox/zvei/TimeSeriesData/ExternalDataFile/1/0\" }, \"administration\": { \"version\": \"1\", \"revision\": \"0\" }, \"idShort\": \"ExternalDataFile\", \"category\": null, \"modelType\": { \"name\": \"ConceptDescription\" }, \"embeddedDataSpecifications\": [ { \"dataSpecification\": { \"keys\": [] }, \"dataSpecificationContent\": { \"preferredName\": [ { \"language\": \"de\", \"text\": \"Externe Datendatei\" }, { \"language\": \"en\", \"text\": \"External data file\" } ], \"shortName\": [], \"unit\": \"\", \"unitId\": null, \"valueFormat\": null, \"sourceOfDefinition\": null, \"symbol\": null, \"dataType\": \"\", \"definition\": [ { \"language\": \"de\", \"text\": \"Externe Datendatei, welche Zeitreihendaten in einem beliebigen Format beinhaltet.\" }, { \"language\": \"en\", \"text\": \"External data file containing time series data in any format.\" } ] } } ], \"isCaseOf\": [], \"descriptions\": null } }";
 
-                // Parse into root
-                var root = JObject.Parse(jsonStr);
+                // Parse JSON string into JsonDocument
+                var doc = JsonDocument.Parse(jsonStr);
 
-                // decompose
-                foreach (var child in root.Children())
+                // Traverse the JSON document
+                foreach (JsonProperty prop in doc.RootElement.EnumerateObject())
                 {
-                    // just look for 1. level properties
-                    var prop = child as JProperty;
-                    if (prop == null)
-                        continue;
-
-                    // ok
-                    var name = prop.Name;
+                    // Get property name and contents
+                    var name     = prop.Name;
                     var contents = prop.Value.ToString();
 
-                    // populate
+                    // Populate dictionary
                     res.Add(name, new LibraryEntry(name, contents));
                 }
 
@@ -1628,7 +1604,7 @@ namespace AasxServerStandardBib
                 // try de-serialize
                 try
                 {
-                    var r = JsonConvert.DeserializeObject<T>(entry.contents);
+                    var r = JsonSerializer.Deserialize<T>(entry.contents);
                     return r;
                 }
                 catch (Exception ex)
@@ -1662,7 +1638,7 @@ namespace AasxServerStandardBib
 
                 // options
                 if (isCaseOf != null)
-                    cd.IsCaseOf = new List<IReference>(new[] { isCaseOf });
+                    cd.IsCaseOf = new List<IReference>(new[] {isCaseOf});
 
                 // ok
                 return cd;
@@ -1683,7 +1659,7 @@ namespace AasxServerStandardBib
             }
 
             public void RetrieveEntriesFromLibraryByReflection(Type typeToReflect = null,
-                bool useAttributes = false, bool useFieldNames = false)
+                                                               bool useAttributes = false, bool useFieldNames = false)
             {
                 // access
                 if (this.theLibrary == null || typeToReflect == null)
@@ -1699,7 +1675,7 @@ namespace AasxServerStandardBib
                     var libName = "" + fi.Name;
 
                     // test
-                    var ok = false;
+                    var ok   = false;
                     var isSM = fi.FieldType == typeof(Submodel);
                     var isCD = fi.FieldType == typeof(ConceptDescription);
 
@@ -1722,6 +1698,7 @@ namespace AasxServerStandardBib
                         fi.SetValue(this, sm);
                         this.theReflectedReferables.Add(sm);
                     }
+
                     if (isCD)
                     {
                         var cd = this.RetrieveReferable<ConceptDescription>(libName);
@@ -1732,7 +1709,7 @@ namespace AasxServerStandardBib
             }
 
             public void AddEntriesByReflection(Type typeToReflect = null,
-                bool useAttributes = false, bool useFieldNames = false)
+                                               bool useAttributes = false, bool useFieldNames = false)
             {
                 // access
                 if (typeToReflect == null)
@@ -1745,7 +1722,7 @@ namespace AasxServerStandardBib
                     var fiName = "" + fi.Name;
 
                     // test
-                    var ok = false;
+                    var ok   = false;
                     var isSM = fi.FieldType == typeof(Submodel);
                     var isCD = fi.FieldType == typeof(ConceptDescription);
 
@@ -1856,11 +1833,11 @@ namespace AasxServerStandardBib
             }
 
             public static string EvalDisplayText(
-                    string minmalText, ISubmodelElement sme,
-                    ConceptDescription cd = null,
-                    bool addMinimalTxt = false,
-                    string defaultLang = null,
-                    bool useIdShort = true)
+                string minmalText, ISubmodelElement sme,
+                ConceptDescription cd = null,
+                bool addMinimalTxt = false,
+                string defaultLang = null,
+                bool useIdShort = true)
             {
                 var res = "" + minmalText;
                 if (sme != null)
@@ -1893,6 +1870,7 @@ namespace AasxServerStandardBib
                             res += $" ({minmalText})";
                     }
                 }
+
                 return res;
             }
 
@@ -1910,9 +1888,9 @@ namespace AasxServerStandardBib
         }
 
         public static ScottPlot.Plottable.IPlottable GenerateCumulativePlottable(
-        ScottPlot.Plot wpfPlot,
-        CumulativeDataItems cumdi,
-        PlotArguments args)
+            ScottPlot.Plot wpfPlot,
+            CumulativeDataItems cumdi,
+            PlotArguments args)
         {
             // access
             if (wpfPlot == null || cumdi == null || args == null)
@@ -1921,11 +1899,11 @@ namespace AasxServerStandardBib
             if (args.type == PlotArguments.Type.Pie)
             {
                 var pie = wpfPlot.AddPie(cumdi.Value.ToArray());
-                pie.SliceLabels = cumdi.Label.ToArray();
-                pie.ShowLabels = args.labels;
-                pie.ShowValues = args.values;
+                pie.SliceLabels     = cumdi.Label.ToArray();
+                pie.ShowLabels      = args.labels;
+                pie.ShowValues      = args.values;
                 pie.ShowPercentages = args.percent;
-                pie.SliceFont.Size = 9.0f;
+                pie.SliceFont.Size  = 9.0f;
                 return pie;
             }
 

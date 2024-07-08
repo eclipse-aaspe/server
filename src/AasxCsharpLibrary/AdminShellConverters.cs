@@ -1,186 +1,198 @@
-﻿/*
-Copyright (c) 2018-2021 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>
-Author: Michael Hoffmeister
+﻿using System;
+using System.Collections.Generic;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
-This source code is licensed under the Apache License 2.0 (see LICENSE.txt).
+namespace AdminShellNS;
 
-This source code may use other Open Source software components (see LICENSE.txt).
-*/
+using System.Linq;
 
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
-using System;
-using System.Reflection;
-
-namespace AdminShellNS
+public static class AdminShellConverters
 {
-    public static class AdminShellConverters
+    public class JsonAasxConverter : JsonConverter<IReferable>
     {
-        /// <summary>
-        /// This converter is used for reading JSON files; it claims to be responsible for
-        /// "Referable" (the base class)
-        /// and decides, which sub-class of the base class shall be populated.
-        /// If the object is SubmodelElement, the decision, shich special sub-class to create is done in a factory
-        /// SubmodelElementWrapper.CreateAdequateType(),
-        /// in order to have all sub-class specific decisions in one place (SubmodelElementWrapper)
-        /// Remark: There is a NuGet package JsonSubTypes, which could have done the job, except the fact of having
-        /// "modelType" being a class property with a contained property "name".
-        /// </summary>
-        public class JsonAasxConverter : JsonConverter
+        private string UpperClassProperty { get; }
+        private string LowerClassProperty { get; }
+
+        public JsonAasxConverter(string upperClassProperty, string lowerClassProperty)
         {
-            private string UpperClassProperty = "modelType";
-            private string LowerClassProperty = "name";
+            UpperClassProperty = upperClassProperty ?? throw new ArgumentNullException(nameof(upperClassProperty));
+            LowerClassProperty = lowerClassProperty ?? throw new ArgumentNullException(nameof(lowerClassProperty));
+        }
 
-            public JsonAasxConverter() : base()
+        public override bool CanConvert(Type typeToConvert) => typeof(IReferable).IsAssignableFrom(typeToConvert);
+
+        public override IReferable? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            using var doc  = JsonDocument.ParseValue(ref reader);
+            var       root = doc.RootElement;
+
+            IReferable? target = null;
+
+            if (root.TryGetProperty(UpperClassProperty, out var upperClassProperty))
             {
+                target = CreateReferableInstance(upperClassProperty);
             }
 
-            public JsonAasxConverter(string UpperClassProperty, string LowerClassProperty) : base()
+            if (target != null)
             {
-                this.UpperClassProperty = UpperClassProperty;
-                this.LowerClassProperty = LowerClassProperty;
+                DeserializeReferableProperties(root, target);
             }
 
-            public override bool CanConvert(Type objectType)
+            return target;
+        }
+
+        private IReferable? CreateReferableInstance(JsonElement upperClassProperty) => upperClassProperty.EnumerateObject()
+                                                                                                         .Where(lowerClassPropertyValue =>
+                                                                                                                    lowerClassPropertyValue.Name == LowerClassProperty &&
+                                                                                                                    lowerClassPropertyValue.Value.ValueKind == JsonValueKind.String)
+                                                                                                         .Select(lowerClassPropertyValue =>
+                                                                                                                     CreateAdequateType(lowerClassPropertyValue.Value.GetString()))
+                                                                                                         .FirstOrDefault();
+
+        private void DeserializeReferableProperties(JsonElement root, IReferable target)
+        {
+            DeserializeProperty(root, "category", JsonValueKind.String, value => target.Category    = value.GetString());
+            DeserializeArrayProperty(root, "idShort", JsonValueKind.String, value => target.IdShort = value.GetString());
+            DeserializeLangStringArrayProperty(root, "displayName", value => target.DisplayName     = value);
+            DeserializeLangStringArrayProperty(root, "description", value => target.Description     = value);
+        }
+
+        private static void DeserializeProperty(JsonElement root, string propertyName, JsonValueKind expectedKind, Action<JsonElement> assignAction)
+        {
+            if (root.TryGetProperty(propertyName, out var property) && property.ValueKind == expectedKind)
             {
-                // Info MIHO 21 APR 2020: changed this from SubmodelElement to Referable
-                if (typeof(IReferable).IsAssignableFrom(objectType))
-                    return true;
-                return false;
-            }
-
-            public override bool CanWrite
-            {
-                get { return false; }
-            }
-
-            public override object ReadJson(JsonReader reader,
-                                            Type objectType,
-                                             object existingValue,
-                                             JsonSerializer serializer)
-            {
-                // Load JObject from stream
-                JObject jObject = JObject.Load(reader);
-
-                // Create target object based on JObject
-                IReferable target = null;
-
-                if (jObject.ContainsKey(UpperClassProperty))
-                {
-                    var j2 = jObject[UpperClassProperty];
-                    if (j2 != null)
-                        foreach (var c in j2.Children())
-                        {
-                            var cprop = c as Newtonsoft.Json.Linq.JProperty;
-                            if (cprop == null)
-                                continue;
-                            if (cprop.Name == LowerClassProperty && cprop.Value.Type.ToString() == "String")
-                            {
-                                var cpval = cprop.Value.ToObject<string>();
-                                if (cpval == null)
-                                    continue;
-                                // Info MIHO 21 APR 2020: use Referable.CreateAdequateType instead of SMW...
-                                var o = CreateAdequateType(cpval);
-                                if (o != null)
-                                    target = o;
-                            }
-                        }
-                }
-
-                // Populate the object properties
-                serializer.Populate(jObject.CreateReader(), target);
-
-                return target;
-            }
-
-            public static IReferable CreateAdequateType(string elementName)
-            {
-                if (elementName == KeyTypes.AssetAdministrationShell.ToString())
-                    return new AssetAdministrationShell("", null);
-                //if (elementName == "Asset") 
-                //    return new AssetInformation(AssetKind.Instance);
-                if (elementName == KeyTypes.ConceptDescription.ToString())
-                    return new ConceptDescription("");
-                if (elementName == KeyTypes.Submodel.ToString())
-                    return new Submodel("");
-                //if (elementName == KeyTypes.View)
-                //    return new View();
-                return CreateSubmodelElementIstance(elementName);
-            }
-
-            private static ISubmodelElement CreateSubmodelElementIstance(string typeName)
-            {
-                Type type = Type.GetType(typeName);
-                if (type == null || !type.IsSubclassOf(typeof(ISubmodelElement)))
-                    return null;
-                var sme = Activator.CreateInstance(type) as ISubmodelElement;
-                return sme;
-            }
-
-            public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-            {
-                throw new NotImplementedException();
+                assignAction(property);
             }
         }
 
-        /// <summary>
-        /// This converter / contract resolver for Json.NET adaptively filters different levels of depth
-        /// of nested AASX structures.
-        /// </summary>
-        public class AdaptiveFilterContractResolver : DefaultContractResolver
+        public static void DeserializeArrayProperty(JsonElement root, string propertyName, JsonValueKind expectedKind, Action<JsonElement> assignAction)
         {
-            public bool AasHasViews = true;
-            public bool BlobHasValue = true;
-            public bool SubmodelHasElements = true;
-            public bool SmcHasValue = true;
-            public bool OpHasVariables = true;
-
-            public AdaptiveFilterContractResolver() { }
-
-            public AdaptiveFilterContractResolver(bool deep = true, bool complete = true)
+            if (root.TryGetProperty(propertyName, out var property) && property.ValueKind == expectedKind)
             {
-                if (!deep)
-                {
-                    this.SubmodelHasElements = false;
-                    this.SmcHasValue = false;
-                    this.OpHasVariables = false;
-                }
-                if (!complete)
-                {
-                    this.AasHasViews = false;
-                    this.BlobHasValue = false;
-                }
-
-            }
-
-            protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
-            {
-                JsonProperty property = base.CreateProperty(member, memberSerialization);
-
-                if (!BlobHasValue && property.DeclaringType == typeof(Blob) &&
-                    property.PropertyName == "value")
-                    property.ShouldSerialize = instance => { return false; };
-
-                if (!SubmodelHasElements && property.DeclaringType == typeof(Submodel) &&
-                    property.PropertyName == "submodelElements")
-                    property.ShouldSerialize = instance => { return false; };
-
-                if (!SmcHasValue && property.DeclaringType == typeof(SubmodelElementCollection) &&
-                    property.PropertyName == "value")
-                    property.ShouldSerialize = instance => { return false; };
-
-                if (!OpHasVariables && property.DeclaringType == typeof(Operation) &&
-                    (property.PropertyName == "in" || property.PropertyName == "out"))
-                    property.ShouldSerialize = instance => { return false; };
-
-                if (!AasHasViews && property.DeclaringType == typeof(AssetAdministrationShell) &&
-                    property.PropertyName == "views")
-                    property.ShouldSerialize = instance => { return false; };
-
-                return property;
+                assignAction(property);
             }
         }
 
+        private static void DeserializeLangStringArrayProperty(JsonElement root, string propertyName, Action<List<ILangStringNameType>> assignAction)
+        {
+            if (!root.TryGetProperty(propertyName, out var property) || property.ValueKind != JsonValueKind.Array)
+            {
+                return;
+            }
+
+            var list = new List<ILangStringNameType>();
+            foreach (var item in property.EnumerateArray())
+            {
+                if (item.TryGetProperty("lang", out var langElement) && item.TryGetProperty("value", out var valueElement) &&
+                    langElement.ValueKind == JsonValueKind.String && valueElement.ValueKind == JsonValueKind.String)
+                {
+                    list.Add(new LangStringNameType(langElement.GetString(), valueElement.GetString()));
+                }
+            }
+
+            assignAction(list);
+        }
+
+        private void DeserializeLangStringArrayProperty(JsonElement root, string propertyName, Action<List<ILangStringTextType>> assignAction)
+        {
+            if (!root.TryGetProperty(propertyName, out var property) || property.ValueKind != JsonValueKind.Array)
+            {
+                return;
+            }
+
+            var list = new List<ILangStringTextType>();
+            foreach (var item in property.EnumerateArray())
+            {
+                if (!item.TryGetProperty("lang", out var langElement) || !item.TryGetProperty("value", out var valueElement) ||
+                    langElement.ValueKind != JsonValueKind.String || valueElement.ValueKind != JsonValueKind.String)
+                {
+                    continue;
+                }
+
+                // Convert ILangStringNameType to ILangStringTextType if possible
+                var convertedItem = ConvertToLangStringTextType(new LangStringNameType(langElement.GetString(), valueElement.GetString()));
+                if (convertedItem != null)
+                {
+                    list.Add(convertedItem);
+                }
+            }
+
+            assignAction(list);
+        }
+
+        private static ILangStringTextType ConvertToLangStringTextType(ILangStringNameType nameType) => new LangStringTextType(nameType.Language, nameType.Text);
+
+        public override void Write(Utf8JsonWriter writer, IReferable value, JsonSerializerOptions options) => throw new NotImplementedException();
+
+        private static IReferable? CreateAdequateType(string elementName)
+        {
+            var administrationShellType = Enum.GetName(typeof(KeyTypes), KeyTypes.AssetAdministrationShell);
+            var conceptDescriptionType  = Enum.GetName(typeof(KeyTypes), KeyTypes.ConceptDescription);
+            var submodelType            = Enum.GetName(typeof(KeyTypes), KeyTypes.Submodel);
+
+            if (elementName == administrationShellType)
+            {
+                return new AssetAdministrationShell(string.Empty, null);
+            }
+
+            if (elementName == conceptDescriptionType)
+            {
+                return new ConceptDescription(string.Empty, null);
+            }
+
+            if (elementName == submodelType)
+            {
+                return new Submodel(string.Empty, null);
+            }
+
+            return CreateSubmodelElementInstance(elementName);
+        }
+
+        private static ISubmodelElement? CreateSubmodelElementInstance(string typeName)
+        {
+            var type = Type.GetType(typeName);
+            if (type != null && typeof(ISubmodelElement).IsAssignableFrom(type))
+            {
+                return Activator.CreateInstance(type) as ISubmodelElement;
+            }
+
+            return null;
+        }
+    }
+
+    public class AdaptiveFilterContractResolver : JsonConverter<JsonElement>
+    {
+        // Properties to configure the behavior of the converter
+        public bool AasHasViews         { get; }
+        public bool BlobHasValue        { get; }
+        public bool SubmodelHasElements { get; }
+        public bool SmcHasValue         { get; }
+        public bool OpHasVariables      { get; }
+
+        public AdaptiveFilterContractResolver(bool aasHasViews = true, bool blobHasValue = true, bool submodelHasElements = true, bool smcHasValue = true,
+                                              bool opHasVariables = true)
+        {
+            AasHasViews         = aasHasViews;
+            BlobHasValue        = blobHasValue;
+            SubmodelHasElements = submodelHasElements;
+            SmcHasValue         = smcHasValue;
+            OpHasVariables      = opHasVariables;
+        }
+
+        public override JsonElement Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            try
+            {
+                using var doc = JsonDocument.ParseValue(ref reader);
+                return doc.RootElement.Clone();
+            }
+            catch (JsonException ex)
+            {
+                throw new JsonException("Error while reading JSON.", ex);
+            }
+        }
+
+        public override void Write(Utf8JsonWriter writer, JsonElement value, JsonSerializerOptions options) => throw new NotImplementedException();
     }
 }

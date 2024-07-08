@@ -15740,7 +15740,7 @@ namespace AasCore.Aas3_0
             /// Thrown when <paramref name="node" /> is not a valid JSON
             /// representation of Environment.
             /// </exception>
-            public static Aas.Environment EnvironmentFrom(
+            public static Environment EnvironmentFrom(
                 Nodes.JsonNode node)
             {
                 Aas.Environment? result = DeserializeImplementation.EnvironmentFrom(
@@ -16047,7 +16047,7 @@ namespace AasCore.Aas3_0
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (IReference item in that.SupplementalSemanticIds)
+                    foreach (IReference? item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -16077,7 +16077,7 @@ namespace AasCore.Aas3_0
                 if (that.RefersTo != null)
                 {
                     var arrayRefersTo = new Nodes.JsonArray();
-                    foreach (IReference item in that.RefersTo)
+                    foreach (IReference? item in that.RefersTo)
                     {
                         arrayRefersTo.Add(
                             Transform(
@@ -16098,7 +16098,7 @@ namespace AasCore.Aas3_0
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification? item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -16149,7 +16149,7 @@ namespace AasCore.Aas3_0
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (IReference item in that.SupplementalSemanticIds)
+                    foreach (IReference? item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -16197,7 +16197,7 @@ namespace AasCore.Aas3_0
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (IExtension item in that.Extensions)
+                    foreach (IExtension? item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -16221,7 +16221,7 @@ namespace AasCore.Aas3_0
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (ILangStringNameType item in that.DisplayName)
+                    foreach (ILangStringNameType? item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -16233,7 +16233,7 @@ namespace AasCore.Aas3_0
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (ILangStringTextType item in that.Description)
+                    foreach (ILangStringTextType? item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
@@ -16254,7 +16254,7 @@ namespace AasCore.Aas3_0
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification? item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -16275,7 +16275,7 @@ namespace AasCore.Aas3_0
                 if (that.Submodels != null)
                 {
                     var arraySubmodels = new Nodes.JsonArray();
-                    foreach (IReference item in that.Submodels)
+                    foreach (IReference? item in that.Submodels)
                     {
                         arraySubmodels.Add(
                             Transform(
@@ -16307,7 +16307,7 @@ namespace AasCore.Aas3_0
                 if (that.SpecificAssetIds != null)
                 {
                     var arraySpecificAssetIds = new Nodes.JsonArray();
-                    foreach (ISpecificAssetId item in that.SpecificAssetIds)
+                    foreach (ISpecificAssetId? item in that.SpecificAssetIds)
                     {
                         arraySpecificAssetIds.Add(
                             Transform(
@@ -16364,7 +16364,7 @@ namespace AasCore.Aas3_0
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (IReference item in that.SupplementalSemanticIds)
+                    foreach (IReference? item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -16397,7 +16397,7 @@ namespace AasCore.Aas3_0
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (IExtension item in that.Extensions)
+                    foreach (IExtension? item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -16421,7 +16421,7 @@ namespace AasCore.Aas3_0
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (ILangStringNameType item in that.DisplayName)
+                    foreach (ILangStringNameType? item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -16433,7 +16433,7 @@ namespace AasCore.Aas3_0
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (ILangStringTextType item in that.Description)
+                    foreach (ILangStringTextType? item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
@@ -16469,7 +16469,7 @@ namespace AasCore.Aas3_0
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (IReference item in that.SupplementalSemanticIds)
+                    foreach (IReference? item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -16481,7 +16481,7 @@ namespace AasCore.Aas3_0
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (IQualifier item in that.Qualifiers)
+                    foreach (IQualifier? item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -16493,7 +16493,7 @@ namespace AasCore.Aas3_0
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification? item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -16505,7 +16505,7 @@ namespace AasCore.Aas3_0
                 if (that.SubmodelElements != null)
                 {
                     var arraySubmodelElements = new Nodes.JsonArray();
-                    foreach (ISubmodelElement item in that.SubmodelElements)
+                    foreach (ISubmodelElement? item in that.SubmodelElements)
                     {
                         arraySubmodelElements.Add(
                             Transform(
@@ -16528,7 +16528,7 @@ namespace AasCore.Aas3_0
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (IExtension item in that.Extensions)
+                    foreach (IExtension? item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -16552,7 +16552,7 @@ namespace AasCore.Aas3_0
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (ILangStringNameType item in that.DisplayName)
+                    foreach (ILangStringNameType? item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -16564,7 +16564,7 @@ namespace AasCore.Aas3_0
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (ILangStringTextType item in that.Description)
+                    foreach (ILangStringTextType? item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
@@ -16582,7 +16582,7 @@ namespace AasCore.Aas3_0
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (IReference item in that.SupplementalSemanticIds)
+                    foreach (IReference? item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -16594,7 +16594,7 @@ namespace AasCore.Aas3_0
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (IQualifier item in that.Qualifiers)
+                    foreach (IQualifier? item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -16606,7 +16606,7 @@ namespace AasCore.Aas3_0
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification? item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -16635,7 +16635,7 @@ namespace AasCore.Aas3_0
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (IExtension item in that.Extensions)
+                    foreach (IExtension? item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -16659,7 +16659,7 @@ namespace AasCore.Aas3_0
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (ILangStringNameType item in that.DisplayName)
+                    foreach (ILangStringNameType? item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -16671,7 +16671,7 @@ namespace AasCore.Aas3_0
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (ILangStringTextType item in that.Description)
+                    foreach (ILangStringTextType? item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
@@ -16689,7 +16689,7 @@ namespace AasCore.Aas3_0
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (IReference item in that.SupplementalSemanticIds)
+                    foreach (IReference? item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -16701,7 +16701,7 @@ namespace AasCore.Aas3_0
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (IQualifier item in that.Qualifiers)
+                    foreach (IQualifier? item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -16713,7 +16713,7 @@ namespace AasCore.Aas3_0
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification? item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -16749,7 +16749,7 @@ namespace AasCore.Aas3_0
                 if (that.Value != null)
                 {
                     var arrayValue = new Nodes.JsonArray();
-                    foreach (ISubmodelElement item in that.Value)
+                    foreach (ISubmodelElement? item in that.Value)
                     {
                         arrayValue.Add(
                             Transform(
@@ -16772,7 +16772,7 @@ namespace AasCore.Aas3_0
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (IExtension item in that.Extensions)
+                    foreach (IExtension? item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -16796,7 +16796,7 @@ namespace AasCore.Aas3_0
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (ILangStringNameType item in that.DisplayName)
+                    foreach (ILangStringNameType? item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -16808,7 +16808,7 @@ namespace AasCore.Aas3_0
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (ILangStringTextType item in that.Description)
+                    foreach (ILangStringTextType? item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
@@ -16826,7 +16826,7 @@ namespace AasCore.Aas3_0
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (IReference item in that.SupplementalSemanticIds)
+                    foreach (IReference? item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -16838,7 +16838,7 @@ namespace AasCore.Aas3_0
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (IQualifier item in that.Qualifiers)
+                    foreach (IQualifier? item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -16850,7 +16850,7 @@ namespace AasCore.Aas3_0
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification? item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -16862,7 +16862,7 @@ namespace AasCore.Aas3_0
                 if (that.Value != null)
                 {
                     var arrayValue = new Nodes.JsonArray();
-                    foreach (ISubmodelElement item in that.Value)
+                    foreach (ISubmodelElement? item in that.Value)
                     {
                         arrayValue.Add(
                             Transform(
@@ -16885,7 +16885,7 @@ namespace AasCore.Aas3_0
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (IExtension item in that.Extensions)
+                    foreach (IExtension? item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -16909,7 +16909,7 @@ namespace AasCore.Aas3_0
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (ILangStringNameType item in that.DisplayName)
+                    foreach (ILangStringNameType? item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -16921,7 +16921,7 @@ namespace AasCore.Aas3_0
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (ILangStringTextType item in that.Description)
+                    foreach (ILangStringTextType? item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
@@ -16939,7 +16939,7 @@ namespace AasCore.Aas3_0
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (IReference item in that.SupplementalSemanticIds)
+                    foreach (IReference? item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -16951,7 +16951,7 @@ namespace AasCore.Aas3_0
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (IQualifier item in that.Qualifiers)
+                    foreach (IQualifier? item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -16963,7 +16963,7 @@ namespace AasCore.Aas3_0
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification? item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -17001,7 +17001,7 @@ namespace AasCore.Aas3_0
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (IExtension item in that.Extensions)
+                    foreach (IExtension? item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -17025,7 +17025,7 @@ namespace AasCore.Aas3_0
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (ILangStringNameType item in that.DisplayName)
+                    foreach (ILangStringNameType? item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -17037,7 +17037,7 @@ namespace AasCore.Aas3_0
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (ILangStringTextType item in that.Description)
+                    foreach (ILangStringTextType? item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
@@ -17055,7 +17055,7 @@ namespace AasCore.Aas3_0
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (IReference item in that.SupplementalSemanticIds)
+                    foreach (IReference? item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -17067,7 +17067,7 @@ namespace AasCore.Aas3_0
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (IQualifier item in that.Qualifiers)
+                    foreach (IQualifier? item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -17079,7 +17079,7 @@ namespace AasCore.Aas3_0
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification? item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -17091,7 +17091,7 @@ namespace AasCore.Aas3_0
                 if (that.Value != null)
                 {
                     var arrayValue = new Nodes.JsonArray();
-                    foreach (ILangStringTextType item in that.Value)
+                    foreach (ILangStringTextType? item in that.Value)
                     {
                         arrayValue.Add(
                             Transform(
@@ -17120,7 +17120,7 @@ namespace AasCore.Aas3_0
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (IExtension item in that.Extensions)
+                    foreach (IExtension? item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -17144,7 +17144,7 @@ namespace AasCore.Aas3_0
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (ILangStringNameType item in that.DisplayName)
+                    foreach (ILangStringNameType? item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -17156,7 +17156,7 @@ namespace AasCore.Aas3_0
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (ILangStringTextType item in that.Description)
+                    foreach (ILangStringTextType? item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
@@ -17174,7 +17174,7 @@ namespace AasCore.Aas3_0
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (IReference item in that.SupplementalSemanticIds)
+                    foreach (IReference? item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -17186,7 +17186,7 @@ namespace AasCore.Aas3_0
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (IQualifier item in that.Qualifiers)
+                    foreach (IQualifier? item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -17198,7 +17198,7 @@ namespace AasCore.Aas3_0
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification? item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -17236,7 +17236,7 @@ namespace AasCore.Aas3_0
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (IExtension item in that.Extensions)
+                    foreach (IExtension? item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -17260,7 +17260,7 @@ namespace AasCore.Aas3_0
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (ILangStringNameType item in that.DisplayName)
+                    foreach (ILangStringNameType? item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -17272,7 +17272,7 @@ namespace AasCore.Aas3_0
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (ILangStringTextType item in that.Description)
+                    foreach (ILangStringTextType? item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
@@ -17290,7 +17290,7 @@ namespace AasCore.Aas3_0
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (IReference item in that.SupplementalSemanticIds)
+                    foreach (IReference? item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -17302,7 +17302,7 @@ namespace AasCore.Aas3_0
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (IQualifier item in that.Qualifiers)
+                    foreach (IQualifier? item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -17314,7 +17314,7 @@ namespace AasCore.Aas3_0
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification? item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -17343,7 +17343,7 @@ namespace AasCore.Aas3_0
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (IExtension item in that.Extensions)
+                    foreach (IExtension? item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -17367,7 +17367,7 @@ namespace AasCore.Aas3_0
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (ILangStringNameType item in that.DisplayName)
+                    foreach (ILangStringNameType? item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -17379,7 +17379,7 @@ namespace AasCore.Aas3_0
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (ILangStringTextType item in that.Description)
+                    foreach (ILangStringTextType? item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
@@ -17397,7 +17397,7 @@ namespace AasCore.Aas3_0
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (IReference item in that.SupplementalSemanticIds)
+                    foreach (IReference? item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -17409,7 +17409,7 @@ namespace AasCore.Aas3_0
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (IQualifier item in that.Qualifiers)
+                    foreach (IQualifier? item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -17421,7 +17421,7 @@ namespace AasCore.Aas3_0
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification? item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -17454,7 +17454,7 @@ namespace AasCore.Aas3_0
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (IExtension item in that.Extensions)
+                    foreach (IExtension? item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -17478,7 +17478,7 @@ namespace AasCore.Aas3_0
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (ILangStringNameType item in that.DisplayName)
+                    foreach (ILangStringNameType? item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -17490,7 +17490,7 @@ namespace AasCore.Aas3_0
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (ILangStringTextType item in that.Description)
+                    foreach (ILangStringTextType? item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
@@ -17508,7 +17508,7 @@ namespace AasCore.Aas3_0
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (IReference item in that.SupplementalSemanticIds)
+                    foreach (IReference? item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -17520,7 +17520,7 @@ namespace AasCore.Aas3_0
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (IQualifier item in that.Qualifiers)
+                    foreach (IQualifier? item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -17532,7 +17532,7 @@ namespace AasCore.Aas3_0
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification? item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -17564,7 +17564,7 @@ namespace AasCore.Aas3_0
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (IExtension item in that.Extensions)
+                    foreach (IExtension? item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -17588,7 +17588,7 @@ namespace AasCore.Aas3_0
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (ILangStringNameType item in that.DisplayName)
+                    foreach (ILangStringNameType? item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -17600,7 +17600,7 @@ namespace AasCore.Aas3_0
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (ILangStringTextType item in that.Description)
+                    foreach (ILangStringTextType? item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
@@ -17618,7 +17618,7 @@ namespace AasCore.Aas3_0
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (IReference item in that.SupplementalSemanticIds)
+                    foreach (IReference? item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -17630,7 +17630,7 @@ namespace AasCore.Aas3_0
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (IQualifier item in that.Qualifiers)
+                    foreach (IQualifier? item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -17642,7 +17642,7 @@ namespace AasCore.Aas3_0
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification? item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -17660,7 +17660,7 @@ namespace AasCore.Aas3_0
                 if (that.Annotations != null)
                 {
                     var arrayAnnotations = new Nodes.JsonArray();
-                    foreach (IDataElement item in that.Annotations)
+                    foreach (IDataElement? item in that.Annotations)
                     {
                         arrayAnnotations.Add(
                             Transform(
@@ -17683,7 +17683,7 @@ namespace AasCore.Aas3_0
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (IExtension item in that.Extensions)
+                    foreach (IExtension? item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -17707,7 +17707,7 @@ namespace AasCore.Aas3_0
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (ILangStringNameType item in that.DisplayName)
+                    foreach (ILangStringNameType? item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -17719,7 +17719,7 @@ namespace AasCore.Aas3_0
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (ILangStringTextType item in that.Description)
+                    foreach (ILangStringTextType? item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
@@ -17737,7 +17737,7 @@ namespace AasCore.Aas3_0
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (IReference item in that.SupplementalSemanticIds)
+                    foreach (IReference? item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -17749,7 +17749,7 @@ namespace AasCore.Aas3_0
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (IQualifier item in that.Qualifiers)
+                    foreach (IQualifier? item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -17761,7 +17761,7 @@ namespace AasCore.Aas3_0
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification? item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -17773,7 +17773,7 @@ namespace AasCore.Aas3_0
                 if (that.Statements != null)
                 {
                     var arrayStatements = new Nodes.JsonArray();
-                    foreach (ISubmodelElement item in that.Statements)
+                    foreach (ISubmodelElement? item in that.Statements)
                     {
                         arrayStatements.Add(
                             Transform(
@@ -17794,7 +17794,7 @@ namespace AasCore.Aas3_0
                 if (that.SpecificAssetIds != null)
                 {
                     var arraySpecificAssetIds = new Nodes.JsonArray();
-                    foreach (ISpecificAssetId item in that.SpecificAssetIds)
+                    foreach (ISpecificAssetId? item in that.SpecificAssetIds)
                     {
                         arraySpecificAssetIds.Add(
                             Transform(
@@ -17866,7 +17866,7 @@ namespace AasCore.Aas3_0
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (IExtension item in that.Extensions)
+                    foreach (IExtension? item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -17890,7 +17890,7 @@ namespace AasCore.Aas3_0
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (ILangStringNameType item in that.DisplayName)
+                    foreach (ILangStringNameType? item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -17902,7 +17902,7 @@ namespace AasCore.Aas3_0
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (ILangStringTextType item in that.Description)
+                    foreach (ILangStringTextType? item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
@@ -17920,7 +17920,7 @@ namespace AasCore.Aas3_0
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (IReference item in that.SupplementalSemanticIds)
+                    foreach (IReference? item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -17932,7 +17932,7 @@ namespace AasCore.Aas3_0
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (IQualifier item in that.Qualifiers)
+                    foreach (IQualifier? item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -17944,7 +17944,7 @@ namespace AasCore.Aas3_0
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification? item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -18006,7 +18006,7 @@ namespace AasCore.Aas3_0
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (IExtension item in that.Extensions)
+                    foreach (IExtension? item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -18030,7 +18030,7 @@ namespace AasCore.Aas3_0
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (ILangStringNameType item in that.DisplayName)
+                    foreach (ILangStringNameType? item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -18042,7 +18042,7 @@ namespace AasCore.Aas3_0
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (ILangStringTextType item in that.Description)
+                    foreach (ILangStringTextType? item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
@@ -18060,7 +18060,7 @@ namespace AasCore.Aas3_0
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (IReference item in that.SupplementalSemanticIds)
+                    foreach (IReference? item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -18072,7 +18072,7 @@ namespace AasCore.Aas3_0
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (IQualifier item in that.Qualifiers)
+                    foreach (IQualifier? item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -18084,7 +18084,7 @@ namespace AasCore.Aas3_0
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification? item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -18096,7 +18096,7 @@ namespace AasCore.Aas3_0
                 if (that.InputVariables != null)
                 {
                     var arrayInputVariables = new Nodes.JsonArray();
-                    foreach (IOperationVariable item in that.InputVariables)
+                    foreach (IOperationVariable? item in that.InputVariables)
                     {
                         arrayInputVariables.Add(
                             Transform(
@@ -18108,7 +18108,7 @@ namespace AasCore.Aas3_0
                 if (that.OutputVariables != null)
                 {
                     var arrayOutputVariables = new Nodes.JsonArray();
-                    foreach (IOperationVariable item in that.OutputVariables)
+                    foreach (IOperationVariable? item in that.OutputVariables)
                     {
                         arrayOutputVariables.Add(
                             Transform(
@@ -18120,7 +18120,7 @@ namespace AasCore.Aas3_0
                 if (that.InoutputVariables != null)
                 {
                     var arrayInoutputVariables = new Nodes.JsonArray();
-                    foreach (IOperationVariable item in that.InoutputVariables)
+                    foreach (IOperationVariable? item in that.InoutputVariables)
                     {
                         arrayInoutputVariables.Add(
                             Transform(
@@ -18155,7 +18155,7 @@ namespace AasCore.Aas3_0
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (IExtension item in that.Extensions)
+                    foreach (IExtension? item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -18179,7 +18179,7 @@ namespace AasCore.Aas3_0
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (ILangStringNameType item in that.DisplayName)
+                    foreach (ILangStringNameType? item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -18191,7 +18191,7 @@ namespace AasCore.Aas3_0
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (ILangStringTextType item in that.Description)
+                    foreach (ILangStringTextType? item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
@@ -18209,7 +18209,7 @@ namespace AasCore.Aas3_0
                 if (that.SupplementalSemanticIds != null)
                 {
                     var arraySupplementalSemanticIds = new Nodes.JsonArray();
-                    foreach (IReference item in that.SupplementalSemanticIds)
+                    foreach (IReference? item in that.SupplementalSemanticIds)
                     {
                         arraySupplementalSemanticIds.Add(
                             Transform(
@@ -18221,7 +18221,7 @@ namespace AasCore.Aas3_0
                 if (that.Qualifiers != null)
                 {
                     var arrayQualifiers = new Nodes.JsonArray();
-                    foreach (IQualifier item in that.Qualifiers)
+                    foreach (IQualifier? item in that.Qualifiers)
                     {
                         arrayQualifiers.Add(
                             Transform(
@@ -18233,7 +18233,7 @@ namespace AasCore.Aas3_0
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification? item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -18256,7 +18256,7 @@ namespace AasCore.Aas3_0
                 if (that.Extensions != null)
                 {
                     var arrayExtensions = new Nodes.JsonArray();
-                    foreach (IExtension item in that.Extensions)
+                    foreach (IExtension? item in that.Extensions)
                     {
                         arrayExtensions.Add(
                             Transform(
@@ -18280,7 +18280,7 @@ namespace AasCore.Aas3_0
                 if (that.DisplayName != null)
                 {
                     var arrayDisplayName = new Nodes.JsonArray();
-                    foreach (ILangStringNameType item in that.DisplayName)
+                    foreach (ILangStringNameType? item in that.DisplayName)
                     {
                         arrayDisplayName.Add(
                             Transform(
@@ -18292,7 +18292,7 @@ namespace AasCore.Aas3_0
                 if (that.Description != null)
                 {
                     var arrayDescription = new Nodes.JsonArray();
-                    foreach (ILangStringTextType item in that.Description)
+                    foreach (ILangStringTextType? item in that.Description)
                     {
                         arrayDescription.Add(
                             Transform(
@@ -18313,7 +18313,7 @@ namespace AasCore.Aas3_0
                 if (that.EmbeddedDataSpecifications != null)
                 {
                     var arrayEmbeddedDataSpecifications = new Nodes.JsonArray();
-                    foreach (IEmbeddedDataSpecification item in that.EmbeddedDataSpecifications)
+                    foreach (IEmbeddedDataSpecification? item in that.EmbeddedDataSpecifications)
                     {
                         arrayEmbeddedDataSpecifications.Add(
                             Transform(
@@ -18325,7 +18325,7 @@ namespace AasCore.Aas3_0
                 if (that.IsCaseOf != null)
                 {
                     var arrayIsCaseOf = new Nodes.JsonArray();
-                    foreach (IReference item in that.IsCaseOf)
+                    foreach (IReference? item in that.IsCaseOf)
                     {
                         arrayIsCaseOf.Add(
                             Transform(
@@ -18355,7 +18355,7 @@ namespace AasCore.Aas3_0
                 }
 
                 var arrayKeys = new Nodes.JsonArray();
-                foreach (IKey item in that.Keys)
+                foreach (IKey? item in that.Keys)
                 {
                     arrayKeys.Add(
                         Transform(
@@ -18420,7 +18420,7 @@ namespace AasCore.Aas3_0
                 if (that.AssetAdministrationShells != null)
                 {
                     var arrayAssetAdministrationShells = new Nodes.JsonArray();
-                    foreach (IAssetAdministrationShell item in that.AssetAdministrationShells)
+                    foreach (IAssetAdministrationShell? item in that.AssetAdministrationShells)
                     {
                         arrayAssetAdministrationShells.Add(
                             Transform(
@@ -18432,7 +18432,7 @@ namespace AasCore.Aas3_0
                 if (that.Submodels != null)
                 {
                     var arraySubmodels = new Nodes.JsonArray();
-                    foreach (ISubmodel item in that.Submodels)
+                    foreach (ISubmodel? item in that.Submodels)
                     {
                         arraySubmodels.Add(
                             Transform(
@@ -18444,7 +18444,7 @@ namespace AasCore.Aas3_0
                 if (that.ConceptDescriptions != null)
                 {
                     var arrayConceptDescriptions = new Nodes.JsonArray();
-                    foreach (IConceptDescription item in that.ConceptDescriptions)
+                    foreach (IConceptDescription? item in that.ConceptDescriptions)
                     {
                         arrayConceptDescriptions.Add(
                             Transform(
@@ -18514,7 +18514,7 @@ namespace AasCore.Aas3_0
                 var result = new Nodes.JsonObject();
 
                 var arrayValueReferencePairs = new Nodes.JsonArray();
-                foreach (IValueReferencePair item in that.ValueReferencePairs)
+                foreach (IValueReferencePair? item in that.ValueReferencePairs)
                 {
                     arrayValueReferencePairs.Add(
                         Transform(
@@ -18577,7 +18577,7 @@ namespace AasCore.Aas3_0
                 var result = new Nodes.JsonObject();
 
                 var arrayPreferredName = new Nodes.JsonArray();
-                foreach (ILangStringPreferredNameTypeIec61360 item in that.PreferredName)
+                foreach (ILangStringPreferredNameTypeIec61360? item in that.PreferredName)
                 {
                     arrayPreferredName.Add(
                         Transform(
@@ -18588,7 +18588,7 @@ namespace AasCore.Aas3_0
                 if (that.ShortName != null)
                 {
                     var arrayShortName = new Nodes.JsonArray();
-                    foreach (ILangStringShortNameTypeIec61360 item in that.ShortName)
+                    foreach (ILangStringShortNameTypeIec61360? item in that.ShortName)
                     {
                         arrayShortName.Add(
                             Transform(
@@ -18633,7 +18633,7 @@ namespace AasCore.Aas3_0
                 if (that.Definition != null)
                 {
                     var arrayDefinition = new Nodes.JsonArray();
-                    foreach (ILangStringDefinitionTypeIec61360 item in that.Definition)
+                    foreach (ILangStringDefinitionTypeIec61360? item in that.Definition)
                     {
                         arrayDefinition.Add(
                             Transform(
@@ -18693,7 +18693,7 @@ namespace AasCore.Aas3_0
             /// <summary>
             /// Serialize an instance of the meta-model into a JSON object.
             /// </summary>
-            public static Nodes.JsonObject ToJsonObject(Aas.IClass that)
+            public static Nodes.JsonObject ToJsonObject(IClass? that)
             {
                 return Serialize.Transformer.Transform(that);
             }
