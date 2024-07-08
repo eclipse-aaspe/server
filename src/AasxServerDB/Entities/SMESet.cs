@@ -35,6 +35,7 @@ namespace AasxServerDB.Entities
         public virtual ICollection<SValueSet> SValueSets { get; } = new List<SValueSet>();
         public virtual ICollection<OValueSet> OValueSets { get; } = new List<OValueSet>();
 
+<<<<<<< HEAD
         public List<string[]> GetValue()
         {
             if (TValue == null)
@@ -69,6 +70,32 @@ namespace AasxServerDB.Entities
             if (dic != null)
                 return dic;
             return new Dictionary<string, Nodes.JsonNode>();
+=======
+        public List<string[]> getValue()
+        {
+            var list = new List<string[]>();
+            using (AasContext db = new AasContext())
+            {
+                switch (ValueType)
+                {
+                    case "S":
+                        list = db.SValueSets.Where(s => s.SMEId == Id).ToList()
+                            .ConvertAll<string[]>(valueDB => [valueDB.Value ?? string.Empty, valueDB.Annotation ?? string.Empty]);
+                        break;
+                    case "I":
+                        list = db.IValueSets.Where(s => s.SMEId == Id).ToList()
+                            .ConvertAll<string[]>(valueDB => [valueDB.Value == null ? string.Empty : valueDB.Value.ToString(), valueDB.Annotation ?? string.Empty]);
+                        break;
+                    case "D":
+                        list = db.DValueSets.Where(s => s.SMEId == Id).ToList()
+                            .ConvertAll<string[]>(valueDB => [valueDB.Value == null ? string.Empty : valueDB.Value.ToString(), valueDB.Annotation ?? string.Empty]);
+                        break;
+                }
+            }
+            if (list.Count > 0 || SMEType.Equals("MLP"))
+                return list;
+            return [[string.Empty, string.Empty]];
+>>>>>>> eclipse-server/main
         }
     }
 }
