@@ -51,6 +51,9 @@
             list = query.Get("smeid");
             if (!list.IsNullOrEmpty())
                 smeid = Convert.ToInt32(list);
+            list = query.Get("parid");
+            if (!list.IsNullOrEmpty())
+                parid = Convert.ToInt32(list);
             list = query.Get("smidentifier");
             if (!list.IsNullOrEmpty())
                 smidentifier = list;
@@ -98,6 +101,11 @@
                             smeid = 0;
                             if (!splitCur[ 1 ].IsNullOrEmpty())
                                 smeid = Convert.ToInt32(splitCur[ 1 ]);
+                            break;
+                        case "parid":
+                            parid = 0;
+                            if (!splitCur[ 1 ].IsNullOrEmpty())
+                                parid = Convert.ToInt32(splitCur[ 1 ]);
                             break;
                     }
                 }
@@ -522,9 +530,9 @@
 
             if (url.EndsWith("/sme"))
             {
-                List<SMESet> data = PageRetriever.GetPageSMEData(size, TimeStamp.StringToDateTime(searchLower), searchLower, smid, smeid);
+                List<SMESet> data = PageRetriever.GetPageSMEData(size, TimeStamp.StringToDateTime(searchLower), searchLower, smid, smeid, parid);
                 <span>
-                    &nbsp&nbsp@($"SME#: {data.Count}/{db.SMESets.Count()} size={size} search={search} smid={smid} smeid={smeid}")
+                    &nbsp&nbsp@($"SME#: {data.Count}/{db.SMESets.Count()} size={size} search={search} smid={smid} smeid={smeid} parid={parid}")
                 </span>
                 <br/>
                 <br/>
@@ -580,20 +588,19 @@
                             <td>
                                 @if (smeDB.SMEType.Equals("MLP"))
                                 {
-                                    List<string> list = smeDB.getMLPValue();
+                                    var list = smeDB.getValue();
                                     <ul>
-                                        @for (int z = 0; z + 1 < list.Count; z++)
+                                        @for (int z = 0; z < list.Count; z++)
                                         {
                                             <li>
-                                                [@list[ z ]] @list[ z + 1 ]
+                                                [@list[ z ][ 1 ]] @list[ z ][ 0 ]
                                             </li>
-                                            z++;
                                         }
                                     </ul>
                                 }
                                 else
                                 {
-                                    @smeDB.getValue()
+                                    @smeDB.getValue().First()[0]
                                 }
                             </td>
                             <td style="word-break:keep-all">@smeDB.ValueType</td>
@@ -608,17 +615,21 @@
                                 {
                                     <a href="@($"{shorturl}/sme?smid={smeDB.SMId}&smeid={smeDB.ParentSMEId}")" target="_blank">par </a>
                                 }
+                                @if (db.SMESets.Where(smeV => smeV.ParentSMEId == smeDB.Id).Any())
+                                {
+                                    <a href="@($"{shorturl}/sme?parid={smeDB.Id}")" target="_blank">children </a>
+                                }
                                 @if (smeDB.ValueType.Equals("S"))
                                 {
-                                    <a href="@($"{shorturl}/svalue?smeid={smeDB.Id}")" target="_blank">svalue</a>
+                                    <a href="@($"{shorturl}/svalue?smeid={smeDB.Id}")" target="_blank">svalue </a>
                                 }
-                                @if (smeDB.ValueType.Equals("I"))
+                                else if (smeDB.ValueType.Equals("I"))
                                 {
-                                    <a href="@($"{shorturl}/ivalue?smeid={smeDB.Id}")" target="_blank">ivalue</a>
+                                    <a href="@($"{shorturl}/ivalue?smeid={smeDB.Id}")" target="_blank">ivalue </a>
                                 }
-                                @if (smeDB.ValueType.Equals("F"))
+                                else if (smeDB.ValueType.Equals("D"))
                                 {
-                                    <a href="@($"{shorturl}/dvalue?smeid={smeDB.Id}")" target="_blank">fvalue</a>
+                                    <a href="@($"{shorturl}/dvalue?smeid={smeDB.Id}")" target="_blank">dvalue </a>
                                 }
                             </td>
                             <td>
@@ -667,15 +678,14 @@
                         <span>
                             @if (smeDB.SMEType.Equals("MLP"))
                             {
-                                List<string> list = smeDB.getMLPValue();
+                                var list = smeDB.getValue();
                                 if (list.Count > 0)
                                 {
                                     string mlp            = string.Empty;
                                     string seperateString = " | ";
-                                    @for (int z = 0; z + 1 < list.Count; z++)
+                                    @for (int z = 0; z < list.Count; z++)
                                     {
-                                        mlp += $"[{list[ z ]}] {list[ z + 1 ]}{seperateString}";
-                                        z++;
+                                        mlp += $"[{list[z][1]}] {list[z][0]}{seperateString}";
                                     }
 
                                     @mlp.Substring(0, mlp.Length - seperateString.Length)
@@ -683,7 +693,7 @@
                             }
                             else
                             {
-                                @smeDB.getValue()
+                                @smeDB.getValue().First()[0]
                             }
                         </span>
                         <span style="background-color:blue;">&nbsp</span>
@@ -698,12 +708,22 @@
                         {
                             <a href="@($"{shorturl}/sme?smid={smeDB.SMId}&smeid={smeDB.ParentSMEId}")" target="_blank">par </a>
                         }
-
-                        @if (smeDB.SMEType.Equals("MLP"))
+                        @if (db.SMESets.Where(smeV => smeV.ParentSMEId == smeDB.Id).Any())
                         {
-                            <a href="@($"{shorturl}/svalue?smeid={smeDB.Id}")" target="_blank">mlp</a>
+                            <a href="@($"{shorturl}/sme?parid={smeDB.Id}")" target="_blank">children </a>
                         }
-
+                        @if (smeDB.ValueType.Equals("S"))
+                        {
+                            <a href="@($"{shorturl}/svalue?smeid={smeDB.Id}")" target="_blank">svalue </a>
+                        }
+                        else if (smeDB.ValueType.Equals("I"))
+                        {
+                            <a href="@($"{shorturl}/ivalue?smeid={smeDB.Id}")" target="_blank">ivalue </a>
+                        }
+                        else if (smeDB.ValueType.Equals("D"))
+                        {
+                            <a href="@($"{shorturl}/dvalue?smeid={smeDB.Id}")" target="_blank">dvalue </a>
+                        }
                         <span style="background-color:blue;">&nbsp</span>
                         <a href="@link" target="_blank">@link</a>
                         <br/>
@@ -955,5 +975,6 @@
     long aasid = 0;
     long smid = 0;
     long smeid = 0;
+    long parid = 0;
     string smidentifier = string.Empty;
 }

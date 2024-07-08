@@ -7,6 +7,12 @@ using System.IO.Compression;
 using Microsoft.IdentityModel.Tokens;
 using static System.Net.Mime.MediaTypeNames;
 using AasxServerDB.Entities;
+using Newtonsoft.Json.Linq;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Runtime.InteropServices.JavaScript;
+using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics.X86;
+using System.ComponentModel.DataAnnotations;
 
 namespace AasxServerDB
 {
@@ -118,7 +124,7 @@ namespace AasxServerDB
                         new VisitorAASX(aasxDB: aasxDB).Visit(cd);
         }
 
-        private string? shortType(ISubmodelElement sme)
+        private string shortSMEType(ISubmodelElement sme)
         {
             return sme switch
                    {
@@ -135,161 +141,137 @@ namespace AasxServerDB
                        AnnotatedRelationshipElement => "RelA",
                        SubmodelElementCollection    => "SMC",
                        SubmodelElementList          => "SML",
-                       _                            => null
+                       _                            => string.Empty
                    };
         }
 
-        private string getValueAndType(string v, out string sValue, out long iValue, out double fValue)
+        private string shortValueType(DataTypeDefXsd? dataType)
         {
-            sValue = "";
-            iValue = 0;
-            fValue = 0;
-
-            if (v.All(char.IsDigit) && v.Length <= 10)
-            {
-                try
-                {
-                    iValue = Convert.ToInt64(v);
-                    return ("I");
-                }
-                catch
-                {
-                    sValue = v;
-                    return "S";
-                }
-            }
-
-            if (v.Contains("."))
-            {
-                var legal = "012345679.E";
-
-                foreach (var c in v)
-                {
-                    if (Char.IsDigit(c))
-                        continue;
-                    if (c == '.')
-                        continue;
-                    if (!legal.Contains(c))
+            return dataType switch
                     {
-                        sValue = v;
-                        return "S";
-                    }
-                }
-
-                try
-                {
-                    var decSep = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
-                    v      = v.Replace(".", decSep);
-                    v      = v.Replace(",", decSep);
-                    fValue = Convert.ToDouble(v);
-                    return "F";
-                }
-                catch { }
-            }
-
-            sValue = v;
-            return "S";
+                        DataTypeDefXsd.AnyUri => "S",
+                        DataTypeDefXsd.Base64Binary => "S",
+                        DataTypeDefXsd.Boolean => "S",
+                        DataTypeDefXsd.Byte => "I",
+                        DataTypeDefXsd.Date => "S",
+                        DataTypeDefXsd.DateTime => "S",
+                        DataTypeDefXsd.Decimal => "S",
+                        DataTypeDefXsd.Double => "D",
+                        DataTypeDefXsd.Duration => "S",
+                        DataTypeDefXsd.Float => "D",
+                        DataTypeDefXsd.GDay => "S",
+                        DataTypeDefXsd.GMonth => "S",
+                        DataTypeDefXsd.GMonthDay => "S",
+                        DataTypeDefXsd.GYear => "S",
+                        DataTypeDefXsd.GYearMonth => "S",
+                        DataTypeDefXsd.HexBinary => "S",
+                        DataTypeDefXsd.Int => "I",
+                        DataTypeDefXsd.Integer => "I",
+                        DataTypeDefXsd.Long => "I",
+                        DataTypeDefXsd.NegativeInteger => "I",
+                        DataTypeDefXsd.NonNegativeInteger => "I",
+                        DataTypeDefXsd.NonPositiveInteger => "I",
+                        DataTypeDefXsd.PositiveInteger => "I",
+                        DataTypeDefXsd.Short => "I",
+                        DataTypeDefXsd.String => "S",
+                        DataTypeDefXsd.Time => "S",
+                        DataTypeDefXsd.UnsignedByte => "I",
+                        DataTypeDefXsd.UnsignedInt => "I",
+                        DataTypeDefXsd.UnsignedLong => "I",
+                        DataTypeDefXsd.UnsignedShort => "I",
+                        _ => string.Empty
+                    };
         }
 
-        private void getValue(ISubmodelElement sme, out string vt, out string sValue, out long iValue, out double fValue)
+        private string getValueAndType(string? value, DataTypeDefXsd? dataType, out string sValue, out long iValue, out double dValue)
         {
             sValue = string.Empty;
             iValue = 0;
-            fValue = 0;
-            vt     = string.Empty;
-            var v = string.Empty;
+            dValue = 0;
 
-            if (sme is Property p)
+            if (value.IsNullOrEmpty())
+                return string.Empty;
+
+            if (shortValueType(dataType).Equals("S"))
             {
-                v = sme.ValueAsText();
-                if (!v.IsNullOrEmpty())
-                    vt = getValueAndType(v, out sValue, out iValue, out fValue);
+                sValue = value;
+                return "S";
             }
 
-            if (sme is AasCore.Aas3_0.File f)
+            if (Int64.TryParse(value, out iValue))
+                return "I";
+
+            if (Double.TryParse(value, out dValue))
+                return "D";
+
+            sValue = value;
+            return "S";
+        }
+
+        private void setValues(ISubmodelElement sme, SMESet smeDB)
+        {
+            if (sme is Property prop)
             {
-                v      = f.Value;
-                vt     = "S";
-                sValue = v;
-            }
+                var value = prop.ValueAsText();
+                if (value.IsNullOrEmpty())
+                    return;
 
-            if (sme is MultiLanguageProperty mlp)
+                smeDB.ValueType = getValueAndType(value, prop.ValueType, out var sValue, out var iValue, out var dValue);
+                if (smeDB.ValueType.Equals("S"))
+                    smeDB.SValueSets.Add(new SValueSet { Value = sValue, Annotation = string.Empty });
+                else if (smeDB.ValueType.Equals("I"))
+                    smeDB.IValueSets.Add(new IValueSet { Value = iValue, Annotation = string.Empty });
+                else if (smeDB.ValueType.Equals("D"))
+                    smeDB.DValueSets.Add(new DValueSet { Value = dValue, Annotation = string.Empty });
+            }
+            else if (sme is AasCore.Aas3_0.File file)
             {
-                var ls = mlp.Value;
-                if (ls != null)
-                {
-                    vt     = "S";
-                    sValue = v;
-                }
+                if (file.Value.IsNullOrEmpty())
+                    return;
+
+                smeDB.ValueType = "S";
+                smeDB.SValueSets.Add(new SValueSet { Value = file.Value, Annotation = string.Empty });
             }
+            else if (sme is MultiLanguageProperty mlp)
+            {
+                if (mlp.Value == null || mlp.Value.Count == 0)
+                    return;
 
-            if (sme is not AasCore.Aas3_0.Range r)
-                return;
-
-            v = r.Min;
-            var v2 = r.Max;
-            v      += "$$" + v2;
-            vt     =  "S";
-            sValue =  v;
+                smeDB.ValueType = "S";
+                if (mlp.Value != null)
+                    foreach (var sValueMLP in mlp.Value)
+                        smeDB.SValueSets.Add(new SValueSet() { Annotation = sValueMLP.Language, Value = sValueMLP.Text });
+            }
+            else if (sme is Entity entity)
+            {
+                smeDB.ValueType = "S";
+                smeDB.SValueSets.Add(new SValueSet { Value = entity.GlobalAssetId, Annotation = entity.EntityType.ToString() });
+            }
         }
 
         private SMESet collectSMEData(ISubmodelElement sme)
         {
+            var semanticId = sme.SemanticId.GetAsIdentifier() ?? string.Empty;
+
             DateTime currentDataTime = DateTime.UtcNow;
             DateTime timeStamp = (sme.TimeStamp == default(DateTime)) ? currentDataTime : sme.TimeStamp;
             DateTime timeStampCreate = (sme.TimeStampCreate == default(DateTime)) ? currentDataTime : sme.TimeStampCreate;
             DateTime timeStampTree = (sme.TimeStampTree == default(DateTime)) ? currentDataTime : sme.TimeStampTree;
-            var st         = shortType(sme);
-            var semanticId = sme.SemanticId.GetAsIdentifier();
-            if (semanticId.IsNullOrEmpty())
-                semanticId = string.Empty;
-            getValue(sme, out var vt, out var sValue, out var iValue, out var fValue);
+
+            var smeType = shortSMEType(sme);
             var smeDB = new SMESet
-            {
-                ParentSME = _parSME,
-                SMEType = st,
-                ValueType = vt,
-                SemanticId = semanticId,
-                IdShort = sme.IdShort,
-                TimeStamp = timeStamp,
-                TimeStampCreate = timeStampCreate,
-                TimeStampTree = timeStampTree
-            };
-            _smDB.SMESets.Add(smeDB);
-
-            if (vt.Equals("S") && st.Equals("MLP"))
-            {
-                if (sme is MultiLanguageProperty mlp)
-                {
-                    var ls = mlp.Value;
-                    if (ls != null)
-                    {
-                        for (int i = 0; i < ls.Count; i++)
                         {
-                            var mlpval = new SValueSet() {Annotation = ls[ i ].Language, Value = ls[ i ].Text};
-                            smeDB.SValueSets.Add(mlpval);
-                        }
-                    }
-                }
-            }
-
-            if (vt.Equals("S") && !st.Equals("MLP"))
-            {
-                var ValueDB = new SValueSet {Value = sValue, Annotation = string.Empty};
-                smeDB.SValueSets.Add(ValueDB);
-            }
-
-            if (vt.Equals("I"))
-            {
-                var ValueDB = new IValueSet {Value = iValue, Annotation = string.Empty};
-                smeDB.IValueSets.Add(ValueDB);
-            }
-
-            if (vt.Equals("F"))
-            {
-                var ValueDB = new DValueSet {Value = fValue, Annotation = string.Empty};
-                smeDB.DValueSets.Add(ValueDB);
-            }
+                            ParentSME  = _parSME,
+                            SMEType    = smeType,
+                            ValueType  = string.Empty,
+                            SemanticId = semanticId,
+                            IdShort    = sme.IdShort,
+                            TimeStamp = timeStamp,
+                            TimeStampCreate = timeStampCreate,
+                            TimeStampTree = timeStampTree
+                        };
+            setValues(sme, smeDB);
+            _smDB?.SMESets.Add(smeDB);
 
             return smeDB;
         }
@@ -360,7 +342,7 @@ namespace AasxServerDB
         }
         public override void VisitRelationshipElement(IRelationshipElement that)
         {
-            SMESet smeSet = collectSMEData(that);
+            collectSMEData(that);
             base.VisitRelationshipElement(that);
         }
         public override void VisitSubmodelElementList(ISubmodelElementList that)
@@ -383,43 +365,46 @@ namespace AasxServerDB
 
         public override void VisitProperty(IProperty that)
         {
-            SMESet smeSet = collectSMEData(that);
+            collectSMEData(that);
             base.VisitProperty(that);
         }
         public override void VisitMultiLanguageProperty(IMultiLanguageProperty that)
         {
-            SMESet smeSet = collectSMEData(that);
+            collectSMEData(that);
             base.VisitMultiLanguageProperty(that);
         }
         public override void VisitRange(AasCore.Aas3_0.IRange that)
         {
-            SMESet smeSet = collectSMEData(that);
+            collectSMEData(that);
             base.VisitRange(that);
         }
         public override void VisitReferenceElement(IReferenceElement that)
         {
-            SMESet smeSet = collectSMEData(that);
+            collectSMEData(that);
             base.VisitReferenceElement(that);
         }
         public override void VisitBlob(IBlob that)
         {
-            SMESet smeSet = collectSMEData(that);
+            collectSMEData(that);
             base.VisitBlob(that);
         }
         public override void VisitFile(AasCore.Aas3_0.IFile that)
         {
-            SMESet smeSet = collectSMEData(that);
+            collectSMEData(that);
             base.VisitFile(that);
         }
         public override void VisitAnnotatedRelationshipElement(IAnnotatedRelationshipElement that)
         {
-            SMESet smeSet = collectSMEData(that);
+            collectSMEData(that);
             base.VisitAnnotatedRelationshipElement(that);
         }
         public override void VisitEntity(IEntity that)
         {
             SMESet smeSet = collectSMEData(that);
+            smeSet.ParentSME = _parSME;
+            _parSME = smeSet;
             base.VisitEntity(that);
+            _parSME = smeSet.ParentSME;
         }
         public override void VisitEventPayload(IEventPayload that)
         {
@@ -427,11 +412,12 @@ namespace AasxServerDB
         }
         public override void VisitBasicEventElement(IBasicEventElement that)
         {
-            // base.VisitBasicEventElement(that);
+            collectSMEData(that);
+            base.VisitBasicEventElement(that);
         }
         public override void VisitOperation(IOperation that)
         {
-            SMESet smeSet = collectSMEData(that);
+            collectSMEData(that);
             base.VisitOperation(that);
         }
         public override void VisitOperationVariable(IOperationVariable that)
@@ -440,7 +426,7 @@ namespace AasxServerDB
         }
         public override void VisitCapability(ICapability that)
         {
-            SMESet smeSet = collectSMEData(that);
+            collectSMEData(that);
             base.VisitCapability(that);
         }
         public override void VisitConceptDescription(IConceptDescription that)
