@@ -1,8 +1,14 @@
+using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using AasxServerDB;
 using AasxServerDB.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 
 /*
  * https://learn.microsoft.com/en-us/ef/core/get-started/overview/first-app?tabs=netcore-cli
@@ -33,6 +39,7 @@ namespace AasxServerDB
         public DbSet<SValueSet> SValueSets { get; set; }
         public DbSet<IValueSet> IValueSets { get; set; }
         public DbSet<DValueSet> DValueSets { get; set; }
+        public DbSet<OValueSet> OValueSets { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
@@ -69,7 +76,8 @@ namespace AasxServerDB
                 SMESets.ExecuteDeleteAsync(),
                 IValueSets.ExecuteDeleteAsync(),
                 SValueSets.ExecuteDeleteAsync(),
-                DValueSets.ExecuteDeleteAsync()
+                DValueSets.ExecuteDeleteAsync(),
+                OValueSets.ExecuteDeleteAsync()
             };
 
             // Wait for all delete tasks to complete
@@ -77,6 +85,15 @@ namespace AasxServerDB
 
             // Save changes to the database
             SaveChanges();
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<OValueSet>()
+                .Property(e => e.Value)
+                .HasConversion(
+                    v => v.ToJsonString(null),
+                    v => JsonNode.Parse(v, null, default));
         }
     }
 }
