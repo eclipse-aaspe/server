@@ -28,12 +28,6 @@ namespace AasxServerDB
 {
     public class AasContext : DbContext
     {
-        static public JsonSerializerSettings _jsonSerializerSettings = new JsonSerializerSettings
-        {
-            TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto,
-            NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore,
-        };
-
         public static IConfiguration? _con       { get; set; }
         public static string?         _dataPath  { get; set; }
         public static bool            IsPostgres { get; set; }
