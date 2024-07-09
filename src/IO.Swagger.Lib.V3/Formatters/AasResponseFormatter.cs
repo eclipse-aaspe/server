@@ -1,17 +1,23 @@
-﻿using AdminShellNS.Lib.V3.Models;
+using AdminShellNS.Lib.V3.Models;
 using DataTransferObjects;
 using DataTransferObjects.ValueDTOs;
 using IO.Swagger.Lib.V3.SerializationModifiers;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers;
 using IO.Swagger.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
@@ -51,6 +57,10 @@ namespace IO.Swagger.Lib.V3.Formatters
 
         public override bool CanWriteResult(OutputFormatterCanWriteContext context)
         {
+            if (context.Object is List<string>)
+            {
+                return true;
+            }
             if (typeof(IClass).IsAssignableFrom(context.ObjectType))
             {
                 return base.CanWriteResult(context);
@@ -86,8 +96,34 @@ namespace IO.Swagger.Lib.V3.Formatters
             //SerializationModifier
             GetSerializationMidifiersFromRequest(context.HttpContext.Request, out LevelEnum level, out ExtentEnum extent);
 
+            if (context.Object is List<string> s)
+            {
+                /*
+                string json = JsonSerializer.Serialize(context.Object);
+                response.Body = new MemoryStream(Encoding.UTF8.GetBytes(json));
+                response.ContentType = "text/plain";
 
-            if (typeof(IClass).IsAssignableFrom(context.ObjectType))
+                using (var writer = new StreamWriter(response.Body))
+                {
+                    writer.WriteAsync(json);
+                    writer.FlushAsync(); // Ensure the response is flushed
+                }
+                */
+
+                var jsonResult = new JsonResult(context.Object)
+                {
+                    StatusCode = StatusCodes.Status200OK,
+                    ContentType = "application/json"
+                };
+
+                jsonResult.ExecuteResultAsync(new ActionContext
+                {
+                    HttpContext = httpContext,
+                    RouteData = httpContext.GetRouteData(),
+                    ActionDescriptor = new ActionDescriptor()
+                });
+            }
+            else if (typeof(IClass).IsAssignableFrom(context.ObjectType))
             {
                 //Validate modifiers
                 SerializationModifiersValidator.Validate((IClass)context.Object, level, extent);
