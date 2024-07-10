@@ -312,7 +312,7 @@ namespace AasxServerDB
                 .Where(s =>
                     (!withSemanticId || (s.SemanticId != null && s.SemanticId.Equals(semanticId))) &&
                     (!withIdentifier || (s.Identifier != null && s.Identifier.Equals(identifier))) &&
-                    (!withDiff || s.TimeStamp.CompareTo(diff) > 0))
+                    (!withDiff || s.TimeStampTree.CompareTo(diff) > 0))
                 .ToList();
         }
 
@@ -326,7 +326,7 @@ namespace AasxServerDB
                     {
                         smId = identifier,
                         url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(identifier)}",
-                        timeStamp = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStamp)
+                        timeStampTree = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree)
                     };
                 }
             );
@@ -357,12 +357,31 @@ namespace AasxServerDB
             if (parameter > 1 || (semanticId.IsNullOrEmpty() && !withDiff && parameter != 1))
                 return result;
 
+            GetXValue(ref result, semanticId, dateTime, contains, equal, lower, upper);
             GetSValue(ref result, semanticId, dateTime, contains, equal);
             GetIValue(ref result, semanticId, dateTime, equal, lower, upper);
             GetDValue(ref result, semanticId, dateTime, equal, lower, upper);
             GetOValue(ref result, semanticId, dateTime, contains, equal);
             SelectSM(ref result, smSemanticId, smIdentifier);
             return result;
+        }
+
+        private static void GetXValue(ref List<SMEWithValue> smeValue, string semanticId = "", DateTime diff = new(), string contains = "", string equal = "", string lower = "", string upper = "")
+        {
+            var withValue = !contains.IsNullOrEmpty() || !equal.IsNullOrEmpty() || !lower.IsNullOrEmpty() || !upper.IsNullOrEmpty();
+            var withSME = !semanticId.IsNullOrEmpty();
+            var withDiff = !diff.Equals(DateTime.MinValue);
+            if (!withDiff || withValue)
+                return;
+
+            using AasContext db = new();
+            smeValue.AddRange(db.SMESets
+                        .Where(sme =>
+                            (sme.TValue == string.Empty || sme.TValue == null) &&
+                            (!withSME || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) &&
+                            (!withDiff || sme.TimeStampTree.CompareTo(diff) > 0))
+                        .Select(sme => new SMEWithValue { sme = sme })
+                .ToList());
         }
 
         private static void GetSValue(ref List<SMEWithValue> smeValue, string semanticId = "", DateTime diff = new(), string contains = "", string equal = "")
@@ -380,10 +399,10 @@ namespace AasxServerDB
                     (!withContains || v.Value.Contains(contains)) &&
                     (!withEqual || v.Value.Equals(equal)))
                 .Join(
-                    (db.SMESets
+                    db.SMESets
                         .Where(sme => 
                             (!withSME || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) &&
-                            (!withDiff || sme.TimeStamp.CompareTo(diff) > 0))),
+                            (!withDiff || sme.TimeStampTree.CompareTo(diff) > 0)),
                     v => v.SMEId, sme => sme.Id, (v, sme) => new SMEWithValue { sme = sme, value = v.Value })
                 .ToList());
         }
@@ -424,7 +443,7 @@ namespace AasxServerDB
                     (db.SMESets
                         .Where(sme =>
                             (!withSME || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) &&
-                            (!withDiff || sme.TimeStamp.CompareTo(diff) > 0))),
+                            (!withDiff || sme.TimeStampTree.CompareTo(diff) > 0))),
                     v => v.SMEId, sme => sme.Id, (v, sme) => new SMEWithValue { sme = sme, value = v.Value.ToString() })
                 .ToList());
         }
@@ -465,7 +484,7 @@ namespace AasxServerDB
                     (db.SMESets
                         .Where(sme =>
                             (!withSME || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) &&
-                            (!withDiff || sme.TimeStamp.CompareTo(diff) > 0))),
+                            (!withDiff || sme.TimeStampTree.CompareTo(diff) > 0))),
                     v => v.SMEId, sme => sme.Id, (v, sme) => new SMEWithValue { sme = sme, value = v.Value.ToString() })
                 .ToList());
         }
@@ -488,7 +507,7 @@ namespace AasxServerDB
                     db.SMESets
                         .Where(sme =>
                             (!withSME || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) &&
-                            (!withDiff || sme.TimeStamp.CompareTo(diff) > 0)),
+                            (!withDiff || sme.TimeStampTree.CompareTo(diff) > 0)),
                     v => v.SMEId, sme => sme.Id, (v, sme) => new SMEWithValue { sme = sme, value = (string) v.Value })
                 .ToList());
         }
@@ -529,7 +548,7 @@ namespace AasxServerDB
                         value = sme.value,
                         idShortPath = path,
                         url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(identifier)}/submodel-elements/{path}",
-                        timeStamp = TimeStamp.TimeStamp.DateTimeToString(sme.sme.TimeStamp)
+                        timeStampTree = TimeStamp.TimeStamp.DateTimeToString(sme.sme.TimeStampTree)
                     };
                 }
             );

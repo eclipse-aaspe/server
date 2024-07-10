@@ -423,7 +423,7 @@ namespace AasxServerDB
                         {
                             ParentSME       = _parSME,
                             SMEType         = ShortSMEType(sme),
-                            TValue       = string.Empty,
+                            TValue          = string.Empty,
                             SemanticId      = semanticId,
                             IdShort         = sme.IdShort,
                             TimeStamp       = timeStamp,

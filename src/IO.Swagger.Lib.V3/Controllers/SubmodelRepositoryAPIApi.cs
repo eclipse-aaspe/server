@@ -38,6 +38,7 @@ namespace IO.Swagger.Controllers;
 using System.Globalization;
 using System.Threading.Tasks;
 using AdminShellNS.Exceptions;
+using Microsoft.IdentityModel.Tokens;
 
 /// <summary>
 /// 
@@ -268,13 +269,12 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var submodelElements = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
-        var      filtered = new List<ISubmodelElement>();
-        DateTime _diff;
-        if (diff != null && diff != "")
+        var filtered = new List<ISubmodelElement>();
+        if (!diff.IsNullOrEmpty())
         {
             try
             {
-                _diff    = DateTime.Parse(diff).ToUniversalTime();
+                var _diff = TimeStamp.TimeStamp.StringToDateTime(diff);
                 filtered = filterSubmodelElements(submodelElements, _diff);
             }
             catch
@@ -283,9 +283,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
         }
         else
-        {
             filtered = submodelElements;
-        }
 
         var smePaginatedList = _paginationService.GetPaginatedList(filtered, new PaginationParameters(cursor, limit));
         var smeLevelList     = _levelExtentModifierService.ApplyLevelExtent(smePaginatedList.result, level, extent);
@@ -412,13 +410,12 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var smeList = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
-        var      filtered = new List<ISubmodelElement>();
-        DateTime _diff;
-        if (diff != null && diff != "")
+        var filtered = new List<ISubmodelElement>();
+        if (!diff.IsNullOrEmpty())
         {
             try
             {
-                _diff    = DateTime.Parse(diff).ToUniversalTime();
+                var _diff = TimeStamp.TimeStamp.StringToDateTime(diff);
                 filtered = filterSubmodelElements(smeList, _diff);
             }
             catch
@@ -427,9 +424,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
         }
         else
-        {
             filtered = smeList;
-        }
 
         var smePagedList    = _paginationService.GetPaginatedList(filtered, new PaginationParameters(cursor, limit));
         var smeListLevel    = _levelExtentModifierService.ApplyLevelExtent(smePagedList.result, level);
@@ -488,13 +483,12 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var submodelElementList = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
-        var      filtered = new List<ISubmodelElement?>();
-        DateTime _diff;
-        if (diff != null && diff != "")
+        var filtered = new List<ISubmodelElement?>();
+        if (!diff.IsNullOrEmpty())
         {
             try
             {
-                _diff    = DateTime.Parse(diff).ToUniversalTime();
+                var _diff = TimeStamp.TimeStamp.StringToDateTime(diff);
                 filtered = filterSubmodelElements(submodelElementList, _diff);
             }
             catch
@@ -616,13 +610,12 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var submodelElements = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
-        var      filtered = new List<ISubmodelElement>();
-        DateTime _diff;
-        if (diff != null && diff != "")
+        var filtered = new List<ISubmodelElement>();
+        if (!diff.IsNullOrEmpty())
         {
             try
             {
-                _diff    = DateTime.Parse(diff).ToUniversalTime();
+                var _diff = TimeStamp.TimeStamp.StringToDateTime(diff);
                 filtered = filterSubmodelElements(submodelElements, _diff);
             }
             catch
@@ -631,9 +624,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
         }
         else
-        {
             filtered = submodelElements;
-        }
 
         var smePagedList   = _paginationService.GetPaginatedList(filtered, new PaginationParameters(cursor, limit));
         var smeLevelExtent = _levelExtentModifierService.ApplyLevelExtent(smePagedList.result ?? [], level, extent);
