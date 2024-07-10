@@ -29,7 +29,7 @@ namespace AasxServerDB
                     (a.Identifier != null && a.Identifier.ToLower().Contains(searchLower)) ||
                     (a.AssetKind != null && a.AssetKind.ToLower().Contains(searchLower)) ||
                     (a.GlobalAssetId != null && a.GlobalAssetId.ToLower().Contains(searchLower)) ||
-                    (withDateTime && a.TimeStamp.CompareTo(dateTime) > 0)))
+                    (withDateTime && a.TimeStampTree.CompareTo(dateTime) > 0)))
                 .Take(size)
                 .ToList();
         }
@@ -44,7 +44,7 @@ namespace AasxServerDB
                     (s.Identifier != null && s.Identifier.ToLower().Contains(searchLower)) ||
                     (s.IdShort != null && s.IdShort.ToLower().Contains(searchLower)) ||
                     (s.SemanticId != null && s.SemanticId.ToLower().Contains(searchLower)) ||
-                    (withDateTime && s.TimeStamp.CompareTo(dateTime) > 0)))
+                    (withDateTime && s.TimeStampTree.CompareTo(dateTime) > 0)))
                 .Take(size)
                 .ToList();
         }
@@ -63,7 +63,7 @@ namespace AasxServerDB
                         (sme.SemanticId != null  && sme.SemanticId.ToLower().Contains(searchLower)) ||
                         (sme.SMEType != null  && sme.SMEType.ToLower().Contains(searchLower)) ||
                         (sme.TValue != null  && sme.TValue.ToLower().Contains(searchLower)) ||
-                        (withDateTime && sme.TimeStamp.CompareTo(dateTime) > 0) ||
+                        (withDateTime && sme.TimeStampTree.CompareTo(dateTime) > 0) ||
                         db.OValueSets.Any(sv => sv.SMEId == sme.Id && (sv.Attribute.ToLower().Contains(searchLower) || ((string) sv.Value).ToLower().Contains(searchLower))) ||
                         (sme.TValue != null && (
                             (sme.TValue.Equals("S") && db.SValueSets.Any(sv => sv.SMEId == sme.Id && ((sv.Annotation != null && sv.Annotation.ToLower().Contains(searchLower)) || (sv.Value != null && sv.Value.ToLower().Contains(searchLower))))) ||

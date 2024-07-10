@@ -64,12 +64,12 @@
         // change parameters to input window
         if (url.EndsWith("/aasx") || url.EndsWith("/aas") || url.EndsWith("/sm")
             || url.EndsWith("/sme") || url.EndsWith("/svalue") || url.EndsWith("/ivalue") || url.EndsWith("/dvalue") || url.EndsWith("/ovalue"))
-            {
+        {
             <input @bind="CurrentValue" style="width:200px; border-width: 1px; border-color: black;"/>
-                @code {
-                    private string CurrentValue { get; set; }
-                }
-                if (!CurrentValue.IsNullOrEmpty())
+            @code {
+                private string CurrentValue { get; set; }
+            }
+            if (!CurrentValue.IsNullOrEmpty())
             {
                 var splitCur = CurrentValue.Split("=");
                 if (splitCur.Count() == 2)
@@ -123,7 +123,7 @@
         {
             if (!(url.EndsWith("/aasx") || url.EndsWith("/aas") || url.EndsWith("/sm") || url.EndsWith("/smjson")
                 || url.EndsWith("/sme") || url.EndsWith("/svalue") || url.EndsWith("/ivalue") || url.EndsWith("/dvalue") || url.EndsWith("/ovalue")))
-                {
+            {
                 if (AasContext.IsPostgres)
                 {
                     <span>PostgreSQL database</span>
