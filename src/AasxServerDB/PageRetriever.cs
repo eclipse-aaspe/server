@@ -63,7 +63,7 @@ namespace AasxServerDB
                         (sme.SemanticId != null  && sme.SemanticId.ToLower().Contains(searchLower)) ||
                         (sme.SMEType != null  && sme.SMEType.ToLower().Contains(searchLower)) ||
                         (sme.TValue != null  && sme.TValue.ToLower().Contains(searchLower)) ||
-                        (withDateTime && sme.TimeStampTree.CompareTo(dateTime) > 0) ||
+                        (withDateTime && sme.TimeStamp.CompareTo(dateTime) > 0) ||
                         db.OValueSets.Any(sv => sv.SMEId == sme.Id && (sv.Attribute.ToLower().Contains(searchLower) || ((string) sv.Value).ToLower().Contains(searchLower))) ||
                         (sme.TValue != null && (
                             (sme.TValue.Equals("S") && db.SValueSets.Any(sv => sv.SMEId == sme.Id && ((sv.Annotation != null && sv.Annotation.ToLower().Contains(searchLower)) || (sv.Value != null && sv.Value.ToLower().Contains(searchLower))))) ||
