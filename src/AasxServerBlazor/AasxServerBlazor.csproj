@@ -19,13 +19,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Using Include="AasCore.Aas3_0"/>
+        <Using Include="AasCore.Aas3_0" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="HotChocolate.AspNetCore" Version="13.9.6" />
+        <PackageReference Include="HotChocolate.AspNetCore" Version="13.9.7" />
         <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.0.6" />
-        <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.2.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.2.0" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.6">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -35,17 +35,17 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\AasSecurity\AasSecurity.csproj"/>
-        <ProjectReference Include="..\AasxServerStandardBib\AasxServerStandardBib.csproj"/>
-        <ProjectReference Include="..\es6numberserializer\es6numberserializer.csproj"/>
-        <ProjectReference Include="..\IO.Swagger.Lib.V3\IO.Swagger.Lib.V3.csproj"/>
-        <ProjectReference Include="..\IO.Swagger.Registry.Lib.V3\IO.Swagger.Registry.Lib.V3.csproj"/>
-        <ProjectReference Include="..\jsoncanonicalizer\jsoncanonicalizer.csproj"/>
+        <ProjectReference Include="..\AasSecurity\AasSecurity.csproj" />
+        <ProjectReference Include="..\AasxServerStandardBib\AasxServerStandardBib.csproj" />
+        <ProjectReference Include="..\es6numberserializer\es6numberserializer.csproj" />
+        <ProjectReference Include="..\IO.Swagger.Lib.V3\IO.Swagger.Lib.V3.csproj" />
+        <ProjectReference Include="..\IO.Swagger.Registry.Lib.V3\IO.Swagger.Registry.Lib.V3.csproj" />
+        <ProjectReference Include="..\jsoncanonicalizer\jsoncanonicalizer.csproj" />
     </ItemGroup>
 
     <ProjectExtensions>
         <VisualStudio>
-            <UserProperties appsettings_1json__JsonSchema="Url&quot;"/>
+            <UserProperties appsettings_1json__JsonSchema="Url&quot;" />
         </VisualStudio>
     </ProjectExtensions>
 
@@ -66,20 +66,20 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Content Remove="wwwroot\2022-02-15_IDTA_AAS-Logo_Final_RGB.png"/>
-        <Content Remove="wwwroot\Cable2.jpg"/>
-        <Content Remove="wwwroot\db-schema.jpg"/>
-        <Content Remove="wwwroot\ex.png"/>
-        <Content Remove="wwwroot\Ex_IECEx.jpg"/>
-        <Content Remove="wwwroot\Logo_IDTA.jpg"/>
-        <Content Remove="wwwroot\NOA.jpg"/>
-        <Content Remove="wwwroot\sm_icons\bom.svg"/>
-        <Content Remove="wwwroot\sm_icons\pcf v1.0.svg"/>
+        <Content Remove="wwwroot\2022-02-15_IDTA_AAS-Logo_Final_RGB.png" />
+        <Content Remove="wwwroot\Cable2.jpg" />
+        <Content Remove="wwwroot\db-schema.jpg" />
+        <Content Remove="wwwroot\ex.png" />
+        <Content Remove="wwwroot\Ex_IECEx.jpg" />
+        <Content Remove="wwwroot\Logo_IDTA.jpg" />
+        <Content Remove="wwwroot\NOA.jpg" />
+        <Content Remove="wwwroot\sm_icons\bom.svg" />
+        <Content Remove="wwwroot\sm_icons\pcf v1.0.svg" />
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="temp\"/>
-        <Folder Include="wwwroot\images\scottplot\"/>
+        <Folder Include="temp\" />
+        <Folder Include="wwwroot\images\scottplot\" />
     </ItemGroup>
 
     <ItemGroup>
