@@ -555,7 +555,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var smePagedList  = _paginationService.GetPaginatedList(smeList, new PaginationParameters(cursor, limit));
         var smeReferences = _referenceModifierService.GetReferenceResult(smePagedList.result.ConvertAll(sme => (IReferable)sme));
-        var output        = new ReferencePagedResult() {result = smeReferences, paging_metadata = smePagedList.paging_metadata};
+        var output = new ReferencePagedResult(smeReferences, smePagedList.paging_metadata);
         return new ObjectResult(output);
     }
 
@@ -830,7 +830,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var submodelsPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
         var smReferences       = _referenceModifierService.GetReferenceResult(submodelsPagedList.result.ConvertAll(sm => (IReferable)sm));
-        var output             = new ReferencePagedResult() {result = smReferences, paging_metadata = submodelsPagedList.paging_metadata};
+        var output = new ReferencePagedResult(smReferences, submodelsPagedList.paging_metadata);
         return new ObjectResult(output);
     }
 

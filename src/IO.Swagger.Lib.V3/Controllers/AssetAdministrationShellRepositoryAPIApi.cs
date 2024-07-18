@@ -423,7 +423,7 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
         var aasList          = _aasService.GetAllAssetAdministrationShells(assetIds, idShort);
         var aasPaginatedList = _paginationService.GetPaginatedList(aasList, new PaginationParameters(cursor, limit));
         var references       = _referenceModifierService.GetReferenceResult(aasPaginatedList.result.ConvertAll(a => (IReferable)a));
-        var output           = new ReferencePagedResult {result = references, paging_metadata = aasPaginatedList.paging_metadata};
+        var output = new ReferencePagedResult(references, aasPaginatedList.paging_metadata);
         return new ObjectResult(output);
     }
 
@@ -676,7 +676,7 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
         // TODO (jtikekar, 2023-09-04): check performace imapct due to ConvertAll
         var smePaginated     = _paginationService.GetPaginatedList(smeList, new PaginationParameters(cursor, limit));
         var smeReferenceList = _referenceModifierService.GetReferenceResult(smePaginated.result.ConvertAll(sme => (IReferable)sme));
-        var output           = new ReferencePagedResult {result = smeReferenceList, paging_metadata = smePaginated.paging_metadata};
+        var output = new ReferencePagedResult(smeReferenceList, smePaginated.paging_metadata);
         return new ObjectResult(output);
     }
 
