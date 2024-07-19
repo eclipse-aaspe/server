@@ -1,4 +1,6 @@
-﻿namespace IO.Swagger.Models;
+namespace IO.Swagger.Models;
+
+using IO.Swagger.Lib.V3.Exceptions;
 
 public class PaginationParameters
 {
@@ -13,6 +15,10 @@ public class PaginationParameters
         _cursor = string.IsNullOrEmpty(cursor) || !int.TryParse(cursor, out var parsedCursor) ? 0 : parsedCursor;
         
         // Set limit to provided value or default to MaxResultSize
+        if(limit < 0)
+        {
+            throw new InvalidPaginationParameterException("Limit", limit);
+        }
         _limit = limit ?? MaxResultSize;
     }
 
