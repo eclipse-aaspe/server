@@ -1,4 +1,4 @@
-﻿using DataTransferObjects.MetadataDTOs;
+using DataTransferObjects.MetadataDTOs;
 using DataTransferObjects.ValueDTOs;
 using IO.Swagger.Lib.V3.SerializationModifiers;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers;
@@ -53,7 +53,6 @@ namespace IO.Swagger.Lib.V3.Formatters
             Type    type    = context.ModelType;
             var     request = context.HttpContext.Request;
             object? result  = null;
-
 
             JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(request.Body).Result;
 
