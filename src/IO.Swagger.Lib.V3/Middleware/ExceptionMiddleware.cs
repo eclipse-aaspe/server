@@ -88,6 +88,7 @@ namespace IO.Swagger.Lib.V3.Middleware
                         message.MessageType = MessageTypeEnum.Error;
                         break;
                     }
+                case InvalidPaginationParameterException:
                 case Jsonization.Exception:
                 case InvalidIdShortPathException:
                 case InvalidUpdateResourceException:
