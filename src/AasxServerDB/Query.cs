@@ -369,16 +369,16 @@ namespace AasxServerDB
         private static void GetXValue(ref List<SMEWithValue> smeValue, string semanticId = "", DateTime diff = new(), string contains = "", string equal = "", string lower = "", string upper = "")
         {
             var withValue = !contains.IsNullOrEmpty() || !equal.IsNullOrEmpty() || !lower.IsNullOrEmpty() || !upper.IsNullOrEmpty();
-            var withSME = !semanticId.IsNullOrEmpty();
+            var withSemanticID = !semanticId.IsNullOrEmpty();
             var withDiff = !diff.Equals(DateTime.MinValue);
-            if (!withDiff || withValue)
+            if ((!withSemanticID && !withDiff) || withValue)
                 return;
 
             using AasContext db = new();
             smeValue.AddRange(db.SMESets
                         .Where(sme =>
                             (sme.TValue == string.Empty || sme.TValue == null) &&
-                            (!withSME || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) &&
+                            (!withSemanticID || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) &&
                             (!withDiff || sme.TimeStamp.CompareTo(diff) > 0))
                         .Select(sme => new SMEWithValue { sme = sme })
                 .ToList());
@@ -386,11 +386,11 @@ namespace AasxServerDB
 
         private static void GetSValue(ref List<SMEWithValue> smeValue, string semanticId = "", DateTime diff = new(), string contains = "", string equal = "")
         {
-            var withSME = !semanticId.IsNullOrEmpty();
+            var withSemanticID = !semanticId.IsNullOrEmpty();
             var withDiff = !diff.Equals(DateTime.MinValue);
             var withContains = !contains.IsNullOrEmpty();
             var withEqual = !equal.IsNullOrEmpty();
-            if (!withDiff && !withContains && !withEqual)
+            if (!withSemanticID && !withDiff && !withContains && !withEqual)
                 return;
 
             using AasContext db = new();
@@ -401,7 +401,7 @@ namespace AasxServerDB
                 .Join(
                     db.SMESets
                         .Where(sme => 
-                            (!withSME || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) &&
+                            (!withSemanticID || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) &&
                             (!withDiff || sme.TimeStamp.CompareTo(diff) > 0)),
                     v => v.SMEId, sme => sme.Id, (v, sme) => new SMEWithValue { sme = sme, value = v.Value })
                 .ToList());
@@ -409,11 +409,11 @@ namespace AasxServerDB
 
         private static void GetIValue(ref List<SMEWithValue> smeValue, string semanticId = "", DateTime diff = new(), string equal = "", string lower = "", string upper = "")
         {
-            var withSME = !semanticId.IsNullOrEmpty();
+            var withSemanticID = !semanticId.IsNullOrEmpty();
             var withDiff = !diff.Equals(DateTime.MinValue);
             var withEqual = !equal.IsNullOrEmpty();
             var withCompare = !(lower.IsNullOrEmpty() && upper.IsNullOrEmpty());
-            if (!withDiff && !withEqual && !withCompare)
+            if (!withSemanticID && !withDiff && !withEqual && !withCompare)
                 return;
 
             var iEqual = (long) 0;
@@ -442,7 +442,7 @@ namespace AasxServerDB
                 .Join(
                     (db.SMESets
                         .Where(sme =>
-                            (!withSME || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) &&
+                            (!withSemanticID || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) &&
                             (!withDiff || sme.TimeStamp.CompareTo(diff) > 0))),
                     v => v.SMEId, sme => sme.Id, (v, sme) => new SMEWithValue { sme = sme, value = v.Value.ToString() })
                 .ToList());
@@ -454,7 +454,7 @@ namespace AasxServerDB
             var withDiff = !diff.Equals(DateTime.MinValue);
             var withEqual = !equal.IsNullOrEmpty();
             var withCompare = !(lower.IsNullOrEmpty() && upper.IsNullOrEmpty());
-            if (!withDiff && !withEqual && !withCompare)
+            if (!withSME && !withDiff && !withEqual && !withCompare)
                 return;
 
             var dEqual = (long) 0;
@@ -495,7 +495,7 @@ namespace AasxServerDB
             var withDiff = !diff.Equals(DateTime.MinValue);
             var withContains = !contains.IsNullOrEmpty();
             var withEqual = !equal.IsNullOrEmpty();
-            if (!withDiff && !withContains && !withEqual)
+            if (!withSME && !withDiff && !withContains && !withEqual)
                 return;
 
             using AasContext db = new();
