@@ -1,4 +1,4 @@
-﻿
+
 using AasxServer;
 using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Interfaces;
@@ -118,7 +118,7 @@ namespace AasxServerStandardBib.Services
             }
             else
             {
-                throw new($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+                throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
             }
         }
 
@@ -132,7 +132,7 @@ namespace AasxServerStandardBib.Services
             }
             else
             {
-                throw new($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+                throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
             }
         }
 
@@ -145,7 +145,7 @@ namespace AasxServerStandardBib.Services
             }
             else
             {
-                throw new($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+                throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
             }
 
         }
@@ -234,7 +234,7 @@ namespace AasxServerStandardBib.Services
             }
             else
             {
-                throw new($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+                throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
             }
         }
 
@@ -406,7 +406,7 @@ namespace AasxServerStandardBib.Services
             }
             else
             {
-                throw new($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+                throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
             }
 
         }
@@ -421,7 +421,7 @@ namespace AasxServerStandardBib.Services
             }
             else
             {
-                throw new($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+                throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
             }
         }
 
@@ -435,7 +435,7 @@ namespace AasxServerStandardBib.Services
             }
             else
             {
-                throw new($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+                throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
             }
         }
 
@@ -449,7 +449,7 @@ namespace AasxServerStandardBib.Services
             }
             else
             {
-                throw new($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+                throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
             }
         }
 
@@ -463,7 +463,7 @@ namespace AasxServerStandardBib.Services
             }
             else
             {
-                throw new($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+                throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
             }
         }
 
@@ -494,7 +494,7 @@ namespace AasxServerStandardBib.Services
             }
             else
             {
-                throw new($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+                throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
             }
 
         }
@@ -509,7 +509,7 @@ namespace AasxServerStandardBib.Services
             }
             else
             {
-                throw new($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+                throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
             }
         }
 
@@ -523,7 +523,7 @@ namespace AasxServerStandardBib.Services
             }
             else
             {
-                throw new($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+                throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
             }
         }
 
@@ -537,7 +537,7 @@ namespace AasxServerStandardBib.Services
             }
             else
             {
-                throw new($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+                throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
             }
         }
 
@@ -551,7 +551,7 @@ namespace AasxServerStandardBib.Services
             }
             else
             {
-                throw new($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+                throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
             }
         }
 
