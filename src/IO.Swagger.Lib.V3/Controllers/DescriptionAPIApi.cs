@@ -25,8 +25,6 @@ public class DescriptionAPIApiController : ControllerBase
 {
     private readonly IServiceDescription _serviceDescription;
 
-    public DescriptionAPIApiController(IServiceDescription serviceDescription) => _serviceDescription = serviceDescription;
-
     /// <summary>
     /// Returns the self-describing information of a network resource (ServiceDescription)
     /// </summary>
@@ -42,15 +40,19 @@ public class DescriptionAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
     public virtual IActionResult GetDescription()
     {
-        _serviceDescription.Profiles = new List<ServiceProfiles>
+        var output = new ServiceDescription();
+        output.Profiles = new List<ServiceProfiles>
                                                     {
                                                         ServiceProfiles.AasxFileServerServiceSpecificationSSP001,
                                                         ServiceProfiles.SubmodelRepositoryServiceSpecificationSSP001,
+                                                        ServiceProfiles.SubmodelRepositoryServiceSpecificationSSP002,
                                                         ServiceProfiles.AssetAdministrationShellRepositoryServiceSpecificationSSP001,
+                                                        ServiceProfiles.AssetAdministrationShellRepositoryServiceSpecificationSSP002,
                                                         ServiceProfiles.AssetAdministrationShellRegistryServiceSpecificationSSP001,
                                                         ServiceProfiles.DiscoveryServiceSpecificationSSP001,
                                                         ServiceProfiles.ConceptDescriptionServiceSpecificationSSP001
                                                     };
-        return new ObjectResult(_serviceDescription.ToJson());
+        //return new ObjectResult(_serviceDescription.ToJson());
+        return new ObjectResult(output.ToJson());
     }
 }
