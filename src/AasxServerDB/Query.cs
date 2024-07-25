@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Runtime.Intrinsics.X86;
 using AasxServerDB.Entities;
 using AasxServerDB.Result;
 using Extensions;
@@ -68,14 +70,35 @@ namespace AasxServerDB
             string smSemanticId = "", string smIdentifier = "", string semanticId = "", string diff = "",
             string contains = "", string equal = "", string lower = "", string upper = "")
         {
+            var withSemanticID = !semanticId.IsNullOrEmpty();
+            var withDiff = diff != "";
+            var diffDT = TimeStamp.TimeStamp.StringToDateTime(diff);
+
             var watch = System.Diagnostics.Stopwatch.StartNew();
             Console.WriteLine();
             Console.WriteLine("CountSMEs");
             Console.WriteLine("Total number of SMEs " + new AasContext().SMESets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
 
             watch.Restart();
-            var smeWithValue = GetSMEWithValue(smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper);
-            var count = smeWithValue.Count;
+
+            var count = 0;
+            if ((withSemanticID || withDiff)
+                && contains.IsNullOrEmpty() && equal.IsNullOrEmpty() && lower.IsNullOrEmpty() && upper.IsNullOrEmpty())
+            {
+                using AasContext db = new();
+                count = db.SMESets
+                    .Where(sme =>
+                        (!withSemanticID || (sme.SemanticId != null && sme.SemanticId == semanticId)) &&
+                        (!withDiff || (sme.TimeStamp > diffDT))
+                    )
+                    .Count();
+            }
+            else
+            {
+                var smeWithValue = GetSMEWithValue(smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper);
+                count = smeWithValue.Count;
+            }
+
             Console.WriteLine("Found " + count + " SMEs in " + watch.ElapsedMilliseconds + "ms");
 
             return count;
@@ -345,7 +368,8 @@ namespace AasxServerDB
             var result = new List<SMEWithValue>();
 
             var dateTime = TimeStamp.TimeStamp.StringToDateTime(diff);
-            var withDiff = !diff.Equals(DateTime.MinValue);
+            var withDiff = diff != "";
+            var withSemanticID = !semanticId.IsNullOrEmpty();
 
             var parameter = 0;
             if (!contains.IsNullOrEmpty())
@@ -357,11 +381,27 @@ namespace AasxServerDB
             if (parameter > 1 || (semanticId.IsNullOrEmpty() && !withDiff && parameter != 1))
                 return result;
 
-            GetXValue(ref result, semanticId, dateTime, contains, equal, lower, upper);
-            GetSValue(ref result, semanticId, dateTime, contains, equal);
-            GetIValue(ref result, semanticId, dateTime, equal, lower, upper);
-            GetDValue(ref result, semanticId, dateTime, equal, lower, upper);
-            GetOValue(ref result, semanticId, dateTime, contains, equal);
+            if ((withSemanticID || withDiff)
+                && contains.IsNullOrEmpty() && equal.IsNullOrEmpty() && lower.IsNullOrEmpty() && upper.IsNullOrEmpty())
+            {
+                using AasContext db = new();
+                result.AddRange(db.SMESets
+                    .Where(sme =>
+                        (!withSemanticID || (sme.SemanticId != null && sme.SemanticId == semanticId)) &&
+                        (!withDiff || (sme.TimeStamp > dateTime))
+                    )
+                    .Select(sme => new SMEWithValue { sme = sme })
+                    .ToList());
+            }
+            else
+            {
+                GetXValue(ref result, semanticId, dateTime, contains, equal, lower, upper);
+                GetSValue(ref result, semanticId, dateTime, contains, equal);
+                GetIValue(ref result, semanticId, dateTime, equal, lower, upper);
+                GetDValue(ref result, semanticId, dateTime, equal, lower, upper);
+                GetOValue(ref result, semanticId, dateTime, contains, equal);
+            }
+
             SelectSM(ref result, smSemanticId, smIdentifier);
             return result;
         }
