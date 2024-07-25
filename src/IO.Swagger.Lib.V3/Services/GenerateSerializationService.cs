@@ -1,5 +1,6 @@
-﻿using AasxServerStandardBib.Interfaces;
+using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
+using AdminShellNS.Extensions;
 using IO.Swagger.Lib.V3.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -39,18 +40,25 @@ public class GenerateSerializationService : IGenerateSerializationService
 
         //Fetch AASs for the requested aasIds
         var aasList = _aasService.GetAllAssetAdministrationShells();
-        if (aasIds != null)
+        //Using is null or empty, as the query parameter in controll currently receives empty list (not null, but count = 0)
+        if (!aasIds.IsNullOrEmpty())
         {
             foreach (var foundAas in aasIds.Select(aasId => aasList.Where(a => a.Id != null && a.Id.Equals(aasId, StringComparison.Ordinal))).Where(foundAas => foundAas.Any()))
             {
                 outputEnv.AssetAdministrationShells.Add(foundAas.First());
             }
         }
+        else
+        {
+            outputEnv.AssetAdministrationShells.AddRange(aasList);
+        }
 
         //Fetch Submodels for the requested submodelIds
         var submodelList = _submodelService.GetAllSubmodels();
-        if (submodelIds == null)
+        //Using is null or empty, as the query parameter in controll currently receives empty list (not null, but count = 0)
+        if (submodelIds.IsNullOrEmpty())
         {
+            outputEnv.Submodels.AddRange(submodelList);
             return outputEnv;
         }
 
