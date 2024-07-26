@@ -90,6 +90,21 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         _validateModifierService = validateModifierService ?? throw new ArgumentNullException(nameof(authorizationService));
     }
 
+    // Events
+
+    [HttpGet]
+    [Route("/geteventmessages")]
+    [ValidateModelState]
+    [SwaggerOperation("GetEventMessages")]
+    [SwaggerResponse(statusCode: 200, type: typeof(String), description: "List of Text")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    public virtual IActionResult GetEventMessages()
+    {
+        return new ObjectResult("Response /geteventmessages");
+    }
+
+    // End Events
+
     /// <summary>
     /// Deletes file content of an existing submodel element at a specified path within submodel elements hierarchy
     /// </summary>
