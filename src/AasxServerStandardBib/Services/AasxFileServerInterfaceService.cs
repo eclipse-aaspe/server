@@ -56,7 +56,7 @@ namespace AasxServerStandardBib.Services
             }
         }
 
-        public string GetAASXByPackageId(string packageId, out byte[] content, out long fileSize, out IAssetAdministrationShell aas)
+        public string? GetAASXByPackageId(string packageId, out byte[] content, out long fileSize, out IAssetAdministrationShell aas)
         {
             aas = null;
             content = null;
@@ -72,7 +72,7 @@ namespace AasxServerStandardBib.Services
                 Program.env[packageIndex].SaveAs(copyFileName);
 
                 content = System.IO.File.ReadAllBytes(copyFileName);
-                string fileName = Path.GetFileName(requestedFileName);
+                string? fileName = Path.GetFileName(requestedFileName);
                 fileSize = content.Length;
                 _packages[packageIndex].SetFilename(requestedFileName);
 
@@ -83,7 +83,8 @@ namespace AasxServerStandardBib.Services
                 System.IO.File.Delete(copyFileName);
                 return fileName;
             }
-            else if (requestedPackage != null && string.IsNullOrEmpty(requestedFileName))
+
+            if (requestedPackage != null && string.IsNullOrEmpty(requestedFileName))
             {
                 //File does not exist, may be AAS is added by REST-API
                 //Check if AAS exists
@@ -99,7 +100,7 @@ namespace AasxServerStandardBib.Services
                     Program.env[packageIndex].SaveAs(copyFileName);
 
                     content = System.IO.File.ReadAllBytes(copyFileName);
-                    string fileName = Path.GetFileName(newFileName);
+                    string? fileName = Path.GetFileName(newFileName);
                     fileSize = content.Length;
 
                     System.IO.File.Copy(copyFileName, newFileName, true);
@@ -118,35 +119,26 @@ namespace AasxServerStandardBib.Services
             return null;
         }
 
-        public List<PackageDescription> GetAllAASXPackageIds(string aasId = null)
+        public List<PackageDescription> GetAllAASXPackageIds(string? aasId = null)
         {
             var output = new List<PackageDescription>();
 
-            for (int i = 0; i < _packages.Length; i++)
+            for (var i = 0; i < _packages.Length; i++)
             {
                 var package = _packages[i];
                 if (package != null)
                 {
-                    var packageDescription = new PackageDescription();
-                    packageDescription.PackageId = i.ToString();
-                    var aasIdList = new List<string>();
-                    foreach (var aas in _packages[i].AasEnv.AssetAdministrationShells)
-                    {
-                        aasIdList.Add(aas.Id);
-                    }
+                    var packageDescription = new PackageDescription {PackageId = i.ToString()};
+                    var aasIdList          = _packages[i].AasEnv?.AssetAdministrationShells?.Select(aas => aas.Id).ToList();
                     packageDescription.AasIds = aasIdList;
                     output.Add(packageDescription);
                 }
-
             }
 
             //Filter w..r.t aasId
-            if (output.Any())
+            if (output.Count != 0 && !string.IsNullOrEmpty(aasId))
             {
-                if (!string.IsNullOrEmpty(aasId))
-                {
-                    output = output.Where(x => x.AasIds.Contains(aasId)).ToList();
-                }
+                output = output.Where(x => x.AasIds.Contains(aasId)).ToList();
             }
 
             return output;
