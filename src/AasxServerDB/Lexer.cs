@@ -14,10 +14,8 @@ public class Lexer
     private int _position;
 
     private static readonly Dictionary<string, TokenType> Keywords = new Dictionary<string, TokenType>
-    {
+    {        
         { "filter", TokenType.Filter },
-        { "filter_submodel", TokenType.Filter }, { "filter_submodel_elements", TokenType.Filter },
-        { "filter_str", TokenType.Filter }, { "filter_num", TokenType.Filter },
         { "str_eq", TokenType.StrEq }, { "str_ne", TokenType.StrNe }, { "str_gt", TokenType.StrGt },
         { "str_lt", TokenType.StrLt }, { "str_ge", TokenType.StrGe }, { "str_le", TokenType.StrLe },
         { "str_starts", TokenType.StrStarts }, { "str_ends", TokenType.StrEnds }, { "str_contains", TokenType.StrContains },
@@ -105,7 +103,7 @@ public class Lexer
     private string ReadIdentifier()
     {
         int start = _position;
-        while (_position < _input.Length && (char.IsLetterOrDigit(_input[_position]) || _input[_position] == '_' || _input[_position] == '.'))
+        while (_position < _input.Length && (char.IsLetterOrDigit(_input[_position]) || _input[_position] == '_'))
         {
             _position++;
         }

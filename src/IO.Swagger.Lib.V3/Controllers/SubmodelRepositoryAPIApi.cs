@@ -49,9 +49,14 @@ using System.Security.Claims;
 namespace IO.Swagger.Controllers;
 
 using System.Globalization;
+using System.Reflection.Emit;
 using System.Threading.Tasks;
+using System.Xml.Linq;
+using AasxServerDB;
 using AdminShellNS.Exceptions;
 using Microsoft.IdentityModel.Tokens;
+using static AasxServerStandardBib.TimeSeriesPlotting.PlotArguments;
+using static QRCoder.PayloadGenerator;
 
 /// <summary>
 /// 
@@ -72,6 +77,17 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     private readonly IAuthorizationService _authorizationService;
     private readonly IAdminShellPackageEnvironmentService _adminShellPackageEnvironmentService;
 
+    public class EventPayload
+    {
+        public string source { get; set; }
+        public string url { get; set; }
+        public string lastUpdate { get; set; }
+        public string payloadType { get; set; }
+        public string payloadSubmodel { get; set; }
+        public List<string> payloadSubmodelElements { get; set; }
+    }
+
+    // EventPayload eventPayload = JsonSerializer.Deserialize<EventPayload>(jsonString);
     public SubmodelRepositoryAPIApiController(IAppLogger<SubmodelRepositoryAPIApiController> logger, IBase64UrlDecoderService decoderService, ISubmodelService submodelService,
                                               IReferenceModifierService referenceModifierService, IJsonQueryDeserializer jsonQueryDeserializer, IMappingService mappingService,
                                               IPathModifierService pathModifierService, ILevelExtentModifierService levelExtentModifierService,
@@ -94,14 +110,129 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     // Events
 
     [HttpGet]
-    [Route("/geteventmessages")]
+    [Route("/geteventmessages/{diff}")]
     [ValidateModelState]
     [SwaggerOperation("GetEventMessages")]
     [SwaggerResponse(statusCode: 200, type: typeof(String), description: "List of Text")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-    public virtual IActionResult GetEventMessages()
+    public virtual IActionResult GetEventMessages([FromRoute] string? diff = "")
     {
-        return new ObjectResult("Response /geteventmessages");
+        var e = new EventPayload();
+        e.source = Program.externalBlazor;
+        e.url = Program.externalBlazor;
+        e.payloadType = "";
+        e.payloadSubmodel = "";
+        e.payloadSubmodelElements = new List<string>();
+        e.lastUpdate = "";
+
+        var isInitial = diff.EndsWith(",init");
+        if (isInitial)
+        {
+            diff = diff.Replace(",init", "");
+        }
+        var withDiff = diff != "";
+        var diffTime = new DateTime();
+        if (withDiff)
+        {
+            diffTime = TimeStamp.TimeStamp.StringToDateTime(diff);
+        }
+
+        /*
+        var text = "Response /geteventmessages " + diffTime + "\n";
+        text += "Time " + DateTime.UtcNow + "\n";
+
+        text += "\nCHANGED\n\n";
+        */
+
+        using AasContext db = new();
+        var result = db.SMSets
+            .Where(sm =>
+                withDiff && sm.TimeStampTree != sm.TimeStampCreate && sm.TimeStampTree > diffTime
+            )
+            .ToList();
+
+        if (result.Any())
+        {
+            var smDB = result.First();
+            var submodel = Converter.GetSubmodel(smDB: smDB);
+            e.lastUpdate = submodel.TimeStampTree.ToString();
+
+            string json = string.Empty;
+            if (submodel != null)
+            {
+                var j = Jsonization.Serialize.ToJsonObject(submodel);
+                json = j.ToJsonString();
+            }
+
+            e.payloadSubmodel = json;
+            e.payloadType = "Submodel";
+
+            if (!isInitial)
+            {
+                var filtered = new List<ISubmodelElement>();
+                if (!diff.IsNullOrEmpty())
+                {
+                    try
+                    {
+                        filtered = filterSubmodelElements(submodel.SubmodelElements, diffTime);
+                    }
+                    catch
+                    {
+                        // ignored
+                    }
+                }
+
+                if (filtered.Count != 0)
+                {
+                    e.payloadSubmodel = "";
+                    e.payloadType = "SubmodelElements";
+                    foreach (var f in filtered)
+                    {
+                        var j = Jsonization.Serialize.ToJsonObject(f);
+                        e.payloadSubmodelElements.Add(j.ToJsonString());
+                    }
+                }
+                /*
+                var smePaginatedList = _paginationService.GetPaginatedList(filtered, new PaginationParameters(null, null));
+                var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginatedList.result);
+                var output = new PagedResult { result = smeLevelList, paging_metadata = smePaginatedList.paging_metadata };
+                */
+            }
+        }
+
+        /*
+        int count = 0;
+        foreach (var r in result)
+        {
+            text += r.IdShort + " " + r.TimeStampTree + "\n";
+            count++;
+            if (count == 1000)
+            {
+                break;
+            }
+        }
+
+        text += "\nCREATED\n\n";
+
+        result = db.SMSets
+            .Where(sm =>
+                !withDiff || (sm.TimeStampCreate > dateTime)
+            )
+            .ToList();
+
+        count = 0;
+        foreach (var r in result)
+        {
+            text += r.IdShort + " " + r.TimeStamp + "\n";
+            count++;
+            if (count == 1000)
+            {
+                break;
+            }
+        }
+        */
+
+        return new ObjectResult(e);
     }
 
     // End Events

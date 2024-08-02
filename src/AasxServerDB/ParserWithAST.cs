@@ -45,13 +45,9 @@ public class ParserWithAST
         var queryNode = new QueryNode();
         while (_currentToken.Type == TokenType.Filter || _currentToken.Type == TokenType.Whitespace)
         {
-            if (_currentToken.Type == TokenType.Filter)
-            {
-                queryNode.FilterTypes.Add(_currentToken.Value);
-            }
             var filterDeclaration = QueryParameter();
             queryNode.FilterDeclarations.Add(filterDeclaration);
-            while (_currentToken.Type == TokenType.Whitespace)
+            if (_currentToken.Type == TokenType.Whitespace)
             {
                 Eat(TokenType.Whitespace);
             }
@@ -170,232 +166,106 @@ public class ParserWithAST
         }
     }
 
-    public string GenerateSql(AstNode node, string typePrefix, ref int upperCountTypePrefix, string filterType = "")
+    public string GenerateSql(AstNode node)
     {
         var leftSql = "ERROR";
         var rightSql = "ERROR";
         string op = "NOT SUPPORTED";
-        int countTypePrefix = 0;
-
-        upperCountTypePrefix = 0;
         switch (node)
         {
             case QueryNode queryNode:
-                for (int fIndex = 0; fIndex < queryNode.FilterDeclarations.Count; fIndex++)
+                if (queryNode.FilterDeclarations.Count == 0)
                 {
-                    if (queryNode.FilterTypes[fIndex] == filterType)
-                    {
-                        return GenerateSql(queryNode.FilterDeclarations[fIndex], typePrefix, ref upperCountTypePrefix);
-                    }
+                    return "";
                 }
-                return "";
+                return GenerateSql(queryNode.FilterDeclarations[0]);
             case FilterDeclarationNode filterDeclarationNode:
-                var filter = GenerateSql(filterDeclarationNode.FilterExpression, typePrefix, ref countTypePrefix);
-                upperCountTypePrefix += countTypePrefix;
-                if (filter == "$SKIP")
-                {
-                    filter = "";
-                }
-                while (filter.Contains("(true && true)") || filter.Contains("(true || true)") || filter.Contains("(true)"))
-                {
-                    filter = filter.Replace("(true && true)", "true");
-                    filter = filter.Replace("(true || true)", "true");
-                    filter = filter.Replace("(true)", "true");
-                }
-                return filter;
+                return GenerateSql(filterDeclarationNode.FilterExpression);
             case SingleComparisonNode singleComparisonNode:
-                bool isNum = false;
-                bool isStr = false;
-                bool withDot = false;
-                leftSql = GenerateSql(singleComparisonNode.Left, typePrefix, ref countTypePrefix);
-                upperCountTypePrefix += countTypePrefix;
-                rightSql = GenerateSql(singleComparisonNode.Right, typePrefix, ref countTypePrefix);
-                upperCountTypePrefix += countTypePrefix;
-                if (leftSql == "$SKIP" || rightSql == "$SKIP")
-                {
-                    return "$SKIP";
-                }
+                leftSql = GenerateSql(singleComparisonNode.Left);
+                rightSql = GenerateSql(singleComparisonNode.Right);
                 switch (singleComparisonNode.ComparisonType)
                 {
                     case TokenType.StrEq:
                         op = "==";
-                        isStr = true;
                         break;
                     case TokenType.StrNe:
                         op = "!=";
-                        isStr = true;
                         break;
                     case TokenType.StrGt:
                         op = ">";
-                        isStr = true;
                         break;
                     case TokenType.StrLt:
                         op = "<";
-                        isStr = true;
                         break;
                     case TokenType.StrGe:
                         op = ">=";
-                        isStr = true;
                         break;
                     case TokenType.StrLe:
                         op = "<=";
-                        isStr = true;
                         break;
                     case TokenType.StrStarts:
                         op = "StartsWith";
-                        isStr = true;
-                        withDot = true;
-                        break;
+                        return $"{leftSql}.{op}({rightSql})";
                     case TokenType.StrEnds:
                         op = "EndsWith";
-                        isStr = true;
-                        withDot = true;
-                        break;
+                        return $"{leftSql}.{op}({rightSql})";
                     case TokenType.StrContains:
                         op = "Contains";
-                        isStr = true;
-                        withDot = true;
-                        break;
+                        return $"{leftSql}.{op}({rightSql})";
                     case TokenType.NumEq:
                         op = "==";
-                        isNum = true;
                         break;
                     case TokenType.NumNe:
                         op = "!=";
-                        isNum = true;
                         break;
                     case TokenType.NumGt:
                         op = ">";
-                        isNum = true;
                         break;
                     case TokenType.NumLt:
                         op = "<";
-                        isNum = true;
                         break;
                     case TokenType.NumGe:
                         op = ">=";
-                        isNum = true;
                         break;
                     case TokenType.NumLe:
                         op = "<=";
-                        isNum = true;
                         break;
-                }
-                if (typePrefix != "sme.value")
-                {
-                    if (leftSql.ToLower() == "sme.value")
-                    {
-                        if (isStr)
-                        {
-                            leftSql = "sValue";
-                        }
-                        if (isNum)
-                        {
-                            leftSql = "mValue";
-                        }
-                        if (typePrefix != "" && typePrefix != leftSql)
-                        {
-                            return "$SKIPVALUE";
-                        }
-                        // for sme.value increase here
-                        upperCountTypePrefix++;
-                    }
-                    if (rightSql.ToLower() == "sme.value")
-                    {
-                        if (isStr)
-                        {
-                            rightSql = "sValue";
-                        }
-                        if (isNum)
-                        {
-                            rightSql = "mValue";
-                        }
-                        if (typePrefix != "" && typePrefix != rightSql)
-                        {
-                            return "$SKIPVALUE";
-                        }
-                        // for sme.value increase here
-                        upperCountTypePrefix++;
-                    }
-                }
-                if (withDot)
-                {
-                    return $"{leftSql}.{op}({rightSql})";
                 }
                 return $"({leftSql} {op} {rightSql})";
             case LogicalOperatorNode logicalOperatorNode:
-                bool first = true;
-                string result = "";
-                int countSkipValue = 0;
-
-                countTypePrefix = 0;
-
-                for (int i = 0; i < logicalOperatorNode.Operands.Count; i++)
+                string result = GenerateSql(logicalOperatorNode.Operands[0]);
+                switch (logicalOperatorNode.OperatorType)
                 {
-                    var s = GenerateSql(logicalOperatorNode.Operands[i], typePrefix, ref countTypePrefix);
-                    upperCountTypePrefix += countTypePrefix;
-                    if (s == "$SKIPVALUE")
-                    {
-                        countSkipValue++;
-                    }
-                    else
-                    {
-                        if (s != "$SKIP")
-                        {
-                            if (first)
-                            {
-                                first = false;
-                                result = s;
-                                switch (logicalOperatorNode.OperatorType)
-                                {
-                                    case TokenType.Not:
-                                        return $"!{result}";
-                                    case TokenType.And:
-                                        op = "&&";
-                                        break;
-                                    case TokenType.Or:
-                                        op = "||";
-                                        break;
-                                }
-                            }
-                            else
-                            {
-                                result += " " + op + " " + s;
-                            }
-                        }
-                    }
+                    case TokenType.Not:
+                        return $"!{result}";
+                    case TokenType.And:
+                        op = "&&";
+                        break;
+                    case TokenType.Or:
+                        op = "||";
+                        break;
                 }
-                if (result == "")
+                if (logicalOperatorNode.Operands.Count > 1)
                 {
-                    if (countTypePrefix == 0 && countSkipValue == 0)
+                    for (int i = 1; i < logicalOperatorNode.Operands.Count; i++)
                     {
-                        return "true";
+                        result += " " + op + " " + GenerateSql(logicalOperatorNode.Operands[i]);
                     }
-                    return "$SKIP";
+                    result = "(" + result + ")";
                 }
-                return "(" + result + ")";
+                return result ;
             case IdentifierNode identifierNode:
-                if (typePrefix == "sValue" || typePrefix == "mValue")
-                {
-                    if (identifierNode.Name != "sme.value")
-                    {
-                        return "$SKIP";
-                    }
-                    // upperCountTypePrefix++ at str_ or num_ expression
-                    return "sme.value";
-                }
-                if (typePrefix == "sme." && identifierNode.Name == "sme.value")
-                    return "$SKIP";
-                if (typePrefix != "" && !identifierNode.Name.StartsWith(typePrefix))
-                    return "$SKIP";
-                upperCountTypePrefix++;
                 return identifierNode.Name;
+                break ;
             case StringLiteralNode stringLiteralNode:
                 return stringLiteralNode.Value;
+                break ;
             case NumericalLiteralNode numericalLiteralNode:
                 return numericalLiteralNode.Value;
+                break ;
             default:
-                throw new NotSupportedException("Unknown node type");
+                    throw new NotSupportedException("Unknown node type");
         }
     }
 }

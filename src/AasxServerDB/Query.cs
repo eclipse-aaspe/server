@@ -10,6 +10,8 @@
 *
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
+using System.Linq.Dynamic.Core;
+using QueryParserTest;
 
 namespace AasxServerDB
 {
