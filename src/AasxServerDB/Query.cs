@@ -5,6 +5,8 @@ using AasxServerDB.Result;
 using Extensions;
 using Microsoft.IdentityModel.Tokens;
 using TimeStamp;
+using System.Linq.Dynamic.Core;
+using QueryParserTest;
 
 namespace AasxServerDB
 {
@@ -13,7 +15,7 @@ namespace AasxServerDB
         public static string? ExternalBlazor { get; set; }
 
         // --------------- API ---------------
-        public List<SMResult> SearchSMs(string semanticId = "", string identifier = "", string diff = "")
+        public List<SMResult> SearchSMs(string semanticId = "", string identifier = "", string diff = "", string expression = "")
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
             Console.WriteLine();
@@ -21,7 +23,7 @@ namespace AasxServerDB
             Console.WriteLine("Total number of SMs " + new AasContext().SMSets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
 
             watch.Restart();
-            var smList = GetSMSet(semanticId, identifier, diff);
+            var smList = GetSMSet(semanticId, identifier, diff, expression);
             Console.WriteLine("Found " + smList.Count + " SM in " + watch.ElapsedMilliseconds + "ms");
 
             watch.Restart();
@@ -321,22 +323,74 @@ namespace AasxServerDB
         }
 
         // --------------- SM Methodes ---------------
-        private static List<SMSet> GetSMSet(string semanticId = "", string identifier = "", string diffString = "")
+        private static List<SMSet> GetSMSet(string semanticId = "", string identifier = "", string diffString = "", string expression = "")
         {
             var withSemanticId = !semanticId.IsNullOrEmpty();
             var withIdentifier = !identifier.IsNullOrEmpty();
             var diff = TimeStamp.TimeStamp.StringToDateTime(diffString);
             var withDiff = !diff.Equals(DateTime.MinValue);
+            var withExpression = !expression.IsNullOrEmpty();
 
-            if (!withSemanticId && !withIdentifier && !withDiff)
+            if (!withSemanticId && !withIdentifier && !withDiff && !withExpression)
                 return new List<SMSet>();
 
-            return new AasContext().SMSets
-                .Where(s =>
-                    (!withSemanticId || (s.SemanticId != null && s.SemanticId.Equals(semanticId))) &&
-                    (!withIdentifier || (s.Identifier != null && s.Identifier.Equals(identifier))) &&
-                    (!withDiff || s.TimeStampTree.CompareTo(diff) > 0))
-                .ToList();
+            if (!withExpression)
+            {
+                var x = new AasContext().SMSets
+                    .Where(s =>
+                        (!withSemanticId || (s.SemanticId != null && s.SemanticId.Equals(semanticId))) &&
+                        (!withIdentifier || (s.Identifier != null && s.Identifier.Equals(identifier))) &&
+                        (!withDiff || s.TimeStampTree.CompareTo(diff) > 0));
+                return x.ToList();
+            }
+
+            // Change to dynamic condition
+            var query = new AasContext().SMSets.AsQueryable();
+            var condition = "";
+            /*
+            int count = 0;
+            if (withSemanticId)
+            {
+                condition += "SemanticId == \"" + semanticId + "\"";
+                count++;
+            }
+            if (withIdentifier)
+            {
+                if (count != 0)
+                {
+                    condition += " && ";
+                }
+                condition += "Identifier == \"" + identifier + "\"";
+                count++;
+            }
+            if (withDiff)
+            {
+                if (count != 0)
+                {
+                    condition += " && ";
+                }
+                condition += "TimeStampTree.CompareTo(diff) > 0";
+            }
+            var y = query.Where(condition);
+            */
+
+            // Actually no whitespace in simple grammar: replace
+            expression = expression.Replace("\n", "");
+            expression = expression.Replace(" ", "");
+
+            // Parser
+            var parser = new ParserWithAST(new Lexer(expression));
+            var ast = parser.Parse();
+            condition = parser.GenerateSql(ast);
+
+            if (condition == "")
+            {
+                return new List<SMSet>();
+            }
+
+            // Dynamic condition
+            var y = query.Where(condition);
+            return y.ToList();
         }
 
         private static List<SMResult> GetSMResult(List<SMSet> smList)
