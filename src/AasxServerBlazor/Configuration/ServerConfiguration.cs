@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using AasSecurity;
@@ -233,7 +233,8 @@ public static class ServerConfiguration
                                                                                });
 
                                    swaggerGenOptions.EnableAnnotations();
-                                   swaggerGenOptions.CustomSchemaIds(type => type.FullName);
+                                   //Based on issue https://github.com/swagger-api/swagger-ui/issues/7911
+                                   swaggerGenOptions.CustomSchemaIds(type => type.FullName?.Replace("+", "."));
 
                                    var swaggerCommentedAssembly =
                                        typeof(AssetAdministrationShellRepositoryAPIApiController).Assembly.GetName().Name;
