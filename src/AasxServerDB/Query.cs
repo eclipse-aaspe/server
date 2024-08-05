@@ -12,6 +12,8 @@
 ********************************************************************************/
 using System.Linq.Dynamic.Core;
 using QueryParserTest;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using Newtonsoft.Json.Linq;
 
 namespace AasxServerDB
 {
@@ -97,6 +99,8 @@ namespace AasxServerDB
             Console.WriteLine("Collect results\tin " + watch.ElapsedMilliseconds + " ms\nSMEs found\t" + result.Count + "/" + db.SMESets.Count());
 
             return result;
+
+
         }
 
         public int CountSMEs(
@@ -337,6 +341,227 @@ namespace AasxServerDB
             }
 
             return result;
+        }
+
+        private static void QuerySMorSME(ref List<SMSet>? smSet, ref List<SMEWithValue>? smeSet, string expression = "")
+        {
+            if (expression == "")
+            {
+                return;
+            }
+
+            using (var db = new AasContext())
+            {
+                // Dynamic condition
+                var querySM = db.SMSets.AsQueryable();
+                var querySME = db.SMESets.AsQueryable();
+                var querySValue = db.SValueSets.AsQueryable();
+                var queryIValue = db.IValueSets.AsQueryable();
+                var queryDValue = db.DValueSets.AsQueryable();
+
+                expression = expression.Replace("\n", "");
+                expression = expression.Replace(" ", "");
+
+                // Parser
+                var parser = new ParserWithAST(new Lexer(expression));
+                var ast = parser.Parse();
+
+                var conditionSM = parser.GenerateSql(ast, "", "filter_submodel");
+
+                var conditionSME = parser.GenerateSql(ast, "", "filter_submodel_elements");
+                var conditionSValue = parser.GenerateSql(ast, "", "filter_str");
+                var conditionIValue = parser.GenerateSql(ast, "", "filter_num");
+                var conditionDValue = conditionIValue;
+
+                // Dynamic condition
+                var qSm = querySM
+                    .Where(conditionSM)
+                    .Distinct();
+
+                if (conditionSME == "")
+                {
+                    if (smSet != null)
+                    {
+                        smSet = qSm.Distinct().ToList();
+                    }
+
+                    return;
+                }
+
+                var qSME = qSm
+                    .Join(
+                        querySME.Where(conditionSME),
+                        smSet => smSet.Id,
+                        smeSet => smeSet.SMId,
+                        (smSet, smeSet) => new { smSet, smeSet }
+                    )
+                    .Distinct();
+
+                if (conditionSValue == "" && conditionIValue == "" && conditionDValue == "")
+                {
+                    if (smSet != null)
+                    {
+                        smSet = qSME.Select(result => result.smSet).Distinct().ToList();
+                    }
+
+                    if (smeSet != null)
+                    {
+                        smeSet = qSME
+                            .Select(result => new SMEWithValue
+                            {
+                                sm = result.smSet,
+                                sme = result.smeSet,
+                                value = "none"
+                            })
+                            .Distinct()
+                            .ToList();
+                    }
+
+                    return;
+                }
+
+                if (conditionSValue != "")
+                {
+                    var qSValue = qSME
+                        .Join(
+                            querySValue.Where(conditionSValue),
+                            combined => combined.smeSet.Id,
+                            sValueSet => sValueSet.SMEId,
+                            (combined, sValueSet) => new { combined.smSet, combined.smeSet, sValueSet }
+                        )
+                        .Distinct();
+
+                    if (conditionIValue == "" && conditionDValue == "")
+                    {
+                        if (smSet != null)
+                        {
+                            smSet = qSValue.Select(result => result.smSet).Distinct().ToList();
+                        }
+
+                        if (smeSet != null)
+                        {
+                            smeSet = qSValue
+                                .Select(result => new SMEWithValue
+                                {
+                                    sm = result.smSet,
+                                    sme = result.smeSet,
+                                    value = result.sValueSet.Value
+                                })
+                                .Distinct()
+                                .ToList();
+                        }
+
+                        return;
+                    }
+
+                    if (conditionIValue != "" && conditionDValue != "")
+                    {
+                        var qIValue = qSME
+                            .Join(
+                                queryIValue.Where(conditionIValue),
+                                combined => combined.smeSet.Id,
+                                iValueSet => iValueSet.SMEId,
+                                (combined, iValueSet) => new { combined.smSet, combined.smeSet, iValueSet }
+                            )
+                            .Distinct();
+
+                        var qDValue = qSME
+                            .Join(
+                                queryDValue.Where(conditionDValue),
+                                combined => combined.smeSet.Id,
+                                dValueSet => dValueSet.SMEId,
+                                (combined, dValueSet) => new { combined.smSet, combined.smeSet, dValueSet }
+                            )
+                            .Distinct();
+
+                        if (smSet != null)
+                        {
+                            var qSValueSelect = qSValue.Select(result => result.smSet);
+                            var qIValueSelect = qIValue.Select(result => result.smSet);
+                            var qDValueSelect = qDValue.Select(result => result.smSet);
+                            smSet = qSValueSelect.Union(qIValueSelect).Union(qDValueSelect).Distinct().ToList();
+                        }
+
+                        if (smeSet != null)
+                        {
+                            var qSValueSelect = qSValue
+                                .Select(result => new SMEWithValue
+                                {
+                                    sm = result.smSet,
+                                    sme = result.smeSet,
+                                    value = result.sValueSet.Value
+                                });
+                            var qIValueSelect = qIValue
+                                .Select(result => new SMEWithValue
+                                {
+                                    sm = result.smSet,
+                                    sme = result.smeSet,
+                                    value = result.iValueSet.Value.ToString()
+                                });
+                            var qDValueSelect = qDValue
+                                .Select(result => new SMEWithValue
+                                {
+                                    sm = result.smSet,
+                                    sme = result.smeSet,
+                                    value = result.dValueSet.Value.ToString()
+                                });
+                            smeSet = qSValueSelect.Union(qIValueSelect).Union(qDValueSelect).Distinct().ToList();
+                        }
+
+                        return;
+                    }
+                }
+
+                if (conditionIValue != "" && conditionDValue != "")
+                {
+                    var qIValue = qSME
+                        .Join(
+                            queryIValue.Where(conditionIValue),
+                            combined => combined.smeSet.Id,
+                            iValueSet => iValueSet.SMEId,
+                            (combined, iValueSet) => new { combined.smSet, combined.smeSet, iValueSet }
+                        )
+                        .Distinct();
+
+                    var qDValue = qSME
+                        .Join(
+                            queryDValue.Where(conditionDValue),
+                            combined => combined.smeSet.Id,
+                            dValueSet => dValueSet.SMEId,
+                            (combined, dValueSet) => new { combined.smSet, combined.smeSet, dValueSet }
+                        )
+                        .Distinct();
+
+                    if (smSet != null)
+                    {
+                        var qIValueSelect = qIValue.Select(result => result.smSet);
+                        var qDValueSelect = qDValue.Select(result => result.smSet);
+                        smSet = qIValueSelect.Union(qDValueSelect).Distinct().ToList();
+                    }
+
+                    if (smeSet != null)
+                    {
+                        var qIValueSelect = qIValue
+                            .Select(result => new SMEWithValue
+                            {
+                                sm = result.smSet,
+                                sme = result.smeSet,
+                                value = result.iValueSet.Value.ToString()
+                            });
+                        var qDValueSelect = qDValue
+                            .Select(result => new SMEWithValue
+                            {
+                                sm = result.smSet,
+                                sme = result.smeSet,
+                                value = result.dValueSet.Value.ToString()
+                            });
+                        smeSet = qIValueSelect.Union(qDValueSelect).Distinct().ToList();
+                    }
+
+                    return;
+                }
+            }
+            return;
         }
 
         // --------------- SM Methodes ---------------

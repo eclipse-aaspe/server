@@ -110,13 +110,20 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     // Events
 
     [HttpGet]
-    [Route("/geteventmessages/{diff}")]
+    [Route("/geteventmessages/{submodelIdentifier}/{diff}")]
     [ValidateModelState]
     [SwaggerOperation("GetEventMessages")]
     [SwaggerResponse(statusCode: 200, type: typeof(String), description: "List of Text")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-    public virtual IActionResult GetEventMessages([FromRoute] string? diff = "")
+    public virtual IActionResult GetEventMessages([FromRoute] [Required] string submodelIdentifier, string? diff = "")
     {
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
+        }
+
         var e = new EventPayload();
         e.source = Program.externalBlazor;
         e.url = Program.externalBlazor;
@@ -125,50 +132,42 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         e.payloadSubmodelElements = new List<string>();
         e.lastUpdate = "";
 
-        var isInitial = diff.EndsWith(",init");
-        if (isInitial)
-        {
-            diff = diff.Replace(",init", "");
-        }
-        var withDiff = diff != "";
-        var diffTime = new DateTime();
-        if (withDiff)
-        {
-            diffTime = TimeStamp.TimeStamp.StringToDateTime(diff);
-        }
-
-        /*
-        var text = "Response /geteventmessages " + diffTime + "\n";
-        text += "Time " + DateTime.UtcNow + "\n";
-
-        text += "\nCHANGED\n\n";
-        */
+        var isInitial = diff == "init";
+        Submodel submodel = null;
 
         using AasContext db = new();
         var result = db.SMSets
             .Where(sm =>
-                withDiff && sm.TimeStampTree != sm.TimeStampCreate && sm.TimeStampTree > diffTime
+                sm.Identifier == decodedSubmodelIdentifier
             )
             .ToList();
 
         if (result.Any())
         {
             var smDB = result.First();
-            var submodel = Converter.GetSubmodel(smDB: smDB);
-            e.lastUpdate = submodel.TimeStampTree.ToString();
+            submodel = Converter.GetSubmodel(smDB: smDB);
+        }
 
-            string json = string.Empty;
-            if (submodel != null)
+        if (submodel != null)
+        {
+            if (isInitial)
             {
-                var j = Jsonization.Serialize.ToJsonObject(submodel);
-                json = j.ToJsonString();
+                e.lastUpdate = submodel.TimeStampTree.ToString();
+
+                string json = string.Empty;
+                if (submodel != null)
+                {
+                    var j = Jsonization.Serialize.ToJsonObject(submodel);
+                    json = j.ToJsonString();
+                }
+
+                e.payloadSubmodel = json;
+                e.payloadType = "Submodel";
             }
-
-            e.payloadSubmodel = json;
-            e.payloadType = "Submodel";
-
-            if (!isInitial)
+            else
             {
+                var diffTime = TimeStamp.TimeStamp.StringToDateTime(diff);
+
                 var filtered = new List<ISubmodelElement>();
                 if (!diff.IsNullOrEmpty())
                 {
@@ -199,38 +198,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 */
             }
         }
-
-        /*
-        int count = 0;
-        foreach (var r in result)
-        {
-            text += r.IdShort + " " + r.TimeStampTree + "\n";
-            count++;
-            if (count == 1000)
-            {
-                break;
-            }
-        }
-
-        text += "\nCREATED\n\n";
-
-        result = db.SMSets
-            .Where(sm =>
-                !withDiff || (sm.TimeStampCreate > dateTime)
-            )
-            .ToList();
-
-        count = 0;
-        foreach (var r in result)
-        {
-            text += r.IdShort + " " + r.TimeStamp + "\n";
-            count++;
-            if (count == 1000)
-            {
-                break;
-            }
-        }
-        */
 
         return new ObjectResult(e);
     }
