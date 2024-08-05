@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,6 +13,7 @@ public abstract class AstNode
 
 public class QueryNode : AstNode
 {
+    public List<string> FilterTypes = new List<string>();
     public List<FilterDeclarationNode> FilterDeclarations { get; } = new List<FilterDeclarationNode>();
 
     public override string ToString()

@@ -45,9 +45,13 @@ public class ParserWithAST
         var queryNode = new QueryNode();
         while (_currentToken.Type == TokenType.Filter || _currentToken.Type == TokenType.Whitespace)
         {
+            if (_currentToken.Type == TokenType.Filter)
+            {
+                queryNode.FilterTypes.Add(_currentToken.Value);
+            }
             var filterDeclaration = QueryParameter();
             queryNode.FilterDeclarations.Add(filterDeclaration);
-            if (_currentToken.Type == TokenType.Whitespace)
+            while (_currentToken.Type == TokenType.Whitespace)
             {
                 Eat(TokenType.Whitespace);
             }
@@ -166,7 +170,7 @@ public class ParserWithAST
         }
     }
 
-    public string GenerateSql(AstNode node)
+    public string GenerateSql(AstNode node, string typePrefix, string filterType = "")
     {
         var leftSql = "ERROR";
         var rightSql = "ERROR";
@@ -174,16 +178,19 @@ public class ParserWithAST
         switch (node)
         {
             case QueryNode queryNode:
-                if (queryNode.FilterDeclarations.Count == 0)
+                for (int fIndex = 0; fIndex < queryNode.FilterDeclarations.Count; fIndex++)
                 {
-                    return "";
+                    if (queryNode.FilterTypes[fIndex] == filterType)
+                    {
+                        return GenerateSql(queryNode.FilterDeclarations[fIndex], typePrefix);
+                    }
                 }
-                return GenerateSql(queryNode.FilterDeclarations[0]);
+                return "";
             case FilterDeclarationNode filterDeclarationNode:
-                return GenerateSql(filterDeclarationNode.FilterExpression);
+                return GenerateSql(filterDeclarationNode.FilterExpression, typePrefix);
             case SingleComparisonNode singleComparisonNode:
-                leftSql = GenerateSql(singleComparisonNode.Left);
-                rightSql = GenerateSql(singleComparisonNode.Right);
+                leftSql = GenerateSql(singleComparisonNode.Left, typePrefix);
+                rightSql = GenerateSql(singleComparisonNode.Right, typePrefix);
                 switch (singleComparisonNode.ComparisonType)
                 {
                     case TokenType.StrEq:
@@ -234,7 +241,7 @@ public class ParserWithAST
                 }
                 return $"({leftSql} {op} {rightSql})";
             case LogicalOperatorNode logicalOperatorNode:
-                string result = GenerateSql(logicalOperatorNode.Operands[0]);
+                string result = GenerateSql(logicalOperatorNode.Operands[0], typePrefix);
                 switch (logicalOperatorNode.OperatorType)
                 {
                     case TokenType.Not:
@@ -250,7 +257,7 @@ public class ParserWithAST
                 {
                     for (int i = 1; i < logicalOperatorNode.Operands.Count; i++)
                     {
-                        result += " " + op + " " + GenerateSql(logicalOperatorNode.Operands[i]);
+                        result += " " + op + " " + GenerateSql(logicalOperatorNode.Operands[i], typePrefix);
                     }
                     result = "(" + result + ")";
                 }
@@ -265,7 +272,7 @@ public class ParserWithAST
                 return numericalLiteralNode.Value;
                 break ;
             default:
-                    throw new NotSupportedException("Unknown node type");
+                throw new NotSupportedException("Unknown node type");
         }
     }
 }
