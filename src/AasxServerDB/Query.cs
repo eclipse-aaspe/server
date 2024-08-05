@@ -20,6 +20,8 @@ using Microsoft.IdentityModel.Tokens;
 using TimeStamp;
 using System.Linq.Dynamic.Core;
 using QueryParserTest;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using Newtonsoft.Json.Linq;
 
 namespace AasxServerDB
 {
@@ -63,7 +65,7 @@ namespace AasxServerDB
 
         public List<SMEResult> SearchSMEs(
             string smSemanticId = "", string smIdentifier = "", string semanticId = "", string diff = "",
-            string contains = "", string equal = "", string lower = "", string upper = "")
+            string contains = "", string equal = "", string lower = "", string upper = "", string expression = "")
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
             Console.WriteLine();
@@ -71,7 +73,7 @@ namespace AasxServerDB
             Console.WriteLine("Total number of SMEs " + new AasContext().SMESets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
 
             watch.Restart();
-            var smeWithValue = GetSMEWithValue(smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper);
+            var smeWithValue = GetSMEWithValue(smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
             Console.WriteLine("Found " + smeWithValue.Count + " SMEs in " + watch.ElapsedMilliseconds + "ms");
 
             watch.Restart();
@@ -79,6 +81,8 @@ namespace AasxServerDB
             Console.WriteLine("Collected result in " + watch.ElapsedMilliseconds + "ms");
 
             return result;
+
+
         }
 
         public int CountSMEs(
@@ -335,6 +339,227 @@ namespace AasxServerDB
             return result;
         }
 
+        private static void QuerySMorSME(ref List<SMSet>? smSet, ref List<SMEWithValue>? smeSet, string expression = "")
+        {
+            if (expression == "")
+            {
+                return;
+            }
+
+            using (var db = new AasContext())
+            {
+                // Dynamic condition
+                var querySM = db.SMSets.AsQueryable();
+                var querySME = db.SMESets.AsQueryable();
+                var querySValue = db.SValueSets.AsQueryable();
+                var queryIValue = db.IValueSets.AsQueryable();
+                var queryDValue = db.DValueSets.AsQueryable();
+
+                expression = expression.Replace("\n", "");
+                expression = expression.Replace(" ", "");
+
+                // Parser
+                var parser = new ParserWithAST(new Lexer(expression));
+                var ast = parser.Parse();
+
+                var conditionSM = parser.GenerateSql(ast, "", "filter_submodel");
+
+                var conditionSME = parser.GenerateSql(ast, "", "filter_submodel_elements");
+                var conditionSValue = parser.GenerateSql(ast, "", "filter_str");
+                var conditionIValue = parser.GenerateSql(ast, "", "filter_num");
+                var conditionDValue = conditionIValue;
+
+                // Dynamic condition
+                var qSm = querySM
+                    .Where(conditionSM)
+                    .Distinct();
+
+                if (conditionSME == "")
+                {
+                    if (smSet != null)
+                    {
+                        smSet = qSm.Distinct().ToList();
+                    }
+
+                    return;
+                }
+
+                var qSME = qSm
+                    .Join(
+                        querySME.Where(conditionSME),
+                        smSet => smSet.Id,
+                        smeSet => smeSet.SMId,
+                        (smSet, smeSet) => new { smSet, smeSet }
+                    )
+                    .Distinct();
+
+                if (conditionSValue == "" && conditionIValue == "" && conditionDValue == "")
+                {
+                    if (smSet != null)
+                    {
+                        smSet = qSME.Select(result => result.smSet).Distinct().ToList();
+                    }
+
+                    if (smeSet != null)
+                    {
+                        smeSet = qSME
+                            .Select(result => new SMEWithValue
+                            {
+                                sm = result.smSet,
+                                sme = result.smeSet,
+                                value = "none"
+                            })
+                            .Distinct()
+                            .ToList();
+                    }
+
+                    return;
+                }
+
+                if (conditionSValue != "")
+                {
+                    var qSValue = qSME
+                        .Join(
+                            querySValue.Where(conditionSValue),
+                            combined => combined.smeSet.Id,
+                            sValueSet => sValueSet.SMEId,
+                            (combined, sValueSet) => new { combined.smSet, combined.smeSet, sValueSet }
+                        )
+                        .Distinct();
+
+                    if (conditionIValue == "" && conditionDValue == "")
+                    {
+                        if (smSet != null)
+                        {
+                            smSet = qSValue.Select(result => result.smSet).Distinct().ToList();
+                        }
+
+                        if (smeSet != null)
+                        {
+                            smeSet = qSValue
+                                .Select(result => new SMEWithValue
+                                {
+                                    sm = result.smSet,
+                                    sme = result.smeSet,
+                                    value = result.sValueSet.Value
+                                })
+                                .Distinct()
+                                .ToList();
+                        }
+
+                        return;
+                    }
+
+                    if (conditionIValue != "" && conditionDValue != "")
+                    {
+                        var qIValue = qSME
+                            .Join(
+                                queryIValue.Where(conditionIValue),
+                                combined => combined.smeSet.Id,
+                                iValueSet => iValueSet.SMEId,
+                                (combined, iValueSet) => new { combined.smSet, combined.smeSet, iValueSet }
+                            )
+                            .Distinct();
+
+                        var qDValue = qSME
+                            .Join(
+                                queryDValue.Where(conditionDValue),
+                                combined => combined.smeSet.Id,
+                                dValueSet => dValueSet.SMEId,
+                                (combined, dValueSet) => new { combined.smSet, combined.smeSet, dValueSet }
+                            )
+                            .Distinct();
+
+                        if (smSet != null)
+                        {
+                            var qSValueSelect = qSValue.Select(result => result.smSet);
+                            var qIValueSelect = qIValue.Select(result => result.smSet);
+                            var qDValueSelect = qDValue.Select(result => result.smSet);
+                            smSet = qSValueSelect.Union(qIValueSelect).Union(qDValueSelect).Distinct().ToList();
+                        }
+
+                        if (smeSet != null)
+                        {
+                            var qSValueSelect = qSValue
+                                .Select(result => new SMEWithValue
+                                {
+                                    sm = result.smSet,
+                                    sme = result.smeSet,
+                                    value = result.sValueSet.Value
+                                });
+                            var qIValueSelect = qIValue
+                                .Select(result => new SMEWithValue
+                                {
+                                    sm = result.smSet,
+                                    sme = result.smeSet,
+                                    value = result.iValueSet.Value.ToString()
+                                });
+                            var qDValueSelect = qDValue
+                                .Select(result => new SMEWithValue
+                                {
+                                    sm = result.smSet,
+                                    sme = result.smeSet,
+                                    value = result.dValueSet.Value.ToString()
+                                });
+                            smeSet = qSValueSelect.Union(qIValueSelect).Union(qDValueSelect).Distinct().ToList();
+                        }
+
+                        return;
+                    }
+                }
+
+                if (conditionIValue != "" && conditionDValue != "")
+                {
+                    var qIValue = qSME
+                        .Join(
+                            queryIValue.Where(conditionIValue),
+                            combined => combined.smeSet.Id,
+                            iValueSet => iValueSet.SMEId,
+                            (combined, iValueSet) => new { combined.smSet, combined.smeSet, iValueSet }
+                        )
+                        .Distinct();
+
+                    var qDValue = qSME
+                        .Join(
+                            queryDValue.Where(conditionDValue),
+                            combined => combined.smeSet.Id,
+                            dValueSet => dValueSet.SMEId,
+                            (combined, dValueSet) => new { combined.smSet, combined.smeSet, dValueSet }
+                        )
+                        .Distinct();
+
+                    if (smSet != null)
+                    {
+                        var qIValueSelect = qIValue.Select(result => result.smSet);
+                        var qDValueSelect = qDValue.Select(result => result.smSet);
+                        smSet = qIValueSelect.Union(qDValueSelect).Distinct().ToList();
+                    }
+
+                    if (smeSet != null)
+                    {
+                        var qIValueSelect = qIValue
+                            .Select(result => new SMEWithValue
+                            {
+                                sm = result.smSet,
+                                sme = result.smeSet,
+                                value = result.iValueSet.Value.ToString()
+                            });
+                        var qDValueSelect = qDValue
+                            .Select(result => new SMEWithValue
+                            {
+                                sm = result.smSet,
+                                sme = result.smeSet,
+                                value = result.dValueSet.Value.ToString()
+                            });
+                        smeSet = qIValueSelect.Union(qDValueSelect).Distinct().ToList();
+                    }
+
+                    return;
+                }
+            }
+            return;
+        }
+
         // --------------- SM Methodes ---------------
         private static List<SMSet> GetSMSet(string semanticId = "", string identifier = "", string diffString = "", string expression = "")
         {
@@ -344,66 +569,28 @@ namespace AasxServerDB
             var withDiff = !diff.Equals(DateTime.MinValue);
             var withExpression = !expression.IsNullOrEmpty();
 
+            var listSMset = new List<SMSet>();
+            List<SMEWithValue> notUsed = null;
+
             if (!withSemanticId && !withIdentifier && !withDiff && !withExpression)
-                return new List<SMSet>();
+                return listSMset;
 
-            if (!withExpression)
+            using (var db = new AasContext())
             {
-                var x = new AasContext().SMSets
-                    .Where(s =>
-                        (!withSemanticId || (s.SemanticId != null && s.SemanticId.Equals(semanticId))) &&
-                        (!withIdentifier || (s.Identifier != null && s.Identifier.Equals(identifier))) &&
-                        (!withDiff || s.TimeStampTree.CompareTo(diff) > 0));
-                return x.ToList();
-            }
-
-            // Change to dynamic condition
-            var query = new AasContext().SMSets.AsQueryable();
-            var condition = "";
-            /*
-            int count = 0;
-            if (withSemanticId)
-            {
-                condition += "SemanticId == \"" + semanticId + "\"";
-                count++;
-            }
-            if (withIdentifier)
-            {
-                if (count != 0)
+                if (!withExpression)
                 {
-                    condition += " && ";
+                    var x = db.SMSets
+                        .Where(s =>
+                            (!withSemanticId || (s.SemanticId != null && s.SemanticId.Equals(semanticId))) &&
+                            (!withIdentifier || (s.Identifier != null && s.Identifier.Equals(identifier))) &&
+                            (!withDiff || s.TimeStampTree.CompareTo(diff) > 0));
+                    return x.ToList();
                 }
-                condition += "Identifier == \"" + identifier + "\"";
-                count++;
-            }
-            if (withDiff)
-            {
-                if (count != 0)
-                {
-                    condition += " && ";
-                }
-                condition += "TimeStampTree.CompareTo(diff) > 0";
-            }
-            var y = query.Where(condition);
-            */
 
-            // Actually no whitespace in simple grammar: replace
-            expression = expression.Replace("\n", "");
-            expression = expression.Replace(" ", "");
-
-            // Parser
-            var parser = new ParserWithAST(new Lexer(expression));
-            var ast = parser.Parse();
-            condition = parser.GenerateSql(ast);
-
-            if (condition == "")
-            {
-                return new List<SMSet>();
+                QuerySMorSME(ref listSMset, ref notUsed, expression);
             }
 
-            // Dynamic condition
-            var y = query.Where(condition);
-            return y.ToList();
+            return listSMset;
         }
 
         private static List<SMResult> GetSMResult(List<SMSet> smList)
@@ -430,46 +617,55 @@ namespace AasxServerDB
             public string? value;
         }
 
-        private List<SMEWithValue> GetSMEWithValue(string smSemanticId = "", string smIdentifier = "", string semanticId = "", string diff = "", string contains = "", string equal = "", string lower = "", string upper = "")
+        private List<SMEWithValue> GetSMEWithValue(string smSemanticId = "", string smIdentifier = "", string semanticId = "",
+            string diff = "", string contains = "", string equal = "", string lower = "", string upper = "", string expression = "")
         {
             var result = new List<SMEWithValue>();
 
-            var dateTime = TimeStamp.TimeStamp.StringToDateTime(diff);
-            var withDiff = diff != "";
-            var withSemanticID = !semanticId.IsNullOrEmpty();
+            if (expression == "")
+            {
+                var dateTime = TimeStamp.TimeStamp.StringToDateTime(diff);
+                var withDiff = diff != "";
+                var withSemanticID = !semanticId.IsNullOrEmpty();
 
-            var parameter = 0;
-            if (!contains.IsNullOrEmpty())
-                parameter++;
-            if (!equal.IsNullOrEmpty())
-                parameter++;
-            if (!(lower.IsNullOrEmpty() && upper.IsNullOrEmpty()))
-                parameter++;
-            if (parameter > 1 || (semanticId.IsNullOrEmpty() && !withDiff && parameter != 1))
+                var parameter = 0;
+                if (!contains.IsNullOrEmpty())
+                    parameter++;
+                if (!equal.IsNullOrEmpty())
+                    parameter++;
+                if (!(lower.IsNullOrEmpty() && upper.IsNullOrEmpty()))
+                    parameter++;
+                if (parameter > 1 || (semanticId.IsNullOrEmpty() && !withDiff && parameter != 1))
+                    return result;
+
+                if ((withSemanticID || withDiff)
+                    && contains.IsNullOrEmpty() && equal.IsNullOrEmpty() && lower.IsNullOrEmpty() && upper.IsNullOrEmpty())
+                {
+                    using AasContext db = new();
+                    result.AddRange(db.SMESets
+                        .Where(sme =>
+                            (!withSemanticID || (sme.SemanticId != null && sme.SemanticId == semanticId)) &&
+                            (!withDiff || (sme.TimeStamp > dateTime))
+                        )
+                        .Select(sme => new SMEWithValue { sme = sme })
+                        .ToList());
+                }
+                else
+                {
+                    GetXValue(ref result, semanticId, dateTime, contains, equal, lower, upper);
+                    GetSValue(ref result, semanticId, dateTime, contains, equal);
+                    GetIValue(ref result, semanticId, dateTime, equal, lower, upper);
+                    GetDValue(ref result, semanticId, dateTime, equal, lower, upper);
+                    GetOValue(ref result, semanticId, dateTime, contains, equal);
+                }
+
+                SelectSM(ref result, smSemanticId, smIdentifier);
                 return result;
-
-            if ((withSemanticID || withDiff)
-                && contains.IsNullOrEmpty() && equal.IsNullOrEmpty() && lower.IsNullOrEmpty() && upper.IsNullOrEmpty())
-            {
-                using AasContext db = new();
-                result.AddRange(db.SMESets
-                    .Where(sme =>
-                        (!withSemanticID || (sme.SemanticId != null && sme.SemanticId == semanticId)) &&
-                        (!withDiff || (sme.TimeStamp > dateTime))
-                    )
-                    .Select(sme => new SMEWithValue { sme = sme })
-                    .ToList());
-            }
-            else
-            {
-                GetXValue(ref result, semanticId, dateTime, contains, equal, lower, upper);
-                GetSValue(ref result, semanticId, dateTime, contains, equal);
-                GetIValue(ref result, semanticId, dateTime, equal, lower, upper);
-                GetDValue(ref result, semanticId, dateTime, equal, lower, upper);
-                GetOValue(ref result, semanticId, dateTime, contains, equal);
             }
 
-            SelectSM(ref result, smSemanticId, smIdentifier);
+            List<SMSet> notUsed = null;
+            QuerySMorSME(ref notUsed, ref result, expression);
+
             return result;
         }
 
