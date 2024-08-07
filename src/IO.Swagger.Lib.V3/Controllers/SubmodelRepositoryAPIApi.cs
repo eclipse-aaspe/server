@@ -113,15 +113,18 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var e = new EventPayload();
         e.source = Program.externalBlazor;
-        e.url = Program.externalBlazor;
+        e.url = Program.externalBlazor + $"/geteventmessages/{submodelIdentifier}";
         e.payloadType = "";
         e.payloadSubmodel = "";
         e.payloadSubmodelElements = new List<string>();
         e.lastUpdate = "";
 
         var isInitial = diff == "init";
-        Submodel submodel = null;
+        ISubmodel submodel = null;
 
+        submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+
+        /*
         using AasContext db = new();
         var result = db.SMSets
             .Where(sm =>
@@ -134,13 +137,14 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             var smDB = result.First();
             submodel = Converter.GetSubmodel(smDB: smDB);
         }
+        */
 
         if (submodel != null)
         {
+            e.lastUpdate = submodel.TimeStampTree.ToString();
+
             if (isInitial)
             {
-                e.lastUpdate = submodel.TimeStampTree.ToString();
-
                 string json = string.Empty;
                 if (submodel != null)
                 {
@@ -178,11 +182,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                         e.payloadSubmodelElements.Add(j.ToJsonString());
                     }
                 }
-                /*
-                var smePaginatedList = _paginationService.GetPaginatedList(filtered, new PaginationParameters(null, null));
-                var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginatedList.result);
-                var output = new PagedResult { result = smeLevelList, paging_metadata = smePaginatedList.paging_metadata };
-                */
             }
         }
 

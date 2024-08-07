@@ -1475,6 +1475,247 @@ namespace AasxServer
             Program.signalNewData(2); // new tree, nodes opened
         }
 
+        static void operation_geteventmessages(Operation op, int envIndex, DateTime timeStamp)
+        {
+            // inputVariable reference authentication: collection
+            // inputVariable sourceEndPoint: property
+            // inputVariable  sourcePath: property
+            // inputVariable reference destinationElement: collection
+            // inputVariable HEAD: property
+
+            SubmodelElementCollection authentication = null;
+            Property authType = null;
+            Property authServerEndPoint = null;
+            Property accessToken = null;
+            Property userName = null;
+            Property passWord = null;
+            AasCore.Aas3_0.File authServerCertificate = null;
+            AasCore.Aas3_0.File clientCertificate = null;
+            Property clientCertificatePassWord = null;
+            Property clientToken = null;
+
+            Property endPoint = null;
+            Property path = null;
+            Submodel elementSubmodel = null;
+
+            Property lastDiff = null;
+            Property status = null;
+            Property mode = null;
+
+            SubmodelElementCollection smec = null;
+            Submodel sm = null;
+            Property p = null;
+
+            HttpClient client = null;
+            HttpClientHandler handler = null;
+
+            foreach (var input in op.InputVariables)
+            {
+                smec = null;
+                sm = null;
+                p = null;
+                var inputRef = input.Value;
+                if (inputRef is Property)
+                {
+                    p = (inputRef as Property);
+                }
+
+                if (inputRef is ReferenceElement)
+                {
+                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as ReferenceElement).Value);
+                    if (refElement is SubmodelElementCollection)
+                    {
+                        smec = refElement as SubmodelElementCollection;
+                    }
+                    if (refElement is Submodel)
+                    {
+                        sm = refElement as Submodel;
+                    }
+                }
+
+                switch (inputRef.IdShort.ToLower())
+                {
+                    case "authentication":
+                        if (smec != null)
+                            authentication = smec;
+                        break;
+                    case "endpoint":
+                        if (p != null)
+                            endPoint = p;
+                        break;
+                    case "path":
+                        if (p != null)
+                            path = p;
+                        break;
+                    case "element":
+                        if (sm != null)
+                            elementSubmodel = sm;
+                        break;
+                    case "mode":
+                        if (p != null)
+                            mode = p;
+                        break;
+                }
+            }
+
+            foreach (var output in op.OutputVariables)
+            {
+                smec = null;
+                sm = null;
+                p = null;
+                var outputRef = output.Value;
+                if (outputRef is Property)
+                {
+                    p = (outputRef as Property);
+                }
+
+                if (outputRef is ReferenceElement)
+                {
+                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((outputRef as ReferenceElement).Value);
+                    if (refElement is SubmodelElementCollection)
+                        smec = refElement as SubmodelElementCollection;
+                    if (refElement is Submodel)
+                        sm = refElement as Submodel;
+                }
+
+                switch (outputRef.IdShort.ToLower())
+                {
+                    case "lastdiff":
+                        if (p != null)
+                            lastDiff = p;
+                        break;
+                    case "status":
+                        if (p != null)
+                            status = p;
+                        break;
+                }
+            }
+
+            if (authentication != null)
+            {
+                smec = authentication;
+                int countSmec = smec.Value.Count;
+                for (int iSmec = 0; iSmec < countSmec; iSmec++)
+                {
+                    var sme2 = smec.Value[iSmec];
+                    var idShort = sme2.IdShort.ToLower();
+
+                    switch (idShort)
+                    {
+                        case "authtype":
+                            if (sme2 is Property)
+                            {
+                                authType = sme2 as Property;
+                            }
+
+                            break;
+
+                        case "accesstoken":
+                            if (sme2 is Property)
+                            {
+                                accessToken = sme2 as Property;
+                            }
+
+                            break;
+
+                        case "clienttoken":
+                            if (sme2 is Property)
+                            {
+                                clientToken = sme2 as Property;
+                            }
+
+                            break;
+
+                        case "username":
+                            if (sme2 is Property)
+                            {
+                                userName = sme2 as Property;
+                            }
+
+                            break;
+
+                        case "password":
+                            if (sme2 is Property)
+                            {
+                                passWord = sme2 as Property;
+                            }
+
+                            break;
+
+                        case "authservercertificate":
+                            if (sme2 is AasCore.Aas3_0.File)
+                            {
+                                authServerCertificate = sme2 as AasCore.Aas3_0.File;
+                            }
+
+                            break;
+
+                        case "authserverendpoint":
+                            if (sme2 is Property)
+                            {
+                                authServerEndPoint = sme2 as Property;
+                            }
+
+                            break;
+
+                        case "clientcertificate":
+                            if (sme2 is AasCore.Aas3_0.File)
+                            {
+                                clientCertificate = sme2 as AasCore.Aas3_0.File;
+                            }
+
+                            break;
+
+                        case "clientcertificatepassword":
+                            if (sme2 is Property)
+                            {
+                                clientCertificatePassWord = sme2 as Property;
+                            }
+
+                            break;
+                    }
+                }
+            }
+
+            string requestPath = endPoint.Value;
+
+            handler = new HttpClientHandler();
+
+            if (proxy != null)
+                handler.Proxy = proxy;
+            else
+                handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+
+            client = new HttpClient(handler);
+            client.Timeout = TimeSpan.FromSeconds(20);
+            HttpResponseMessage response = null;
+
+            try
+            {
+                using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestPath))
+                {
+                    var task = Task.Run(async () => { response = await client.SendAsync(requestMessage); });
+                    task.Wait();
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        if (status != null)
+                        {
+                            status.Value = response.StatusCode.ToString() + " ; " +
+                                           response.Content.ReadAsStringAsync().Result + " ; " +
+                                           "GET " + requestPath;
+                            status.TimeStamp = timeStamp;
+                            Program.signalNewData(0);
+                        }
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            Program.signalNewData(2); // new tree, nodes opened
+        }
+
         static void operation_limitCount(Operation op, int envIndex, DateTime timeStamp)
         {
             // inputVariable reference collection: collection
