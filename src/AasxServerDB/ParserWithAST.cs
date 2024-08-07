@@ -189,55 +189,102 @@ public class ParserWithAST
             case FilterDeclarationNode filterDeclarationNode:
                 return GenerateSql(filterDeclarationNode.FilterExpression, typePrefix);
             case SingleComparisonNode singleComparisonNode:
+                bool isNum = false;
+                bool isStr = false;
+                bool withDot = false;
                 leftSql = GenerateSql(singleComparisonNode.Left, typePrefix);
                 rightSql = GenerateSql(singleComparisonNode.Right, typePrefix);
                 switch (singleComparisonNode.ComparisonType)
                 {
                     case TokenType.StrEq:
                         op = "==";
+                        isStr = true;
                         break;
                     case TokenType.StrNe:
                         op = "!=";
+                        isStr = true;
                         break;
                     case TokenType.StrGt:
                         op = ">";
+                        isStr = true;
                         break;
                     case TokenType.StrLt:
                         op = "<";
+                        isStr = true;
                         break;
                     case TokenType.StrGe:
                         op = ">=";
+                        isStr = true;
                         break;
                     case TokenType.StrLe:
                         op = "<=";
+                        isStr = true;
                         break;
                     case TokenType.StrStarts:
                         op = "StartsWith";
-                        return $"{leftSql}.{op}({rightSql})";
+                        isStr = true;
+                        withDot = true;
+                        break;
                     case TokenType.StrEnds:
                         op = "EndsWith";
-                        return $"{leftSql}.{op}({rightSql})";
+                        isStr = true;
+                        withDot = true;
+                        break;
                     case TokenType.StrContains:
                         op = "Contains";
-                        return $"{leftSql}.{op}({rightSql})";
+                        isStr = true;
+                        withDot = true;
+                        break;
                     case TokenType.NumEq:
                         op = "==";
+                        isNum = true;
                         break;
                     case TokenType.NumNe:
                         op = "!=";
+                        isNum = true;
                         break;
                     case TokenType.NumGt:
                         op = ">";
+                        isNum = true;
                         break;
                     case TokenType.NumLt:
                         op = "<";
+                        isNum = true;
                         break;
                     case TokenType.NumGe:
                         op = ">=";
+                        isNum = true;
                         break;
                     case TokenType.NumLe:
                         op = "<=";
+                        isNum = true;
                         break;
+                }
+                if (leftSql.ToLower() == "sme.value")
+                {
+                    if (isStr)
+                    {
+                        leftSql = "sValue";
+                    }
+                    if (isNum)
+                    {
+                        leftSql = "mValue";
+                    }
+                }
+                if (rightSql.ToLower() == "sme.value")
+                {
+                    if (isStr)
+                    {
+                        leftSql = "sValue";
+                    }
+                    if (isNum)
+                    {
+                        leftSql = "mValue";
+                    }
+                }
+                if (withDot)
+                {
+                    return $"{leftSql}.{op}({rightSql})";
                 }
                 return $"({leftSql} {op} {rightSql})";
             case LogicalOperatorNode logicalOperatorNode:
