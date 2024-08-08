@@ -187,13 +187,26 @@ public class ParserWithAST
                 }
                 return "";
             case FilterDeclarationNode filterDeclarationNode:
-                return GenerateSql(filterDeclarationNode.FilterExpression, typePrefix);
+                var s2 = GenerateSql(filterDeclarationNode.FilterExpression, typePrefix);
+                if (s2 == "$SKIP")
+                {
+                    s2 = "";
+                }
+                return s2;
             case SingleComparisonNode singleComparisonNode:
                 bool isNum = false;
                 bool isStr = false;
                 bool withDot = false;
                 leftSql = GenerateSql(singleComparisonNode.Left, typePrefix);
                 rightSql = GenerateSql(singleComparisonNode.Right, typePrefix);
+                if (leftSql == "$SKIPVALUE" || rightSql == "$SKIPVALUE")
+                {
+                    return "$SKIPVALUE";
+                }
+                if (leftSql == "$SKIP" || rightSql == "$SKIP")
+                {
+                    return "$SKIP";
+                }
                 switch (singleComparisonNode.ComparisonType)
                 {
                     case TokenType.StrEq:
@@ -270,16 +283,24 @@ public class ParserWithAST
                     {
                         leftSql = "mValue";
                     }
+                    if (typePrefix != "" && typePrefix != leftSql)
+                    {
+                        return "$SKIP";
+                    }
                 }
                 if (rightSql.ToLower() == "sme.value")
                 {
                     if (isStr)
                     {
-                        leftSql = "sValue";
+                        rightSql = "sValue";
                     }
                     if (isNum)
                     {
-                        leftSql = "mValue";
+                        rightSql = "mValue";
+                    }
+                    if (typePrefix != "" && typePrefix != rightSql)
+                    {
+                        return "$SKIP";
                     }
                 }
                 if (withDot)
@@ -288,36 +309,68 @@ public class ParserWithAST
                 }
                 return $"({leftSql} {op} {rightSql})";
             case LogicalOperatorNode logicalOperatorNode:
-                string result = GenerateSql(logicalOperatorNode.Operands[0], typePrefix);
-                switch (logicalOperatorNode.OperatorType)
+                bool first = true;
+                string result = "";
+                int countSkipValue = 0;
+
+                for (int i = 0; i < logicalOperatorNode.Operands.Count; i++)
                 {
-                    case TokenType.Not:
-                        return $"!{result}";
-                    case TokenType.And:
-                        op = "&&";
-                        break;
-                    case TokenType.Or:
-                        op = "||";
-                        break;
-                }
-                if (logicalOperatorNode.Operands.Count > 1)
-                {
-                    for (int i = 1; i < logicalOperatorNode.Operands.Count; i++)
+                    var s = GenerateSql(logicalOperatorNode.Operands[i], typePrefix);
+                    if (s == "$SKIPVALUE")
                     {
-                        result += " " + op + " " + GenerateSql(logicalOperatorNode.Operands[i], typePrefix);
+                        countSkipValue++;
                     }
-                    result = "(" + result + ")";
+                    if (s != "$SKIP" && s != "$SKIPVALUE")
+                    {
+                        if (first)
+                        {
+                            first = false;
+                            result = s;
+                            switch (logicalOperatorNode.OperatorType)
+                            {
+                                case TokenType.Not:
+                                    return $"!{result}";
+                                case TokenType.And:
+                                    op = "&&";
+                                    break;
+                                case TokenType.Or:
+                                    op = "||";
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            result += " " + op + " " + s;
+                        }
+                    }
                 }
-                return result ;
+                if (result == "")
+                {
+                    if (countSkipValue > 0)
+                    {
+                        return "true";
+                    }
+                    return "$SKIP";
+                }
+                return "(" + result + ")";
             case IdentifierNode identifierNode:
+                if (typePrefix == "sValue" || typePrefix == "mValue")
+                {
+                    if (identifierNode.Name != "sme.value")
+                    {
+                        return "$SKIP";
+                    }
+                    return identifierNode.Name;
+                }
+                if (typePrefix == "sme." && identifierNode.Name == "sme.value")
+                    return "$SKIPVALUE";
+                if (typePrefix != "" && !identifierNode.Name.StartsWith(typePrefix))
+                    return "$SKIP";
                 return identifierNode.Name;
-                break ;
             case StringLiteralNode stringLiteralNode:
                 return stringLiteralNode.Value;
-                break ;
             case NumericalLiteralNode numericalLiteralNode:
                 return numericalLiteralNode.Value;
-                break ;
             default:
                 throw new NotSupportedException("Unknown node type");
         }

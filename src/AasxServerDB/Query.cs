@@ -348,15 +348,43 @@ namespace AasxServerDB
             public double? mValue { get; set; }
         }
 
+        private class CombinedValueResult
+        {
+            public int SMEId { get; set; }
+            public string? sValue { get; set; }
+            public double? mValue { get; set; }
+        }
+
         private static void QuerySMorSME(ref List<SMSet>? smSet, ref List<SMEWithValue>? smeSet, string expression = "")
+        {
+            if (expression.StartsWith("$REVERSE"))
+            {
+                expression = expression.Replace("$REVERSE", "");
+                Console.WriteLine("$REVERSE");
+                QuerySMorSME_reverse(ref smSet, ref smeSet, expression);
+                return;
+            }
+            QuerySMorSME_normal(ref smSet, ref smeSet, expression);
+        }
+        private static void QuerySMorSME_reverse(ref List<SMSet>? smSet, ref List<SMEWithValue>? smeSet, string expression = "")
         {
             if (expression == "")
             {
                 return;
             }
 
+            bool log = false;
+            if (expression.StartsWith("$LOG"))
+            {
+                log = true;
+                expression = expression.Replace("$LOG", "");
+                Console.WriteLine("$LOG");
+            }
+
             using (var db = new AasContext())
             {
+                var watch = System.Diagnostics.Stopwatch.StartNew();
+
                 expression = expression.Replace("\n", "").Replace(" ", "");
 
                 // Parser
@@ -364,6 +392,36 @@ namespace AasxServerDB
                 var ast = parser.Parse();
 
                 var combinedCondition = parser.GenerateSql(ast, "", "filter");
+                Console.WriteLine("combinedCondition: " + combinedCondition);
+
+                var conditionSM = parser.GenerateSql(ast, "", "filter_submodel");
+                if (conditionSM == "")
+                {
+                    conditionSM = parser.GenerateSql(ast, "sm.", "filter");
+                }
+                conditionSM = conditionSM.Replace("sm.", "");
+                Console.WriteLine("conditionSM: " + conditionSM);
+                var conditionSME = parser.GenerateSql(ast, "", "filter_submodel_elements");
+                if (conditionSME == "")
+                {
+                    conditionSME = parser.GenerateSql(ast, "sme.", "filter");
+                }
+                conditionSME = conditionSME.Replace("sme.", "");
+                Console.WriteLine("conditionSME: " + conditionSME);
+                var conditionStr = parser.GenerateSql(ast, "", "filter_str");
+                if (conditionStr == "")
+                {
+                    conditionStr = parser.GenerateSql(ast, "sValue", "filter");
+                }
+                conditionStr = conditionStr.Replace("sValue", "Value");
+                Console.WriteLine("conditionStr: " + conditionStr);
+                var conditionNum = parser.GenerateSql(ast, "", "filter_num");
+                if (conditionNum == "")
+                {
+                    conditionNum = parser.GenerateSql(ast, "mValue", "filter");
+                }
+                conditionNum = conditionNum.Replace("mValue", "Value");
+                Console.WriteLine("conditionNum: " + conditionNum);
 
                 // Dynamic condition
                 var querySM = db.SMSets.AsQueryable();
@@ -372,47 +430,119 @@ namespace AasxServerDB
                 var queryIValue = db.IValueSets.AsQueryable();
                 var queryDValue = db.DValueSets.AsQueryable();
 
-                var querySMandSME = querySM
+                var querySValueWhere = querySValue;
+                if (conditionStr != "")
+                {
+                    querySValueWhere = querySValue.Where(conditionStr);
+                }
+                var querySValueFiltered =
+                        querySValueWhere
+                        .Select(sValue => new CombinedValueResult { SMEId = sValue.SMEId, sValue = sValue.Value, mValue = null } );
+                var sLog = "";
+                if (log)
+                {
+                    sLog = "Found " + querySValueFiltered.Count();
+                }
+                Console.WriteLine(sLog + " querySValueFiltered " + watch.ElapsedMilliseconds + "ms");
+                watch.Restart();
+
+                var queryIValueWhere = queryIValue;
+                if (conditionNum != "")
+                {
+                    queryIValueWhere = queryIValue.Where(conditionNum);
+                }
+                var queryIValueFiltered =
+                        queryIValueWhere
+                        .Select(iValue => new CombinedValueResult { SMEId = iValue.SMEId, sValue = null, mValue = iValue.Value });
+                sLog = "";
+                if (log)
+                {
+                    sLog = "Found " + queryIValueFiltered.Count();
+                }
+                Console.WriteLine(sLog + " queryIValueFiltered " + watch.ElapsedMilliseconds + "ms");
+                watch.Restart();
+
+                var queryDValueWhere = queryDValue;
+                if (conditionNum != "")
+                {
+                    queryDValueWhere = queryDValue.Where(conditionNum);
+                }
+                var queryDValueFiltered =
+                        queryDValueWhere
+                        .Select(dValue => new CombinedValueResult { SMEId = dValue.SMEId, sValue = null, mValue = dValue.Value });
+                sLog = "";
+                if (log)
+                {
+                    sLog = "Found " + queryDValueFiltered.Count();
+                }
+                Console.WriteLine(sLog + " queryDValueFiltered " + watch.ElapsedMilliseconds + "ms");
+                watch.Restart();
+
+                var queryUnionValueFiltered = querySValueFiltered.Union(queryIValueFiltered).Union(queryDValueFiltered).Distinct();
+                sLog = "";
+                if (log)
+                {
+                    sLog = "Found " + queryUnionValueFiltered.Count();
+                }
+                Console.WriteLine(sLog + " queryUnionValueFiltered " + watch.ElapsedMilliseconds + "ms");
+                watch.Restart();
+
+                var querySMEWhere = querySME;
+                if (conditionSME != "")
+                {
+                    querySMEWhere = querySME.Where(conditionSME);
+                }
+                var queryValueAndSME = queryUnionValueFiltered
                     .Join(
-                        querySME,
+                        querySMEWhere,
+                        value => value.SMEId,
+                        sme => sme.Id,
+                            (value, sme) => new { sme, value.sValue, value.mValue }
+                        );
+                sLog = "";
+                if (log)
+                {
+                    sLog = "Found " + queryValueAndSME.Count();
+                }
+                Console.WriteLine(sLog + " queryValueAndSME " + watch.ElapsedMilliseconds + "ms");
+                watch.Restart();
+
+                var querySMWhere = querySM;
+                if (conditionSM != "")
+                {
+                    querySMWhere = querySM.Where(conditionSM);
+                }
+                var queryValueAndSMEandSM = queryValueAndSME
+                    .Join(
+                        querySMWhere,
+                        valuesme => valuesme.sme.SMId,
                         sm => sm.Id,
-                        sme => sme.SMId,
-                        (sm, sme) => new { sm, sme }
-                    );
+                            (valuesme, sm) => new CombinedResult { sm = sm, sme = valuesme.sme, sValue = valuesme.sValue, mValue = valuesme.mValue }
+                        );
+                sLog = "";
+                if (log)
+                {
+                    sLog = "Found " + queryValueAndSMEandSM.Count();
+                }
+                Console.WriteLine(sLog + " queryValueAndSMEandSM " + watch.ElapsedMilliseconds + "ms");
+                watch.Restart();
 
-                var querySMandSMEandSValue = querySMandSME
-                    .Join(
-                        querySValue,
-                        combined => combined.sme.Id,
-                        sValue => sValue.SMEId,
-                        (combined, sValue) => new CombinedResult { sm = combined.sm, sme = combined.sme, sValue = sValue.Value, mValue = null }
-                    );
-
-                var querySMandSMEandIValue = querySMandSME
-                    .Join(
-                        queryIValue,
-                        combined => combined.sme.Id,
-                        iValue => iValue.SMEId,
-                        (combined, iValue) => new CombinedResult { sm = combined.sm, sme = combined.sme, sValue = null, mValue = iValue.Value }
-                    );
-
-                var querySMandSMEandDValue = querySMandSME
-                    .Join(
-                        queryDValue,
-                        combined => combined.sme.Id,
-                        dValue => dValue.SMEId,
-                        (combined, dValue) => new CombinedResult { sm = combined.sm, sme = combined.sme, sValue = null, mValue = dValue.Value }
-                    );
-
-                var queryUnion = querySMandSMEandSValue.Union(querySMandSMEandIValue).Union(querySMandSMEandDValue).Distinct();
-
-                var query = queryUnion
+                var query = queryValueAndSMEandSM
                     .Where(combinedCondition)
                     .Distinct();
+                sLog = "";
+                if (log)
+                {
+                    sLog = "Found " + query.Count();
+                }
+                Console.WriteLine(sLog + " query in " + watch.ElapsedMilliseconds + "ms");
+                watch.Restart();
 
                 if (smSet != null)
                 {
                     smSet = query.Select(result => result.sm).Distinct().ToList();
+                    Console.WriteLine("smSet in " + watch.ElapsedMilliseconds + "ms");
+                    watch.Restart();
                 }
 
                 if (smeSet != null)
@@ -426,6 +556,196 @@ namespace AasxServerDB
                         })
                         .Distinct()
                         .ToList();
+                    Console.WriteLine("smeSet in " + watch.ElapsedMilliseconds + "ms");
+                    watch.Restart();
+                }
+
+                return;
+            }
+        }
+
+        private static void QuerySMorSME_normal(ref List<SMSet>? smSet, ref List<SMEWithValue>? smeSet, string expression = "")
+        {
+            if (expression == "")
+            {
+                return;
+            }
+
+            bool log = false;
+            if (expression.StartsWith("$LOG"))
+            {
+                log = true;
+                expression = expression.Replace("$LOG", "");
+                Console.WriteLine("$LOG");
+            }
+
+            using (var db = new AasContext())
+            {
+                var watch = System.Diagnostics.Stopwatch.StartNew();
+
+                expression = expression.Replace("\n", "").Replace(" ", "");
+
+                // Parser
+                var parser = new ParserWithAST(new Lexer(expression));
+                var ast = parser.Parse();
+
+                var combinedCondition = parser.GenerateSql(ast, "", "filter");
+                Console.WriteLine("combinedCondition: " + combinedCondition);
+
+                var conditionSM = parser.GenerateSql(ast, "", "filter_submodel");
+                if (conditionSM == "")
+                {
+                    conditionSM = parser.GenerateSql(ast, "sm.", "filter");
+                }
+                conditionSM = conditionSM.Replace("sm.", "");
+                Console.WriteLine("conditionSM: " + conditionSM);
+                var conditionSME = parser.GenerateSql(ast, "", "filter_submodel_elements");
+                if (conditionSME == "")
+                {
+                    conditionSME = parser.GenerateSql(ast, "sme.", "filter");
+                }
+                conditionSME = conditionSME.Replace("sme.", "");
+                Console.WriteLine("conditionSME: " + conditionSME);
+                var conditionStr = parser.GenerateSql(ast, "", "filter_str");
+                if (conditionStr == "")
+                {
+                    conditionStr = parser.GenerateSql(ast, "sValue", "filter");
+                }
+                conditionStr = conditionStr.Replace("sValue", "Value");
+                Console.WriteLine("conditionStr: " + conditionStr);
+                var conditionNum = parser.GenerateSql(ast, "", "filter_num");
+                if (conditionNum == "")
+                {
+                    conditionNum = parser.GenerateSql(ast, "mValue", "filter");
+                }
+                conditionNum = conditionNum.Replace("mValue", "Value");
+                Console.WriteLine("conditionNum: " + conditionNum);
+
+                // Dynamic condition
+                var querySM = db.SMSets.AsQueryable();
+                var querySME = db.SMESets.AsQueryable();
+                var querySValue = db.SValueSets.AsQueryable();
+                var queryIValue = db.IValueSets.AsQueryable();
+                var queryDValue = db.DValueSets.AsQueryable();
+
+                var querySMWhere = querySM;
+                if (conditionSM != "")
+                {
+                    querySMWhere = querySMWhere.Where(conditionSM);
+                }
+                var querySMEWhere = querySME;
+                if (conditionSME != "")
+                {
+                    querySMEWhere = querySMEWhere.Where(conditionSME);
+                }
+                var querySMandSME = querySMWhere
+                    .Join(
+                        querySMEWhere,
+                        sm => sm.Id,
+                        sme => sme.SMId,
+                        (sm, sme) => new { sm, sme }
+                    );
+                var sLog = "";
+                if (log)
+                {
+                    sLog = "Found " + querySMandSME.Count();
+                }
+                Console.WriteLine(sLog + " filterd SM+SME in " + watch.ElapsedMilliseconds + "ms");
+                watch.Restart();
+
+                var querySValueWhere = querySValue;
+                if (conditionStr != "")
+                {
+                    querySValueWhere = querySValue.Where(conditionStr);
+                }
+                var querySMandSMEandSValue = querySMandSME
+                    .Join(
+                        querySValueWhere,
+                        combined => combined.sme.Id,
+                        sValue => sValue.SMEId,
+                        (combined, sValue) => new CombinedResult { sm = combined.sm, sme = combined.sme, sValue = sValue.Value, mValue = null }
+                    );
+                sLog = "";
+                if (log)
+                {
+                    sLog = "Found " + querySMandSMEandSValue.Count();
+                }
+                Console.WriteLine(sLog + " filtered SM+SME+SVALUE in " + watch.ElapsedMilliseconds + "ms");
+                watch.Restart();
+
+                var queryIValueWhere = queryIValue;
+                if (conditionNum != "")
+                {
+                    queryIValueWhere = queryIValue.Where(conditionNum);
+                }
+                var querySMandSMEandIValue = querySMandSME
+                    .Join(
+                        queryIValueWhere,
+                        combined => combined.sme.Id,
+                        iValue => iValue.SMEId,
+                        (combined, iValue) => new CombinedResult { sm = combined.sm, sme = combined.sme, sValue = null, mValue = iValue.Value }
+                    );
+                sLog = "";
+                if (log)
+                {
+                    sLog = "Found " + querySMandSMEandIValue.Count();
+                }
+                Console.WriteLine(sLog + " filtered SM+SME+IVALUE in " + watch.ElapsedMilliseconds + "ms");
+                watch.Restart();
+
+                var queryDValueWhere = queryDValue;
+                if (conditionNum != "")
+                {
+                    queryDValueWhere = queryDValue.Where(conditionNum);
+                }
+                var querySMandSMEandDValue = querySMandSME
+                    .Join(
+                        queryDValueWhere,
+                        combined => combined.sme.Id,
+                        dValue => dValue.SMEId,
+                        (combined, dValue) => new CombinedResult { sm = combined.sm, sme = combined.sme, sValue = null, mValue = dValue.Value }
+                    );
+                sLog = "";
+                if (log)
+                {
+                    sLog = "Found " + querySMandSMEandDValue.Count();
+                }
+                Console.WriteLine(sLog + " filtered SM+SME+DVALUE in " + watch.ElapsedMilliseconds + "ms");
+                watch.Restart();
+
+                var queryUnion = querySMandSMEandSValue.Union(querySMandSMEandIValue).Union(querySMandSMEandDValue).Distinct();
+
+                var query = queryUnion
+                    .Where(combinedCondition)
+                    .Distinct();
+                sLog = "";
+                if (log)
+                {
+                    sLog = "Found " + query.Count();
+                }
+                Console.WriteLine(sLog + " Union in " + watch.ElapsedMilliseconds + "ms");
+                watch.Restart();
+
+                if (smSet != null)
+                {
+                    smSet = query.Select(result => result.sm).Distinct().ToList();
+                    Console.WriteLine("smSet in " + watch.ElapsedMilliseconds + "ms");
+                    watch.Restart();
+                }
+
+                if (smeSet != null)
+                {
+                    smeSet = query
+                        .Select(result => new SMEWithValue
+                        {
+                            sm = result.sm,
+                            sme = result.sme,
+                            value = result.sValue ?? result.mValue.ToString()
+                        })
+                        .Distinct()
+                        .ToList();
+                    Console.WriteLine("smeSet in " + watch.ElapsedMilliseconds + "ms");
+                    watch.Restart();
                 }
 
                 return;
