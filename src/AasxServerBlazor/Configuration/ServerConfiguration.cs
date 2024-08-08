@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using AasSecurity;
@@ -53,7 +53,9 @@ public static class ServerConfiguration
         services.AddControllers();
         services.AddLazyResolution();
 
-        services.AddGraphQLServer().AddQueryType<Query>();
+        services.AddGraphQLServer()
+            .AddQueryType<Query>()
+            .SetRequestOptions(_ => new HotChocolate.Execution.Options.RequestExecutorOptions { ExecutionTimeout = TimeSpan.FromMinutes(10) });
     }
 
     /// <summary>
