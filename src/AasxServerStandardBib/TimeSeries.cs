@@ -478,7 +478,7 @@ namespace AasxTimeSeries
             opcClientRate = (long)value;
         }
 
-        private static void OnOPCClientNextTimedEvent(long ms)
+        /*private static void OnOPCClientNextTimedEvent(long ms)
         {
             if (opcClientRate != 0)
             {
@@ -489,7 +489,7 @@ namespace AasxTimeSeries
                     opcClientCount = 0;
                 }
             }
-        }
+        }*/
 
         /*
         static ulong ChangeNumber = 0;
@@ -685,7 +685,7 @@ namespace AasxTimeSeries
             if (Program.isLoading)
                 return true;
 
-            OnOPCClientNextTimedEvent(100);
+            //OnOPCClientNextTimedEvent(100);
 
             // ulong newChangeNumber = ChangeNumber + 1;
             // bool useNewChangeNumber = false;
@@ -1402,8 +1402,8 @@ namespace AasxTimeSeries
 
         static List<List<object>> table = null;
         static string ErrorMessage { get; set; }
-        static UASampleClient opc = null;
-        static Opc.Ua.Client.Session session = null;
+        /*static UASampleClient opc = null;
+        static Opc.Ua.Client.Session session = null;*/
         static DateTime startTime;
         static DateTime endTime;
         static List<string> opcDAValues = null;
@@ -1498,7 +1498,7 @@ namespace AasxTimeSeries
             try
             {
                 ErrorMessage = "";
-                if (session == null)
+                /*if (session == null)
                     Connect(tsb);
                 if (session != null)
                 {
@@ -1509,7 +1509,7 @@ namespace AasxTimeSeries
                         string   value = opc.ReadSubmodelElementValue(split[1], (ushort)Convert.ToInt32(split[0]));
                         opcDAValues.Add(value);
                     }
-                }
+                }*/
             }
             catch (Exception ex)
             {
@@ -1531,22 +1531,22 @@ namespace AasxTimeSeries
             try
             {
                 ErrorMessage = "";
-                if (session == null)
+                /*if (session == null)
                     Connect(tsb);
                 startTime = tsb.opcLastTimeStamp;
                 // get current time on server
                 if (session != null)
                     endTime = (DateTime)session.ReadValue(new NodeId(2258, 0)).Value;
-                GetData(tsb);
+                GetData(tsb);*/
             }
             catch (Exception ex)
             {
                 ErrorMessage = ex.Message;
                 Console.WriteLine(ErrorMessage);
-                session?.Close();
+                /*session?.Close();
                 session?.Dispose();
                 session = null;
-                opc     = null;
+                opc     = null;*/
             }
             /*
             session?.Close();
@@ -1555,7 +1555,7 @@ namespace AasxTimeSeries
             */
         }
 
-        public static void Connect(TimeSeriesBlock tsb)
+        /*public static void Connect(TimeSeriesBlock tsb)
         {
             Console.WriteLine("Connect OPC UA");
             if (opc == null)
@@ -1573,11 +1573,11 @@ namespace AasxTimeSeries
                 tsb.opcLastTimeStamp =  (DateTime)session.ReadValue(new NodeId(2258, 0)).Value;
                 tsb.opcLastTimeStamp -= TimeSpan.FromMinutes(1);
             }
-        }
+        }*/
 
         public static void GetData(TimeSeriesBlock tsb)
         {
-            if (session != null)
+            /*if (session != null)
             {
                 ReadRawModifiedDetails details = new ReadRawModifiedDetails();
                 details.StartTime        = startTime;
@@ -1675,7 +1675,7 @@ namespace AasxTimeSeries
                         nodesToRead[i].ContinuationPoint = results[i].ContinuationPoint;
                     }
                 }
-            }
+            }*/
         }
     }
 }
