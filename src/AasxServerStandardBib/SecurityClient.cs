@@ -37,7 +37,10 @@ using System.Linq;
 
 namespace AasxServer
 {
+    using System.IO.Packaging;
     using System.Text.Json;
+    using AasxServerStandardBib.Interfaces;
+    using Opc.Ua;
 
     public class AasxTask
     {
@@ -209,6 +212,9 @@ namespace AasxServer
                     {
                         case "authenticate":
                             operation_authenticate(op, envIndex, timeStamp);
+                            break;
+                        case "geteventmessages":
+                            operation_geteventmessages(op, envIndex, timeStamp);
                             break;
                         case "get":
                         case "getdiff":
@@ -1488,6 +1494,15 @@ namespace AasxServer
             Program.signalNewData(2); // new tree, nodes opened
         }
 
+        public class EventPayload
+        {
+            public string source { get; set; }
+            public string url { get; set; }
+            public string lastUpdate { get; set; }
+            public string payloadType { get; set; }
+            public string payloadSubmodel { get; set; }
+            public List<string> payloadSubmodelElements { get; set; }
+        }
         static void operation_geteventmessages(Operation op, int envIndex, DateTime timeStamp)
         {
             // inputVariable reference authentication: collection
@@ -1514,6 +1529,7 @@ namespace AasxServer
             Property lastDiff = null;
             Property status = null;
             Property mode = null;
+            SubmodelElementCollection diff = null;
 
             SubmodelElementCollection smec = null;
             Submodel sm = null;
@@ -1582,6 +1598,11 @@ namespace AasxServer
                     p = (outputRef as Property);
                 }
 
+                if (outputRef is SubmodelElementCollection)
+                {
+                    smec = outputRef as SubmodelElementCollection;
+                }
+
                 if (outputRef is ReferenceElement)
                 {
                     var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((outputRef as ReferenceElement).Value);
@@ -1600,6 +1621,10 @@ namespace AasxServer
                     case "status":
                         if (p != null)
                             status = p;
+                        break;
+                    case "diff":
+                        if (smec != null)
+                            diff = smec;
                         break;
                 }
             }
@@ -1692,12 +1717,23 @@ namespace AasxServer
 
             string requestPath = endPoint.Value;
 
+            if (lastDiff.Value == null)
+            {
+                requestPath += "/init";
+            }
+            else
+            {
+                requestPath += "/" + lastDiff.Value;
+            }
+
             handler = new HttpClientHandler();
 
+            /*
             if (proxy != null)
                 handler.Proxy = proxy;
             else
                 handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+            */
 
             client = new HttpClient(handler);
             client.Timeout = TimeSpan.FromSeconds(20);
@@ -1705,6 +1741,18 @@ namespace AasxServer
 
             try
             {
+                // TEST
+                /*
+                var smc = new SubmodelElementCollection(idShort: "col-" + DateTime.UtcNow);
+                if (diff.Value == null)
+                {
+                    diff.Value = new List<ISubmodelElement>();
+                }
+                diff.Value.Add(smc);
+                Program.signalNewData(1);
+                return;
+                */
+
                 using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestPath))
                 {
                     var task = Task.Run(async () => { response = await client.SendAsync(requestMessage); });
@@ -1716,10 +1764,97 @@ namespace AasxServer
                             status.Value = response.StatusCode.ToString() + " ; " +
                                            response.Content.ReadAsStringAsync().Result + " ; " +
                                            "GET " + requestPath;
-                            status.TimeStamp = timeStamp;
-                            Program.signalNewData(0);
                         }
                     }
+                    else // ok
+                    {
+                        var jsonString = response.Content.ReadAsStringAsync().Result;
+                        EventPayload eventPayload = JsonSerializer.Deserialize<EventPayload>(jsonString);
+                        /*
+                        if (!eventPayload.lastUpdate.EndsWith("Z"))
+                        {
+                            eventPayload.lastUpdate += "Z";
+                        }
+                        */
+                        var dt = TimeStamp.TimeStamp.StringToDateTime(eventPayload.lastUpdate);
+                        dt = DateTime.Parse(eventPayload.lastUpdate);
+                        lastDiff.Value = TimeStamp.TimeStamp.DateTimeToString(dt);
+                        if (status.Value == null)
+                        {
+                            status.Value = "on";
+                        }
+                        if (eventPayload.payloadSubmodel != "" && elementSubmodel != null)
+                        {
+                            MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(eventPayload.payloadSubmodel));
+                            JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                            var receiveSubmodel = Jsonization.Deserialize.SubmodelFrom(node);
+                            receiveSubmodel.Id = elementSubmodel.Id;
+                            receiveSubmodel.TimeStampCreate = dt;
+                            receiveSubmodel.SetTimeStamp(dt);
+                            receiveSubmodel.SetAllParents(dt);
+
+                            // not applicable
+                            // var _submodelService = new SubmodelRepositoryAPIApiController();
+                            // _submodelService.ReplaceSubmodelById(decodedSubmodelIdentifier, body);
+                            // copy code
+                            for (int i = 0; i < Program.env.Length; i++)
+                            {
+                                var package = Program.env[i];
+                                if (package != null)
+                                {
+                                    var env = package.AasEnv;
+                                    if (env != null)
+                                    {
+                                        var submodels = env.Submodels.Where(a => a.Id.Equals(elementSubmodel.Id));
+                                        if (submodels.Any())
+                                        {
+                                            var submodel = submodels.First();
+                                            if (submodel != null)
+                                            {
+                                                var index = env.Submodels.IndexOf(submodel);
+                                                env.Submodels.Remove(submodel);
+                                                env.Submodels.Insert(index, receiveSubmodel);
+                                                Program.signalNewData(1);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            diff.Value = new List<ISubmodelElement>();
+                            if (eventPayload.payloadSubmodelElements.Count != 0 && diff != null)
+                            {
+                                foreach (var json in eventPayload.payloadSubmodelElements)
+                                {
+                                    MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(json));
+                                    JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                                    var receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
+                                    ExtendSubmodel.SetParentsForSME(diff, receiveSme, dt);
+                                    diff.Value.Add(receiveSme);
+
+                                    if (elementSubmodel != null && elementSubmodel.SubmodelElements != null)
+                                    {
+                                        for (int i = 0; i < elementSubmodel.SubmodelElements.Count; i++)
+                                        {
+                                            if (elementSubmodel.SubmodelElements[i].IdShort.Equals(receiveSme.IdShort))
+                                            {
+                                                if (elementSubmodel.SubmodelElements[i].GetType() == receiveSme.GetType())
+                                                {
+                                                    receiveSme.TimeStampCreate = elementSubmodel.SubmodelElements[i].TimeStampCreate;
+                                                    elementSubmodel.SubmodelElements[i] = receiveSme;
+                                                }
+                                            }
+
+                                        }
+                                    }
+                                }
+                                Program.signalNewData(1);
+                            }
+                        }
+                    }
+                    Program.signalNewData(0);
                 }
             }
             catch

@@ -388,40 +388,43 @@ namespace AasxServerDB
                 expression = expression.Replace("\n", "").Replace(" ", "");
 
                 // Parser
+                int countTypePrefix = 0;
                 var parser = new ParserWithAST(new Lexer(expression));
                 var ast = parser.Parse();
 
-                var combinedCondition = parser.GenerateSql(ast, "", "filter");
+                var combinedCondition = parser.GenerateSql(ast, "", ref countTypePrefix, "filter");
                 Console.WriteLine("combinedCondition: " + combinedCondition);
 
-                var conditionSM = parser.GenerateSql(ast, "", "filter_submodel");
+                var conditionSM = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_submodel");
                 if (conditionSM == "")
                 {
-                    conditionSM = parser.GenerateSql(ast, "sm.", "filter");
+                    conditionSM = parser.GenerateSql(ast, "sm.", ref countTypePrefix, "filter");
                 }
                 conditionSM = conditionSM.Replace("sm.", "");
-                Console.WriteLine("conditionSM: " + conditionSM);
-                var conditionSME = parser.GenerateSql(ast, "", "filter_submodel_elements");
+                Console.WriteLine("condition sm. #" + countTypePrefix + ": " + conditionSM);
+                var conditionSME = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_submodel_elements");
                 if (conditionSME == "")
                 {
-                    conditionSME = parser.GenerateSql(ast, "sme.", "filter");
+                    conditionSME = parser.GenerateSql(ast, "sme.", ref countTypePrefix, "filter");
                 }
                 conditionSME = conditionSME.Replace("sme.", "");
-                Console.WriteLine("conditionSME: " + conditionSME);
-                var conditionStr = parser.GenerateSql(ast, "", "filter_str");
+                Console.WriteLine("condition sme. #" + countTypePrefix + ": " + conditionSME);
+                var conditionSMEValue = parser.GenerateSql(ast, "sme.value", ref countTypePrefix, "filter");
+                Console.WriteLine("condition sme.value #" + countTypePrefix + ": " + conditionSMEValue);
+                var conditionStr = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_str");
                 if (conditionStr == "")
                 {
-                    conditionStr = parser.GenerateSql(ast, "sValue", "filter");
+                    conditionStr = parser.GenerateSql(ast, "sValue", ref countTypePrefix, "filter");
                 }
                 conditionStr = conditionStr.Replace("sValue", "Value");
-                Console.WriteLine("conditionStr: " + conditionStr);
-                var conditionNum = parser.GenerateSql(ast, "", "filter_num");
+                Console.WriteLine("condition sValue #" + countTypePrefix + ": " + conditionStr);
+                var conditionNum = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_num");
                 if (conditionNum == "")
                 {
-                    conditionNum = parser.GenerateSql(ast, "mValue", "filter");
+                    conditionNum = parser.GenerateSql(ast, "mValue", ref countTypePrefix, "filter");
                 }
                 conditionNum = conditionNum.Replace("mValue", "Value");
-                Console.WriteLine("conditionNum: " + conditionNum);
+                Console.WriteLine("condition mValue #" + countTypePrefix + ": " + conditionNum);
 
                 // Dynamic condition
                 var querySM = db.SMSets.AsQueryable();
@@ -566,17 +569,18 @@ namespace AasxServerDB
 
         private static void QuerySMorSME_normal(ref List<SMSet>? smSet, ref List<SMEWithValue>? smeSet, string expression = "")
         {
-            if (expression == "")
-            {
-                return;
-            }
-
             bool log = false;
+
             if (expression.StartsWith("$LOG"))
             {
                 log = true;
                 expression = expression.Replace("$LOG", "");
                 Console.WriteLine("$LOG");
+            }
+
+            if (expression == "" || (smSet == null && smeSet == null))
+            {
+                return;
             }
 
             using (var db = new AasContext())
@@ -586,40 +590,43 @@ namespace AasxServerDB
                 expression = expression.Replace("\n", "").Replace(" ", "");
 
                 // Parser
+                int countTypePrefix = 0;
                 var parser = new ParserWithAST(new Lexer(expression));
                 var ast = parser.Parse();
 
-                var combinedCondition = parser.GenerateSql(ast, "", "filter");
+                var combinedCondition = parser.GenerateSql(ast, "", ref countTypePrefix, "filter");
                 Console.WriteLine("combinedCondition: " + combinedCondition);
 
-                var conditionSM = parser.GenerateSql(ast, "", "filter_submodel");
+                var conditionSM = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_submodel");
                 if (conditionSM == "")
                 {
-                    conditionSM = parser.GenerateSql(ast, "sm.", "filter");
+                    conditionSM = parser.GenerateSql(ast, "sm.", ref countTypePrefix, "filter");
                 }
                 conditionSM = conditionSM.Replace("sm.", "");
-                Console.WriteLine("conditionSM: " + conditionSM);
-                var conditionSME = parser.GenerateSql(ast, "", "filter_submodel_elements");
+                Console.WriteLine("condition sm. #" + countTypePrefix + ": " + conditionSM);
+                var conditionSME = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_submodel_elements");
                 if (conditionSME == "")
                 {
-                    conditionSME = parser.GenerateSql(ast, "sme.", "filter");
+                    conditionSME = parser.GenerateSql(ast, "sme.", ref countTypePrefix, "filter");
                 }
                 conditionSME = conditionSME.Replace("sme.", "");
-                Console.WriteLine("conditionSME: " + conditionSME);
-                var conditionStr = parser.GenerateSql(ast, "", "filter_str");
+                Console.WriteLine("condition sme. #" + countTypePrefix + ": " + conditionSME);
+                var conditionSMEValue = parser.GenerateSql(ast, "sme.value", ref countTypePrefix, "filter");
+                Console.WriteLine("condition sme.value #" + countTypePrefix + ": " + conditionSMEValue);
+                var conditionStr = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_str");
                 if (conditionStr == "")
                 {
-                    conditionStr = parser.GenerateSql(ast, "sValue", "filter");
+                    conditionStr = parser.GenerateSql(ast, "sValue", ref countTypePrefix, "filter");
                 }
                 conditionStr = conditionStr.Replace("sValue", "Value");
-                Console.WriteLine("conditionStr: " + conditionStr);
-                var conditionNum = parser.GenerateSql(ast, "", "filter_num");
+                Console.WriteLine("condition sValue #" + countTypePrefix + ": " + conditionStr);
+                var conditionNum = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_num");
                 if (conditionNum == "")
                 {
-                    conditionNum = parser.GenerateSql(ast, "mValue", "filter");
+                    conditionNum = parser.GenerateSql(ast, "mValue", ref countTypePrefix, "filter");
                 }
                 conditionNum = conditionNum.Replace("mValue", "Value");
-                Console.WriteLine("conditionNum: " + conditionNum);
+                Console.WriteLine("condition mValue #" + countTypePrefix + ": " + conditionNum);
 
                 // Dynamic condition
                 var querySM = db.SMSets.AsQueryable();
@@ -633,6 +640,14 @@ namespace AasxServerDB
                 {
                     querySMWhere = querySMWhere.Where(conditionSM);
                 }
+
+                if (conditionSME == "" && conditionStr == "" && conditionNum == "" && smeSet == null)
+                {
+                    smSet = querySMWhere.Distinct().ToList();
+                    Console.WriteLine("smSet in " + watch.ElapsedMilliseconds + "ms");
+                    return;
+                }
+
                 var querySMEWhere = querySME;
                 if (conditionSME != "")
                 {
@@ -652,6 +667,18 @@ namespace AasxServerDB
                 }
                 Console.WriteLine(sLog + " filterd SM+SME in " + watch.ElapsedMilliseconds + "ms");
                 watch.Restart();
+
+                if (smeSet == null)
+                {
+                    if (smSet != null)
+                    {
+                        smSet = querySMandSME.Select(result => result.sm).Distinct().ToList();
+                        Console.WriteLine("smSet in " + watch.ElapsedMilliseconds + "ms");
+                        watch.Restart();
+                    }
+
+                    return;
+                }
 
                 var querySValueWhere = querySValue;
                 if (conditionStr != "")

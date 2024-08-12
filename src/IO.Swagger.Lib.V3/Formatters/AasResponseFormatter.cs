@@ -74,7 +74,7 @@ namespace IO.Swagger.Lib.V3.Formatters
 
         public override bool CanWriteResult(OutputFormatterCanWriteContext context)
         {
-            if (context.Object is Controllers.SubmodelRepositoryAPIApiController.EventPayload)
+            if (context.Object is AasxServer.AasxTask.EventPayload)
             {
                 return true;
             }
@@ -129,7 +129,7 @@ namespace IO.Swagger.Lib.V3.Formatters
             //SerializationModifier
             GetSerializationMidifiersFromRequest(context.HttpContext.Request, out LevelEnum level, out ExtentEnum extent);
 
-            if (context.Object is List<string> s || context.Object is Controllers.SubmodelRepositoryAPIApiController.EventPayload)
+            if (context.Object is List<string> s || context.Object is AasxServer.AasxTask.EventPayload)
             {
                 /*
                 string json = JsonSerializer.Serialize(context.Object);

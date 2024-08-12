@@ -75,17 +75,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     private readonly IAdminShellPackageEnvironmentService _adminShellPackageEnvironmentService;
     private readonly IValidateSerializationModifierService _validateModifierService;
 
-    public class EventPayload
-    {
-        public string source { get; set; }
-        public string url { get; set; }
-        public string lastUpdate { get; set; }
-        public string payloadType { get; set; }
-        public string payloadSubmodel { get; set; }
-        public List<string> payloadSubmodelElements { get; set; }
-    }
-
-    // EventPayload eventPayload = JsonSerializer.Deserialize<EventPayload>(jsonString);
     public SubmodelRepositoryAPIApiController(IAppLogger<SubmodelRepositoryAPIApiController> logger, IBase64UrlDecoderService decoderService, ISubmodelService submodelService,
                                               IReferenceModifierService referenceModifierService, IJsonQueryDeserializer jsonQueryDeserializer, IMappingService mappingService,
                                               IPathModifierService pathModifierService, ILevelExtentModifierService levelExtentModifierService,
@@ -123,7 +112,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
         }
 
-        var e = new EventPayload();
+        var e = new AasxServer.AasxTask.EventPayload();
         e.source = Program.externalBlazor;
         e.url = Program.externalBlazor + $"/geteventmessages/{submodelIdentifier}";
         e.payloadType = "";
@@ -153,7 +142,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         if (submodel != null)
         {
-            e.lastUpdate = submodel.TimeStampTree.ToString();
+            e.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(submodel.TimeStampTree);
 
             if (isInitial)
             {
@@ -170,6 +159,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             else
             {
                 var diffTime = TimeStamp.TimeStamp.StringToDateTime(diff);
+                Console.WriteLine(diffTime.ToString());
+                diffTime = DateTime.Parse(diff);
+                Console.WriteLine(diffTime.ToString());
 
                 var filtered = new List<ISubmodelElement>();
                 if (!diff.IsNullOrEmpty())
@@ -421,7 +413,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     {
         var output = new List<ISubmodelElement?>();
 
-        foreach (var sme in submodelElements.Where(sme => sme != null && sme.TimeStampTree >= diff))
+        foreach (var sme in submodelElements.Where(sme => sme != null && (sme.TimeStampTree - diff).TotalMilliseconds > 1))
         {
             List<ISubmodelElement?> smeDiff;
             switch (sme)
@@ -444,7 +436,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                                                                     value: smeDiff) {Parent = smc.Parent};
                         output.Add(smcDiff);
                     }
-                    else if (smc.TimeStamp >= diff)
+                    else if ((smc.TimeStamp - diff).TotalMilliseconds > 1)
                     {
                         output.Add(smc);
                     }
@@ -470,7 +462,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                                                               value: smeDiff) {Parent = sml.Parent};
                         output.Add(smlDiff);
                     }
-                    else if (sml.TimeStamp >= diff)
+                    else if ((sml.TimeStamp - diff).TotalMilliseconds > 1)
                     {
                         output.Add(sml);
                     }
