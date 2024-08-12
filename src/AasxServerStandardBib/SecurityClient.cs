@@ -1481,15 +1481,6 @@ namespace AasxServer
             Program.signalNewData(2); // new tree, nodes opened
         }
 
-        public class EventPayload
-        {
-            public string source { get; set; }
-            public string url { get; set; }
-            public string lastUpdate { get; set; }
-            public string payloadType { get; set; }
-            public string payloadSubmodel { get; set; }
-            public List<string> payloadSubmodelElements { get; set; }
-        }
         static void operation_geteventmessages(Operation op, int envIndex, DateTime timeStamp)
         {
             // inputVariable reference authentication: collection
@@ -1756,7 +1747,7 @@ namespace AasxServer
                     else // ok
                     {
                         var jsonString = response.Content.ReadAsStringAsync().Result;
-                        EventPayload eventPayload = JsonSerializer.Deserialize<EventPayload>(jsonString);
+                        Events.EventPayload eventPayload = JsonSerializer.Deserialize<Events.EventPayload>(jsonString);
                         /*
                         if (!eventPayload.lastUpdate.EndsWith("Z"))
                         {
@@ -1770,9 +1761,10 @@ namespace AasxServer
                         {
                             status.Value = "on";
                         }
-                        if (eventPayload.payloadSubmodel != "" && elementSubmodel != null)
+                        var entries = eventPayload.eventEntries;
+                        if (entries.Count == 1 &&  entries[0].payloadType == "submodel" && elementSubmodel != null)
                         {
-                            MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(eventPayload.payloadSubmodel));
+                            MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(entries[0].payload));
                             JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
                             var receiveSubmodel = Jsonization.Deserialize.SubmodelFrom(node);
                             receiveSubmodel.Id = elementSubmodel.Id;
@@ -1811,29 +1803,32 @@ namespace AasxServer
                         else
                         {
                             diff.Value = new List<ISubmodelElement>();
-                            if (eventPayload.payloadSubmodelElements.Count != 0 && diff != null)
+                            if (entries.Count != 0 && diff != null)
                             {
-                                foreach (var json in eventPayload.payloadSubmodelElements)
+                                foreach (var e in entries)
                                 {
-                                    MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(json));
-                                    JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
-                                    var receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
-                                    ExtendSubmodel.SetParentsForSME(diff, receiveSme, dt);
-                                    diff.Value.Add(receiveSme);
-
-                                    if (elementSubmodel != null && elementSubmodel.SubmodelElements != null)
+                                    if (e.entryType == "UPDATE" && e.payloadType == "SME")
                                     {
-                                        for (int i = 0; i < elementSubmodel.SubmodelElements.Count; i++)
-                                        {
-                                            if (elementSubmodel.SubmodelElements[i].IdShort.Equals(receiveSme.IdShort))
-                                            {
-                                                if (elementSubmodel.SubmodelElements[i].GetType() == receiveSme.GetType())
-                                                {
-                                                    receiveSme.TimeStampCreate = elementSubmodel.SubmodelElements[i].TimeStampCreate;
-                                                    elementSubmodel.SubmodelElements[i] = receiveSme;
-                                                }
-                                            }
+                                        MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(e.payload));
+                                        JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                                        var receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
+                                        ExtendSubmodel.SetParentsForSME(diff, receiveSme, dt);
+                                        diff.Value.Add(receiveSme);
 
+                                        if (elementSubmodel != null && elementSubmodel.SubmodelElements != null)
+                                        {
+                                            for (int i = 0; i < elementSubmodel.SubmodelElements.Count; i++)
+                                            {
+                                                if (elementSubmodel.SubmodelElements[i].IdShort.Equals(receiveSme.IdShort))
+                                                {
+                                                    if (elementSubmodel.SubmodelElements[i].GetType() == receiveSme.GetType())
+                                                    {
+                                                        receiveSme.TimeStampCreate = elementSubmodel.SubmodelElements[i].TimeStampCreate;
+                                                        elementSubmodel.SubmodelElements[i] = receiveSme;
+                                                    }
+                                                }
+
+                                            }
                                         }
                                     }
                                 }
