@@ -112,84 +112,16 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
         }
 
-        var e = new AasxServer.AasxTask.EventPayload();
-        e.source = Program.externalBlazor;
-        e.url = Program.externalBlazor + $"/geteventmessages/{submodelIdentifier}";
-        e.payloadType = "";
-        e.payloadSubmodel = "";
-        e.payloadSubmodelElements = new List<string>();
-        e.lastUpdate = "";
-
-        var isInitial = diff == "init";
-        ISubmodel submodel = null;
-
-        submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
-
-        /*
-        using AasContext db = new();
-        var result = db.SMSets
-            .Where(sm =>
-                sm.Identifier == decodedSubmodelIdentifier
-            )
-            .ToList();
-
-        if (result.Any())
-        {
-            var smDB = result.First();
-            submodel = Converter.GetSubmodel(smDB: smDB);
-        }
-        */
+        var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
 
         if (submodel != null)
         {
-            e.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(submodel.TimeStampTree);
-
-            if (isInitial)
-            {
-                string json = string.Empty;
-                if (submodel != null)
-                {
-                    var j = Jsonization.Serialize.ToJsonObject(submodel);
-                    json = j.ToJsonString();
-                }
-
-                e.payloadSubmodel = json;
-                e.payloadType = "Submodel";
-            }
-            else
-            {
-                var diffTime = TimeStamp.TimeStamp.StringToDateTime(diff);
-                Console.WriteLine(diffTime.ToString());
-                diffTime = DateTime.Parse(diff);
-                Console.WriteLine(diffTime.ToString());
-
-                var filtered = new List<ISubmodelElement>();
-                if (!diff.IsNullOrEmpty())
-                {
-                    try
-                    {
-                        filtered = filterSubmodelElements(submodel.SubmodelElements, diffTime);
-                    }
-                    catch
-                    {
-                        // ignored
-                    }
-                }
-
-                if (filtered.Count != 0)
-                {
-                    e.payloadSubmodel = "";
-                    e.payloadType = "SubmodelElements";
-                    foreach (var f in filtered)
-                    {
-                        var j = Jsonization.Serialize.ToJsonObject(f);
-                        e.payloadSubmodelElements.Add(j.ToJsonString());
-                    }
-                }
-            }
+            string sourceUrl = Program.externalBlazor + $"/geteventmessages/{submodelIdentifier}";
+            var e = Events.EventPayload.CollectPayload(sourceUrl, submodel as Submodel, diff);
+            return new ObjectResult(e);
         }
 
-        return new ObjectResult(e);
+        return NoContent();
     }
 
     // End Events
