@@ -94,6 +94,18 @@ namespace AasxServerDB
                 .HasConversion(
                     v => v.ToJsonString(null),
                     v => JsonNode.Parse(v, null, default));
+
+            modelBuilder.Entity<SValueSet>()
+                .HasIndex(d => d.Value);
+
+            modelBuilder.Entity<IValueSet>()
+                .HasIndex(d => d.Value);
+
+            modelBuilder.Entity<DValueSet>()
+                .HasIndex(d => d.Value);
+
+            modelBuilder.Entity<SMESet>()
+                .HasIndex(d => d.ParentSMEId);
         }
     }
 }

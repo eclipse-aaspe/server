@@ -1,4 +1,4 @@
-﻿using AasxServer;
+using AasxServer;
 using Extensions;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -300,7 +300,28 @@ public class AASService
 
         smeRootItem.Children = smChildren;
         foreach (var c in smChildren)
+        {
             c.parent = smeRootItem;
+            switch (c.Tag)
+            {
+                case SubmodelElementCollection collection:
+                {
+                    createSMECItems(c, collection, i);
+                    break;
+                }
+                case Entity entity:
+                {
+                    CreateEntityItems(c, entity, i);
+                    break;
+                }
+                case AnnotatedRelationshipElement annotatedRelationshipElement:
+                    CreateAnnotatedRelationshipElementItems(c, annotatedRelationshipElement, i);
+                    break;
+                case SubmodelElementList smeList:
+                    CreateSMEListItems(c, smeList, i);
+                    break;
+            }
+        }
     }
 
     void CreateEntityItems(Item smeRootItem, IEntity e, int i)

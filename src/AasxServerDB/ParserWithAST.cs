@@ -170,11 +170,14 @@ public class ParserWithAST
         }
     }
 
-    public string GenerateSql(AstNode node, string typePrefix, string filterType = "")
+    public string GenerateSql(AstNode node, string typePrefix, ref int upperCountTypePrefix, string filterType = "")
     {
         var leftSql = "ERROR";
         var rightSql = "ERROR";
         string op = "NOT SUPPORTED";
+        int countTypePrefix = 0;
+
+        upperCountTypePrefix = 0;
         switch (node)
         {
             case QueryNode queryNode:
@@ -182,27 +185,31 @@ public class ParserWithAST
                 {
                     if (queryNode.FilterTypes[fIndex] == filterType)
                     {
-                        return GenerateSql(queryNode.FilterDeclarations[fIndex], typePrefix);
+                        return GenerateSql(queryNode.FilterDeclarations[fIndex], typePrefix, ref upperCountTypePrefix);
                     }
                 }
                 return "";
             case FilterDeclarationNode filterDeclarationNode:
-                var s2 = GenerateSql(filterDeclarationNode.FilterExpression, typePrefix);
-                if (s2 == "$SKIP")
+                var filter = GenerateSql(filterDeclarationNode.FilterExpression, typePrefix, ref countTypePrefix);
+                upperCountTypePrefix += countTypePrefix;
+                if (filter == "$SKIP")
                 {
-                    s2 = "";
+                    filter = "";
                 }
-                return s2;
+                while (filter.Contains("(true && true)") || filter.Contains("(true || true)"))
+                {
+                    filter = filter.Replace("(true && true)", "true");
+                    filter = filter.Replace("(true || true)", "true");
+                }
+                return filter;
             case SingleComparisonNode singleComparisonNode:
                 bool isNum = false;
                 bool isStr = false;
                 bool withDot = false;
-                leftSql = GenerateSql(singleComparisonNode.Left, typePrefix);
-                rightSql = GenerateSql(singleComparisonNode.Right, typePrefix);
-                if (leftSql == "$SKIPVALUE" || rightSql == "$SKIPVALUE")
-                {
-                    return "$SKIPVALUE";
-                }
+                leftSql = GenerateSql(singleComparisonNode.Left, typePrefix, ref countTypePrefix);
+                upperCountTypePrefix += countTypePrefix;
+                rightSql = GenerateSql(singleComparisonNode.Right, typePrefix, ref countTypePrefix);
+                upperCountTypePrefix += countTypePrefix;
                 if (leftSql == "$SKIP" || rightSql == "$SKIP")
                 {
                     return "$SKIP";
@@ -273,34 +280,41 @@ public class ParserWithAST
                         isNum = true;
                         break;
                 }
-                if (leftSql.ToLower() == "sme.value")
+                if (typePrefix != "sme.value")
                 {
-                    if (isStr)
+                    if (leftSql.ToLower() == "sme.value")
                     {
-                        leftSql = "sValue";
+                        if (isStr)
+                        {
+                            leftSql = "sValue";
+                        }
+                        if (isNum)
+                        {
+                            leftSql = "mValue";
+                        }
+                        if (typePrefix != "" && typePrefix != leftSql)
+                        {
+                            return "$SKIPVALUE";
+                        }
+                        // for sme.value increase here
+                        upperCountTypePrefix++;
                     }
-                    if (isNum)
+                    if (rightSql.ToLower() == "sme.value")
                     {
-                        leftSql = "mValue";
-                    }
-                    if (typePrefix != "" && typePrefix != leftSql)
-                    {
-                        return "$SKIP";
-                    }
-                }
-                if (rightSql.ToLower() == "sme.value")
-                {
-                    if (isStr)
-                    {
-                        rightSql = "sValue";
-                    }
-                    if (isNum)
-                    {
-                        rightSql = "mValue";
-                    }
-                    if (typePrefix != "" && typePrefix != rightSql)
-                    {
-                        return "$SKIP";
+                        if (isStr)
+                        {
+                            rightSql = "sValue";
+                        }
+                        if (isNum)
+                        {
+                            rightSql = "mValue";
+                        }
+                        if (typePrefix != "" && typePrefix != rightSql)
+                        {
+                            return "$SKIPVALUE";
+                        }
+                        // for sme.value increase here
+                        upperCountTypePrefix++;
                     }
                 }
                 if (withDot)
@@ -313,40 +327,46 @@ public class ParserWithAST
                 string result = "";
                 int countSkipValue = 0;
 
+                countTypePrefix = 0;
+
                 for (int i = 0; i < logicalOperatorNode.Operands.Count; i++)
                 {
-                    var s = GenerateSql(logicalOperatorNode.Operands[i], typePrefix);
+                    var s = GenerateSql(logicalOperatorNode.Operands[i], typePrefix, ref countTypePrefix);
+                    upperCountTypePrefix += countTypePrefix;
                     if (s == "$SKIPVALUE")
                     {
                         countSkipValue++;
                     }
-                    if (s != "$SKIP" && s != "$SKIPVALUE")
+                    else
                     {
-                        if (first)
+                        if (s != "$SKIP")
                         {
-                            first = false;
-                            result = s;
-                            switch (logicalOperatorNode.OperatorType)
+                            if (first)
                             {
-                                case TokenType.Not:
-                                    return $"!{result}";
-                                case TokenType.And:
-                                    op = "&&";
-                                    break;
-                                case TokenType.Or:
-                                    op = "||";
-                                    break;
+                                first = false;
+                                result = s;
+                                switch (logicalOperatorNode.OperatorType)
+                                {
+                                    case TokenType.Not:
+                                        return $"!{result}";
+                                    case TokenType.And:
+                                        op = "&&";
+                                        break;
+                                    case TokenType.Or:
+                                        op = "||";
+                                        break;
+                                }
                             }
-                        }
-                        else
-                        {
-                            result += " " + op + " " + s;
+                            else
+                            {
+                                result += " " + op + " " + s;
+                            }
                         }
                     }
                 }
                 if (result == "")
                 {
-                    if (countSkipValue > 0)
+                    if (countTypePrefix == 0 && countSkipValue == 0)
                     {
                         return "true";
                     }
@@ -360,12 +380,14 @@ public class ParserWithAST
                     {
                         return "$SKIP";
                     }
-                    return identifierNode.Name;
+                    // upperCountTypePrefix++ at str_ or num_ expression
+                    return "sme.value";
                 }
                 if (typePrefix == "sme." && identifierNode.Name == "sme.value")
-                    return "$SKIPVALUE";
+                    return "$SKIP";
                 if (typePrefix != "" && !identifierNode.Name.StartsWith(typePrefix))
                     return "$SKIP";
+                upperCountTypePrefix++;
                 return identifierNode.Name;
             case StringLiteralNode stringLiteralNode:
                 return stringLiteralNode.Value;
