@@ -1,16 +1,3 @@
-/********************************************************************************
-* Copyright (c) {2019 - 2024} Contributors to the Eclipse Foundation
-*
-* See the NOTICE file(s) distributed with this work for additional
-* information regarding copyright ownership.
-*
-* This program and the accompanying materials are made available under the
-* terms of the Apache License Version 2.0 which is available at
-* https://www.apache.org/licenses/LICENSE-2.0
-*
-* SPDX-License-Identifier: Apache-2.0
-********************************************************************************/
-
 using AasxServer;
 using Extensions;
 using Microsoft.IdentityModel.Tokens;
@@ -313,7 +300,28 @@ public class AASService
 
         smeRootItem.Children = smChildren;
         foreach (var c in smChildren)
+        {
             c.parent = smeRootItem;
+            switch (c.Tag)
+            {
+                case SubmodelElementCollection collection:
+                {
+                    createSMECItems(c, collection, i);
+                    break;
+                }
+                case Entity entity:
+                {
+                    CreateEntityItems(c, entity, i);
+                    break;
+                }
+                case AnnotatedRelationshipElement annotatedRelationshipElement:
+                    CreateAnnotatedRelationshipElementItems(c, annotatedRelationshipElement, i);
+                    break;
+                case SubmodelElementList smeList:
+                    CreateSMEListItems(c, smeList, i);
+                    break;
+            }
+        }
     }
 
     void CreateEntityItems(Item smeRootItem, IEntity e, int i)
