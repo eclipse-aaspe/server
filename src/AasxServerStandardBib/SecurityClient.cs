@@ -1527,6 +1527,11 @@ namespace AasxServer
                     p = (inputRef as Property);
                 }
 
+                if (inputRef is SubmodelElementCollection)
+                {
+                    smec = (inputRef as SubmodelElementCollection);
+                }
+
                 if (inputRef is ReferenceElement)
                 {
                     var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as ReferenceElement).Value);
@@ -1717,6 +1722,7 @@ namespace AasxServer
             client.Timeout = TimeSpan.FromSeconds(20);
             HttpResponseMessage response = null;
 
+            int update = 0;
             try
             {
                 // TEST
@@ -1742,108 +1748,45 @@ namespace AasxServer
                             status.Value = response.StatusCode.ToString() + " ; " +
                                            response.Content.ReadAsStringAsync().Result + " ; " +
                                            "GET " + requestPath;
+                            status.SetTimeStamp(DateTime.Now);
                         }
                     }
                     else // ok
                     {
                         var jsonString = response.Content.ReadAsStringAsync().Result;
-                        Events.EventPayload eventPayload = JsonSerializer.Deserialize<Events.EventPayload>(jsonString);
-                        /*
-                        if (!eventPayload.lastUpdate.EndsWith("Z"))
+                        string lastDiffValue = "";
+                        string statusValue = "";
+                        List<ISubmodelElement> diffValue = new List<ISubmodelElement>();
+                        int count = Events.EventPayload.changeData(jsonString, Program.env, out lastDiffValue, out statusValue, diffValue);
+                        if (count > 0)
                         {
-                            eventPayload.lastUpdate += "Z";
+                            update = 2;
                         }
-                        */
-                        var dt = TimeStamp.TimeStamp.StringToDateTime(eventPayload.lastUpdate);
-                        dt = DateTime.Parse(eventPayload.lastUpdate);
-                        lastDiff.Value = TimeStamp.TimeStamp.DateTimeToString(dt);
-                        if (status.Value == null)
+                        var dt = DateTime.Parse(lastDiffValue);
+                        if (lastDiff != null)
                         {
-                            status.Value = "on";
+                            lastDiff.Value = lastDiffValue;
+                            lastDiff.SetTimeStamp(dt);
                         }
-                        var entries = eventPayload.eventEntries;
-                        if (entries.Count == 1 &&  entries[0].payloadType == "submodel" && elementSubmodel != null)
+                        if (statusValue != null)
                         {
-                            MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(entries[0].payload));
-                            JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
-                            var receiveSubmodel = Jsonization.Deserialize.SubmodelFrom(node);
-                            receiveSubmodel.Id = elementSubmodel.Id;
-                            receiveSubmodel.TimeStampCreate = dt;
-                            receiveSubmodel.SetTimeStamp(dt);
-                            receiveSubmodel.SetAllParents(dt);
-
-                            // not applicable
-                            // var _submodelService = new SubmodelRepositoryAPIApiController();
-                            // _submodelService.ReplaceSubmodelById(decodedSubmodelIdentifier, body);
-                            // copy code
-                            for (int i = 0; i < Program.env.Length; i++)
-                            {
-                                var package = Program.env[i];
-                                if (package != null)
-                                {
-                                    var env = package.AasEnv;
-                                    if (env != null)
-                                    {
-                                        var submodels = env.Submodels.Where(a => a.Id.Equals(elementSubmodel.Id));
-                                        if (submodels.Any())
-                                        {
-                                            var submodel = submodels.First();
-                                            if (submodel != null)
-                                            {
-                                                var index = env.Submodels.IndexOf(submodel);
-                                                env.Submodels.Remove(submodel);
-                                                env.Submodels.Insert(index, receiveSubmodel);
-                                                Program.signalNewData(1);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            status.Value = statusValue;
+                            status.SetTimeStamp(dt);
                         }
-                        else
+                        if (diff != null && diffValue.Count > 0)
                         {
-                            diff.Value = new List<ISubmodelElement>();
-                            if (entries.Count != 0 && diff != null)
-                            {
-                                foreach (var e in entries)
-                                {
-                                    if (e.entryType == "UPDATE" && e.payloadType == "SME")
-                                    {
-                                        MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(e.payload));
-                                        JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
-                                        var receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
-                                        ExtendSubmodel.SetParentsForSME(diff, receiveSme, dt);
-                                        diff.Value.Add(receiveSme);
-
-                                        if (elementSubmodel != null && elementSubmodel.SubmodelElements != null)
-                                        {
-                                            for (int i = 0; i < elementSubmodel.SubmodelElements.Count; i++)
-                                            {
-                                                if (elementSubmodel.SubmodelElements[i].IdShort.Equals(receiveSme.IdShort))
-                                                {
-                                                    if (elementSubmodel.SubmodelElements[i].GetType() == receiveSme.GetType())
-                                                    {
-                                                        receiveSme.TimeStampCreate = elementSubmodel.SubmodelElements[i].TimeStampCreate;
-                                                        elementSubmodel.SubmodelElements[i] = receiveSme;
-                                                    }
-                                                }
-
-                                            }
-                                        }
-                                    }
-                                }
-                                Program.signalNewData(1);
-                            }
+                            diff.Value = diffValue;
+                            diff.SetTimeStamp(dt);
                         }
                     }
-                    Program.signalNewData(0);
                 }
             }
             catch
             {
+                update = 2;
             }
 
-            Program.signalNewData(2); // new tree, nodes opened
+            Program.signalNewData(update); // new tree, nodes opened
         }
 
         static void operation_limitCount(Operation op, int envIndex, DateTime timeStamp)
