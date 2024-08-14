@@ -4,7 +4,7 @@ using IO.Swagger.Lib.V3.Exceptions;
 
 public class PaginationParameters
 {
-    private const int MaxResultSize = 500;
+    private const int MaxResultSize = 100;
 
     private int _cursor;
     private int _limit;
