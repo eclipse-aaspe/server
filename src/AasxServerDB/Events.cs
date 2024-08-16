@@ -41,7 +41,7 @@ namespace Events
 
         public List<EventPayloadEntry> eventEntries { get; set; }
 
-        public static int collectSubmodelElements(List<ISubmodelElement> submodelElements, DateTime diffTime, List<string> entryTypes, string submodelId, string idShortPath, List<EventPayloadEntry> entries)
+        public static int collectSubmodelElements(List<ISubmodelElement> submodelElements, DateTime diffTime, List<string> entryTypes, string submodelId, string idShortPath, List<EventPayloadEntry> entries, List<ISubmodelElement> diffValue)
         {
             int count = 0;
             foreach (var entryType in entryTypes)
@@ -84,6 +84,7 @@ namespace Events
                         }
                         if (!tree)
                         {
+                            diffValue.Add(sme);
                             var j = Jsonization.Serialize.ToJsonObject(sme);
                             var e = new EventPayloadEntry();
                             e.entryType = entryType;
@@ -97,7 +98,7 @@ namespace Events
                         }
                         else
                         {
-                           count += collectSubmodelElements(children, diffTime, new List<String> { entryType }, submodelId, idShortPath + sme.IdShort + ".", entries);
+                           count += collectSubmodelElements(children, diffTime, new List<String> { entryType }, submodelId, idShortPath + sme.IdShort + ".", entries, diffValue);
                         }
                     }
                 }
@@ -105,7 +106,7 @@ namespace Events
             return count;
         }
 
-        public static EventPayload CollectPayload(string sourceUrl, Submodel submodel, string diff)
+        public static EventPayload CollectPayload(string sourceUrl, Submodel submodel, string diff, List<ISubmodelElement> diffValue)
         {
             var e = new EventPayload();
             e.sourceUrl = sourceUrl;
@@ -140,7 +141,7 @@ namespace Events
                     List<string> entryTypes = new List<string>();
                     entryTypes.Add("UPDATE");
                     var diffTime = DateTime.Parse(diff);
-                    collectSubmodelElements(submodel.SubmodelElements, diffTime, entryTypes, submodel.Id, "", e.eventEntries);
+                    collectSubmodelElements(submodel.SubmodelElements, diffTime, entryTypes, submodel.Id, "", e.eventEntries, diffValue);
                 }
             }
 
@@ -150,17 +151,13 @@ namespace Events
         public static int changeData(string json, AdminShellPackageEnv[] env, out string lastDiffValue, out string statusValue, List<ISubmodelElement> diffValue)
         {
             lastDiffValue = "";
-            statusValue = "";
+            statusValue = "ERROR";
             int count = 0;
 
             EventPayload eventPayload = JsonSerializer.Deserialize<Events.EventPayload>(json);
             var dt = TimeStamp.TimeStamp.StringToDateTime(eventPayload.lastUpdate);
             dt = DateTime.Parse(eventPayload.lastUpdate);
             lastDiffValue = TimeStamp.TimeStamp.DateTimeToString(dt);
-            if (statusValue == null)
-            {
-                statusValue = "on";
-            }
 
             foreach (var entry in eventPayload.eventEntries)
             {
@@ -212,7 +209,8 @@ namespace Events
                             aas = aasEnv.AssetAdministrationShells[0];
                             aas.Submodels.Add(receiveSubmodel.GetReference());
                         }
-                        aasEnv.Submodels.Insert(index, receiveSubmodel);
+                        // aasEnv.Submodels.Insert(index, receiveSubmodel);
+                        aasEnv.Submodels.Add(receiveSubmodel);
                         count++;
                     }
                 }
@@ -222,6 +220,8 @@ namespace Events
                     count += changeSubmodelElement(entry, submodel.SubmodelElements, "", diffValue);
                 }
             }
+
+            statusValue = "Updated: " + count;
 
             return count;
         }
