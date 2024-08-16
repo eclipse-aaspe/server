@@ -55,6 +55,7 @@ using System.Xml.Linq;
 using AasxServerDB;
 using AdminShellNS.Exceptions;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using static AasxServerStandardBib.TimeSeriesPlotting.PlotArguments;
 using static QRCoder.PayloadGenerator;
 
@@ -118,8 +119,45 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         if (submodel != null)
         {
             string sourceUrl = Program.externalBlazor + $"/geteventmessages/{submodelIdentifier}";
-            var e = Events.EventPayload.CollectPayload(sourceUrl, submodel as Submodel, diff);
+            List<ISubmodelElement> diffValue = new List<ISubmodelElement>();
+            var e = Events.EventPayload.CollectPayload(sourceUrl, submodel as Submodel, diff, diffValue);
             return new ObjectResult(e);
+        }
+
+        return NoContent();
+    }
+
+    [HttpPut]
+    [Route("/puteventmessages/{submodelIdentifier}")]
+    [ValidateModelState]
+    [SwaggerOperation("PutEventMessages")]
+    [SwaggerResponse(statusCode: 200, type: typeof(String), description: "List of Text")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    public virtual IActionResult PutEventMessages([FromRoute][Required] string submodelIdentifier)
+    {
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
+        }
+
+        var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+
+        using (var reader = new StreamReader(HttpContext.Request.Body))
+        {
+            var body = reader.ReadToEndAsync().Result;
+
+            // Now you can use jsonBody as needed
+            string lastDiffValue = "";
+            string statusValue = "";
+            List<ISubmodelElement> diffValue = new List<ISubmodelElement>();
+            int count = Events.EventPayload.changeData(body, Program.env, out lastDiffValue, out statusValue, diffValue);
+
+            if (count > 0)
+            {
+                Program.signalNewData(2);
+            }
         }
 
         return NoContent();
