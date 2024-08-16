@@ -26,8 +26,10 @@ namespace AasxServer
 {
     using System.IO.Packaging;
     using System.Text.Json;
+    using System.Xml.Linq;
     using AasxServerStandardBib.Interfaces;
     using Opc.Ua;
+    using ScottPlot.Drawing.Colormaps;
 
     public class AasxTask
     {
@@ -195,13 +197,18 @@ namespace AasxServer
                 if (sme2 is Operation op)
                 {
                     var idShort = sme2.IdShort.ToLower();
+                    if (idShort.StartsWith("geteventmessages"))
+                    {
+                        operation_get_put_eventmessages(op, envIndex, timeStamp, "get");
+                    }
+                    if (idShort.StartsWith("puteventmessages"))
+                    {
+                        operation_get_put_eventmessages(op, envIndex, timeStamp, "put");
+                    }
                     switch (idShort)
                     {
                         case "authenticate":
                             operation_authenticate(op, envIndex, timeStamp);
-                            break;
-                        case "geteventmessages":
-                            operation_geteventmessages(op, envIndex, timeStamp);
                             break;
                         case "get":
                         case "getdiff":
@@ -217,11 +224,12 @@ namespace AasxServer
                             operation_calculate_cfp(op, envIndex, timeStamp);
                             break;
                         default:
+                            /*
                             if (idShort.Substring(0, 3) == "get")
                             {
                                 operation_get_put(op, envIndex, timeStamp);
                             }
-
+                            */
                             break;
                     }
                 }
@@ -1481,14 +1489,8 @@ namespace AasxServer
             Program.signalNewData(2); // new tree, nodes opened
         }
 
-        static void operation_geteventmessages(Operation op, int envIndex, DateTime timeStamp)
+        static void operation_get_put_eventmessages(Operation op, int envIndex, DateTime timeStamp, string getPut)
         {
-            // inputVariable reference authentication: collection
-            // inputVariable sourceEndPoint: property
-            // inputVariable  sourcePath: property
-            // inputVariable reference destinationElement: collection
-            // inputVariable HEAD: property
-
             SubmodelElementCollection authentication = null;
             Property authType = null;
             Property authServerEndPoint = null;
@@ -1698,95 +1700,185 @@ namespace AasxServer
                 }
             }
 
-            string requestPath = endPoint.Value;
-
-            if (lastDiff.Value == null)
+            if (getPut == "get")
             {
-                requestPath += "/init";
-            }
-            else
-            {
-                requestPath += "/" + lastDiff.Value;
-            }
+                string requestPath = endPoint.Value;
 
-            handler = new HttpClientHandler();
-
-            /*
-            if (proxy != null)
-                handler.Proxy = proxy;
-            else
-                handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
-            */
-
-            client = new HttpClient(handler);
-            client.Timeout = TimeSpan.FromSeconds(20);
-            HttpResponseMessage response = null;
-
-            int update = 0;
-            try
-            {
-                // TEST
-                /*
-                var smc = new SubmodelElementCollection(idShort: "col-" + DateTime.UtcNow);
-                if (diff.Value == null)
+                if (lastDiff.Value == null)
                 {
-                    diff.Value = new List<ISubmodelElement>();
+                    requestPath += "/init";
                 }
-                diff.Value.Add(smc);
-                Program.signalNewData(1);
-                return;
+                else
+                {
+                    requestPath += "/" + lastDiff.Value;
+                }
+
+                handler = new HttpClientHandler();
+
+                /*
+                if (proxy != null)
+                    handler.Proxy = proxy;
+                else
+                    handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
                 */
 
-                using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestPath))
+                client = new HttpClient(handler);
+                client.Timeout = TimeSpan.FromSeconds(20);
+                HttpResponseMessage response = null;
+
+                int update = 0;
+                try
                 {
-                    var task = Task.Run(async () => { response = await client.SendAsync(requestMessage); });
-                    task.Wait();
-                    if (!response.IsSuccessStatusCode)
+                    // TEST
+                    /*
+                    var smc = new SubmodelElementCollection(idShort: "col-" + DateTime.UtcNow);
+                    if (diff.Value == null)
                     {
-                        if (status != null)
-                        {
-                            status.Value = response.StatusCode.ToString() + " ; " +
-                                           response.Content.ReadAsStringAsync().Result + " ; " +
-                                           "GET " + requestPath;
-                            status.SetTimeStamp(DateTime.Now);
-                        }
+                        diff.Value = new List<ISubmodelElement>();
                     }
-                    else // ok
+                    diff.Value.Add(smc);
+                    Program.signalNewData(1);
+                    return;
+                    */
+
+                    using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestPath))
                     {
-                        var jsonString = response.Content.ReadAsStringAsync().Result;
-                        string lastDiffValue = "";
-                        string statusValue = "";
-                        List<ISubmodelElement> diffValue = new List<ISubmodelElement>();
-                        int count = Events.EventPayload.changeData(jsonString, Program.env, out lastDiffValue, out statusValue, diffValue);
-                        if (count > 0)
+                        var task = Task.Run(async () => { response = await client.SendAsync(requestMessage); });
+                        task.Wait();
+                        if (!response.IsSuccessStatusCode)
                         {
-                            update = 2;
+                            if (status != null)
+                            {
+                                status.Value = "ERROR: " +
+                                    response.StatusCode.ToString() + " ; " +
+                                    response.Content.ReadAsStringAsync().Result + " ; " +
+                                    "GET " + requestPath;
+                                status.SetTimeStamp(DateTime.UtcNow);
+                            }
                         }
-                        var dt = DateTime.Parse(lastDiffValue);
-                        if (lastDiff != null)
+                        else // ok
                         {
-                            lastDiff.Value = lastDiffValue;
-                            lastDiff.SetTimeStamp(dt);
-                        }
-                        if (statusValue != null)
-                        {
-                            status.Value = statusValue;
-                            status.SetTimeStamp(dt);
-                        }
-                        if (diff != null && diffValue.Count > 0)
-                        {
-                            diff.Value = diffValue;
-                            diff.SetTimeStamp(dt);
+                            var jsonString = response.Content.ReadAsStringAsync().Result;
+                            string lastDiffValue = "";
+                            string statusValue = "";
+                            List<ISubmodelElement> diffValue = new List<ISubmodelElement>();
+                            int count = Events.EventPayload.changeData(jsonString, Program.env, out lastDiffValue, out statusValue, diffValue);
+                            if (count > 0)
+                            {
+                                update = 2;
+                            }
+                            var dt = DateTime.Parse(lastDiffValue);
+                            if (lastDiff != null)
+                            {
+                                lastDiff.Value = lastDiffValue;
+                                lastDiff.SetTimeStamp(dt);
+                            }
+                            if (statusValue != null)
+                            {
+                                status.Value = statusValue;
+                                status.SetTimeStamp(DateTime.UtcNow);
+                            }
+                            if (diff != null && diffValue.Count > 0)
+                            {
+                                diff.Value = diffValue;
+                                diff.SetTimeStamp(dt);
+                            }
                         }
                     }
                 }
-            }
-            catch
-            {
-                update = 2;
-            }
+                catch
+                {
+                    update = 2;
+                }
 
-            Program.signalNewData(update); // new tree, nodes opened
+                Program.signalNewData(update);
+            }
+            if (getPut == "put")
+            {
+                string requestPath = endPoint.Value;
+                string sourceUrl = Program.externalBlazor;
+
+                var split = requestPath.Split("/");
+                var submodelId = split[split.Length - 1];
+                submodelId = Base64UrlEncoder.Decode(submodelId);
+                var submodel = Program.env[envIndex].AasEnv.FindSubmodelById(submodelId);
+                if (submodel == null)
+                {
+                    return;
+                }
+
+                string d = "";
+                if (lastDiff.Value == null)
+                {
+                    d = "init";
+                }
+                else
+                {
+                    d = lastDiff.Value;
+                }
+                List<ISubmodelElement> diffValue = new List<ISubmodelElement>();
+                var e = Events.EventPayload.CollectPayload(sourceUrl, submodel as Submodel, d, diffValue);
+                var json = JsonSerializer.Serialize(e);
+
+                handler = new HttpClientHandler();
+                client = new HttpClient(handler);
+                client.Timeout = TimeSpan.FromSeconds(20);
+
+                /*
+                if (proxy != null)
+                    handler.Proxy = proxy;
+                else
+                    handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                */
+
+                int update = 0;
+                try
+                {
+                    HttpResponseMessage response = null;
+                    var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                    var task = Task.Run(async () =>
+                    {
+                        response = await client.PutAsync(requestPath, content);
+
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            if (status != null)
+                            {
+                                status.Value = "ERROR: " +
+                                    response.StatusCode.ToString() + " ; " +
+                                    response.Content.ReadAsStringAsync().Result + " ; " +
+                                    "GET " + requestPath;
+                                status.SetTimeStamp(DateTime.UtcNow);
+                            }
+                        }
+                        else
+                        {
+                            var dt = DateTime.Parse(e.lastUpdate);
+                            if (lastDiff != null)
+                            {
+                                lastDiff.Value = e.lastUpdate;
+                                lastDiff.SetTimeStamp(dt);
+                            }
+                            if (status != null)
+                            {
+                                status.Value = "on";
+                                status.SetTimeStamp(DateTime.UtcNow);
+                            }
+                            if (diff != null && diffValue.Count > 0)
+                            {
+                                diff.Value = diffValue;
+                                diff.SetTimeStamp(dt);
+                                update = 3;
+                            }
+                        }
+                    });
+                }
+                catch
+                {
+                }
+
+                Program.signalNewData(2);
+            }
         }
 
         static void operation_limitCount(Operation op, int envIndex, DateTime timeStamp)
