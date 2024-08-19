@@ -99,7 +99,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     // Events
 
     [HttpGet]
-    [Route("/geteventmessages/{submodelIdentifier}/{diff}")]
+    [Route("/submodels/{submodelIdentifier}/events/{diff}")]
     [ValidateModelState]
     [SwaggerOperation("GetEventMessages")]
     [SwaggerResponse(statusCode: 200, type: typeof(String), description: "List of Text")]
@@ -114,6 +114,14 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+        if (!Program.noSecurity)
+        {
+            var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
+            if (!authResult.Succeeded)
+            {
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
+            }
+        }
 
         if (submodel != null)
         {
@@ -127,7 +135,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     }
 
     [HttpPut]
-    [Route("/puteventmessages/{submodelIdentifier}")]
+    [Route("/submodels/{submodelIdentifier}/events")]
     [ValidateModelState]
     [SwaggerOperation("PutEventMessages")]
     [SwaggerResponse(statusCode: 200, type: typeof(String), description: "List of Text")]
@@ -142,20 +150,30 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
-
         using (var reader = new StreamReader(HttpContext.Request.Body))
         {
             var body = reader.ReadToEndAsync().Result;
 
-            // Now you can use jsonBody as needed
-            string lastDiffValue = "";
-            string statusValue = "";
-            List<ISubmodelElement> diffValue = new List<ISubmodelElement>();
-            int count = Events.EventPayload.changeData(body, Program.env, out lastDiffValue, out statusValue, diffValue);
-
-            if (count > 0)
+            if (!Program.noSecurity)
             {
-                Program.signalNewData(2);
+                var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
+                if (!authResult.Succeeded)
+                {
+                    throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
+                }
+                else
+                {
+                    // Now you can use jsonBody as needed
+                    string lastDiffValue = "";
+                    string statusValue = "";
+                    List<ISubmodelElement> diffValue = new List<ISubmodelElement>();
+                    int count = Events.EventPayload.changeData(body, Program.env, out lastDiffValue, out statusValue, diffValue);
+
+                    if (count > 0)
+                    {
+                        Program.signalNewData(2);
+                    }
+                }
             }
         }
 
