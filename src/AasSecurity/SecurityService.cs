@@ -1,4 +1,5 @@
-﻿using AasSecurity.Models;
+using AasSecurity.Models;
+using AasSecurity.Exceptions;
 using AasxServer;
 using AasxServerStandardBib.Logging;
 using AasxServerStandardBib.Services;
@@ -429,7 +430,7 @@ namespace AasSecurity
             // Exception
             if (!testOnly)
             {
-                //throw new NotAllowed(error);
+                // throw new NotAllowed(error);
                 return false;
             }
 

@@ -89,6 +89,7 @@
                                     <span style="color:green;background-color:green;">&nbsp</span>
                                 }
                             }
+                            <span>&nbsp&nbsp</span>
                         }
                     }
 
@@ -289,15 +290,15 @@
                 }
 
                 if (SelectedNode is {Tag: (AssetAdministrationShell or File) and AssetAdministrationShell})
-            @code {
+                @code {
 
-                private void runCreateQRCodeImage()
-                {
-                    CreateQRCodeImage(SelectedNode);
+                    private void runCreateQRCodeImage()
+                    {
+                        CreateQRCodeImage(SelectedNode);
+                    }
+
                 }
-
-            }
-            {
+                {
                     <button style="border-width: 1px; border-color: black; color: white; background-color: blue" @onclick="runCreateQRCodeImage">QRCODE</button>
                     <br/>
                     var qrcodeLink = GetQRCodeLink(SelectedNode);
@@ -327,6 +328,7 @@
                     <span style="color:white;background-color:blue;">URL:</span>
                     <a href="@path" target="_blank">@path</a>
                     <br>
+
                 }
 
                 if (SelectedNode != null && SelectedNode.Tag is ISubmodelElement sme)
@@ -582,6 +584,7 @@
 @using AasxServer;
 
 @code {
+    string lastUpdate = TimeStamp.DateTimeToString(DateTime.UtcNow);
     System.Diagnostics.Stopwatch watchTimeToProcessImage = new();
     DateTime timeStampPlot = new();
     PlotFilter plotFilter = new();

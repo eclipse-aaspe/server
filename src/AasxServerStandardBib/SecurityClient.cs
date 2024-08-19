@@ -1799,7 +1799,7 @@ namespace AasxServer
                 string sourceUrl = Program.externalBlazor;
 
                 var split = requestPath.Split("/");
-                var submodelId = split[split.Length - 1];
+                var submodelId = split[split.Length - 2];
                 submodelId = Base64UrlEncoder.Decode(submodelId);
                 var submodel = Program.env[envIndex].AasEnv.FindSubmodelById(submodelId);
                 if (submodel == null)
