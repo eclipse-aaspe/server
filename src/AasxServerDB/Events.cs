@@ -134,6 +134,7 @@ namespace Events
                     entry.payloadType = "submodel";
                     entry.submodelId = submodel.Id;
                     entry.payload = json;
+                    entry.lastUpdate = e.lastUpdate;
                     e.eventEntries.Add(entry);
                 }
                 else
@@ -180,7 +181,9 @@ namespace Events
                             if (submodels.Any())
                             {
                                 submodel = submodels.First();
-                                index = aasEnv.Submodels.IndexOf(submodel);
+                                // index = aasEnv.Submodels.IndexOf(submodel);
+                                index = i;
+                                break;
                             }
                         }
                     }
@@ -201,27 +204,36 @@ namespace Events
                         {
                             aasEnv.Submodels.Remove(submodel);
                             aas = aasEnv.FindAasWithSubmodelId(submodel.Id);
+
+                            // aasEnv.Submodels.Insert(index, receiveSubmodel);
+                            aasEnv.Submodels.Add(receiveSubmodel);
+                            env[index].setWrite(true);
+                            count++;
                         }
                         else
                         {
+                            return 0;
+
                             index = 0;
                             aasEnv = env[index].AasEnv;
                             aas = aasEnv.AssetAdministrationShells[0];
                             aas.Submodels.Add(receiveSubmodel.GetReference());
                         }
-                        // aasEnv.Submodels.Insert(index, receiveSubmodel);
-                        aasEnv.Submodels.Add(receiveSubmodel);
-                        count++;
                     }
                 }
 
                 if (entry.payloadType == "sme" && submodel != null)
                 {
                     count += changeSubmodelElement(entry, submodel.SubmodelElements, "", diffValue);
+                    if (count > 0)
+                    {
+                        env[index].setWrite(true);
+                    }
                 }
             }
 
             statusValue = "Updated: " + count;
+
 
             return count;
         }
@@ -252,22 +264,17 @@ namespace Events
                         return count;
                     }
                 }
-                List<ISubmodelElement> children = new List<ISubmodelElement>();
-                switch (sme)
+                var path = idShortPath + sme.IdShort + ".";
+                if (entry.idShortPath.StartsWith(path))
                 {
-                    case ISubmodelElementCollection smc:
-                        children = smc.Value;
-                        break;
-                    case ISubmodelElementList sml:
-                        children = sml.Value;
-                        break;
-                }
-                if (children.Count != 0)
-                {
-                    var path = idShortPath + sme.IdShort + ".";
-                    if (entry.idShortPath.StartsWith(path))
+                    switch (sme)
                     {
-                        count += changeSubmodelElement(entry, children, path, diffValue);
+                        case ISubmodelElementCollection smc:
+                            count += changeSubmodelElement(entry, smc.Value, path, diffValue);
+                            break;
+                        case ISubmodelElementList sml:
+                            count += changeSubmodelElement(entry, sml.Value, path, diffValue);
+                            break;
                     }
                 }
             }
