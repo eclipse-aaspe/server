@@ -225,6 +225,8 @@ public static class ServerConfiguration
 
                                     // Add other necessary custom converters
                                     opts.JsonSerializerOptions.Converters.Add(new AdminShellConverters.JsonAasxConverter("modelType", "name"));
+
+                                    opts.JsonSerializerOptions.MaxDepth = 128; // increase default of 64
                                 });
 
 
