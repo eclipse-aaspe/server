@@ -28,7 +28,9 @@ namespace AasxServer
     using System.Text.Json;
     using System.Xml.Linq;
     using AasxServerStandardBib.Interfaces;
+    using Newtonsoft.Json;
     using Opc.Ua;
+    using Org.BouncyCastle.Asn1.Ocsp;
     using ScottPlot.Drawing.Colormaps;
 
     public class AasxTask
@@ -197,13 +199,13 @@ namespace AasxServer
                 if (sme2 is Operation op)
                 {
                     var idShort = sme2.IdShort.ToLower();
-                    if (idShort.StartsWith("geteventmessages"))
+                    if (idShort.StartsWith("getevents"))
                     {
-                        operation_get_put_eventmessages(op, envIndex, timeStamp, "get");
+                        operation_get_put_events(op, envIndex, timeStamp, "get");
                     }
-                    if (idShort.StartsWith("puteventmessages"))
+                    if (idShort.StartsWith("putevents"))
                     {
-                        operation_get_put_eventmessages(op, envIndex, timeStamp, "put");
+                        operation_get_put_events(op, envIndex, timeStamp, "put");
                     }
                     switch (idShort)
                     {
@@ -1059,7 +1061,7 @@ namespace AasxServer
                                         var text                            = property.Value?.ToString();
                                         if (text != null)
                                         {
-                                            receiveCollection = JsonSerializer.Deserialize<SubmodelElementCollection>(text, serializerOptions);
+                                            receiveCollection = System.Text.Json.JsonSerializer.Deserialize<SubmodelElementCollection>(text, serializerOptions);
                                         }
 
                                         elementCollection.Value = receiveCollection?.Value;
@@ -1167,7 +1169,7 @@ namespace AasxServer
                                                         = new JsonSerializerOptions {Converters = {new AdminShellConverters.JsonAasxConverter("modelType", "name")}};
                                                     foreach (var text in from jp1 in parsed.RootElement.EnumerateObject() where jp1.Name == "elem" select jp1.Value.GetRawText())
                                                     {
-                                                        receiveCollection = JsonSerializer.Deserialize<SubmodelElementCollection>(
+                                                        receiveCollection = System.Text.Json.JsonSerializer.Deserialize<SubmodelElementCollection>(
                                                          text, serializerOptions);
                                                         break;
                                                     }
@@ -1489,7 +1491,7 @@ namespace AasxServer
             Program.signalNewData(2); // new tree, nodes opened
         }
 
-        static void operation_get_put_eventmessages(Operation op, int envIndex, DateTime timeStamp, string getPut)
+        static void operation_get_put_events(Operation op, int envIndex, DateTime timeStamp, string getPut)
         {
             SubmodelElementCollection authentication = null;
             Property authType = null;
@@ -1497,6 +1499,7 @@ namespace AasxServer
             Property accessToken = null;
             Property userName = null;
             Property passWord = null;
+            string basicAuth = null;
             AasCore.Aas3_0.File authServerCertificate = null;
             AasCore.Aas3_0.File clientCertificate = null;
             Property clientCertificatePassWord = null;
@@ -1700,6 +1703,40 @@ namespace AasxServer
                 }
             }
 
+            if (authType != null)
+            {
+                switch (authType.Value.ToLower())
+                {
+                    case "openid":
+                        if (authServerEndPoint != null && authServerCertificate != null && clientCertificate != null
+                            && accessToken != null)
+                        {
+                            if (accessToken.Value == null)
+                                accessToken.Value = "";
+
+                            if (accessToken.Value != "")
+                            {
+                                bool valid = true;
+                                var jwtToken = new JwtSecurityToken(accessToken.Value);
+                                if ((jwtToken == null) || (jwtToken.ValidFrom > DateTime.UtcNow) || (jwtToken.ValidTo < DateTime.UtcNow))
+                                    valid = false;
+                                if (valid)
+                                    break;
+                                accessToken.Value = "";
+                            }
+
+                            if (createAccessToken(envIndex, authServerEndPoint, authServerCertificate,
+                                                  clientCertificate, clientCertificatePassWord,
+                                                  accessToken, clientToken))
+                                accessToken.SetTimeStamp(timeStamp);
+                        }
+
+                        break;
+                    case "userpw":
+                        break;
+                }
+            }
+
             if (getPut == "get")
             {
                 string requestPath = endPoint.Value;
@@ -1715,15 +1752,17 @@ namespace AasxServer
 
                 handler = new HttpClientHandler();
 
-                /*
-                if (proxy != null)
-                    handler.Proxy = proxy;
-                else
-                    handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
-                */
+                if (!requestPath.Contains("localhost"))
+                {
+                    if (proxy != null)
+                        handler.Proxy = proxy;
+                    else
+                        handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                }
 
                 client = new HttpClient(handler);
                 client.Timeout = TimeSpan.FromSeconds(20);
+
                 HttpResponseMessage response = null;
 
                 int update = 0;
@@ -1743,6 +1782,18 @@ namespace AasxServer
 
                     using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestPath))
                     {
+                        if (accessToken != null && accessToken.Value != null && accessToken.Value != "")
+                        {
+                            client.SetBearerToken(accessToken.Value);
+                        }
+                        else
+                        {
+                            if (authType != null && authType.Value.ToLower() == "userpw" && userName != null && passWord != null)
+                            {
+                                requestMessage.Headers.Authorization = new BasicAuthenticationHeaderValue(userName.Value, passWord.Value);
+                            }
+                        }
+
                         var task = Task.Run(async () => { response = await client.SendAsync(requestMessage); });
                         task.Wait();
                         if (!response.IsSuccessStatusCode)
@@ -1758,7 +1809,19 @@ namespace AasxServer
                         }
                         else // ok
                         {
-                            var jsonString = response.Content.ReadAsStringAsync().Result;
+                            // reading as string got an error
+                            // var jsonString = response.Content.ReadAsStringAsync().Result;
+                            string jsonString = null;
+                            task = Task.Run(async () =>
+                            {
+                                using (var stream = await response.Content.ReadAsStreamAsync())
+                                {
+                                    var reader = new StreamReader(stream);
+                                    jsonString = reader.ReadToEnd();
+                                }
+                            });
+                            task.Wait();
+
                             string lastDiffValue = "";
                             string statusValue = "";
                             List<ISubmodelElement> diffValue = new List<ISubmodelElement>();
@@ -1786,8 +1849,12 @@ namespace AasxServer
                         }
                     }
                 }
-                catch
+                catch(Exception ex)
                 {
+                    status.Value = "ERROR: " +
+                        ex.Message +
+                        " ; GET " + requestPath;
+                    status.SetTimeStamp(DateTime.UtcNow);
                     update = 2;
                 }
 
@@ -1804,6 +1871,13 @@ namespace AasxServer
                 var submodel = Program.env[envIndex].AasEnv.FindSubmodelById(submodelId);
                 if (submodel == null)
                 {
+                    if (status != null)
+                    {
+                        status.Value = "ERROR: " +
+                            "Submodel " + submodelId + " not found" +
+                            " ; PUT " + requestPath;
+                        status.SetTimeStamp(DateTime.UtcNow);
+                    }
                     return;
                 }
 
@@ -1818,7 +1892,14 @@ namespace AasxServer
                 }
                 List<ISubmodelElement> diffValue = new List<ISubmodelElement>();
                 var e = Events.EventPayload.CollectPayload(sourceUrl, submodel as Submodel, d, diffValue);
-                var json = JsonSerializer.Serialize(e);
+
+                if (e.eventEntries.Count == 0)
+                {
+                    return;
+                }
+                Console.WriteLine("PUT Events: " + requestPath + "/" + d);
+
+                var json = System.Text.Json.JsonSerializer.Serialize(e);
 
                 handler = new HttpClientHandler();
                 client = new HttpClient(handler);
@@ -1834,44 +1915,62 @@ namespace AasxServer
                 int update = 0;
                 try
                 {
-                    HttpResponseMessage response = null;
-                    var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-                    var task = Task.Run(async () =>
+                    using (var requestMessage = new HttpRequestMessage(HttpMethod.Put, requestPath))
                     {
-                        response = await client.PutAsync(requestPath, content);
-
-                        if (!response.IsSuccessStatusCode)
+                        if (accessToken != null && accessToken.Value != null && accessToken.Value != "")
                         {
-                            if (status != null)
-                            {
-                                status.Value = "ERROR: " +
-                                    response.StatusCode.ToString() + " ; " +
-                                    response.Content.ReadAsStringAsync().Result + " ; " +
-                                    "GET " + requestPath;
-                                status.SetTimeStamp(DateTime.UtcNow);
-                            }
+                            client.SetBearerToken(accessToken.Value);
                         }
                         else
                         {
-                            var dt = DateTime.Parse(e.lastUpdate);
-                            if (lastDiff != null)
+                            if (userName != null && passWord != null)
                             {
-                                lastDiff.Value = e.lastUpdate;
-                                lastDiff.SetTimeStamp(dt);
-                            }
-                            if (status != null)
-                            {
-                                status.Value = "on";
-                                status.SetTimeStamp(DateTime.UtcNow);
-                            }
-                            if (diff != null && diffValue.Count > 0)
-                            {
-                                diff.Value = diffValue;
-                                diff.SetTimeStamp(dt);
-                                update = 3;
+                                requestMessage.Headers.Authorization = new BasicAuthenticationHeaderValue(userName.Value, passWord.Value);
                             }
                         }
-                    });
+
+                        var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                        requestMessage.Content = content;
+
+                        HttpResponseMessage response = null;
+                        var task = Task.Run(async () =>
+                        {
+                            response = await client.SendAsync(requestMessage);
+
+                            if (!response.IsSuccessStatusCode)
+                            {
+                                if (status != null)
+                                {
+                                    status.Value = "ERROR: " +
+                                        response.StatusCode.ToString() + " ; " +
+                                        response.Content.ReadAsStringAsync().Result + " ; " +
+                                        "PUT " + requestPath;
+                                    status.SetTimeStamp(DateTime.UtcNow);
+                                }
+                            }
+                            else
+                            {
+                                var dt = DateTime.Parse(e.lastUpdate);
+                                if (lastDiff != null)
+                                {
+                                    lastDiff.Value = e.lastUpdate;
+                                    lastDiff.SetTimeStamp(dt);
+                                }
+                                if (status != null)
+                                {
+                                    status.Value = "on";
+                                    status.SetTimeStamp(DateTime.UtcNow);
+                                }
+                                if (diff != null && diffValue.Count > 0)
+                                {
+                                    diff.Value = diffValue;
+                                    diff.SetTimeStamp(dt);
+                                    update = 3;
+                                }
+                            }
+                        });
+                        task.Wait();
+                    }
                 }
                 catch
                 {
@@ -2031,11 +2130,11 @@ namespace AasxServer
 
             if (logCount % logCountModulo == 0)
             {
-                Console.WriteLine();
+                // Console.WriteLine();
             }
             else
             {
-                Console.Write(logCount % logCountModulo + " ");
+                // Console.Write(logCount % logCountModulo + " ");
             }
 
             // GET actual BOM

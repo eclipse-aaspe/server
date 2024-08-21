@@ -149,19 +149,17 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 {
                     throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
                 }
-                else
-                {
-                    // Now you can use jsonBody as needed
-                    string lastDiffValue = "";
-                    string statusValue = "";
-                    List<ISubmodelElement> diffValue = new List<ISubmodelElement>();
-                    int count = Events.EventPayload.changeData(body, Program.env, out lastDiffValue, out statusValue, diffValue);
+            }
 
-                    if (count > 0)
-                    {
-                        Program.signalNewData(2);
-                    }
-                }
+            // Now you can use jsonBody as needed
+            string lastDiffValue = "";
+            string statusValue = "";
+            List<ISubmodelElement> diffValue = new List<ISubmodelElement>();
+            int count = Events.EventPayload.changeData(body, Program.env, out lastDiffValue, out statusValue, diffValue);
+
+            if (count > 0)
+            {
+                Program.signalNewData(2);
             }
         }
 
