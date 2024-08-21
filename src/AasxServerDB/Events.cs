@@ -209,6 +209,7 @@ namespace Events
                             aasEnv.Submodels.Add(receiveSubmodel);
                             env[index].setWrite(true);
                             count++;
+                            Console.WriteLine("Event Submodel: " + receiveSubmodel.Id);
                         }
                         else
                         {
@@ -254,6 +255,7 @@ namespace Events
 
                     if (entry.entryType == "UPDATE")
                     {
+                        Console.WriteLine("Event SME: " + entry.idShortPath);
                         receiveSme.Parent = submodelElements[i].Parent;
                         receiveSme.TimeStampCreate = submodelElements[i].TimeStampCreate;
                         submodelElements[i] = receiveSme;

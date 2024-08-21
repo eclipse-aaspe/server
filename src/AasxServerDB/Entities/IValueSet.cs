@@ -12,9 +12,11 @@
 ********************************************************************************/
 
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace AasxServerDB.Entities
 {
+    [Index(nameof(Value))]
     public class IValueSet
     {
         public int Id { get; set; }
