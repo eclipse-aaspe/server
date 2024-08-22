@@ -605,12 +605,20 @@ namespace AasxServerDB
                 {
                     conditionStr = parser.GenerateSql(ast, "sValue", ref countTypePrefix, "filter");
                 }
+                if (conditionStr == "true")
+                {
+                    conditionStr = "sValue != null";
+                }
                 conditionStr = conditionStr.Replace("sValue", "Value");
                 Console.WriteLine("condition sValue #" + countTypePrefix + ": " + conditionStr);
                 var conditionNum = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_num");
                 if (conditionNum == "")
                 {
                     conditionNum = parser.GenerateSql(ast, "mValue", ref countTypePrefix, "filter");
+                }
+                if (conditionNum == "true")
+                {
+                    conditionNum = "mValue != null";
                 }
                 conditionNum = conditionNum.Replace("mValue", "Value");
                 Console.WriteLine("condition mValue #" + countTypePrefix + ": " + conditionNum);
@@ -623,7 +631,7 @@ namespace AasxServerDB
                 var queryDValue = db.DValueSets.AsQueryable();
 
                 var querySMWhere = querySM;
-                if (conditionSM != "")
+                if (conditionSM != "" && conditionSM != "true")
                 {
                     querySMWhere = querySMWhere.Where(conditionSM);
                 }
@@ -636,7 +644,7 @@ namespace AasxServerDB
                 }
 
                 var querySMEWhere = querySME;
-                if (conditionSME != "")
+                if (conditionSME != "" && conditionSME != "true")
                 {
                     querySMEWhere = querySMEWhere.Where(conditionSME);
                 }
@@ -668,7 +676,7 @@ namespace AasxServerDB
                 }
 
                 var querySValueWhere = querySValue;
-                if (conditionStr != "")
+                if (conditionStr != "" && conditionStr != "true")
                 {
                     querySValueWhere = querySValue.Where(conditionStr);
                 }
@@ -688,7 +696,7 @@ namespace AasxServerDB
                 watch.Restart();
 
                 var queryIValueWhere = queryIValue;
-                if (conditionNum != "")
+                if (conditionNum != "" && conditionNum != "true")
                 {
                     queryIValueWhere = queryIValue.Where(conditionNum);
                 }
@@ -708,7 +716,7 @@ namespace AasxServerDB
                 watch.Restart();
 
                 var queryDValueWhere = queryDValue;
-                if (conditionNum != "")
+                if (conditionNum != "" && conditionNum != "true")
                 {
                     queryDValueWhere = queryDValue.Where(conditionNum);
                 }

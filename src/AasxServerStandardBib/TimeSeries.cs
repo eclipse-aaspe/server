@@ -112,7 +112,7 @@ namespace AasxTimeSeries
                                     if (sme is SubmodelElementCollection && sme.IdShort.Contains("TimeSeries"))
                                     {
                                         bool nextSme = false;
-                                        if (sme.Qualifiers.Count > 0)
+                                        if (sme.Qualifiers != null && sme.Qualifiers.Count > 0)
                                         {
                                             int j = 0;
                                             while (j < sme.Qualifiers.Count)
@@ -369,7 +369,11 @@ namespace AasxTimeSeries
                                             {
                                                 if (tsb.data != null)
                                                     smec = tsb.data;
-                                                countSmec = smec.Value.Count;
+                                                countSmec = 0;
+                                                if (smec.Value != null)
+                                                {
+                                                    countSmec = smec.Value.Count;
+                                                }
                                             }
                                         }
 
@@ -381,6 +385,10 @@ namespace AasxTimeSeries
                                             tsb.latestData = new SubmodelElementCollection(idShort: "latestData", value: new List<ISubmodelElement>());
                                             tsb.latestData.SetTimeStamp(timeStamp);
                                             tsb.latestData.TimeStampCreate = timeStamp;
+                                            if (tsb.data.Value == null)
+                                            {
+                                                tsb.data.Value = new List<ISubmodelElement>();
+                                            }
                                             tsb.data.Value.Add(tsb.latestData);
 
                                             ISubmodelElement latestDataProperty = null;
@@ -390,6 +398,10 @@ namespace AasxTimeSeries
                                                 latestDataProperty = new Property(DataTypeDefXsd.String, idShort: "lowDataIndex", value: "0");
                                                 //latestDataProperty = new Property(DataTypeDefXsd.String,idShort:"lowDataIndex");
                                                 latestDataProperty.TimeStampCreate = timeStamp;
+                                                if (tsb.latestData.Value == null)
+                                                {
+                                                    tsb.latestData.Value = new List<ISubmodelElement>();
+                                                }
                                                 tsb.latestData.Value.Add(latestDataProperty);
                                                 tsb.lowDataIndex = latestDataProperty as Property;
                                             }
@@ -402,6 +414,10 @@ namespace AasxTimeSeries
                                                 //latestDataProperty = new Property(DataTypeDefXsd.String,idShort:"highDataIndex");
                                                 latestDataProperty                 = new Property(DataTypeDefXsd.String, idShort: "highDataIndex", value: "-1");
                                                 latestDataProperty.TimeStampCreate = timeStamp;
+                                                if (tsb.latestData.Value == null)
+                                                {
+                                                    tsb.latestData.Value = new List<ISubmodelElement>();
+                                                }
                                                 tsb.latestData.Value.Add(latestDataProperty);
                                                 tsb.highDataIndex = latestDataProperty as Property;
                                             }
@@ -414,6 +430,10 @@ namespace AasxTimeSeries
                                                 //latestDataProperty = new Property(DataTypeDefXsd.String,idShort:"totalSamples");
                                                 latestDataProperty                 = new Property(DataTypeDefXsd.String, idShort: "totalSamples", value: "0");
                                                 latestDataProperty.TimeStampCreate = timeStamp;
+                                                if (tsb.latestData.Value == null)
+                                                {
+                                                    tsb.latestData.Value = new List<ISubmodelElement>();
+                                                }
                                                 tsb.latestData.Value.Add(latestDataProperty);
                                                 tsb.totalSamples = latestDataProperty as Property;
                                             }
@@ -426,6 +446,10 @@ namespace AasxTimeSeries
                                                 //latestDataProperty = new Property(DataTypeDefXsd.String,idShort:"timeStamp");
                                                 latestDataProperty                 = new Property(DataTypeDefXsd.String, idShort: "timeStamp");
                                                 latestDataProperty.TimeStampCreate = timeStamp;
+                                                if (tsb.latestData.Value == null)
+                                                {
+                                                    tsb.latestData.Value = new List<ISubmodelElement>();
+                                                }
                                                 tsb.latestData.Value.Add(latestDataProperty);
                                             }
 
@@ -455,8 +479,8 @@ namespace AasxTimeSeries
             }
             else
             {
-                timeSeriesThread = new Thread(new ThreadStart(timeSeriesSamplingLoop));
-                timeSeriesThread.Start();
+                // timeSeriesThread = new Thread(new ThreadStart(timeSeriesSamplingLoop));
+                // timeSeriesThread.Start();
             }
         }
 
