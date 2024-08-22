@@ -238,6 +238,9 @@ namespace AasxServer
                         case "calculate_cfp":
                             operation_calculate_cfp(op, envIndex, timeStamp);
                             break;
+                        case "timeseriessampling":
+                            AasxTimeSeries.TimeSeries.timeSeriesSampling(false);
+                            break;
                         default:
                             /*
                             if (idShort.Substring(0, 3) == "get")
@@ -1918,12 +1921,13 @@ namespace AasxServer
                 client = new HttpClient(handler);
                 client.Timeout = TimeSpan.FromSeconds(20);
 
-                /*
-                if (proxy != null)
-                    handler.Proxy = proxy;
-                else
-                    handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
-                */
+                if (!requestPath.Contains("localhost"))
+                {
+                    if (proxy != null)
+                        handler.Proxy = proxy;
+                    else
+                        handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                }
 
                 int update = 0;
                 try
@@ -1978,15 +1982,18 @@ namespace AasxServer
                                 {
                                     diff.Value = diffValue;
                                     diff.SetTimeStamp(dt);
-                                    update = 3;
                                 }
                             }
                         });
                         task.Wait();
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
+                    status.Value = "ERROR: " +
+                        ex.Message +
+                        " ; PUT " + requestPath;
+                    status.SetTimeStamp(DateTime.UtcNow);
                 }
 
                 Program.signalNewData(2);
@@ -2022,9 +2029,16 @@ namespace AasxServer
 
                 if (inputRef is ReferenceElement)
                 {
-                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as ReferenceElement).Value);
-                    if (refElement is SubmodelElementCollection)
-                        smec = refElement as SubmodelElementCollection;
+                    try
+                    {
+                        var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as ReferenceElement).Value);
+                        if (refElement is SubmodelElementCollection)
+                            smec = refElement as SubmodelElementCollection;
+                    }
+                    catch
+                    {
+
+                    }
                 }
 
                 switch (inputRef.IdShort.ToLower())
