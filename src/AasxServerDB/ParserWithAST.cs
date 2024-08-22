@@ -196,10 +196,11 @@ public class ParserWithAST
                 {
                     filter = "";
                 }
-                while (filter.Contains("(true && true)") || filter.Contains("(true || true)"))
+                while (filter.Contains("(true && true)") || filter.Contains("(true || true)") || filter.Contains("(true)"))
                 {
                     filter = filter.Replace("(true && true)", "true");
                     filter = filter.Replace("(true || true)", "true");
+                    filter = filter.Replace("(true)", "true");
                 }
                 return filter;
             case SingleComparisonNode singleComparisonNode:
