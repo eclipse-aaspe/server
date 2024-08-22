@@ -53,6 +53,7 @@ using AasxServerDB;
 using AdminShellNS.Exceptions;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using TimeStamp;
 using static AasxServerStandardBib.TimeSeriesPlotting.PlotArguments;
 using static QRCoder.PayloadGenerator;
 
@@ -126,6 +127,13 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         if (submodel != null)
         {
             string sourceUrl = Program.externalBlazor + $"/geteventmessages/{submodelIdentifier}";
+            if (diff.StartsWith("refresh="))
+            {
+                diff = diff.Replace("refresh=", "");
+                Response.Headers["Refresh"] = diff;
+                int s = Convert.ToInt32(diff);
+                diff = TimeStamp.DateTimeToString(DateTime.UtcNow.AddSeconds(-s));
+            }
             List<ISubmodelElement> diffValue = new List<ISubmodelElement>();
             var e = Events.EventPayload.CollectPayload(sourceUrl, submodel as Submodel, diff, diffValue);
             return new ObjectResult(e);
@@ -373,21 +381,24 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
 	    var submodelElements = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
-	    var filtered = new List<ISubmodelElement>();
-	    if (!diff.IsNullOrEmpty())
-	    {
-	        try
-	        {
-	            var _diff = TimeStamp.TimeStamp.StringToDateTime(diff);
-	            filtered = filterSubmodelElements(submodelElements, _diff);
-	        }
-	        catch
-	        {
-	            // ignored
-	        }
-	    }
-	    else
-	        filtered = submodelElements;
+        var filtered = new List<ISubmodelElement>();
+        if (!diff.IsNullOrEmpty())
+        {
+            try
+            {
+                var _diff = TimeStamp.StringToDateTime(diff);
+                Console.WriteLine(_diff.ToString());
+                _diff = DateTime.Parse(diff);
+                Console.WriteLine(_diff.ToString());
+                filtered = filterSubmodelElements(submodelElements, _diff);
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+        else
+            filtered = submodelElements;
 
 	    var smePaginatedList = _paginationService.GetPaginatedList(filtered, new PaginationParameters(cursor, limit));
 	    var smeLevelList     = _levelExtentModifierService.ApplyLevelExtent(smePaginatedList.result, levelEnum, extentEnum);
@@ -519,7 +530,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         {
             try
             {
-                var _diff = TimeStamp.TimeStamp.StringToDateTime(diff);
+                var _diff = TimeStamp.StringToDateTime(diff);
                 filtered = filterSubmodelElements(smeList, _diff);
             }
             catch
@@ -598,6 +609,22 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 	    }
 	    else
 	        filtered = submodelElementList;
+
+        var filtered = new List<ISubmodelElement?>();
+        if (!diff.IsNullOrEmpty())
+        {
+            try
+            {
+                var _diff = TimeStamp.StringToDateTime(diff);
+                filtered = filterSubmodelElements(submodelElementList, _diff);
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+        else
+            filtered = submodelElementList;
 
         var smePaginated = _paginationService.GetPaginatedList(filtered, new PaginationParameters(cursor, limit));
         var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginated.result ?? [], levelEnum);
@@ -714,21 +741,21 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
 	    var submodelElements = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
-	    var filtered = new List<ISubmodelElement>();
-	    if (!diff.IsNullOrEmpty())
-	    {
-	        try
-	        {
-	            var _diff = TimeStamp.TimeStamp.StringToDateTime(diff);
-	            filtered = filterSubmodelElements(submodelElements, _diff);
-	        }
-	        catch
-	        {
-	            // ignored
-	        }
-	    }
-	    else
-	        filtered = submodelElements;
+        var filtered = new List<ISubmodelElement>();
+        if (!diff.IsNullOrEmpty())
+        {
+            try
+            {
+                var _diff = TimeStamp.StringToDateTime(diff);
+                filtered = filterSubmodelElements(submodelElements, _diff);
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+        else
+            filtered = submodelElements;
 
         var smePagedList   = _paginationService.GetPaginatedList(filtered, new PaginationParameters(cursor, limit));
         var smeLevelExtent = _levelExtentModifierService.ApplyLevelExtent(smePagedList.result ?? [], levelEnum, extentEnum);
