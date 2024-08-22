@@ -43,6 +43,7 @@ using AasxServerDB;
 using AdminShellNS.Exceptions;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using TimeStamp;
 using static AasxServerStandardBib.TimeSeriesPlotting.PlotArguments;
 using static QRCoder.PayloadGenerator;
 
@@ -114,6 +115,13 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         if (submodel != null)
         {
             string sourceUrl = Program.externalBlazor + $"/geteventmessages/{submodelIdentifier}";
+            if (diff.StartsWith("refresh="))
+            {
+                diff = diff.Replace("refresh=", "");
+                Response.Headers["Refresh"] = diff;
+                int s = Convert.ToInt32(diff);
+                diff = TimeStamp.DateTimeToString(DateTime.UtcNow.AddSeconds(-s));
+            }
             List<ISubmodelElement> diffValue = new List<ISubmodelElement>();
             var e = Events.EventPayload.CollectPayload(sourceUrl, submodel as Submodel, diff, diffValue);
             return new ObjectResult(e);
@@ -364,7 +372,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         {
             try
             {
-                var _diff = TimeStamp.TimeStamp.StringToDateTime(diff);
+                var _diff = TimeStamp.StringToDateTime(diff);
                 Console.WriteLine(_diff.ToString());
                 _diff = DateTime.Parse(diff);
                 Console.WriteLine(_diff.ToString());
@@ -508,7 +516,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         {
             try
             {
-                var _diff = TimeStamp.TimeStamp.StringToDateTime(diff);
+                var _diff = TimeStamp.StringToDateTime(diff);
                 filtered = filterSubmodelElements(smeList, _diff);
             }
             catch
@@ -581,7 +589,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         {
             try
             {
-                var _diff = TimeStamp.TimeStamp.StringToDateTime(diff);
+                var _diff = TimeStamp.StringToDateTime(diff);
                 filtered = filterSubmodelElements(submodelElementList, _diff);
             }
             catch
@@ -708,7 +716,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         {
             try
             {
-                var _diff = TimeStamp.TimeStamp.StringToDateTime(diff);
+                var _diff = TimeStamp.StringToDateTime(diff);
                 filtered = filterSubmodelElements(submodelElements, _diff);
             }
             catch
