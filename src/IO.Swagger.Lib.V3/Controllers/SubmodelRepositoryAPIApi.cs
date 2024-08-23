@@ -105,7 +105,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerOperation("GetEventMessages")]
     [SwaggerResponse(statusCode: 200, type: typeof(String), description: "List of Text")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-    public virtual IActionResult GetEventMessages([FromRoute] [Required] string submodelIdentifier, string? diff = "")
+    public virtual IActionResult GetEventMessages([FromRoute] [Required] string submodelIdentifier, [FromQuery] bool? noPayload, string? diff = "")
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -126,7 +126,13 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         if (submodel != null)
         {
-            string sourceUrl = Program.externalBlazor + $"/geteventmessages/{submodelIdentifier}";
+            bool np = false;
+            if (noPayload.HasValue && noPayload != null)
+            {
+                np = (bool)noPayload;
+            }
+
+            string sourceUrl = Program.externalBlazor + $"/getevents/{submodelIdentifier}";
             if (diff.StartsWith("refresh="))
             {
                 diff = diff.Replace("refresh=", "");
@@ -135,7 +141,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 diff = TimeStamp.DateTimeToString(DateTime.UtcNow.AddSeconds(-s));
             }
             List<ISubmodelElement> diffValue = new List<ISubmodelElement>();
-            var e = Events.EventPayload.CollectPayload(sourceUrl, submodel as Submodel, diff, diffValue);
+            var e = Events.EventPayload.CollectPayload(sourceUrl, submodel as Submodel, diff, diffValue, np);
             return new ObjectResult(e);
         }
 

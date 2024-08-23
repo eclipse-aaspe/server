@@ -1524,6 +1524,7 @@ namespace AasxServer
             Property endPoint = null;
             Property path = null;
             Submodel elementSubmodel = null;
+            Property noPayload = null;
 
             Property lastDiff = null;
             Property status = null;
@@ -1575,6 +1576,10 @@ namespace AasxServer
                     case "endpoint":
                         if (p != null)
                             endPoint = p;
+                        break;
+                    case "nopayload":
+                        if (p != null)
+                            noPayload = p;
                         break;
                     case "path":
                         if (p != null)
@@ -1879,10 +1884,10 @@ namespace AasxServer
             if (getPut == "put")
             {
                 string requestPath = endPoint.Value;
-                string sourceUrl = Program.externalBlazor;
 
                 var split = requestPath.Split("/");
                 var submodelId = split[split.Length - 2];
+                string sourceUrl = Program.externalBlazor + "/" + submodelId;
                 submodelId = Base64UrlEncoder.Decode(submodelId);
                 var submodel = Program.env[envIndex].AasEnv.FindSubmodelById(submodelId);
                 if (submodel == null)
@@ -1907,7 +1912,9 @@ namespace AasxServer
                     d = lastDiff.Value;
                 }
                 List<ISubmodelElement> diffValue = new List<ISubmodelElement>();
-                var e = Events.EventPayload.CollectPayload(sourceUrl, submodel as Submodel, d, diffValue);
+                bool np = false;
+                np = noPayload != null && noPayload.Value != null && noPayload.Value.ToLower() == "true";
+                var e = Events.EventPayload.CollectPayload(sourceUrl, submodel as Submodel, d, diffValue, np);
 
                 if (e.eventEntries.Count == 0)
                 {
