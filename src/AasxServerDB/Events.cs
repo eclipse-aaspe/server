@@ -36,12 +36,14 @@ namespace Events
     }
     public class EventPayload
     {
+        public string transmitted { get; set; } // timestamp of GET or PUT
         public string sourceUrl { get; set; } // API endpoint, for new values: sourceUrl+lastUpdate
         public string lastUpdate { get; set; } // latest timeStamp for all entries
 
         public List<EventPayloadEntry> eventEntries { get; set; }
 
-        public static int collectSubmodelElements(List<ISubmodelElement> submodelElements, DateTime diffTime, List<string> entryTypes, string submodelId, string idShortPath, List<EventPayloadEntry> entries, List<ISubmodelElement> diffValue)
+        public static int collectSubmodelElements(List<ISubmodelElement> submodelElements, DateTime diffTime, List<string> entryTypes,
+            string submodelId, string idShortPath, List<EventPayloadEntry> entries, List<ISubmodelElement> diffValue, bool noPayload)
         {
             int count = 0;
             foreach (var entryType in entryTypes)
@@ -90,7 +92,10 @@ namespace Events
                             e.entryType = entryType;
                             e.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(timeStamp);
                             e.payloadType = "sme";
-                            e.payload = j.ToJsonString();
+                            if (!noPayload)
+                            {
+                                e.payload = j.ToJsonString();
+                            }
                             e.submodelId = submodelId;
                             e.idShortPath = idShortPath + sme.IdShort;
                             entries.Add(e);
@@ -98,7 +103,7 @@ namespace Events
                         }
                         else
                         {
-                           count += collectSubmodelElements(children, diffTime, new List<String> { entryType }, submodelId, idShortPath + sme.IdShort + ".", entries, diffValue);
+                           count += collectSubmodelElements(children, diffTime, new List<String> { entryType }, submodelId, idShortPath + sme.IdShort + ".", entries, diffValue, noPayload);
                         }
                     }
                 }
@@ -106,9 +111,10 @@ namespace Events
             return count;
         }
 
-        public static EventPayload CollectPayload(string sourceUrl, Submodel submodel, string diff, List<ISubmodelElement> diffValue)
+        public static EventPayload CollectPayload(string sourceUrl, Submodel submodel, string diff, List<ISubmodelElement> diffValue, bool noPayload)
         {
             var e = new EventPayload();
+            e.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
             e.sourceUrl = sourceUrl;
             e.lastUpdate = "";
             e.eventEntries = new List<EventPayloadEntry>();
@@ -133,7 +139,10 @@ namespace Events
                     e.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(submodel.TimeStampTree);
                     entry.payloadType = "submodel";
                     entry.submodelId = submodel.Id;
-                    entry.payload = json;
+                    if (!noPayload)
+                    {
+                        entry.payload = json;
+                    }
                     entry.lastUpdate = e.lastUpdate;
                     e.eventEntries.Add(entry);
                 }
@@ -142,7 +151,7 @@ namespace Events
                     List<string> entryTypes = new List<string>();
                     entryTypes.Add("UPDATE");
                     var diffTime = DateTime.Parse(diff);
-                    collectSubmodelElements(submodel.SubmodelElements, diffTime, entryTypes, submodel.Id, "", e.eventEntries, diffValue);
+                    collectSubmodelElements(submodel.SubmodelElements, diffTime, entryTypes, submodel.Id, "", e.eventEntries, diffValue, noPayload);
                 }
             }
 
@@ -189,7 +198,7 @@ namespace Events
                     }
                 }
 
-                if (entry.payloadType == "submodel")
+                if (entry.payloadType == "submodel" && entry.payload != "")
                 {
                     MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(entry.payload));
                     JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
@@ -223,7 +232,7 @@ namespace Events
                     }
                 }
 
-                if (entry.payloadType == "sme" && submodel != null)
+                if (entry.payloadType == "sme" && submodel != null && entry.payload != "")
                 {
                     count += changeSubmodelElement(entry, submodel.SubmodelElements, "", diffValue);
                     if (count > 0)
