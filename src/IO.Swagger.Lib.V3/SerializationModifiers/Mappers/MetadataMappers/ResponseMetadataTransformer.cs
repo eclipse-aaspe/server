@@ -39,8 +39,17 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
         public IDTO TransformAnnotatedRelationshipElement(IAnnotatedRelationshipElement that)
         {
             if (that == null) return null;
+            List<ISubmodelElementMetadata> smeMetadataList = null;
+            if (!that.Annotations.IsNullOrEmpty())
+            {
+                smeMetadataList = new List<ISubmodelElementMetadata>();
+                foreach (var submodelElement in that.Annotations)
+                {
+                    smeMetadataList.Add((ISubmodelElementMetadata)Transform(submodelElement));
+                }
+            }
 
-            return new AnnotatedRelationshipElementMetadata(TransformExtensionList(that.Extensions), that.Category, that.IdShort, TransformLangStringNameTypeList(that.DisplayName), TransformLangStringTextTypeList(that.Description), (ReferenceDTO)Transform(that.SemanticId), TransformReferenceList(that.SupplementalSemanticIds), TransformQualifierList(that.Qualifiers), TransformEmbeddedDataSpecList(that.EmbeddedDataSpecifications));
+            return new AnnotatedRelationshipElementMetadata(TransformExtensionList(that.Extensions), that.Category, that.IdShort, TransformLangStringNameTypeList(that.DisplayName), TransformLangStringTextTypeList(that.Description), (ReferenceDTO)Transform(that.SemanticId), TransformReferenceList(that.SupplementalSemanticIds), TransformQualifierList(that.Qualifiers), TransformEmbeddedDataSpecList(that.EmbeddedDataSpecifications), smeMetadataList);
         }
 
         public IDTO TransformAssetAdministrationShell(IAssetAdministrationShell that) => throw new InvalidOperationException("Metadata modifier cannot be applied to AssetAdministrationShell");
@@ -60,7 +69,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
             return new BlobMetadata(TransformExtensionList(that.Extensions), that.Category, that.IdShort, TransformLangStringNameTypeList(that.DisplayName), TransformLangStringTextTypeList(that.Description), (ReferenceDTO)Transform(that.SemanticId), TransformReferenceList(that.SupplementalSemanticIds), TransformQualifierList(that.Qualifiers), TransformEmbeddedDataSpecList(that.EmbeddedDataSpecifications));
         }
 
-        public IDTO TransformCapability(ICapability that) => throw new InvalidSerializationModifierException("Metadata", that.GetType().Name);
+        public IDTO TransformCapability(ICapability that) => throw new InvalidOperationException("Metadata modifier cannot be applied to Capability");
 
         public IDTO TransformConceptDescription(IConceptDescription that) => throw new InvalidOperationException("Metadata modifier cannot be applied to ConceptDescription");
 
@@ -89,7 +98,16 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
         public IDTO TransformEntity(IEntity that)
         {
             if (that == null) return null;
-            return new EntityMetadata(that.EntityType, TransformExtensionList(that.Extensions), that.Category, that.IdShort, TransformLangStringNameTypeList(that.DisplayName), TransformLangStringTextTypeList(that.Description), (ReferenceDTO)Transform(that.SemanticId), TransformReferenceList(that.SupplementalSemanticIds), TransformQualifierList(that.Qualifiers), TransformEmbeddedDataSpecList(that.EmbeddedDataSpecifications));
+            List<ISubmodelElementMetadata> smeMetadataList = null;
+            if (!that.Statements.IsNullOrEmpty())
+            {
+                smeMetadataList = new List<ISubmodelElementMetadata>();
+                foreach (var submodelElement in that.Statements)
+                {
+                    smeMetadataList.Add((ISubmodelElementMetadata)Transform(submodelElement));
+                }
+            }
+            return new EntityMetadata(that.EntityType, TransformExtensionList(that.Extensions), that.Category, that.IdShort, TransformLangStringNameTypeList(that.DisplayName), TransformLangStringTextTypeList(that.Description), (ReferenceDTO)Transform(that.SemanticId), TransformReferenceList(that.SupplementalSemanticIds), TransformQualifierList(that.Qualifiers), TransformEmbeddedDataSpecList(that.EmbeddedDataSpecifications), smeMetadataList);
         }
 
         public IDTO TransformEnvironment(IEnvironment that) => throw new InvalidOperationException("Metadata modifier cannot be applied to Environment.");
@@ -313,22 +331,46 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
         public IDTO TransformSubmodel(ISubmodel that)
         {
             if (that == null) return null;
+            List<ISubmodelElementMetadata> smeMetadataList = null;
+            if (!that.SubmodelElements.IsNullOrEmpty())
+            {
+                smeMetadataList = new List<ISubmodelElementMetadata>();
+                foreach (var submodelElement in that.SubmodelElements)
+                {
+                    smeMetadataList.Add((ISubmodelElementMetadata)Transform(submodelElement));
+                }
+            }
 
-            return new SubmodelMetadata(that.Id, TransformExtensionList(that.Extensions), that.Category, that.IdShort, TransformLangStringNameTypeList(that.DisplayName), TransformLangStringTextTypeList(that.Description), (AdministrativeInformationDTO)Transform(that.Administration), that.Kind, (ReferenceDTO)Transform(that.SemanticId), TransformReferenceList(that.SupplementalSemanticIds), TransformQualifierList(that.Qualifiers), TransformEmbeddedDataSpecList(that.EmbeddedDataSpecifications));
+            return new SubmodelMetadata(that.Id, TransformExtensionList(that.Extensions), that.Category, that.IdShort, TransformLangStringNameTypeList(that.DisplayName), TransformLangStringTextTypeList(that.Description), (AdministrativeInformationDTO)Transform(that.Administration), that.Kind, (ReferenceDTO)Transform(that.SemanticId), TransformReferenceList(that.SupplementalSemanticIds), TransformQualifierList(that.Qualifiers), TransformEmbeddedDataSpecList(that.EmbeddedDataSpecifications), smeMetadataList);
         }
 
         public IDTO TransformSubmodelElementCollection(ISubmodelElementCollection that)
         {
-            if (that == null)
-                return null;
-            return new SubmodelElementCollectionMetadata(TransformExtensionList(that.Extensions), that.Category, that.IdShort, TransformLangStringNameTypeList(that.DisplayName), TransformLangStringTextTypeList(that.Description), (ReferenceDTO)Transform(that.SemanticId), TransformReferenceList(that.SupplementalSemanticIds), TransformQualifierList(that.Qualifiers), TransformEmbeddedDataSpecList(that.EmbeddedDataSpecifications));
+            List<ISubmodelElementMetadata> smeMetadataList = null;
+            if (!that.Value.IsNullOrEmpty())
+            {
+                smeMetadataList = new List<ISubmodelElementMetadata>();
+                foreach (var submodelElement in that.Value)
+                {
+                    smeMetadataList.Add((ISubmodelElementMetadata)Transform(submodelElement));
+                }
+            }
+            return new SubmodelElementCollectionMetadata(TransformExtensionList(that.Extensions), that.Category, that.IdShort, TransformLangStringNameTypeList(that.DisplayName), TransformLangStringTextTypeList(that.Description), (ReferenceDTO)Transform(that.SemanticId), TransformReferenceList(that.SupplementalSemanticIds), TransformQualifierList(that.Qualifiers), TransformEmbeddedDataSpecList(that.EmbeddedDataSpecifications), smeMetadataList);
         }
 
         public IDTO TransformSubmodelElementList(ISubmodelElementList that)
         {
-            if (that == null)
-                return null;
-            return new SubmodelElementListMetadata(that.TypeValueListElement, TransformExtensionList(that.Extensions), that.Category, that.IdShort, TransformLangStringNameTypeList(that.DisplayName), TransformLangStringTextTypeList(that.Description), (ReferenceDTO)Transform(that.SemanticId), TransformReferenceList(that.SupplementalSemanticIds), TransformQualifierList(that.Qualifiers), TransformEmbeddedDataSpecList(that.EmbeddedDataSpecifications), that.OrderRelevant, (ReferenceDTO)Transform(that.SemanticIdListElement), that.ValueTypeListElement);
+            if (that == null) return null;
+            List<ISubmodelElementMetadata> smeMetadataList = null;
+            if (!that.Value.IsNullOrEmpty())
+            {
+                smeMetadataList = new List<ISubmodelElementMetadata>();
+                foreach (var submodelElement in that.Value)
+                {
+                    smeMetadataList.Add((ISubmodelElementMetadata)Transform(submodelElement));
+                }
+            }
+            return new SubmodelElementListMetadata(that.TypeValueListElement, TransformExtensionList(that.Extensions), that.Category, that.IdShort, TransformLangStringNameTypeList(that.DisplayName), TransformLangStringTextTypeList(that.Description), (ReferenceDTO)Transform(that.SemanticId), TransformReferenceList(that.SupplementalSemanticIds), TransformQualifierList(that.Qualifiers), TransformEmbeddedDataSpecList(that.EmbeddedDataSpecifications), that.OrderRelevant, (ReferenceDTO)Transform(that.SemanticIdListElement), that.ValueTypeListElement, smeMetadataList);
         }
 
         public IDTO TransformValueList(IValueList that) => throw new System.NotImplementedException();

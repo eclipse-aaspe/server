@@ -49,34 +49,79 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
             if (source is SubmodelMetadata submodelMetadata)
                 return Transform(submodelMetadata);
 
-            throw new InvalidSerializationModifierException("metadata", source.GetType().Name);
+            return null;
         }
 
         private static ISubmodel Transform(SubmodelMetadata metadata)
         {
-            return new Submodel(metadata.Id, TransformExtensions(metadata.Extensions), metadata.Category, metadata.IdShort, TransformLangStringNameTypeList(metadata.DisplayName), TransformLangStringTextTypeList(metadata.Description), TransformAdministrationInformation(metadata.Administration), metadata.Kind, TransformReference(metadata.SemanticId), TransformReferenceList(metadata.SupplementalSemanticIds), TransformQualifierList(metadata.Qualifiers), TransformEmbeddedDataSpecList(metadata.EmbeddedDataSpecifications));
+            List<ISubmodelElement> submodelElements = null;
+            if (metadata.SubmodelElements != null)
+            {
+                submodelElements = new List<ISubmodelElement>();
+                foreach (var element in metadata.SubmodelElements)
+                {
+                    submodelElements.Add((ISubmodelElement)Map(element));
+                }
+            }
+            return new Submodel(metadata.Id, TransformExtensions(metadata.Extensions), metadata.Category, metadata.IdShort, TransformLangStringNameTypeList(metadata.DisplayName), TransformLangStringTextTypeList(metadata.Description), TransformAdministrationInformation(metadata.Administration), metadata.Kind, TransformReference(metadata.SemanticId), TransformReferenceList(metadata.SupplementalSemanticIds), TransformQualifierList(metadata.Qualifiers), TransformEmbeddedDataSpecList(metadata.EmbeddedDataSpecifications), submodelElements);
         }
 
 
 
         private static IEntity Transform(EntityMetadata metadata)
         {
-            return new Entity(metadata.EntityType, TransformExtensions(metadata.Extensions), metadata.Category, metadata.IdShort, TransformLangStringNameTypeList(metadata.DisplayName), TransformLangStringTextTypeList(metadata.Description), TransformReference(metadata.SemanticId), TransformReferenceList(metadata.SupplementalSemanticIds), TransformQualifierList(metadata.Qualifiers), TransformEmbeddedDataSpecList(metadata.EmbeddedDataSpecifications));
+            List<ISubmodelElement> statements = null;
+            if (metadata.Statements != null)
+            {
+                statements = new List<ISubmodelElement>();
+                foreach (var element in metadata.Statements)
+                {
+                    statements.Add((ISubmodelElement)Map(element));
+                }
+            }
+            return new Entity(metadata.EntityType, TransformExtensions(metadata.Extensions), metadata.Category, metadata.IdShort, TransformLangStringNameTypeList(metadata.DisplayName), TransformLangStringTextTypeList(metadata.Description), TransformReference(metadata.SemanticId), TransformReferenceList(metadata.SupplementalSemanticIds), TransformQualifierList(metadata.Qualifiers), TransformEmbeddedDataSpecList(metadata.EmbeddedDataSpecifications), statements);
         }
 
         private static IAnnotatedRelationshipElement Transform(AnnotatedRelationshipElementMetadata metadata)
         {
-            return new AnnotatedRelationshipElement(null, null, TransformExtensions(metadata.Extensions), metadata.Category, metadata.IdShort, TransformLangStringNameTypeList(metadata.DisplayName), TransformLangStringTextTypeList(metadata.Description), TransformReference(metadata.SemanticId), TransformReferenceList(metadata.SupplementalSemanticIds), TransformQualifierList(metadata.Qualifiers), TransformEmbeddedDataSpecList(metadata.EmbeddedDataSpecifications));
+            List<IDataElement> annotations = null;
+            if (metadata.Annotations != null)
+            {
+                annotations = new List<IDataElement>();
+                foreach (var element in metadata.Annotations)
+                {
+                    annotations.Add((IDataElement)Map(element));
+                }
+            }
+            return new AnnotatedRelationshipElement(null, null, TransformExtensions(metadata.Extensions), metadata.Category, metadata.IdShort, TransformLangStringNameTypeList(metadata.DisplayName), TransformLangStringTextTypeList(metadata.Description), TransformReference(metadata.SemanticId), TransformReferenceList(metadata.SupplementalSemanticIds), TransformQualifierList(metadata.Qualifiers), TransformEmbeddedDataSpecList(metadata.EmbeddedDataSpecifications), annotations);
         }
 
         private static ISubmodelElementList Transform(SubmodelElementListMetadata metadata)
         {
-            return new SubmodelElementList(metadata.TypeValueListElement, TransformExtensions(metadata.Extensions), metadata.Category, metadata.IdShort, TransformLangStringNameTypeList(metadata.DisplayName), TransformLangStringTextTypeList(metadata.Description), TransformReference(metadata.SemanticId), TransformReferenceList(metadata.SupplementalSemanticIds), TransformQualifierList(metadata.Qualifiers), TransformEmbeddedDataSpecList(metadata.EmbeddedDataSpecifications), metadata.OrderRelevant, TransformReference(metadata.SemanticIdListElement), metadata.ValueTypeListElement);
+            List<ISubmodelElement> value = null;
+            if (metadata.Value != null)
+            {
+                value = new List<ISubmodelElement>();
+                foreach (var element in metadata.Value)
+                {
+                    value.Add((ISubmodelElement)Map(element));
+                }
+            }
+            return new SubmodelElementList(metadata.TypeValueListElement, TransformExtensions(metadata.Extensions), metadata.Category, metadata.IdShort, TransformLangStringNameTypeList(metadata.DisplayName), TransformLangStringTextTypeList(metadata.Description), TransformReference(metadata.SemanticId), TransformReferenceList(metadata.SupplementalSemanticIds), TransformQualifierList(metadata.Qualifiers), TransformEmbeddedDataSpecList(metadata.EmbeddedDataSpecifications), metadata.OrderRelevant, TransformReference(metadata.SemanticIdListElement), metadata.ValueTypeListElement, value);
         }
 
         private static ISubmodelElementCollection Transform(SubmodelElementCollectionMetadata metadata)
         {
-            return new SubmodelElementCollection(TransformExtensions(metadata.Extensions), metadata.Category, metadata.IdShort, TransformLangStringNameTypeList(metadata.DisplayName), TransformLangStringTextTypeList(metadata.Description), TransformReference(metadata.SemanticId), TransformReferenceList(metadata.SupplementalSemanticIds), TransformQualifierList(metadata.Qualifiers), TransformEmbeddedDataSpecList(metadata.EmbeddedDataSpecifications));
+            List<ISubmodelElement> value = null;
+            if (metadata.Value != null)
+            {
+                value = new List<ISubmodelElement>();
+                foreach (var element in metadata.Value)
+                {
+                    value.Add((ISubmodelElement)Map(element));
+                }
+            }
+            return new SubmodelElementCollection(TransformExtensions(metadata.Extensions), metadata.Category, metadata.IdShort, TransformLangStringNameTypeList(metadata.DisplayName), TransformLangStringTextTypeList(metadata.Description), TransformReference(metadata.SemanticId), TransformReferenceList(metadata.SupplementalSemanticIds), TransformQualifierList(metadata.Qualifiers), TransformEmbeddedDataSpecList(metadata.EmbeddedDataSpecifications), value);
         }
 
         private static IRelationshipElement Transform(RelationshipElementMetadata metadata)
