@@ -1,4 +1,4 @@
-﻿using DataTransferObjects.CommonDTOs;
+using DataTransferObjects.CommonDTOs;
 using DataTransferObjects.ValueDTOs;
 using System;
 using System.Text.Json;
@@ -74,9 +74,9 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             var result = new JsonObject();
 
             var statements = new JsonObject();
-            if (entityValue.statements != null)
+            if (entityValue.Statements != null)
             {
-                foreach (var element in entityValue.statements)
+                foreach (var element in entityValue.Statements)
                 {
                     var elementObject = ToJsonObject(element) as JsonObject;
                     foreach (var keyValue in elementObject)
@@ -90,10 +90,10 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 
             var valueObject = new JsonObject();
             valueObject["statements"] = statements;
-            valueObject["entityType"] = Jsonization.Serialize.EntityTypeToJsonValue(entityValue.entityType);
-            valueObject["globalAssetId"] = entityValue.globalAssetId;
+            valueObject["entityType"] = Jsonization.Serialize.EntityTypeToJsonValue(entityValue.EntityType);
+            valueObject["globalAssetId"] = entityValue.GlobalAssetId;
 
-            result[entityValue.idShort] = valueObject;
+            result[entityValue.IdShort] = valueObject;
 
             return result;
         }
@@ -103,9 +103,9 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             var result = new JsonObject();
 
             var annotations = new JsonArray();
-            if (annotatedRelEleValue.annotations != null)
+            if (annotatedRelEleValue.Annotations != null)
             {
-                foreach (var element in annotatedRelEleValue.annotations)
+                foreach (var element in annotatedRelEleValue.Annotations)
                 {
                     var elementObject = ToJsonObject(element);
                     annotations.Add(elementObject);
@@ -113,11 +113,11 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             }
 
             var valueObject = new JsonObject();
-            valueObject["first"] = Transform(annotatedRelEleValue.first);
-            valueObject["second"] = Transform(annotatedRelEleValue.second);
+            valueObject["first"] = Transform(annotatedRelEleValue.First);
+            valueObject["second"] = Transform(annotatedRelEleValue.Second);
             valueObject["annotations"] = annotations;
 
-            result[annotatedRelEleValue.idShort] = valueObject;
+            result[annotatedRelEleValue.IdShort] = valueObject;
 
             return result;
         }
@@ -125,9 +125,9 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
         private static JsonNode Transform(SubmodelValue submodelValue)
         {
             var result = new JsonObject();
-            if (submodelValue.submodelElements != null)
+            if (submodelValue.SubmodelElements != null)
             {
-                foreach (var element in submodelValue.submodelElements)
+                foreach (var element in submodelValue.SubmodelElements)
                 {
                     var elementObject = ToJsonObject(element) as JsonObject;
                     foreach (var keyValue in elementObject)
@@ -147,9 +147,9 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             var result = new JsonObject();
 
             var valueArray = new JsonArray();
-            if (submodelElementListValue.value != null)
+            if (submodelElementListValue.Value != null)
             {
-                foreach (var element in submodelElementListValue.value)
+                foreach (var element in submodelElementListValue.Value)
                 {
                     var elementObject = ToJsonObject(element) as JsonObject;
                     foreach (var keyValue in elementObject)
@@ -161,7 +161,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
                 }
             }
 
-            result[submodelElementListValue.idShort] = valueArray;
+            result[submodelElementListValue.IdShort] = valueArray;
 
             return result;
         }
@@ -171,9 +171,9 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             var result = new JsonObject();
 
             var valueObject = new JsonObject();
-            if (submodelElementCollectionValue.value != null)
+            if (submodelElementCollectionValue.Value != null)
             {
-                foreach (var element in submodelElementCollectionValue.value)
+                foreach (var element in submodelElementCollectionValue.Value)
                 {
                     var elementObject = ToJsonObject(element) as JsonObject;
                     foreach (var keyValue in elementObject)
@@ -185,7 +185,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
                 }
             }
 
-            result[submodelElementCollectionValue.idShort] = valueObject;
+            result[submodelElementCollectionValue.IdShort] = valueObject;
 
             return result;
         }
@@ -195,10 +195,10 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             var result = new JsonObject();
 
             var valueObject = new JsonObject();
-            valueObject["first"] = Transform(relationshipElementValue.first);
-            valueObject["second"] = Transform(relationshipElementValue.second);
+            valueObject["first"] = Transform(relationshipElementValue.First);
+            valueObject["second"] = Transform(relationshipElementValue.Second);
 
-            result[relationshipElementValue.idShort] = valueObject;
+            result[relationshipElementValue.IdShort] = valueObject;
 
             return result;
         }
@@ -207,7 +207,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
         {
             var result = new JsonObject();
 
-            result[referenceElementValue.idShort] = Transform(referenceElementValue.value);
+            result[referenceElementValue.IdShort] = Transform(referenceElementValue.Value);
 
             return result;
         }
@@ -217,10 +217,10 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             var result = new JsonObject();
 
             var valueObject = new JsonObject();
-            valueObject["min"] = rangeValue.min;
-            valueObject["max"] = rangeValue.max;
+            valueObject["min"] = rangeValue.Min;
+            valueObject["max"] = rangeValue.Max;
 
-            result[rangeValue.idShort] = valueObject;
+            result[rangeValue.IdShort] = valueObject;
 
             return result;
         }
@@ -230,10 +230,10 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             var result = new JsonObject();
 
             var valueObject = new JsonObject();
-            valueObject["contentType"] = fileValue.contentType;
-            valueObject["value"] = fileValue.value;
+            valueObject["contentType"] = fileValue.ContentType;
+            valueObject["value"] = fileValue.Value;
 
-            result[fileValue.idShort] = valueObject;
+            result[fileValue.IdShort] = valueObject;
 
             return result;
         }
@@ -243,13 +243,13 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             var result = new JsonObject();
 
             var valueObject = new JsonObject();
-            valueObject["contentType"] = blobValue.contentType;
-            if (blobValue.value != null)
+            valueObject["contentType"] = blobValue.ContentType;
+            if (blobValue.Value != null)
             {
-                valueObject["value"] = JsonValue.Create(System.Convert.ToBase64String(blobValue.value));
+                valueObject["value"] = JsonValue.Create(System.Convert.ToBase64String(blobValue.Value));
             }
 
-            result[blobValue.idShort] = valueObject;
+            result[blobValue.IdShort] = valueObject;
 
             return result;
         }
@@ -259,9 +259,9 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             var result = new JsonObject();
 
             var valueObject = new JsonObject();
-            valueObject["observed"] = Transform(basicEventElementValue.observed);
+            valueObject["observed"] = Transform(basicEventElementValue.Observed);
 
-            result[basicEventElementValue.idShort] = valueObject;
+            result[basicEventElementValue.IdShort] = valueObject;
 
             return result;
         }
@@ -271,16 +271,16 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             var result = new JsonObject();
 
             result["type"] = Jsonization.Serialize.ReferenceTypesToJsonValue(
-                that.type);
+                that.Type);
 
-            if (that.referredSemanticId != null)
+            if (that.ReferredSemanticId != null)
             {
                 result["referredSemanticId"] = Transform(
-                    that.referredSemanticId);
+                    that.ReferredSemanticId);
             }
 
             var arrayKeys = new JsonArray();
-            foreach (KeyDTO item in that.keys)
+            foreach (KeyDTO item in that.Keys)
             {
                 arrayKeys.Add(Transform(item));
             }
@@ -294,10 +294,10 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             var result = new JsonObject();
 
             result["type"] = Jsonization.Serialize.KeyTypesToJsonValue(
-                that.type);
+                that.Type);
 
             result["value"] = JsonValue.Create(
-                that.value);
+                that.Value);
 
             return result;
         }
@@ -307,21 +307,21 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             var result = new JsonObject();
 
             var arrayLangStrings = new JsonArray();
-            foreach (var item in multiLanguagePropertyValue.langStrings)
+            foreach (var item in multiLanguagePropertyValue.LangStrings)
             {
                 var langNode = new JsonObject();
                 langNode[item.Key] = item.Value;
                 arrayLangStrings.Add(langNode);
             }
 
-            result[multiLanguagePropertyValue.idShort] = arrayLangStrings;
+            result[multiLanguagePropertyValue.IdShort] = arrayLangStrings;
             return result;
         }
 
         private static JsonObject Transform(PropertyValue propertyValue)
         {
             var result = new JsonObject();
-            result[propertyValue.idShort] = propertyValue.value;
+            result[propertyValue.IdShort] = propertyValue.Value;
             return result;
         }
     }

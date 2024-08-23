@@ -132,7 +132,6 @@ namespace AasCore.Aas3_0
             public void VisitDataSpecificationIec61360(
                 IDataSpecificationIec61360 that
             );
-            // OZ: void Visit(Extension that);
         }  // public interface IVisitor
 
         /// <summary>
@@ -705,7 +704,7 @@ namespace AasCore.Aas3_0
         /// <typeparam name="TContext">Context type</typeparam>
         public interface IVisitorWithContext<in TContext>
         {
-            public void Visit(IClass? that, TContext context);
+            public void Visit(IClass that, TContext context);
             public void VisitExtension(
                 IExtension that,
                 TContext context
@@ -723,7 +722,7 @@ namespace AasCore.Aas3_0
                 TContext context
             );
             public void VisitAssetInformation(
-                IAssetInformation? that,
+                IAssetInformation that,
                 TContext context
             );
             public void VisitResource(
@@ -807,7 +806,7 @@ namespace AasCore.Aas3_0
                 TContext context
             );
             public void VisitReference(
-                IReference? that,
+                IReference that,
                 TContext context
             );
             public void VisitKey(
@@ -868,7 +867,7 @@ namespace AasCore.Aas3_0
         public abstract class AbstractVisitorWithContext<TContext>
             : IVisitorWithContext<TContext>
         {
-            public void Visit(IClass? that, TContext context)
+            public void Visit(IClass that, TContext context)
             {
                 that.Accept(this, context);
             }
@@ -889,7 +888,7 @@ namespace AasCore.Aas3_0
                 TContext context
             );
             public abstract void VisitAssetInformation(
-                IAssetInformation? that,
+                IAssetInformation that,
                 TContext context
             );
             public abstract void VisitResource(
@@ -973,7 +972,7 @@ namespace AasCore.Aas3_0
                 TContext context
             );
             public abstract void VisitReference(
-                IReference? that,
+                IReference that,
                 TContext context
             );
             public abstract void VisitKey(
@@ -1038,7 +1037,7 @@ namespace AasCore.Aas3_0
         /// <typeparam name="T">The type of the transformation result</typeparam>
         public interface ITransformer<out T>
         {
-            public T Transform(IClass? that);
+            public T Transform(IClass that);
             public T TransformExtension(
                 IExtension that
             );
@@ -1162,7 +1161,7 @@ namespace AasCore.Aas3_0
         /// <typeparam name="T">The type of the transformation result</typeparam>
         public abstract class AbstractTransformer<T> : ITransformer<T>
         {
-            public T Transform(IClass? that)
+            public T Transform(IClass that)
             {
                 return that.Transform(this);
             }
@@ -1333,7 +1332,7 @@ namespace AasCore.Aas3_0
         /// <typeparam name="T">The type of the transformation result</typeparam>
         public interface ITransformerWithContext<in TContext, out T>
         {
-            public T Transform(IClass? that, TContext context);
+            public T Transform(IClass that, TContext context);
             public T TransformExtension(
                 IExtension that,
                 TContext context
@@ -1502,7 +1501,7 @@ namespace AasCore.Aas3_0
         public abstract class AbstractTransformerWithContext<TContext, T>
             : ITransformerWithContext<TContext, T>
         {
-            public T Transform(IClass? that, TContext context)
+            public T Transform(IClass that, TContext context)
             {
                 return that.Transform(this, context);
             }

@@ -1,6 +1,10 @@
-﻿using AasCore.Aas3_0;
+using AasCore.Aas3_0;
 
 namespace DataTransferObjects.ValueDTOs
 {
-    public record class EntityValue(string idShort, EntityType entityType, List<ISubmodelElementValue>? statements = null, string globalAssetId = null) : ISubmodelElementValue;
+    public record class EntityValue(
+        string IdShort,
+        EntityType EntityType,
+        List<ISubmodelElementValue>? Statements = null,
+        string? GlobalAssetId = null) : ISubmodelElementValue;
 }

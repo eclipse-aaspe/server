@@ -1,9 +1,9 @@
-﻿using AasCore.Aas3_0;
+using AasCore.Aas3_0;
 
 namespace DataTransferObjects.CommonDTOs
 {
     public record class ReferenceDTO(
-            ReferenceTypes type,
-            List<KeyDTO>? keys,
-            ReferenceDTO? referredSemanticId = null) : IDTO;
+            ReferenceTypes Type,
+            List<KeyDTO> Keys,
+            ReferenceDTO? ReferredSemanticId = null) : IDTO;
 }

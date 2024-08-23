@@ -1,12 +1,12 @@
-﻿using AasCore.Aas3_0;
+using AasCore.Aas3_0;
 
 namespace DataTransferObjects.CommonDTOs
 {
     public record class ExtensionDTO(
-            string? name,
-            ReferenceDTO? semanticId = null,
-            List<ReferenceDTO>? supplementalSemanticIds = null,
-            DataTypeDefXsd? valueType = null,
-            string value = null,
-            List<ReferenceDTO>? refersTo = null) : IDTO;
+            string Name,
+            ReferenceDTO? SemanticId = null,
+            List<ReferenceDTO>? SupplementalSemanticIds = null,
+            DataTypeDefXsd? ValueType = null,
+            string? Value = null,
+            List<ReferenceDTO>? RefersTo = null) : IDTO;
 }

@@ -21,6 +21,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using DataTransferObjects.MetadataDTOs;
+using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers;
 
 namespace IO.Swagger.Lib.V3.Formatters
 {
@@ -82,6 +84,10 @@ namespace IO.Swagger.Lib.V3.Formatters
                 return base.CanWriteResult(context);
             }
             if (typeof(PagedResult).IsAssignableFrom(context.ObjectType))
+            {
+                return base.CanWriteResult(context);
+            }
+            if (typeof(IMetadataDTO).IsAssignableFrom(context.ObjectType))
             {
                 return base.CanWriteResult(context);
             }
@@ -202,6 +208,13 @@ namespace IO.Swagger.Lib.V3.Formatters
                 }
                 var writer = new Utf8JsonWriter(response.Body);
                 jsonArray.WriteTo(writer);
+                writer.FlushAsync().GetAwaiter().GetResult();
+            }
+            else if(typeof(IMetadataDTO).IsAssignableFrom(context.ObjectType))
+            {
+                JsonNode? json = MetadataJsonSerializer.ToJsonObject((IMetadataDTO)context.Object);
+                var writer = new Utf8JsonWriter(response.Body);
+                json.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();
             }
             else if (typeof(PagedResult).IsAssignableFrom(context.ObjectType))

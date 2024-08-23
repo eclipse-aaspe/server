@@ -1,4 +1,7 @@
-﻿namespace DataTransferObjects.ValueDTOs
+namespace DataTransferObjects.ValueDTOs
 {
-    public record class RangeValue(string idShort, string min = null, string max = null) : ISubmodelElementValue;
+    public record class RangeValue(
+        string IdShort,
+        string? Min = null,
+        string? Max = null) : ISubmodelElementValue;
 }

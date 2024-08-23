@@ -1,4 +1,9 @@
-﻿namespace DataTransferObjects.ValueDTOs
+namespace DataTransferObjects.ValueDTOs
 {
-    public record class OperationValue(string idShort, List<ISubmodelElementValue>? inputVariables = null, List<ISubmodelElementValue>? outputVariables = null, List<ISubmodelElementValue>? inoutputvariables = null) : ISubmodelElementValue;
+    public record class OperationValue(
+        string IdShort,
+        List<ISubmodelElementValue>? InputVariables = null,
+        List<ISubmodelElementValue>? OutputVariables = null,
+        List<ISubmodelElementValue>? Inoutputvariables = null)
+        : ISubmodelElementValue;
 }

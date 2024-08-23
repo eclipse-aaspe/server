@@ -45,12 +45,12 @@ namespace AasCore.Aas3_0
         }
 
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
-        private static readonly Dictionary<string?, ModellingKind> _modellingKindFromString = (
-                                                                                                  new Dictionary<string?, ModellingKind>()
-                                                                                                  {
-                                                                                                      { "Template", Aas.ModellingKind.Template },
-                                                                                                      { "Instance", Aas.ModellingKind.Instance }
-                                                                                                  });
+        private static readonly Dictionary<string, Aas.ModellingKind> _modellingKindFromString = (
+            new Dictionary<string, Aas.ModellingKind>()
+            {
+                { "Template", Aas.ModellingKind.Template },
+                { "Instance", Aas.ModellingKind.Instance }
+            });
 
         /// <summary>
         /// Parse the string representation of <see cref="ModellingKind" />.
@@ -60,7 +60,7 @@ namespace AasCore.Aas3_0
         /// of a literal of <see cref="ModellingKind" />,
         /// return <c>null</c>.
         /// </remarks>
-        public static Aas.ModellingKind? ModellingKindFromString(string? text)
+        public static Aas.ModellingKind? ModellingKindFromString(string text)
         {
             if (_modellingKindFromString.TryGetValue(text, out ModellingKind value))
             {
@@ -106,13 +106,13 @@ namespace AasCore.Aas3_0
         }
 
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
-        private static readonly Dictionary<string?, QualifierKind> _qualifierKindFromString = (
-                                                                                                  new Dictionary<string?, QualifierKind>()
-                                                                                                  {
-                                                                                                      { "ValueQualifier", Aas.QualifierKind.ValueQualifier },
-                                                                                                      { "ConceptQualifier", Aas.QualifierKind.ConceptQualifier },
-                                                                                                      { "TemplateQualifier", Aas.QualifierKind.TemplateQualifier }
-                                                                                                  });
+        private static readonly Dictionary<string, Aas.QualifierKind> _qualifierKindFromString = (
+            new Dictionary<string, Aas.QualifierKind>()
+            {
+                { "ValueQualifier", Aas.QualifierKind.ValueQualifier },
+                { "ConceptQualifier", Aas.QualifierKind.ConceptQualifier },
+                { "TemplateQualifier", Aas.QualifierKind.TemplateQualifier }
+            });
 
         /// <summary>
         /// Parse the string representation of <see cref="QualifierKind" />.
@@ -122,7 +122,7 @@ namespace AasCore.Aas3_0
         /// of a literal of <see cref="QualifierKind" />,
         /// return <c>null</c>.
         /// </remarks>
-        public static Aas.QualifierKind? QualifierKindFromString(string? text)
+        public static Aas.QualifierKind? QualifierKindFromString(string text)
         {
             if (_qualifierKindFromString.TryGetValue(text, out QualifierKind value))
             {
@@ -168,13 +168,13 @@ namespace AasCore.Aas3_0
         }
 
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
-        private static readonly Dictionary<string?, AssetKind> _assetKindFromString = (
-                                                                                          new Dictionary<string?, AssetKind>()
-                                                                                          {
-                                                                                              { "Type", Aas.AssetKind.Type },
-                                                                                              { "Instance", Aas.AssetKind.Instance },
-                                                                                              { "NotApplicable", Aas.AssetKind.NotApplicable }
-                                                                                          });
+        private static readonly Dictionary<string, Aas.AssetKind> _assetKindFromString = (
+            new Dictionary<string, Aas.AssetKind>()
+            {
+                { "Type", Aas.AssetKind.Type },
+                { "Instance", Aas.AssetKind.Instance },
+                { "NotApplicable", Aas.AssetKind.NotApplicable }
+            });
 
         /// <summary>
         /// Parse the string representation of <see cref="AssetKind" />.
@@ -184,7 +184,7 @@ namespace AasCore.Aas3_0
         /// of a literal of <see cref="AssetKind" />,
         /// return <c>null</c>.
         /// </remarks>
-        public static Aas.AssetKind? AssetKindFromString(string? text)
+        public static Aas.AssetKind? AssetKindFromString(string text)
         {
             if (_assetKindFromString.TryGetValue(text, out AssetKind value))
             {
@@ -244,27 +244,27 @@ namespace AasCore.Aas3_0
         }
 
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
-        private static readonly Dictionary<string?, AasSubmodelElements> _aasSubmodelElementsFromString = (
-                                                                                                              new Dictionary<string?, AasSubmodelElements>()
-                                                                                                              {
-                                                                                                                  { "AnnotatedRelationshipElement", Aas.AasSubmodelElements.AnnotatedRelationshipElement },
-                                                                                                                  { "BasicEventElement", Aas.AasSubmodelElements.BasicEventElement },
-                                                                                                                  { "Blob", Aas.AasSubmodelElements.Blob },
-                                                                                                                  { "Capability", Aas.AasSubmodelElements.Capability },
-                                                                                                                  { "DataElement", Aas.AasSubmodelElements.DataElement },
-                                                                                                                  { "Entity", Aas.AasSubmodelElements.Entity },
-                                                                                                                  { "EventElement", Aas.AasSubmodelElements.EventElement },
-                                                                                                                  { "File", Aas.AasSubmodelElements.File },
-                                                                                                                  { "MultiLanguageProperty", Aas.AasSubmodelElements.MultiLanguageProperty },
-                                                                                                                  { "Operation", Aas.AasSubmodelElements.Operation },
-                                                                                                                  { "Property", Aas.AasSubmodelElements.Property },
-                                                                                                                  { "Range", Aas.AasSubmodelElements.Range },
-                                                                                                                  { "ReferenceElement", Aas.AasSubmodelElements.ReferenceElement },
-                                                                                                                  { "RelationshipElement", Aas.AasSubmodelElements.RelationshipElement },
-                                                                                                                  { "SubmodelElement", Aas.AasSubmodelElements.SubmodelElement },
-                                                                                                                  { "SubmodelElementList", Aas.AasSubmodelElements.SubmodelElementList },
-                                                                                                                  { "SubmodelElementCollection", Aas.AasSubmodelElements.SubmodelElementCollection }
-                                                                                                              });
+        private static readonly Dictionary<string, Aas.AasSubmodelElements> _aasSubmodelElementsFromString = (
+            new Dictionary<string, Aas.AasSubmodelElements>()
+            {
+                { "AnnotatedRelationshipElement", Aas.AasSubmodelElements.AnnotatedRelationshipElement },
+                { "BasicEventElement", Aas.AasSubmodelElements.BasicEventElement },
+                { "Blob", Aas.AasSubmodelElements.Blob },
+                { "Capability", Aas.AasSubmodelElements.Capability },
+                { "DataElement", Aas.AasSubmodelElements.DataElement },
+                { "Entity", Aas.AasSubmodelElements.Entity },
+                { "EventElement", Aas.AasSubmodelElements.EventElement },
+                { "File", Aas.AasSubmodelElements.File },
+                { "MultiLanguageProperty", Aas.AasSubmodelElements.MultiLanguageProperty },
+                { "Operation", Aas.AasSubmodelElements.Operation },
+                { "Property", Aas.AasSubmodelElements.Property },
+                { "Range", Aas.AasSubmodelElements.Range },
+                { "ReferenceElement", Aas.AasSubmodelElements.ReferenceElement },
+                { "RelationshipElement", Aas.AasSubmodelElements.RelationshipElement },
+                { "SubmodelElement", Aas.AasSubmodelElements.SubmodelElement },
+                { "SubmodelElementList", Aas.AasSubmodelElements.SubmodelElementList },
+                { "SubmodelElementCollection", Aas.AasSubmodelElements.SubmodelElementCollection }
+            });
 
         /// <summary>
         /// Parse the string representation of <see cref="AasSubmodelElements" />.
@@ -274,7 +274,7 @@ namespace AasCore.Aas3_0
         /// of a literal of <see cref="AasSubmodelElements" />,
         /// return <c>null</c>.
         /// </remarks>
-        public static Aas.AasSubmodelElements? AasSubmodelElementsFromString(string? text)
+        public static Aas.AasSubmodelElements? AasSubmodelElementsFromString(string text)
         {
             if (_aasSubmodelElementsFromString.TryGetValue(text, out AasSubmodelElements value))
             {
@@ -319,12 +319,12 @@ namespace AasCore.Aas3_0
         }
 
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
-        private static readonly Dictionary<string?, EntityType> _entityTypeFromString = (
-                                                                                            new Dictionary<string?, EntityType>()
-                                                                                            {
-                                                                                                { "CoManagedEntity", Aas.EntityType.CoManagedEntity },
-                                                                                                { "SelfManagedEntity", Aas.EntityType.SelfManagedEntity }
-                                                                                            });
+        private static readonly Dictionary<string, Aas.EntityType> _entityTypeFromString = (
+            new Dictionary<string, Aas.EntityType>()
+            {
+                { "CoManagedEntity", Aas.EntityType.CoManagedEntity },
+                { "SelfManagedEntity", Aas.EntityType.SelfManagedEntity }
+            });
 
         /// <summary>
         /// Parse the string representation of <see cref="EntityType" />.
@@ -334,7 +334,7 @@ namespace AasCore.Aas3_0
         /// of a literal of <see cref="EntityType" />,
         /// return <c>null</c>.
         /// </remarks>
-        public static Aas.EntityType? EntityTypeFromString(string? text)
+        public static Aas.EntityType? EntityTypeFromString(string text)
         {
             if (_entityTypeFromString.TryGetValue(text, out EntityType value))
             {
@@ -379,12 +379,12 @@ namespace AasCore.Aas3_0
         }
 
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
-        private static readonly Dictionary<string?, Direction> _directionFromString = (
-                                                                                          new Dictionary<string?, Direction>()
-                                                                                          {
-                                                                                              { "input", Aas.Direction.Input },
-                                                                                              { "output", Aas.Direction.Output }
-                                                                                          });
+        private static readonly Dictionary<string, Aas.Direction> _directionFromString = (
+            new Dictionary<string, Aas.Direction>()
+            {
+                { "input", Aas.Direction.Input },
+                { "output", Aas.Direction.Output }
+            });
 
         /// <summary>
         /// Parse the string representation of <see cref="Direction" />.
@@ -394,7 +394,7 @@ namespace AasCore.Aas3_0
         /// of a literal of <see cref="Direction" />,
         /// return <c>null</c>.
         /// </remarks>
-        public static Aas.Direction? DirectionFromString(string? text)
+        public static Aas.Direction? DirectionFromString(string text)
         {
             if (_directionFromString.TryGetValue(text, out Direction value))
             {
@@ -439,12 +439,12 @@ namespace AasCore.Aas3_0
         }
 
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
-        private static readonly Dictionary<string?, StateOfEvent> _stateOfEventFromString = (
-                                                                                                new Dictionary<string?, StateOfEvent>()
-                                                                                                {
-                                                                                                    { "on", Aas.StateOfEvent.On },
-                                                                                                    { "off", Aas.StateOfEvent.Off }
-                                                                                                });
+        private static readonly Dictionary<string, Aas.StateOfEvent> _stateOfEventFromString = (
+            new Dictionary<string, Aas.StateOfEvent>()
+            {
+                { "on", Aas.StateOfEvent.On },
+                { "off", Aas.StateOfEvent.Off }
+            });
 
         /// <summary>
         /// Parse the string representation of <see cref="StateOfEvent" />.
@@ -454,7 +454,7 @@ namespace AasCore.Aas3_0
         /// of a literal of <see cref="StateOfEvent" />,
         /// return <c>null</c>.
         /// </remarks>
-        public static Aas.StateOfEvent? StateOfEventFromString(string? text)
+        public static Aas.StateOfEvent? StateOfEventFromString(string text)
         {
             if (_stateOfEventFromString.TryGetValue(text, out StateOfEvent value))
             {
@@ -499,12 +499,12 @@ namespace AasCore.Aas3_0
         }
 
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
-        private static readonly Dictionary<string?, ReferenceTypes> _referenceTypesFromString = (
-                                                                                                    new Dictionary<string?, ReferenceTypes>()
-                                                                                                    {
-                                                                                                        { "ExternalReference", Aas.ReferenceTypes.ExternalReference },
-                                                                                                        { "ModelReference", Aas.ReferenceTypes.ModelReference }
-                                                                                                    });
+        private static readonly Dictionary<string, Aas.ReferenceTypes> _referenceTypesFromString = (
+            new Dictionary<string, Aas.ReferenceTypes>()
+            {
+                { "ExternalReference", Aas.ReferenceTypes.ExternalReference },
+                { "ModelReference", Aas.ReferenceTypes.ModelReference }
+            });
 
         /// <summary>
         /// Parse the string representation of <see cref="ReferenceTypes" />.
@@ -514,7 +514,7 @@ namespace AasCore.Aas3_0
         /// of a literal of <see cref="ReferenceTypes" />,
         /// return <c>null</c>.
         /// </remarks>
-        public static Aas.ReferenceTypes? ReferenceTypesFromString(string? text)
+        public static Aas.ReferenceTypes? ReferenceTypesFromString(string text)
         {
             if (_referenceTypesFromString.TryGetValue(text, out ReferenceTypes value))
             {
@@ -581,34 +581,34 @@ namespace AasCore.Aas3_0
         }
 
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
-        private static readonly Dictionary<string?, KeyTypes> _keyTypesFromString = (
-                                                                                        new Dictionary<string?, KeyTypes>()
-                                                                                        {
-                                                                                            { "AnnotatedRelationshipElement", Aas.KeyTypes.AnnotatedRelationshipElement },
-                                                                                            { "AssetAdministrationShell", Aas.KeyTypes.AssetAdministrationShell },
-                                                                                            { "BasicEventElement", Aas.KeyTypes.BasicEventElement },
-                                                                                            { "Blob", Aas.KeyTypes.Blob },
-                                                                                            { "Capability", Aas.KeyTypes.Capability },
-                                                                                            { "ConceptDescription", Aas.KeyTypes.ConceptDescription },
-                                                                                            { "DataElement", Aas.KeyTypes.DataElement },
-                                                                                            { "Entity", Aas.KeyTypes.Entity },
-                                                                                            { "EventElement", Aas.KeyTypes.EventElement },
-                                                                                            { "File", Aas.KeyTypes.File },
-                                                                                            { "FragmentReference", Aas.KeyTypes.FragmentReference },
-                                                                                            { "GlobalReference", Aas.KeyTypes.GlobalReference },
-                                                                                            { "Identifiable", Aas.KeyTypes.Identifiable },
-                                                                                            { "MultiLanguageProperty", Aas.KeyTypes.MultiLanguageProperty },
-                                                                                            { "Operation", Aas.KeyTypes.Operation },
-                                                                                            { "Property", Aas.KeyTypes.Property },
-                                                                                            { "Range", Aas.KeyTypes.Range },
-                                                                                            { "Referable", Aas.KeyTypes.Referable },
-                                                                                            { "ReferenceElement", Aas.KeyTypes.ReferenceElement },
-                                                                                            { "RelationshipElement", Aas.KeyTypes.RelationshipElement },
-                                                                                            { "Submodel", Aas.KeyTypes.Submodel },
-                                                                                            { "SubmodelElement", Aas.KeyTypes.SubmodelElement },
-                                                                                            { "SubmodelElementCollection", Aas.KeyTypes.SubmodelElementCollection },
-                                                                                            { "SubmodelElementList", Aas.KeyTypes.SubmodelElementList }
-                                                                                        });
+        private static readonly Dictionary<string, Aas.KeyTypes> _keyTypesFromString = (
+            new Dictionary<string, Aas.KeyTypes>()
+            {
+                { "AnnotatedRelationshipElement", Aas.KeyTypes.AnnotatedRelationshipElement },
+                { "AssetAdministrationShell", Aas.KeyTypes.AssetAdministrationShell },
+                { "BasicEventElement", Aas.KeyTypes.BasicEventElement },
+                { "Blob", Aas.KeyTypes.Blob },
+                { "Capability", Aas.KeyTypes.Capability },
+                { "ConceptDescription", Aas.KeyTypes.ConceptDescription },
+                { "DataElement", Aas.KeyTypes.DataElement },
+                { "Entity", Aas.KeyTypes.Entity },
+                { "EventElement", Aas.KeyTypes.EventElement },
+                { "File", Aas.KeyTypes.File },
+                { "FragmentReference", Aas.KeyTypes.FragmentReference },
+                { "GlobalReference", Aas.KeyTypes.GlobalReference },
+                { "Identifiable", Aas.KeyTypes.Identifiable },
+                { "MultiLanguageProperty", Aas.KeyTypes.MultiLanguageProperty },
+                { "Operation", Aas.KeyTypes.Operation },
+                { "Property", Aas.KeyTypes.Property },
+                { "Range", Aas.KeyTypes.Range },
+                { "Referable", Aas.KeyTypes.Referable },
+                { "ReferenceElement", Aas.KeyTypes.ReferenceElement },
+                { "RelationshipElement", Aas.KeyTypes.RelationshipElement },
+                { "Submodel", Aas.KeyTypes.Submodel },
+                { "SubmodelElement", Aas.KeyTypes.SubmodelElement },
+                { "SubmodelElementCollection", Aas.KeyTypes.SubmodelElementCollection },
+                { "SubmodelElementList", Aas.KeyTypes.SubmodelElementList }
+            });
 
         /// <summary>
         /// Parse the string representation of <see cref="KeyTypes" />.
@@ -618,7 +618,7 @@ namespace AasCore.Aas3_0
         /// of a literal of <see cref="KeyTypes" />,
         /// return <c>null</c>.
         /// </remarks>
-        public static Aas.KeyTypes? KeyTypesFromString(string? text)
+        public static Aas.KeyTypes? KeyTypesFromString(string text)
         {
             if (_keyTypesFromString.TryGetValue(text, out KeyTypes value))
             {
@@ -691,40 +691,40 @@ namespace AasCore.Aas3_0
         }
 
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
-        private static readonly Dictionary<string?, DataTypeDefXsd> _dataTypeDefXsdFromString = (
-                                                                                                    new Dictionary<string?, DataTypeDefXsd>()
-                                                                                                    {
-                                                                                                        { "xs:anyURI", Aas.DataTypeDefXsd.AnyUri },
-                                                                                                        { "xs:base64Binary", Aas.DataTypeDefXsd.Base64Binary },
-                                                                                                        { "xs:boolean", Aas.DataTypeDefXsd.Boolean },
-                                                                                                        { "xs:byte", Aas.DataTypeDefXsd.Byte },
-                                                                                                        { "xs:date", Aas.DataTypeDefXsd.Date },
-                                                                                                        { "xs:dateTime", Aas.DataTypeDefXsd.DateTime },
-                                                                                                        { "xs:decimal", Aas.DataTypeDefXsd.Decimal },
-                                                                                                        { "xs:double", Aas.DataTypeDefXsd.Double },
-                                                                                                        { "xs:duration", Aas.DataTypeDefXsd.Duration },
-                                                                                                        { "xs:float", Aas.DataTypeDefXsd.Float },
-                                                                                                        { "xs:gDay", Aas.DataTypeDefXsd.GDay },
-                                                                                                        { "xs:gMonth", Aas.DataTypeDefXsd.GMonth },
-                                                                                                        { "xs:gMonthDay", Aas.DataTypeDefXsd.GMonthDay },
-                                                                                                        { "xs:gYear", Aas.DataTypeDefXsd.GYear },
-                                                                                                        { "xs:gYearMonth", Aas.DataTypeDefXsd.GYearMonth },
-                                                                                                        { "xs:hexBinary", Aas.DataTypeDefXsd.HexBinary },
-                                                                                                        { "xs:int", Aas.DataTypeDefXsd.Int },
-                                                                                                        { "xs:integer", Aas.DataTypeDefXsd.Integer },
-                                                                                                        { "xs:long", Aas.DataTypeDefXsd.Long },
-                                                                                                        { "xs:negativeInteger", Aas.DataTypeDefXsd.NegativeInteger },
-                                                                                                        { "xs:nonNegativeInteger", Aas.DataTypeDefXsd.NonNegativeInteger },
-                                                                                                        { "xs:nonPositiveInteger", Aas.DataTypeDefXsd.NonPositiveInteger },
-                                                                                                        { "xs:positiveInteger", Aas.DataTypeDefXsd.PositiveInteger },
-                                                                                                        { "xs:short", Aas.DataTypeDefXsd.Short },
-                                                                                                        { "xs:string", Aas.DataTypeDefXsd.String },
-                                                                                                        { "xs:time", Aas.DataTypeDefXsd.Time },
-                                                                                                        { "xs:unsignedByte", Aas.DataTypeDefXsd.UnsignedByte },
-                                                                                                        { "xs:unsignedInt", Aas.DataTypeDefXsd.UnsignedInt },
-                                                                                                        { "xs:unsignedLong", Aas.DataTypeDefXsd.UnsignedLong },
-                                                                                                        { "xs:unsignedShort", Aas.DataTypeDefXsd.UnsignedShort }
-                                                                                                    });
+        private static readonly Dictionary<string, Aas.DataTypeDefXsd> _dataTypeDefXsdFromString = (
+            new Dictionary<string, Aas.DataTypeDefXsd>()
+            {
+                { "xs:anyURI", Aas.DataTypeDefXsd.AnyUri },
+                { "xs:base64Binary", Aas.DataTypeDefXsd.Base64Binary },
+                { "xs:boolean", Aas.DataTypeDefXsd.Boolean },
+                { "xs:byte", Aas.DataTypeDefXsd.Byte },
+                { "xs:date", Aas.DataTypeDefXsd.Date },
+                { "xs:dateTime", Aas.DataTypeDefXsd.DateTime },
+                { "xs:decimal", Aas.DataTypeDefXsd.Decimal },
+                { "xs:double", Aas.DataTypeDefXsd.Double },
+                { "xs:duration", Aas.DataTypeDefXsd.Duration },
+                { "xs:float", Aas.DataTypeDefXsd.Float },
+                { "xs:gDay", Aas.DataTypeDefXsd.GDay },
+                { "xs:gMonth", Aas.DataTypeDefXsd.GMonth },
+                { "xs:gMonthDay", Aas.DataTypeDefXsd.GMonthDay },
+                { "xs:gYear", Aas.DataTypeDefXsd.GYear },
+                { "xs:gYearMonth", Aas.DataTypeDefXsd.GYearMonth },
+                { "xs:hexBinary", Aas.DataTypeDefXsd.HexBinary },
+                { "xs:int", Aas.DataTypeDefXsd.Int },
+                { "xs:integer", Aas.DataTypeDefXsd.Integer },
+                { "xs:long", Aas.DataTypeDefXsd.Long },
+                { "xs:negativeInteger", Aas.DataTypeDefXsd.NegativeInteger },
+                { "xs:nonNegativeInteger", Aas.DataTypeDefXsd.NonNegativeInteger },
+                { "xs:nonPositiveInteger", Aas.DataTypeDefXsd.NonPositiveInteger },
+                { "xs:positiveInteger", Aas.DataTypeDefXsd.PositiveInteger },
+                { "xs:short", Aas.DataTypeDefXsd.Short },
+                { "xs:string", Aas.DataTypeDefXsd.String },
+                { "xs:time", Aas.DataTypeDefXsd.Time },
+                { "xs:unsignedByte", Aas.DataTypeDefXsd.UnsignedByte },
+                { "xs:unsignedInt", Aas.DataTypeDefXsd.UnsignedInt },
+                { "xs:unsignedLong", Aas.DataTypeDefXsd.UnsignedLong },
+                { "xs:unsignedShort", Aas.DataTypeDefXsd.UnsignedShort }
+            });
 
         /// <summary>
         /// Parse the string representation of <see cref="DataTypeDefXsd" />.
@@ -734,7 +734,7 @@ namespace AasCore.Aas3_0
         /// of a literal of <see cref="DataTypeDefXsd" />,
         /// return <c>null</c>.
         /// </remarks>
-        public static Aas.DataTypeDefXsd? DataTypeDefXsdFromString(string? text)
+        public static Aas.DataTypeDefXsd? DataTypeDefXsdFromString(string text)
         {
             if (_dataTypeDefXsdFromString.TryGetValue(text, out DataTypeDefXsd value))
             {
@@ -796,29 +796,29 @@ namespace AasCore.Aas3_0
         }
 
         [CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
-        private static readonly Dictionary<string?, DataTypeIec61360> _dataTypeIec61360FromString = (
-                                                                                                        new Dictionary<string?, DataTypeIec61360>()
-                                                                                                        {
-                                                                                                            { "DATE", Aas.DataTypeIec61360.Date },
-                                                                                                            { "STRING", Aas.DataTypeIec61360.String },
-                                                                                                            { "STRING_TRANSLATABLE", Aas.DataTypeIec61360.StringTranslatable },
-                                                                                                            { "INTEGER_MEASURE", Aas.DataTypeIec61360.IntegerMeasure },
-                                                                                                            { "INTEGER_COUNT", Aas.DataTypeIec61360.IntegerCount },
-                                                                                                            { "INTEGER_CURRENCY", Aas.DataTypeIec61360.IntegerCurrency },
-                                                                                                            { "REAL_MEASURE", Aas.DataTypeIec61360.RealMeasure },
-                                                                                                            { "REAL_COUNT", Aas.DataTypeIec61360.RealCount },
-                                                                                                            { "REAL_CURRENCY", Aas.DataTypeIec61360.RealCurrency },
-                                                                                                            { "BOOLEAN", Aas.DataTypeIec61360.Boolean },
-                                                                                                            { "IRI", Aas.DataTypeIec61360.Iri },
-                                                                                                            { "IRDI", Aas.DataTypeIec61360.Irdi },
-                                                                                                            { "RATIONAL", Aas.DataTypeIec61360.Rational },
-                                                                                                            { "RATIONAL_MEASURE", Aas.DataTypeIec61360.RationalMeasure },
-                                                                                                            { "TIME", Aas.DataTypeIec61360.Time },
-                                                                                                            { "TIMESTAMP", Aas.DataTypeIec61360.Timestamp },
-                                                                                                            { "FILE", Aas.DataTypeIec61360.File },
-                                                                                                            { "HTML", Aas.DataTypeIec61360.Html },
-                                                                                                            { "BLOB", Aas.DataTypeIec61360.Blob }
-                                                                                                        });
+        private static readonly Dictionary<string, Aas.DataTypeIec61360> _dataTypeIec61360FromString = (
+            new Dictionary<string, Aas.DataTypeIec61360>()
+            {
+                { "DATE", Aas.DataTypeIec61360.Date },
+                { "STRING", Aas.DataTypeIec61360.String },
+                { "STRING_TRANSLATABLE", Aas.DataTypeIec61360.StringTranslatable },
+                { "INTEGER_MEASURE", Aas.DataTypeIec61360.IntegerMeasure },
+                { "INTEGER_COUNT", Aas.DataTypeIec61360.IntegerCount },
+                { "INTEGER_CURRENCY", Aas.DataTypeIec61360.IntegerCurrency },
+                { "REAL_MEASURE", Aas.DataTypeIec61360.RealMeasure },
+                { "REAL_COUNT", Aas.DataTypeIec61360.RealCount },
+                { "REAL_CURRENCY", Aas.DataTypeIec61360.RealCurrency },
+                { "BOOLEAN", Aas.DataTypeIec61360.Boolean },
+                { "IRI", Aas.DataTypeIec61360.Iri },
+                { "IRDI", Aas.DataTypeIec61360.Irdi },
+                { "RATIONAL", Aas.DataTypeIec61360.Rational },
+                { "RATIONAL_MEASURE", Aas.DataTypeIec61360.RationalMeasure },
+                { "TIME", Aas.DataTypeIec61360.Time },
+                { "TIMESTAMP", Aas.DataTypeIec61360.Timestamp },
+                { "FILE", Aas.DataTypeIec61360.File },
+                { "HTML", Aas.DataTypeIec61360.Html },
+                { "BLOB", Aas.DataTypeIec61360.Blob }
+            });
 
         /// <summary>
         /// Parse the string representation of <see cref="DataTypeIec61360" />.
@@ -828,7 +828,7 @@ namespace AasCore.Aas3_0
         /// of a literal of <see cref="DataTypeIec61360" />,
         /// return <c>null</c>.
         /// </remarks>
-        public static Aas.DataTypeIec61360? DataTypeIec61360FromString(string? text)
+        public static Aas.DataTypeIec61360? DataTypeIec61360FromString(string text)
         {
             if (_dataTypeIec61360FromString.TryGetValue(text, out DataTypeIec61360 value))
             {
