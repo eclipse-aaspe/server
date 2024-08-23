@@ -113,6 +113,7 @@ namespace IO.Swagger.Lib.V3.Middleware
                 case OperationVariableException:
                 case JsonDeserializationException:
                 case Base64UrlDecoderException:
+                case InvalidOperationException:
                     {
                         context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
                         message.Code = HttpStatusCode.BadRequest.ToString();

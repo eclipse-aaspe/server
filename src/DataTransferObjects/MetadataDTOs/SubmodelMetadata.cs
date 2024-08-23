@@ -17,18 +17,18 @@ using DataTransferObjects.CommonDTOs;
 namespace DataTransferObjects.MetadataDTOs
 {
     public record class SubmodelMetadata(
-            string? id,
-            List<ExtensionDTO>? extensions = null,
-            string category = null,
-            string idShort = null,
-            List<LangStringNameTypeDTO>? displayName = null,
-            List<LangStringTextTypeDTO>? description = null,
-            AdministrativeInformationDTO? administration = null,
-            ModellingKind? kind = null,
-            ReferenceDTO? semanticId = null,
-            List<ReferenceDTO>? supplementalSemanticIds = null,
-            List<QualifierDTO>? qualifiers = null,
-            List<EmbeddedDataSpecificationDTO>? embeddedDataSpecifications = null,
-            List<ISubmodelElementMetadata?> submodelElements = null,
-            string modelType = "Submodel") : IMetadataDTO;
+            string Id,
+            List<ExtensionDTO>? Extensions = null,
+            string? Category = null,
+            string? IdShort = null,
+            List<LangStringNameTypeDTO>? DisplayName = null,
+            List<LangStringTextTypeDTO>? Description = null,
+            AdministrativeInformationDTO? Administration = null,
+            ModellingKind? Kind = null,
+            ReferenceDTO? SemanticId = null,
+            List<ReferenceDTO>? SupplementalSemanticIds = null,
+            List<QualifierDTO>? Qualifiers = null,
+            List<EmbeddedDataSpecificationDTO>? EmbeddedDataSpecifications = null,
+            List<ISubmodelElementMetadata>? SubmodelElements = null,
+            string ModelType = "Submodel") : IMetadataDTO;
 }

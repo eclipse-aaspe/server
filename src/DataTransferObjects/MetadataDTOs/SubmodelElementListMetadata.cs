@@ -17,19 +17,19 @@ using DataTransferObjects.CommonDTOs;
 namespace DataTransferObjects.MetadataDTOs
 {
     public record class SubmodelElementListMetadata(
-            AasSubmodelElements typeValueListElement,
-            List<ExtensionDTO>? extensions = null,
-            string category = null,
-            string idShort = null,
-            List<LangStringNameTypeDTO>? displayName = null,
-            List<LangStringTextTypeDTO>? description = null,
-            ReferenceDTO? semanticId = null,
-            List<ReferenceDTO>? supplementalSemanticIds = null,
-            List<QualifierDTO>? qualifiers = null,
-            List<EmbeddedDataSpecificationDTO>? embeddedDataSpecifications = null,
-            bool? orderRelevant = null,
-            ReferenceDTO? semanticIdListElement = null,
-            DataTypeDefXsd? valueTypeListElement = null,
-            List<ISubmodelElementMetadata?> value = null,
-            string modelType = "SubmodelElementList") : ISubmodelElementMetadata;
+            AasSubmodelElements TypeValueListElement,
+            List<ExtensionDTO>? Extensions = null,
+            string? Category = null,
+            string? IdShort = null,
+            List<LangStringNameTypeDTO>? DisplayName = null,
+            List<LangStringTextTypeDTO>? Description = null,
+            ReferenceDTO? SemanticId = null,
+            List<ReferenceDTO>? SupplementalSemanticIds = null,
+            List<QualifierDTO>? Qualifiers = null,
+            List<EmbeddedDataSpecificationDTO>? EmbeddedDataSpecifications = null,
+            bool? OrderRelevant = null,
+            ReferenceDTO? SemanticIdListElement = null,
+            DataTypeDefXsd? ValueTypeListElement = null,
+            List<ISubmodelElementMetadata>? Value = null,
+            string ModelType = "SubmodelElementList") : ISubmodelElementMetadata;
 }
