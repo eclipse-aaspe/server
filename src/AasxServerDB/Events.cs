@@ -42,69 +42,87 @@ namespace Events
 
         public List<EventPayloadEntry> eventEntries { get; set; }
 
-        public static int collectSubmodelElements(List<ISubmodelElement> submodelElements, DateTime diffTime, List<string> entryTypes,
+        public static int collectSubmodelElements(List<ISubmodelElement> submodelElements, DateTime diffTime, string entryType,
             string submodelId, string idShortPath, List<EventPayloadEntry> entries, List<ISubmodelElement> diffValue, bool noPayload)
         {
             int count = 0;
-            foreach (var entryType in entryTypes)
+            foreach (var sme in submodelElements)
             {
-                foreach (var sme in submodelElements)
-                {
-                    DateTime timeStamp = new DateTime();
+                bool tree = false;
+                bool copy = false;
+                DateTime timeStamp = new DateTime();
 
-                    switch (entryType)
-                    {
-                        case "CREATE":
-                            timeStamp = sme.TimeStampCreate;
-                            break;
-                        case "UPDATE":
-                            timeStamp = sme.TimeStampTree;
-                            break;
-                    }
-                    if ((timeStamp - diffTime).TotalMilliseconds > 1)
-                    {
-                        bool tree = false;
-                        List <ISubmodelElement> children = new List<ISubmodelElement>();
-                        switch (sme)
+                List<ISubmodelElement> children = new List<ISubmodelElement>();
+                switch (sme)
+                {
+                    case ISubmodelElementCollection smc:
+                        children = smc.Value;
+                        break;
+                    case ISubmodelElementList sml:
+                        children = sml.Value;
+                        break;
+                }
+
+                switch (entryType)
+                {
+                    case "CREATE":
+                        timeStamp = sme.TimeStampCreate;
+                        if (sme.TimeStampCreate >= sme.TimeStampTree && (sme.TimeStampCreate - diffTime).TotalMilliseconds > 1)
                         {
-                            case ISubmodelElementCollection smc:
-                                children = smc.Value;
-                                break;
-                            case ISubmodelElementList sml:
-                                children = sml.Value;
-                                break;
-                        }
-                        if (children.Count != 0)
-                        {
-                            if (entryType == "UPDATE")
-                            {
-                                if (sme.TimeStampTree > sme.TimeStamp)
-                                {
-                                    tree = true;
-                                }
-                            }
-                        }
-                        if (!tree)
-                        {
-                            diffValue.Add(sme);
-                            var j = Jsonization.Serialize.ToJsonObject(sme);
-                            var e = new EventPayloadEntry();
-                            e.entryType = entryType;
-                            e.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(timeStamp);
-                            e.payloadType = "sme";
-                            if (!noPayload)
-                            {
-                                e.payload = j.ToJsonString();
-                            }
-                            e.submodelId = submodelId;
-                            e.idShortPath = idShortPath + sme.IdShort;
-                            entries.Add(e);
-                            count++;
+                            copy = true;
                         }
                         else
                         {
-                           count += collectSubmodelElements(children, diffTime, new List<String> { entryType }, submodelId, idShortPath + sme.IdShort + ".", entries, diffValue, noPayload);
+                            if (sme.TimeStampCreate < sme.TimeStampTree && (sme.TimeStampTree - diffTime).TotalMilliseconds > 1)
+                            {
+                                tree = true;
+                            }
                         }
+                        break;
+                    case "UPDATE":
+                        timeStamp = sme.TimeStampTree;
+                        if (sme.TimeStampCreate < sme.TimeStampTree && (sme.TimeStampTree - diffTime).TotalMilliseconds > 1)
+                        {
+                            if (children != null || children.Count != 0)
+                            {
+                                foreach (ISubmodelElement child in children)
+                                {
+                                    if (child.TimeStampTree != sme.TimeStampTree)
+                                    {
+                                        tree = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!tree)
+                            {
+                                copy = true;
+                            }
+                        }
+                        break;
+                }
+                if (copy)
+                {
+                    diffValue.Add(sme);
+                    var j = Jsonization.Serialize.ToJsonObject(sme);
+                    var e = new EventPayloadEntry();
+                    e.entryType = entryType;
+                    e.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(timeStamp);
+                    e.payloadType = "sme";
+                    if (!noPayload)
+                    {
+                        e.payload = j.ToJsonString();
+                    }
+                    e.submodelId = submodelId;
+                    e.idShortPath = idShortPath + sme.IdShort;
+                    entries.Add(e);
+                    count++;
+                }
+                else
+                {
+                    if (tree && children.Count != 0)
+                    {
+                        count += collectSubmodelElements(children, diffTime, entryType, submodelId, idShortPath + sme.IdShort + ".", entries, diffValue, noPayload);
                     }
                 }
             }
@@ -148,10 +166,9 @@ namespace Events
                 }
                 else
                 {
-                    List<string> entryTypes = new List<string>();
-                    entryTypes.Add("UPDATE");
                     var diffTime = DateTime.Parse(diff);
-                    collectSubmodelElements(submodel.SubmodelElements, diffTime, entryTypes, submodel.Id, "", e.eventEntries, diffValue, noPayload);
+                    collectSubmodelElements(submodel.SubmodelElements, diffTime, "CREATE", submodel.Id, "", e.eventEntries, diffValue, noPayload);
+                    collectSubmodelElements(submodel.SubmodelElements, diffTime, "UPDATE", submodel.Id, "", e.eventEntries, diffValue, noPayload);
                 }
             }
 
@@ -234,7 +251,7 @@ namespace Events
 
                 if (entry.payloadType == "sme" && submodel != null && entry.payload != "")
                 {
-                    count += changeSubmodelElement(entry, submodel.SubmodelElements, "", diffValue);
+                    count += changeSubmodelElement(entry, submodel, submodel.SubmodelElements, "", diffValue);
                     if (count > 0)
                     {
                         env[index].setWrite(true);
@@ -248,44 +265,87 @@ namespace Events
             return count;
         }
 
-        public static int changeSubmodelElement(EventPayloadEntry entry, List<ISubmodelElement> submodelElements, string idShortPath, List<ISubmodelElement> diffValue)
+        public static int changeSubmodelElement(EventPayloadEntry entry, IReferable parent, List<ISubmodelElement> submodelElements, string idShortPath, List<ISubmodelElement> diffValue)
         {
             int count = 0;
             var dt = DateTime.Parse(entry.lastUpdate);
 
-            for (int i = 0; i < submodelElements.Count; i++)
-            {
-                var sme = submodelElements[i];
-                if (entry.idShortPath == idShortPath + sme.IdShort)
-                {
-                    MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(entry.payload));
-                    JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
-                    var receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
+            MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(entry.payload));
+            JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+            var receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
+            receiveSme.Parent = parent;
 
-                    if (entry.entryType == "UPDATE")
+            if (entry.entryType == "CREATE")
+            {
+                if (entry.idShortPath.StartsWith(idShortPath))
+                {
+                    var path = entry.idShortPath;
+                    if (idShortPath != "")
                     {
-                        Console.WriteLine("Event SME: " + entry.idShortPath);
-                        receiveSme.Parent = submodelElements[i].Parent;
-                        receiveSme.TimeStampCreate = submodelElements[i].TimeStampCreate;
-                        submodelElements[i] = receiveSme;
-                        receiveSme.SetAllParentsAndTimestamps((IReferable)receiveSme.Parent, dt, receiveSme.TimeStampCreate);
+                        path = path.Replace(idShortPath, "");
+                    }
+                    if (!path.Contains("."))
+                    {
+                        Console.WriteLine("Event CREATE SME: " + entry.idShortPath);
+                        receiveSme.TimeStampCreate = dt;
+                        submodelElements.Add(receiveSme);
+                        receiveSme.SetAllParentsAndTimestamps(parent, dt, receiveSme.TimeStampCreate);
                         receiveSme.SetTimeStamp(dt);
                         diffValue.Add(receiveSme);
                         count++;
                         return count;
                     }
-                }
-                var path = idShortPath + sme.IdShort + ".";
-                if (entry.idShortPath.StartsWith(path))
-                {
-                    switch (sme)
+                    else
                     {
-                        case ISubmodelElementCollection smc:
-                            count += changeSubmodelElement(entry, smc.Value, path, diffValue);
-                            break;
-                        case ISubmodelElementList sml:
-                            count += changeSubmodelElement(entry, sml.Value, path, diffValue);
-                            break;
+                        for (int i = 0; i < submodelElements.Count; i++)
+                        {
+                            var sme = submodelElements[i];
+                            path = idShortPath + sme.IdShort + ".";
+                            switch (sme)
+                            {
+                                case ISubmodelElementCollection smc:
+                                    count += changeSubmodelElement(entry, smc, smc.Value, path, diffValue);
+                                    break;
+                                case ISubmodelElementList sml:
+                                    count += changeSubmodelElement(entry, sml, sml.Value, path, diffValue);
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
+            if (entry.entryType == "UPDATE")
+            {
+                for (int i = 0; i < submodelElements.Count; i++)
+                {
+
+                    var sme = submodelElements[i];
+                    if (entry.idShortPath == idShortPath + sme.IdShort)
+                    {
+                        if (entry.entryType == "UPDATE")
+                        {
+                            Console.WriteLine("Event UPDATE SME: " + entry.idShortPath);
+                            receiveSme.TimeStampCreate = submodelElements[i].TimeStampCreate;
+                            submodelElements[i] = receiveSme;
+                            receiveSme.SetAllParentsAndTimestamps(parent, dt, receiveSme.TimeStampCreate);
+                            receiveSme.SetTimeStamp(dt);
+                            diffValue.Add(receiveSme);
+                            count++;
+                            return count;
+                        }
+                    }
+                    var path = idShortPath + sme.IdShort + ".";
+                    if (entry.idShortPath.StartsWith(path))
+                    {
+                        switch (sme)
+                        {
+                            case ISubmodelElementCollection smc:
+                                count += changeSubmodelElement(entry, smc, smc.Value, path, diffValue);
+                                break;
+                            case ISubmodelElementList sml:
+                                count += changeSubmodelElement(entry, sml, sml.Value, path, diffValue);
+                                break;
+                        }
                     }
                 }
             }
