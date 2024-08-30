@@ -21,9 +21,5 @@
   <ItemGroup>
     <ProjectReference Include="..\AasxCsharpLibrary\AasxCsharpLibrary.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Migrations\" />
-  </ItemGroup>
   
 </Project>

@@ -87,6 +87,8 @@ namespace AasxServerDB.Migrations.Sqlite
 
                     b.HasIndex("SMEId");
 
+                    b.HasIndex("Value");
+
                     b.ToTable("DValueSets");
                 });
 
@@ -108,6 +110,8 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.HasKey("Id");
 
                     b.HasIndex("SMEId");
+
+                    b.HasIndex("Value");
 
                     b.ToTable("IValueSets");
                 });
@@ -235,6 +239,8 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.HasKey("Id");
 
                     b.HasIndex("SMEId");
+
+                    b.HasIndex("Value");
 
                     b.ToTable("SValueSets");
                 });

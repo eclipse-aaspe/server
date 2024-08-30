@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AasxServerDB.Migrations.Postgres
 {
     [DbContext(typeof(PostgreAasContext))]
-    [Migration("20240705095057_InitialCreate")]
+    [Migration("20240820074549_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -101,6 +101,8 @@ namespace AasxServerDB.Migrations.Postgres
 
                     b.HasIndex("SMEId");
 
+                    b.HasIndex("Value");
+
                     b.ToTable("DValueSets");
                 });
 
@@ -124,6 +126,8 @@ namespace AasxServerDB.Migrations.Postgres
                     b.HasKey("Id");
 
                     b.HasIndex("SMEId");
+
+                    b.HasIndex("Value");
 
                     b.ToTable("IValueSets");
                 });
@@ -259,6 +263,8 @@ namespace AasxServerDB.Migrations.Postgres
                     b.HasKey("Id");
 
                     b.HasIndex("SMEId");
+
+                    b.HasIndex("Value");
 
                     b.ToTable("SValueSets");
                 });

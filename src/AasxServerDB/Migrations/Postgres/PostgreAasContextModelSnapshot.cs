@@ -98,6 +98,8 @@ namespace AasxServerDB.Migrations.Postgres
 
                     b.HasIndex("SMEId");
 
+                    b.HasIndex("Value");
+
                     b.ToTable("DValueSets");
                 });
 
@@ -121,6 +123,8 @@ namespace AasxServerDB.Migrations.Postgres
                     b.HasKey("Id");
 
                     b.HasIndex("SMEId");
+
+                    b.HasIndex("Value");
 
                     b.ToTable("IValueSets");
                 });
@@ -256,6 +260,8 @@ namespace AasxServerDB.Migrations.Postgres
                     b.HasKey("Id");
 
                     b.HasIndex("SMEId");
+
+                    b.HasIndex("Value");
 
                     b.ToTable("SValueSets");
                 });

@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AasxServerDB.Migrations.Sqlite
 {
     [DbContext(typeof(SqliteAasContext))]
-    [Migration("20240705094953_InitialCreate")]
+    [Migration("20240820074454_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -90,6 +90,8 @@ namespace AasxServerDB.Migrations.Sqlite
 
                     b.HasIndex("SMEId");
 
+                    b.HasIndex("Value");
+
                     b.ToTable("DValueSets");
                 });
 
@@ -111,6 +113,8 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.HasKey("Id");
 
                     b.HasIndex("SMEId");
+
+                    b.HasIndex("Value");
 
                     b.ToTable("IValueSets");
                 });
@@ -238,6 +242,8 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.HasKey("Id");
 
                     b.HasIndex("SMEId");
+
+                    b.HasIndex("Value");
 
                     b.ToTable("SValueSets");
                 });
