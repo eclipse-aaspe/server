@@ -2168,42 +2168,6 @@ namespace IO.Swagger.Controllers
             return NoContent();
         }
 
-        ///// <summary>
-        ///// Creates a new Asset Administration Shell
-        ///// </summary>
-        ///// <param name="body">Asset Administration Shell object</param>
-        ///// <response code="201">Asset Administration Shell created successfully</response>
-        ///// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
-        ///// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
-        ///// <response code="403">Forbidden</response>
-        ///// <response code="409">Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.</response>
-        ///// <response code="500">Internal Server Error</response>
-        ///// <response code="0">Default error handling for unmentioned status codes</response>
-        //[HttpPost]
-        //[Route("/shells")]
-        //[ValidateModelState]
-        //[SwaggerOperation("PostAssetAdministrationShell")]
-        //[SwaggerResponse(statusCode: 201, type: typeof(AssetAdministrationShell), description: "Asset Administration Shell created successfully")]
-        //[SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-        //[SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
-        //[SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-        //[SwaggerResponse(statusCode: 409, type: typeof(Result),
-        //                    description:
-        //                    "Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.")]
-        //[SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-        //[SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        //public virtual IActionResult PostAssetAdministrationShell([FromBody] AssetAdministrationShell? body)
-        //{
-        //    if (body == null)
-        //    {
-        //        return BadRequest($"Could not proceed, as {nameof(body)} is null.");
-        //    }
-
-        //    var output = _aasService.CreateAssetAdministrationShell(body);
-
-        //    return CreatedAtAction("PostAssetAdministrationShell", output);
-        //}
-
         /// <summary>
         /// Creates a new Asset Administration Shell
         /// </summary>
