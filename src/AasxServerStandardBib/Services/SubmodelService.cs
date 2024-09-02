@@ -236,7 +236,7 @@ namespace AasxServerStandardBib.Services
 
             var timeStamp = DateTime.UtcNow;
             smeParent.TimeStampDelete = timeStamp;
-            smeParent.SetTimeStamp(timeStamp);
+            smeParent.SetTimeStampTree(timeStamp);
 
             if (_packageEnvService.IsSubmodelPresent(submodelIdentifier, out _, out int packageIndex))
                 _packageEnvService.setWrite(packageIndex, true);
