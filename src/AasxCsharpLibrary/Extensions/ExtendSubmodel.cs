@@ -427,7 +427,7 @@ namespace Extensions
 
             if (submodel.SubmodelElements != null)
                 foreach (var sme in submodel.SubmodelElements)
-                    sme.SetAllParentsAndTimestamps(submodel, DateTime.UtcNow, DateTime.UtcNow);
+                    sme.SetAllParentsAndTimestamps(submodel, DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow);
         }
 
 
