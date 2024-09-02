@@ -1,4 +1,4 @@
-﻿using AasSecurity.Exceptions;
+using AasSecurity.Exceptions;
 using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Logging;
 using AdminShellNS.Exceptions;
@@ -88,6 +88,8 @@ namespace IO.Swagger.Lib.V3.Middleware
                         message.MessageType = MessageTypeEnum.Error;
                         break;
                     }
+                case InvalidPaginationParameterException:
+                case Jsonization.Exception:
                 case InvalidIdShortPathException:
                 case InvalidUpdateResourceException:
                 case EmptyCursorException:

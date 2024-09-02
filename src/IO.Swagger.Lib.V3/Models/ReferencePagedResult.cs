@@ -1,12 +1,14 @@
-﻿using IO.Swagger.Models;
+using IO.Swagger.Models;
 using System.Collections.Generic;
 
 namespace IO.Swagger.Lib.V3.Models
 {
     public class ReferencePagedResult : PagedResult
     {
-        public new List<IReference>? result { get; set; }
-
-        public new PagedResultPagingMetadata? paging_metadata { get; set; }
+        public ReferencePagedResult(List<IReference>? result, PagedResultPagingMetadata? pagingMetadata)
+        {
+            this.result = result.ConvertAll(a=> (IClass)a);
+            paging_metadata = pagingMetadata;
+        }
     }
 }

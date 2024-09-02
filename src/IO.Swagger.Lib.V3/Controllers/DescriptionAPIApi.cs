@@ -42,15 +42,19 @@ public class DescriptionAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
     public virtual IActionResult GetDescription()
     {
+        var output = new ServiceDescription();
         _serviceDescription.Profiles = new List<ServiceProfiles>
                                                     {
                                                         ServiceProfiles.AasxFileServerServiceSpecificationSSP001,
                                                         ServiceProfiles.SubmodelRepositoryServiceSpecificationSSP001,
+                                                        ServiceProfiles.SubmodelRepositoryServiceSpecificationSSP002,
                                                         ServiceProfiles.AssetAdministrationShellRepositoryServiceSpecificationSSP001,
+                                                        ServiceProfiles.AssetAdministrationShellRepositoryServiceSpecificationSSP002,
                                                         ServiceProfiles.AssetAdministrationShellRegistryServiceSpecificationSSP001,
                                                         ServiceProfiles.DiscoveryServiceSpecificationSSP001,
                                                         ServiceProfiles.ConceptDescriptionServiceSpecificationSSP001
                                                     };
+        //return new ObjectResult(_serviceDescription.ToJson());
         return new ObjectResult(_serviceDescription.ToJson());
     }
 }

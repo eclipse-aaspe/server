@@ -567,7 +567,8 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
             {
                 // from database
                 using var db = new AasContext();
-                aasList.AddRange(from aasDB in db.AASSets where assetList.Contains(aasDB.GlobalAssetId) select aasDB.Identifier);
+                var withoutAssetId = assetList.Count == 0;
+                aasList.AddRange(from aasDB in db.AASSets where withoutAssetId || assetList.Contains(aasDB.GlobalAssetId) select aasDB.Identifier);
             }
 
             return new ObjectResult(aasList);
