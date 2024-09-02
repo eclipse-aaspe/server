@@ -408,7 +408,7 @@ namespace AasxServerDB
                     !restrictSME ||
                     (restrictSME &&
                     (!withSemanticId || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) &&
-                    (!withDiff || sme.TimeStampTree.CompareTo(diffDateTime) > 0)));
+                    (!withDiff || sme.TimeStamp.CompareTo(diffDateTime) > 0)));
             var sm = db.SMSets
                 .Where(sm =>
                     !restrictSM ||
@@ -460,7 +460,7 @@ namespace AasxServerDB
                     smId = sme.sm.Identifier ?? string.Empty,
                     idShort = sme.sme.IdShort,
                     parentSMEId = sme.sme.ParentSMEId,
-                    timeStampTree = sme.sme.TimeStampTree,
+                    timeStamp= sme.sme.TimeStamp,
                     sme.value
                 });
 
@@ -482,7 +482,7 @@ namespace AasxServerDB
                         value = sme.value,
                         idShortPath = path,
                         url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sme.smId)}/submodel-elements/{path}",
-                        timeStampTree = TimeStamp.TimeStamp.DateTimeToString(sme.timeStampTree)
+                        timeStamp = TimeStamp.TimeStamp.DateTimeToString(sme.timeStamp)
                     }
                 );
             }
