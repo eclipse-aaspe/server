@@ -1,4 +1,4 @@
-﻿using AdminShellNS;
+using AdminShellNS;
 using AdminShellNS.Display;
 using System;
 using System.Collections.Generic;
@@ -325,19 +325,22 @@ namespace Extensions
             }
         }
 
-        public static void SetTimeStamp(this IReferable? referable, DateTime timeStamp)
+        public static void SetTimeStamp(this IReferable? referable, DateTime timeStamp, bool isDelete = false)
         {
             IReferable? newReferable = referable;
             newReferable.TimeStamp = timeStamp;
             do
             {
-                newReferable.TimeStampTree = timeStamp;
+                if (isDelete)
+                    newReferable.TimeStampDelete = timeStamp;
+                else 
+                    newReferable.TimeStampTree = timeStamp;
+
                 if (newReferable != newReferable.Parent)
-                {
                     newReferable = (IReferable) newReferable.Parent;
-                }
                 else
                     newReferable = null;
+
             } while (newReferable != null);
         }
 
@@ -435,6 +438,7 @@ namespace Extensions
             referable.TimeStamp = timeStamp;
             referable.TimeStampTree = timeStamp;
             referable.TimeStampCreate = timeStampCreate;
+            referable.TimeStampDelete = timeStamp;
 
             foreach (var submodelElement in referable.EnumerateChildren())
             {

@@ -26,6 +26,7 @@ namespace AasxServerDB
                 aas.TimeStampCreate = aasDB.TimeStampCreate;
                 aas.TimeStamp = aasDB.TimeStamp;
                 aas.TimeStampTree = aasDB.TimeStampTree;
+                aas.TimeStampDelete = aasDB.TimeStampDelete;
 
                 AdminShellPackageEnv? aasEnv = new AdminShellPackageEnv();
                 aasEnv.SetFilename(path);
@@ -76,6 +77,7 @@ namespace AasxServerDB
                 submodel.TimeStampCreate = smDB.TimeStampCreate;
                 submodel.TimeStamp = smDB.TimeStamp;
                 submodel.TimeStampTree = smDB.TimeStampTree;
+                submodel.TimeStampDelete = smDB.TimeStampDelete;
                 submodel.SetAllParents();
 
                 return submodel;
@@ -246,6 +248,7 @@ namespace AasxServerDB
             sme.TimeStamp = smeSet.TimeStamp;
             sme.TimeStampCreate = smeSet.TimeStampCreate;
             sme.TimeStampTree = smeSet.TimeStampTree;
+            sme.TimeStampDelete = smeSet.TimeStampDelete;
             if (!smeSet.SemanticId.IsNullOrEmpty())
                 sme.SemanticId = new Reference(ReferenceTypes.ExternalReference,
                     new List<IKey>() { new Key(KeyTypes.GlobalReference, smeSet.SemanticId) });

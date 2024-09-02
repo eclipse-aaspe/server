@@ -234,6 +234,8 @@ namespace AasxServerStandardBib.Services
                 throw new NotFoundException($"Requested SubmodelElement NOT found in submodel with Id {submodelIdentifier}");
             }
 
+            submodelElement.SetTimeStamp(DateTime.UtcNow, true);
+
             if (_packageEnvService.IsSubmodelPresent(submodelIdentifier, out _, out int packageIndex))
                 _packageEnvService.setWrite(packageIndex, true);
             Program.signalNewData(1);
