@@ -354,7 +354,8 @@
                             <td style="word-break:keep-all;color:lightgray;font-size:x-small">
                                 @($"UPDATE {TimeStamp.DateTimeToString(aasDB.TimeStamp)}")<br/>
                                 @($"CREATE {TimeStamp.DateTimeToString(aasDB.TimeStampCreate)}")<br/>
-                                @($"TREE {TimeStamp.DateTimeToString(aasDB.TimeStampTree)}")
+                                @($"TREE {TimeStamp.DateTimeToString(aasDB.TimeStampTree)}")<br />
+                                @($"DELETE {TimeStamp.DateTimeToString(aasDB.TimeStampDelete)}")
                             </td>
                             <td style="word-break:keep-all">
                                 <a href="@($"{shorturl}/aasx?aasxid={aasDB.AASXId}")" target="_blank">aasx </a>
@@ -396,6 +397,7 @@
                         <span>@($"UPDATE {TimeStamp.DateTimeToString(aasDB.TimeStamp)}")</span>
                         <span>@($"CREATE {TimeStamp.DateTimeToString(aasDB.TimeStampCreate)}")</span>
                         <span>@($"TREE {TimeStamp.DateTimeToString(aasDB.TimeStampTree)}")</span>
+                        <span>@($"DELETE {TimeStamp.DateTimeToString(aasDB.TimeStampDelete)}")</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <a href="@($"{shorturl}/aasx?aasxid={aasDB.AASXId}")" target="_blank">aasx </a>
                         <a href="@($"{shorturl}/sm?aasid={aasDB.Id}")" target="_blank">sm</a>
@@ -461,7 +463,8 @@
                             <td style="word-break:keep-all;color:lightgray;font-size:x-small">
                                 @($"UPDATE {TimeStamp.DateTimeToString(smDB.TimeStamp)}")<br/>
                                 @($"CREATE {TimeStamp.DateTimeToString(smDB.TimeStampCreate)}")<br/>
-                                @($"TREE {TimeStamp.DateTimeToString(smDB.TimeStampTree)}")
+                                @($"TREE {TimeStamp.DateTimeToString(smDB.TimeStampTree)}")<br />
+                                @($"DELETE {TimeStamp.DateTimeToString(smDB.TimeStampDelete)}")
                             </td>
                             <td style="word-break:keep-all">
                                 <a href="@($"{shorturl}/aasx?aasxid={smDB.AASXId}")" target="_blank">aasx </a>
@@ -505,6 +508,7 @@
                         <span>@($"UPDATE {TimeStamp.DateTimeToString(smDB.TimeStamp)}")</span>
                         <span>@($"CREATE {TimeStamp.DateTimeToString(smDB.TimeStampCreate)}")</span>
                         <span>@($"TREE {TimeStamp.DateTimeToString(smDB.TimeStampTree)}")</span>
+                            <span>@($"DELETE {TimeStamp.DateTimeToString(smDB.TimeStampDelete)}")</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <a href="@($"{shorturl}/aasx?aasxid={smDB.AASXId}")" target="_blank">aasx </a>
                         <a href="@($"{shorturl}/aas?aasid={smDB.AASId}")" target="_blank">aas </a>
@@ -668,7 +672,8 @@
                             <td style="word-break:keep-all;color:lightgray;font-size:x-small">
                                 @($"UPDATE {TimeStamp.DateTimeToString(smeDB.TimeStamp)}")<br/>
                                 @($"CREATE {TimeStamp.DateTimeToString(smeDB.TimeStampCreate)}")<br/>
-                                @($"TREE {TimeStamp.DateTimeToString(smeDB.TimeStampTree)}")
+                                @($"TREE {TimeStamp.DateTimeToString(smeDB.TimeStampTree)}")<br />
+                                @($"DELETE {TimeStamp.DateTimeToString(smeDB.TimeStampDelete)}")
                             </td>
                             <td style="word-break:keep-all">
                                 <a href="@($"{shorturl}/sm?smid={smeDB.SMId}")" target="_blank">sm </a>
@@ -807,6 +812,7 @@
                         <span>@($"UPDATE {TimeStamp.DateTimeToString(smeDB.TimeStamp)}")</span>
                         <span>@($"CREATE {TimeStamp.DateTimeToString(smeDB.TimeStampCreate)}")</span>
                         <span>@($"TREE {TimeStamp.DateTimeToString(smeDB.TimeStampTree)}")</span>
+                        <span>@($"DELETE {TimeStamp.DateTimeToString(smeDB.TimeStampDelete)}")</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <a href="@($"{shorturl}/sm?smid={smeDB.SMId}")" target="_blank">sm </a>
                         @if (smeDB.ParentSMEId != null)

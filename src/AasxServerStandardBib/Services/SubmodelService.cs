@@ -179,7 +179,7 @@ namespace AasxServerStandardBib.Services
             }
 
             var timeStamp = DateTime.UtcNow;
-            newSubmodelElement.SetAllParentsAndTimestamps(smeParent, timeStamp, timeStamp);
+            newSubmodelElement.SetAllParentsAndTimestamps(smeParent, timeStamp, timeStamp, timeStamp);
             newSubmodelElement.SetTimeStamp(timeStamp);
             if (_packageEnvService.IsSubmodelPresent(submodelIdentifier, out _, out int packageIndex))
                 _packageEnvService.setWrite(packageIndex, true);
@@ -233,6 +233,10 @@ namespace AasxServerStandardBib.Services
             {
                 throw new NotFoundException($"Requested SubmodelElement NOT found in submodel with Id {submodelIdentifier}");
             }
+
+            var timeStamp = DateTime.UtcNow;
+            smeParent.TimeStampDelete = timeStamp;
+            smeParent.SetTimeStampTree(timeStamp);
 
             if (_packageEnvService.IsSubmodelPresent(submodelIdentifier, out _, out int packageIndex))
                 _packageEnvService.setWrite(packageIndex, true);
@@ -391,7 +395,7 @@ namespace AasxServerStandardBib.Services
             }
 
             var timeStamp = DateTime.UtcNow;
-            newSubmodelElement.SetAllParentsAndTimestamps(submodel, timeStamp, timeStamp);
+            newSubmodelElement.SetAllParentsAndTimestamps(submodel, timeStamp, timeStamp, timeStamp);
             newSubmodelElement.SetTimeStamp(timeStamp);
             if (_packageEnvService.IsSubmodelPresent(submodelIdentifier, out _, out int packageIndex))
                 _packageEnvService.setWrite(packageIndex, true);
@@ -467,7 +471,7 @@ namespace AasxServerStandardBib.Services
                 }
 
                 var timeStamp = DateTime.UtcNow;
-                newSme.SetAllParentsAndTimestamps(smeParent, timeStamp, timeStamp);
+                newSme.SetAllParentsAndTimestamps(smeParent, timeStamp, timeStamp, timeStamp);
                 newSme.SetTimeStamp(timeStamp);
                 if (_packageEnvService.IsSubmodelPresent(submodelIdentifier, out _, out int packageIndex))
                     _packageEnvService.setWrite(packageIndex, true);

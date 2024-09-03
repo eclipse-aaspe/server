@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -37,7 +37,8 @@ namespace AasxServerDB.Migrations.Sqlite
                     GlobalAssetId = table.Column<string>(type: "TEXT", nullable: true),
                     TimeStampCreate = table.Column<DateTime>(type: "TEXT", nullable: false),
                     TimeStamp = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    TimeStampTree = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    TimeStampTree = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    TimeStampDelete = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -63,7 +64,8 @@ namespace AasxServerDB.Migrations.Sqlite
                     IdShort = table.Column<string>(type: "TEXT", nullable: true),
                     TimeStampCreate = table.Column<DateTime>(type: "TEXT", nullable: false),
                     TimeStamp = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    TimeStampTree = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    TimeStampTree = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    TimeStampDelete = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -95,7 +97,8 @@ namespace AasxServerDB.Migrations.Sqlite
                     IdShort = table.Column<string>(type: "TEXT", nullable: true),
                     TimeStampCreate = table.Column<DateTime>(type: "TEXT", nullable: false),
                     TimeStamp = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    TimeStampTree = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    TimeStampTree = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    TimeStampDelete = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -208,19 +211,9 @@ namespace AasxServerDB.Migrations.Sqlite
                 column: "SMEId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DValueSets_Value",
-                table: "DValueSets",
-                column: "Value");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_IValueSets_SMEId",
                 table: "IValueSets",
                 column: "SMEId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_IValueSets_Value",
-                table: "IValueSets",
-                column: "Value");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OValueSets_SMEId",
@@ -251,11 +244,6 @@ namespace AasxServerDB.Migrations.Sqlite
                 name: "IX_SValueSets_SMEId",
                 table: "SValueSets",
                 column: "SMEId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_SValueSets_Value",
-                table: "SValueSets",
-                column: "Value");
         }
 
         /// <inheritdoc />

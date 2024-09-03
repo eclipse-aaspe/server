@@ -197,7 +197,9 @@
                     <span style="color:lightgray;">CREATE @TimeStamp.DateTimeToString(r.TimeStampCreate)</span>
                     <br/>
                     <span style="color:lightgray;">TREE @TimeStamp.DateTimeToString(r.TimeStampTree)</span>
-                    <br/>
+                    <br />
+                    <span style="color:lightgray;">DELETE @TimeStamp.DateTimeToString(r.TimeStampDelete)</span>
+                    <br />
             @code {
 
                 private void SetTimeStamp()
@@ -565,6 +567,8 @@
                         <span style="color:lightgray;">UPDATE @TimeStamp.DateTimeToString(refsme.TimeStamp)</span>
                         <br />
                         <span style="color:lightgray;">CREATE @TimeStamp.DateTimeToString(refsme.TimeStampCreate)</span>
+                        <br />
+                        <span style="color:lightgray;">DELETE @TimeStamp.DateTimeToString(refsme.TimeStampDelete)</span>
                         <br />
                     }
                     else
