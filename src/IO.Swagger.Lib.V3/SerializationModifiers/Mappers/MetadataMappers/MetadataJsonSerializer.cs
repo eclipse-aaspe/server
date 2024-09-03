@@ -7,6 +7,8 @@ using DataTransferObjects.MetadataDTOs;
 using AasCore.Aas3_0;
 using DataTransferObjects.CommonDTOs;
 using System.Collections.Generic;
+using IO.Swagger.Lib.V3.Exceptions;
+using static AasxServerStandardBib.TimeSeriesPlotting.PlotArguments;
 
 public class MetadataJsonSerializer
 {
@@ -18,7 +20,7 @@ public class MetadataJsonSerializer
         {
             return TransformRelationshipElement(relationshipElementMetadata);
         }
-        else if (that is IAnnotatedRelationshipElement annotatedRelationshipElementMetadata)
+        else if (that is AnnotatedRelationshipElementMetadata annotatedRelationshipElementMetadata)
         {
             return TransformAnnotatedRelationshipElement(annotatedRelationshipElementMetadata);
         }
@@ -44,7 +46,7 @@ public class MetadataJsonSerializer
         }
         else
         {
-            throw new InvalidOperationException($"The Metadata serialization of type {that.GetType()} is not supported.");
+            throw new InvalidSerializationModifierException("metadata", that.GetType().Name);
         }
     }
 
@@ -138,7 +140,61 @@ public class MetadataJsonSerializer
 
         return result;
     }
-    private static JsonNode? TransformAnnotatedRelationshipElement(IAnnotatedRelationshipElement annotatedRelationshipElementMetadata) => throw new NotImplementedException();
+    private static JsonNode? TransformAnnotatedRelationshipElement(AnnotatedRelationshipElementMetadata that)
+    {
+        var result = new JsonObject();
+
+        if (that.Extensions != null)
+        {
+            result["extensions"] = TransformExtensions(that.Extensions);
+        }
+
+        if (that.Category != null)
+        {
+            result["category"] = JsonValue.Create(
+                that.Category);
+        }
+
+        if (that.IdShort != null)
+        {
+            result["idShort"] = JsonValue.Create(
+                that.IdShort);
+        }
+
+        if (that.DisplayName != null)
+        {
+            result["displayName"] = TransformDisplayName(that.DisplayName);
+        }
+
+        if (that.Description != null)
+        {
+            result["description"] = TransformDescription(that.Description);
+        }
+
+        if (that.SemanticId != null)
+        {
+            result["semanticId"] = TransformReference(that.SemanticId);
+        }
+
+        if (that.SupplementalSemanticIds != null)
+        {
+            result["supplementalSemanticIds"] = TransformReferenceList(that.SupplementalSemanticIds);
+        }
+
+        if (that.Qualifiers != null)
+        {
+            result["qualifiers"] = TransformQualifiers(that.Qualifiers);
+        }
+
+        if (that.EmbeddedDataSpecifications != null)
+        {
+            result["embeddedDataSpecifications"] = TransformEmbeddedDataSpecifications(that.EmbeddedDataSpecifications);
+        }
+
+        result["modelType"] = "AnnotatedRelationshipElement";
+
+        return result;
+    }
     
     private static JsonNode? TransformRelationshipElement(RelationshipElementMetadata that)
     {
