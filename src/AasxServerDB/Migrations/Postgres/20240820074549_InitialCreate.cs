@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -38,7 +38,8 @@ namespace AasxServerDB.Migrations.Postgres
                     GlobalAssetId = table.Column<string>(type: "text", nullable: true),
                     TimeStampCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     TimeStamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    TimeStampTree = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    TimeStampTree = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStampDelete = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -64,7 +65,8 @@ namespace AasxServerDB.Migrations.Postgres
                     IdShort = table.Column<string>(type: "text", nullable: true),
                     TimeStampCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     TimeStamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    TimeStampTree = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    TimeStampTree = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStampDelete = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -96,7 +98,8 @@ namespace AasxServerDB.Migrations.Postgres
                     IdShort = table.Column<string>(type: "text", nullable: true),
                     TimeStampCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     TimeStamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    TimeStampTree = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    TimeStampTree = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStampDelete = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
