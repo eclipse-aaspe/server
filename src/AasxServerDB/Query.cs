@@ -84,8 +84,8 @@ namespace AasxServerDB
             Console.WriteLine("Total number of SMEs " + new AasContext().SMESets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
 
             watch.Restart();
-            var smeWithValue = GetSMEWithValue(db, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper);
-            var count = smeWithValue.Count();
+            var enumerable = GetSMEWithValue(db, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper);
+            var count = enumerable.Count();
             Console.WriteLine("Found " + count + " SMEs in " + watch.ElapsedMilliseconds + "ms");
 
             return count;
