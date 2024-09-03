@@ -20,7 +20,7 @@ public class MetadataJsonSerializer
         {
             return TransformRelationshipElement(relationshipElementMetadata);
         }
-        else if (that is IAnnotatedRelationshipElement annotatedRelationshipElementMetadata)
+        else if (that is AnnotatedRelationshipElementMetadata annotatedRelationshipElementMetadata)
         {
             return TransformAnnotatedRelationshipElement(annotatedRelationshipElementMetadata);
         }
@@ -50,7 +50,7 @@ public class MetadataJsonSerializer
         }
         else
         {
-            throw new InvalidOperationException($"The Metadata serialization of type {that.GetType()} is not supported.");
+            throw new InvalidSerializationModifierException("metadata", that.GetType().Name);
         }
     }
 
@@ -199,7 +199,6 @@ public class MetadataJsonSerializer
 
         return result;
     }
-    private static JsonNode? TransformAnnotatedRelationshipElement(IAnnotatedRelationshipElement annotatedRelationshipElementMetadata) => throw new NotImplementedException();
     
     private static JsonNode? TransformRelationshipElement(RelationshipElementMetadata that)
     {

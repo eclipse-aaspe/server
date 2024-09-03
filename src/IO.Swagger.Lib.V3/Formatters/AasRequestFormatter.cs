@@ -213,8 +213,7 @@ namespace IO.Swagger.Lib.V3.Formatters
                                               submodelMetadata.SemanticId,
                                               submodelMetadata.SupplementalSemanticIds,
                                               submodelMetadata.Qualifiers,
-                                              submodelMetadata.EmbeddedDataSpecifications,
-                                              valueMetadata);
+                                              submodelMetadata.EmbeddedDataSpecifications);
             }
 
             return output;
@@ -276,7 +275,7 @@ namespace IO.Swagger.Lib.V3.Formatters
                     output = new AnnotatedRelationshipElementMetadata(annotatedRelElement.Extensions, annotatedRelElement.Category, annotatedRelElement.IdShort,
                                                                       annotatedRelElement.DisplayName, annotatedRelElement.Description, annotatedRelElement.SemanticId,
                                                                       annotatedRelElement.SupplementalSemanticIds, annotatedRelElement.Qualifiers,
-                                                                      annotatedRelElement.EmbeddedDataSpecifications, valueMetadata);
+                                                                      annotatedRelElement.EmbeddedDataSpecifications);
                     break;
                 }
                 case "basiceventelement":
@@ -290,7 +289,7 @@ namespace IO.Swagger.Lib.V3.Formatters
                     var entity = JsonSerializer.Deserialize<EntityMetadata>(node.ToJsonString(), serializerOptions);
 
                     output = new EntityMetadata(entity.EntityType, entity.Extensions, entity.Category, entity.IdShort, entity.DisplayName, entity.Description,
-                                                entity.SemanticId, entity.SupplementalSemanticIds, entity.Qualifiers, entity.EmbeddedDataSpecifications, valueMetadata);
+                                                entity.SemanticId, entity.SupplementalSemanticIds, entity.Qualifiers, entity.EmbeddedDataSpecifications);
                     break;
                 }
                 case "file":
@@ -316,8 +315,7 @@ namespace IO.Swagger.Lib.V3.Formatters
                     var smeColl = JsonSerializer.Deserialize<SubmodelElementCollectionMetadata>(node.ToJsonString(), serializerOptions);
 
                     output = new SubmodelElementCollectionMetadata(smeColl.Extensions, smeColl.Category, smeColl.IdShort, smeColl.DisplayName, smeColl.Description,
-                                                                   smeColl.SemanticId, smeColl.SupplementalSemanticIds, smeColl.Qualifiers, smeColl.EmbeddedDataSpecifications,
-                                                                   valueMetadata);
+                                                                   smeColl.SemanticId, smeColl.SupplementalSemanticIds, smeColl.Qualifiers, smeColl.EmbeddedDataSpecifications);
 
                     break;
                 }
@@ -328,7 +326,7 @@ namespace IO.Swagger.Lib.V3.Formatters
                     output = new SubmodelElementListMetadata(smeList.TypeValueListElement, smeList.Extensions, smeList.Category, smeList.IdShort, smeList.DisplayName,
                                                              smeList.Description, smeList.SemanticId, smeList.SupplementalSemanticIds, smeList.Qualifiers,
                                                              smeList.EmbeddedDataSpecifications, smeList.OrderRelevant, smeList.SemanticIdListElement,
-                                                             smeList.ValueTypeListElement, valueMetadata);
+                                                             smeList.ValueTypeListElement);
                     break;
                 }
             }
