@@ -11,7 +11,6 @@ namespace AasxServerDB
         public static List<AASXSet> GetPageAASXData(int size = 1000, string searchLower = "", long aasxid = 0)
         {
             return new AasContext().AASXSets
-                .OrderBy(a => a.Id)
                 .Where(a => (aasxid == 0 || a.Id == aasxid) &&
                 (searchLower.IsNullOrEmpty() || a.AASX.ToLower().Contains(searchLower)))
                 .Take(size)
@@ -22,7 +21,6 @@ namespace AasxServerDB
         {
             bool withDateTime = !dateTime.Equals(DateTime.MinValue);
             return new AasContext().AASSets
-                .OrderBy(a => a.Id)
                 .Where(a => (aasxid == 0 || a.AASXId == aasxid) && (aasid == 0 || a.Id == aasid) &&
                     (searchLower.IsNullOrEmpty() ||
                     (a.IdShort != null && a.IdShort.ToLower().Contains(searchLower)) ||
@@ -38,7 +36,6 @@ namespace AasxServerDB
         {
             bool withDateTime = !dateTime.Equals(DateTime.MinValue);
             return new AasContext().SMSets
-                .OrderBy(s => s.Id)
                 .Where(s => (aasxid == 0 || s.AASXId == aasxid) && (aasid == 0 || s.AASId == aasid) && (smid == 0 || s.Id == smid) &&
                     (searchLower.IsNullOrEmpty() ||
                     (s.Identifier != null && s.Identifier.ToLower().Contains(searchLower)) ||
@@ -56,7 +53,6 @@ namespace AasxServerDB
             using (AasContext db = new AasContext())
             {
                 data = db.SMESets
-                    .OrderBy(sme => sme.Id)
                     .Where(sme => (smid == 0 || sme.SMId == smid) && (smeid == 0 || sme.Id == smeid) && (parid == 0 || sme.ParentSMEId == parid) &&
                         (searchLower.IsNullOrEmpty() ||
                         (sme.IdShort != null  && sme.IdShort.ToLower().Contains(searchLower)) ||
@@ -78,7 +74,6 @@ namespace AasxServerDB
         public static List<SValueSet> GetPageSValueData(int size = 1000, string searchLower = "", long smeid = 0)
         {
             return new AasContext().SValueSets
-                .OrderBy(v => v.SMEId)
                 .Where(v => (smeid == 0 || v.SMEId == smeid) &&
                     (searchLower.IsNullOrEmpty() ||
                     (v.Value != null && v.Value.ToLower().Contains(searchLower)) ||
@@ -93,7 +88,6 @@ namespace AasxServerDB
                 iEqual = 0;
 
             return new AasContext().IValueSets
-                .OrderBy(v => v.SMEId)
                 .Where(v => (smeid == 0 || v.SMEId == smeid) &&
                             (searchLower.IsNullOrEmpty() ||
                             (v.Annotation != null && v.Annotation.ToLower().Contains(searchLower)) ||
@@ -108,7 +102,6 @@ namespace AasxServerDB
                 dEqual = 0;
 
             return new AasContext().DValueSets
-                .OrderBy(v => v.SMEId)
                 .Where(v => (smeid == 0 || v.SMEId == smeid) &&
                             (searchLower.IsNullOrEmpty() ||
                             (v.Annotation != null && v.Annotation.ToLower().Contains(searchLower)) ||
@@ -120,7 +113,6 @@ namespace AasxServerDB
         public static List<OValueSet> GetPageOValueData(int size = 1000, string searchLower = "", long smeid = 0)
         {
             return new AasContext().OValueSets
-                .OrderBy(v => v.SMEId)
                 .Where(v => (smeid == 0 || v.SMEId == smeid) &&
                     (searchLower.IsNullOrEmpty() ||
                     (v.Attribute != null && v.Attribute.ToLower().Contains(searchLower)) ||
