@@ -100,7 +100,7 @@ namespace AasxTimeSeries
                             var sm = env.AasEnv.FindSubmodel(smr);
                             if (sm != null && sm.IdShort != null)
                             {
-                                sm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp);
+                                sm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp, timeStamp);
                                 sm.SetTimeStamp(timeStamp);
                                 if (sm.SubmodelElements == null)
                                     continue;
