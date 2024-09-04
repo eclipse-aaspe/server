@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -38,7 +38,8 @@ namespace AasxServerDB.Migrations.Postgres
                     GlobalAssetId = table.Column<string>(type: "text", nullable: true),
                     TimeStampCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     TimeStamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    TimeStampTree = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    TimeStampTree = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStampDelete = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -64,7 +65,8 @@ namespace AasxServerDB.Migrations.Postgres
                     IdShort = table.Column<string>(type: "text", nullable: true),
                     TimeStampCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     TimeStamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    TimeStampTree = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    TimeStampTree = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStampDelete = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -96,7 +98,8 @@ namespace AasxServerDB.Migrations.Postgres
                     IdShort = table.Column<string>(type: "text", nullable: true),
                     TimeStampCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     TimeStamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    TimeStampTree = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    TimeStampTree = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStampDelete = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -209,19 +212,9 @@ namespace AasxServerDB.Migrations.Postgres
                 column: "SMEId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DValueSets_Value",
-                table: "DValueSets",
-                column: "Value");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_IValueSets_SMEId",
                 table: "IValueSets",
                 column: "SMEId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_IValueSets_Value",
-                table: "IValueSets",
-                column: "Value");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OValueSets_SMEId",
@@ -252,11 +245,6 @@ namespace AasxServerDB.Migrations.Postgres
                 name: "IX_SValueSets_SMEId",
                 table: "SValueSets",
                 column: "SMEId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_SValueSets_Value",
-                table: "SValueSets",
-                column: "Value");
         }
 
         /// <inheritdoc />

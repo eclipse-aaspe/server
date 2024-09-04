@@ -418,6 +418,7 @@ namespace AasxServerDB
             var timeStamp = (sme.TimeStamp == default) ? currentDataTime : sme.TimeStamp;
             var timeStampCreate = (sme.TimeStampCreate == default) ? currentDataTime : sme.TimeStampCreate;
             var timeStampTree = (sme.TimeStampTree == default) ? currentDataTime : sme.TimeStampTree;
+            var timeStampDelete = (sme.TimeStampDelete == default) ? currentDataTime : sme.TimeStampDelete;
 
             var smeDB = new SMESet
                         {
@@ -428,7 +429,8 @@ namespace AasxServerDB
                             IdShort         = sme.IdShort,
                             TimeStamp       = timeStamp,
                             TimeStampCreate = timeStampCreate,
-                            TimeStampTree   = timeStampTree
+                            TimeStampTree   = timeStampTree,
+                            TimeStampDelete = timeStampDelete
                         };
             SetValues(sme, smeDB);
             _smDB?.SMESets.Add(smeDB);
@@ -454,6 +456,7 @@ namespace AasxServerDB
             var timeStamp = (that.TimeStamp == default) ? currentDataTime : that.TimeStamp;
             var timeStampCreate = (that.TimeStampCreate == default) ? currentDataTime : that.TimeStampCreate;
             var timeStampTree = (that.TimeStampTree == default) ? currentDataTime : that.TimeStampTree;
+            var timeStampDelete = (that.TimeStampDelete == default) ? currentDataTime : that.TimeStampDelete;
 
             var aasDB = new AASSet
                         {
@@ -463,7 +466,8 @@ namespace AasxServerDB
                             GlobalAssetId   = that.AssetInformation.GlobalAssetId,
                             TimeStamp       = timeStamp,
                             TimeStampCreate = timeStampCreate,
-                            TimeStampTree   = timeStampTree
+                            TimeStampTree   = timeStampTree,
+                            TimeStampDelete = timeStampDelete
                         };
             _aasxDB.AASSets.Add(aasDB);
             base.VisitAssetAdministrationShell(that);
@@ -486,6 +490,7 @@ namespace AasxServerDB
             var timeStamp = (that.TimeStamp == default) ? currentDataTime : that.TimeStamp;
             var timeStampCreate = (that.TimeStampCreate == default) ? currentDataTime : that.TimeStampCreate;
             var timeStampTree = (that.TimeStampTree == default) ? currentDataTime : that.TimeStampTree;
+            var timeStampDelete = (that.TimeStampDelete == default) ? currentDataTime : that.TimeStampDelete;
 
             var semanticId = that.SemanticId.GetAsIdentifier();
             if (semanticId.IsNullOrEmpty())
@@ -498,7 +503,8 @@ namespace AasxServerDB
                         IdShort         = that.IdShort,
                         TimeStamp       = timeStamp,
                         TimeStampCreate = timeStampCreate,
-                        TimeStampTree   = timeStampTree
+                        TimeStampTree   = timeStampTree,
+                        TimeStampDelete = timeStampDelete
                     };
             _aasxDB.SMSets.Add(_smDB);
             base.VisitSubmodel(that);

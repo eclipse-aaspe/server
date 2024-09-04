@@ -1068,7 +1068,7 @@ namespace AasxServer
                                         }
 
                                         elementCollection.Value = receiveCollection?.Value;
-                                        elementCollection.SetAllParentsAndTimestamps(elementCollection, timeStamp, elementCollection.TimeStampCreate);
+                                        elementCollection.SetAllParentsAndTimestamps(elementCollection, timeStamp, elementCollection.TimeStampCreate, elementCollection.TimeStampDelete);
                                         elementCollection.SetTimeStamp(timeStamp);
                                     }
                                 }
@@ -1187,7 +1187,7 @@ namespace AasxServer
                                                                 if (d.mode == "UPDATE")
                                                                 {
                                                                     smc.Value = receiveCollection?.Value;
-                                                                    smc.SetAllParentsAndTimestamps(elementCollection, timeStamp, elementCollection.TimeStampCreate);
+                                                                    smc.SetAllParentsAndTimestamps(elementCollection, timeStamp, elementCollection.TimeStampCreate, elementCollection.TimeStampDelete);
                                                                     smc.SetTimeStamp(timeStamp);
                                                                 }
 
@@ -1199,7 +1199,7 @@ namespace AasxServer
                                                         if (!found && d.mode == "CREATE")
                                                         {
                                                             elementCollection.Value.Add(receiveCollection);
-                                                            receiveCollection.SetAllParentsAndTimestamps(elementCollection, timeStamp, timeStamp);
+                                                            receiveCollection.SetAllParentsAndTimestamps(elementCollection, timeStamp, timeStamp, timeStamp);
                                                             receiveCollection.SetTimeStamp(timeStamp);
                                                         }
                                                     }
@@ -2247,7 +2247,7 @@ namespace AasxServer
                                                 newsm            =  Jsonization.Deserialize.SubmodelFrom(node);
                                                 newsm.IdShort    += " - COPY";
                                                 newsm.Extensions =  sm.Extensions;
-                                                newsm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp);
+                                                newsm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp, timeStamp);
                                                 env.AasEnv.Submodels.Remove(sm);
                                                 env.AasEnv.Submodels.Add(newsm);
                                                 success = true;
@@ -2268,7 +2268,7 @@ namespace AasxServer
                                                 newsm            = new Submodel(sm.Id);
                                                 newsm.IdShort    = "BillOfMaterial - NO ACCESS";
                                                 newsm.Extensions = sm.Extensions;
-                                                newsm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp);
+                                                newsm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp, timeStamp);
                                                 env.AasEnv.Submodels.Remove(sm);
                                                 env.AasEnv.Submodels.Add(newsm);
                                             }
@@ -2665,7 +2665,7 @@ namespace AasxServer
                                 {
                                     pCO2eqTotal = new Property(DataTypeDefXsd.String, idShort: "CO2eqTotal");
                                     co2eqSubmodel.SubmodelElements.Add(pCO2eqTotal);
-                                    pCO2eqTotal.SetAllParentsAndTimestamps(co2eqSubmodel, timeStamp, co2eqSubmodel.TimeStampCreate);
+                                    pCO2eqTotal.SetAllParentsAndTimestamps(co2eqSubmodel, timeStamp, co2eqSubmodel.TimeStampCreate, co2eqSubmodel.TimeStampDelete);
                                     pCO2eqTotal.SetTimeStamp(timeStamp);
                                     pCO2eqTotal.Value = "0";
                                 }

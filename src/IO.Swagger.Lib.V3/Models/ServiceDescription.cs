@@ -16,6 +16,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using IO.Swagger.Lib.V3.Converters;
 
 namespace IO.Swagger.Models;
 
@@ -45,7 +46,8 @@ public partial class ServiceDescription : IEquatable<ServiceDescription>, IServi
                                                             {
                                                                 WriteIndented          = true,
                                                                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-                                                                Converters             = {new JsonStringEnumConverter()}
+                                                                //Converters             = {new JsonStringEnumConverter()}
+                                                                Converters             = {new ServiceProfileEnumValueConverter()}
                                                             };
 
 

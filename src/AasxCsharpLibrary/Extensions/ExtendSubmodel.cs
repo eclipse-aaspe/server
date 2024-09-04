@@ -1,4 +1,4 @@
-﻿using AdminShellNS;
+using AdminShellNS;
 using AdminShellNS.Display;
 using AdminShellNS.Extensions;
 using System;
@@ -389,6 +389,7 @@ namespace Extensions
             submodelElement.TimeStamp = timestamp;
             submodelElement.TimeStampCreate = timestamp;
             submodelElement.TimeStampTree = timestamp;
+            submodelElement.TimeStampDelete = timestamp;
 
             foreach (var childElement in submodelElement.EnumerateChildren())
             {
@@ -426,7 +427,7 @@ namespace Extensions
 
             if (submodel.SubmodelElements != null)
                 foreach (var sme in submodel.SubmodelElements)
-                    sme.SetAllParentsAndTimestamps(submodel, DateTime.UtcNow, DateTime.UtcNow);
+                    sme.SetAllParentsAndTimestamps(submodel, DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow);
         }
 
 

@@ -1,4 +1,4 @@
-﻿/*  Copyright (c) 2019-2023 Fraunhofer IOSB-INA Lemgo,
+/*  Copyright (c) 2019-2023 Fraunhofer IOSB-INA Lemgo,
 eine rechtlich nicht selbstaendige Einrichtung der Fraunhofer-Gesellschaft
 zur Foerderung der angewandten Forschung e.V.
  */
@@ -502,10 +502,16 @@ namespace AasxServerStandardBib.Services
 
             foreach (var package in _packages)
             {
-                var env = package.AasEnv;
-                if (env?.Submodels != null)
+                if (package != null)
                 {
-                    output.AddRange(env.Submodels);
+                    var env = package.AasEnv;
+                    if (env != null)
+                    {
+                        if (env?.Submodels != null)
+                        {
+                            output.AddRange(env.Submodels);
+                        }  
+                    }
                 }
             }
 

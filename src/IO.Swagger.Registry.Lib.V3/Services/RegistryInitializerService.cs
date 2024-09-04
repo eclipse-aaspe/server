@@ -611,7 +611,7 @@ public class RegistryInitializerService : IRegistryInitializerService
                                                                                     new Extension("endpoint", value: sd.Endpoints?[0].ProtocolInformation?.Href),
                                                                                     new Extension("clientToken", value: clientToken)
                                                                                 };
-                                                                sm.SetAllParentsAndTimestamps(null, timestamp, timestamp);
+                                                                sm.SetAllParentsAndTimestamps(null, timestamp, timestamp, timestamp);
                                                                 aas.AddSubmodelReference(sm.GetReference());
                                                                 newEnv.AasEnv?.Submodels.Add(sm);
                                                             }
@@ -689,7 +689,7 @@ public class RegistryInitializerService : IRegistryInitializerService
                                                                 new Extension("endpoint", value: sd.Endpoints?[0].ProtocolInformation.Href),
                                                                 new Extension("clientToken", value: clientToken)
                                                             };
-                                            sm.SetAllParentsAndTimestamps(null, timestamp, timestamp);
+                                            sm.SetAllParentsAndTimestamps(null, timestamp, timestamp, timestamp);
                                             aas.AddSubmodelReference(sm.GetReference());
                                             newEnv.AasEnv.Submodels?.Add(sm);
                                         }
