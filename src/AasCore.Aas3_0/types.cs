@@ -455,7 +455,7 @@ namespace AasCore.Aas3_0
 
         #region Parent
         [JsonIgnore]
-        public IClass Parent { get; set; }
+        public IClass? Parent { get; set; }
         #endregion
 
         #region TimeStamp
@@ -1009,7 +1009,7 @@ namespace AasCore.Aas3_0
 
         #region Parent
         [JsonIgnore]
-        public IClass Parent { get; set; }
+        public IClass? Parent { get; set; }
         #endregion
 
         #region TimeStamp
@@ -1313,7 +1313,7 @@ namespace AasCore.Aas3_0
 
         #region Parent
         [JsonIgnore]
-        public IClass Parent { get; set; }
+        public IClass? Parent { get; set; }
         #endregion
 
         #region TimeStamp
@@ -2456,7 +2456,7 @@ namespace AasCore.Aas3_0
 
         #region Parent
         [JsonIgnore]
-        public IClass Parent { get; set; }
+        public IClass? Parent { get; set; }
         #endregion
 
         #region TimeStamp
@@ -2979,7 +2979,7 @@ namespace AasCore.Aas3_0
 
         #region Parent
         [JsonIgnore]
-        public IClass Parent { get; set; }
+        public IClass? Parent { get; set; }
         #endregion
 
         #region TimeStamp
@@ -3625,7 +3625,7 @@ namespace AasCore.Aas3_0
 
         #region Parent
         [JsonIgnore]
-        public IClass Parent { get; set; }
+        public IClass? Parent { get; set; }
         #endregion
 
         #region TimeStamp
@@ -4114,7 +4114,7 @@ namespace AasCore.Aas3_0
 
         #region Parent
         [JsonIgnore]
-        public IClass Parent { get; set; }
+        public IClass? Parent { get; set; }
         #endregion
 
         #region TimeStamp
@@ -4645,7 +4645,7 @@ namespace AasCore.Aas3_0
 
         #region Parent
         [JsonIgnore]
-        public IClass Parent { get; set; }
+        public IClass? Parent { get; set; }
         #endregion
 
         #region TimeStamp
@@ -5150,7 +5150,7 @@ namespace AasCore.Aas3_0
         public IReference? ValueId { get; set; }
         #region Parent
         [JsonIgnore]
-        public IClass Parent { get; set; }
+        public IClass? Parent { get; set; }
         #endregion
 
         #region TimeStamp
@@ -5670,7 +5670,7 @@ namespace AasCore.Aas3_0
 
         #region Parent
         [JsonIgnore]
-        public IClass Parent { get; set; }
+        public IClass? Parent { get; set; }
         #endregion
 
         #region TimeStamp
@@ -6121,7 +6121,7 @@ namespace AasCore.Aas3_0
 
         #region Parent
         [JsonIgnore]
-        public IClass Parent { get; set; }
+        public IClass? Parent { get; set; }
         #endregion
 
         #region TimeStamp
@@ -6619,7 +6619,7 @@ namespace AasCore.Aas3_0
         public string ContentType { get; set; }
         #region Parent
         [JsonIgnore]
-        public IClass Parent { get; set; }
+        public IClass? Parent { get; set; }
         #endregion
 
         #region TimeStamp
@@ -7087,7 +7087,7 @@ namespace AasCore.Aas3_0
         public string ContentType { get; set; }
         #region Parent
         [JsonIgnore]
-        public IClass Parent { get; set; }
+        public IClass? Parent { get; set; }
         #endregion
 
         #region TimeStamp
@@ -7546,7 +7546,7 @@ namespace AasCore.Aas3_0
         public List<IDataElement>? Annotations { get; set; }
         #region Parent
         [JsonIgnore]
-        public IClass Parent { get; set; }
+        public IClass? Parent { get; set; }
         #endregion
 
         #region TimeStamp
@@ -8094,7 +8094,7 @@ namespace AasCore.Aas3_0
         public List<ISpecificAssetId>? SpecificAssetIds { get; set; }
         #region Parent
         [JsonIgnore]
-        public IClass Parent { get; set; }
+        public IClass? Parent { get; set; }
         #endregion
 
         #region TimeStamp
@@ -9096,7 +9096,7 @@ namespace AasCore.Aas3_0
         public string? MaxInterval { get; set; }
         #region Parent
         [JsonIgnore]
-        public IClass Parent { get; set; }
+        public IClass? Parent { get; set; }
         #endregion
 
         #region TimeStamp
@@ -9616,7 +9616,7 @@ namespace AasCore.Aas3_0
         public List<IOperationVariable>? InoutputVariables { get; set; }
         #region Parent
         [JsonIgnore]
-        public IClass Parent { get; set; }
+        public IClass? Parent { get; set; }
         #endregion
 
         #region TimeStamp
@@ -10224,7 +10224,7 @@ namespace AasCore.Aas3_0
         public List<IEmbeddedDataSpecification>? EmbeddedDataSpecifications { get; set; }
         #region Parent
         [JsonIgnore]
-        public IClass Parent { get; set; }
+        public IClass? Parent { get; set; }
         #endregion
 
         #region TimeStamp
@@ -10737,7 +10737,7 @@ namespace AasCore.Aas3_0
         public List<IReference>? IsCaseOf { get; set; }
         #region Parent
         [JsonIgnore]
-        public IClass Parent { get; set; }
+        public IClass? Parent { get; set; }
         #endregion
 
         #region TimeStamp
