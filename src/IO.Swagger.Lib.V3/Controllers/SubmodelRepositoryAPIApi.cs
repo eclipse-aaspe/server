@@ -2187,7 +2187,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                         "Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult PostSubmodel([FromBody] Submodel? body, [FromQuery] string? aasIdentifier)
+    public virtual IActionResult PostSubmodel([FromBody] Submodel body, [FromQuery] string aasIdentifier)
     {
         if (body == null)
         {

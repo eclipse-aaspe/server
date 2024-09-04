@@ -1,4 +1,4 @@
-﻿using DataTransferObjects;
+using DataTransferObjects;
 using DataTransferObjects.CommonDTOs;
 using DataTransferObjects.ValueDTOs;
 using IO.Swagger.Lib.V3.Exceptions;
@@ -170,37 +170,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 
         public IDTO TransformOperation(IOperation that)
         {
-            List<ISubmodelElementValue> inputVariables = null;
-            List<ISubmodelElementValue> outputVariables = null;
-            List<ISubmodelElementValue> inoutputVariables = null;
-            if (that.InputVariables != null)
-            {
-                inputVariables = new List<ISubmodelElementValue>();
-                foreach (var inputVariable in that.InputVariables)
-                {
-                    inputVariables.Add((ISubmodelElementValue) Transform(inputVariable));
-                }
-            }
-
-            if (that.OutputVariables != null)
-            {
-                outputVariables = new List<ISubmodelElementValue>();
-                foreach (var outputVariable in that.OutputVariables)
-                {
-                    outputVariables.Add((ISubmodelElementValue) Transform(outputVariable));
-                }
-            }
-
-            if (that.InoutputVariables != null)
-            {
-                inoutputVariables = new List<ISubmodelElementValue>();
-                foreach (var inoutputVariable in that.InoutputVariables)
-                {
-                    inoutputVariables.Add((ISubmodelElementValue) Transform(inoutputVariable));
-                }
-            }
-
-            return new OperationValue(that.IdShort, inputVariables, outputVariables, inoutputVariables);
+            throw new InvalidSerializationModifierException("ValueOnly", that.GetType().Name);
         }
 
         public IDTO? TransformOperationVariable(IOperationVariable? that) => Transform(that?.Value);
@@ -253,7 +223,14 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
                 submodelElements = new List<ISubmodelElementValue>();
                 foreach (var element in that.SubmodelElements)
                 {
-                    submodelElements.Add((ISubmodelElementValue) Transform(element));
+                    try
+                    {
+                        submodelElements.Add((ISubmodelElementValue)Transform(element));
+                    }
+                    catch (InvalidSerializationModifierException)
+                    {
+                        continue;
+                    }
                 }
             }
 
@@ -268,7 +245,14 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
                 value = new List<ISubmodelElementValue>();
                 foreach (var element in that.Value)
                 {
-                    value.Add((ISubmodelElementValue) Transform(element));
+                    try
+                    {
+                        value.Add((ISubmodelElementValue)Transform(element));
+                    }
+                    catch (InvalidSerializationModifierException)
+                    {
+                        continue;
+                    }
                 }
             }
 
