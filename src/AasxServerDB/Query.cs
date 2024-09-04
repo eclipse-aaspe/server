@@ -1,21 +1,14 @@
 using System.Diagnostics;
-using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
-using System.IO;
-using System.Collections.Generic;
-using System.Runtime.Intrinsics.X86;
 using AasxServerDB.Entities;
 using AasxServerDB.Result;
 using Extensions;
 using Microsoft.IdentityModel.Tokens;
-using TimeStamp;
 using System.Text.RegularExpressions;
 using System.Linq.Dynamic.Core;
 using QueryParserTest;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 using Newtonsoft.Json.Linq;
-using System.Linq;
-using System.Collections;
 
 namespace AasxServerDB
 {
@@ -26,59 +19,53 @@ namespace AasxServerDB
         // --------------- API ---------------
         public List<SMResult> SearchSMs(string semanticId = "", string identifier = "", string diff = "", string expression = "")
         {
-            using AasContext db = new();
-
             var watch = Stopwatch.StartNew();
-            Console.WriteLine();
-            Console.WriteLine("SearchSMs");
-            Console.WriteLine("Total number of SMs " + new AasContext().SMSets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
+            using AasContext db = new();
+            Console.WriteLine("\nSearchSMs");
 
             watch.Restart();
-            var enumerable = GetSMs(db, semanticId, identifier, diff, expression);
-            Console.WriteLine("SMs found in " + watch.ElapsedMilliseconds + "ms");
+            var query = GetSMs(db, semanticId, identifier, diff, expression);
+            Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
 
             watch.Restart();
-            var result = GetSMResult(enumerable);
-            Console.WriteLine("Collected result in " + watch.ElapsedMilliseconds + "ms");
+            var result = GetSMResult(query);
+            Console.WriteLine("Collect results\tin " + watch.ElapsedMilliseconds + " ms\nSMs found\t" + result.Count + "/" + db.SMSets.Count());
 
             return result;
         }
 
         public int CountSMs(string semanticId = "", string identifier = "", string diff = "", string expression = "")
         {
-            using AasContext db = new();
-
             var watch = Stopwatch.StartNew();
-            Console.WriteLine();
-            Console.WriteLine("CountSMs");
-            Console.WriteLine("Total number of SMs " + new AasContext().SMSets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
+            using AasContext db = new();
+            Console.WriteLine("\nCountSMs");
 
             watch.Restart();
-            var enumerable = GetSMs(db, semanticId, identifier, diff, expression);
-            var count = enumerable.Count();
-            Console.WriteLine("Found " + count + " SM in " + watch.ElapsedMilliseconds + "ms");
+            var query = GetSMs(db, semanticId, identifier, diff, expression);
+            Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
 
-            return count;
+            watch.Restart();
+            var result = query.Count();
+            Console.WriteLine("Collect results\tin " + watch.ElapsedMilliseconds + " ms\nSMs found\t" + result + "/" + db.SMSets.Count());
+
+            return result;
         }
 
         public List<SMEResult> SearchSMEs(
             string smSemanticId = "", string smIdentifier = "", string semanticId = "", string diff = "",
             string contains = "", string equal = "", string lower = "", string upper = "", string expression = "")
         {
-            using AasContext db = new();
-
             var watch = Stopwatch.StartNew();
-            Console.WriteLine();
-            Console.WriteLine("SearchSMEs");
-            Console.WriteLine("Total number of SMEs " + new AasContext().SMESets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
+            using AasContext db = new();
+            Console.WriteLine("\nSearchSMEs");
 
             watch.Restart();
-            var enumerable = GetSMEs(db, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
-            Console.WriteLine("SMEs found in " + watch.ElapsedMilliseconds + "ms");
+            var query = GetSMEs(db, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
+            Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
 
             watch.Restart();
-            var result = GetSMEResult(db, enumerable);
-            Console.WriteLine("Collected result in " + watch.ElapsedMilliseconds + "ms");
+            var result = GetSMEResult(db, query);
+            Console.WriteLine("Collect results\tin " + watch.ElapsedMilliseconds + " ms\nSMEs found\t" + result.Count + "/" + db.SMESets.Count());
 
             return result;
         }
@@ -87,19 +74,19 @@ namespace AasxServerDB
             string smSemanticId = "", string smIdentifier = "", string semanticId = "", string diff = "",
             string contains = "", string equal = "", string lower = "", string upper = "", string expression = "")
         {
-            using AasContext db = new();
-
             var watch = Stopwatch.StartNew();
-            Console.WriteLine();
-            Console.WriteLine("CountSMEs");
-            Console.WriteLine("Total number of SMEs " + new AasContext().SMESets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
+            using AasContext db = new();
+            Console.WriteLine("\nCountSMEs");
 
             watch.Restart();
-            var enumerable = GetSMEs(db, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
-            var count = enumerable.Count();
-            Console.WriteLine("Found " + count + " SMEs in " + watch.ElapsedMilliseconds + "ms");
+            var query = GetSMEs(db, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
+            Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
 
-            return count;
+            watch.Restart();
+            var result = query.Count();
+            Console.WriteLine("Collect results\tin " + watch.ElapsedMilliseconds + " ms\nSMEs found\t" + result + "/" + db.SMESets.Count());
+
+            return result;
         }
 
         public List<SMEResult> SearchSMEsResult(
@@ -109,7 +96,7 @@ namespace AasxServerDB
             string resultSemanticId = "", string resultIdShort = "")
         {
             List<SMEResult> result = new List<SMEResult>();
-            
+
             if (searchSemanticId.IsNullOrEmpty() && searchIdShort.IsNullOrEmpty())
                 return result;
             if (equal.IsNullOrEmpty() && contains.IsNullOrEmpty())
@@ -319,7 +306,7 @@ namespace AasxServerDB
         }
 
         // --------------- SM Methodes ---------------
-        private static IEnumerable<SMSet> GetSMs(AasContext db, string semanticId = "", string identifier = "", string diffString = "", string expression = "")
+        private static IQueryable<SMSet> GetSMs(AasContext db, string semanticId = "", string identifier = "", string diffString = "", string expression = "")
         {
             // analyse parameters
             var withSemanticId = !semanticId.IsNullOrEmpty();
@@ -329,19 +316,50 @@ namespace AasxServerDB
             var withParameters = withSemanticId || withIdentifier || withDiff;
             var withExpression = !expression.IsNullOrEmpty();
 
+            // get data
             if (withExpression && !withParameters)
-                return new List<SMSet>();
+            {
+                // shorten expression
+                expression = expression.Replace("$REVERSE", "").Replace("$LOG", "");
+                expression = Regex.Replace(expression, @"\s+", string.Empty);
 
-            return db.SMSets
+                // init parser
+                var countTypePrefix = 0;
+                var parser = new ParserWithAST(new Lexer(expression));
+                var ast = parser.Parse();
+
+                // combined condition
+                var combinedCondition = parser.GenerateSql(ast, "", ref countTypePrefix, "filter");
+
+                // sm condition
+                var conditionSM = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_submodel");
+                if (conditionSM.IsNullOrEmpty())
+                    conditionSM = parser.GenerateSql(ast, "sm.", ref countTypePrefix, "filter");
+                conditionSM = conditionSM.Replace("sm.", "");
+
+                // check restrictions
+                var restrictSM = !conditionSM.IsNullOrEmpty() && !conditionSM.Equals("true");
+
+                // get data
+                if (restrictSM)
+                    return db.SMSets.Where(conditionSM);
+                else
+                    return Enumerable.Empty<SMSet>().AsQueryable();
+            }
+            else if (!withExpression && withParameters)
+            {
+                return db.SMSets
                 .Where(s =>
                     (!withSemanticId || (s.SemanticId != null && s.SemanticId.Equals(semanticId))) &&
                     (!withIdentifier || (s.Identifier != null && s.Identifier.Equals(identifier))) &&
                     (!withDiff || s.TimeStampTree.CompareTo(diff) > 0));
+            }
+            return Enumerable.Empty<SMSet>().AsQueryable();
         }
 
-        private static List<SMResult> GetSMResult(IEnumerable<SMSet> enumerable)
+        private static List<SMResult> GetSMResult(IQueryable<SMSet> query)
         {
-            var shortEnum = enumerable.Select(sm => new { identifier = sm.Identifier ?? "", sm.TimeStampTree });
+            var shortEnum = query.Select(sm => new { identifier = sm.Identifier ?? "", sm.TimeStampTree });
 
             var result = new List<SMResult>();
             foreach (var sm in shortEnum)
@@ -365,7 +383,7 @@ namespace AasxServerDB
             public string? value;
         }
 
-        private IEnumerable<CombinedResult> GetSMEs(AasContext db, string smSemanticId = "", string smIdentifier = "", string semanticId = "",
+        private IQueryable<CombinedResult> GetSMEs(AasContext db, string smSemanticId = "", string smIdentifier = "", string semanticId = "",
             string diff = "", string contains = "", string equal = "", string lower = "", string upper = "", string expression = "")
         {
             // analyse parameters
@@ -382,17 +400,19 @@ namespace AasxServerDB
             var withParameters = withSMSemanticId || withSMIdentifier || withSemanticId || withDiff || withContains || withEqualString || withLower || withUpper;
             var withExpression = !expression.IsNullOrEmpty();
 
+            var test = db.SMSets.Where(sm => sm.Id == 50).Select(sm => new { sm.Id, sm.AASId });
+
             // direction
             var topDown = true;
             var restrictValue = false;
 
             // restrict all tables seperate
-            IEnumerable<SMSet> sm;
-            IEnumerable<SMESet> sme;
-            IEnumerable<OValueSet> oValue;
-            IEnumerable<SValueSet> sValue;
-            IEnumerable<IValueSet> iValue;
-            IEnumerable<DValueSet> dValue;
+            IQueryable<SMSet> sm;
+            IQueryable<SMESet> sme;
+            //IQueryable<OValueSet> oValue;
+            IQueryable<SValueSet> sValue;
+            IQueryable<IValueSet> iValue;
+            IQueryable<DValueSet> dValue;
 
             // get data
             if (withExpression && !withParameters)
@@ -455,7 +475,7 @@ namespace AasxServerDB
                 // restrict all tables seperate 
                 sm =     !restrictSM      ? db.SMSets : db.SMSets.Where(conditionSM);
                 sme =    !restrictSME     ? db.SMESets : db.SMESets.Where(conditionSME);
-                oValue = new List<OValueSet>(); // OValue implementation missing
+                //oValue = Enumerable.Empty<OValueSet>().AsQueryable(); // OValue implementation missing
                 sValue = !restrictSVaue   ? db.SValueSets : db.SValueSets.Where(conditionStr);
                 iValue = !restrictNumVaue ? db.IValueSets : db.IValueSets.Where(conditionNum);
                 dValue = !restrictNumVaue ? db.DValueSets : db.DValueSets.Where(conditionNum);
@@ -470,7 +490,7 @@ namespace AasxServerDB
                 var withCompare = withLower && withUpper;
                 var withNum = withEqualNum || withCompare;
                 if (withText && withNum && !withEqualString)
-                    return new List<CombinedResult>();
+                    return Enumerable.Empty<CombinedResult>().AsQueryable();
 
                 // check restrictions
                 var restrictSM = withSMSemanticId || withSMIdentifier;
@@ -480,16 +500,15 @@ namespace AasxServerDB
                 // restrict all tables seperate 
                 sm =     !restrictSM    ? db.SMSets     : db.SMSets.Where(sm => (!withSMSemanticId || (sm.SemanticId != null && sm.SemanticId.Equals(smSemanticId))) && (!withSMIdentifier || (sm.Identifier != null && sm.Identifier.Equals(smIdentifier))));
                 sme =    !restrictSME   ? db.SMESets    : db.SMESets.Where(sme => (!withSemanticId || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) && (!withDiff || sme.TimeStamp.CompareTo(diffDateTime) > 0));
-                oValue = !restrictValue ? db.OValueSets : db.OValueSets.Where(v => withText && v.Value != null && (!withContains || ((string)v.Value).Contains(contains)) && (!withEqualString || ((string)v.Value).Equals(equal)));
+                //oValue = !restrictValue ? db.OValueSets : db.OValueSets.Where(v => withText && v.Value != null && (!withContains || ((string)v.Value).Contains(contains)) && (!withEqualString || ((string)v.Value).Equals(equal)));
                 sValue = !restrictValue ? db.SValueSets : db.SValueSets.Where(v => withText && v.Value != null && (!withContains || v.Value.Contains(contains)) && (!withEqualString || v.Value.Equals(equal)));
                 iValue = !restrictValue ? db.IValueSets : db.IValueSets.Where(v => withNum && v.Value != null && (!withEqualNum || v.Value == equalNum) && (!withCompare || (v.Value >= lowerNum && v.Value <= upperNum)));
                 dValue = !restrictValue ? db.DValueSets : db.DValueSets.Where(v => withNum && v.Value != null && (!withEqualNum || v.Value == equalNum) && (!withCompare || (v.Value >= lowerNum && v.Value <= upperNum)));
             }
             else
-                return new List<CombinedResult>();
+                return Enumerable.Empty<CombinedResult>().AsQueryable();
 
             // join the restricted tables
-            IEnumerable<CombinedResult> result;
             if (topDown) // top-down
             {
                 var smSME = sm.Join(sme, sm => sm.Id, sme => sme.SMId, (sm, sme) => new { sm, sme }).Where(sme => sme.sm != null);
@@ -498,7 +517,7 @@ namespace AasxServerDB
                 var smSMEDValue = smSME.Join(dValue, sme => sme.sme.Id, v => v.SMEId, (sme, v) => new CombinedResult { sm = sme.sm, sme = sme.sme, value = v.Value.ToString() });
                 //var smSMEOValue = smSME.Join(oValue, sme => sme.sme.Id, v => v.SMEId, (sme, v) => new CombinedResult { sm = sme.sm, sme = sme.sme, value = (string)v.Value });
                 //.Union(smSMEOValue)
-                result = smSMESValue.Union(smSMEIValue).Union(smSMEDValue);
+                return smSMESValue.Union(smSMEIValue).Union(smSMEDValue);
             }
             else // down-top
             {
@@ -509,19 +528,18 @@ namespace AasxServerDB
                 //.Union(oValueSME)
                 var xValueSME = sme.Where(sme => !restrictValue && (sme.TValue == null || sme.TValue.Equals(""))).Select(sme => new { sme, value = "" });
                 var valueSME = sValueSME.Union(iValueSME).Union(dValueSME).Union(xValueSME);
-                result = valueSME.Join(sm, sme => sme.sme.SMId, sm => sm.Id, (sme, sm) => new CombinedResult { sm = sm, sme = sme.sme, value = sme.value }).Where(sme => sme.sm != null);
+                return valueSME.Join(sm, sme => sme.sme.SMId, sm => sm.Id, (sme, sm) => new CombinedResult { sm = sm, sme = sme.sme, value = sme.value }).Where(sme => sme.sm != null);
             }
-            return result;
         }
 
-        private static List<SMEResult> GetSMEResult(AasContext db, IEnumerable<CombinedResult> enumerable)
+        private static List<SMEResult> GetSMEResult(AasContext db, IQueryable<CombinedResult> query)
         {
-            var shortEnum = enumerable
+            var shortEnum = query
                 .Select(sme => new {
                     smId = sme.sm.Identifier ?? string.Empty,
                     idShort = sme.sme.IdShort,
                     parentSMEId = sme.sme.ParentSMEId,
-                    timeStamp= sme.sme.TimeStamp,
+                    timeStamp = sme.sme.TimeStamp,
                     sme.value
                 });
 
@@ -537,7 +555,7 @@ namespace AasxServerDB
                     pId = smeDB.ParentSMEId;
                 }
 
-                result.Add( new SMEResult()
+                result.Add(new SMEResult()
                     {
                         smId = sme.smId,
                         value = sme.value,
