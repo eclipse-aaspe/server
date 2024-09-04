@@ -289,7 +289,7 @@ namespace Events
                         Console.WriteLine("Event CREATE SME: " + entry.idShortPath);
                         receiveSme.TimeStampCreate = dt;
                         submodelElements.Add(receiveSme);
-                        receiveSme.SetAllParentsAndTimestamps(parent, dt, receiveSme.TimeStampCreate);
+                        receiveSme.SetAllParentsAndTimestamps(parent, dt, receiveSme.TimeStampCreate, receiveSme.TimeStampDelete);
                         receiveSme.SetTimeStamp(dt);
                         diffValue.Add(receiveSme);
                         count++;
@@ -327,7 +327,7 @@ namespace Events
                             Console.WriteLine("Event UPDATE SME: " + entry.idShortPath);
                             receiveSme.TimeStampCreate = submodelElements[i].TimeStampCreate;
                             submodelElements[i] = receiveSme;
-                            receiveSme.SetAllParentsAndTimestamps(parent, dt, receiveSme.TimeStampCreate);
+                            receiveSme.SetAllParentsAndTimestamps(parent, dt, receiveSme.TimeStampCreate, receiveSme.TimeStampDelete);
                             receiveSme.SetTimeStamp(dt);
                             diffValue.Add(receiveSme);
                             count++;

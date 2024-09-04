@@ -466,6 +466,11 @@ namespace AasCore.Aas3_0
         [JsonIgnore]
         public DateTime TimeStampTree { get; set; }
 
+        [ JsonIgnore ] public DateTime TimeStampCreate { get; set; }
+        [ JsonIgnore ] public DateTime TimeStamp       { get; set; }
+        [ JsonIgnore ] public DateTime TimeStampTree   { get; set; }
+        [JsonIgnore] public DateTime TimeStampDelete   { get; set; }
+
         #endregion
 
         /// <summary>
@@ -1020,6 +1025,11 @@ namespace AasCore.Aas3_0
         [JsonIgnore]
         public DateTime TimeStampTree { get; set; }
 
+        [ JsonIgnore ] public DateTime TimeStampCreate { get; set; }
+        [ JsonIgnore ] public DateTime TimeStamp       { get; set; }
+        [ JsonIgnore ] public DateTime TimeStampTree   { get; set; }
+        [JsonIgnore] public DateTime TimeStampDelete   { get; set; }
+
         #endregion
 
         /// <summary>
@@ -1326,6 +1336,7 @@ namespace AasCore.Aas3_0
 
         [JsonIgnore]
         private DiaryDataDef _diaryData = new DiaryDataDef();
+        [JsonIgnore] public DateTime TimeStampDelete   { get; set; }
 
         [JsonIgnore]
         public DiaryDataDef DiaryData { get { return _diaryData; } }
@@ -2469,6 +2480,7 @@ namespace AasCore.Aas3_0
 
         [JsonIgnore]
         private DiaryDataDef _diaryData = new DiaryDataDef();
+        [JsonIgnore] public DateTime TimeStampDelete   { get; set; }
 
         [JsonIgnore]
         public DiaryDataDef DiaryData { get { return _diaryData; } }
@@ -2992,6 +3004,7 @@ namespace AasCore.Aas3_0
 
         [JsonIgnore]
         private DiaryDataDef _diaryData = new DiaryDataDef();
+        [JsonIgnore] public DateTime TimeStampDelete   { get; set; }
 
         [JsonIgnore]
         public DiaryDataDef DiaryData { get { return _diaryData; } }
@@ -3638,6 +3651,7 @@ namespace AasCore.Aas3_0
 
         [JsonIgnore]
         private DiaryDataDef _diaryData = new DiaryDataDef();
+        [JsonIgnore] public DateTime TimeStampDelete   { get; set; }
 
         [JsonIgnore]
         public DiaryDataDef DiaryData { get { return _diaryData; } }
@@ -4127,6 +4141,7 @@ namespace AasCore.Aas3_0
 
         [JsonIgnore]
         private DiaryDataDef _diaryData = new DiaryDataDef();
+        [JsonIgnore] public DateTime TimeStampDelete   { get; set; }
 
         [JsonIgnore]
         public DiaryDataDef DiaryData { get { return _diaryData; } }
@@ -4658,6 +4673,7 @@ namespace AasCore.Aas3_0
 
         [JsonIgnore]
         private DiaryDataDef _diaryData = new DiaryDataDef();
+        [JsonIgnore] public DateTime TimeStampDelete   { get; set; }
 
         [JsonIgnore]
         public DiaryDataDef DiaryData { get { return _diaryData; } }
@@ -5163,6 +5179,7 @@ namespace AasCore.Aas3_0
 
         [JsonIgnore]
         private DiaryDataDef _diaryData = new DiaryDataDef();
+        [JsonIgnore] public DateTime TimeStampDelete   { get; set; }
 
         [JsonIgnore]
         public DiaryDataDef DiaryData { get { return _diaryData; } }
@@ -5683,6 +5700,7 @@ namespace AasCore.Aas3_0
 
         [JsonIgnore]
         private DiaryDataDef _diaryData = new DiaryDataDef();
+        [JsonIgnore] public DateTime TimeStampDelete   { get; set; }
 
         [JsonIgnore]
         public DiaryDataDef DiaryData { get { return _diaryData; } }
@@ -6134,6 +6152,7 @@ namespace AasCore.Aas3_0
 
         [JsonIgnore]
         private DiaryDataDef _diaryData = new DiaryDataDef();
+        [JsonIgnore] public DateTime TimeStampDelete   { get; set; }
 
         [JsonIgnore]
         public DiaryDataDef DiaryData { get { return _diaryData; } }
@@ -6632,6 +6651,7 @@ namespace AasCore.Aas3_0
 
         [JsonIgnore]
         private DiaryDataDef _diaryData = new DiaryDataDef();
+        [JsonIgnore] public DateTime TimeStampDelete   { get; set; }
 
         [JsonIgnore]
         public DiaryDataDef DiaryData { get { return _diaryData; } }
@@ -7100,6 +7120,7 @@ namespace AasCore.Aas3_0
 
         [JsonIgnore]
         private DiaryDataDef _diaryData = new DiaryDataDef();
+        [JsonIgnore] public DateTime TimeStampDelete   { get; set; }
 
         [JsonIgnore]
         public DiaryDataDef DiaryData { get { return _diaryData; } }
@@ -7559,6 +7580,7 @@ namespace AasCore.Aas3_0
 
         [JsonIgnore]
         private DiaryDataDef _diaryData = new DiaryDataDef();
+        [JsonIgnore] public DateTime TimeStampDelete   { get; set; }
 
         [JsonIgnore]
         public DiaryDataDef DiaryData { get { return _diaryData; } }
@@ -8107,6 +8129,7 @@ namespace AasCore.Aas3_0
 
         [JsonIgnore]
         private DiaryDataDef _diaryData = new DiaryDataDef();
+        [JsonIgnore] public DateTime TimeStampDelete   { get; set; }
 
         [JsonIgnore]
         public DiaryDataDef DiaryData { get { return _diaryData; } }
@@ -9109,6 +9132,7 @@ namespace AasCore.Aas3_0
 
         [JsonIgnore]
         private DiaryDataDef _diaryData = new DiaryDataDef();
+        [JsonIgnore] public DateTime TimeStampDelete   { get; set; }
 
         [JsonIgnore]
         public DiaryDataDef DiaryData { get { return _diaryData; } }
@@ -9629,6 +9653,7 @@ namespace AasCore.Aas3_0
 
         [JsonIgnore]
         private DiaryDataDef _diaryData = new DiaryDataDef();
+        [JsonIgnore] public DateTime TimeStampDelete   { get; set; }
 
         [JsonIgnore]
         public DiaryDataDef DiaryData { get { return _diaryData; } }
@@ -10237,6 +10262,7 @@ namespace AasCore.Aas3_0
 
         [JsonIgnore]
         private DiaryDataDef _diaryData = new DiaryDataDef();
+        [JsonIgnore] public DateTime TimeStampDelete   { get; set; }
 
         [JsonIgnore]
         public DiaryDataDef DiaryData { get { return _diaryData; } }
@@ -10750,6 +10776,7 @@ namespace AasCore.Aas3_0
 
         [JsonIgnore]
         private DiaryDataDef _diaryData = new DiaryDataDef();
+        [JsonIgnore] public DateTime TimeStampDelete   { get; set; }
 
         [JsonIgnore]
         public DiaryDataDef DiaryData { get { return _diaryData; } }

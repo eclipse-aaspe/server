@@ -340,17 +340,22 @@ namespace Extensions
 
         public static void SetTimeStamp(this IReferable? referable, DateTime timeStamp)
         {
+            referable.TimeStamp = timeStamp;
+            SetTimeStampTree(referable, timeStamp);
+        }
+
+        public static void SetTimeStampTree(this IReferable? referable, DateTime timeStamp)
+        {
             IReferable? newReferable = referable;
-            newReferable.TimeStamp = timeStamp;
             do
             {
                 newReferable.TimeStampTree = timeStamp;
+
                 if (newReferable != newReferable.Parent)
-                {
-                    newReferable = (IReferable) newReferable.Parent;
-                }
+                    newReferable = (IReferable)newReferable.Parent;
                 else
                     newReferable = null;
+
             } while (newReferable != null);
         }
 
@@ -439,7 +444,7 @@ namespace Extensions
         }
 
 
-        public static void SetAllParentsAndTimestamps(this IReferable? referable, IReferable? parent, DateTime timeStamp, DateTime timeStampCreate)
+        public static void SetAllParentsAndTimestamps(this IReferable? referable, IReferable? parent, DateTime timeStamp, DateTime timeStampCreate, DateTime timeStampDelete)
         {
             // if (parent == null)
             //    return;
@@ -448,10 +453,11 @@ namespace Extensions
             referable.TimeStamp = timeStamp;
             referable.TimeStampTree = timeStamp;
             referable.TimeStampCreate = timeStampCreate;
+            referable.TimeStampDelete = timeStampDelete;
 
             foreach (var submodelElement in referable.EnumerateChildren())
             {
-                submodelElement.SetAllParentsAndTimestamps(referable, timeStamp, timeStampCreate);
+                submodelElement.SetAllParentsAndTimestamps(referable, timeStamp, timeStampCreate, timeStampDelete);
             }
         }
 

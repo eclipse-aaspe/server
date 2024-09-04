@@ -31,6 +31,7 @@ namespace AasxServerDB.Entities
         public DateTime TimeStampCreate { get; set; }
         public DateTime TimeStamp       { get; set; }
         public DateTime TimeStampTree   { get; set; }
+        public DateTime TimeStampDelete { get; set; }
 
         public virtual ICollection<SMSet> SMSets { get; } = new List<SMSet>();
     }

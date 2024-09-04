@@ -1,4 +1,4 @@
-﻿using AasxServer;
+using AasxServer;
 using AdminShellNS;
 using Extensions;
 using Grapevine.Interfaces.Server;
@@ -2418,7 +2418,7 @@ namespace AasxRestServerLibrary
                     }
                 }
 
-                sme.SetAllParentsAndTimestamps(sm, timeStamp, sme.TimeStampCreate);
+                sme.SetAllParentsAndTimestamps(sm, timeStamp, sme.TimeStampCreate, sme.TimeStampDelete);
                 sme.SetTimeStamp(timeStamp);
             }
             else
@@ -2458,7 +2458,7 @@ namespace AasxRestServerLibrary
                         parentsmc.Add(sme);
                     }
 
-                    sme.SetAllParentsAndTimestamps(parentsmc, timeStamp, sme.TimeStampCreate);
+                    sme.SetAllParentsAndTimestamps(parentsmc, timeStamp, sme.TimeStampCreate, sme.TimeStampDelete);
                     sme.SetTimeStamp(timeStamp);
                 }
                 else
