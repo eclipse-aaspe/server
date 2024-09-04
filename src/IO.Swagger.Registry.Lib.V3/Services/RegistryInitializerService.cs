@@ -269,7 +269,7 @@ public class RegistryInitializerService : IRegistryInitializerService
                         submodelRegistryUrl = submodelRegistryUrl.Replace("\n", "");
 
                         // basyx with Submodel Registry: read submodel descriptors
-                        var requestPath = $"{submodelRegistryUrl}/submodel-descriptors";
+                        string? requestPath = $"{submodelRegistryUrl}/submodel-descriptors";
 
                         if (AasxCredentials.get(cs.credentials, requestPath, out _, out _, out _, out var replace) && !string.IsNullOrEmpty(replace))
                         {
@@ -337,7 +337,7 @@ public class RegistryInitializerService : IRegistryInitializerService
 
                         string? json        = null;
                         string? accessToken = null;
-                        var     requestPath = $"{greg}/shell-descriptors";
+                        string? requestPath = $"{greg}/shell-descriptors";
                         string  userPW;
                         string  urlEdcWrapper;
                         string  replace;
