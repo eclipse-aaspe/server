@@ -104,6 +104,12 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             valueObject["entityType"] = Jsonization.Serialize.EntityTypeToJsonValue(entityValue.EntityType);
             valueObject["globalAssetId"] = entityValue.GlobalAssetId;
 
+            if (isParentSML)
+            {
+                return valueObject;
+            }
+
+            var result = new JsonObject();
             result[entityValue.IdShort] = valueObject;
 
             var result = new JsonObject();
@@ -129,6 +135,12 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             valueObject["second"] = Transform(annotatedRelEleValue.Second);
             valueObject["annotations"] = annotations;
 
+            if (isParentSML)
+            {
+                return valueObject;
+            }
+
+            var result = new JsonObject();
             result[annotatedRelEleValue.IdShort] = valueObject;
 
             return result;
@@ -165,16 +177,23 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             {
                 foreach (var element in submodelElementListValue.Value)
                 {
-                    var elementObject = ToJsonObject(element) as JsonObject;
-                    foreach (var keyValue in elementObject)
-                    {
-                        var valueString = keyValue.Value.ToJsonString();
-                        var valueNode = JsonSerializer.Deserialize<JsonNode>(valueString);
-                        valueArray.Add(valueNode);
-                    }
+                    var elementNode = ToJsonObject(element, true) as JsonNode;
+                    valueArray.Add(elementNode);
+                    //foreach (var keyValue in elementObject)
+                    //{
+                    //    var valueString = keyValue.Value.ToJsonString();
+                    //    var valueNode = JsonSerializer.Deserialize<JsonNode>(valueString);
+                    //    valueArray.Add(valueNode);
+                    //}
                 }
             }
 
+            if (isParentSML)
+            {
+                return valueArray;
+            }
+
+            var result = new JsonObject();
             result[submodelElementListValue.IdShort] = valueArray;
 
             return result;
@@ -202,6 +221,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
                 return valueObject;
             }
 
+            var result = new JsonObject();
             result[submodelElementCollectionValue.IdShort] = valueObject;
 
             return result;
@@ -213,7 +233,10 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             valueObject["first"] = Transform(relationshipElementValue.First);
             valueObject["second"] = Transform(relationshipElementValue.Second);
 
-            result[relationshipElementValue.IdShort] = valueObject;
+            if (isParentSML)
+            {
+                return valueObject;
+            }
 
             var result = new JsonObject();
             result[relationshipElementValue.IdShort] = valueObject;
@@ -225,7 +248,13 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
         {
             var valueObject = Transform(referenceElementValue.Value);
 
-            result[referenceElementValue.IdShort] = Transform(referenceElementValue.Value);
+            if(isParentSML)
+            {
+                return valueObject;
+            }
+
+            var result = new JsonObject();
+            result[referenceElementValue.IdShort] = valueObject;
 
             var result = new JsonObject();
             result[referenceElementValue.IdShort] = valueObject;
@@ -239,7 +268,10 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             valueObject["min"] = rangeValue.Min;
             valueObject["max"] = rangeValue.Max;
 
-            result[rangeValue.IdShort] = valueObject;
+            if (isParentSML )
+            {
+                return valueObject;
+            }
 
             var result = new JsonObject();
             result[rangeValue.IdShort] = valueObject;
@@ -253,7 +285,10 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             valueObject["contentType"] = fileValue.ContentType;
             valueObject["value"] = fileValue.Value;
 
-            result[fileValue.IdShort] = valueObject;
+            if(isParentSML)
+            {
+                return valueObject;
+            }
 
             var result = new JsonObject();
             result[fileValue.IdShort] = valueObject;
@@ -270,13 +305,12 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
                 valueObject["value"] = JsonValue.Create(System.Convert.ToBase64String(blobValue.Value));
             }
 
-            var valueObject = new JsonObject();
-            valueObject["contentType"] = blobValue.ContentType;
-            if (blobValue.Value != null)
+            if(isParentSML)
             {
-                valueObject["value"] = JsonValue.Create(System.Convert.ToBase64String(blobValue.Value));
+                return valueObject;
             }
 
+            var result = new JsonObject();
             result[blobValue.IdShort] = valueObject;
 
             return result;
@@ -287,9 +321,12 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             var valueObject = new JsonObject();
             valueObject["observed"] = Transform(basicEventElementValue.Observed);
 
-            var valueObject = new JsonObject();
-            valueObject["observed"] = Transform(basicEventElementValue.Observed);
+            if(isParentSML)
+            {
+                return valueObject;
+            }
 
+            var result = new JsonObject();
             result[basicEventElementValue.IdShort] = valueObject;
 
             return result;
@@ -341,6 +378,12 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
                 arrayLangStrings.Add(langNode);
             }
 
+            if(isParentSML)
+            {
+                return arrayLangStrings;
+            }
+
+            var result = new JsonObject();
             result[multiLanguagePropertyValue.IdShort] = arrayLangStrings;
             return result;
         }
