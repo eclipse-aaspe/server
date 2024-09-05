@@ -1044,10 +1044,9 @@ namespace AasxTimeSeries
                                         actualSamples           -= maxSamplesInCollection;
                                         tsb.actualSamples.Value =  "" + actualSamples;
                                         tsb.actualSamples.SetTimeStamp(timeStamp);
-                                        AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
-                                                                                                           first, "Remove", tsb.submodel, (ulong)timeStamp.Ticks);
+                                        AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(first, "Remove", tsb.submodel, (ulong)timeStamp.Ticks);
                                         tsb.data.Value.Remove(first);
-                                        tsb.data.SetTimeStamp(timeStamp);
+                                        tsb.data.SetTimeStampDelete(timeStamp);
                                         // tsb.lowDataIndex++;
                                         int index = Convert.ToInt32(tsb.lowDataIndex.Value);
                                         tsb.lowDataIndex.Value = (index + 1).ToString();
