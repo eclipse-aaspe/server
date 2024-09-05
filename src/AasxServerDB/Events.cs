@@ -335,6 +335,7 @@ namespace Events
                     {
                         Console.WriteLine("Event CREATE SME: " + entry.idShortPath);
                         receiveSme.TimeStampCreate = dt;
+                        receiveSme.TimeStampDelete = new DateTime();
                         int i = 0;
                         bool found = false;
                         for (; i < submodelElements.Count; i++)
@@ -388,6 +389,7 @@ namespace Events
                     {
                         Console.WriteLine("Event UPDATE SME: " + entry.idShortPath);
                         receiveSme.TimeStampCreate = submodelElements[i].TimeStampCreate;
+                        receiveSme.TimeStampDelete = submodelElements[i].TimeStampDelete;
                         submodelElements[i] = receiveSme;
                         receiveSme.SetAllParentsAndTimestamps(parent, dt, receiveSme.TimeStampCreate, receiveSme.TimeStampDelete);
                         receiveSme.SetTimeStamp(dt);
@@ -436,6 +438,7 @@ namespace Events
                                 if (!entry.notDeletedIdShortList.Contains(children[c].IdShort))
                                 {
                                     children.RemoveAt(c);
+                                    sme.SetTimeStampDelete(dt);
                                     count++;
                                 }
                                 else
