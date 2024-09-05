@@ -344,6 +344,12 @@ namespace Extensions
             SetTimeStampTree(referable, timeStamp);
         }
 
+        public static void SetTimeStampDelete(this IReferable? referable, DateTime timeStamp)
+        {
+            referable.TimeStampDelete = timeStamp;
+            SetTimeStampTree(referable, timeStamp);
+        }
+
         public static void SetTimeStampTree(this IReferable? referable, DateTime timeStamp)
         {
             IReferable? newReferable = referable;
