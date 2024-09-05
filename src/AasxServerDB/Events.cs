@@ -12,17 +12,19 @@ using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using TimeStamp;
 using System.Runtime.Intrinsics.X86;
+using System.IO;
 
 namespace Events
 {
     public class EventPayloadEntry
     {
-        public string entryType { get; set; } // CREATE, UPDATE, DELETED below
+        public string entryType { get; set; } // CREATE, UPDATE, DELETE
         public string lastUpdate { get; set; } // timeStamp for this entry
         public string payloadType { get; set; } // Submodel, SME, AAS
         public string payload { get; set; } // JSON Serialization
         public string submodelId { get; set; } // ID of related Submodel
         public string idShortPath { get; set; } // for SMEs only
+        public List<string> notDeletedIdShortList { get; set; } // for DELETE only, remaining idShort
 
         public EventPayloadEntry()
         {
@@ -32,6 +34,7 @@ namespace Events
             payload = "";
             submodelId = "";
             idShortPath = "";
+            notDeletedIdShortList = new List<string>();
         }
     }
     public class EventPayload
@@ -50,6 +53,7 @@ namespace Events
             {
                 bool tree = false;
                 bool copy = false;
+                bool delete = false;
                 DateTime timeStamp = new DateTime();
 
                 List<ISubmodelElement> children = new List<ISubmodelElement>();
@@ -100,6 +104,24 @@ namespace Events
                             }
                         }
                         break;
+                    case "DELETE":
+                        timeStamp = sme.TimeStampDelete;
+                        if ((sme.TimeStampDelete - diffTime).TotalMilliseconds > 1)
+                        {
+                            delete = true;
+                        }
+                        if (children != null || children.Count != 0)
+                        {
+                            foreach (ISubmodelElement child in children)
+                            {
+                                if (child.TimeStampTree != sme.TimeStampTree)
+                                {
+                                    tree = true;
+                                    break;
+                                }
+                            }
+                        }
+                        break;
                 }
                 if (copy)
                 {
@@ -118,7 +140,27 @@ namespace Events
                     entries.Add(e);
                     count++;
                 }
-                else
+                if (delete)
+                {
+                    Console.WriteLine("DELETE SME " + idShortPath + sme.IdShort);
+                    diffValue.Add(sme);
+                    var e = new EventPayloadEntry();
+                    e.entryType = entryType;
+                    e.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(timeStamp);
+                    e.payloadType = "sme";
+                    e.submodelId = submodelId;
+                    e.idShortPath = idShortPath + sme.IdShort;
+                    if (children != null || children.Count != 0)
+                    {
+                        foreach (var child in children)
+                        {
+                            e.notDeletedIdShortList.Add(child.IdShort);
+                        }
+                    }
+                    entries.Add(e);
+                    count++;
+                }
+                if (tree)
                 {
                     if (tree && children.Count != 0)
                     {
@@ -168,6 +210,7 @@ namespace Events
                 {
                     var diffTime = DateTime.Parse(diff);
                     collectSubmodelElements(submodel.SubmodelElements, diffTime, "CREATE", submodel.Id, "", e.eventEntries, diffValue, noPayload);
+                    collectSubmodelElements(submodel.SubmodelElements, diffTime, "DELETE", submodel.Id, "", e.eventEntries, diffValue, noPayload);
                     collectSubmodelElements(submodel.SubmodelElements, diffTime, "UPDATE", submodel.Id, "", e.eventEntries, diffValue, noPayload);
                 }
             }
@@ -249,7 +292,7 @@ namespace Events
                     }
                 }
 
-                if (entry.payloadType == "sme" && submodel != null && entry.payload != "")
+                if (entry.payloadType == "sme" && submodel != null && (entry.payload != "" || entry.notDeletedIdShortList.Count != 0))
                 {
                     count += changeSubmodelElement(entry, submodel, submodel.SubmodelElements, "", diffValue);
                     if (count > 0)
@@ -270,10 +313,14 @@ namespace Events
             int count = 0;
             var dt = DateTime.Parse(entry.lastUpdate);
 
-            MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(entry.payload));
-            JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
-            var receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
-            receiveSme.Parent = parent;
+            ISubmodelElement receiveSme = null;
+            if (entry.payload != "")
+            {
+                MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(entry.payload));
+                JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
+                receiveSme.Parent = parent;
+            }
 
             if (entry.entryType == "CREATE")
             {
@@ -288,7 +335,25 @@ namespace Events
                     {
                         Console.WriteLine("Event CREATE SME: " + entry.idShortPath);
                         receiveSme.TimeStampCreate = dt;
-                        submodelElements.Add(receiveSme);
+                        int i = 0;
+                        bool found = false;
+                        for (; i < submodelElements.Count; i++)
+                        {
+                            var sme = submodelElements[i];
+                            if (sme.IdShort == path)
+                            {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (found)
+                        {
+                            submodelElements[i] = receiveSme;
+                        }
+                        else
+                        {
+                            submodelElements.Add(receiveSme);
+                        }
                         receiveSme.SetAllParentsAndTimestamps(parent, dt, receiveSme.TimeStampCreate, receiveSme.TimeStampDelete);
                         receiveSme.SetTimeStamp(dt);
                         diffValue.Add(receiveSme);
@@ -318,21 +383,17 @@ namespace Events
             {
                 for (int i = 0; i < submodelElements.Count; i++)
                 {
-
                     var sme = submodelElements[i];
                     if (entry.idShortPath == idShortPath + sme.IdShort)
                     {
-                        if (entry.entryType == "UPDATE")
-                        {
-                            Console.WriteLine("Event UPDATE SME: " + entry.idShortPath);
-                            receiveSme.TimeStampCreate = submodelElements[i].TimeStampCreate;
-                            submodelElements[i] = receiveSme;
-                            receiveSme.SetAllParentsAndTimestamps(parent, dt, receiveSme.TimeStampCreate, receiveSme.TimeStampDelete);
-                            receiveSme.SetTimeStamp(dt);
-                            diffValue.Add(receiveSme);
-                            count++;
-                            return count;
-                        }
+                        Console.WriteLine("Event UPDATE SME: " + entry.idShortPath);
+                        receiveSme.TimeStampCreate = submodelElements[i].TimeStampCreate;
+                        submodelElements[i] = receiveSme;
+                        receiveSme.SetAllParentsAndTimestamps(parent, dt, receiveSme.TimeStampCreate, receiveSme.TimeStampDelete);
+                        receiveSme.SetTimeStamp(dt);
+                        diffValue.Add(receiveSme);
+                        count++;
+                        return count;
                     }
                     var path = idShortPath + sme.IdShort + ".";
                     if (entry.idShortPath.StartsWith(path))
@@ -346,6 +407,50 @@ namespace Events
                                 count += changeSubmodelElement(entry, sml, sml.Value, path, diffValue);
                                 break;
                         }
+                    }
+                }
+            }
+            if (entry.entryType == "DELETE")
+            {
+                for (int i = 0; i < submodelElements.Count; i++)
+                {
+                    var sme = submodelElements[i];
+                    List<ISubmodelElement> children = new List<ISubmodelElement>();
+                    switch (sme)
+                    {
+                        case ISubmodelElementCollection smc:
+                            children = smc.Value;
+                            break;
+                        case ISubmodelElementList sml:
+                            children = sml.Value;
+                            break;
+                    }
+                    if (entry.idShortPath == idShortPath + sme.IdShort)
+                    {
+                        Console.WriteLine("Event DELETE SME: " + entry.idShortPath);
+                        if (children.Count != 0)
+                        {
+                            int c = 0;
+                            while (c < children.Count)
+                            {
+                                if (!entry.notDeletedIdShortList.Contains(children[c].IdShort))
+                                {
+                                    children.RemoveAt(c);
+                                    count++;
+                                }
+                                else
+                                {
+                                    c++;
+                                }
+                            }
+                        }
+                        count++;
+                        return count;
+                    }
+                    var path = idShortPath + sme.IdShort + ".";
+                    if (entry.idShortPath.StartsWith(path))
+                    {
+                        count += changeSubmodelElement(entry, sme, children, path, diffValue);
                     }
                 }
             }
