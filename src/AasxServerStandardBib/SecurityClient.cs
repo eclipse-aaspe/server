@@ -207,6 +207,10 @@ namespace AasxServer
                     {
                         operation_get_put_events(op, envIndex, timeStamp, "put");
                     }
+                    if (idShort.StartsWith("eventelement"))
+                    {
+                        operation_get_put_events(op, envIndex, timeStamp, "");
+                    }
                     switch (idShort)
                     {
                         case "authenticate":
@@ -1508,14 +1512,17 @@ namespace AasxServer
             Property clientCertificatePassWord = null;
             Property clientToken = null;
 
+            Property direction = null;
+            Property mode = null;
+            Property changes = null;
             Property endPoint = null;
-            Property path = null;
-            Submodel elementSubmodel = null;
+            Submodel dataSubmodel = null;
+            SubmodelElementCollection dataCollection = null;
+            SubmodelElementCollection statusData = null;
             Property noPayload = null;
 
             Property lastDiff = null;
             Property status = null;
-            Property mode = null;
             SubmodelElementCollection diff = null;
 
             SubmodelElementCollection smec = null;
@@ -1534,6 +1541,10 @@ namespace AasxServer
                 if (inputRef is Property)
                 {
                     p = (inputRef as Property);
+                    if (p.Value == null)
+                    {
+                        p = null;
+                    }
                 }
 
                 if (inputRef is SubmodelElementCollection)
@@ -1556,6 +1567,18 @@ namespace AasxServer
 
                 switch (inputRef.IdShort.ToLower())
                 {
+                    case "direction":
+                        if (p != null)
+                            direction = p;
+                        break;
+                    case "mode":
+                        if (p != null)
+                            mode = p;
+                        break;
+                    case "changes":
+                        if (p != null)
+                            changes = p;
+                        break;
                     case "authentication":
                         if (smec != null)
                             authentication = smec;
@@ -1568,17 +1591,15 @@ namespace AasxServer
                         if (p != null)
                             noPayload = p;
                         break;
-                    case "path":
-                        if (p != null)
-                            path = p;
-                        break;
-                    case "element":
+                    case "data":
                         if (sm != null)
-                            elementSubmodel = sm;
+                            dataSubmodel = sm;
+                        if (smec != null)
+                            dataCollection = smec;
                         break;
-                    case "mode":
-                        if (p != null)
-                            mode = p;
+                    case "statusdata":
+                        if (smec != null)
+                            statusData = smec;
                         break;
                 }
             }
@@ -1745,6 +1766,18 @@ namespace AasxServer
                 }
             }
 
+            if (direction != null && mode != null)
+            {
+                if (direction.Value == "OUT" && mode.Value == "PUSH")
+                {
+                    getPut = "put";
+                }
+                if (direction.Value == "IN" && mode.Value == "PULL")
+                {
+                    getPut = "get";
+                }
+            }
+
             if (getPut == "get")
             {
                 string requestPath = endPoint.Value;
@@ -1872,6 +1905,16 @@ namespace AasxServer
             {
                 string requestPath = endPoint.Value;
 
+                IReferable source = null;
+                if (dataCollection != null)
+                {
+                    source = dataCollection;
+                }
+                else
+                {
+                    source = dataSubmodel;
+                }
+
                 var split = requestPath.Split("/");
                 var submodelId = split[split.Length - 2];
                 string sourceUrl = Program.externalBlazor + "/" + submodelId;
@@ -1898,10 +1941,21 @@ namespace AasxServer
                 {
                     d = lastDiff.Value;
                 }
-                List<ISubmodelElement> diffValue = new List<ISubmodelElement>();
+                List<String> diffEntry = new List<String>();
                 bool np = false;
                 np = noPayload != null && noPayload.Value != null && noPayload.Value.ToLower() == "true";
-                var e = Events.EventPayload.CollectPayload(sourceUrl, submodel as Submodel, d, diffValue, np);
+                string c = "";
+                if (changes != null)
+                {
+                    c = changes.Value;
+                }
+                var e = Events.EventPayload.CollectPayload(c, source, d, diffEntry, np);
+
+                if (statusData != null)
+                {
+                    var j = Jsonization.Serialize.ToJsonObject(statusData);
+                    e.statusData = j.ToJsonString();
+                }
 
                 if (e.eventEntries.Count == 0)
                 {
@@ -1954,17 +2008,17 @@ namespace AasxServer
                                 {
                                     status.Value = "ERROR: " +
                                         response.StatusCode.ToString() + " ; " +
-                                        response.Content.ReadAsStringAsync().Result + " ; " +
-                                        "PUT " + requestPath;
+                                        response.Content.ReadAsStringAsync().Result +
+                                        " ; PUT " + requestPath;
                                     status.SetTimeStamp(DateTime.UtcNow);
                                 }
                             }
                             else
                             {
-                                var dt = DateTime.Parse(e.lastUpdate);
+                                var dt = DateTime.Parse(e.status.lastUpdate);
                                 if (lastDiff != null)
                                 {
-                                    lastDiff.Value = e.lastUpdate;
+                                    lastDiff.Value = e.status.lastUpdate;
                                     lastDiff.SetTimeStamp(dt);
                                 }
                                 if (status != null)
@@ -1972,9 +2026,19 @@ namespace AasxServer
                                     status.Value = "on";
                                     status.SetTimeStamp(DateTime.UtcNow);
                                 }
-                                if (diff != null && diffValue.Count > 0)
+                                if (diff != null && diffEntry.Count > 0)
                                 {
-                                    diff.Value = diffValue;
+                                    diff.Value = new List<ISubmodelElement>();
+                                    int i = 0;
+                                    foreach (var d in diffEntry)
+                                    {
+                                        var p = new Property(DataTypeDefXsd.String);
+                                        p.IdShort = "diff" + i;
+                                        p.Value = d;
+                                        p.SetTimeStamp(dt);
+                                        diff.Value.Add(p);
+                                        i++;
+                                    }
                                     diff.SetTimeStamp(dt);
                                 }
                             }

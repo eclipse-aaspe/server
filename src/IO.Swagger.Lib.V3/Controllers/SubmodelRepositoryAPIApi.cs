@@ -128,8 +128,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 int s = Convert.ToInt32(diff);
                 diff = TimeStamp.DateTimeToString(DateTime.UtcNow.AddSeconds(-s));
             }
-            List<ISubmodelElement> diffValue = new List<ISubmodelElement>();
-            var e = Events.EventPayload.CollectPayload(sourceUrl, submodel as Submodel, diff, diffValue, np);
+            List<String> diffEntry = new List<String>();
+            string changes = "CREATE UPDATE DELETE";
+            var e = Events.EventPayload.CollectPayload(changes, submodel as Submodel, diff, diffEntry, np);
             return new ObjectResult(e);
         }
 
@@ -169,7 +170,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             string lastDiffValue = "";
             string statusValue = "";
             List<ISubmodelElement> diffValue = new List<ISubmodelElement>();
-            int count = Events.EventPayload.changeData(body, Program.env, out lastDiffValue, out statusValue, diffValue);
+            int count = 0;
+            count = Events.EventPayload.changeData(body, Program.env, out lastDiffValue, out statusValue, diffValue);
 
             if (count > 0)
             {

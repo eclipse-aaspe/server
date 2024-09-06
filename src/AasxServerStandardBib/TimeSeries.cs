@@ -237,6 +237,20 @@ namespace AasxTimeSeries
                                                         }
 
                                                         break;
+                                                    case "latestData":
+                                                        if (sme2 is SubmodelElementCollection)
+                                                        {
+                                                            tsb.latestData = sme2 as SubmodelElementCollection;
+                                                        }
+
+                                                        if (sme2 is ReferenceElement)
+                                                        {
+                                                            var refElement = Program.env[0].AasEnv.FindReferableByReference((sme2 as ReferenceElement).GetModelReference());
+                                                            if (refElement is SubmodelElementCollection)
+                                                                tsb.latestData = refElement as SubmodelElementCollection;
+                                                        }
+
+                                                        break;
                                                     case "minDiffPercent":
                                                         if (sme2 is Property)
                                                         {
@@ -378,17 +392,17 @@ namespace AasxTimeSeries
 
                                         tsb.opcLastTimeStamp = DateTime.UtcNow + TimeSpan.FromMinutes(tsb.correctionMinutes) - TimeSpan.FromMinutes(2);
 
-                                        if (tsb.data != null)
+                                        if (tsb.data != null && tsb.latestData != null)
                                         {
                                             //tsb.latestData = new SubmodelElementCollection(idShort:"latestData");
-                                            tsb.latestData = new SubmodelElementCollection(idShort: "latestData", value: new List<ISubmodelElement>());
+                                            // tsb.latestData = new SubmodelElementCollection(idShort: "latestData", value: new List<ISubmodelElement>());
                                             tsb.latestData.TimeStampCreate = timeStamp;
                                             tsb.latestData.SetTimeStamp(timeStamp);
                                             if (tsb.data.Value == null)
                                             {
                                                 tsb.data.Value = new List<ISubmodelElement>();
                                             }
-                                            tsb.data.Value.Add(tsb.latestData);
+                                            // tsb.data.Value.Add(tsb.latestData);
 
                                             ISubmodelElement latestDataProperty = null;
                                             latestDataProperty = tsb.latestData.FindFirstIdShortAs<Property>("lowDataIndex");
