@@ -37,16 +37,34 @@ namespace Events
             notDeletedIdShortList = new List<string>();
         }
     }
-    public class EventPayload
+
+    public class EventStatus
     {
+        public string mode { get; set; } // PULL or PUSH must be the same in publisher and consumer
         public string transmitted { get; set; } // timestamp of GET or PUT
-        public string sourceUrl { get; set; } // API endpoint, for new values: sourceUrl+lastUpdate
         public string lastUpdate { get; set; } // latest timeStamp for all entries
 
+        public EventStatus()
+        {
+            mode = "";
+            transmitted = "";
+            lastUpdate = "";
+        }
+    }
+    public class EventPayload
+    {
+        public EventStatus status { get; set; }
+        public string statusData { get; set; } // application status data, continuously sent, can be used for specific reconnect
         public List<EventPayloadEntry> eventEntries { get; set; }
 
+        public EventPayload()
+        {
+            status = new EventStatus();
+            statusData = "";
+            eventEntries = new List<EventPayloadEntry>();
+        }
         public static int collectSubmodelElements(List<ISubmodelElement> submodelElements, DateTime diffTime, string entryType,
-            string submodelId, string idShortPath, List<EventPayloadEntry> entries, List<ISubmodelElement> diffValue, bool noPayload)
+            string submodelId, string idShortPath, List<EventPayloadEntry> entries, List<String> diffEntry, bool noPayload)
         {
             int count = 0;
             foreach (var sme in submodelElements)
@@ -125,7 +143,7 @@ namespace Events
                 }
                 if (copy)
                 {
-                    diffValue.Add(sme);
+                    diffEntry.Add(entryType + " " + idShortPath + sme.IdShort);
                     var j = Jsonization.Serialize.ToJsonObject(sme);
                     var e = new EventPayloadEntry();
                     e.entryType = entryType;
@@ -143,7 +161,7 @@ namespace Events
                 if (delete)
                 {
                     Console.WriteLine("DELETE SME " + idShortPath + sme.IdShort);
-                    diffValue.Add(sme);
+                    diffEntry.Add(entryType + " " + idShortPath + sme.IdShort);
                     var e = new EventPayloadEntry();
                     e.entryType = entryType;
                     e.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(timeStamp);
@@ -164,54 +182,102 @@ namespace Events
                 {
                     if (tree && children.Count != 0)
                     {
-                        count += collectSubmodelElements(children, diffTime, entryType, submodelId, idShortPath + sme.IdShort + ".", entries, diffValue, noPayload);
+                        count += collectSubmodelElements(children, diffTime, entryType, submodelId, idShortPath + sme.IdShort + ".", entries, diffEntry, noPayload);
                     }
                 }
             }
             return count;
         }
 
-        public static EventPayload CollectPayload(string sourceUrl, Submodel submodel, string diff, List<ISubmodelElement> diffValue, bool noPayload)
+        public static EventPayload CollectPayload(string changes, IReferable referable, string diff, List<String> diffEntry, bool noPayload)
         {
             var e = new EventPayload();
-            e.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
-            e.sourceUrl = sourceUrl;
-            e.lastUpdate = "";
+            e.status.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
+            e.status.lastUpdate = "";
             e.eventEntries = new List<EventPayloadEntry>();
 
             var isInitial = diff == "init";
 
-            if (submodel != null)
+            if (referable != null)
             {
-                e.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(submodel.TimeStampTree);
+                var entry = new EventPayloadEntry();
+                var idShortPath = "";
+                Submodel submodel = null;
+                List<ISubmodelElement> children = null;
+                if (referable is Submodel)
+                {
+                    submodel = referable as Submodel;
+                    children = submodel.SubmodelElements;
+                    entry.submodelId = submodel.Id;
+                    entry.payloadType = "submodel";
+                }
+                else
+                {
+                    if (referable is SubmodelElementCollection smc)
+                    {
+                        children = smc.Value;
+                    }
+                    if (referable is SubmodelElementList sml)
+                    {
+                        children = sml.Value;
+                    }
+                    var r = referable;
+                    while (r.Parent != null)
+                    {
+                        idShortPath = r.IdShort + "." + idShortPath;
+                        r = r.Parent as IReferable;
+                    }
+                    if (r is Submodel)
+                    {
+                        submodel = r as Submodel;
+                        entry.submodelId = submodel.Id;
+                    }
+                    entry.payloadType = "sme";
+                    idShortPath = referable.IdShort + ".";
+                }
+
+                e.status.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(referable.TimeStampTree);
 
                 if (isInitial)
                 {
                     string json = string.Empty;
-                    if (submodel != null)
+                    if (referable != null)
                     {
-                        var j = Jsonization.Serialize.ToJsonObject(submodel);
+                        var j = Jsonization.Serialize.ToJsonObject(referable);
                         json = j.ToJsonString();
                     }
 
-                    var entry = new EventPayloadEntry();
-                    entry.entryType = "UPDATE";
-                    e.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(submodel.TimeStampTree);
-                    entry.payloadType = "submodel";
-                    entry.submodelId = submodel.Id;
+                    entry.entryType = "CREATE";
+                    e.status.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(referable.TimeStampTree);
                     if (!noPayload)
                     {
                         entry.payload = json;
                     }
-                    entry.lastUpdate = e.lastUpdate;
+                    entry.lastUpdate = e.status.lastUpdate;
+                    entry.idShortPath = idShortPath.TrimEnd('.');
                     e.eventEntries.Add(entry);
                 }
                 else
                 {
                     var diffTime = DateTime.Parse(diff);
-                    collectSubmodelElements(submodel.SubmodelElements, diffTime, "CREATE", submodel.Id, "", e.eventEntries, diffValue, noPayload);
-                    collectSubmodelElements(submodel.SubmodelElements, diffTime, "DELETE", submodel.Id, "", e.eventEntries, diffValue, noPayload);
-                    collectSubmodelElements(submodel.SubmodelElements, diffTime, "UPDATE", submodel.Id, "", e.eventEntries, diffValue, noPayload);
+                    if (changes == null || changes.Contains("CREATE"))
+                    {
+                        collectSubmodelElements(children, diffTime, "CREATE", submodel.Id, idShortPath, e.eventEntries, diffEntry, noPayload);
+                    }
+                    if (changes == null || changes.Contains("DELETE"))
+                    {
+                        collectSubmodelElements(children, diffTime, "DELETE", submodel.Id, idShortPath, e.eventEntries, diffEntry, noPayload);
+                        if (!(referable is Submodel))
+                        {
+                            children = new List<ISubmodelElement>();
+                            children.Add(referable as ISubmodelElement);
+                            collectSubmodelElements(children, diffTime, "DELETE", submodel.Id, "", e.eventEntries, diffEntry, noPayload);
+                        }
+                    }
+                    if (changes == null || changes.Contains("UPDATE"))
+                    {
+                        collectSubmodelElements(children, diffTime, "UPDATE", submodel.Id, idShortPath, e.eventEntries, diffEntry, noPayload);
+                    }
                 }
             }
 
@@ -225,9 +291,27 @@ namespace Events
             int count = 0;
 
             EventPayload eventPayload = JsonSerializer.Deserialize<Events.EventPayload>(json);
-            var dt = TimeStamp.TimeStamp.StringToDateTime(eventPayload.lastUpdate);
-            dt = DateTime.Parse(eventPayload.lastUpdate);
+            var dt = TimeStamp.TimeStamp.StringToDateTime(eventPayload.status.lastUpdate);
+            dt = DateTime.Parse(eventPayload.status.lastUpdate);
             lastDiffValue = TimeStamp.TimeStamp.DateTimeToString(dt);
+
+            if (eventPayload.statusData != "" && eventPayload.eventEntries.Count != 0)
+            {
+                ISubmodelElement receiveSme = null;
+                MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(eventPayload.statusData));
+                JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
+
+                var entryStatusData = new EventPayloadEntry();
+                entryStatusData.entryType = "CREATE";
+                entryStatusData.lastUpdate = eventPayload.status.lastUpdate;
+                entryStatusData.payloadType = "sme";
+                entryStatusData.payload = eventPayload.statusData;
+                entryStatusData.submodelId = eventPayload.eventEntries[0].submodelId;
+                entryStatusData.idShortPath = receiveSme.IdShort;
+                entryStatusData.notDeletedIdShortList = new List<string>();
+                eventPayload.eventEntries.Insert(0, entryStatusData);
+            }
 
             foreach (var entry in eventPayload.eventEntries)
             {
