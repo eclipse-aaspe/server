@@ -29,6 +29,7 @@ using AasxServerStandardBib.Logging;
 using AdminShellNS.Lib.V3.Models;
 using DataTransferObjects.MetadataDTOs;
 using DataTransferObjects.ValueDTOs;
+using Extensions;
 using IO.Swagger.Attributes;
 using IO.Swagger.Lib.V3.Interfaces;
 using IO.Swagger.Lib.V3.Models;
@@ -114,7 +115,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
         }
 
-        var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+        int packageIndex;
+        var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier, out packageIndex);
         if (!Program.noSecurity)
         {
             var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
@@ -140,14 +142,36 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 int s = Convert.ToInt32(diff);
                 diff = TimeStamp.DateTimeToString(DateTime.UtcNow.AddSeconds(-s));
             }
+
+            var eventData = new Events.EventData();
+            var op = Events.EventData.FindEvent(submodel);
+            eventData.ParseData(op, Program.env[packageIndex]);
+
+            IReferable data = null;
+            if (eventData.dataSubmodel != null)
+            {
+                data = eventData.dataSubmodel;
+            }
+            if (eventData.dataCollection != null)
+            {
+                data = eventData.dataCollection;
+            }
+            if (data == null)
+            {
+                return NoContent();
+            }
+
             List<String> diffEntry = new List<String>();
             string changes = "CREATE UPDATE DELETE";
-            var e = Events.EventPayload.CollectPayload(changes, submodel as Submodel, diff, diffEntry, np);
+            var e = Events.EventPayload.CollectPayload(changes, 1, eventData.statusData, data, diff, diffEntry, np);
             return new ObjectResult(e);
         }
 
         return NoContent();
     }
+
+    static bool debug = false;
+    static bool isRunning = false;
 
     [HttpPut]
     [Route("/submodels/{submodelIdentifier}/events")]
@@ -157,14 +181,25 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
     public virtual IActionResult PutEventMessages([FromRoute][Required] string submodelIdentifier)
     {
+        if (debug)
+        {
+            if (isRunning)
+            {
+                return NoContent();
+            }
+            isRunning = true;
+        }
+
+        int packageIndex;
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
         if (decodedSubmodelIdentifier == null)
         {
+            isRunning = false;
             throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
         }
 
-        var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+        var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier, out packageIndex);
         using (var reader = new StreamReader(HttpContext.Request.Body))
         {
             var body = reader.ReadToEndAsync().Result;
@@ -174,21 +209,79 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
                 if (!authResult.Succeeded)
                 {
+                    isRunning = false;
                     throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
                 }
             }
 
             // Now you can use jsonBody as needed
+
+            var eventData = new Events.EventData();
+            var op = Events.EventData.FindEvent(submodel);
+            eventData.ParseData(op, Program.env[packageIndex]);
+
+            IReferable data = null;
+            if (eventData.dataSubmodel != null)
+            {
+                data = eventData.dataSubmodel;
+            }
+            if (eventData.dataCollection != null)
+            {
+                data = eventData.dataCollection;
+            }
+            if (data == null)
+            {
+                return NoContent();
+            }
+
+            string transmitted = "";
             string lastDiffValue = "";
             string statusValue = "";
-            List<ISubmodelElement> diffValue = new List<ISubmodelElement>();
+            List<String> diffEntry = new List<string>();
             int count = 0;
-            count = Events.EventPayload.changeData(body, Program.env, out lastDiffValue, out statusValue, diffValue);
+            count = Events.EventPayload.changeData(body, eventData.statusData, Program.env, data, out transmitted, out lastDiffValue, out statusValue, diffEntry, packageIndex);
 
-            if (count > 0)
+            if (eventData.transmitted != null)
             {
-                Program.signalNewData(2);
+                eventData.transmitted.Value = transmitted;
+                eventData.transmitted.SetTimeStamp(DateTime.UtcNow);
             }
+            var dt = DateTime.Parse(lastDiffValue);
+            if (eventData.lastUpdate != null)
+            {
+                eventData.lastUpdate.Value = lastDiffValue;
+                eventData.lastUpdate.SetTimeStamp(dt);
+            }
+            if (eventData.message != null && statusValue != null)
+            {
+                eventData.message.Value = statusValue;
+                eventData.message.SetTimeStamp(DateTime.UtcNow);
+            }
+            if (eventData.diff != null)
+            {
+                eventData.diff.Value = new List<ISubmodelElement>();
+                if (diffEntry.Count > 0)
+                {
+                    int i = 0;
+                    foreach (var d in diffEntry)
+                    {
+                        var p = new Property(DataTypeDefXsd.String);
+                        p.IdShort = "diff" + i;
+                        p.Value = d;
+                        p.SetTimeStamp(dt);
+                        eventData.diff.Value.Add(p);
+                        i++;
+                    }
+                }
+                eventData.diff.SetTimeStamp(dt);
+            }
+
+            Program.signalNewData(2);
+        }
+
+        if (debug)
+        {
+            isRunning = false;
         }
 
         return NoContent();

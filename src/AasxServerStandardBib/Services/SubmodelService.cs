@@ -370,6 +370,11 @@ namespace AasxServerStandardBib.Services
             return _packageEnvService.GetSubmodelById(submodelIdentifier, out _);
         }
 
+        public ISubmodel GetSubmodelById(string submodelIdentifier, out int packageIndex)
+        {
+            packageIndex = -1;
+            return _packageEnvService.GetSubmodelById(submodelIdentifier, out packageIndex);
+        }
         public ISubmodelElement GetSubmodelElementByPath(string submodelIdentifier, string idShortPath)
         {
             var found = IsSubmodelElementPresent(submodelIdentifier, idShortPath, out ISubmodelElement output, out _);

@@ -161,7 +161,7 @@ namespace Events
                 if (delete)
                 {
                     Console.WriteLine("DELETE SME " + idShortPath + sme.IdShort);
-                    diffEntry.Add(entryType + " " + idShortPath + sme.IdShort);
+                    diffEntry.Add(entryType + " " + idShortPath + sme.IdShort + ".*");
                     var e = new EventPayloadEntry();
                     e.entryType = entryType;
                     e.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(timeStamp);
@@ -189,7 +189,7 @@ namespace Events
             return count;
         }
 
-        public static EventPayload CollectPayload(string changes, IReferable referable, string diff, List<String> diffEntry, bool noPayload)
+        public static EventPayload CollectPayload(string changes, int depth, SubmodelElementCollection statusData, IReferable referable, string diff, List<String> diffEntry, bool noPayload)
         {
             var e = new EventPayload();
             e.status.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
@@ -197,6 +197,22 @@ namespace Events
             e.eventEntries = new List<EventPayloadEntry>();
 
             var isInitial = diff == "init";
+
+            if (statusData != null && statusData.Value != null)
+            {
+                if (depth == 0)
+                {
+                    var j = Jsonization.Serialize.ToJsonObject(statusData);
+                    e.statusData = j.ToJsonString();
+
+                }
+                if (depth == 1 && statusData.Value.Count == 1 && statusData.Value[0] is SubmodelElementCollection smc)
+                {
+                    var j = Jsonization.Serialize.ToJsonObject(smc);
+                    e.statusData = j.ToJsonString();
+
+                }
+            }
 
             if (referable != null)
             {
@@ -266,12 +282,15 @@ namespace Events
                     }
                     if (changes == null || changes.Contains("DELETE"))
                     {
-                        collectSubmodelElements(children, diffTime, "DELETE", submodel.Id, idShortPath, e.eventEntries, diffEntry, noPayload);
                         if (!(referable is Submodel))
                         {
                             children = new List<ISubmodelElement>();
                             children.Add(referable as ISubmodelElement);
                             collectSubmodelElements(children, diffTime, "DELETE", submodel.Id, "", e.eventEntries, diffEntry, noPayload);
+                        }
+                        else
+                        {
+                            collectSubmodelElements(children, diffTime, "DELETE", submodel.Id, idShortPath, e.eventEntries, diffEntry, noPayload);
                         }
                     }
                     if (changes == null || changes.Contains("UPDATE"))
@@ -284,24 +303,37 @@ namespace Events
             return e;
         }
 
-        public static int changeData(string json, AdminShellPackageEnv[] env, out string lastDiffValue, out string statusValue, List<ISubmodelElement> diffValue)
+        public static int changeData(string json, SubmodelElementCollection statusData, AdminShellPackageEnv[] env, IReferable referable, out string transmit, out string lastDiffValue, out string statusValue, List<String> diffEntry, int packageIndex = -1)
         {
+            transmit = "";
             lastDiffValue = "";
             statusValue = "ERROR";
             int count = 0;
 
             EventPayload eventPayload = JsonSerializer.Deserialize<Events.EventPayload>(json);
+            transmit = eventPayload.status.transmitted;
             var dt = TimeStamp.TimeStamp.StringToDateTime(eventPayload.status.lastUpdate);
             dt = DateTime.Parse(eventPayload.status.lastUpdate);
             lastDiffValue = TimeStamp.TimeStamp.DateTimeToString(dt);
 
-            if (eventPayload.statusData != "" && eventPayload.eventEntries.Count != 0)
+            ISubmodelElementCollection statusDataCollection = null;
+            if (eventPayload.statusData != "" && statusData != null)
             {
                 ISubmodelElement receiveSme = null;
                 MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(eventPayload.statusData));
                 JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
                 receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
+                if (receiveSme is SubmodelElementCollection smc)
+                {
+                    statusData.Value = new List<ISubmodelElement>();
+                    statusData.Add(smc);
+                    receiveSme.TimeStampCreate = dt;
+                    receiveSme.TimeStampDelete = new DateTime();
+                    receiveSme.SetAllParentsAndTimestamps(statusData, dt, receiveSme.TimeStampCreate, receiveSme.TimeStampDelete);
+                    receiveSme.SetTimeStamp(dt);
+                }
 
+                /*
                 var entryStatusData = new EventPayloadEntry();
                 entryStatusData.entryType = "CREATE";
                 entryStatusData.lastUpdate = eventPayload.status.lastUpdate;
@@ -311,17 +343,22 @@ namespace Events
                 entryStatusData.idShortPath = receiveSme.IdShort;
                 entryStatusData.notDeletedIdShortList = new List<string>();
                 eventPayload.eventEntries.Insert(0, entryStatusData);
+                */
             }
 
-            foreach (var entry in eventPayload.eventEntries)
-            {
-                var submodelId = entry.submodelId;
-                ISubmodel submodel = null;
-                ISubmodel receiveSubmodel = null;
-                IAssetAdministrationShell aas = null;
-                AasCore.Aas3_0.Environment aasEnv = null;
-                int index = -1;
+            AasCore.Aas3_0.Environment aasEnv = null;
+            int index = -1;
+            ISubmodelElementCollection dataCollection = null;
+            List<ISubmodelElement> data = new List<ISubmodelElement>();
+            SubmodelElementCollection status = null;
+            AasCore.Aas3_0.Property message = null;
+            AasCore.Aas3_0.Property transmitted = null;
+            AasCore.Aas3_0.Property lastUpdate = null;
+            SubmodelElementCollection diff = null;
 
+            /*
+            if (submodel == null)
+            {
                 for (int i = 0; i < env.Length; i++)
                 {
                     var package = env[i];
@@ -335,12 +372,102 @@ namespace Events
                             {
                                 submodel = submodels.First();
                                 // index = aasEnv.Submodels.IndexOf(submodel);
+                                data = submodel.SubmodelElements;
                                 index = i;
+                                packageIndex = i;
                                 break;
                             }
                         }
                     }
                 }
+            }
+            else // parse EventElement in submodel
+            {
+                foreach (var sme in submodel.SubmodelElements)
+                {
+                    if (sme is Operation op && sme.IdShort.ToLower().StartsWith("eventelement"))
+                    {
+                        foreach (var input in op.InputVariables)
+                        {
+                            if (input.Value is ReferenceElement r && input.Value.IdShort == "data")
+                            {
+                                var refElement = env[packageIndex].AasEnv.FindReferableByReference(r.Value);
+                                if (refElement is SubmodelElementCollection smc)
+                                {
+                                    dataCollection = smc;
+                                    data = smc.Value;
+                                }
+                            }
+                            if (input.Value is ReferenceElement r2 && input.Value.IdShort == "statusData")
+                            {
+                                var refElement = env[packageIndex].AasEnv.FindReferableByReference(r2.Value);
+                                if (refElement is SubmodelElementCollection smc)
+                                {
+                                    if (statusDataCollection != null)
+                                    {
+                                        smc.Value = new List<ISubmodelElement>();
+                                        smc.Value.Add(statusDataCollection);
+                                    }
+                                    smc.SetAllParentsAndTimestamps(smc.Parent as IReferable, dt, dt, dt);
+                                    smc.SetTimeStamp(dt);
+                                }
+                            }
+                        }
+
+                        foreach (var output in op.OutputVariables)
+                        {
+                            var outputRef = output.Value;
+                            if (outputRef is ReferenceElement r && output.Value.IdShort == "status")
+                            {
+                                var refElement = env[packageIndex].AasEnv.FindReferableByReference(r.Value);
+                                if (refElement is SubmodelElementCollection smc)
+                                {
+                                    status = smc;
+                                    status.SetAllParentsAndTimestamps(status.Parent as IReferable, dt, dt, dt);
+                                    status.SetTimeStamp(dt);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            */
+
+            List<ISubmodelElement> children = null;
+            Submodel submodel = null;
+            if (referable is Submodel)
+            {
+                submodel = referable as Submodel;
+                children = submodel.SubmodelElements;
+            }
+            else
+            {
+                if (referable is SubmodelElementCollection smc)
+                {
+                    dataCollection = smc;
+                    data = smc.Value;
+                    children = smc.Value;
+                }
+                if (referable is SubmodelElementList sml)
+                {
+                    children = sml.Value;
+                }
+                var r = referable;
+                while (r.Parent != null)
+                {
+                    r = r.Parent as IReferable;
+                }
+                if (r is Submodel)
+                {
+                    submodel = r as Submodel;
+                }
+            }
+
+            foreach (var entry in eventPayload.eventEntries)
+            {
+                var submodelId = entry.submodelId;
+                ISubmodel receiveSubmodel = null;
+                IAssetAdministrationShell aas = null;
 
                 if (entry.payloadType == "submodel" && entry.payload != "")
                 {
@@ -353,6 +480,10 @@ namespace Events
 
                     if (receiveSubmodel != null)
                     {
+                        dataCollection.Value = receiveSubmodel.SubmodelElements;
+                        dataCollection.SetTimeStamp(dt);
+                        return 1;
+
                         if (index != -1) // submodel exisiting
                         {
                             aasEnv.Submodels.Remove(submodel);
@@ -376,12 +507,12 @@ namespace Events
                     }
                 }
 
-                if (entry.payloadType == "sme" && submodel != null && (entry.payload != "" || entry.notDeletedIdShortList.Count != 0))
+                if (entry.payloadType == "sme" && referable != null && (entry.payload != "" || entry.notDeletedIdShortList.Count != 0))
                 {
-                    count += changeSubmodelElement(entry, submodel, submodel.SubmodelElements, "", diffValue);
+                    count += changeSubmodelElement(entry, referable as ISubmodelElement, children, "", diffEntry);
                     if (count > 0)
                     {
-                        env[index].setWrite(true);
+                        env[packageIndex].setWrite(true);
                     }
                 }
             }
@@ -392,7 +523,7 @@ namespace Events
             return count;
         }
 
-        public static int changeSubmodelElement(EventPayloadEntry entry, IReferable parent, List<ISubmodelElement> submodelElements, string idShortPath, List<ISubmodelElement> diffValue)
+        public static int changeSubmodelElement(EventPayloadEntry entry, IReferable parent, List<ISubmodelElement> submodelElements, string idShortPath, List<String> diffEntry)
         {
             int count = 0;
             var dt = DateTime.Parse(entry.lastUpdate);
@@ -441,7 +572,7 @@ namespace Events
                         }
                         receiveSme.SetAllParentsAndTimestamps(parent, dt, receiveSme.TimeStampCreate, receiveSme.TimeStampDelete);
                         receiveSme.SetTimeStamp(dt);
-                        diffValue.Add(receiveSme);
+                        diffEntry.Add(entry.entryType + " " + entry.idShortPath);
                         count++;
                         return count;
                     }
@@ -454,10 +585,10 @@ namespace Events
                             switch (sme)
                             {
                                 case ISubmodelElementCollection smc:
-                                    count += changeSubmodelElement(entry, smc, smc.Value, path, diffValue);
+                                    count += changeSubmodelElement(entry, smc, smc.Value, path, diffEntry);
                                     break;
                                 case ISubmodelElementList sml:
-                                    count += changeSubmodelElement(entry, sml, sml.Value, path, diffValue);
+                                    count += changeSubmodelElement(entry, sml, sml.Value, path, diffEntry);
                                     break;
                             }
                         }
@@ -477,7 +608,7 @@ namespace Events
                         submodelElements[i] = receiveSme;
                         receiveSme.SetAllParentsAndTimestamps(parent, dt, receiveSme.TimeStampCreate, receiveSme.TimeStampDelete);
                         receiveSme.SetTimeStamp(dt);
-                        diffValue.Add(receiveSme);
+                        diffEntry.Add(entry.entryType + " " + entry.idShortPath);
                         count++;
                         return count;
                     }
@@ -487,10 +618,10 @@ namespace Events
                         switch (sme)
                         {
                             case ISubmodelElementCollection smc:
-                                count += changeSubmodelElement(entry, smc, smc.Value, path, diffValue);
+                                count += changeSubmodelElement(entry, smc, smc.Value, path, diffEntry);
                                 break;
                             case ISubmodelElementList sml:
-                                count += changeSubmodelElement(entry, sml, sml.Value, path, diffValue);
+                                count += changeSubmodelElement(entry, sml, sml.Value, path, diffEntry);
                                 break;
                         }
                     }
@@ -531,17 +662,307 @@ namespace Events
                                 }
                             }
                         }
+                        diffEntry.Add(entry.entryType + " " + entry.idShortPath + ".*");
                         count++;
                         return count;
                     }
                     var path = idShortPath + sme.IdShort + ".";
                     if (entry.idShortPath.StartsWith(path))
                     {
-                        count += changeSubmodelElement(entry, sme, children, path, diffValue);
+                        count += changeSubmodelElement(entry, sme, children, path, diffEntry);
                     }
                 }
             }
             return count;
+        }
+    }
+
+    public class EventData
+    {
+        public SubmodelElementCollection authentication = null;
+        public AasCore.Aas3_0.Property authType = null;
+        public AasCore.Aas3_0.Property authServerEndPoint = null;
+        public AasCore.Aas3_0.Property accessToken = null;
+        public AasCore.Aas3_0.Property userName = null;
+        public AasCore.Aas3_0.Property passWord = null;
+        public string basicAuth = null;
+        public AasCore.Aas3_0.File authServerCertificate = null;
+        public AasCore.Aas3_0.File clientCertificate = null;
+        public AasCore.Aas3_0.Property clientCertificatePassWord = null;
+        public AasCore.Aas3_0.Property clientToken = null;
+
+        public AasCore.Aas3_0.Property direction = null;
+        public AasCore.Aas3_0.Property mode = null;
+        public AasCore.Aas3_0.Property changes = null;
+        public AasCore.Aas3_0.Property endPoint = null;
+        public Submodel dataSubmodel = null;
+        public SubmodelElementCollection dataCollection = null;
+        public SubmodelElementCollection statusData = null;
+        public AasCore.Aas3_0.Property noPayload = null;
+
+        public SubmodelElementCollection status = null;
+        public AasCore.Aas3_0.Property message = null;
+        public AasCore.Aas3_0.Property transmitted = null;
+        public AasCore.Aas3_0.Property lastUpdate = null;
+        public SubmodelElementCollection diff = null;
+
+        public EventData()
+        {
+
+        }
+
+        public static Operation FindEvent(ISubmodel submodel)
+        {
+            foreach (var sme in submodel.SubmodelElements)
+            {
+                if (sme is Operation op && sme.IdShort.ToLower().StartsWith("eventelement"))
+                {
+                    return op;
+                }
+            }
+
+            return null;
+        }
+
+        public void ParseData(Operation op, AdminShellPackageEnv env)
+        {
+            SubmodelElementCollection smec = null;
+            Submodel sm = null;
+            AasCore.Aas3_0.Property p = null;
+
+            foreach (var input in op.InputVariables)
+            {
+                smec = null;
+                sm = null;
+                p = null;
+                var inputRef = input.Value;
+                if (inputRef is AasCore.Aas3_0.Property)
+                {
+                    p = (inputRef as AasCore.Aas3_0.Property);
+                    if (p.Value == null)
+                    {
+                        p = null;
+                    }
+                }
+
+                if (inputRef is SubmodelElementCollection)
+                {
+                    smec = (inputRef as SubmodelElementCollection);
+                }
+
+                if (inputRef is ReferenceElement)
+                {
+                    var refElement = env.AasEnv.FindReferableByReference((inputRef as ReferenceElement).Value);
+                    if (refElement is SubmodelElementCollection)
+                    {
+                        smec = refElement as SubmodelElementCollection;
+                    }
+                    if (refElement is Submodel)
+                    {
+                        sm = refElement as Submodel;
+                    }
+                }
+
+                switch (inputRef.IdShort.ToLower())
+                {
+                    case "direction":
+                        if (p != null)
+                            direction = p;
+                        break;
+                    case "mode":
+                        if (p != null)
+                            mode = p;
+                        break;
+                    case "changes":
+                        if (p != null)
+                            changes = p;
+                        break;
+                    case "authentication":
+                        if (smec != null)
+                            authentication = smec;
+                        break;
+                    case "endpoint":
+                        if (p != null)
+                            endPoint = p;
+                        break;
+                    case "nopayload":
+                        if (p != null)
+                            noPayload = p;
+                        break;
+                    case "data":
+                        if (sm != null)
+                            dataSubmodel = sm;
+                        if (smec != null)
+                            dataCollection = smec;
+                        break;
+                    case "statusdata":
+                        if (smec != null)
+                            statusData = smec;
+                        break;
+                }
+            }
+
+            foreach (var output in op.OutputVariables)
+            {
+                smec = null;
+                sm = null;
+                p = null;
+                var outputRef = output.Value;
+                if (outputRef is AasCore.Aas3_0.Property)
+                {
+                    p = (outputRef as AasCore.Aas3_0.Property);
+                }
+
+                if (outputRef is SubmodelElementCollection)
+                {
+                    smec = outputRef as SubmodelElementCollection;
+                }
+
+                if (outputRef is ReferenceElement)
+                {
+                    var refElement = env.AasEnv.FindReferableByReference((outputRef as ReferenceElement).Value);
+                    if (refElement is SubmodelElementCollection)
+                        smec = refElement as SubmodelElementCollection;
+                    if (refElement is Submodel)
+                        sm = refElement as Submodel;
+                }
+
+                switch (outputRef.IdShort.ToLower())
+                {
+                    case "lastupdate":
+                        if (p != null)
+                            lastUpdate = p;
+                        break;
+                    case "status":
+                        if (smec != null)
+                            status = smec;
+                        break;
+                    case "diff":
+                        if (smec != null)
+                            diff = smec;
+                        break;
+                }
+            }
+
+            if (status != null)
+            {
+                foreach (var sme in status.Value)
+                {
+                    switch (sme.IdShort.ToLower())
+                    {
+                        case "message":
+                            if (sme is AasCore.Aas3_0.Property)
+                            {
+                                message = sme as AasCore.Aas3_0.Property;
+                            }
+                            break;
+                        case "transmitted":
+                            if (sme is AasCore.Aas3_0.Property)
+                            {
+                                transmitted = sme as AasCore.Aas3_0.Property;
+                            }
+                            break;
+                        case "lastupdate":
+                            if (sme is AasCore.Aas3_0.Property)
+                            {
+                                lastUpdate = sme as AasCore.Aas3_0.Property;
+                            }
+                            break;
+                        case "diff":
+                            if (sme is SubmodelElementCollection)
+                            {
+                                diff = sme as SubmodelElementCollection;
+                            }
+                            break;
+                    }
+                }
+            }
+
+            if (authentication != null)
+            {
+                smec = authentication;
+                int countSmec = smec.Value.Count;
+                for (int iSmec = 0; iSmec < countSmec; iSmec++)
+                {
+                    var sme2 = smec.Value[iSmec];
+                    var idShort = sme2.IdShort.ToLower();
+
+                    switch (idShort)
+                    {
+                        case "authtype":
+                            if (sme2 is AasCore.Aas3_0.Property)
+                            {
+                                authType = sme2 as AasCore.Aas3_0.Property;
+                            }
+
+                            break;
+
+                        case "accesstoken":
+                            if (sme2 is AasCore.Aas3_0.Property)
+                            {
+                                accessToken = sme2 as AasCore.Aas3_0.Property;
+                            }
+
+                            break;
+
+                        case "clienttoken":
+                            if (sme2 is AasCore.Aas3_0.Property)
+                            {
+                                clientToken = sme2 as AasCore.Aas3_0.Property;
+                            }
+
+                            break;
+
+                        case "username":
+                            if (sme2 is AasCore.Aas3_0.Property)
+                            {
+                                userName = sme2 as AasCore.Aas3_0.Property;
+                            }
+
+                            break;
+
+                        case "password":
+                            if (sme2 is AasCore.Aas3_0.Property)
+                            {
+                                passWord = sme2 as AasCore.Aas3_0.Property;
+                            }
+
+                            break;
+
+                        case "authservercertificate":
+                            if (sme2 is AasCore.Aas3_0.File)
+                            {
+                                authServerCertificate = sme2 as AasCore.Aas3_0.File;
+                            }
+
+                            break;
+
+                        case "authserverendpoint":
+                            if (sme2 is AasCore.Aas3_0.Property)
+                            {
+                                authServerEndPoint = sme2 as AasCore.Aas3_0.Property;
+                            }
+
+                            break;
+
+                        case "clientcertificate":
+                            if (sme2 is AasCore.Aas3_0.File)
+                            {
+                                clientCertificate = sme2 as AasCore.Aas3_0.File;
+                            }
+
+                            break;
+
+                        case "clientcertificatepassword":
+                            if (sme2 is AasCore.Aas3_0.Property)
+                            {
+                                clientCertificatePassWord = sme2 as AasCore.Aas3_0.Property;
+                            }
+
+                            break;
+                    }
+                }
+            }
         }
     }
 }

@@ -28,7 +28,8 @@ namespace AasxServerStandardBib.Interfaces
         List<ISubmodel>        GetAllSubmodels(IReference reqSemanticId = null, string idShort = null);
         string                 GetFileByPath(string submodelIdentifier, string idShortPath, out byte[] byteArray, out long fileSize);
         ISubmodel              GetSubmodelById(string submodelIdentifier);
-        ISubmodelElement       GetSubmodelElementByPath(string submodelIdentifier, string idShortPath);
+        ISubmodel GetSubmodelById(string submodelIdentifier, out int packageIndex);
+        ISubmodelElement GetSubmodelElementByPath(string submodelIdentifier, string idShortPath);
         bool                   IsSubmodelElementPresent(string submodelIdentifier, string idShortPath);
         void                   ReplaceFileByPath(string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream fileContent);
         void                   ReplaceSubmodelById(string submodelIdentifier, ISubmodel newSubmodel);
