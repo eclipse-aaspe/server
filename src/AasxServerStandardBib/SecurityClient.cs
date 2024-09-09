@@ -411,7 +411,7 @@ namespace AasxServer
             if (authServerEndPoint == null)
                 return false;
 
-            client.Timeout = TimeSpan.FromSeconds(20);
+            client.Timeout = TimeSpan.FromSeconds(5);
             Task task;
 
             Stream s = null;
@@ -470,96 +470,105 @@ namespace AasxServer
             // get new access token
             if (policy == "" && accessToken.Value == "")
             {
-                task = Task.Run(async () => { disco = await client.GetDiscoveryDocumentAsync(authServerEndPoint.Value); });
-                task.Wait();
-                if (disco.IsError) return false;
-                Console.WriteLine("Get OpenID Discovery JSON");
-                // Console.WriteLine(disco.Raw);
-
-                string[] X509Base64 = new string[xc.Count];
-
-                int j   = xc.Count;
-                var xce = xc.GetEnumerator();
-                for (int i = 0; i < xc.Count; i++)
+                try
                 {
-                    xce.MoveNext();
-                    X509Base64[--j] = Convert.ToBase64String(xce.Current.GetRawCertData());
-                    // X509Base64[ --j ] = Base64UrlEncoder.Encode(xce.Current.GetRawCertData());
-                }
+                    task = Task.Run(async () => { disco = await client.GetDiscoveryDocumentAsync(authServerEndPoint.Value); });
+                    task.Wait();
+                    if (disco.IsError)
+                        return false;
+                    Console.WriteLine("Get OpenID Discovery JSON");
+                    // Console.WriteLine(disco.Raw);
 
-                x5c = X509Base64;
+                    string[] X509Base64 = new string[xc.Count];
 
-                var    credential = new X509SigningCredentials(certificate);
-                string clientId   = "client.jwt";
-                string email      = "";
-                string subject    = certificate.Subject;
-                var    split      = subject.Split(new Char[] {','});
-                if (split[0] != "")
-                {
-                    var split2 = split[0].Split(new Char[] {'='});
-                    if (split2[0] == "E")
+                    int j = xc.Count;
+                    var xce = xc.GetEnumerator();
+                    for (int i = 0; i < xc.Count; i++)
                     {
-                        email = split2[1];
+                        xce.MoveNext();
+                        X509Base64[--j] = Convert.ToBase64String(xce.Current.GetRawCertData());
+                        // X509Base64[ --j ] = Base64UrlEncoder.Encode(xce.Current.GetRawCertData());
                     }
-                }
 
-                Console.WriteLine("email: " + email);
+                    x5c = X509Base64;
 
-                var now = DateTime.UtcNow;
-                var claimList =
-                    new List<Claim>()
+                    var credential = new X509SigningCredentials(certificate);
+                    string clientId = "client.jwt";
+                    string email = "";
+                    string subject = certificate.Subject;
+                    var split = subject.Split(new Char[] { ',' });
+                    if (split[0] != "")
                     {
+                        var split2 = split[0].Split(new Char[] { '=' });
+                        if (split2[0] == "E")
+                        {
+                            email = split2[1];
+                        }
+                    }
+
+                    Console.WriteLine("email: " + email);
+
+                    var now = DateTime.UtcNow;
+                    var claimList =
+                        new List<Claim>()
+                        {
                         new Claim(JwtClaimTypes.JwtId, Guid.NewGuid().ToString()),
                         new Claim(JwtClaimTypes.Subject, clientId),
                         new Claim(JwtClaimTypes.IssuedAt, now.ToEpochTime().ToString(), ClaimValueTypes.Integer64),
                         // OZ
                         new Claim(JwtClaimTypes.Email, email),
-                    };
-                if (policy != "")
-                    claimList.Add(new Claim("policy", policy, ClaimValueTypes.String));
-                if (policyRequestedResource != "")
-                    claimList.Add(new Claim("policyRequestedResource", policyRequestedResource, ClaimValueTypes.String));
-                var token = new JwtSecurityToken(
-                                                 clientId,
-                                                 disco.TokenEndpoint,
-                                                 claimList,
-                                                 now,
-                                                 now.AddMinutes(1),
-                                                 credential
-                                                );
+                        };
+                    if (policy != "")
+                        claimList.Add(new Claim("policy", policy, ClaimValueTypes.String));
+                    if (policyRequestedResource != "")
+                        claimList.Add(new Claim("policyRequestedResource", policyRequestedResource, ClaimValueTypes.String));
+                    var token = new JwtSecurityToken(
+                                                     clientId,
+                                                     disco.TokenEndpoint,
+                                                     claimList,
+                                                     now,
+                                                     now.AddMinutes(1),
+                                                     credential
+                                                    );
 
-                token.Header.Add("x5c", x5c);
-                var    tokenHandler    = new JwtSecurityTokenHandler();
-                string clientLongToken = tokenHandler.WriteToken(token);
+                    token.Header.Add("x5c", x5c);
+                    var tokenHandler = new JwtSecurityTokenHandler();
+                    string clientLongToken = tokenHandler.WriteToken(token);
 
-                TokenResponse response = null;
-                // client.Timeout = TimeSpan.FromSeconds(20);
-                task = Task.Run(async () =>
-                                {
-                                    response = await client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
-                                                                                               {
-                                                                                                   Address = disco.TokenEndpoint,
-                                                                                                   Scope   = "resource1.scope1",
-                                                                                                   ClientAssertion =
+                    TokenResponse response = null;
+                    // client.Timeout = TimeSpan.FromSeconds(20);
+                    task = Task.Run(async () =>
+                    {
+                        response = await client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
+                        {
+                            Address = disco.TokenEndpoint,
+                            Scope = "resource1.scope1",
+                            ClientAssertion =
                                                                                                    {
                                                                                                        Type  = OidcConstants.ClientAssertionTypes.JwtBearer,
                                                                                                        Value = clientLongToken
                                                                                                    }
-                                                                                               });
-                                });
-                task.Wait();
+                        });
+                    });
+                    task.Wait();
 
-                if (response.IsError) return false;
+                    if (response.IsError)
+                        return false;
 
-                var t = response.AccessToken;
+                    var t = response.AccessToken;
 
-                // create clientToken
-                if (t != null)
-                {
-                    accessToken.Value = t;
+                    // create clientToken
+                    if (t != null)
+                    {
+                        accessToken.Value = t;
+                    }
+
+                    return true;
                 }
-
-                return true;
+                catch
+                {
+                    return false;
+                }
             }
 
             // create client token
@@ -1513,264 +1522,38 @@ namespace AasxServer
 
         static void operation_get_put_events(Operation op, int envIndex, DateTime timeStamp, string getPut)
         {
-            SubmodelElementCollection authentication = null;
-            Property authType = null;
-            Property authServerEndPoint = null;
-            Property accessToken = null;
-            Property userName = null;
-            Property passWord = null;
-            string basicAuth = null;
-            AasCore.Aas3_0.File authServerCertificate = null;
-            AasCore.Aas3_0.File clientCertificate = null;
-            Property clientCertificatePassWord = null;
-            Property clientToken = null;
-
-            Property direction = null;
-            Property mode = null;
-            Property changes = null;
-            Property endPoint = null;
-            Submodel dataSubmodel = null;
-            SubmodelElementCollection dataCollection = null;
-            SubmodelElementCollection statusData = null;
-            Property noPayload = null;
-
-            Property lastDiff = null;
-            Property status = null;
-            SubmodelElementCollection diff = null;
-
-            SubmodelElementCollection smec = null;
-            Submodel sm = null;
-            Property p = null;
-
             HttpClient client = null;
             HttpClientHandler handler = null;
 
-            foreach (var input in op.InputVariables)
+            var eventData = new Events.EventData();
+            eventData.ParseData(op, Program.env[envIndex]);
+
+            if (false && eventData.authType != null)
             {
-                smec = null;
-                sm = null;
-                p = null;
-                var inputRef = input.Value;
-                if (inputRef is Property)
-                {
-                    p = (inputRef as Property);
-                    if (p.Value == null)
-                    {
-                        p = null;
-                    }
-                }
-
-                if (inputRef is SubmodelElementCollection)
-                {
-                    smec = (inputRef as SubmodelElementCollection);
-                }
-
-                if (inputRef is ReferenceElement)
-                {
-                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((inputRef as ReferenceElement).Value);
-                    if (refElement is SubmodelElementCollection)
-                    {
-                        smec = refElement as SubmodelElementCollection;
-                    }
-                    if (refElement is Submodel)
-                    {
-                        sm = refElement as Submodel;
-                    }
-                }
-
-                switch (inputRef.IdShort.ToLower())
-                {
-                    case "direction":
-                        if (p != null)
-                            direction = p;
-                        break;
-                    case "mode":
-                        if (p != null)
-                            mode = p;
-                        break;
-                    case "changes":
-                        if (p != null)
-                            changes = p;
-                        break;
-                    case "authentication":
-                        if (smec != null)
-                            authentication = smec;
-                        break;
-                    case "endpoint":
-                        if (p != null)
-                            endPoint = p;
-                        break;
-                    case "nopayload":
-                        if (p != null)
-                            noPayload = p;
-                        break;
-                    case "data":
-                        if (sm != null)
-                            dataSubmodel = sm;
-                        if (smec != null)
-                            dataCollection = smec;
-                        break;
-                    case "statusdata":
-                        if (smec != null)
-                            statusData = smec;
-                        break;
-                }
-            }
-
-            foreach (var output in op.OutputVariables)
-            {
-                smec = null;
-                sm = null;
-                p = null;
-                var outputRef = output.Value;
-                if (outputRef is Property)
-                {
-                    p = (outputRef as Property);
-                }
-
-                if (outputRef is SubmodelElementCollection)
-                {
-                    smec = outputRef as SubmodelElementCollection;
-                }
-
-                if (outputRef is ReferenceElement)
-                {
-                    var refElement = Program.env[envIndex].AasEnv.FindReferableByReference((outputRef as ReferenceElement).Value);
-                    if (refElement is SubmodelElementCollection)
-                        smec = refElement as SubmodelElementCollection;
-                    if (refElement is Submodel)
-                        sm = refElement as Submodel;
-                }
-
-                switch (outputRef.IdShort.ToLower())
-                {
-                    case "lastdiff":
-                        if (p != null)
-                            lastDiff = p;
-                        break;
-                    case "status":
-                        if (p != null)
-                            status = p;
-                        break;
-                    case "diff":
-                        if (smec != null)
-                            diff = smec;
-                        break;
-                }
-            }
-
-            if (authentication != null)
-            {
-                smec = authentication;
-                int countSmec = smec.Value.Count;
-                for (int iSmec = 0; iSmec < countSmec; iSmec++)
-                {
-                    var sme2 = smec.Value[iSmec];
-                    var idShort = sme2.IdShort.ToLower();
-
-                    switch (idShort)
-                    {
-                        case "authtype":
-                            if (sme2 is Property)
-                            {
-                                authType = sme2 as Property;
-                            }
-
-                            break;
-
-                        case "accesstoken":
-                            if (sme2 is Property)
-                            {
-                                accessToken = sme2 as Property;
-                            }
-
-                            break;
-
-                        case "clienttoken":
-                            if (sme2 is Property)
-                            {
-                                clientToken = sme2 as Property;
-                            }
-
-                            break;
-
-                        case "username":
-                            if (sme2 is Property)
-                            {
-                                userName = sme2 as Property;
-                            }
-
-                            break;
-
-                        case "password":
-                            if (sme2 is Property)
-                            {
-                                passWord = sme2 as Property;
-                            }
-
-                            break;
-
-                        case "authservercertificate":
-                            if (sme2 is AasCore.Aas3_0.File)
-                            {
-                                authServerCertificate = sme2 as AasCore.Aas3_0.File;
-                            }
-
-                            break;
-
-                        case "authserverendpoint":
-                            if (sme2 is Property)
-                            {
-                                authServerEndPoint = sme2 as Property;
-                            }
-
-                            break;
-
-                        case "clientcertificate":
-                            if (sme2 is AasCore.Aas3_0.File)
-                            {
-                                clientCertificate = sme2 as AasCore.Aas3_0.File;
-                            }
-
-                            break;
-
-                        case "clientcertificatepassword":
-                            if (sme2 is Property)
-                            {
-                                clientCertificatePassWord = sme2 as Property;
-                            }
-
-                            break;
-                    }
-                }
-            }
-
-            if (authType != null)
-            {
-                switch (authType.Value.ToLower())
+                switch (eventData.authType.Value.ToLower())
                 {
                     case "openid":
-                        if (authServerEndPoint != null && authServerCertificate != null && clientCertificate != null
-                            && accessToken != null)
+                        if (eventData.authServerEndPoint != null && eventData.authServerCertificate != null && eventData.clientCertificate != null
+                            && eventData.accessToken != null)
                         {
-                            if (accessToken.Value == null)
-                                accessToken.Value = "";
+                            if (eventData.accessToken.Value == null)
+                                eventData.accessToken.Value = "";
 
-                            if (accessToken.Value != "")
+                            if (eventData.accessToken.Value != "")
                             {
                                 bool valid = true;
-                                var jwtToken = new JwtSecurityToken(accessToken.Value);
+                                var jwtToken = new JwtSecurityToken(eventData.accessToken.Value);
                                 if ((jwtToken == null) || (jwtToken.ValidFrom > DateTime.UtcNow) || (jwtToken.ValidTo < DateTime.UtcNow))
                                     valid = false;
                                 if (valid)
                                     break;
-                                accessToken.Value = "";
+                                eventData.accessToken.Value = "";
                             }
 
-                            if (createAccessToken(envIndex, authServerEndPoint, authServerCertificate,
-                                                  clientCertificate, clientCertificatePassWord,
-                                                  accessToken, clientToken))
-                                accessToken.SetTimeStamp(timeStamp);
+                            if (createAccessToken(envIndex, eventData.authServerEndPoint, eventData.authServerCertificate,
+                                                  eventData.clientCertificate, eventData.clientCertificatePassWord,
+                                                  eventData.accessToken, eventData.clientToken))
+                                eventData.accessToken.SetTimeStamp(timeStamp);
                         }
 
                         break;
@@ -1779,13 +1562,13 @@ namespace AasxServer
                 }
             }
 
-            if (direction != null && mode != null)
+            if (eventData.direction != null && eventData.mode != null)
             {
-                if (direction.Value == "OUT" && mode.Value == "PUSH")
+                if (eventData.direction.Value == "OUT" && eventData.mode.Value == "PUSH")
                 {
                     getPut = "put";
                 }
-                if (direction.Value == "IN" && mode.Value == "PULL")
+                if (eventData.direction.Value == "IN" && eventData.mode.Value == "PULL")
                 {
                     getPut = "get";
                 }
@@ -1793,15 +1576,15 @@ namespace AasxServer
 
             if (getPut == "get")
             {
-                string requestPath = endPoint.Value;
+                string requestPath = eventData.endPoint.Value;
 
-                if (lastDiff.Value == null)
+                if (eventData.lastUpdate.Value == null)
                 {
                     requestPath += "/init";
                 }
                 else
                 {
-                    requestPath += "/" + lastDiff.Value;
+                    requestPath += "/" + eventData.lastUpdate.Value;
                 }
 
                 handler = new HttpClientHandler();
@@ -1836,15 +1619,15 @@ namespace AasxServer
 
                     using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestPath))
                     {
-                        if (accessToken != null && accessToken.Value != null && accessToken.Value != "")
+                        if (eventData.accessToken != null && eventData.accessToken.Value != null && eventData.accessToken.Value != "")
                         {
-                            client.SetBearerToken(accessToken.Value);
+                            client.SetBearerToken(eventData.accessToken.Value);
                         }
                         else
                         {
-                            if (authType != null && authType.Value.ToLower() == "userpw" && userName != null && passWord != null)
+                            if (eventData.authType != null && eventData.authType.Value.ToLower() == "userpw" && eventData.userName != null && eventData.passWord != null)
                             {
-                                requestMessage.Headers.Authorization = new BasicAuthenticationHeaderValue(userName.Value, passWord.Value);
+                                requestMessage.Headers.Authorization = new BasicAuthenticationHeaderValue(eventData.userName.Value, eventData.passWord.Value);
                             }
                         }
 
@@ -1852,13 +1635,13 @@ namespace AasxServer
                         task.Wait();
                         if (!response.IsSuccessStatusCode)
                         {
-                            if (status != null)
+                            if (eventData.status != null)
                             {
-                                status.Value = "ERROR: " +
+                                eventData.message.Value = "ERROR: " +
                                     response.StatusCode.ToString() + " ; " +
                                     response.Content.ReadAsStringAsync().Result + " ; " +
                                     "GET " + requestPath;
-                                status.SetTimeStamp(DateTime.UtcNow);
+                                eventData.status.SetTimeStamp(DateTime.UtcNow);
                             }
                         }
                         else // ok
@@ -1876,39 +1659,58 @@ namespace AasxServer
                             });
                             task.Wait();
 
+                            string transmit;
                             string lastDiffValue = "";
                             string statusValue = "";
-                            List<ISubmodelElement> diffValue = new List<ISubmodelElement>();
-                            int count = Events.EventPayload.changeData(jsonString, Program.env, out lastDiffValue, out statusValue, diffValue);
+                            List<String> diffEntry = new List<string>();
+                            int count = Events.EventPayload.changeData(jsonString, eventData.statusData, Program.env, null, out transmit, out lastDiffValue, out statusValue, diffEntry);
                             if (count > 0)
                             {
                                 update = 2;
                             }
+                            if (eventData.transmitted != null)
+                            {
+                                eventData.transmitted.Value = transmit;
+                                eventData.transmitted.SetTimeStamp(DateTime.UtcNow);
+                            }
                             var dt = DateTime.Parse(lastDiffValue);
-                            if (lastDiff != null)
+                            if (eventData.lastUpdate != null)
                             {
-                                lastDiff.Value = lastDiffValue;
-                                lastDiff.SetTimeStamp(dt);
+                                eventData.lastUpdate.Value = lastDiffValue;
+                                eventData.lastUpdate.SetTimeStamp(dt);
                             }
-                            if (statusValue != null)
+                            if (eventData.message != null && statusValue != null)
                             {
-                                status.Value = statusValue;
-                                status.SetTimeStamp(DateTime.UtcNow);
+                                eventData.message.Value = statusValue;
+                                eventData.message.SetTimeStamp(DateTime.UtcNow);
                             }
-                            if (diff != null && diffValue.Count > 0)
+                            if (eventData.diff != null)
                             {
-                                diff.Value = diffValue;
-                                diff.SetTimeStamp(dt);
+                                eventData.diff.Value = new List<ISubmodelElement>();
+                                if (diffEntry.Count > 0)
+                                {
+                                    int i = 0;
+                                    foreach (var d in diffEntry)
+                                    {
+                                        var p = new Property(DataTypeDefXsd.String);
+                                        p.IdShort = "diff" + i;
+                                        p.Value = d;
+                                        p.SetTimeStamp(dt);
+                                        eventData.diff.Value.Add(p);
+                                        i++;
+                                    }
+                                }
+                                eventData.diff.SetTimeStamp(dt);
                             }
                         }
                     }
                 }
                 catch(Exception ex)
                 {
-                    status.Value = "ERROR: " +
+                    eventData.message.Value = "ERROR: " +
                         ex.Message +
                         " ; GET " + requestPath;
-                    status.SetTimeStamp(DateTime.UtcNow);
+                    eventData.status.SetTimeStamp(DateTime.UtcNow);
                     update = 2;
                 }
 
@@ -1916,18 +1718,19 @@ namespace AasxServer
             }
             if (getPut == "put")
             {
-                string requestPath = endPoint.Value;
+                string requestPath = eventData.endPoint.Value;
 
                 IReferable source = null;
-                if (dataCollection != null)
+                if (eventData.dataCollection != null)
                 {
-                    source = dataCollection;
+                    source = eventData.dataCollection;
                 }
                 else
                 {
-                    source = dataSubmodel;
+                    source = eventData.dataSubmodel;
                 }
 
+                /*
                 var split = requestPath.Split("/");
                 var submodelId = split[split.Length - 2];
                 string sourceUrl = Program.externalBlazor + "/" + submodelId;
@@ -1944,36 +1747,27 @@ namespace AasxServer
                     }
                     return;
                 }
+                */
 
                 string d = "";
-                if (lastDiff.Value == null)
+                if (eventData.lastUpdate.Value == null)
                 {
                     d = "init";
                 }
                 else
                 {
-                    d = lastDiff.Value;
+                    d = eventData.lastUpdate.Value;
                 }
                 List<String> diffEntry = new List<String>();
                 bool np = false;
-                np = noPayload != null && noPayload.Value != null && noPayload.Value.ToLower() == "true";
+                np = eventData.noPayload != null && eventData.noPayload.Value != null && eventData.noPayload.Value.ToLower() == "true";
                 string c = "";
-                if (changes != null)
+                if (eventData.changes != null)
                 {
-                    c = changes.Value;
+                    c = eventData.changes.Value;
                 }
-                var e = Events.EventPayload.CollectPayload(c, source, d, diffEntry, np);
+                var e = Events.EventPayload.CollectPayload(c, 0, eventData.statusData, source, d, diffEntry, np);
 
-                if (statusData != null)
-                {
-                    var j = Jsonization.Serialize.ToJsonObject(statusData);
-                    e.statusData = j.ToJsonString();
-                }
-
-                if (e.eventEntries.Count == 0)
-                {
-                    return;
-                }
                 Console.WriteLine("PUT Events: " + requestPath + "/" + d);
 
                 var json = System.Text.Json.JsonSerializer.Serialize(e);
@@ -1995,15 +1789,15 @@ namespace AasxServer
                 {
                     using (var requestMessage = new HttpRequestMessage(HttpMethod.Put, requestPath))
                     {
-                        if (accessToken != null && accessToken.Value != null && accessToken.Value != "")
+                        if (eventData.accessToken != null && eventData.accessToken.Value != null && eventData.accessToken.Value != "")
                         {
-                            client.SetBearerToken(accessToken.Value);
+                            client.SetBearerToken(eventData.accessToken.Value);
                         }
                         else
                         {
-                            if (userName != null && passWord != null)
+                            if (eventData.userName != null && eventData.passWord != null)
                             {
-                                requestMessage.Headers.Authorization = new BasicAuthenticationHeaderValue(userName.Value, passWord.Value);
+                                requestMessage.Headers.Authorization = new BasicAuthenticationHeaderValue(eventData.userName.Value, eventData.passWord.Value);
                             }
                         }
 
@@ -2017,31 +1811,36 @@ namespace AasxServer
 
                             if (!response.IsSuccessStatusCode)
                             {
-                                if (status != null)
+                                if (eventData.status != null)
                                 {
-                                    status.Value = "ERROR: " +
+                                    eventData.message.Value = "ERROR: " +
                                         response.StatusCode.ToString() + " ; " +
                                         response.Content.ReadAsStringAsync().Result +
                                         " ; PUT " + requestPath;
-                                    status.SetTimeStamp(DateTime.UtcNow);
+                                    eventData.status.SetTimeStamp(DateTime.UtcNow);
                                 }
                             }
                             else
                             {
+                                if (eventData.transmitted != null)
+                                {
+                                    eventData.transmitted.Value = e.status.transmitted;
+                                    eventData.transmitted.SetTimeStamp(DateTime.UtcNow);
+                                }
                                 var dt = DateTime.Parse(e.status.lastUpdate);
-                                if (lastDiff != null)
+                                if (eventData.lastUpdate != null)
                                 {
-                                    lastDiff.Value = e.status.lastUpdate;
-                                    lastDiff.SetTimeStamp(dt);
+                                    eventData.lastUpdate.Value = e.status.lastUpdate;
+                                    eventData.lastUpdate.SetTimeStamp(dt);
                                 }
-                                if (status != null)
+                                if (eventData.status != null)
                                 {
-                                    status.Value = "on";
-                                    status.SetTimeStamp(DateTime.UtcNow);
+                                    eventData.message.Value = "on";
+                                    eventData.status.SetTimeStamp(DateTime.UtcNow);
                                 }
-                                if (diff != null && diffEntry.Count > 0)
+                                if (eventData.diff != null && diffEntry.Count > 0)
                                 {
-                                    diff.Value = new List<ISubmodelElement>();
+                                    eventData.diff.Value = new List<ISubmodelElement>();
                                     int i = 0;
                                     foreach (var d in diffEntry)
                                     {
@@ -2049,10 +1848,10 @@ namespace AasxServer
                                         p.IdShort = "diff" + i;
                                         p.Value = d;
                                         p.SetTimeStamp(dt);
-                                        diff.Value.Add(p);
+                                        eventData.diff.Value.Add(p);
                                         i++;
                                     }
-                                    diff.SetTimeStamp(dt);
+                                    eventData.diff.SetTimeStamp(dt);
                                 }
                             }
                         });
@@ -2061,10 +1860,10 @@ namespace AasxServer
                 }
                 catch (Exception ex)
                 {
-                    status.Value = "ERROR: " +
+                    eventData.message.Value = "ERROR: " +
                         ex.Message +
                         " ; PUT " + requestPath;
-                    status.SetTimeStamp(DateTime.UtcNow);
+                    eventData.status.SetTimeStamp(DateTime.UtcNow);
                 }
 
                 Program.signalNewData(2);
