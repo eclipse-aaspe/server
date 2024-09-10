@@ -26,7 +26,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformAdministrativeInformation(IAdministrativeInformation that, PathModifierContext context)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("Path", that.GetType().Name);
         }
 
         public List<string> TransformAnnotatedRelationshipElement(IAnnotatedRelationshipElement that, PathModifierContext context)
@@ -56,12 +56,12 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformAssetAdministrationShell(IAssetAdministrationShell that, PathModifierContext context)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("Path", that.GetType().Name);
         }
 
         public List<string> TransformAssetInformation(IAssetInformation that, PathModifierContext context)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("Path", that.GetType().Name);
         }
 
         public List<string> TransformBasicEventElement(IBasicEventElement that, PathModifierContext context)
@@ -111,7 +111,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformConceptDescription(IConceptDescription that, PathModifierContext context)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("Path", that.GetType().Name);
         }
 
         public List<string> TransformDataSpecificationIec61360(IDataSpecificationIec61360 that, PathModifierContext context)
@@ -121,7 +121,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformEmbeddedDataSpecification(IEmbeddedDataSpecification that, PathModifierContext context)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("Path", that.GetType().Name);
         }
 
         public List<string> TransformEntity(IEntity that, PathModifierContext context)
@@ -151,17 +151,17 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformEnvironment(IEnvironment that, PathModifierContext context)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("Path", that.GetType().Name);
         }
 
         public List<string> TransformEventPayload(IEventPayload that, PathModifierContext context)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("Path", that.GetType().Name);
         }
 
         public List<string> TransformExtension(IExtension that, PathModifierContext context)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("Path", that.GetType().Name);
         }
 
         public List<string> TransformFile(IFile that, PathModifierContext context)
@@ -181,37 +181,37 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformKey(IKey that, PathModifierContext context)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("Path", that.GetType().Name);
         }
 
         public List<string> TransformLangStringDefinitionTypeIec61360(ILangStringDefinitionTypeIec61360 that, PathModifierContext context)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("Path", that.GetType().Name);
         }
 
         public List<string> TransformLangStringNameType(ILangStringNameType that, PathModifierContext context)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("Path", that.GetType().Name);
         }
 
         public List<string> TransformLangStringPreferredNameTypeIec61360(ILangStringPreferredNameTypeIec61360 that, PathModifierContext context)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("Path", that.GetType().Name);
         }
 
         public List<string> TransformLangStringShortNameTypeIec61360(ILangStringShortNameTypeIec61360 that, PathModifierContext context)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("Path", that.GetType().Name);
         }
 
         public List<string> TransformLangStringTextType(ILangStringTextType that, PathModifierContext context)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("Path", that.GetType().Name);
         }
 
         public List<string> TransformLevelType(ILevelType that, PathModifierContext context)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("Path", that.GetType().Name);
         }
 
         public List<string> TransformMultiLanguageProperty(IMultiLanguageProperty that, PathModifierContext context)
@@ -306,7 +306,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformQualifier(IQualifier that, PathModifierContext context)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("Path", that.GetType().Name);
         }
 
         public List<string> TransformRange(IRange that, PathModifierContext context)
@@ -326,7 +326,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformReference(IReference that, PathModifierContext context)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("Path", that.GetType().Name);
         }
 
         public List<string> TransformReferenceElement(IReferenceElement that, PathModifierContext context)
@@ -361,7 +361,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformResource(IResource that, PathModifierContext context)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("Path", that.GetType().Name);
         }
 
         public List<string> TransformSpecificAssetId(ISpecificAssetId that, PathModifierContext context)
@@ -440,12 +440,12 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformValueList(IValueList that, PathModifierContext context)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("Path", that.GetType().Name);
         }
 
         public List<string> TransformValueReferencePair(IValueReferencePair that, PathModifierContext context)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidSerializationModifierException("Path", that.GetType().Name);
         }
     }
 }
