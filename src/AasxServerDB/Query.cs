@@ -422,6 +422,8 @@ namespace AasxServerDB
             var restrictValue = false;
 
             // implementierung OValueSet
+            // Spalte TValue bringt vllt mehr Geschwindigkeit (SME seperieren nach Value Tabelle), beispiel bei smeTabel, wenn ich weiß, dass es in S ist können alle SME mit einem Typ ungleich S ist gelöscht werden
+
             // restrict all tables seperate
             IQueryable<SMSet> smTabel;
             IQueryable<SMESet> smeTabel;
@@ -495,7 +497,7 @@ namespace AasxServerDB
             else if (!withExpression && withParameters)
             {
                 // direction
-                direction = (withSMSemanticId || withSMIdentifier || withSemanticId || withDiff) ? 0 : 2;
+                direction = (withSMSemanticId || withSMIdentifier) ? 0 : ((withContains || withEqualString || withLower || withUpper) ? 2 : 1);
 
                 // check restrictions
                 var restrictSM = withSMSemanticId || withSMIdentifier;
@@ -503,7 +505,7 @@ namespace AasxServerDB
                 var restrictSVaue = withContains || withEqualString;
                 var restrictNumVaue = withEqualNum || withCompare;
                 restrictValue = restrictSVaue || restrictNumVaue;
-                if ((withContains && withEqualString) || (withEqualString && withCompare) || (withContains && withCompare))
+                if ((withEqualString && (withContains || withLower || withUpper)) || (withContains && (withLower || withUpper)) || (withLower != withUpper))
                     return Enumerable.Empty<CombinedSMEResult>().AsQueryable();
 
                 // restrict all tables seperate 
@@ -525,9 +527,7 @@ namespace AasxServerDB
 
             // join the restricted tables
             IQueryable<CombinedSMEResult>? result = null;
-            direction = 0;
-            var withRawSQL = true;
-            if (withRawSQL)
+            if (true)
             {
                 // to query string
                 var smQueryString = smSelect.ToQueryString();
@@ -549,28 +549,45 @@ namespace AasxServerDB
                     $"FilteredSME AS (\r\n{smeQueryString}\r\n),\r\n" +
                     (sValueQueryString != null ? $"FilteredSValue AS (\r\n{sValueQueryString}\r\n),\r\n" : string.Empty) +
                     (iValueQueryString != null ? $"FilteredIValue AS (\r\n{iValueQueryString}\r\n),\r\n" : string.Empty) +
-                    (dValueQueryString != null ? $"FilteredDValue AS (\r\n{dValueQueryString}\r\n)" : string.Empty);
+                    (dValueQueryString != null ? $"FilteredDValue AS (\r\n{dValueQueryString}\r\n),\r\n" : string.Empty);
 
+                // next with
                 var nextWith = string.Empty;
-                var select = string.Empty;
-                if (direction == 0 || direction == 1) // top-down
+                if (direction == 0) // top-down
+                    nextWith = $"FilteredSMAndSME AS ( \r\n" +
+                        $"SELECT sme.SMId, sme.Id, sm.Identifier, sme.ParentSMEId, sme.IdShort, sme.TimeStamp \r\n" +
+                        $"FROM FilteredSM AS sm \r\n" +
+                        $"INNER JOIN FilteredSME AS sme \r\n" +
+                        $"ON sm.Id = sme.SMId \r\n" +
+                    $")";
+                else if (direction == 1) // middle-out
+                    nextWith = $"FilteredSMAndSME AS ( \r\n" +
+                        $"SELECT sme.SMId, sme.Id, sm.Identifier, sme.ParentSMEId, sme.IdShort, sme.TimeStamp \r\n" +
+                        $"FROM FilteredSME AS sme \r\n" +
+                        $"INNER JOIN FilteredSM AS sm \r\n" +
+                        $"ON sm.Id = sme.SMId \r\n" +
+                    $")";
+                else if (direction == 2) // down-top
                 {
-                    // combine SM and SME
-                    if (direction == 0)
-                        nextWith = $"FilteredSMAndSME AS ( \r\n" +
-                            $"SELECT sme.SMId, sme.Id, sm.Identifier, sme.ParentSMEId, sme.IdShort, sme.TimeStamp \r\n" +
-                            $"FROM FilteredSM AS sm \r\n" +
-                            $"INNER JOIN FilteredSME AS sme \r\n" +
-                            $"ON sm.Id = sme.SMId \r\n" +
-                        $"\r\n)";
-                    else
-                        nextWith = $"FilteredSMAndSME AS ( \r\n" +
-                            $"SELECT sme.SMId, sme.Id, sm.Identifier, sme.ParentSMEId, sme.IdShort, sme.TimeStamp \r\n" +
-                            $"FROM FilteredSME AS sme \r\n" +
-                            $"INNER JOIN FilteredSM AS sm \r\n" +
-                            $"ON sm.Id = sme.SMId \r\n" +
-                        $"\r\n)";
+                    var selectStart = $"SELECT sme.SMId, sme.ParentSMEId, sme.IdShort, sme.TimeStamp, v.Value \r\n" +
+                    $"FROM";
+                    var selectEnd = $"AS v \r\n" +
+                        ((withContains || withEqualString || withCompare) ? "INNER" : "RIGHT") +
+                        $" JOIN FilteredSME AS sme \r\n" +
+                        $"ON sme.Id = v.SMEId \r\n ";
+                    nextWith = $"FilteredSMEAndValue AS (\r\n" +
+                            (!sValueQueryString.IsNullOrEmpty() ? $"{selectStart} FilteredSValue {selectEnd}" : string.Empty) +
+                            ((!sValueQueryString.IsNullOrEmpty() && !iValueQueryString.IsNullOrEmpty()) ? "UNION ALL \r\n" : string.Empty) +
+                            (!iValueQueryString.IsNullOrEmpty() ? $"{selectStart} FilteredIValue {selectEnd}" : string.Empty) +
+                            ((!iValueQueryString.IsNullOrEmpty() && !dValueQueryString.IsNullOrEmpty()) ? "UNION ALL \r\n" : string.Empty) +
+                            (!dValueQueryString.IsNullOrEmpty() ? $"{selectStart} FilteredDValue {selectEnd}" : string.Empty) +
+                        $")";
+                }
 
+                //select
+                var select = string.Empty;
+                if (direction == 0 || direction == 1) // top-down and middle-out
+                {
                     // create raw sql
                     var selectStart = $"SELECT sm_sme.SMId AS sm_Id, sm_sme.Identifier, sm_sme.ParentSMEId, sm_sme.IdShort, sm_sme.TimeStamp, v.Value \r\n" +
                         $"FROM FilteredSMAndSME AS sm_sme \r\n" +
@@ -586,31 +603,13 @@ namespace AasxServerDB
                         (!dValueQueryString.IsNullOrEmpty() ? $"{selectStart} FilteredDValue {selectEnd}" : string.Empty);
                 }
                 else if (direction == 2) // down-top
-                {
-                    // combine SME and Value
-                    var selectStart = $"SELECT sme.SMId, sme.ParentSMEId, sme.IdShort, sme.TimeStamp, v.Value \r\n" +
-                        $"FROM";
-                    var selectEnd = $"AS v \r\n" +
-                        ((withContains || withEqualString || withCompare) ? "INNER" : "RIGHT") +
-                        $" JOIN FilteredSME AS sme \r\n" +
-                        $"ON sme.Id = v.SMEId \r\n ";
-                    nextWith = $"FilteredSMEAndValue AS (\r\n" +
-                            (!sValueQueryString.IsNullOrEmpty() ? $"{selectStart} FilteredSValue {selectEnd}" : string.Empty) +
-                            ((!sValueQueryString.IsNullOrEmpty() && !iValueQueryString.IsNullOrEmpty()) ? "UNION ALL \r\n" : string.Empty) +
-                            (!iValueQueryString.IsNullOrEmpty() ? $"{selectStart} FilteredIValue {selectEnd}" : string.Empty) +
-                            ((!iValueQueryString.IsNullOrEmpty() && !dValueQueryString.IsNullOrEmpty()) ? "UNION ALL \r\n" : string.Empty) +
-                            (!dValueQueryString.IsNullOrEmpty() ? $"{selectStart} FilteredDValue {selectEnd}" : string.Empty) +
-                        $")";
-
-                    // create raw sql
                     select = $"SELECT sme_v.SMId AS sm_Id, sm.Identifier, sme_v.ParentSMEId, sme_v.IdShort, sme_v.TimeStamp, sme_v.Value \r\n" +
                         $"FROM FilteredSMEAndValue AS sme_v \r\n" +
                         $"INNER JOIN FilteredSM AS sm \r\n" +
                         $"ON sme_v.SMId = sm.Id";
-                }
 
                 // create queryable
-                var rawSql = $"{withQueryString},\r\n" +
+                var rawSql = $"{withQueryString}\r\n" +
                     $"{nextWith}\r\n" +
                     $"{select}";
                 result = db.Database.SqlQueryRaw<CombinedSMEResult>(rawSql);
@@ -657,12 +656,13 @@ namespace AasxServerDB
         private string SetParameter(string rawSQL)
         {
             var splitParam = rawSQL.Split(new string[] { ".param set ", "\r\n\r\n" }, StringSplitOptions.None);
+            var withoutParam = splitParam[splitParam.Length - 1];
             for (var i = 1; i < splitParam.Length - 1; i++)
             {
                 var param = splitParam[i].Split(new[] { ' ' }, 2);
-                rawSQL = splitParam[splitParam.Length - 1].Replace(param[0], param[1]);
+                withoutParam = withoutParam.Replace(param[0], param[1]);
             }
-            return rawSQL;
+            return withoutParam;
         }
 
         private static List<SMEResult> GetSMEResult(AasContext db, IQueryable<CombinedSMEResult> query)
