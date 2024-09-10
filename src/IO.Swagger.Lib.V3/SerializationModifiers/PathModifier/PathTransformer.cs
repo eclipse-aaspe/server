@@ -45,6 +45,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
                 var currentParentPath = string.IsNullOrEmpty(context.ParentPath) ? that.IdShort : $"{context.ParentPath}.{that.IdShort}";
                 foreach (ISubmodelElement? item in that.Annotations)
                 {
+                    context.IsRoot = false;
                     context.ParentPath = currentParentPath;
                     Transform(item, context);
                 }
@@ -65,28 +66,46 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformBasicEventElement(IBasicEventElement that, PathModifierContext context)
         {
-            if (context.ParentPath == null)
+            if (context.IsRoot)
                 throw new InvalidSerializationModifierException("Path", that.GetType().Name);
-
-            context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
+            if (string.IsNullOrEmpty(context.ParentPath))
+            {
+                context.IdShortPaths.Add(that.IdShort);
+            }
+            else
+            {
+                context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
+            }
             return context.IdShortPaths;
         }
 
         public List<string> TransformBlob(IBlob that, PathModifierContext context)
         {
-            if (context.ParentPath == null)
+            if (context.IsRoot)
                 throw new InvalidSerializationModifierException("Path", that.GetType().Name);
-
-            context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
+            if (string.IsNullOrEmpty(context.ParentPath))
+            {
+                context.IdShortPaths.Add(that.IdShort);
+            }
+            else
+            {
+                context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
+            }
             return context.IdShortPaths;
         }
 
         public List<string> TransformCapability(ICapability that, PathModifierContext context)
         {
-            if (context.ParentPath == null)
+            if (context.IsRoot)
                 throw new InvalidSerializationModifierException("Path", that.GetType().Name);
-
-            context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
+            if (string.IsNullOrEmpty(context.ParentPath))
+            {
+                context.IdShortPaths.Add(that.IdShort);
+            }
+            else
+            {
+                context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
+            }
             return context.IdShortPaths;
         }
 
@@ -121,6 +140,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
                 var currentParentPath = string.IsNullOrEmpty(context.ParentPath) ? that.IdShort : $"{context.ParentPath}.{that.IdShort}";
                 foreach (var item in that.Statements)
                 {
+                    context.IsRoot = false;
                     context.ParentPath = currentParentPath;
                     Transform(item, context);
                 }
@@ -146,10 +166,16 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformFile(IFile that, PathModifierContext context)
         {
-            if (context.ParentPath == null)
+            if (context.IsRoot)
                 throw new InvalidSerializationModifierException("Path", that.GetType().Name);
-
-            context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
+            if (string.IsNullOrEmpty(context.ParentPath))
+            {
+                context.IdShortPaths.Add(that.IdShort);
+            }
+            else
+            {
+                context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
+            }
             return context.IdShortPaths;
         }
 
@@ -190,22 +216,37 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformMultiLanguageProperty(IMultiLanguageProperty that, PathModifierContext context)
         {
-            if (context.ParentPath == null)
+            if (context.IsRoot)
                 throw new InvalidSerializationModifierException("Path", that.GetType().Name);
-
-            context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
+            if (string.IsNullOrEmpty(context.ParentPath))
+            {
+                context.IdShortPaths.Add(that.IdShort);
+            }
+            else
+            {
+                context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
+            }
             return context.IdShortPaths;
         }
 
         public List<string> TransformOperation(IOperation that, PathModifierContext context)
         {
-            context.IdShortPaths.Add(that.IdShort);
+            if (context.IdShortPaths.Count == 0)
+            {
+                context.IdShortPaths.Add(that.IdShort);
+            }
+            else
+            {
+                context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
+            }
 
+            var currentParentPath = string.IsNullOrEmpty(context.ParentPath) ? that.IdShort : $"{context.ParentPath}.{that.IdShort}";
             if (that.InputVariables != null)
             {
                 foreach (var element in that.InputVariables)
                 {
-                    context.ParentPath = that.IdShort;
+                    context.IsRoot = false;
+                    context.ParentPath = currentParentPath;
                     Transform(element, context);
                 }
             }
@@ -214,7 +255,8 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
             {
                 foreach (var element in that.OutputVariables)
                 {
-                    context.ParentPath = that.IdShort;
+                    context.IsRoot = false;
+                    context.ParentPath = currentParentPath;
                     Transform(element, context);
                 }
             }
@@ -223,7 +265,8 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
             {
                 foreach (var element in that.InoutputVariables)
                 {
-                    context.ParentPath = that.IdShort;
+                    context.IsRoot = false;
+                    context.ParentPath = currentParentPath;
                     Transform(element, context);
                 }
             }
@@ -233,17 +276,31 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformOperationVariable(IOperationVariable that, PathModifierContext context)
         {
-            if (context.ParentPath == null)
+            if (context.IsRoot)
                 throw new InvalidSerializationModifierException("Path", that.GetType().Name);
-            context.IdShortPaths.Add(context.ParentPath + "." + that.Value.IdShort);
+            if (string.IsNullOrEmpty(context.ParentPath))
+            {
+                context.IdShortPaths.Add(that.Value.IdShort);
+            }
+            else
+            {
+                context.IdShortPaths.Add($"{context.ParentPath}.{that.Value.IdShort}");
+            }
             return context.IdShortPaths;
         }
 
         public List<string> TransformProperty(IProperty that, PathModifierContext context)
         {
-            if (context.ParentPath == null)
+            if (context.IsRoot)
                 throw new InvalidSerializationModifierException("Path", that.GetType().Name);
-            context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
+            if (string.IsNullOrEmpty(context.ParentPath))
+            {
+                context.IdShortPaths.Add(that.IdShort);
+            }
+            else
+            {
+                context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
+            }
             return context.IdShortPaths;
         }
 
@@ -254,10 +311,16 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformRange(IRange that, PathModifierContext context)
         {
-            if (context.ParentPath == null)
+            if (context.IsRoot)
                 throw new InvalidSerializationModifierException("Path", that.GetType().Name);
-
-            context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
+            if (string.IsNullOrEmpty(context.ParentPath))
+            {
+                context.IdShortPaths.Add(that.IdShort);
+            }
+            else
+            {
+                context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
+            }
             return context.IdShortPaths;
         }
 
@@ -268,19 +331,31 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformReferenceElement(IReferenceElement that, PathModifierContext context)
         {
-            if (context.ParentPath == null)
+            if (context.IsRoot)
                 throw new InvalidSerializationModifierException("Path", that.GetType().Name);
-
-            context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
+            if (string.IsNullOrEmpty(context.ParentPath))
+            {
+                context.IdShortPaths.Add(that.IdShort);
+            }
+            else
+            {
+                context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
+            }
             return context.IdShortPaths;
         }
 
         public List<string> TransformRelationshipElement(IRelationshipElement that, PathModifierContext context)
         {
-            if (context.ParentPath == null)
+            if (context.IsRoot)
                 throw new InvalidSerializationModifierException("Path", that.GetType().Name);
-
-            context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
+            if (string.IsNullOrEmpty(context.ParentPath))
+            {
+                context.IdShortPaths.Add(that.IdShort);
+            }
+            else
+            {
+                context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
+            }
             return context.IdShortPaths;
         }
 
@@ -296,13 +371,11 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformSubmodel(ISubmodel? that, PathModifierContext context)
         {
-            context.IdShortPaths.Add(that.IdShort);
-
             if (that.SubmodelElements != null)
             {
                 foreach (var element in that.SubmodelElements)
                 {
-                    context.ParentPath = that.IdShort;
+                    context.IsRoot = false;
                     Transform(element, context);
                 }
             }
@@ -326,6 +399,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
                 var currentParentPath = string.IsNullOrEmpty(context.ParentPath) ? that.IdShort : $"{context.ParentPath}.{that.IdShort}";
                 foreach (var item in that.Value)
                 {
+                    context.IsRoot = false ;
                     context.ParentPath = currentParentPath;
                     Transform(item, context);
                 }
@@ -336,6 +410,15 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformSubmodelElementList(ISubmodelElementList that, PathModifierContext context)
         {
+            if (context.IdShortPaths.Count == 0)
+            {
+                context.IdShortPaths.Add(that.IdShort);
+            }
+            else
+            {
+                context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
+            }
+
             if (that.Value != null)
             {
                 for (var i = 0; i < that.Value.Count; i++)

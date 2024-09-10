@@ -25,12 +25,15 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent
 
         public bool IsRoot { get; set; }
 
-        public LevelExtentModifierContext(LevelEnum level, ExtentEnum extent)
+        public bool IsGetAllSmes { get; set; }
+
+        public LevelExtentModifierContext(LevelEnum level, ExtentEnum extent, bool isGetAllSme = false)
         {
             Level = level;
             Extent = extent;
             IsRoot = true;
             IncludeChildren = true;
+            IsGetAllSmes = isGetAllSme;
         }
     }
 }
