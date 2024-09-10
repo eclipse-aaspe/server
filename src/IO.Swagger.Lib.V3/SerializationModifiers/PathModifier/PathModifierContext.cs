@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 {
@@ -10,9 +10,12 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string>? IdShortPaths { get => idShortPaths; set => idShortPaths = value; }
 
+        public bool IsRoot { get; set; }
+
         public PathModifierContext()
         {
             idShortPaths = new List<string>();
+            IsRoot = true;
         }
     }
 }

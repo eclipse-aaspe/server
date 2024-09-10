@@ -201,7 +201,7 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult GetAllSubmodelDescriptorsThroughSuperpath([FromRoute] [Required] string aasIdentifier,
+    public virtual IActionResult GetAllSubmodelDescriptorsThroughSuperpath([FromRoute] [Required] string? aasIdentifier,
                                                                            [FromQuery] int? limit,
                                                                            [FromQuery] string cursor)
     {
