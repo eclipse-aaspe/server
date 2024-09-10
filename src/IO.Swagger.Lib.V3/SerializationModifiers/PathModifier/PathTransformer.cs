@@ -291,7 +291,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformProperty(IProperty that, PathModifierContext context)
         {
-            if (context.IsRoot && !context.IsGetAllSmes)
+            if (context.IsRoot)
                 throw new InvalidSerializationModifierException("Path", that.GetType().Name);
             if (string.IsNullOrEmpty(context.ParentPath))
             {

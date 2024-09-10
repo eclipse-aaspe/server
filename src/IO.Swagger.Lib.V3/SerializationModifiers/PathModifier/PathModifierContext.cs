@@ -25,13 +25,10 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public bool IsRoot { get; set; }
 
-        public bool IsGetAllSmes { get; set; }
-
-        public PathModifierContext(bool isGetAllSmes = false)
+        public PathModifierContext()
         {
             idShortPaths = new List<string>();
             IsRoot = true;
-            IsGetAllSmes = isGetAllSmes;
         }
     }
 }
