@@ -5,6 +5,10 @@ using System.Text.Json.Nodes;
 
 namespace AasxServerDB.Entities
 {
+    [Index(nameof(Id))]
+    [Index(nameof(SMEId))]
+    [Index(nameof(Value))]
+
     public class OValueSet
     {
         public int Id { get; set; }

@@ -1,7 +1,10 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace AasxServerDB.Entities
 {
+    [Index(nameof(Id))]
+
     public class AASSet
     {
         public int Id { get; set; }

@@ -3,7 +3,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AasxServerDB.Entities
 {
+    [Index(nameof(Id))]
+    [Index(nameof(SMEId))]
     [Index(nameof(Value))]
+
     public class DValueSet
     {
         public int Id { get; set; }

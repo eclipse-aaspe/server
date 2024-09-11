@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -207,6 +207,21 @@ namespace AasxServerDB.Migrations.Postgres
                 column: "AASXId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_AASSets_Id",
+                table: "AASSets",
+                column: "Id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AASXSets_Id",
+                table: "AASXSets",
+                column: "Id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DValueSets_Id",
+                table: "DValueSets",
+                column: "Id");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_DValueSets_SMEId",
                 table: "DValueSets",
                 column: "SMEId");
@@ -215,6 +230,11 @@ namespace AasxServerDB.Migrations.Postgres
                 name: "IX_DValueSets_Value",
                 table: "DValueSets",
                 column: "Value");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_IValueSets_Id",
+                table: "IValueSets",
+                column: "Id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_IValueSets_SMEId",
@@ -227,9 +247,29 @@ namespace AasxServerDB.Migrations.Postgres
                 column: "Value");
 
             migrationBuilder.CreateIndex(
+                name: "IX_OValueSets_Id",
+                table: "OValueSets",
+                column: "Id");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_OValueSets_SMEId",
                 table: "OValueSets",
                 column: "SMEId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OValueSets_Value",
+                table: "OValueSets",
+                column: "Value");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SMESets_Id",
+                table: "SMESets",
+                column: "Id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SMESets_IdShort",
+                table: "SMESets",
+                column: "IdShort");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SMESets_ParentSMEId",
@@ -237,9 +277,19 @@ namespace AasxServerDB.Migrations.Postgres
                 column: "ParentSMEId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_SMESets_SemanticId",
+                table: "SMESets",
+                column: "SemanticId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_SMESets_SMId",
                 table: "SMESets",
                 column: "SMId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SMESets_TimeStamp",
+                table: "SMESets",
+                column: "TimeStamp");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SMSets_AASId",
@@ -250,6 +300,31 @@ namespace AasxServerDB.Migrations.Postgres
                 name: "IX_SMSets_AASXId",
                 table: "SMSets",
                 column: "AASXId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SMSets_Id",
+                table: "SMSets",
+                column: "Id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SMSets_Identifier",
+                table: "SMSets",
+                column: "Identifier");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SMSets_SemanticId",
+                table: "SMSets",
+                column: "SemanticId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SMSets_TimeStampTree",
+                table: "SMSets",
+                column: "TimeStampTree");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SValueSets_Id",
+                table: "SValueSets",
+                column: "Id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SValueSets_SMEId",

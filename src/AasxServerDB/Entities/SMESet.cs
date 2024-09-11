@@ -10,6 +10,13 @@ using Nodes = System.Text.Json.Nodes;
 
 namespace AasxServerDB.Entities
 {
+    [Index(nameof(Id))]
+    [Index(nameof(SMId))]
+    [Index(nameof(ParentSMEId))]
+    [Index(nameof(SemanticId))]
+    [Index(nameof(IdShort))]
+    [Index(nameof(TimeStamp))]
+
     public class SMESet
     {
         public int Id { get; set; }

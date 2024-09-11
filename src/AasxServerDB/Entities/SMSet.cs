@@ -1,7 +1,15 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace AasxServerDB.Entities
 {
+    [Index(nameof(Id))]
+    [Index(nameof(AASXId))]
+    [Index(nameof(AASId))]
+    [Index(nameof(SemanticId))]
+    [Index(nameof(Identifier))]
+    [Index(nameof(TimeStampTree))]
+
     public class SMSet
     {
         public int Id { get; set; }

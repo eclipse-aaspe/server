@@ -1,5 +1,9 @@
 namespace AasxServerDB.Entities
 {
+    using Microsoft.EntityFrameworkCore;
+
+    [Index(nameof(Id))]
+
     public class AASXSet
     {
         public int Id { get; set; }
