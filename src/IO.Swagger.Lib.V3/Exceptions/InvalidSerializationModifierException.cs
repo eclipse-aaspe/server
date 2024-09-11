@@ -1,10 +1,15 @@
-﻿using System;
+using System;
 
 namespace IO.Swagger.Lib.V3.Exceptions
 {
     public class InvalidSerializationModifierException : Exception
     {
         public InvalidSerializationModifierException(string modifier, string type) : base($"Invalid serialization modifier {modifier} for the requested element of type {type}.")
+        {
+
+        }
+
+        public InvalidSerializationModifierException() : base($"Invalid serialization modifier combination Level = Deeep & Content = Reference.")
         {
 
         }

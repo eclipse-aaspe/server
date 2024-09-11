@@ -42,6 +42,10 @@ public class MetadataJsonSerializer
         if (mappedIClass != null)
         {
             var jsonNode = Jsonization.Serialize.ToJsonObject(mappedIClass);
+            if (mappedIClass is IBlob or IFile)
+            {
+                jsonNode.Remove("contentType");
+            }
             return jsonNode;
         }
         else
