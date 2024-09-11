@@ -60,7 +60,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
             return new BlobMetadata(TransformExtensionList(that.Extensions), that.Category, that.IdShort, TransformLangStringNameTypeList(that.DisplayName), TransformLangStringTextTypeList(that.Description), (ReferenceDTO)Transform(that.SemanticId), TransformReferenceList(that.SupplementalSemanticIds), TransformQualifierList(that.Qualifiers), TransformEmbeddedDataSpecList(that.EmbeddedDataSpecifications));
         }
 
-        public IDTO TransformCapability(ICapability that) => throw new InvalidOperationException("Metadata modifier cannot be applied to Capability");
+        public IDTO TransformCapability(ICapability that) => throw new InvalidSerializationModifierException("Metadata", that.GetType().Name);
 
         public IDTO TransformConceptDescription(IConceptDescription that) => throw new InvalidOperationException("Metadata modifier cannot be applied to ConceptDescription");
 

@@ -109,6 +109,10 @@ namespace IO.Swagger.Lib.V3.Formatters
             {
                 return base.CanWriteResult(context);
             }
+            if (typeof(PathPagedResult).IsAssignableFrom(context.ObjectType))
+            {
+                return base.CanWriteResult(context);
+            }
             else
                 return false;
         }
@@ -256,6 +260,17 @@ namespace IO.Swagger.Lib.V3.Formatters
                     pagingMetadata["cursor"] = cursor;
                 }
                 jsonNode["paging_metadata"] = pagingMetadata;
+                var writer = new Utf8JsonWriter(response.Body);
+                jsonNode.WriteTo(writer);
+                writer.FlushAsync().GetAwaiter().GetResult();
+            }
+            else if (typeof(PathPagedResult).IsAssignableFrom(context.ObjectType))
+            {
+                JsonNode jsonNode = null;
+                if(context.Object is PathPagedResult pagedResult)
+                {
+                    jsonNode = JsonSerializer.SerializeToNode(pagedResult);
+                }
                 var writer = new Utf8JsonWriter(response.Body);
                 jsonNode.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();
