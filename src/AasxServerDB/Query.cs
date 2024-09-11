@@ -528,7 +528,7 @@ namespace AasxServerDB
 
             // join the restricted tables
             IQueryable<CombinedSMEResult>? result = null;
-            if (true)
+            if (false)
             {
                 // to query string
                 var smQueryString = smSelect.ToQueryString();
