@@ -337,7 +337,8 @@
                     {
                         if (parent is ISubmodelElementList parentList)
                         {
-                            if (path.Equals(sme.IdShort))
+                            //Considering child elements of SML can have null idShorts
+                            if (path == null || path.Equals(sme.IdShort))
                             {
                                 var index = parentList.Value?.IndexOf(sme);
                                 path = $"[{index}]";
