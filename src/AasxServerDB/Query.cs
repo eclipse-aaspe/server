@@ -30,7 +30,7 @@ namespace AasxServerDB
 
         public class CombinedSMEResult
         {
-            public int? sm_Id { get; set; } = null;
+            // public int? sm_Id { get; set; } = null;
             public string? Identifier { get; set; } = null;
             public int? ParentSMEId { get; set; } = null;
             public string? IdShort { get; set; } = null;
@@ -502,18 +502,19 @@ namespace AasxServerDB
                 // check restrictions
                 var restrictSM = withSMSemanticId || withSMIdentifier;
                 var restrictSME = withSemanticId || withDiff;
-                var restrictSVaue = withContains || withEqualString;
-                var restrictNumVaue = withEqualNum || withCompare;
-                restrictValue = restrictSVaue || restrictNumVaue;
+                var restrictSValue = withContains || withEqualString;
+                var restrictNumValue = withEqualNum || withCompare;
+                restrictValue = restrictSValue || restrictNumValue;
                 if ((withEqualString && (withContains || withLower || withUpper)) || (withContains && (withLower || withUpper)) || (withLower != withUpper))
                     return Enumerable.Empty<CombinedSMEResult>().AsQueryable();
 
                 // restrict all tables seperate 
                 smTabel = restrictSM ? db.SMSets.Where(sm => (!withSMSemanticId || (sm.SemanticId != null && sm.SemanticId.Equals(smSemanticId))) && (!withSMIdentifier || (sm.Identifier != null && sm.Identifier.Equals(smIdentifier)))) : db.SMSets;
                 smeTabel = restrictSME ? db.SMESets.Where(sme => (!withSemanticId || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) && (!withDiff || sme.TimeStamp.CompareTo(diff) > 0)) : db.SMESets;
-                sValueTabel = restrictValue ? (restrictSVaue ? db.SValueSets.Where(v => restrictSVaue && v.Value != null && (!withContains || v.Value.Contains(contains)) && (!withEqualString || v.Value.Equals(equal))) : null) : db.SValueSets;
-                iValueTabel = restrictValue ? (restrictNumVaue ? db.IValueSets.Where(v => restrictNumVaue && v.Value != null && (!withEqualNum || v.Value == equalNum) && (!withCompare || (v.Value >= lowerNum && v.Value <= upperNum))) : null) : db.IValueSets;
-                dValueTabel = restrictValue ? (restrictNumVaue ? db.DValueSets.Where(v => restrictNumVaue && v.Value != null && (!withEqualNum || v.Value == equalNum) && (!withCompare || (v.Value >= lowerNum && v.Value <= upperNum))) : null) : db.DValueSets;
+                // die extra abfragen sind zu langsam - smeTabel = (restrictSME || restrictValue) ? db.SMESets.Where(sme => (!withSemanticId || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) && (!withDiff || sme.TimeStamp.CompareTo(diff) > 0) && (!restrictValue || (sme.TValue != null && ((restrictSValue && sme.TValue.Equals("S")) || (restrictNumValue && (sme.TValue.Equals("I") || sme.TValue.Equals("D"))))))) : db.SMESets;
+                sValueTabel = restrictValue ? (restrictSValue   ? db.SValueSets.Where(v => restrictSValue   && v.Value != null && (!withContains || v.Value.Contains(contains)) && (!withEqualString || v.Value.Equals(equal))) : null) : db.SValueSets;
+                iValueTabel = restrictValue ? (restrictNumValue ? db.IValueSets.Where(v => restrictNumValue && v.Value != null && (!withEqualNum || v.Value == equalNum) && (!withCompare || (v.Value >= lowerNum && v.Value <= upperNum))) : null) : db.IValueSets;
+                dValueTabel = restrictValue ? (restrictNumValue ? db.DValueSets.Where(v => restrictNumValue && v.Value != null && (!withEqualNum || v.Value == equalNum) && (!withCompare || (v.Value >= lowerNum && v.Value <= upperNum))) : null) : db.DValueSets;
             }
             else
                 return Enumerable.Empty<CombinedSMEResult>().AsQueryable();
@@ -589,21 +590,21 @@ namespace AasxServerDB
                 if (direction == 0 || direction == 1) // top-down and middle-out
                 {
                     // create raw sql
-                    var selectStart = $"SELECT sm_sme.SMId AS sm_Id, sm_sme.Identifier, sm_sme.ParentSMEId, sm_sme.IdShort, sm_sme.TimeStamp, v.Value \r\n" +
+                    var selectStart = $"SELECT sm_sme.Identifier, sm_sme.ParentSMEId, sm_sme.IdShort, sm_sme.TimeStamp, v.Value \r\n" +
                         $"FROM FilteredSMAndSME AS sm_sme \r\n" +
                         ((withContains || withEqualString || withCompare) ? "INNER" : "LEFT") +
                         $" JOIN";
                     var selectEnd = $"AS v \r\n" +
                         $"ON sm_sme.Id = v.SMEId \r\n ";
                     select =
-                        (!sValueQueryString.IsNullOrEmpty() ? $"{selectStart} FilteredSValue {selectEnd}" : string.Empty) +
+                         (!sValueQueryString.IsNullOrEmpty() ? $"{selectStart} FilteredSValue {selectEnd}" : string.Empty) +
                         ((!sValueQueryString.IsNullOrEmpty() && !iValueQueryString.IsNullOrEmpty()) ? "UNION ALL \r\n" : string.Empty) +
-                        (!iValueQueryString.IsNullOrEmpty() ? $"{selectStart} FilteredIValue {selectEnd}" : string.Empty) +
+                         (!iValueQueryString.IsNullOrEmpty() ? $"{selectStart} FilteredIValue {selectEnd}" : string.Empty) +
                         ((!iValueQueryString.IsNullOrEmpty() && !dValueQueryString.IsNullOrEmpty()) ? "UNION ALL \r\n" : string.Empty) +
-                        (!dValueQueryString.IsNullOrEmpty() ? $"{selectStart} FilteredDValue {selectEnd}" : string.Empty);
+                         (!dValueQueryString.IsNullOrEmpty() ? $"{selectStart} FilteredDValue {selectEnd}" : string.Empty);
                 }
                 else if (direction == 2) // down-top
-                    select = $"SELECT sme_v.SMId AS sm_Id, sm.Identifier, sme_v.ParentSMEId, sme_v.IdShort, sme_v.TimeStamp, sme_v.Value \r\n" +
+                    select = $"SELECT sm.Identifier, sme_v.ParentSMEId, sme_v.IdShort, sme_v.TimeStamp, sme_v.Value \r\n" +
                         $"FROM FilteredSMEAndValue AS sme_v \r\n" +
                         $"INNER JOIN FilteredSM AS sm \r\n" +
                         $"ON sme_v.SMId = sm.Id";
@@ -616,7 +617,7 @@ namespace AasxServerDB
             }
             else
             {
-                if (direction == 0) // top-down
+                if (direction == 0 || direction == 1) // top-down
                 {
                     var smSME = smSelect.Join(smeSelect, sm => sm.Id, sme => sme.SMId, (sm, sme) => new { sme.Id, sm.Identifier, sme.ParentSMEId, sme.IdShort, sme.TimeStamp });
                     var smSMESValue = sValueSelect != null ? smSME.Join(sValueSelect, sm_sme => sm_sme.Id, v => v.SMEId, (sm_sme, v) => new CombinedSMEResult { Identifier = sm_sme.Identifier, ParentSMEId = sm_sme.ParentSMEId, IdShort = sm_sme.IdShort, TimeStamp = sm_sme.TimeStamp, Value = v.Value }) : null;
@@ -632,12 +633,12 @@ namespace AasxServerDB
                 }
                 else if (direction == 2) // down-top
                 {
-                    var sValueSME = sValueSelect?.Join(smeSelect, v => v.SMEId, sme => sme.Id, (v, sme) => new CombinedSMEResult { sm_Id = sme.SMId, ParentSMEId = sme.ParentSMEId, IdShort = sme.IdShort, TimeStamp = sme.TimeStamp, Value = v.Value });
-                    var iValueSME = iValueSelect?.Join(smeSelect, v => v.SMEId, sme => sme.Id, (v, sme) => new CombinedSMEResult { sm_Id = sme.SMId, ParentSMEId = sme.ParentSMEId, IdShort = sme.IdShort, TimeStamp = sme.TimeStamp, Value = v.Value.ToString() });
-                    var dValueSME = dValueSelect?.Join(smeSelect, v => v.SMEId, sme => sme.Id, (v, sme) => new CombinedSMEResult { sm_Id = sme.SMId, ParentSMEId = sme.ParentSMEId, IdShort = sme.IdShort, TimeStamp = sme.TimeStamp, Value = v.Value.ToString() });
-                    var xValueSME = !restrictValue ? smeSelect.Where(sme => !restrictValue && (sme.TValue == null || sme.TValue.Equals(""))).Select(sme => new CombinedSMEResult { sm_Id = sme.SMId, ParentSMEId = sme.ParentSMEId, IdShort = sme.IdShort, TimeStamp = sme.TimeStamp, Value = "" }) : null;
+                    var sValueSME = sValueSelect?.Join(smeSelect, v => v.SMEId, sme => sme.Id, (v, sme) => new { sm_Id = sme.SMId, ParentSMEId = sme.ParentSMEId, IdShort = sme.IdShort, TimeStamp = sme.TimeStamp, Value = v.Value });
+                    var iValueSME = iValueSelect?.Join(smeSelect, v => v.SMEId, sme => sme.Id, (v, sme) => new { sm_Id = sme.SMId, ParentSMEId = sme.ParentSMEId, IdShort = sme.IdShort, TimeStamp = sme.TimeStamp, Value = v.Value.ToString() });
+                    var dValueSME = dValueSelect?.Join(smeSelect, v => v.SMEId, sme => sme.Id, (v, sme) => new { sm_Id = sme.SMId, ParentSMEId = sme.ParentSMEId, IdShort = sme.IdShort, TimeStamp = sme.TimeStamp, Value = v.Value.ToString() });
+                    var xValueSME = !restrictValue ? smeSelect.Where(sme => !restrictValue && (sme.TValue == null || sme.TValue.Equals(""))).Select(sme => new { sm_Id = sme.SMId, ParentSMEId = sme.ParentSMEId, IdShort = sme.IdShort, TimeStamp = sme.TimeStamp, Value = "" }) : null;
 
-                    IQueryable<CombinedSMEResult>? valueSME = null;
+                    var valueSME = (sValueSME != null) ? sValueSME : iValueSME;
                     if (sValueSME != null)
                         valueSME = sValueSME;
                     if (iValueSME != null)
@@ -650,6 +651,7 @@ namespace AasxServerDB
                     result = valueSME?.Join(smSelect, sme_v => sme_v.sm_Id, sm => sm.Id, (sme_v, sm) => new CombinedSMEResult { Identifier = sm.Identifier, ParentSMEId = sme_v.ParentSMEId, IdShort = sme_v.IdShort, TimeStamp = sme_v.TimeStamp, Value = sme_v.Value });
                 }
             }
+
             return result != null ? ((IQueryable<CombinedSMEResult>) result).AsNoTracking() : Enumerable.Empty<CombinedSMEResult>().AsQueryable();
         }
 
