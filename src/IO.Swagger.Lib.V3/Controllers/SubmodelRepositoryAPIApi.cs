@@ -247,9 +247,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
             if (eventData.diff != null)
             {
-                eventData.diff.Value = new List<ISubmodelElement>();
                 if (diffEntry.Count > 0)
                 {
+                    eventData.diff.Value = new List<ISubmodelElement>();
                     int i = 0;
                     foreach (var d in diffEntry)
                     {
@@ -260,8 +260,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                         eventData.diff.Value.Add(p);
                         i++;
                     }
+                    eventData.diff.SetTimeStamp(dt);
                 }
-                eventData.diff.SetTimeStamp(dt);
             }
 
             Program.signalNewData(2);

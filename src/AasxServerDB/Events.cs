@@ -837,6 +837,10 @@ namespace Events
                         if (smec != null)
                             status = smec;
                         break;
+                    case "statusdata":
+                        if (smec != null)
+                            statusData = smec;
+                        break;
                     case "diff":
                         if (smec != null)
                             diff = smec;
