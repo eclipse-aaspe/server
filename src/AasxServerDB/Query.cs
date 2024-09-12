@@ -1,22 +1,17 @@
-using System.Diagnostics;
-using Microsoft.EntityFrameworkCore;
-using AasxServerDB.Entities;
-using AasxServerDB.Result;
-using Extensions;
-using Microsoft.IdentityModel.Tokens;
-using System.Text.RegularExpressions;
-using System.Linq.Dynamic.Core;
-using QueryParserTest;
-using Microsoft.EntityFrameworkCore.Query.Internal;
-using Newtonsoft.Json.Linq;
-using System.Runtime.Intrinsics.X86;
-using System.Linq;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
-using System.Runtime.CompilerServices;
-using System.Security.AccessControl;
-
 namespace AasxServerDB
 {
+    using System.Diagnostics;
+    using Microsoft.EntityFrameworkCore;
+    using AasxServerDB.Entities;
+    using AasxServerDB.Result;
+    using Extensions;
+    using Microsoft.IdentityModel.Tokens;
+    using System.Text.RegularExpressions;
+    using System.Linq.Dynamic.Core;
+    using QueryParserTest;
+    using System.Linq;
+    using System.Security.AccessControl;
+
     public class Query
     {
         public static string? ExternalBlazor { get; set; }
@@ -24,18 +19,18 @@ namespace AasxServerDB
         // --------------- Help Class ---------------
         private class CombinedSMResult
         {
-            public string? Identifier;
-            public DateTime TimeStampTree;
+            public string? Identifier { get; set; }
+            public DateTime TimeStampTree { get; set; }
         }
 
-        public class CombinedSMEResult
+        private class CombinedSMEResult
         {
-            // public int? sm_Id { get; set; } = null;
-            public string? Identifier { get; set; } = null;
-            public int? ParentSMEId { get; set; } = null;
-            public string? IdShort { get; set; } = null;
-            public DateTime? TimeStamp { get; set; } = null;
-            public string? Value { get; set; } = null;
+            public int Id { get; set; }
+            public string? Identifier { get; set; }
+            public int? ParentSMEId { get; set; }
+            public string? IdShort { get; set; }
+            public DateTime TimeStamp { get; set; }
+            public string? Value { get; set; }
         }
 
         // --------------- API ---------------
@@ -47,7 +42,15 @@ namespace AasxServerDB
 
             watch.Restart();
             var query = GetSMs(db, semanticId, identifier, diff, expression);
-            Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
+            if (query == null)
+            {
+                Console.WriteLine("No query can be generated due to incorrect parameter combinations");
+                return new List<SMResult>();
+            }
+            else
+            {
+                Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
+            }
 
             watch.Restart();
             var result = GetSMResult(query);
@@ -64,7 +67,15 @@ namespace AasxServerDB
 
             watch.Restart();
             var query = GetSMs(db, semanticId, identifier, diff, expression);
-            Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
+            if (query == null)
+            {
+                Console.WriteLine("No query can be generated due to incorrect parameter combinations");
+                return 0;
+            }
+            else
+            {
+                Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
+            }
 
             watch.Restart();
             var result = query.Count();
@@ -83,7 +94,15 @@ namespace AasxServerDB
 
             watch.Restart();
             var query = GetSMEs(db, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
-            Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
+            if (query == null)
+            {
+                Console.WriteLine("No query can be generated due to incorrect parameter combinations");
+                return new List<SMEResult>();
+            }
+            else
+            {
+                Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
+            }
 
             watch.Restart();
             var result = GetSMEResult(db, query);
@@ -102,7 +121,15 @@ namespace AasxServerDB
 
             watch.Restart();
             var query = GetSMEs(db, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
-            Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
+            if (query == null)
+            {
+                Console.WriteLine("No query can be generated due to incorrect parameter combinations");
+                return 0;
+            }
+            else
+            {
+                Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
+            }
 
             watch.Restart();
             var result = query.Count();
@@ -113,7 +140,7 @@ namespace AasxServerDB
 
         public List<SMEResult> SearchSMEsResult(
             string smSemanticId = "",
-            string searchSemanticId = "",  string searchIdShort = "",
+            string searchSemanticId = "", string searchIdShort = "",
             string? equal = "", string? contains = "",
             string resultSemanticId = "", string resultIdShort = "")
         {
@@ -328,7 +355,7 @@ namespace AasxServerDB
         }
 
         // --------------- SM Methodes ---------------
-        private static IQueryable<CombinedSMResult> GetSMs(AasContext db, string semanticId = "", string identifier = "", string diffString = "", string expression = "")
+        private static IQueryable<CombinedSMResult>? GetSMs(AasContext db, string semanticId = "", string identifier = "", string diffString = "", string expression = "")
         {
             // analyse parameters
             var withSemanticId = !semanticId.IsNullOrEmpty();
@@ -338,13 +365,17 @@ namespace AasxServerDB
             var withParameters = withSemanticId || withIdentifier || withDiff;
             var withExpression = !expression.IsNullOrEmpty();
 
+            // wrong parameters
+            if (withExpression == withParameters)
+                return null;
+
             // get data
-            IQueryable<SMSet> result;
-            if (withExpression && !withParameters)
+            IQueryable<SMSet> smTable;
+            if (withExpression) // with expression
             {
                 // shorten expression
                 expression = expression.Replace("$REVERSE", "").Replace("$LOG", "");
-                expression = Regex.Replace(expression, @"\s+", string.Empty);
+                expression = Regex.Replace(expression, @"\s+", replacement: string.Empty);
 
                 // init parser
                 var countTypePrefix = 0;
@@ -364,22 +395,34 @@ namespace AasxServerDB
                 var restrictSM = !conditionSM.IsNullOrEmpty() && !conditionSM.Equals("true");
 
                 // get data
-                if (restrictSM)
-                    result = db.SMSets.Where(conditionSM);
-                else
-                    result = Enumerable.Empty<SMSet>().AsQueryable();
+                if (!restrictSM)
+                    return null;
+                smTable = db.SMSets.Where(conditionSM);
             }
-            else if (!withExpression && withParameters)
+            else // with parameters
             {
-                result = db.SMSets
+                smTable = db.SMSets
                     .Where(s =>
                         (!withSemanticId || (s.SemanticId != null && s.SemanticId.Equals(semanticId))) &&
                         (!withIdentifier || (s.Identifier != null && s.Identifier.Equals(identifier))) &&
                         (!withDiff || s.TimeStampTree.CompareTo(diff) > 0));
             }
-            else
-                result = Enumerable.Empty<SMSet>().AsQueryable();
-            return result.Select(sm => new CombinedSMResult { Identifier = sm.Identifier, TimeStampTree = sm.TimeStampTree });
+
+            // set select
+            var smSelect = smTable.Select(sm => new { sm.Identifier, sm.TimeStampTree });
+
+            // to query string
+            var smQueryString = smSelect.ToQueryString();
+
+            // set parameters
+            smQueryString = SetParameter(smQueryString);
+
+            // change INSTR to LIKE
+            smQueryString = withExpression ? ChangeINSTRToLIKE(smQueryString) : smQueryString;
+
+            // create queryable
+            var result = db.Database.SqlQueryRaw<CombinedSMResult>(smQueryString);
+            return result;
         }
 
         private static List<SMResult> GetSMResult(IQueryable<CombinedSMResult> query)
@@ -388,9 +431,10 @@ namespace AasxServerDB
             foreach (var sm in query)
             {
                 result.Add(
-                    new SMResult{
-                        smId = sm.Identifier ?? "",
-                        url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sm.Identifier ?? "")}",
+                    new SMResult
+                    {
+                        smId = sm.Identifier ?? string.Empty,
+                        url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sm.Identifier ?? string.Empty)}",
                         timeStampTree = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree)
                     }
                 );
@@ -399,7 +443,7 @@ namespace AasxServerDB
         }
 
         // --------------- SME Methodes ---------------
-        private IQueryable<CombinedSMEResult> GetSMEs(AasContext db, string smSemanticId = "", string smIdentifier = "", string semanticId = "",
+        private static IQueryable<CombinedSMEResult>? GetSMEs(AasContext db, string smSemanticId = "", string smIdentifier = "", string semanticId = "",
             string diffString = "", string contains = "", string equal = "", string lower = "", string upper = "", string expression = "")
         {
             // analyse parameters
@@ -410,28 +454,34 @@ namespace AasxServerDB
             var withDiff = !diff.Equals(DateTime.MinValue);
             var withContains = !contains.IsNullOrEmpty();
             var withEqualString = !equal.IsNullOrEmpty();
-            var withEqualNum = Int64.TryParse(equal, out long equalNum);
-            var withLower = Int64.TryParse(lower, out long lowerNum);
-            var withUpper = Int64.TryParse(upper, out long upperNum);
+            var withEqualNum = Int64.TryParse(equal, out var equalNum);
+            var withLower = Int64.TryParse(lower, out var lowerNum);
+            var withUpper = Int64.TryParse(upper, out var upperNum);
             var withCompare = withLower && withUpper;
             var withParameters = withSMSemanticId || withSMIdentifier || withSemanticId || withDiff || withContains || withEqualString || withLower || withUpper;
             var withExpression = !expression.IsNullOrEmpty();
 
+            // wrong parameters
+            if (withExpression == withParameters ||
+                (withEqualString && (withContains || withLower || withUpper)) ||
+                (withContains && (withLower || withUpper)) ||
+                (withLower != withUpper))
+                return null;
+
             // direction
-            var direction = 0; // 0 = top-down, 1 = middle-out, 2 down-top
-            var restrictValue = false;
+            var direction = 0; // 0 = top-down, 1 = middle-out, 2 = bottom-up
 
             // implementierung OValueSet
 
             // restrict all tables seperate
-            IQueryable<SMSet> smTabel;
-            IQueryable<SMESet> smeTabel;
-            IQueryable<SValueSet>? sValueTabel;
-            IQueryable<IValueSet>? iValueTabel;
-            IQueryable<DValueSet>? dValueTabel;
+            IQueryable<SMSet> smTable;
+            IQueryable<SMESet> smeTable;
+            IQueryable<SValueSet>? sValueTable;
+            IQueryable<IValueSet>? iValueTable;
+            IQueryable<DValueSet>? dValueTable;
 
             // get data
-            if (withExpression && !withParameters)
+            if (withExpression) // with expression
             {
                 // direction
                 direction = !expression.Contains("$REVERSE") ? 0 : 2;
@@ -484,16 +534,16 @@ namespace AasxServerDB
                 var restrictSME = !conditionSME.IsNullOrEmpty() && !conditionSME.Equals("true");
                 var restrictSVaue = !conditionStr.IsNullOrEmpty() && !conditionStr.Equals("true");
                 var restrictNumVaue = !conditionNum.IsNullOrEmpty() && !conditionNum.Equals("true");
-                restrictValue = restrictSVaue || restrictNumVaue;
+                var restrictValue = restrictSVaue || restrictNumVaue;
 
                 // restrict all tables seperate 
-                smTabel = restrictSM ? db.SMSets.Where(conditionSM) : db.SMSets;
-                smeTabel = restrictSME ? db.SMESets.Where(conditionSME) : db.SMESets;
-                sValueTabel = restrictValue ? (restrictSVaue ? db.SValueSets.Where(conditionStr) : null) : db.SValueSets;
-                iValueTabel = restrictValue ? (restrictNumVaue ? db.IValueSets.Where(conditionStr) : null) : db.IValueSets;
-                dValueTabel = restrictValue ? (restrictNumVaue ? db.DValueSets.Where(conditionStr) : null) : db.DValueSets;
+                smTable = restrictSM ? db.SMSets.Where(conditionSM) : db.SMSets;
+                smeTable = restrictSME ? db.SMESets.Where(conditionSME) : db.SMESets;
+                sValueTable = restrictValue ? (restrictSVaue   ? db.SValueSets.Where(conditionStr) : null) : db.SValueSets;
+                iValueTable = restrictValue ? (restrictNumVaue ? db.IValueSets.Where(conditionNum) : null) : db.IValueSets;
+                dValueTable = restrictValue ? (restrictNumVaue ? db.DValueSets.Where(conditionNum) : null) : db.DValueSets;
             }
-            else if (!withExpression && withParameters)
+            else // with parameters
             {
                 // direction
                 direction = (withSMSemanticId || withSMIdentifier) ? 0 : ((withContains || withEqualString || withLower || withUpper) ? 2 : 1);
@@ -503,26 +553,22 @@ namespace AasxServerDB
                 var restrictSME = withSemanticId || withDiff;
                 var restrictSValue = withContains || withEqualString;
                 var restrictNumValue = withEqualNum || withCompare;
-                restrictValue = restrictSValue || restrictNumValue;
-                if ((withEqualString && (withContains || withLower || withUpper)) || (withContains && (withLower || withUpper)) || (withLower != withUpper))
-                    return Enumerable.Empty<CombinedSMEResult>().AsQueryable();
+                var restrictValue = restrictSValue || restrictNumValue;
 
                 // restrict all tables seperate 
-                smTabel = restrictSM ? db.SMSets.Where(sm => (!withSMSemanticId || (sm.SemanticId != null && sm.SemanticId.Equals(smSemanticId))) && (!withSMIdentifier || (sm.Identifier != null && sm.Identifier.Equals(smIdentifier)))) : db.SMSets;
-                smeTabel = restrictSME ? db.SMESets.Where(sme => (!withSemanticId || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) && (!withDiff || sme.TimeStamp.CompareTo(diff) > 0)) : db.SMESets;
-                sValueTabel = restrictValue ? (restrictSValue   ? db.SValueSets.Where(v => restrictSValue   && v.Value != null && (!withContains || v.Value.Contains(contains)) && (!withEqualString || v.Value.Equals(equal))) : null) : db.SValueSets;
-                iValueTabel = restrictValue ? (restrictNumValue ? db.IValueSets.Where(v => restrictNumValue && v.Value != null && (!withEqualNum || v.Value == equalNum) && (!withCompare || (v.Value >= lowerNum && v.Value <= upperNum))) : null) : db.IValueSets;
-                dValueTabel = restrictValue ? (restrictNumValue ? db.DValueSets.Where(v => restrictNumValue && v.Value != null && (!withEqualNum || v.Value == equalNum) && (!withCompare || (v.Value >= lowerNum && v.Value <= upperNum))) : null) : db.DValueSets;
+                smTable = restrictSM ? db.SMSets.Where(sm => (!withSMSemanticId || (sm.SemanticId != null && sm.SemanticId.Equals(smSemanticId))) && (!withSMIdentifier || (sm.Identifier != null && sm.Identifier.Equals(smIdentifier)))) : db.SMSets;
+                smeTable = restrictSME ? db.SMESets.Where(sme => (!withSemanticId || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) && (!withDiff || sme.TimeStamp.CompareTo(diff) > 0)) : db.SMESets;
+                sValueTable = restrictValue ? (restrictSValue   ? db.SValueSets.Where(v => restrictSValue   && v.Value != null && (!withContains || v.Value.Contains(contains)) && (!withEqualString || v.Value.Equals(equal))) : null) : db.SValueSets;
+                iValueTable = restrictValue ? (restrictNumValue ? db.IValueSets.Where(v => restrictNumValue && v.Value != null && (!withEqualNum || v.Value == equalNum) && (!withCompare || (v.Value >= lowerNum && v.Value <= upperNum))) : null) : db.IValueSets;
+                dValueTable = restrictValue ? (restrictNumValue ? db.DValueSets.Where(v => restrictNumValue && v.Value != null && (!withEqualNum || v.Value == equalNum) && (!withCompare || (v.Value >= lowerNum && v.Value <= upperNum))) : null) : db.DValueSets;
             }
-            else
-                return Enumerable.Empty<CombinedSMEResult>().AsQueryable();
 
-            // select
-            var smSelect = smTabel.Select(sm => new { sm.Id, sm.Identifier });
-            var smeSelect = smeTabel.Select(sme => new { sme.SMId, sme.Id, sme.ParentSMEId, sme.IdShort, sme.TimeStamp, sme.TValue });
-            var sValueSelect = sValueTabel?.Select(sV => new { sV.SMEId, sV.Value });
-            var iValueSelect = iValueTabel?.Select(iV => new { iV.SMEId, iV.Value });
-            var dValueSelect = dValueTabel?.Select(dV => new { dV.SMEId, dV.Value });
+            // set select
+            var smSelect = smTable.Select(sm => new { sm.Id, sm.Identifier });
+            var smeSelect = smeTable.Select(sme => new { sme.SMId, sme.Id, sme.ParentSMEId, sme.IdShort, sme.TimeStamp, sme.TValue });
+            var sValueSelect = sValueTable?.Select(sV => new { sV.SMEId, sV.Value });
+            var iValueSelect = iValueTable?.Select(iV => new { iV.SMEId, iV.Value });
+            var dValueSelect = dValueTable?.Select(dV => new { dV.SMEId, dV.Value });
 
             // to query string
             var smQueryString = smSelect.ToQueryString();
@@ -539,70 +585,87 @@ namespace AasxServerDB
             dValueQueryString = dValueQueryString != null ? SetParameter(dValueQueryString) : null;
 
             // change INSTR to LIKE
-            sValueQueryString = sValueQueryString != null && withContains ? ChangeINSTRToLIKE(sValueQueryString) : null;
+            smQueryString = ChangeINSTRToLIKE(smQueryString);
+            smeQueryString = ChangeINSTRToLIKE(smeQueryString);
+            sValueQueryString = sValueQueryString != null ? ChangeINSTRToLIKE(sValueQueryString) : null;
+            iValueQueryString = iValueQueryString != null ? ChangeINSTRToLIKE(iValueQueryString) : null;
+            dValueQueryString = dValueQueryString != null ? ChangeINSTRToLIKE(dValueQueryString) : null;
 
-            // with querys
-            var selectWithStart = $"SELECT sme.SMId, sme.ParentSMEId, sme.IdShort, sme.TimeStamp, v.Value \r\n" +
-                $"FROM";
-            var selectWithEnd = $"AS v \r\n" +
-                ((withContains || withEqualString || withCompare) ? "INNER" : "RIGHT") +
-                $" JOIN FilteredSME AS sme \r\n" +
-                $"ON sme.Id = v.SMEId \r\n ";
-            var withQueryString = $"WITH\r\n" +
+            // with querys for each table
+            var queryWithTables = $"WITH\r\n" +
                 $"FilteredSM AS (\r\n{smQueryString}\r\n),\r\n" +
                 $"FilteredSME AS (\r\n{smeQueryString}\r\n),\r\n" +
                 (sValueQueryString != null ? $"FilteredSValue AS (\r\n{sValueQueryString}\r\n),\r\n" : string.Empty) +
                 (iValueQueryString != null ? $"FilteredIValue AS (\r\n{iValueQueryString}\r\n),\r\n" : string.Empty) +
-                (dValueQueryString != null ? $"FilteredDValue AS (\r\n{dValueQueryString}\r\n),\r\n" : string.Empty) +
-                (direction == 0 ?
+                (dValueQueryString != null ? $"FilteredDValue AS (\r\n{dValueQueryString}\r\n),\r\n" : string.Empty);
+
+            // first join in with
+            var selectWithStart = $"SELECT sme.SMId, sme.Id, sme.ParentSMEId, sme.IdShort, sme.TimeStamp, v.Value \r\n" +
+                $"FROM";
+            var selectWithEnd = $"AS v \r\n" +
+                $"INNER JOIN FilteredSME AS sme \r\n" +
+                $"ON sme.Id = v.SMEId \r\n ";
+            var queryWithJoin =
+                (direction == 0 ? // top-down
                     $"FilteredSMAndSME AS ( \r\n" +
-                        $"SELECT sme.SMId, sme.Id, sm.Identifier, sme.ParentSMEId, sme.IdShort, sme.TimeStamp \r\n" +
+                        $"SELECT sme.SMId, sm.Identifier, sme.Id, sme.ParentSMEId, sme.IdShort, sme.TimeStamp, sme.TValue \r\n" +
                         $"FROM FilteredSM AS sm \r\n" +
                         $"INNER JOIN FilteredSME AS sme \r\n" +
                         $"ON sm.Id = sme.SMId \r\n" +
                     $")" : string.Empty) +
-                (direction == 1 ?
+                (direction == 1 ? // middle-out
                     $"FilteredSMAndSME AS ( \r\n" +
-                        $"SELECT sme.SMId, sme.Id, sm.Identifier, sme.ParentSMEId, sme.IdShort, sme.TimeStamp \r\n" +
+                        $"SELECT sme.SMId, sm.Identifier, sme.Id, sme.ParentSMEId, sme.IdShort, sme.TimeStamp, sme.TValue \r\n" +
                         $"FROM FilteredSME AS sme \r\n" +
                         $"INNER JOIN FilteredSM AS sm \r\n" +
                         $"ON sm.Id = sme.SMId \r\n" +
                     $")" : string.Empty) +
-                (direction == 2 ?
+                (direction == 2 ? // bottom-up
                     $"FilteredSMEAndValue AS (\r\n" +
                         (!sValueQueryString.IsNullOrEmpty() ? $"{selectWithStart} FilteredSValue {selectWithEnd}" : string.Empty) +
                         ((!sValueQueryString.IsNullOrEmpty() && !iValueQueryString.IsNullOrEmpty()) ? "UNION ALL \r\n" : string.Empty) +
                         (!iValueQueryString.IsNullOrEmpty() ? $"{selectWithStart} FilteredIValue {selectWithEnd}" : string.Empty) +
                         ((!iValueQueryString.IsNullOrEmpty() && !dValueQueryString.IsNullOrEmpty()) ? "UNION ALL \r\n" : string.Empty) +
                         (!dValueQueryString.IsNullOrEmpty() ? $"{selectWithStart} FilteredDValue {selectWithEnd}" : string.Empty) +
-                    $")" : string.Empty);
+                        ((withParameters && !withContains && !withEqualString && !withEqualNum && !withCompare) ? // Das hier bei Expression richtig?
+                            $"UNION ALL \r\n" +
+                            $"SELECT sme.SMId, sme.Id, sme.ParentSMEId, sme.IdShort, sme.TimeStamp, NULL \r\n" +
+                            $"FROM FilteredSME AS sme " +
+                            $"WHERE sme.TValue IS NULL OR sme.TValue = ''" : string.Empty) +
+                    $")" : string.Empty)
+                    + "\r\n";
 
-            // join the restricted tables
-            var selectStart = $"SELECT sm_sme.Identifier, sm_sme.ParentSMEId, sm_sme.IdShort, sm_sme.TimeStamp, v.Value \r\n" +
+            // secound join in select
+            var selectStart = $"SELECT sm_sme.Identifier, sm_sme.Id, sm_sme.ParentSMEId, sm_sme.IdShort, sm_sme.TimeStamp, v.Value \r\n" +
                 $"FROM FilteredSMAndSME AS sm_sme \r\n" +
-                ((withContains || withEqualString || withCompare) ? "INNER" : "LEFT") +
-                $" JOIN";
+                $"INNER JOIN";
             var selectEnd = $"AS v \r\n" +
                 $"ON sm_sme.Id = v.SMEId \r\n ";
-            var select =
-                (direction == 0 || direction == 1) ? // top-down and middle-out
+            var querySelectJoin =
+                (direction is 0 or 1) ? // top-down and middle-out
                     (!sValueQueryString.IsNullOrEmpty() ? $"{selectStart} FilteredSValue {selectEnd}" : string.Empty) +
                     ((!sValueQueryString.IsNullOrEmpty() && !iValueQueryString.IsNullOrEmpty()) ? "UNION ALL \r\n" : string.Empty) +
                     (!iValueQueryString.IsNullOrEmpty() ? $"{selectStart} FilteredIValue {selectEnd}" : string.Empty) +
                     ((!iValueQueryString.IsNullOrEmpty() && !dValueQueryString.IsNullOrEmpty()) ? "UNION ALL \r\n" : string.Empty) +
-                    (!dValueQueryString.IsNullOrEmpty() ? $"{selectStart} FilteredDValue {selectEnd}" : string.Empty)
-                : // down-top
-                    $"SELECT sm.Identifier, sme_v.ParentSMEId, sme_v.IdShort, sme_v.TimeStamp, sme_v.Value \r\n" +
+                    (!dValueQueryString.IsNullOrEmpty() ? $"{selectStart} FilteredDValue {selectEnd}" : string.Empty) +
+                    ((withParameters && !withContains && !withEqualString && !withEqualNum && !withCompare) ? // Das hier bei Expression richtig?
+                        $"UNION ALL \r\n" +
+                        $"SELECT sm_sme.SMId, sm_sme.Id, sm_sme.ParentSMEId, sm_sme.IdShort, sm_sme.TimeStamp, NULL \r\n" +
+                        $"FROM FilteredSMAndSME AS sm_sme " +
+                        $"WHERE sm_sme.TValue IS NULL OR sm_sme.TValue = ''" : string.Empty)
+                : // bottom-up
+                    $"SELECT sm.Identifier, sme_v.Id, sme_v.ParentSMEId, sme_v.IdShort, sme_v.TimeStamp, sme_v.Value \r\n" +
                     $"FROM FilteredSMEAndValue AS sme_v \r\n" +
                     $"INNER JOIN FilteredSM AS sm \r\n" +
                     $"ON sme_v.SMId = sm.Id";
 
             // create queryable
-            var rawSql = $"{withQueryString}\r\n{select}";
-            return db.Database.SqlQueryRaw<CombinedSMEResult>(rawSql);
+            var rawSql = $"{queryWithTables}{queryWithJoin}{querySelectJoin}";
+            var result = db.Database.SqlQueryRaw<CombinedSMEResult>(rawSql);
+            return result;
         }
 
-        private string SetParameter(string rawSQL)
+        private static string SetParameter(string rawSQL)
         {
             var splitParam = rawSQL.Split(new string[] { ".param set ", "\r\n\r\n" }, StringSplitOptions.None);
             var result = splitParam[splitParam.Length - 1];
@@ -614,7 +677,7 @@ namespace AasxServerDB
             return result;
         }
 
-        private string ChangeINSTRToLIKE(string rawSQL)
+        private static string ChangeINSTRToLIKE(string rawSQL)
         {
             var splitParam = rawSQL.Split(new string[] { "instr(", ") > 0" }, StringSplitOptions.None);
             var result = splitParam[0];
@@ -633,6 +696,8 @@ namespace AasxServerDB
             var result = new List<SMEResult>();
             foreach (var sm_sme_v in query)
             {
+                /*
+                 * ------ParentID Löschen------
                 var path = sm_sme_v.IdShort;
                 var pId = sm_sme_v.ParentSMEId;
                 while (pId != null)
@@ -640,15 +705,30 @@ namespace AasxServerDB
                     var smeDB = db.SMESets.Where(s => s.Id == pId).Select(sme => new { sme.IdShort, sme.ParentSMEId }).First();
                     path = $"{smeDB.IdShort}.{path}";
                     pId = smeDB.ParentSMEId;
-                }
+                }*/
 
-                result.Add(new SMEResult()
+                var rawSql = $"WITH " +
+                    $"RECURSIVE SME_CTE AS (\r\n" +
+                        $"SELECT IdShort, ParentSMEId, CAST(IdShort AS TEXT) AS Path\r\n" +
+                        $"FROM SMESets\r\n" +
+                        $"WHERE Id = {sm_sme_v.Id}\r\n" +
+                        $"UNION ALL\r\n" +
+                        $"SELECT x.IdShort, x.ParentSMEId, x.IdShort || '.' || c.Path\r\n" +
+                        $"FROM SMESets x\r\n" +
+                        $"INNER JOIN SME_CTE c " +
+                        $"ON x.Id = c.ParentSMEId\r\n" +
+                    $")\r\n" +
+                    $"SELECT Path FROM SME_CTE WHERE ParentSMEId IS NULL";
+                var path = db.Database.SqlQueryRaw<string>(rawSql).ToList()[0];
+
+                result.Add(
+                    new SMEResult()
                     {
-                        smId = sm_sme_v.Identifier ?? "",
+                        smId = sm_sme_v.Identifier ?? string.Empty,
                         value = sm_sme_v.Value,
-                        idShortPath = path,
+                        idShortPath = path ?? string.Empty,
                         url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sm_sme_v.Identifier ?? "")}/submodel-elements/{path}",
-                        timeStamp = TimeStamp.TimeStamp.DateTimeToString((DateTime)sm_sme_v.TimeStamp)
+                        timeStamp = TimeStamp.TimeStamp.DateTimeToString(sm_sme_v.TimeStamp)
                     }
                 );
             }
