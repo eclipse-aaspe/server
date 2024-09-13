@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Nodes;
 
 namespace AasxServerDB.Entities
 {
@@ -17,6 +18,7 @@ namespace AasxServerDB.Entities
         public string? SemanticId { get; set; }
         public string? Identifier { get; set; }
         public string? IdShort { get; set; }
+        public JsonArray? Extensions { get; set; }
 
         public DateTime TimeStampCreate { get; set; }
         public DateTime TimeStamp { get; set; }

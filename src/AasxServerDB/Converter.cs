@@ -1,3 +1,4 @@
+using System.Runtime.Intrinsics.X86;
 using System.Text;
 using AasCore.Aas3_0;
 using AasxServerDB.Entities;
@@ -5,6 +6,7 @@ using AdminShellNS;
 using Extensions;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Nodes = System.Text.Json.Nodes;
 
 namespace AasxServerDB
@@ -22,6 +24,7 @@ namespace AasxServerDB
                     id: aasDB.Identifier,
                     idShort: aasDB.IdShort,
                     assetInformation: new AssetInformation(AssetKind.Type, aasDB.GlobalAssetId),
+                    extensions: aasDB.Extensions != null ? DeserializeExtensions(aasDB.Extensions) : null,
                     submodels: new List<AasCore.Aas3_0.IReference>());
                 aas.TimeStampCreate = aasDB.TimeStampCreate;
                 aas.TimeStamp = aasDB.TimeStamp;
@@ -70,6 +73,7 @@ namespace AasxServerDB
                 submodel.IdShort = smDB.IdShort;
                 submodel.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
                     new List<IKey>() { new Key(KeyTypes.GlobalReference, smDB.SemanticId) });
+                submodel.Extensions = smDB.Extensions != null ? DeserializeExtensions(smDB.Extensions) : null;
                 submodel.SubmodelElements = new List<ISubmodelElement>();
 
                 LoadSME(submodel, null, null, SMEList);
@@ -245,6 +249,7 @@ namespace AasxServerDB
                 return null;
 
             sme.IdShort = smeSet.IdShort;
+            sme.Extensions = smeSet.Extensions != null ? DeserializeExtensions(smeSet.Extensions) : null;
             sme.TimeStamp = smeSet.TimeStamp;
             sme.TimeStampCreate = smeSet.TimeStampCreate;
             sme.TimeStampTree = smeSet.TimeStampTree;
@@ -292,6 +297,14 @@ namespace AasxServerDB
 
             var aasxDB = aasxDBList.First();
             return aasxDB.AASX;
+        }
+
+        private static List<IExtension> DeserializeExtensions(Nodes.JsonArray extensions)
+        {
+            var list = new List<IExtension>();
+            foreach (var item in extensions)
+                list.Add(Jsonization.Deserialize.ExtensionFrom(item));
+            return list;
         }
     }
 }
