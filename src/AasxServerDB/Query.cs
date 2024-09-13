@@ -468,8 +468,6 @@ namespace AasxServerDB
             // direction
             var direction = 0; // 0 = top-down, 1 = middle-out, 2 = bottom-up
 
-            // implementierung OValueSet
-
             // restrict all tables seperate
             IQueryable<SMSet> smTable;
             IQueryable<SMESet> smeTable;
