@@ -11,7 +11,7 @@ namespace AasxServerDB
 {
     public class Converter
     {
-        public static AdminShellPackageEnv? GetPackageEnv(string path, AASSet? aasDB) 
+        public static AdminShellPackageEnv? GetPackageEnv(string path, AASSet? aasDB)
         {
             using (AasContext db = new AasContext())
             {

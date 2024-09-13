@@ -10,7 +10,6 @@ namespace AasxServerDB
     using System.Linq.Dynamic.Core;
     using QueryParserTest;
     using System.Linq;
-    using System.Security.AccessControl;
 
     public class Query
     {
@@ -25,10 +24,8 @@ namespace AasxServerDB
 
         private class CombinedSMEResult
         {
-            public int Id { get; set; }
             public string? Identifier { get; set; }
-            public int? ParentSMEId { get; set; }
-            public string? IdShort { get; set; }
+            public string? IdShortPath { get; set; }
             public DateTime TimeStamp { get; set; }
             public string? Value { get; set; }
         }
@@ -105,7 +102,7 @@ namespace AasxServerDB
             }
 
             watch.Restart();
-            var result = GetSMEResult(db, query);
+            var result = GetSMEResult(query);
             Console.WriteLine("Collect results\tin " + watch.ElapsedMilliseconds + " ms\nSMEs found\t" + result.Count + "/" + db.SMESets.Count());
 
             return result;
@@ -599,68 +596,82 @@ namespace AasxServerDB
                 (iValueQueryString != null ? $"FilteredIValue AS (\r\n{iValueQueryString}\r\n),\r\n" : string.Empty) +
                 (dValueQueryString != null ? $"FilteredDValue AS (\r\n{dValueQueryString}\r\n),\r\n" : string.Empty);
 
-            // first join in with
-            var selectWithStart = $"SELECT sme.SMId, sme.Id, sme.ParentSMEId, sme.IdShort, sme.TimeStamp, v.Value \r\n" +
-                $"FROM";
-            var selectWithEnd = $"AS v \r\n" +
-                $"INNER JOIN FilteredSME AS sme \r\n" +
-                $"ON sme.Id = v.SMEId \r\n ";
-            var queryWithJoin =
+            // first join
+            var selectWithStart = $"SELECT sme.SMId, sme.Id, sme.ParentSMEId, sme.IdShort, sme.TimeStamp, v.Value \r\n " +
+                $"FROM ";
+            var selectWithEnd = $" AS v \r\n" +
+                $"INNER JOIN FilteredSME AS sme ON sme.Id = v.SMEId \r\n ";
+            var queryWithJoin1 =
                 (direction == 0 ? // top-down
                     $"FilteredSMAndSME AS ( \r\n" +
                         $"SELECT sme.SMId, sm.Identifier, sme.Id, sme.ParentSMEId, sme.IdShort, sme.TimeStamp, sme.TValue \r\n" +
                         $"FROM FilteredSM AS sm \r\n" +
-                        $"INNER JOIN FilteredSME AS sme \r\n" +
-                        $"ON sm.Id = sme.SMId \r\n" +
-                    $")" : string.Empty) +
+                        $"INNER JOIN FilteredSME AS sme ON sm.Id = sme.SMId \r\n" : string.Empty) +
                 (direction == 1 ? // middle-out
                     $"FilteredSMAndSME AS ( \r\n" +
                         $"SELECT sme.SMId, sm.Identifier, sme.Id, sme.ParentSMEId, sme.IdShort, sme.TimeStamp, sme.TValue \r\n" +
                         $"FROM FilteredSME AS sme \r\n" +
-                        $"INNER JOIN FilteredSM AS sm \r\n" +
-                        $"ON sm.Id = sme.SMId \r\n" +
-                    $")" : string.Empty) +
+                        $"INNER JOIN FilteredSM AS sm ON sm.Id = sme.SMId \r\n" : string.Empty) +
                 (direction == 2 ? // bottom-up
                     $"FilteredSMEAndValue AS (\r\n" +
-                        (!sValueQueryString.IsNullOrEmpty() ? $"{selectWithStart} FilteredSValue {selectWithEnd}" : string.Empty) +
+                        (!sValueQueryString.IsNullOrEmpty() ? $"{selectWithStart}FilteredSValue{selectWithEnd}" : string.Empty) +
                         ((!sValueQueryString.IsNullOrEmpty() && !iValueQueryString.IsNullOrEmpty()) ? "UNION ALL \r\n" : string.Empty) +
-                        (!iValueQueryString.IsNullOrEmpty() ? $"{selectWithStart} FilteredIValue {selectWithEnd}" : string.Empty) +
+                        (!iValueQueryString.IsNullOrEmpty() ? $"{selectWithStart}FilteredIValue{selectWithEnd}" : string.Empty) +
                         ((!iValueQueryString.IsNullOrEmpty() && !dValueQueryString.IsNullOrEmpty()) ? "UNION ALL \r\n" : string.Empty) +
-                        (!dValueQueryString.IsNullOrEmpty() ? $"{selectWithStart} FilteredDValue {selectWithEnd}" : string.Empty) +
+                        (!dValueQueryString.IsNullOrEmpty() ? $"{selectWithStart}FilteredDValue{selectWithEnd}" : string.Empty) +
                         ((withParameters && !withContains && !withEqualString && !withEqualNum && !withCompare) ? // Das hier bei Expression richtig?
                             $"UNION ALL \r\n" +
                             $"SELECT sme.SMId, sme.Id, sme.ParentSMEId, sme.IdShort, sme.TimeStamp, NULL \r\n" +
-                            $"FROM FilteredSME AS sme " +
-                            $"WHERE sme.TValue IS NULL OR sme.TValue = ''" : string.Empty) +
-                    $")" : string.Empty)
-                    + "\r\n";
+                            $"FROM FilteredSME AS sme \r\n" +
+                            $"WHERE sme.TValue IS NULL OR sme.TValue = ''\r\n" : string.Empty) : string.Empty)
+                    + "), \r\n";
 
-            // secound join in select
+            // secound join
             var selectStart = $"SELECT sm_sme.Identifier, sm_sme.Id, sm_sme.ParentSMEId, sm_sme.IdShort, sm_sme.TimeStamp, v.Value \r\n" +
                 $"FROM FilteredSMAndSME AS sm_sme \r\n" +
-                $"INNER JOIN";
-            var selectEnd = $"AS v \r\n" +
-                $"ON sm_sme.Id = v.SMEId \r\n ";
-            var querySelectJoin =
-                (direction is 0 or 1) ? // top-down and middle-out
-                    (!sValueQueryString.IsNullOrEmpty() ? $"{selectStart} FilteredSValue {selectEnd}" : string.Empty) +
+                $"INNER JOIN ";
+            var selectEnd = $" AS v ON sm_sme.Id = v.SMEId \r\n ";
+            var queryWithJoin2 = $"FilteredSMAndSMEANDValue AS ( \r\n" +
+                ((direction is 0 or 1) ? // top-down and middle-out
+                    (!sValueQueryString.IsNullOrEmpty() ? $"{selectStart}FilteredSValue{selectEnd}" : string.Empty) +
                     ((!sValueQueryString.IsNullOrEmpty() && !iValueQueryString.IsNullOrEmpty()) ? "UNION ALL \r\n" : string.Empty) +
-                    (!iValueQueryString.IsNullOrEmpty() ? $"{selectStart} FilteredIValue {selectEnd}" : string.Empty) +
+                    (!iValueQueryString.IsNullOrEmpty() ? $"{selectStart}FilteredIValue{selectEnd}" : string.Empty) +
                     ((!iValueQueryString.IsNullOrEmpty() && !dValueQueryString.IsNullOrEmpty()) ? "UNION ALL \r\n" : string.Empty) +
-                    (!dValueQueryString.IsNullOrEmpty() ? $"{selectStart} FilteredDValue {selectEnd}" : string.Empty) +
+                    (!dValueQueryString.IsNullOrEmpty() ? $"{selectStart}FilteredDValue{selectEnd}" : string.Empty) +
                     ((withParameters && !withContains && !withEqualString && !withEqualNum && !withCompare) ? // Das hier bei Expression richtig?
                         $"UNION ALL \r\n" +
                         $"SELECT sm_sme.SMId, sm_sme.Id, sm_sme.ParentSMEId, sm_sme.IdShort, sm_sme.TimeStamp, NULL \r\n" +
-                        $"FROM FilteredSMAndSME AS sm_sme " +
-                        $"WHERE sm_sme.TValue IS NULL OR sm_sme.TValue = ''" : string.Empty)
+                        $"FROM FilteredSMAndSME AS sm_sme \r\n" +
+                        $"WHERE sm_sme.TValue IS NULL OR sm_sme.TValue = ''\r\n" : string.Empty)
                 : // bottom-up
                     $"SELECT sm.Identifier, sme_v.Id, sme_v.ParentSMEId, sme_v.IdShort, sme_v.TimeStamp, sme_v.Value \r\n" +
                     $"FROM FilteredSMEAndValue AS sme_v \r\n" +
-                    $"INNER JOIN FilteredSM AS sm \r\n" +
-                    $"ON sme_v.SMId = sm.Id";
+                    $"INNER JOIN FilteredSM AS sm ON sme_v.SMId = sm.Id \r\n")
+                + "), \r\n";
+
+            // get path
+            var queryWithPath = $"RecursiveSME AS( \r\n" +
+                    $"WITH RECURSIVE SME_CTE AS ( \r\n" +
+                        $"SELECT Id, IdShort, ParentSMEId, IdShort AS IdShortPath, Id AS StartId \r\n" +
+                        $"FROM SMESets \r\n" +
+                        $"WHERE Id IN(SELECT Id FROM FilteredSMAndSMEAndValue) \r\n" +
+                        $"UNION ALL \r\n" +
+                        $"SELECT x.Id, x.IdShort, x.ParentSMEId, x.IdShort || '.' || c.IdShortPath, c.StartId \r\n" +
+                        $"FROM SMESets x \r\n" +
+                        $"INNER JOIN SME_CTE c ON x.Id = c.ParentSMEId \r\n" +
+                    $") \r\n" +
+                    $"SELECT StartId AS Id, IdShortPath \r\n" +
+                    $"FROM SME_CTE \r\n" +
+                    $"WHERE ParentSMEId IS NULL \r\n" +
+                $") \r\n";
+
+            //select
+            var select = "SELECT sme.Identifier, r.IdShortPath, sme.TimeStamp, sme.Value \r\n" +
+                "FROM FilteredSMAndSMEAndValue AS sme \r\n" +
+                "INNER JOIN RecursiveSME AS r ON sme.Id = r.Id;";
 
             // create queryable
-            var rawSql = $"{queryWithTables}{queryWithJoin}{querySelectJoin}";
+            var rawSql = $"{queryWithTables}{queryWithJoin1}{queryWithJoin2}{queryWithPath}{select}";
             var result = db.Database.SqlQueryRaw<CombinedSMEResult>(rawSql);
             return result;
         }
@@ -691,43 +702,18 @@ namespace AasxServerDB
             return result;
         }
 
-        private static List<SMEResult> GetSMEResult(AasContext db, IQueryable<CombinedSMEResult> query)
+        private static List<SMEResult> GetSMEResult(IQueryable<CombinedSMEResult> query)
         {
             var result = new List<SMEResult>();
             foreach (var sm_sme_v in query)
             {
-                /*
-                 * ------ParentID Löschen------
-                var path = sm_sme_v.IdShort;
-                var pId = sm_sme_v.ParentSMEId;
-                while (pId != null)
-                {
-                    var smeDB = db.SMESets.Where(s => s.Id == pId).Select(sme => new { sme.IdShort, sme.ParentSMEId }).First();
-                    path = $"{smeDB.IdShort}.{path}";
-                    pId = smeDB.ParentSMEId;
-                }*/
-
-                var rawSql = $"WITH " +
-                    $"RECURSIVE SME_CTE AS (\r\n" +
-                        $"SELECT IdShort, ParentSMEId, CAST(IdShort AS TEXT) AS Path\r\n" +
-                        $"FROM SMESets\r\n" +
-                        $"WHERE Id = {sm_sme_v.Id}\r\n" +
-                        $"UNION ALL\r\n" +
-                        $"SELECT x.IdShort, x.ParentSMEId, x.IdShort || '.' || c.Path\r\n" +
-                        $"FROM SMESets x\r\n" +
-                        $"INNER JOIN SME_CTE c " +
-                        $"ON x.Id = c.ParentSMEId\r\n" +
-                    $")\r\n" +
-                    $"SELECT Path FROM SME_CTE WHERE ParentSMEId IS NULL";
-                var path = db.Database.SqlQueryRaw<string>(rawSql).ToList()[0];
-
                 result.Add(
                     new SMEResult()
                     {
-                        smId = sm_sme_v.Identifier ?? string.Empty,
+                        smId = sm_sme_v.Identifier,
                         value = sm_sme_v.Value,
-                        idShortPath = path ?? string.Empty,
-                        url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sm_sme_v.Identifier ?? "")}/submodel-elements/{path}",
+                        idShortPath = sm_sme_v.IdShortPath,
+                        url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sm_sme_v.Identifier ?? string.Empty)}/submodel-elements/{sm_sme_v.IdShortPath}",
                         timeStamp = TimeStamp.TimeStamp.DateTimeToString(sm_sme_v.TimeStamp)
                     }
                 );
