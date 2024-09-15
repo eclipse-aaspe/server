@@ -101,8 +101,7 @@ jobs:
         with:
           push: true
           load: true
-          file: ./src/docker/Dockerfile-AasxServerBlazor
-          platforms: linux/arm64/v8
+          file: ./src/docker/Dockerfile-AasxServerBlazor-arm64
           tags: adminshellio/aasx-server-blazor-for-demo-arm64:latest
           github-token: ${{ secrets.GITHUB_TOKEN }}
           labels: "version =${{ env.VERSION_NUMBER }}"
