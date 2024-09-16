@@ -1,4 +1,4 @@
-﻿@page "/pcf2";
+@page "/pcf2";
 
 @using AasCore.Aas3_0
 @using Data
@@ -524,7 +524,7 @@
                                                             <a href="@link" target="_blank" onclick="document.getElementById('iframe').src='@iframePath?aasUrl=@link&smUrl=@System.Net.WebUtility.UrlEncode(sm.Id)'; return false;" style="margin-right: 2px;">
                                                                 <img src="/sm_icons/@(icon.ToLower()).svg" style="height:22px; display: inline; filter: @filter;"/><span style="font-size:8pt; color:@color;">@(id)</span>
                                                             </a>
-                                                            if (sm.Extensions.Count > 1 && sm.Extensions[ 1 ].Value != "")
+                                                            if (Program.withPolicy && sm.Extensions.Count > 1 && sm.Extensions[ 1 ].Value != "")
                                                             {
                                                                 <span style="font-size:8pt; color:white; background-color:@color">P</span>
                                                             }
