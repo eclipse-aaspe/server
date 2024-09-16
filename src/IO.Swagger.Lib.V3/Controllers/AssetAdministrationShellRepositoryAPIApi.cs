@@ -2105,7 +2105,7 @@ public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
     }
 
     /// <summary>
-    /// Updates teh values of the Submodel
+    /// Updates the values of the Submodel
     /// </summary>
     /// <param name="body">Submodel object in the ValueOnly representation</param>
     /// <param name="aasIdentifier">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>

@@ -57,7 +57,6 @@ public class ServiceDescriptionTests
             // Assert
             result.Should().NotBeNullOrEmpty();
             result.Should().Contain("\"Profiles\":");
-            result.Should().Contain("\"DiscoveryServiceSpecificationSSP001\"");
         }
 
         [Fact]

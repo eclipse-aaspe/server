@@ -59,9 +59,7 @@ public class AASXFileServerAPIApiController : ControllerBase
                                           IAasxFileServerInterfaceService fileService, IPaginationService paginationService, IAuthorizationService authorizationService)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        ;
         _decoderService = decoderService ?? throw new ArgumentNullException(nameof(decoderService));
-        ;
         _fileService          = fileService ?? throw new ArgumentNullException(nameof(fileService));
         _paginationService    = paginationService ?? throw new ArgumentNullException(nameof(paginationService));
         _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
@@ -206,12 +204,7 @@ public class AASXFileServerAPIApiController : ControllerBase
     {
         _logger.LogInformation($"Received request to get all the AASX packages.");
         var decodedAasId = _decoderService.Decode("aasId", aasId);
-
-        if (decodedAasId == null)
-        {
-            throw new NotAllowed($"Cannot proceed as {nameof(decodedAasId)} is null");
-        }
-
+        
         var packages = _fileService.GetAllAASXPackageIds(decodedAasId);
 
         var authResult = _authorizationService.AuthorizeAsync(User, packages, "SecurityPolicy").Result;
@@ -242,12 +235,7 @@ public class AASXFileServerAPIApiController : ControllerBase
     public virtual IActionResult PostAASXPackage([FromQuery] string? aasIds, IFormFile? file)
     {
         _logger.LogInformation($"Received request to create a new AASX Package.");
-
-        if (file == null)
-        {
-            return Ok("No file was provided.");
-        }
-
+        
         var authResult = _authorizationService.AuthorizeAsync(User, "", "SecurityPolicy").Result;
         if (!authResult.Succeeded)
         {
@@ -267,8 +255,8 @@ public class AASXFileServerAPIApiController : ControllerBase
 
         // TODO (jtikekar, 2023-09-04): aasIds
         var stream = new MemoryStream();
-        file.CopyTo(stream);
-        var packageId = _fileService.PostAASXPackage(stream.ToArray(), file.FileName);
+        file?.CopyTo(stream);
+        var packageId = _fileService.PostAASXPackage(stream.ToArray(), file?.FileName ?? string.Empty);
         return CreatedAtAction(nameof(PostAASXPackage), packageId);
     }
 
@@ -285,10 +273,6 @@ public class AASXFileServerAPIApiController : ControllerBase
     [SwaggerOperation("PutAASXPackageById")]
     public virtual IActionResult PutAASXPackageById([FromRoute] [Required] string packageId, IFormFile? file, [FromQuery] string? aasIds)
     {
-        if (file == null)
-        {
-            return Ok("No file was provided.");
-        }
 
         // TODO (jtikekar, 2023-09-04): aasIds
         var decodedPackageId = _decoderService.Decode("packageId", packageId);
@@ -319,8 +303,8 @@ public class AASXFileServerAPIApiController : ControllerBase
         }
 
         var stream = new MemoryStream();
-        file.CopyTo(stream);
-        var fileName = file.FileName;
+        file?.CopyTo(stream);
+        var fileName = file?.FileName ?? string.Empty;
         _fileService.UpdateAASXPackageById(decodedPackageId, stream.ToArray(), fileName);
 
         return NoContent();
