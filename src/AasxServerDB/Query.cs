@@ -41,13 +41,11 @@ namespace AasxServerDB
             var query = GetSMs(db, semanticId, identifier, diff, expression);
             if (query == null)
             {
-                Console.WriteLine("No query can be generated due to incorrect parameter combinations");
-                return new List<SMResult>();
+                var error = "No query can be generated due to incorrect parameter combination";
+                Console.WriteLine(error);
+                throw new Exception(error);
             }
-            else
-            {
-                Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
-            }
+            Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
 
             watch.Restart();
             var result = GetSMResult(query);
@@ -66,13 +64,11 @@ namespace AasxServerDB
             var query = GetSMs(db, semanticId, identifier, diff, expression);
             if (query == null)
             {
-                Console.WriteLine("No query can be generated due to incorrect parameter combinations");
-                return 0;
+                var error = "No query can be generated due to incorrect parameter combination";
+                Console.WriteLine(error);
+                throw new Exception(error);
             }
-            else
-            {
-                Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
-            }
+            Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
 
             watch.Restart();
             var result = query.Count();
@@ -93,13 +89,11 @@ namespace AasxServerDB
             var query = GetSMEs(db, false, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
             if (query == null)
             {
-                Console.WriteLine("No query can be generated due to incorrect parameter combinations");
-                return new List<SMEResult>();
+                var error = "No query can be generated due to incorrect parameter combination";
+                Console.WriteLine(error);
+                throw new Exception(error);
             }
-            else
-            {
-                Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
-            }
+            Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
 
             watch.Restart();
             var result = GetSMEResult(query);
@@ -120,13 +114,11 @@ namespace AasxServerDB
             var query = GetSMEs(db, true, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
             if (query == null)
             {
-                Console.WriteLine("No query can be generated due to incorrect parameter combinations");
-                return 0;
+                var error = "No query can be generated due to incorrect parameter combination";
+                Console.WriteLine(error);
+                throw new Exception(error);
             }
-            else
-            {
-                Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
-            }
+            Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
 
             watch.Restart();
             var result = query.Count();
@@ -587,130 +579,130 @@ namespace AasxServerDB
             dValueQueryString = dValueQueryString != null ? ChangeINSTRToLIKE(dValueQueryString) : null;
 
             // with querys for each table
-            var rawSQL = $"WITH\r\n" +
-                $"FilteredSM AS (\r\n{smQueryString}\r\n),\r\n" +
-                $"FilteredSME AS (\r\n{smeQueryString}\r\n),\r\n" +
-                (sValueQueryString != null ? $"FilteredSValue AS (\r\n{sValueQueryString}\r\n),\r\n" : string.Empty) +
-                (iValueQueryString != null ? $"FilteredIValue AS (\r\n{iValueQueryString}\r\n),\r\n" : string.Empty) +
-                (dValueQueryString != null ? $"FilteredDValue AS (\r\n{dValueQueryString}\r\n),\r\n" : string.Empty);
+            var rawSQL = $"WITH\n" +
+                $"FilteredSM AS (\n{smQueryString}\n),\n" +
+                $"FilteredSME AS (\n{smeQueryString}\n),\n" +
+                (sValueQueryString != null ? $"FilteredSValue AS (\n{sValueQueryString}\n),\n" : string.Empty) +
+                (iValueQueryString != null ? $"FilteredIValue AS (\n{iValueQueryString}\n),\n" : string.Empty) +
+                (dValueQueryString != null ? $"FilteredDValue AS (\n{dValueQueryString}\n),\n" : string.Empty);
 
             // join direction
             if (direction == 0) // top-down
             {
                 // SM => SME
                 rawSQL +=
-                    $"FilteredSMAndSME AS ( \r\n" +
-                        $"SELECT sm.Identifier, sme.Id, sme.TimeStamp, sme.TValue \r\n" +
-                        $"FROM FilteredSM AS sm \r\n" +
-                        $"INNER JOIN FilteredSME AS sme ON sm.Id = sme.SMId \r\n" +
-                    $"), \r\n";
+                    $"FilteredSMAndSME AS ( \n" +
+                        $"SELECT sm.Identifier, sme.Id, sme.TimeStamp, sme.TValue \n" +
+                        $"FROM FilteredSM AS sm \n" +
+                        $"INNER JOIN FilteredSME AS sme ON sm.Id = sme.SMId \n" +
+                    $"), \n";
 
                 // SM-SME => VALUE
-                var selectStart = $"SELECT sm_sme.Identifier, sm_sme.Id, sm_sme.TimeStamp, v.Value \r\n" +
-                    $"FROM FilteredSMAndSME AS sm_sme \r\n" +
+                var selectStart = $"SELECT sm_sme.Identifier, sm_sme.Id, sm_sme.TimeStamp, v.Value \n" +
+                    $"FROM FilteredSMAndSME AS sm_sme \n" +
                     $"INNER JOIN ";
-                var selectEnd = $" AS v ON sm_sme.Id = v.SMEId \r\n ";
+                var selectEnd = $" AS v ON sm_sme.Id = v.SMEId \n ";
                 rawSQL +=
-                    $"FilteredSMAndSMEAndValue AS ( \r\n" +
+                    $"FilteredSMAndSMEAndValue AS ( \n" +
                         (!sValueQueryString.IsNullOrEmpty() ? $"{selectStart}FilteredSValue{selectEnd}" : string.Empty) +
-                        ((!sValueQueryString.IsNullOrEmpty() && !iValueQueryString.IsNullOrEmpty()) ? "UNION ALL \r\n" : string.Empty) +
+                        ((!sValueQueryString.IsNullOrEmpty() && !iValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
                         (!iValueQueryString.IsNullOrEmpty() ? $"{selectStart}FilteredIValue{selectEnd}" : string.Empty) +
-                        ((!iValueQueryString.IsNullOrEmpty() && !dValueQueryString.IsNullOrEmpty()) ? "UNION ALL \r\n" : string.Empty) +
+                        ((!iValueQueryString.IsNullOrEmpty() && !dValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
                         (!dValueQueryString.IsNullOrEmpty() ? $"{selectStart}FilteredDValue{selectEnd}" : string.Empty) +
                         ((withParameters && !withContains && !withEqualString && !withEqualNum && !withCompare) ?
-                            $"UNION ALL \r\n" +
-                            $"SELECT sm_sme.Identifier, sm_sme.Id, sm_sme.TimeStamp, NULL \r\n" +
-                            $"FROM FilteredSMAndSME AS sm_sme \r\n" +
-                            $"WHERE sm_sme.TValue IS NULL OR sm_sme.TValue = ''\r\n" : string.Empty) +
+                            $"UNION ALL \n" +
+                            $"SELECT sm_sme.Identifier, sm_sme.Id, sm_sme.TimeStamp, NULL \n" +
+                            $"FROM FilteredSMAndSME AS sm_sme \n" +
+                            $"WHERE sm_sme.TValue IS NULL OR sm_sme.TValue = ''\n" : string.Empty) +
                     $")";
             }
             else if (direction == 1) // middle-out
             {
                 // SME => SM
                 rawSQL +=
-                    $"FilteredSMAndSME AS ( \r\n" +
-                        $"SELECT sm.Identifier, sme.Id, sme.TimeStamp, sme.TValue \r\n" +
-                        $"FROM FilteredSME AS sme \r\n" +
-                        $"INNER JOIN FilteredSM AS sm ON sm.Id = sme.SMId \r\n" +
-                    $"), \r\n";
+                    $"FilteredSMAndSME AS ( \n" +
+                        $"SELECT sm.Identifier, sme.Id, sme.TimeStamp, sme.TValue \n" +
+                        $"FROM FilteredSME AS sme \n" +
+                        $"INNER JOIN FilteredSM AS sm ON sm.Id = sme.SMId \n" +
+                    $"), \n";
 
                 // SME-SM => VALUE
-                var selectStart = $"SELECT sm_sme.Identifier, sm_sme.Id, sm_sme.TimeStamp, v.Value \r\n" +
-                    $"FROM FilteredSMAndSME AS sm_sme \r\n" +
+                var selectStart = $"SELECT sm_sme.Identifier, sm_sme.Id, sm_sme.TimeStamp, v.Value \n" +
+                    $"FROM FilteredSMAndSME AS sm_sme \n" +
                     $"INNER JOIN ";
-                var selectEnd = $" AS v ON sm_sme.Id = v.SMEId \r\n ";
+                var selectEnd = $" AS v ON sm_sme.Id = v.SMEId \n ";
                 rawSQL +=
-                    $"FilteredSMAndSMEAndValue AS ( \r\n" +
+                    $"FilteredSMAndSMEAndValue AS ( \n" +
                         (!sValueQueryString.IsNullOrEmpty() ? $"{selectStart}FilteredSValue{selectEnd}" : string.Empty) +
-                        ((!sValueQueryString.IsNullOrEmpty() && !iValueQueryString.IsNullOrEmpty()) ? "UNION ALL \r\n" : string.Empty) +
+                        ((!sValueQueryString.IsNullOrEmpty() && !iValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
                         (!iValueQueryString.IsNullOrEmpty() ? $"{selectStart}FilteredIValue{selectEnd}" : string.Empty) +
-                        ((!iValueQueryString.IsNullOrEmpty() && !dValueQueryString.IsNullOrEmpty()) ? "UNION ALL \r\n" : string.Empty) +
+                        ((!iValueQueryString.IsNullOrEmpty() && !dValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
                         (!dValueQueryString.IsNullOrEmpty() ? $"{selectStart}FilteredDValue{selectEnd}" : string.Empty) +
                         ((withParameters && !withContains && !withEqualString && !withEqualNum && !withCompare) ?
-                            $"UNION ALL \r\n" +
-                            $"SELECT sm_sme.Identifier, sm_sme.Id, sm_sme.TimeStamp, NULL \r\n" +
-                            $"FROM FilteredSMAndSME AS sm_sme \r\n" +
-                            $"WHERE sm_sme.TValue IS NULL OR sm_sme.TValue = ''\r\n" : string.Empty) +
+                            $"UNION ALL \n" +
+                            $"SELECT sm_sme.Identifier, sm_sme.Id, sm_sme.TimeStamp, NULL \n" +
+                            $"FROM FilteredSMAndSME AS sm_sme \n" +
+                            $"WHERE sm_sme.TValue IS NULL OR sm_sme.TValue = ''\n" : string.Empty) +
                     $")";
             }
             else if (direction == 2) // bottom-up
             {
                 // VALUE => SME
-                var selectWithStart = $"SELECT sme.SMId, sme.Id, sme.TimeStamp, v.Value \r\n " +
+                var selectWithStart = $"SELECT sme.SMId, sme.Id, sme.TimeStamp, v.Value \n " +
                     $"FROM ";
-                var selectWithEnd = $" AS v \r\n" +
-                    $"INNER JOIN FilteredSME AS sme ON sme.Id = v.SMEId \r\n ";
+                var selectWithEnd = $" AS v \n" +
+                    $"INNER JOIN FilteredSME AS sme ON sme.Id = v.SMEId \n ";
                 rawSQL +=
-                    $"FilteredSMEAndValue AS (\r\n" +
+                    $"FilteredSMEAndValue AS (\n" +
                         (!sValueQueryString.IsNullOrEmpty() ? $"{selectWithStart}FilteredSValue{selectWithEnd}" : string.Empty) +
-                        ((!sValueQueryString.IsNullOrEmpty() && !iValueQueryString.IsNullOrEmpty()) ? "UNION ALL \r\n" : string.Empty) +
+                        ((!sValueQueryString.IsNullOrEmpty() && !iValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
                         (!iValueQueryString.IsNullOrEmpty() ? $"{selectWithStart}FilteredIValue{selectWithEnd}" : string.Empty) +
-                        ((!iValueQueryString.IsNullOrEmpty() && !dValueQueryString.IsNullOrEmpty()) ? "UNION ALL \r\n" : string.Empty) +
+                        ((!iValueQueryString.IsNullOrEmpty() && !dValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
                         (!dValueQueryString.IsNullOrEmpty() ? $"{selectWithStart}FilteredDValue{selectWithEnd}" : string.Empty) +
                         ((withParameters && !withContains && !withEqualString && !withEqualNum && !withCompare) ?
-                            $"UNION ALL \r\n" +
-                            $"SELECT sme.SMId, sme.Id, sme.TimeStamp, NULL \r\n" +
-                            $"FROM FilteredSME AS sme \r\n" +
-                            $"WHERE sme.TValue IS NULL OR sme.TValue = ''\r\n" : string.Empty) +
-                    $"), \r\n";
+                            $"UNION ALL \n" +
+                            $"SELECT sme.SMId, sme.Id, sme.TimeStamp, NULL \n" +
+                            $"FROM FilteredSME AS sme \n" +
+                            $"WHERE sme.TValue IS NULL OR sme.TValue = ''\n" : string.Empty) +
+                    $"), \n";
 
                 // VALUE-SME => SM
                 rawSQL +=
-                    $"FilteredSMAndSMEAndValue AS ( \r\n" +
-                        $"SELECT sm.Identifier, sme_v.Id, sme_v.TimeStamp, sme_v.Value \r\n" +
-                        $"FROM FilteredSMEAndValue AS sme_v \r\n" +
-                        $"INNER JOIN FilteredSM AS sm ON sme_v.SMId = sm.Id \r\n" +
+                    $"FilteredSMAndSMEAndValue AS ( \n" +
+                        $"SELECT sm.Identifier, sme_v.Id, sme_v.TimeStamp, sme_v.Value \n" +
+                        $"FROM FilteredSMEAndValue AS sme_v \n" +
+                        $"INNER JOIN FilteredSM AS sm ON sme_v.SMId = sm.Id \n" +
                     $")";
             }
 
             if (!withCount)
             {
                 // get path
-                rawSQL += $", \r\n" +
-                    $"RecursiveSME AS( \r\n" +
-                        $"WITH RECURSIVE SME_CTE AS ( \r\n" +
-                            $"SELECT Id, IdShort, ParentSMEId, IdShort AS IdShortPath, Id AS StartId \r\n" +
-                            $"FROM SMESets \r\n" +
-                            $"WHERE Id IN (SELECT Id FROM FilteredSMAndSMEAndValue) \r\n" +
-                            $"UNION ALL \r\n" +
-                            $"SELECT x.Id, x.IdShort, x.ParentSMEId, x.IdShort || '.' || c.IdShortPath, c.StartId \r\n" +
-                            $"FROM SMESets x \r\n" +
-                            $"INNER JOIN SME_CTE c ON x.Id = c.ParentSMEId \r\n" +
-                        $") \r\n" +
-                        $"SELECT StartId AS Id, IdShortPath \r\n" +
-                        $"FROM SME_CTE \r\n" +
-                        $"WHERE ParentSMEId IS NULL \r\n" +
-                    $") \r\n";
+                rawSQL += $", \n" +
+                    $"RecursiveSME AS( \n" +
+                        $"WITH RECURSIVE SME_CTE AS ( \n" +
+                            $"SELECT Id, IdShort, ParentSMEId, IdShort AS IdShortPath, Id AS StartId \n" +
+                            $"FROM SMESets \n" +
+                            $"WHERE Id IN (SELECT Id FROM FilteredSMAndSMEAndValue) \n" +
+                            $"UNION ALL \n" +
+                            $"SELECT x.Id, x.IdShort, x.ParentSMEId, x.IdShort || '.' || c.IdShortPath, c.StartId \n" +
+                            $"FROM SMESets x \n" +
+                            $"INNER JOIN SME_CTE c ON x.Id = c.ParentSMEId \n" +
+                        $") \n" +
+                        $"SELECT StartId AS Id, IdShortPath \n" +
+                        $"FROM SME_CTE \n" +
+                        $"WHERE ParentSMEId IS NULL \n" +
+                    $") \n";
 
                 //select
-                rawSQL += "SELECT sme.Identifier, r.IdShortPath, sme.TimeStamp, sme.Value \r\n" +
-                    "FROM FilteredSMAndSMEAndValue AS sme \r\n" +
+                rawSQL += "SELECT sme.Identifier, r.IdShortPath, sme.TimeStamp, sme.Value \n" +
+                    "FROM FilteredSMAndSMEAndValue AS sme \n" +
                     "INNER JOIN RecursiveSME AS r ON sme.Id = r.Id";
             }
             else
             {
                 //select
-                rawSQL += "\r\nSELECT sme.Identifier, NULL AS IdShortPath, sme.TimeStamp, sme.Value \r\n" +
+                rawSQL += "\nSELECT sme.Identifier, NULL AS IdShortPath, sme.TimeStamp, sme.Value \n" +
                     "FROM FilteredSMAndSMEAndValue AS sme";
             }
 
@@ -721,14 +713,33 @@ namespace AasxServerDB
 
         private static string SetParameter(string rawSQL)
         {
-            var splitParam = rawSQL.Split(new string[] { ".param set ", "\r\n\r\n" }, StringSplitOptions.None);
-            var result = splitParam[splitParam.Length - 1];
-            for (var i = 1; i < splitParam.Length - 1; i++)
+            var parameters = new Dictionary<string, string>();
+            var lines = rawSQL.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            var sqlLines = new List<string>();
+            foreach (var line in lines)
             {
-                var param = splitParam[i].Split(new[] { ' ' }, 2);
-                result = result.Replace(param[0], param[1]);
+                if (line.StartsWith(".param set"))
+                {
+                    // Extract parameter
+                    var parts = line.Split(new[] { ' ' }, 4);
+                    parameters[parts[2]] = parts[3];
+                }
+                else
+                {
+                    sqlLines.Add(line);
+                }
             }
-            return result;
+
+            // Join the remaining lines to form the SQL query
+            var sqlQuery = string.Join("\n", sqlLines);
+
+            // Replace parameter placeholders in the SQL query with their values
+            foreach (var param in parameters)
+            {
+                sqlQuery = sqlQuery.Replace(param.Key, $"{param.Value}");
+            }
+
+            return sqlQuery;
         }
 
         private static string ChangeINSTRToLIKE(string rawSQL)
