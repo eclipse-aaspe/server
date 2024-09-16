@@ -41,9 +41,8 @@ namespace AasxServerDB
             var query = GetSMs(db, semanticId, identifier, diff, expression);
             if (query == null)
             {
-                var error = "No query can be generated due to incorrect parameter combination";
-                Console.WriteLine(error);
-                throw new Exception(error);
+                Console.WriteLine("No query is generated due to incorrect parameter combination.");
+                return new List<SMResult>();
             }
             Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
 
@@ -64,9 +63,8 @@ namespace AasxServerDB
             var query = GetSMs(db, semanticId, identifier, diff, expression);
             if (query == null)
             {
-                var error = "No query can be generated due to incorrect parameter combination";
-                Console.WriteLine(error);
-                throw new Exception(error);
+                Console.WriteLine("No query is generated due to incorrect parameter combination.");
+                return 0;
             }
             Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
 
@@ -89,9 +87,8 @@ namespace AasxServerDB
             var query = GetSMEs(db, false, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
             if (query == null)
             {
-                var error = "No query can be generated due to incorrect parameter combination";
-                Console.WriteLine(error);
-                throw new Exception(error);
+                Console.WriteLine("No query is generated due to incorrect parameter combination.");
+                return new List<SMEResult>();
             }
             Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
 
@@ -114,9 +111,8 @@ namespace AasxServerDB
             var query = GetSMEs(db, true, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
             if (query == null)
             {
-                var error = "No query can be generated due to incorrect parameter combination";
-                Console.WriteLine(error);
-                throw new Exception(error);
+                Console.WriteLine("No query is generated due to incorrect parameter combination.");
+                return 0;
             }
             Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
 
