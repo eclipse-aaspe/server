@@ -43,6 +43,7 @@ using System.Xml.Linq;
 using AasxServerDB;
 using AdminShellNS.Exceptions;
 using Microsoft.IdentityModel.Tokens;
+using Namotion.Reflection;
 using Newtonsoft.Json;
 using TimeStamp;
 using static AasxServerStandardBib.TimeSeriesPlotting.PlotArguments;
@@ -87,14 +88,14 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     }
 
     // Events
-
+ 
     [HttpGet]
-    [Route("/submodels/{submodelIdentifier}/events/{diff}")]
+    [Route("/submodels/{submodelIdentifier}/events/{eventName}/{diff}")]
     [ValidateModelState]
     [SwaggerOperation("GetEventMessages")]
     [SwaggerResponse(statusCode: 200, type: typeof(String), description: "List of Text")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-    public virtual IActionResult GetEventMessages([FromRoute] [Required] string submodelIdentifier, [FromQuery] bool? noPayload, string? diff = "")
+    public virtual IActionResult GetEventMessages([FromRoute] [Required] string submodelIdentifier, [Required] string eventName, [FromQuery] bool? noPayload, string? diff = "")
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -132,7 +133,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
 
             var eventData = new Events.EventData();
-            var op = Events.EventData.FindEvent(submodel);
+            var op = Events.EventData.FindEvent(submodel, eventName);
             eventData.ParseData(op, Program.env[packageIndex]);
 
             IReferable data = null;
@@ -143,6 +144,13 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             if (eventData.dataCollection != null)
             {
                 data = eventData.dataCollection;
+                if (eventData.direction != null && eventData.direction.Value == "IN" && eventData.mode != null && eventData.mode.Value == "PUSH")
+                {
+                    if (eventData.dataCollection.Value != null && eventData.dataCollection.Value.Count == 1 && eventData.dataCollection.Value[0] is SubmodelElementCollection)
+                    {
+                        data = eventData.dataCollection.Value[0];
+                    }
+                }
             }
             if (data == null)
             {
@@ -162,12 +170,12 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     static bool isRunning = false;
 
     [HttpPut]
-    [Route("/submodels/{submodelIdentifier}/events")]
+    [Route("/submodels/{submodelIdentifier}/events/{eventName}")]
     [ValidateModelState]
     [SwaggerOperation("PutEventMessages")]
     [SwaggerResponse(statusCode: 200, type: typeof(String), description: "List of Text")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-    public virtual IActionResult PutEventMessages([FromRoute][Required] string submodelIdentifier)
+    public virtual IActionResult PutEventMessages([FromRoute][Required] string submodelIdentifier, [Required] string eventName)
     {
         if (debug)
         {
@@ -205,7 +213,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             // Now you can use jsonBody as needed
 
             var eventData = new Events.EventData();
-            var op = Events.EventData.FindEvent(submodel);
+            var op = Events.EventData.FindEvent(submodel, eventName);
             eventData.ParseData(op, Program.env[packageIndex]);
 
             IReferable data = null;

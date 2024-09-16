@@ -135,7 +135,11 @@ namespace AasxServer
                                         nextTask.def      = smec;
                                         nextTask.envIndex = i;
 
-                                        int countSmec = smec.Value.Count;
+                                        int countSmec = 0;
+                                        if (smec.Value != null)
+                                        {
+                                            countSmec = smec.Value.Count;
+                                        }
                                         for (int iSmec = 0; iSmec < countSmec; iSmec++)
                                         {
                                             var sme2    = smec.Value[iSmec];
@@ -1507,8 +1511,14 @@ namespace AasxServer
             Program.signalNewData(2); // new tree, nodes opened
         }
 
+        static bool debug = false;
         static void operation_get_put_events(Operation op, int envIndex, DateTime timeStamp, string getPut)
         {
+            if (debug)
+            {
+                return;
+            }
+
             HttpClient client = null;
             HttpClientHandler handler = null;
 
@@ -1650,7 +1660,19 @@ namespace AasxServer
                             string lastDiffValue = "";
                             string statusValue = "";
                             List<String> diffEntry = new List<string>();
-                            int count = Events.EventPayload.changeData(jsonString, eventData.statusData, Program.env, null, out transmit, out lastDiffValue, out statusValue, diffEntry);
+
+                            IReferable dest = null;
+                            if (eventData.dataCollection != null)
+                            {
+                                dest = eventData.dataCollection;
+                            }
+                            else
+                            {
+                                dest = eventData.dataSubmodel;
+                            }
+
+
+                            int count = Events.EventPayload.changeData(jsonString, eventData.statusData, Program.env, dest, out transmit, out lastDiffValue, out statusValue, diffEntry, envIndex);
                             if (count > 0)
                             {
                                 update = 2;
