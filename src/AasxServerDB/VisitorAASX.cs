@@ -13,6 +13,8 @@ using System.Runtime.InteropServices.JavaScript;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.X86;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Nodes;
+using System.Collections.Generic;
 
 namespace AasxServerDB
 {
@@ -412,26 +414,31 @@ namespace AasxServerDB
 
         private SMESet CollectSMEData(ISubmodelElement sme)
         {
-            var semanticId = sme.SemanticId.GetAsIdentifier() ?? string.Empty;
-
             var currentDataTime = DateTime.UtcNow;
-            var timeStamp = (sme.TimeStamp == default) ? currentDataTime : sme.TimeStamp;
             var timeStampCreate = (sme.TimeStampCreate == default) ? currentDataTime : sme.TimeStampCreate;
+            var timeStamp = (sme.TimeStamp == default) ? currentDataTime : sme.TimeStamp;
             var timeStampTree = (sme.TimeStampTree == default) ? currentDataTime : sme.TimeStampTree;
             var timeStampDelete = (sme.TimeStampDelete == default) ? currentDataTime : sme.TimeStampDelete;
 
-            var smeDB = new SMESet
-                        {
-                            ParentSME       = _parSME,
-                            SMEType         = ShortSMEType(sme),
-                            TValue          = string.Empty,
-                            SemanticId      = semanticId,
-                            IdShort         = sme.IdShort,
-                            TimeStamp       = timeStamp,
-                            TimeStampCreate = timeStampCreate,
-                            TimeStampTree   = timeStampTree,
-                            TimeStampDelete = timeStampDelete
-                        };
+            var smeDB = new SMESet()
+            {
+                ParentSME               = _parSME,
+                SMEType                 = ShortSMEType(sme),
+                IdShort                 = sme.IdShort,
+                DisplayName             = sme.DisplayName,
+                Category                = sme.Category,
+                Description             = sme.Description,
+                Extensions              = sme.Extensions,
+                SemanticId              = sme.SemanticId?.GetAsIdentifier(),
+                SupplementalSemanticIds = sme.SupplementalSemanticIds,
+                Qualifiers              = sme.Qualifiers,
+                DataSpecifications      = sme.EmbeddedDataSpecifications,
+                TValue                  = string.Empty,
+                TimeStampCreate         = timeStampCreate,
+                TimeStamp               = timeStamp,
+                TimeStampTree           = timeStampTree,
+                TimeStampDelete         = timeStampDelete
+            };
             SetValues(sme, smeDB);
             _smDB?.SMESets.Add(smeDB);
 

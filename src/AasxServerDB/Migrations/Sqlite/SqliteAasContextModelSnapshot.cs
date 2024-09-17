@@ -161,22 +161,49 @@ namespace AasxServerDB.Migrations.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Category")
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DataSpecifications")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DisplayName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Extensions")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("IdShort")
+                        .HasMaxLength(128)
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("ParentSMEId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Qualifiers")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("SMEType")
+                        .IsRequired()
+                        .HasMaxLength(9)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("SMId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("SemanticId")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SupplementalSemanticIds")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("TValue")
+                        .HasMaxLength(1)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("TimeStamp")

@@ -245,14 +245,19 @@ namespace AasxServerDB
                 return null;
 
             sme.IdShort = smeSet.IdShort;
-            sme.TimeStamp = smeSet.TimeStamp;
+            sme.DisplayName = smeSet.DisplayName;
+            sme.Category = smeSet.Category;
+            sme.Description = smeSet.Description;
+            sme.Extensions = smeSet.Extensions;
+            sme.SemanticId = !smeSet.SemanticId.IsNullOrEmpty() ?
+                new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, smeSet.SemanticId) }) : null;
+            sme.SupplementalSemanticIds = smeSet.SupplementalSemanticIds;
+            sme.Qualifiers = smeSet.Qualifiers;
+            sme.EmbeddedDataSpecifications = smeSet.DataSpecifications;
             sme.TimeStampCreate = smeSet.TimeStampCreate;
+            sme.TimeStamp = smeSet.TimeStamp;
             sme.TimeStampTree = smeSet.TimeStampTree;
             sme.TimeStampDelete = smeSet.TimeStampDelete;
-            if (!smeSet.SemanticId.IsNullOrEmpty())
-                sme.SemanticId = new Reference(ReferenceTypes.ExternalReference,
-                    new List<IKey>() { new Key(KeyTypes.GlobalReference, smeSet.SemanticId) });
-
             return sme;
         }
 

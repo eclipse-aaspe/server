@@ -1,15 +1,14 @@
-using Microsoft.EntityFrameworkCore;
-using Extensions;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Collections.Generic;
-using AasCore.Aas3_0;
-using System.Linq;
-using Newtonsoft.Json.Linq;
-using Microsoft.IdentityModel.Tokens;
-using Nodes = System.Text.Json.Nodes;
-
 namespace AasxServerDB.Entities
 {
+    using Microsoft.EntityFrameworkCore;
+    using System.ComponentModel.DataAnnotations.Schema;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Microsoft.IdentityModel.Tokens;
+    using Nodes = System.Text.Json.Nodes;
+    using System.ComponentModel.DataAnnotations;
+    using AasCore.Aas3_0;
+
     [Index(nameof(Id))]
     [Index(nameof(SMId))]
     [Index(nameof(ParentSMEId))]
@@ -19,30 +18,43 @@ namespace AasxServerDB.Entities
 
     public class SMESet
     {
-        public int Id { get; set; }
-
+        // submodel
         [ForeignKey("SMSet")]
         public         int    SMId  { get; set; }
         public virtual SMSet? SMSet { get; set; }
 
-        public         int?    ParentSMEId { get; set; }
+        // parent submodelelement id
+        public int?    ParentSMEId { get; set; }
         public virtual SMESet? ParentSME   { get; set; }
 
-        public string?  SMEType   { get; set; }
-        public string? TValue     { get; set; }
-        public string? SemanticId { get; set; }
-        public string? IdShort    { get; set; }
+        // submodelelement id
+        public int Id { get; set; }
 
-        public DateTime TimeStampCreate { get; set; }
-        public DateTime TimeStamp       { get; set; }
-        public DateTime TimeStampTree   { get; set; }
-        public DateTime TimeStampDelete { get; set; }
+        // sme type
+        [Required]
+        [StringLength(9)]
+        public string? SMEType { get; set; }
 
+        // sme attributes
+        [StringLength(128)]
+        public string? IdShort                                      { get; set; }
+        public List<ILangStringNameType>? DisplayName               { get; set; }
+        [StringLength(128)]
+        public string? Category                                     { get; set; }
+        public List<ILangStringTextType>? Description               { get; set; }
+        public List<IExtension>? Extensions                         { get; set; }
+        [MaxLength(2000)]
+        public string? SemanticId                                   { get; set; } // change to save the rest of the reference
+        public List<IReference>? SupplementalSemanticIds            { get; set; }
+        public List<IQualifier>? Qualifiers                         { get; set; }
+        public List<IEmbeddedDataSpecification>? DataSpecifications { get; set; }
+
+        // value
+        [StringLength(1)]
+        public string? TValue { get; set; }
         public virtual ICollection<IValueSet> IValueSets { get; } = new List<IValueSet>();
         public virtual ICollection<DValueSet> DValueSets { get; } = new List<DValueSet>();
         public virtual ICollection<SValueSet> SValueSets { get; } = new List<SValueSet>();
-        public virtual ICollection<OValueSet> OValueSets { get; } = new List<OValueSet>();
-
         public List<string[]> GetValue()
         {
             if (TValue == null)
@@ -71,6 +83,8 @@ namespace AasxServerDB.Entities
             return [[string.Empty, string.Empty]];
         }
 
+        // additional attributes
+        public virtual ICollection<OValueSet> OValueSets { get; } = new List<OValueSet>();
         public Dictionary<string, Nodes.JsonNode> GetOValue()
         {
             var dic = new AasContext().OValueSets.Where(s => s.SMEId == Id).ToList().ToDictionary(valueDB => valueDB.Attribute, valueDB => valueDB.Value);
@@ -78,5 +92,11 @@ namespace AasxServerDB.Entities
                 return dic;
             return new Dictionary<string, Nodes.JsonNode>();
         }
+
+        // time stamp
+        public DateTime TimeStampCreate { get; set; }
+        public DateTime TimeStamp { get; set; }
+        public DateTime TimeStampTree { get; set; }
+        public DateTime TimeStampDelete { get; set; }
     }
 }

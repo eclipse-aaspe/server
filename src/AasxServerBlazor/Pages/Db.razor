@@ -567,13 +567,20 @@
                         <th style="word-break:keep-all">SM#</th>
                         <th style="word-break:keep-all">Par#</th>
                         <th style="word-break:keep-all">SME#</th>
-                        <th style="word-break:keep-all">Type</th>
-                        <th style="word-break:keep-all">IdShort</th>
-                        <th style="word-break:keep-all">SemanticId</th>
+                        <th style="word-break:keep-all">SME Type</th>
+                        <th style="word-break:keep-all">Id Short</th>
+                        <th style="word-break:keep-all">Display Name</th>
+                        <th style="word-break:keep-all">Category</th>
+                        <th style="word-break:keep-all">Description</th>
+                        <th style="word-break:keep-all">Extensions</th>
+                        <th style="word-break:keep-all">Semantic Id</th>
+                        <th style="word-break:keep-all">Supplemental Semantic Ids</th>
+                        <th style="word-break:keep-all">Qualifiers</th>
+                        <th style="word-break:keep-all">Data Specifications</th>
                         <th style="word-break:keep-all">TValue</th>
                         <th style="word-break:keep-all">Value</th>
                         <th style="word-break:keep-all">Additional Attributes</th>
-                        <th style="word-break:keep-all">TimeStamp</th>
+                        <th style="word-break:keep-all">Time Stamp</th>
                         <th style="word-break:keep-all">Links</th>
                         <th style="word-break:keep-all">API</th>
                     </tr>
@@ -606,9 +613,16 @@
                                 <b>@smeDB.Id</b>
                             </td>
                             <td style="word-break:keep-all">@smeDB.SMEType</td>
-                            <td>@smeDB.IdShort</td>
+                            <td style="word-break:keep-all;max-width:200px">@smeDB.IdShort</td>
+                            <td style="font-size:small">@AasContext.SerializeList(smeDB.DisplayName)</td>
+                            <td style="word-break:keep-all">@smeDB.Category</td>
+                            <td style="font-size:small">@AasContext.SerializeList(smeDB.Description)</td>
+                            <td style="font-size:small">@AasContext.SerializeList(smeDB.Extensions)</td>
                             <td>@smeDB.SemanticId</td>
-                            <td style="word-break:keep-all">@smeDB.TValue</td>
+                            <td style="font-size:small">@AasContext.SerializeList(smeDB.SupplementalSemanticIds)</td>
+                            <td style="font-size:small">@AasContext.SerializeList(smeDB.Qualifiers)</td>
+                            <td style="font-size:small">@AasContext.SerializeList(smeDB.DataSpecifications)</td>
+                            <td>@smeDB.TValue</td>
                             <td>
                                 @if (smeTypeWithoutOperation != null && smeTypeWithoutOperation.Equals("MLP"))
                                 {
@@ -655,7 +669,7 @@
                                     @value.First()[0]
                                 }
                             </td>
-                            <td style="word-break:keep-all;font-size:small;max-width:200px">
+                            <td style="font-size:small">
                                 @if (db.OValueSets.Where(value => value.SMEId == smeDB.Id).Any())
                                 {
                                     var dic = smeDB.GetOValue();
@@ -669,7 +683,7 @@
                                     </ul>
                                 }
                             </td>
-                            <td style="word-break:keep-all;color:lightgray;font-size:x-small">
+                            <td style="width:175px;color:lightgray;font-size:x-small">
                                 @($"UPDATE {TimeStamp.DateTimeToString(smeDB.TimeStamp)}")<br/>
                                 @($"CREATE {TimeStamp.DateTimeToString(smeDB.TimeStampCreate)}")<br/>
                                 @($"TREE {TimeStamp.DateTimeToString(smeDB.TimeStampTree)}")<br />
@@ -705,8 +719,8 @@
                                     <a href="@($"{shorturl}/ovalue?smeid={smeDB.Id}")" target="_blank">ovalue </a>
                                 }
                                 </td>
-                            <td>
-                                <a href="@link" target="_blank">@link</a>
+                            <td style="word-break:keep-all">
+                                <a href="@link" target="_blank">api</a>
                             </td>
                         </tr>
                     }
@@ -751,7 +765,21 @@
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smeDB.IdShort</span>
                         <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeList(smeDB.DisplayName)</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smeDB.Category</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeList(smeDB.Description)</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeList(smeDB.Extensions)</span>
+                        <span style="background-color:blue;">&nbsp</span>
                         <span>@smeDB.SemanticId</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeList(smeDB.SupplementalSemanticIds)</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeList(smeDB.Qualifiers)</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeList(smeDB.DataSpecifications)</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smeDB.TValue</span>
                         <span style="background-color:blue;">&nbsp</span>
@@ -843,7 +871,7 @@
                             <a href="@($"{shorturl}/ovalue?smeid={smeDB.Id}")" target="_blank">ovalue </a>
                         }
                         <span style="background-color:blue;">&nbsp</span>
-                        <a href="@link" target="_blank">@link</a>
+                        <a href="@link" target="_blank">api</a>
                         <br/>
                     }
 
