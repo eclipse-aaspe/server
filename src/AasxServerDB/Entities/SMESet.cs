@@ -20,6 +20,7 @@ using System.Linq;
 using Newtonsoft.Json.Linq;
 using Microsoft.IdentityModel.Tokens;
 using Nodes = System.Text.Json.Nodes;
+using System.Text.Json.Nodes;
 
 namespace AasxServerDB.Entities
 {
@@ -38,6 +39,7 @@ namespace AasxServerDB.Entities
         public string? TValue     { get; set; }
         public string? SemanticId { get; set; }
         public string? IdShort    { get; set; }
+        public JsonArray? Extensions { get; set; }
 
         public DateTime TimeStampCreate { get; set; }
         public DateTime TimeStamp       { get; set; }

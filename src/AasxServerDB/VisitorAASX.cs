@@ -51,7 +51,7 @@ namespace AasxServerDB
             {
                 if (!createFilesOnly)
                 {
-                    var aasxDB = new AASXSet {AASX = filePath};
+                    var aasxDB = new AASXSet { AASX = filePath };
                     LoadAASInDB(asp, aasxDB);
 
                     using AasContext db = new AasContext();
@@ -129,7 +129,7 @@ namespace AasxServerDB
                         {
                             if (smRef.Keys != null && smRef.Keys.Count > 0)
                             {
-                                var smDB = aasxDB.SMSets.FirstOrDefault(smV => smRef.Keys[ 0 ].Value == smV.Identifier);
+                                var smDB = aasxDB.SMSets.FirstOrDefault(smV => smRef.Keys[0].Value == smV.Identifier);
                                 if (smDB != null)
                                     smDB.AASSet = aasDB;
                             }
@@ -145,23 +145,23 @@ namespace AasxServerDB
         private string ShortSMEType(ISubmodelElement sme)
         {
             return _oprPrefix + sme switch
-                   {
-                       RelationshipElement          => "Rel",
-                       AnnotatedRelationshipElement => "RelA",
-                       Property                     => "Prop",
-                       MultiLanguageProperty        => "MLP",
-                       AasCore.Aas3_0.Range         => "Range",
-                       Blob                         => "Blob",
-                       AasCore.Aas3_0.File          => "File",
-                       ReferenceElement             => "Ref",
-                       Capability                   => "Cap",
-                       SubmodelElementList          => "SML",
-                       SubmodelElementCollection    => "SMC",
-                       Entity                       => "Ent",
-                       BasicEventElement            => "Evt",
-                       Operation                    => "Opr",
-                       _                            => string.Empty
-                   };
+            {
+                RelationshipElement => "Rel",
+                AnnotatedRelationshipElement => "RelA",
+                Property => "Prop",
+                MultiLanguageProperty => "MLP",
+                AasCore.Aas3_0.Range => "Range",
+                Blob => "Blob",
+                AasCore.Aas3_0.File => "File",
+                ReferenceElement => "Ref",
+                Capability => "Cap",
+                SubmodelElementList => "SML",
+                SubmodelElementCollection => "SMC",
+                Entity => "Ent",
+                BasicEventElement => "Evt",
+                Operation => "Opr",
+                _ => string.Empty
+            };
         }
 
         public static Dictionary<DataTypeDefXsd, string> DataTypeToTable = new Dictionary<DataTypeDefXsd, string>() {
@@ -385,7 +385,7 @@ namespace AasxServerDB
                 smeDB.OValueSets.Add(new OValueSet { Attribute = "TypeValueListElement", Value = Jsonization.Serialize.AasSubmodelElementsToJsonValue(sml.TypeValueListElement) });
 
                 if (sml.ValueTypeListElement != null)
-                    smeDB.OValueSets.Add(new OValueSet { Attribute = "ValueTypeListElement", Value = Jsonization.Serialize.DataTypeDefXsdToJsonValue((DataTypeDefXsd) sml.ValueTypeListElement) });
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "ValueTypeListElement", Value = Jsonization.Serialize.DataTypeDefXsdToJsonValue((DataTypeDefXsd)sml.ValueTypeListElement) });
             }
             else if (sme is Entity ent)
             {
@@ -434,21 +434,30 @@ namespace AasxServerDB
             var timeStampDelete = (sme.TimeStampDelete == default) ? currentDataTime : sme.TimeStampDelete;
 
             var smeDB = new SMESet
-                        {
-                            ParentSME       = _parSME,
-                            SMEType         = ShortSMEType(sme),
-                            TValue          = string.Empty,
-                            SemanticId      = semanticId,
-                            IdShort         = sme.IdShort,
-                            TimeStamp       = timeStamp,
-                            TimeStampCreate = timeStampCreate,
-                            TimeStampTree   = timeStampTree,
-                            TimeStampDelete = timeStampDelete
-                        };
+            {
+                ParentSME = _parSME,
+                SMEType = ShortSMEType(sme),
+                TValue = string.Empty,
+                SemanticId = semanticId,
+                IdShort = sme.IdShort,
+                Extensions = sme.Extensions != null ? SerializeExtensions(sme.Extensions) : null,
+                TimeStamp = timeStamp,
+                TimeStampCreate = timeStampCreate,
+                TimeStampTree = timeStampTree,
+                TimeStampDelete = timeStampDelete
+            };
             SetValues(sme, smeDB);
             _smDB?.SMESets.Add(smeDB);
 
             return smeDB;
+        }
+
+        private Nodes.JsonArray SerializeExtensions(List<IExtension> extensions)
+        {
+            var jsonArray = new Nodes.JsonArray();
+            foreach (var item in extensions)
+                jsonArray.Add(Jsonization.Serialize.ToJsonObject(item));
+            return jsonArray;
         }
 
         public override void VisitExtension(IExtension that)
@@ -477,6 +486,7 @@ namespace AasxServerDB
                             IdShort         = that.IdShort,
                             AssetKind       = that.AssetInformation.AssetKind.ToString(),
                             GlobalAssetId   = that.AssetInformation.GlobalAssetId,
+                            Extensions       = that.Extensions != null ? SerializeExtensions(that.Extensions) : null,
                             TimeStamp       = timeStamp,
                             TimeStampCreate = timeStampCreate,
                             TimeStampTree   = timeStampTree,
@@ -514,6 +524,7 @@ namespace AasxServerDB
                         SemanticId      = semanticId,
                         Identifier      = that.Id,
                         IdShort         = that.IdShort,
+                        Extensions = that.Extensions != null ? SerializeExtensions(that.Extensions) : null,
                         TimeStamp       = timeStamp,
                         TimeStampCreate = timeStampCreate,
                         TimeStampTree   = timeStampTree,
