@@ -331,6 +331,7 @@
                         <th style="word-break:keep-all">IdShort</th>
                         <th style="word-break:keep-all">AssetKind</th>
                         <th style="word-break:keep-all">GlobalAssetId</th>
+                        <th style="word-break:keep-all">Extensions</th>
                         <th style="word-break:keep-all">TimeStamp</th>
                         <th style="word-break:keep-all">Links</th>
                         <th style="word-break:keep-all">API</th>
@@ -351,6 +352,7 @@
                             <td>@aasDB.IdShort</td>
                             <td>@aasDB.AssetKind</td>
                             <td>@aasDB.GlobalAssetId</td>
+                            <td style="word-break:keep-all;font-size:small;max-width:200px">@aasDB.Extensions</td>
                             <td style="word-break:keep-all;color:lightgray;font-size:x-small">
                                 @($"UPDATE {TimeStamp.DateTimeToString(aasDB.TimeStamp)}")<br/>
                                 @($"CREATE {TimeStamp.DateTimeToString(aasDB.TimeStampCreate)}")<br/>
@@ -393,6 +395,8 @@
                         <span>@aasDB.AssetKind</span>
                         <span smDB="background-color:blue;">&nbsp</span>
                         <span>@aasDB.GlobalAssetId</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <td>@aasDB.Extensions</td>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@($"UPDATE {TimeStamp.DateTimeToString(aasDB.TimeStamp)}")</span>
                         <span>@($"CREATE {TimeStamp.DateTimeToString(aasDB.TimeStampCreate)}")</span>
@@ -438,6 +442,7 @@
                         <th style="word-break:keep-all">Identifier</th>
                         <th style="word-break:keep-all">IdShort</th>
                         <th style="word-break:keep-all">SemanticId</th>
+                        <th style="word-break:keep-all">Extensions</th>
                         <th style="word-break:keep-all">TimeStamp</th>
                         <th style="word-break:keep-all">Links</th>
                         <th style="word-break:keep-all">API</th>
@@ -460,6 +465,7 @@
                             <td>@smDB.Identifier</td>
                             <td>@smDB.IdShort</td>
                             <td>@smDB.SemanticId</td>
+                            <td style="word-break:keep-all;font-size:small;max-width:200px">@smDB.Extensions</td>
                             <td style="word-break:keep-all;color:lightgray;font-size:x-small">
                                 @($"UPDATE {TimeStamp.DateTimeToString(smDB.TimeStamp)}")<br/>
                                 @($"CREATE {TimeStamp.DateTimeToString(smDB.TimeStampCreate)}")<br/>
@@ -505,10 +511,12 @@
                         <span smDB="background-color:blue;">&nbsp</span>
                         <span>@smDB.SemanticId</span>
                         <span style="background-color:blue;">&nbsp</span>
+                        <span>@smDB.Extensions</span>
+                        <span style="background-color:blue;">&nbsp</span>
                         <span>@($"UPDATE {TimeStamp.DateTimeToString(smDB.TimeStamp)}")</span>
                         <span>@($"CREATE {TimeStamp.DateTimeToString(smDB.TimeStampCreate)}")</span>
                         <span>@($"TREE {TimeStamp.DateTimeToString(smDB.TimeStampTree)}")</span>
-                            <span>@($"DELETE {TimeStamp.DateTimeToString(smDB.TimeStampDelete)}")</span>
+                        <span>@($"DELETE {TimeStamp.DateTimeToString(smDB.TimeStampDelete)}")</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <a href="@($"{shorturl}/aasx?aasxid={smDB.AASXId}")" target="_blank">aasx </a>
                         <a href="@($"{shorturl}/aas?aasid={smDB.AASId}")" target="_blank">aas </a>
@@ -573,6 +581,7 @@
                         <th style="word-break:keep-all">TValue</th>
                         <th style="word-break:keep-all">Value</th>
                         <th style="word-break:keep-all">Additional Attributes</th>
+                        <th style="word-break:keep-all">Extensions</th>
                         <th style="word-break:keep-all">TimeStamp</th>
                         <th style="word-break:keep-all">Links</th>
                         <th style="word-break:keep-all">API</th>
@@ -669,6 +678,7 @@
                                     </ul>
                                 }
                             </td>
+                            <td style="word-break:keep-all;font-size:small;max-width:200px">@smeDB.Extensions</td>
                             <td style="word-break:keep-all;color:lightgray;font-size:x-small">
                                 @($"UPDATE {TimeStamp.DateTimeToString(smeDB.TimeStamp)}")<br/>
                                 @($"CREATE {TimeStamp.DateTimeToString(smeDB.TimeStampCreate)}")<br/>
@@ -808,6 +818,8 @@
                                 </span>
                             }
                         </span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smeDB.Extensions</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@($"UPDATE {TimeStamp.DateTimeToString(smeDB.TimeStamp)}")</span>
                         <span>@($"CREATE {TimeStamp.DateTimeToString(smeDB.TimeStampCreate)}")</span>
