@@ -12,16 +12,16 @@ namespace AasxServerDB.Migrations.Sqlite
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "AASXSets",
+                name: "EnvSets",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    AASX = table.Column<string>(type: "TEXT", nullable: true)
+                    Path = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_AASXSets", x => x.Id);
+                    table.PrimaryKey("PK_EnvSets", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -30,7 +30,7 @@ namespace AasxServerDB.Migrations.Sqlite
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    AASXId = table.Column<int>(type: "INTEGER", nullable: false),
+                    EnvId = table.Column<int>(type: "INTEGER", nullable: false),
                     IdShort = table.Column<string>(type: "TEXT", maxLength: 128, nullable: true),
                     DisplayName = table.Column<string>(type: "TEXT", nullable: true),
                     Category = table.Column<string>(type: "TEXT", maxLength: 128, nullable: true),
@@ -40,9 +40,9 @@ namespace AasxServerDB.Migrations.Sqlite
                     Administration = table.Column<string>(type: "TEXT", nullable: true),
                     DataSpecifications = table.Column<string>(type: "TEXT", nullable: true),
                     AssetKind = table.Column<string>(type: "TEXT", nullable: true),
-                    SpecificAssetIds = table.Column<string>(type: "TEXT", nullable: true),
                     GlobalAssetId = table.Column<string>(type: "TEXT", nullable: true),
                     AssetType = table.Column<string>(type: "TEXT", nullable: true),
+                    SpecificAssetIds = table.Column<string>(type: "TEXT", nullable: true),
                     DefaultThumbnail = table.Column<string>(type: "TEXT", nullable: true),
                     TimeStampCreate = table.Column<DateTime>(type: "TEXT", nullable: false),
                     TimeStamp = table.Column<DateTime>(type: "TEXT", nullable: false),
@@ -53,9 +53,41 @@ namespace AasxServerDB.Migrations.Sqlite
                 {
                     table.PrimaryKey("PK_AASSets", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_AASSets_AASXSets_AASXId",
-                        column: x => x.AASXId,
-                        principalTable: "AASXSets",
+                        name: "FK_AASSets_EnvSets_EnvId",
+                        column: x => x.EnvId,
+                        principalTable: "EnvSets",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CDSets",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    EnvId = table.Column<int>(type: "INTEGER", nullable: false),
+                    IdShort = table.Column<string>(type: "TEXT", maxLength: 128, nullable: true),
+                    DisplayName = table.Column<string>(type: "TEXT", nullable: true),
+                    Category = table.Column<string>(type: "TEXT", maxLength: 128, nullable: true),
+                    Description = table.Column<string>(type: "TEXT", nullable: true),
+                    Extensions = table.Column<string>(type: "TEXT", nullable: true),
+                    Identifier = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
+                    Administration = table.Column<string>(type: "TEXT", nullable: true),
+                    IsCaseOf = table.Column<string>(type: "TEXT", nullable: true),
+                    DataSpecifications = table.Column<string>(type: "TEXT", nullable: true),
+                    TimeStampCreate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    TimeStamp = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    TimeStampTree = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    TimeStampDelete = table.Column<DateTime>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CDSets", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CDSets_EnvSets_EnvId",
+                        column: x => x.EnvId,
+                        principalTable: "EnvSets",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -66,7 +98,7 @@ namespace AasxServerDB.Migrations.Sqlite
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    AASXId = table.Column<int>(type: "INTEGER", nullable: false),
+                    EnvId = table.Column<int>(type: "INTEGER", nullable: false),
                     AASId = table.Column<int>(type: "INTEGER", nullable: true),
                     IdShort = table.Column<string>(type: "TEXT", maxLength: 128, nullable: true),
                     DisplayName = table.Column<string>(type: "TEXT", nullable: true),
@@ -94,9 +126,9 @@ namespace AasxServerDB.Migrations.Sqlite
                         principalTable: "AASSets",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_SMSets_AASXSets_AASXId",
-                        column: x => x.AASXId,
-                        principalTable: "AASXSets",
+                        name: "FK_SMSets_EnvSets_EnvId",
+                        column: x => x.EnvId,
+                        principalTable: "EnvSets",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -226,9 +258,9 @@ namespace AasxServerDB.Migrations.Sqlite
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_AASSets_AASXId",
+                name: "IX_AASSets_EnvId",
                 table: "AASSets",
-                column: "AASXId");
+                column: "EnvId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AASSets_Id",
@@ -236,8 +268,13 @@ namespace AasxServerDB.Migrations.Sqlite
                 column: "Id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_AASXSets_Id",
-                table: "AASXSets",
+                name: "IX_CDSets_EnvId",
+                table: "CDSets",
+                column: "EnvId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CDSets_Id",
+                table: "CDSets",
                 column: "Id");
 
             migrationBuilder.CreateIndex(
@@ -254,6 +291,11 @@ namespace AasxServerDB.Migrations.Sqlite
                 name: "IX_DValueSets_Value",
                 table: "DValueSets",
                 column: "Value");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EnvSets_Id",
+                table: "EnvSets",
+                column: "Id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_IValueSets_Id",
@@ -321,9 +363,9 @@ namespace AasxServerDB.Migrations.Sqlite
                 column: "AASId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SMSets_AASXId",
+                name: "IX_SMSets_EnvId",
                 table: "SMSets",
-                column: "AASXId");
+                column: "EnvId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SMSets_Id",
@@ -365,6 +407,9 @@ namespace AasxServerDB.Migrations.Sqlite
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "CDSets");
+
+            migrationBuilder.DropTable(
                 name: "DValueSets");
 
             migrationBuilder.DropTable(
@@ -386,7 +431,7 @@ namespace AasxServerDB.Migrations.Sqlite
                 name: "AASSets");
 
             migrationBuilder.DropTable(
-                name: "AASXSets");
+                name: "EnvSets");
         }
     }
 }

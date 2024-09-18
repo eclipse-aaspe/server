@@ -10,10 +10,10 @@ namespace AasxServerDB.Entities
 
     public class AASSet
     {
-        // aasx
-        [ForeignKey("AASXSet")]
-        public         int      AASXId  { get; set; }
-        public virtual AASXSet? AASXSet { get; set; }
+        // env
+        [ForeignKey("EnvSet")]
+        public         int      EnvId  { get; set; }
+        public virtual EnvSet? EnvSet { get; set; }
 
         // aas
         public int Id { get; set; }

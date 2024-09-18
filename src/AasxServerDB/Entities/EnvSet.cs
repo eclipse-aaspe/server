@@ -5,18 +5,17 @@ namespace AasxServerDB.Entities
     // indexes
     [Index(nameof(Id))]
 
-    public class AASXSet
+    public class EnvSet
     {
         // id
         public int Id { get; set; }
 
         // path
-        public string? AASX { get; set; }
+        public string? Path { get; set; }
 
-        // aas
+        // cd, aas, sm
+        public virtual ICollection<CDSet?> CDSets  { get; } = new List<CDSet?>();
         public virtual ICollection<AASSet> AASSets { get; } = new List<AASSet>();
-
-        // sm
         public virtual ICollection<SMSet?> SMSets  { get; } = new List<SMSet?>();
     }
 }

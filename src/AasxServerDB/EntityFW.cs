@@ -27,7 +27,8 @@ namespace AasxServerDB
         public static string?         _dataPath  { get; set; }
         public static bool            IsPostgres { get; set; }
 
-        public DbSet<AASXSet> AASXSets     { get; set; }
+        public DbSet<EnvSet> EnvSets     { get; set; }
+        public DbSet<CDSet> CDSets { get; set; }
         public DbSet<AASSet> AASSets       { get; set; }
         public DbSet<SMSet> SMSets         { get; set; }
         public DbSet<SMESet> SMESets       { get; set; }
@@ -65,7 +66,8 @@ namespace AasxServerDB
             // Queue up all delete operations asynchronously
             var tasks = new List<Task<int>>
             {
-                AASXSets.ExecuteDeleteAsync(),
+                EnvSets.ExecuteDeleteAsync(),
+                CDSets.ExecuteDeleteAsync(),
                 AASSets.ExecuteDeleteAsync(),
                 SMSets.ExecuteDeleteAsync(),
                 SMESets.ExecuteDeleteAsync(),
@@ -84,6 +86,38 @@ namespace AasxServerDB
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // CD
+            modelBuilder.Entity<CDSet>()
+                .Property(e => e.DisplayName)
+                .HasConversion(
+                    obj => SerializeList(obj),
+                    text => DeserializeList<ILangStringNameType>(text));
+            modelBuilder.Entity<CDSet>()
+                .Property(e => e.Description)
+                .HasConversion(
+                    obj => SerializeList(obj),
+                    text => DeserializeList<ILangStringTextType>(text));
+            modelBuilder.Entity<CDSet>()
+                .Property(e => e.Extensions)
+                .HasConversion(
+                    obj => SerializeList(obj),
+                    text => DeserializeList<IExtension>(text));
+            modelBuilder.Entity<CDSet>()
+                .Property(e => e.Administration)
+                .HasConversion(
+                    obj => SerializeElement(obj),
+                    text => DeserializeElement<IAdministrativeInformation>(text));
+            modelBuilder.Entity<CDSet>()
+                .Property(e => e.IsCaseOf)
+                .HasConversion(
+                    obj => SerializeList(obj),
+                    text => DeserializeList<IReference>(text));
+            modelBuilder.Entity<CDSet>()
+                .Property(e => e.DataSpecifications)
+                .HasConversion(
+                    obj => SerializeList(obj),
+                    text => DeserializeList<IEmbeddedDataSpecification>(text));
+
             // AASSet
             modelBuilder.Entity<AASSet>()
                 .Property(e => e.DisplayName)

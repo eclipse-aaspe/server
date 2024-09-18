@@ -7,7 +7,7 @@ namespace AasxServerDB.Entities
 
     // indexes
     [Index(nameof(Id))]
-    [Index(nameof(AASXId))]
+    [Index(nameof(EnvId))]
     [Index(nameof(AASId))]
     [Index(nameof(SemanticId))]
     [Index(nameof(Identifier))]
@@ -15,10 +15,10 @@ namespace AasxServerDB.Entities
 
     public class SMSet
     {
-        // aasx
-        [ForeignKey("AASXSet")]
-        public         int      AASXId  { get; set; }
-        public virtual AASXSet? AASXSet { get; set; }
+        // env
+        [ForeignKey("EnvSet")]
+        public         int      EnvId  { get; set; }
+        public virtual EnvSet? EnvSet { get; set; }
 
         // aas
         [ForeignKey("AASSet")]

@@ -15,6 +15,84 @@ namespace AasxServerDB
             if (path.IsNullOrEmpty() || aasDB == null)
                 return null;
 
+            // env
+            var aasEnv = new AdminShellPackageEnv();
+            aasEnv.SetFilename(path);
+
+            // aas
+            var aas = GetAssetAdministrationShell(aasDB);
+            aasEnv.AasEnv?.AssetAdministrationShells?.Add(aas);
+
+            // db
+            var db = new AasContext();
+
+            // cd
+            var cdDBList = db.CDSets.Where(cd => cd.EnvId == aasDB.EnvId).ToList();
+            foreach (var cd in cdDBList.Select(selector: cdDB => GetConceptDescription(cdDB: cdDB)))
+            {
+                aasEnv.AasEnv?.ConceptDescriptions?.Add(cd);
+            }
+
+            // sm
+            var smDBList = db.SMSets.Where(cd => cd.EnvId == aasDB.EnvId).ToList();
+            foreach (var sm in smDBList.Select(selector: submodelDB => GetSubmodel(smDB: submodelDB)))
+            {
+                aas.Submodels?.Add(sm.GetReference());
+                aasEnv.AasEnv?.Submodels?.Add(sm);
+            }
+
+            return aasEnv;
+        }
+
+        public static ConceptDescription? GetConceptDescription(CDSet? cdDB = null, string cdIdentifier = "")
+        {
+            var db = new AasContext();
+            if (!cdIdentifier.IsNullOrEmpty())
+            {
+                var cdList = db.CDSets.Where(cd => cd.Identifier == cdIdentifier).ToList();
+                if (cdList.Count == 0)
+                    return null;
+                cdDB = cdList.First();
+            }
+
+            if (cdDB == null)
+                return null;
+
+            var cd = new ConceptDescription(
+                idShort: cdDB.IdShort,
+                displayName: cdDB.DisplayName,
+                category: cdDB.Category,
+                description: cdDB.Description,
+                extensions: cdDB.Extensions,
+                id: cdDB.Identifier,
+                administration: cdDB.Administration,
+                isCaseOf: cdDB.IsCaseOf,
+                embeddedDataSpecifications: cdDB.DataSpecifications
+            )
+            {
+                TimeStampCreate = cdDB.TimeStampCreate,
+                TimeStamp = cdDB.TimeStamp,
+                TimeStampTree = cdDB.TimeStampTree,
+                TimeStampDelete = cdDB.TimeStampDelete
+            };
+
+            return cd;
+        }
+
+        public static AssetAdministrationShell? GetAssetAdministrationShell(AASSet? aasDB = null, string aasIdentifier = "")
+        {
+            var db = new AasContext();
+            if (!aasIdentifier.IsNullOrEmpty())
+            {
+                var aasList = db.AASSets.Where(cd => cd.Identifier == aasIdentifier).ToList();
+                if (aasList.Count == 0)
+                    return null;
+                aasDB = aasList.First();
+            }
+
+            if (aasDB == null)
+                return null;
+
             var aas = new AssetAdministrationShell(
                 idShort: aasDB.IdShort,
                 displayName: aasDB.DisplayName,
@@ -40,22 +118,7 @@ namespace AasxServerDB
                 TimeStampDelete = aasDB.TimeStampDelete
             };
 
-            var aasEnv = new AdminShellPackageEnv();
-            aasEnv.SetFilename(path);
-            aasEnv.AasEnv?.AssetAdministrationShells?.Add(aas);
-
-            var db = new AasContext();
-            var submodelDBList = db.SMSets
-                .OrderBy(sm => sm.Id)
-                .Where(sm => sm.AASId == aasDB.Id)
-                .ToList();
-            foreach (var sm in submodelDBList.Select(selector: submodelDB => GetSubmodel(smDB: submodelDB)))
-            {
-                aas.Submodels?.Add(sm.GetReference());
-                aasEnv.AasEnv?.Submodels?.Add(sm);
-            }
-
-            return aasEnv;
+            return aas;
         }
 
         public static Submodel? GetSubmodel(SMSet? smDB = null, string smIdentifier = "")
@@ -293,33 +356,40 @@ namespace AasxServerDB
                 return new Reference(ReferenceTypes.ExternalReference, new List<IKey>());
         }
 
-        public static string GetAASXPath(string aasId = "", string submodelId = "")
+        public static string GetAASXPath(string cdId = "", string aasId = "", string smId = "")
         {
             using var db = new AasContext();
-            int? aasxId = null;
-            if (!submodelId.IsNullOrEmpty())
+            int? envId = null;
+            if (!cdId.IsNullOrEmpty())
             {
-                var submodelDBList = db.SMSets.Where(s => s.Identifier == submodelId);
+                var cdDBList = db.CDSets.Where(s => s.Identifier == cdId);
+                if (cdDBList.Count() > 0)
+                    envId = cdDBList.First().EnvId;
+            }
+
+            if (!smId.IsNullOrEmpty())
+            {
+                var submodelDBList = db.SMSets.Where(s => s.Identifier == smId);
                 if (submodelDBList.Count() > 0)
-                    aasxId = submodelDBList.First().AASXId;
+                    envId = submodelDBList.First().EnvId;
             }
 
             if (!aasId.IsNullOrEmpty())
             {
                 var aasDBList = db.AASSets.Where(a => a.Identifier == aasId);
                 if (aasDBList.Any())
-                    aasxId = aasDBList.First().AASXId;
+                    envId = aasDBList.First().EnvId;
             }
 
-            if (aasxId == null)
+            if (envId == null)
                 return string.Empty;
 
-            var aasxDBList = db.AASXSets.Where(a => a.Id == aasxId);
-            if (!aasxDBList.Any())
+            var envDBList = db.EnvSets.Where(a => a.Id == envId);
+            if (!envDBList.Any())
                 return string.Empty;
 
-            var aasxDB = aasxDBList.First();
-            return aasxDB.AASX;
+            var envDB = envDBList.First();
+            return envDB.Path;
         }
     }
 }

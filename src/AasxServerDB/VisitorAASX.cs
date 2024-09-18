@@ -13,7 +13,7 @@ namespace AasxServerDB
 
     public class VisitorAASX : VisitorThrough
     {
-        private AASXSet? _aasxDB;
+        private EnvSet? _envDB;
         private SMSet? _smDB;
         private SMESet? _parSME;
         private string _oprPrefix = string.Empty;
@@ -22,9 +22,9 @@ namespace AasxServerDB
         public static string OPERATION_INOUTPUT = "IO";
         public static string OPERATION_SPLIT = "-";
 
-        public VisitorAASX(AASXSet? aasxDB = null)
+        public VisitorAASX(EnvSet? envDB = null)
         {
-            _aasxDB = aasxDB;
+            _envDB = envDB;
         }
 
         public static void LoadAASXInDB(string filePath, bool createFilesOnly, bool withDbFiles)
@@ -33,11 +33,11 @@ namespace AasxServerDB
             {
                 if (!createFilesOnly)
                 {
-                    var aasxDB = new AASXSet {AASX = filePath};
-                    LoadAASInDB(asp, aasxDB);
+                    var envDB = new EnvSet() { Path = filePath };
+                    LoadAASInDB(asp, envDB);
 
                     using AasContext db = new AasContext();
-                    db.Add(aasxDB);
+                    db.Add(envDB);
                     db.SaveChanges();
                 }
 
@@ -86,32 +86,32 @@ namespace AasxServerDB
             }
         }
 
-        public static void LoadAASInDB(AdminShellPackageEnv asp, AASXSet aasxDB)
+        public static void LoadAASInDB(AdminShellPackageEnv asp, EnvSet envDB)
         {
-            if (aasxDB == null || asp == null || asp.AasEnv == null)
+            if (envDB == null || asp == null || asp.AasEnv == null)
                 return;
 
             if (asp.AasEnv.AssetAdministrationShells != null)
                 foreach (var aas in asp.AasEnv.AssetAdministrationShells)
                     if (!aas.Id.IsNullOrEmpty() && !aas.AssetInformation.GlobalAssetId.IsNullOrEmpty() &&
                         !(!aas.IdShort.IsNullOrEmpty() && aas.IdShort.ToLower().Contains("globalsecurity")))
-                        new VisitorAASX(aasxDB: aasxDB).Visit(aas);
+                        new VisitorAASX(envDB: envDB).Visit(aas);
 
             if (asp.AasEnv.Submodels != null)
                 foreach (var sm in asp.AasEnv.Submodels)
                     if (!sm.Id.IsNullOrEmpty())
-                        new VisitorAASX(aasxDB: aasxDB).Visit(sm);
+                        new VisitorAASX(envDB: envDB).Visit(sm);
 
             if (asp.AasEnv.AssetAdministrationShells != null && asp.AasEnv.Submodels != null)
                 foreach (var aas in asp.AasEnv.AssetAdministrationShells)
                 {
-                    var aasDB = aasxDB.AASSets.FirstOrDefault(aasV => aas.Id == aasV.Identifier);
+                    var aasDB = envDB.AASSets.FirstOrDefault(aasV => aas.Id == aasV.Identifier);
                     if (aasDB != null && aas.Submodels != null)
                         foreach (var smRef in aas.Submodels)
                         {
                             if (smRef.Keys != null && smRef.Keys.Count > 0)
                             {
-                                var smDB = aasxDB.SMSets.FirstOrDefault(smV => smRef.Keys[ 0 ].Value == smV.Identifier);
+                                var smDB = envDB.SMSets.FirstOrDefault(smV => smRef.Keys[ 0 ].Value == smV.Identifier);
                                 if (smDB != null)
                                     smDB.AASSet = aasDB;
                             }
@@ -121,7 +121,7 @@ namespace AasxServerDB
             if (asp.AasEnv.ConceptDescriptions != null)
                 foreach (var cd in asp.AasEnv.ConceptDescriptions)
                     if (cd != null)
-                        new VisitorAASX(aasxDB: aasxDB).Visit(cd);
+                        new VisitorAASX(envDB: envDB).Visit(cd);
         }
 
         private string ShortSMEType(ISubmodelElement sme)
@@ -468,7 +468,7 @@ namespace AasxServerDB
                 TimeStampTree       = that.TimeStampTree   == default ? currentDataTime : that.TimeStampTree,
                 TimeStampDelete     = that.TimeStampDelete == default ? currentDataTime : that.TimeStampDelete
             };
-            _aasxDB?.AASSets.Add(aasDB);
+            _envDB?.AASSets.Add(aasDB);
             base.VisitAssetAdministrationShell(that);
         }
         public override void VisitAssetInformation(IAssetInformation that)
@@ -505,7 +505,7 @@ namespace AasxServerDB
                 TimeStampTree           = that.TimeStampTree   == default ? currentDataTime : that.TimeStampTree,
                 TimeStampDelete         = that.TimeStampDelete == default ? currentDataTime : that.TimeStampDelete
             };
-            _aasxDB?.SMSets.Add(_smDB);
+            _envDB?.SMSets.Add(_smDB);
             base.VisitSubmodel(that);
         }
         public override void VisitRelationshipElement(IRelationshipElement that)
@@ -622,7 +622,25 @@ namespace AasxServerDB
         }
         public override void VisitConceptDescription(IConceptDescription that)
         {
-            // base.VisitConceptDescription(that);
+            var currentDataTime = DateTime.UtcNow;
+            var _cdDB = new CDSet()
+            {
+                IdShort            = that.IdShort,
+                DisplayName        = that.DisplayName,
+                Category           = that.Category,
+                Description        = that.Description,
+                Extensions         = that.Extensions,
+                Identifier         = that.Id,
+                Administration     = that.Administration,
+                IsCaseOf           = that.IsCaseOf,
+                DataSpecifications = that.EmbeddedDataSpecifications,
+                TimeStampCreate    = that.TimeStampCreate == default ? currentDataTime : that.TimeStampCreate,
+                TimeStamp          = that.TimeStamp == default ? currentDataTime : that.TimeStamp,
+                TimeStampTree      = that.TimeStampTree == default ? currentDataTime : that.TimeStampTree,
+                TimeStampDelete    = that.TimeStampDelete == default ? currentDataTime : that.TimeStampDelete
+            };
+            _envDB?.CDSets.Add(_cdDB);
+            base.VisitConceptDescription(that);
         }
         public override void VisitReference(AasCore.Aas3_0.IReference that)
         {

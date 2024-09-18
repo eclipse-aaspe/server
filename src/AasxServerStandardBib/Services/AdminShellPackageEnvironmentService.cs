@@ -322,27 +322,10 @@ namespace AasxServerStandardBib.Services
 
         private bool IsConceptDescriptionPresent(string cdIdentifier, out IConceptDescription output, out int packageIndex)
         {
-            output       = null;
             packageIndex = -1;
-            foreach (var package in _packages)
-            {
-                if (package != null)
-                {
-                    var env = package.AasEnv;
-                    if (env != null)
-                    {
-                        var conceptDescriptions = env.ConceptDescriptions.Where(c => c.Id.Equals(cdIdentifier));
-                        if (conceptDescriptions.Any())
-                        {
-                            output       = conceptDescriptions.First();
-                            packageIndex = Array.IndexOf(_packages, package);
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            return false;
+            var success = false;
+            output = Program.loadPackage<IConceptDescription>(out success, out packageIndex, cdIdentifier: cdIdentifier);
+            return success;
         }
 
         public List<IConceptDescription> GetAllConceptDescriptions()

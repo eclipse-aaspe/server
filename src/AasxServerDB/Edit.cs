@@ -11,15 +11,15 @@ namespace AasxServerDB
             using (AasContext db = new AasContext())
             {
                 // Deletes automatically from DB
-                db.AASXSets.Where(a => a.AASX == env.Filename).ExecuteDelete();
+                db.EnvSets.Where(a => a.Path == env.Filename).ExecuteDelete();
 
                 // Load Everything back in
-                var aasxDB = new AASXSet
+                var envDB = new EnvSet
                 {
-                    AASX = env.Filename
+                    Path = env.Filename
                 };
-                VisitorAASX.LoadAASInDB(env, aasxDB);
-                db.Add(aasxDB);
+                VisitorAASX.LoadAASInDB(env, envDB);
+                db.Add(envDB);
                 try
                 {
                     db.SaveChanges();

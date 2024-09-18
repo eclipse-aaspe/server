@@ -8,20 +8,33 @@ namespace AasxServerDB
 {
     public class PageRetriever
     {
-        public static List<AASXSet> GetPageAASXData(int size = 1000, string searchLower = "", long aasxid = 0)
+        public static List<EnvSet> GetPageEnvData(int size = 1000, string searchLower = "", long envid = 0)
         {
-            return new AasContext().AASXSets
-                .Where(a => (aasxid == 0 || a.Id == aasxid) &&
-                (searchLower.IsNullOrEmpty() || a.AASX.ToLower().Contains(searchLower)))
+            return new AasContext().EnvSets
+                .Where(a => (envid == 0 || a.Id == envid) &&
+                (searchLower.IsNullOrEmpty() || a.Path.ToLower().Contains(searchLower)))
                 .Take(size)
                 .ToList();
         }
 
-        public static List<AASSet> GetPageAASData(int size = 1000, DateTime dateTime = new DateTime(), string searchLower = "", long aasxid = 0, long aasid = 0)
+        public static List<CDSet> GetPageCDData(int size = 1000, DateTime dateTime = new DateTime(), string searchLower = "", long envid = 0, long cdid = 0)
+        {
+            bool withDateTime = !dateTime.Equals(DateTime.MinValue);
+            return new AasContext().CDSets
+                .Where(a => (envid == 0 || a.EnvId == envid) && (cdid == 0 || a.Id == cdid) &&
+                    (searchLower.IsNullOrEmpty() ||
+                    (a.IdShort != null && a.IdShort.ToLower().Contains(searchLower)) ||
+                    (a.Identifier != null && a.Identifier.ToLower().Contains(searchLower)) ||
+                    (withDateTime && a.TimeStampTree.CompareTo(dateTime) > 0)))
+                .Take(size)
+                .ToList();
+        }
+
+        public static List<AASSet> GetPageAASData(int size = 1000, DateTime dateTime = new DateTime(), string searchLower = "", long envid = 0, long aasid = 0)
         {
             bool withDateTime = !dateTime.Equals(DateTime.MinValue);
             return new AasContext().AASSets
-                .Where(a => (aasxid == 0 || a.AASXId == aasxid) && (aasid == 0 || a.Id == aasid) &&
+                .Where(a => (envid == 0 || a.EnvId == envid) && (aasid == 0 || a.Id == aasid) &&
                     (searchLower.IsNullOrEmpty() ||
                     (a.IdShort != null && a.IdShort.ToLower().Contains(searchLower)) ||
                     (a.Identifier != null && a.Identifier.ToLower().Contains(searchLower)) ||
@@ -32,11 +45,11 @@ namespace AasxServerDB
                 .ToList();
         }
 
-        public static List<SMSet> GetPageSMData(int size = 1000, DateTime dateTime = new DateTime(), string searchLower = "", long aasxid = 0, long aasid = 0, long smid = 0)
+        public static List<SMSet> GetPageSMData(int size = 1000, DateTime dateTime = new DateTime(), string searchLower = "", long envid = 0, long aasid = 0, long smid = 0)
         {
             bool withDateTime = !dateTime.Equals(DateTime.MinValue);
             return new AasContext().SMSets
-                .Where(s => (aasxid == 0 || s.AASXId == aasxid) && (aasid == 0 || s.AASId == aasid) && (smid == 0 || s.Id == smid) &&
+                .Where(s => (envid == 0 || s.EnvId == envid) && (aasid == 0 || s.AASId == aasid) && (smid == 0 || s.Id == smid) &&
                     (searchLower.IsNullOrEmpty() ||
                     (s.Identifier != null && s.Identifier.ToLower().Contains(searchLower)) ||
                     (s.IdShort != null && s.IdShort.ToLower().Contains(searchLower)) ||

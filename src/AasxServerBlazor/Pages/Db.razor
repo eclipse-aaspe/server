@@ -1,5 +1,6 @@
 @page "/db";
-@page "/db/aasx";
+@page "/db/env";
+@page "/db/cd";
 @page "/db/aas";
 @page "/db/sm";
 @page "/db/smjson";
@@ -41,9 +42,9 @@
             list = query.Get("search");
             if (!list.IsNullOrEmpty())
                 search = list;
-            list = query.Get("aasxid");
+            list = query.Get("envid");
             if (!list.IsNullOrEmpty())
-                aasxid = Convert.ToInt32(list);
+                envid = Convert.ToInt32(list);
             list = query.Get("aasid");
             if (!list.IsNullOrEmpty())
                 aasid = Convert.ToInt32(list);
@@ -62,7 +63,7 @@
         }
 
         // change parameters to input window
-        if (url.EndsWith("/aasx") || url.EndsWith("/aas") || url.EndsWith("/sm")
+        if (url.EndsWith("/env") || url.EndsWith("/cd") || url.EndsWith("/aas") || url.EndsWith("/sm")
             || url.EndsWith("/sme") || url.EndsWith("/svalue") || url.EndsWith("/ivalue") || url.EndsWith("/dvalue") || url.EndsWith("/ovalue"))
         {
             <input @bind="CurrentValue" style="width:200px; border-width: 1px; border-color: black;"/>
@@ -84,10 +85,15 @@
                         case "search":
                             search = splitCur[ 1 ];
                             break;
-                        case "aasxid":
-                            aasxid = 0;
+                        case "envid":
+                            envid = 0;
                             if (!splitCur[ 1 ].IsNullOrEmpty())
-                                aasxid = Convert.ToInt32(splitCur[ 1 ]);
+                                    envid = Convert.ToInt32(splitCur[1]);
+                            break;
+                        case "cdid":
+                            cdid = 0;
+                            if (!splitCur[ 1 ].IsNullOrEmpty())
+                                    cdid = Convert.ToInt32(splitCur[1]);
                             break;
                         case "aasid":
                             aasid = 0;
@@ -121,7 +127,7 @@
 
         using (AasContext db = new AasContext())
         {
-            if (!(url.EndsWith("/aasx") || url.EndsWith("/aas") || url.EndsWith("/sm") || url.EndsWith("/smjson")
+            if (!(url.EndsWith("/env") || url.EndsWith("/cd") || url.EndsWith("/aas") || url.EndsWith("/sm") || url.EndsWith("/smjson")
                 || url.EndsWith("/sme") || url.EndsWith("/svalue") || url.EndsWith("/ivalue") || url.EndsWith("/dvalue") || url.EndsWith("/ovalue")))
             {
                 if (AasContext.IsPostgres)
@@ -147,13 +153,24 @@
                     <tbody>
                     <tr>
                         <td>
-                            <span>AASX#:</span>
+                            <span>Env#:</span>
                         </td>
                         <td>
-                            <span>@db.AASXSets.Count()</span>
+                            <span>@db.EnvSets.Count()</span>
                         </td>
                         <td>
-                            <a href="@($"{url}/aasx")" target="_blank">aasx</a>
+                            <a href="@($"{url}/env")" target="_blank">env</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span>CD#:</span>
+                        </td>
+                        <td>
+                            <span>@db.CDSets.Count()</span>
+                        </td>
+                        <td>
+                            <a href="@($"{url}/cd")" target="_blank">cd</a>
                         </td>
                     </tr>
                     <tr>
@@ -241,10 +258,10 @@
                 <img src="db-schema.jpg"/>
             }
 
-            if (url.EndsWith("/aasx"))
+            if (url.EndsWith("/env"))
             {
-                List<AASXSet> data = PageRetriever.GetPageAASXData(size, searchLower, aasxid);
-                <span>&nbsp&nbsp@($"AASX#: {data.Count}/{db.AASXSets.Count()} size={size} search={search} aasxid={aasxid}")</span>
+                List<EnvSet> data = PageRetriever.GetPageEnvData(size, searchLower, envid);
+                <span>&nbsp&nbsp@($"Env#: {data.Count}/{db.EnvSets.Count()} size={size} search={search} envid={envid}")</span>
                 <br/>
                 <br/>
                 @if (size > 1000 && data.Count > 1000)
@@ -258,23 +275,24 @@
                 <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
                     <thead>
                     <tr>
-                        <th style="word-break:keep-all">AASX#</th>
-                        <th style="word-break:keep-all">AASX</th>
+                        <th style="word-break:keep-all">Env#</th>
+                        <th style="word-break:keep-all">Path</th>
                         <th style="word-break:keep-all">Links</th>
                     </tr>
                     </thead>
                     <tbody>
                     @for (int i = 0; i < data.Count && i < 1000; i++)
                     {
-                        var aasxDB = data[ i ];
+                        var envDB = data[ i ];
                         <tr>
                             <td style="word-break:keep-all">
-                                <b>@aasxDB.Id</b>
+                                <b>@envDB.Id</b>
                             </td>
-                            <td>@aasxDB.AASX</td>
+                            <td>@envDB.Path</td>
                             <td style="word-break:keep-all">
-                                <a href="@($"{shorturl}/aas?aasxid={aasxDB.Id}")" target="_blank">aas </a>
-                                <a href="@($"{shorturl}/sm?aasxid={aasxDB.Id}")" target="_blank">sm</a>
+                                <a href="@($"{shorturl}/aas?envid={envDB.Id}")" target="_blank">aas </a>
+                                <a href="@($"{shorturl}/sm?envid={envDB.Id}")" target="_blank">sm</a>
+                                <a href="@($"{shorturl}/cd?envid={envDB.Id}")" target="_blank">cd</a>
                             </td>
                         </tr>
                     }
@@ -288,16 +306,17 @@
                     <br/>
                     @for (int i = 1000; i < data.Count; i++)
                     {
-                        var aasxDB = data[ i ];
+                        var envDB = data[ i ];
                         <span style="background-color:blue;">&nbsp</span>
                         <span>
-                            <b>@aasxDB.Id</b>
+                            <b>@envDB.Id</b>
                         </span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@aasxDB.AASX</span>
+                        <span>@envDB.Path</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <a href="@($"{shorturl}/aas?aasxid={aasxDB.Id}")" target="_blank">aas </a>
-                        <a href="@($"{shorturl}/sm?aasxid={aasxDB.Id}")" target="_blank">sm</a>
+                        <a href="@($"{shorturl}/aas?envid={envDB.Id}")" target="_blank">aas </a>
+                        <a href="@($"{shorturl}/sm?envid={envDB.Id}")" target="_blank">sm</a>
+                        <a href="@($"{shorturl}/cd?envid={envDB.Id}")" target="_blank">cd</a>
                         <br/>
                     }
 
@@ -308,10 +327,137 @@
                 <br/>
             }
 
+            if (url.EndsWith("/cd"))
+            {
+                List<CDSet> data = PageRetriever.GetPageCDData(size, TimeStamp.StringToDateTime(searchLower), searchLower, envid, cdid);
+                <span>&nbsp&nbsp@($"CD#: {data.Count}/{db.AASSets.Count()} size={size} search={search} envid={envid} cdid={cdid}")</span>
+                <br />
+                <br />
+                @if (size > 1000 && data.Count > 1000)
+                {
+                    <b>
+                        <span style="color:red;">First 1000 as TABLE</span>
+                    </b>
+                    <br />
+                }
+
+                <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
+                    <thead>
+                        <tr>
+                            <th style="word-break:keep-all">Env#</th>
+                            <th style="word-break:keep-all">CD#</th>
+                            <th style="word-break:keep-all">Id Short</th>
+                            <th style="word-break:keep-all">Display Name</th>
+                            <th style="word-break:keep-all">Category</th>
+                            <th style="word-break:keep-all">Description</th>
+                            <th style="word-break:keep-all">Extensions</th>
+                            <th style="word-break:keep-all">Identifier</th>
+                            <th style="word-break:keep-all">Administration</th>
+                            <th style="word-break:keep-all">Is Case Of</th>
+                            <th style="word-break:keep-all">Data Specifications</th>
+                            <th style="word-break:keep-all">Time Stamp</th>
+                            <th style="word-break:keep-all">Links</th>
+                            <th style="word-break:keep-all">API</th>
+
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < data.Count && i < 1000; i++)
+                        {
+                            var cdDB = data[i];
+                            var cd64 = Base64UrlEncoder.Encode(cdDB.Identifier);
+                            var link = $"{AasxServer.Program.externalBlazor}/concept-descriptions/{cd64}";
+
+                            <tr>
+                                <td style="word-break:keep-all">@cdDB.EnvId</td>
+                                <td style="word-break:keep-all">
+                                    <b>@cdDB.Id</b>
+                                </td>
+                                <td style="word-break:keep-all;max-width:200px">@cdDB.IdShort</td>
+                                <td style="font-size:small">@AasContext.SerializeList(cdDB.DisplayName)</td>
+                                <td style="word-break:keep-all">@cdDB.Category</td>
+                                <td style="font-size:small">@AasContext.SerializeList(cdDB.Description)</td>
+                                <td style="font-size:small">@AasContext.SerializeList(cdDB.Extensions)</td>
+                                <td>@cdDB.Identifier</td>
+                                <td style="font-size:small">@AasContext.SerializeElement(cdDB.Administration)</td>
+                                <td style="font-size:small">@AasContext.SerializeList(cdDB.IsCaseOf)</td>
+                                <td style="font-size:small">@AasContext.SerializeList(cdDB.DataSpecifications)</td>
+                                <td style="width:175px;color:lightgray;font-size:x-small">
+                                    @($"CREATE {TimeStamp.DateTimeToString(cdDB.TimeStampCreate)}")<br />
+                                    @($"UPDATE {TimeStamp.DateTimeToString(cdDB.TimeStamp)}")<br />
+                                    @($"TREE {TimeStamp.DateTimeToString(cdDB.TimeStampTree)}")<br />
+                                    @($"DELETE {TimeStamp.DateTimeToString(cdDB.TimeStampDelete)}")
+                                </td>
+                                <td style="word-break:keep-all">
+                                    <a href="@($"{shorturl}/env?envid={cdDB.EnvId}")" target="_blank">env</a>
+                                </td>
+                                <td style="word-break:keep-all">
+                                    <a href="@link" target="_blank">api</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                @if (size > 1000 && data.Count > 1000)
+                {
+                    <b>
+                        <span style="color:red;">All other as text</span>
+                    </b>
+                    <br />
+                    @for (int i = 1000; i < data.Count; i++)
+                    {
+                        var cdDB = data[i];
+                        var cd64 = Base64UrlEncoder.Encode(cdDB.Identifier);
+                        var link = $"{AasxServer.Program.externalBlazor}/concept-descriptions/{cd64}";
+
+
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@cdDB.EnvId</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>
+                            <b>@cdDB.Id</b>
+                        </span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@cdDB.IdShort</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeList(cdDB.DisplayName)</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@cdDB.Category</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeList(cdDB.Description)</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeList(cdDB.Extensions)</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@cdDB.Identifier</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeElement(cdDB.Administration)</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeList(cdDB.IsCaseOf)</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeList(cdDB.DataSpecifications)</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@($"CREATE {TimeStamp.DateTimeToString(cdDB.TimeStampCreate)}")</span>
+                        <span>@($"UPDATE {TimeStamp.DateTimeToString(cdDB.TimeStamp)}")</span>
+                        <span>@($"TREE {TimeStamp.DateTimeToString(cdDB.TimeStampTree)}")</span>
+                        <span>@($"DELETE {TimeStamp.DateTimeToString(cdDB.TimeStampDelete)}")</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <a href="@($"{shorturl}/env?envid={cdDB.EnvId}")" target="_blank">env</a>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <a href="@link" target="_blank">api</a>
+                        <br />
+                    }
+
+                    <br />
+                }
+
+                <span>@($"Count: {data.Count}")</span>
+                <br />
+            }
+
             if (url.EndsWith("/aas"))
             {
-                List<AASSet> data = PageRetriever.GetPageAASData(size, TimeStamp.StringToDateTime(searchLower), searchLower, aasxid, aasid);
-                <span>&nbsp&nbsp@($"AAS#: {data.Count}/{db.AASSets.Count()} size={size} search={search} aasxid={aasxid} aasid={aasid}")</span>
+                List<AASSet> data = PageRetriever.GetPageAASData(size, TimeStamp.StringToDateTime(searchLower), searchLower, envid, aasid);
+                <span>&nbsp&nbsp@($"AAS#: {data.Count}/{db.AASSets.Count()} size={size} search={search} envid={envid} aasid={aasid}")</span>
                 <br/>
                 <br/>
                 @if (size > 1000 && data.Count > 1000)
@@ -325,7 +471,7 @@
                 <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
                     <thead>
                     <tr>
-                        <th style="word-break:keep-all">AASX#</th>
+                        <th style="word-break:keep-all">Env#</th>
                         <th style="word-break:keep-all">AAS#</th>
                         <th style="word-break:keep-all">Id Short</th>
                         <th style="word-break:keep-all">Display Name</th>
@@ -354,7 +500,7 @@
                         var link  = $"{AasxServer.Program.externalBlazor}/shells/{aas64}";
 
                         <tr>
-                            <td style="word-break:keep-all">@aasDB.AASXId</td>
+                            <td style="word-break:keep-all">@aasDB.EnvId</td>
                             <td style="word-break:keep-all">
                                 <b>@aasDB.Id</b>
                             </td>
@@ -378,7 +524,7 @@
                                 @($"DELETE {TimeStamp.DateTimeToString(aasDB.TimeStampDelete)}")
                             </td>
                             <td style="word-break:keep-all">
-                                <a href="@($"{shorturl}/aasx?aasxid={aasDB.AASXId}")" target="_blank">aasx </a>
+                                <a href="@($"{shorturl}/env?envid={aasDB.EnvId}")" target="_blank">env </a>
                                 <a href="@($"{shorturl}/sm?aasid={aasDB.Id}")" target="_blank">sm</a>
                             </td>
                             <td style="word-break:keep-all">
@@ -402,7 +548,7 @@
 
                         
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@aasDB.AASXId</span>
+                        <span>@aasDB.EnvId</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>
                             <b>@aasDB.Id</b>
@@ -439,7 +585,7 @@
                         <span>@($"TREE {TimeStamp.DateTimeToString(aasDB.TimeStampTree)}")</span>
                         <span>@($"DELETE {TimeStamp.DateTimeToString(aasDB.TimeStampDelete)}")</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <a href="@($"{shorturl}/aasx?aasxid={aasDB.AASXId}")" target="_blank">aasx </a>
+                        <a href="@($"{shorturl}/env?envid={aasDB.EnvId}")" target="_blank">env </a>
                         <a href="@($"{shorturl}/sm?aasid={aasDB.Id}")" target="_blank">sm</a>
                         <span style="background-color:blue;">&nbsp</span>
                         <a href="@link" target="_blank">api</a>
@@ -455,9 +601,9 @@
 
             if (url.EndsWith("/sm"))
             {
-                List<SMSet> data = PageRetriever.GetPageSMData(size, TimeStamp.StringToDateTime(searchLower), searchLower, aasxid, aasid, smid);
+                List<SMSet> data = PageRetriever.GetPageSMData(size, TimeStamp.StringToDateTime(searchLower), searchLower, envid, aasid, smid);
                 <span>
-                    &nbsp&nbsp@($"SM#: {data.Count}/{db.SMSets.Count()} size={size} search={search} aasxid={aasxid} aasid={aasid} smid={smid}")
+                    &nbsp&nbsp@($"SM#: {data.Count}/{db.SMSets.Count()} size={size} search={search} envid={envid} aasid={aasid} smid={smid}")
                 </span>
                 <br/>
                 <br/>
@@ -472,7 +618,7 @@
                 <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
                     <thead>
                     <tr>
-                        <th style="word-break:keep-all">AASX#</th>
+                        <th style="word-break:keep-all">Env#</th>
                         <th style="word-break:keep-all">AAS#</th>
                         <th style="word-break:keep-all">SM#</th>
                         <th style="word-break:keep-all">Id Short</th>
@@ -501,7 +647,7 @@
                         var smeCount   = db.SMESets.Where(sme => sme.SMId == smDB.Id).Count();
 
                         <tr>
-                            <td style="word-break:keep-all">@smDB.AASXId</td>
+                            <td style="word-break:keep-all">@smDB.EnvId</td>
                             <td style="word-break:keep-all">@smDB.AASId</td>
                             <td style="word-break:keep-all">
                                 <b>@smDB.Id</b>
@@ -525,7 +671,7 @@
                                 @($"DELETE {TimeStamp.DateTimeToString(smDB.TimeStampDelete)}")
                             </td>
                             <td style="word-break:keep-all">
-                                <a href="@($"{shorturl}/aasx?aasxid={smDB.AASXId}")" target="_blank">aasx </a>
+                                <a href="@($"{shorturl}/env?envid={smDB.EnvId}")" target="_blank">env </a>
                                 <a href="@($"{shorturl}/aas?aasid={smDB.AASId}")" target="_blank">aas </a>
                                 <a href="@($"{shorturl}/sme?smid={smDB.Id}")" target="_blank">sme:@(smeCount)</a>
                             </td>
@@ -550,7 +696,7 @@
                         var smeCount   = db.SMESets.Where(sme => sme.SMId == smDB.Id).Count();
 
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@smDB.AASXId</span>
+                        <span>@smDB.EnvId</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smDB.AASId</span>
                             <span style="background-color:blue;">&nbsp</span>
@@ -587,7 +733,7 @@
                         <span>@($"TREE {TimeStamp.DateTimeToString(smDB.TimeStampTree)}")</span>
                         <span>@($"DELETE {TimeStamp.DateTimeToString(smDB.TimeStampDelete)}")</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <a href="@($"{shorturl}/aasx?aasxid={smDB.AASXId}")" target="_blank">aasx </a>
+                        <a href="@($"{shorturl}/env?envid={smDB.EnvId}")" target="_blank">env </a>
                         <a href="@($"{shorturl}/aas?aasid={smDB.AASId}")" target="_blank">aas </a>
                         <a href="@($"{shorturl}/sme?smid={smDB.Id}")" target="_blank">sme:@(smeCount)</a>
                         <span style="background-color:blue;">&nbsp</span>
@@ -1240,10 +1386,11 @@
 @code {
     int size = 1000;
     string search = string.Empty;
-    long aasxid = 0;
+    long envid = 0;
     long aasid = 0;
     long smid = 0;
     long smeid = 0;
     long parid = 0;
+    long cdid = 0;
     string smidentifier = string.Empty;
 }
