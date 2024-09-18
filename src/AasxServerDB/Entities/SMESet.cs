@@ -9,6 +9,7 @@ namespace AasxServerDB.Entities
     using System.ComponentModel.DataAnnotations;
     using AasCore.Aas3_0;
 
+    // indexes
     [Index(nameof(Id))]
     [Index(nameof(SMId))]
     [Index(nameof(ParentSMEId))]
@@ -18,16 +19,16 @@ namespace AasxServerDB.Entities
 
     public class SMESet
     {
-        // submodel
+        // sm
         [ForeignKey("SMSet")]
         public         int    SMId  { get; set; }
         public virtual SMSet? SMSet { get; set; }
 
-        // parent submodelelement id
-        public int?    ParentSMEId { get; set; }
-        public virtual SMESet? ParentSME   { get; set; }
+        // parent sme
+        public         int?    ParentSMEId       { get; set; }
+        public virtual SMESet? ParentSME { get; set; }
 
-        // submodelelement id
+        // id
         public int Id { get; set; }
 
         // sme type
@@ -35,19 +36,19 @@ namespace AasxServerDB.Entities
         [StringLength(9)]
         public string? SMEType { get; set; }
 
-        // sme attributes
+        // attributes
         [StringLength(128)]
-        public string? IdShort                                      { get; set; }
-        public List<ILangStringNameType>? DisplayName               { get; set; }
+        public string?                           IdShort                 { get; set; }
+        public List<ILangStringNameType>?        DisplayName             { get; set; }
         [StringLength(128)]
-        public string? Category                                     { get; set; }
-        public List<ILangStringTextType>? Description               { get; set; }
-        public List<IExtension>? Extensions                         { get; set; }
+        public string?                           Category                { get; set; }
+        public List<ILangStringTextType>?        Description             { get; set; }
+        public List<IExtension>?                 Extensions              { get; set; }
         [MaxLength(2000)]
-        public string? SemanticId                                   { get; set; } // change to save the rest of the reference
-        public List<IReference>? SupplementalSemanticIds            { get; set; }
-        public List<IQualifier>? Qualifiers                         { get; set; }
-        public List<IEmbeddedDataSpecification>? DataSpecifications { get; set; }
+        public string?                           SemanticId              { get; set; } // change to save the rest of the reference
+        public List<IReference>?                 SupplementalSemanticIds { get; set; }
+        public List<IQualifier>?                 Qualifiers              { get; set; }
+        public List<IEmbeddedDataSpecification>? DataSpecifications      { get; set; }
 
         // value
         [StringLength(1)]
@@ -83,7 +84,7 @@ namespace AasxServerDB.Entities
             return [[string.Empty, string.Empty]];
         }
 
-        // additional attributes
+        // additional attributes / ovalue
         public virtual ICollection<OValueSet> OValueSets { get; } = new List<OValueSet>();
         public Dictionary<string, Nodes.JsonNode> GetOValue()
         {
@@ -95,8 +96,8 @@ namespace AasxServerDB.Entities
 
         // time stamp
         public DateTime TimeStampCreate { get; set; }
-        public DateTime TimeStamp { get; set; }
-        public DateTime TimeStampTree { get; set; }
+        public DateTime TimeStamp       { get; set; }
+        public DateTime TimeStampTree   { get; set; }
         public DateTime TimeStampDelete { get; set; }
     }
 }

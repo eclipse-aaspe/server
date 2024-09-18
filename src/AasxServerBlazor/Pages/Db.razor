@@ -327,13 +327,23 @@
                     <tr>
                         <th style="word-break:keep-all">AASX#</th>
                         <th style="word-break:keep-all">AAS#</th>
-                        <th style="word-break:keep-all">Id</th>
-                        <th style="word-break:keep-all">IdShort</th>
-                        <th style="word-break:keep-all">AssetKind</th>
-                        <th style="word-break:keep-all">GlobalAssetId</th>
-                        <th style="word-break:keep-all">TimeStamp</th>
+                        <th style="word-break:keep-all">Id Short</th>
+                        <th style="word-break:keep-all">Display Name</th>
+                        <th style="word-break:keep-all">Category</th>
+                        <th style="word-break:keep-all">Description</th>
+                        <th style="word-break:keep-all">Extensions</th>
+                        <th style="word-break:keep-all">Identifier</th>
+                        <th style="word-break:keep-all">Administration</th>
+                        <th style="word-break:keep-all">Data Specifications</th>
+                        <th style="word-break:keep-all">Asset Kind</th>
+                        <th style="word-break:keep-all">Global Asset Id</th>
+                        <th style="word-break:keep-all">Asset Type</th>
+                        <th style="word-break:keep-all">Specific Asset Ids</th>
+                        <th style="word-break:keep-all">Default Thumbnail</th>
+                        <th style="word-break:keep-all">Time Stamp</th>
                         <th style="word-break:keep-all">Links</th>
                         <th style="word-break:keep-all">API</th>
+
                     </tr>
                     </thead>
                     <tbody>
@@ -342,18 +352,28 @@
                         var    aasDB = data[ i ];
                         var aas64 = Base64UrlEncoder.Encode(aasDB.Identifier);
                         var link  = $"{AasxServer.Program.externalBlazor}/shells/{aas64}";
+
                         <tr>
                             <td style="word-break:keep-all">@aasDB.AASXId</td>
                             <td style="word-break:keep-all">
                                 <b>@aasDB.Id</b>
                             </td>
+                            <td style="word-break:keep-all;max-width:200px">@aasDB.IdShort</td>
+                            <td style="font-size:small">@AasContext.SerializeList(aasDB.DisplayName)</td>
+                            <td style="word-break:keep-all">@aasDB.Category</td>
+                            <td style="font-size:small">@AasContext.SerializeList(aasDB.Description)</td>
+                            <td style="font-size:small">@AasContext.SerializeList(aasDB.Extensions)</td>
                             <td>@aasDB.Identifier</td>
-                            <td>@aasDB.IdShort</td>
-                            <td>@aasDB.AssetKind</td>
+                            <td style="font-size:small">@AasContext.SerializeElement(aasDB.Administration)</td>
+                            <td style="font-size:small">@AasContext.SerializeList(aasDB.DataSpecifications)</td>
+                            <td>@AasContext.SerializeElement(aasDB.AssetKind)</td>
                             <td>@aasDB.GlobalAssetId</td>
-                            <td style="word-break:keep-all;color:lightgray;font-size:x-small">
-                                @($"UPDATE {TimeStamp.DateTimeToString(aasDB.TimeStamp)}")<br/>
-                                @($"CREATE {TimeStamp.DateTimeToString(aasDB.TimeStampCreate)}")<br/>
+                            <td>@aasDB.AssetType</td>
+                            <td style="font-size:small">@AasContext.SerializeList(aasDB.SpecificAssetIds)</td>
+                            <td style="font-size:small">@AasContext.SerializeElement(aasDB.DefaultThumbnail)</td>
+                            <td style="width:175px;color:lightgray;font-size:x-small">
+                                @($"CREATE {TimeStamp.DateTimeToString(aasDB.TimeStampCreate)}")<br />
+                                @($"UPDATE {TimeStamp.DateTimeToString(aasDB.TimeStamp)}")<br />
                                 @($"TREE {TimeStamp.DateTimeToString(aasDB.TimeStampTree)}")<br />
                                 @($"DELETE {TimeStamp.DateTimeToString(aasDB.TimeStampDelete)}")
                             </td>
@@ -361,8 +381,8 @@
                                 <a href="@($"{shorturl}/aasx?aasxid={aasDB.AASXId}")" target="_blank">aasx </a>
                                 <a href="@($"{shorturl}/sm?aasid={aasDB.Id}")" target="_blank">sm</a>
                             </td>
-                            <td>
-                                <a href="@link" target="_blank">@link</a>
+                            <td style="word-break:keep-all">
+                                <a href="@link" target="_blank">api</a>
                             </td>
                         </tr>
                     }
@@ -379,30 +399,50 @@
                         var    aasDB = data[ i ];
                         var aas64 = Base64UrlEncoder.Encode(aasDB.Identifier);
                         var link  = $"{AasxServer.Program.externalBlazor}/shells/{aas64}";
+
+                        
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@aasDB.AASXId</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>
                             <b>@aasDB.Id</b>
                         </span>
-                        <span smDB="background-color:blue;">&nbsp</span>
-                        <span>@aasDB.Identifier</span>
-                        <span smDB="background-color:blue;">&nbsp</span>
+                        <span style="background-color:blue;">&nbsp</span>
                         <span>@aasDB.IdShort</span>
-                        <span smDB="background-color:blue;">&nbsp</span>
-                        <span>@aasDB.AssetKind</span>
-                        <span smDB="background-color:blue;">&nbsp</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeList(aasDB.DisplayName)</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@aasDB.Category</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeList(aasDB.Description)</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeList(aasDB.Extensions)</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@aasDB.Identifier</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeElement(aasDB.Administration)</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeList(aasDB.DataSpecifications)</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeElement(aasDB.AssetKind)</span>
+                        <span style="background-color:blue;">&nbsp</span>
                         <span>@aasDB.GlobalAssetId</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@($"UPDATE {TimeStamp.DateTimeToString(aasDB.TimeStamp)}")</span>
+                        <span>@aasDB.AssetType</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeList(aasDB.SpecificAssetIds)</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeElement(aasDB.DefaultThumbnail)</span>
+                        <span style="background-color:blue;">&nbsp</span>
                         <span>@($"CREATE {TimeStamp.DateTimeToString(aasDB.TimeStampCreate)}")</span>
+                        <span>@($"UPDATE {TimeStamp.DateTimeToString(aasDB.TimeStamp)}")</span>
                         <span>@($"TREE {TimeStamp.DateTimeToString(aasDB.TimeStampTree)}")</span>
                         <span>@($"DELETE {TimeStamp.DateTimeToString(aasDB.TimeStampDelete)}")</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <a href="@($"{shorturl}/aasx?aasxid={aasDB.AASXId}")" target="_blank">aasx </a>
                         <a href="@($"{shorturl}/sm?aasid={aasDB.Id}")" target="_blank">sm</a>
                         <span style="background-color:blue;">&nbsp</span>
-                        <a href="@link" target="_blank">@link</a>
+                        <a href="@link" target="_blank">api</a>
                         <br/>
                     }
 
@@ -435,10 +475,19 @@
                         <th style="word-break:keep-all">AASX#</th>
                         <th style="word-break:keep-all">AAS#</th>
                         <th style="word-break:keep-all">SM#</th>
-                        <th style="word-break:keep-all">Id</th>
-                        <th style="word-break:keep-all">IdShort</th>
-                        <th style="word-break:keep-all">SemanticId</th>
-                        <th style="word-break:keep-all">TimeStamp</th>
+                        <th style="word-break:keep-all">Id Short</th>
+                        <th style="word-break:keep-all">Display Name</th>
+                        <th style="word-break:keep-all">Category</th>
+                        <th style="word-break:keep-all">Description</th>
+                        <th style="word-break:keep-all">Extensions</th>
+                        <th style="word-break:keep-all">Identifier</th>
+                        <th style="word-break:keep-all">Administration</th>
+                        <th style="word-break:keep-all">Kind</th>
+                        <th style="word-break:keep-all">Semantic Id</th>
+                        <th style="word-break:keep-all">Supplemental Semantic Ids</th>
+                        <th style="word-break:keep-all">Qualifiers</th>
+                        <th style="word-break:keep-all">Data Specifications</th>
+                        <th style="word-break:keep-all">Time Stamp</th>
                         <th style="word-break:keep-all">Links</th>
                         <th style="word-break:keep-all">API</th>
                     </tr>
@@ -457,12 +506,21 @@
                             <td style="word-break:keep-all">
                                 <b>@smDB.Id</b>
                             </td>
+                            <td style="word-break:keep-all;max-width:200px">@smDB.IdShort</td>
+                            <td style="font-size:small">@AasContext.SerializeList(smDB.DisplayName)</td>
+                            <td style="word-break:keep-all">@smDB.Category</td>
+                            <td style="font-size:small">@AasContext.SerializeList(smDB.Description)</td>
+                            <td style="font-size:small">@AasContext.SerializeList(smDB.Extensions)</td>
                             <td>@smDB.Identifier</td>
-                            <td>@smDB.IdShort</td>
+                            <td style="font-size:small">@AasContext.SerializeElement(smDB.Administration)</td>
+                            <td style="word-break:keep-all">@AasContext.SerializeElement(smDB.Kind)</td>
                             <td>@smDB.SemanticId</td>
-                            <td style="word-break:keep-all;color:lightgray;font-size:x-small">
-                                @($"UPDATE {TimeStamp.DateTimeToString(smDB.TimeStamp)}")<br/>
+                            <td style="font-size:small">@AasContext.SerializeList(smDB.SupplementalSemanticIds)</td>
+                            <td style="font-size:small">@AasContext.SerializeList(smDB.Qualifiers)</td>
+                            <td style="font-size:small">@AasContext.SerializeList(smDB.DataSpecifications)</td>
+                            <td style="width:175px;color:lightgray;font-size:x-small">
                                 @($"CREATE {TimeStamp.DateTimeToString(smDB.TimeStampCreate)}")<br/>
+                                @($"UPDATE {TimeStamp.DateTimeToString(smDB.TimeStamp)}")<br/>
                                 @($"TREE {TimeStamp.DateTimeToString(smDB.TimeStampTree)}")<br />
                                 @($"DELETE {TimeStamp.DateTimeToString(smDB.TimeStampDelete)}")
                             </td>
@@ -471,8 +529,8 @@
                                 <a href="@($"{shorturl}/aas?aasid={smDB.AASId}")" target="_blank">aas </a>
                                 <a href="@($"{shorturl}/sme?smid={smDB.Id}")" target="_blank">sme:@(smeCount)</a>
                             </td>
-                            <td>
-                                <a href="@link" target="_blank">@link</a>
+                            <td style="word-break:keep-all">
+                                <a href="@link" target="_blank">api</a>
                             </td>
                         </tr>
                     }
@@ -490,31 +548,50 @@
                         var submodel64 = Base64UrlEncoder.Encode(smDB.Identifier);
                         var link       = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}";
                         var smeCount   = db.SMESets.Where(sme => sme.SMId == smDB.Id).Count();
+
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smDB.AASXId</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smDB.AASId</span>
-                        <span smDB="background-color:blue;">&nbsp</span>
+                            <span style="background-color:blue;">&nbsp</span>
                         <span>
                             <b>@smDB.Id</b>
                         </span>
-                        <span smDB="background-color:blue;">&nbsp</span>
-                        <span>@smDB.Identifier</span>
-                        <span smDB="background-color:blue;">&nbsp</span>
+                        <span style="background-color:blue;">&nbsp</span>
                         <span>@smDB.IdShort</span>
-                        <span smDB="background-color:blue;">&nbsp</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeList(smDB.DisplayName)</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smDB.Category</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeList(smDB.Description)</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeList(smDB.Extensions)</span>
+                            <span style="background-color:blue;">&nbsp</span>
+                        <span>@smDB.Identifier</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeElement(smDB.Administration)</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeElement(smDB.Kind)</span>
+                        <span style="background-color:blue;">&nbsp</span>
                         <span>@smDB.SemanticId</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@($"UPDATE {TimeStamp.DateTimeToString(smDB.TimeStamp)}")</span>
+                        <span>@AasContext.SerializeList(smDB.SupplementalSemanticIds)</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeList(smDB.Qualifiers)</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeList(smDB.DataSpecifications)</span>
+                        <span style="background-color:blue;">&nbsp</span>
                         <span>@($"CREATE {TimeStamp.DateTimeToString(smDB.TimeStampCreate)}")</span>
+                        <span>@($"UPDATE {TimeStamp.DateTimeToString(smDB.TimeStamp)}")</span>
                         <span>@($"TREE {TimeStamp.DateTimeToString(smDB.TimeStampTree)}")</span>
-                            <span>@($"DELETE {TimeStamp.DateTimeToString(smDB.TimeStampDelete)}")</span>
+                        <span>@($"DELETE {TimeStamp.DateTimeToString(smDB.TimeStampDelete)}")</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <a href="@($"{shorturl}/aasx?aasxid={smDB.AASXId}")" target="_blank">aasx </a>
                         <a href="@($"{shorturl}/aas?aasid={smDB.AASId}")" target="_blank">aas </a>
                         <a href="@($"{shorturl}/sme?smid={smDB.Id}")" target="_blank">sme:@(smeCount)</a>
                         <span style="background-color:blue;">&nbsp</span>
-                        <a href="@link" target="_blank">@link</a>
+                        <a href="@link" target="_blank">api</a>
                         <br/>
                     }
 
@@ -684,8 +761,8 @@
                                 }
                             </td>
                             <td style="width:175px;color:lightgray;font-size:x-small">
-                                @($"UPDATE {TimeStamp.DateTimeToString(smeDB.TimeStamp)}")<br/>
                                 @($"CREATE {TimeStamp.DateTimeToString(smeDB.TimeStampCreate)}")<br/>
+                                @($"UPDATE {TimeStamp.DateTimeToString(smeDB.TimeStamp)}")<br/>
                                 @($"TREE {TimeStamp.DateTimeToString(smeDB.TimeStampTree)}")<br />
                                 @($"DELETE {TimeStamp.DateTimeToString(smeDB.TimeStampDelete)}")
                             </td>
@@ -837,8 +914,8 @@
                             }
                         </span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@($"UPDATE {TimeStamp.DateTimeToString(smeDB.TimeStamp)}")</span>
                         <span>@($"CREATE {TimeStamp.DateTimeToString(smeDB.TimeStampCreate)}")</span>
+                        <span>@($"UPDATE {TimeStamp.DateTimeToString(smeDB.TimeStamp)}")</span>
                         <span>@($"TREE {TimeStamp.DateTimeToString(smeDB.TimeStampTree)}")</span>
                         <span>@($"DELETE {TimeStamp.DateTimeToString(smeDB.TimeStampDelete)}")</span>
                         <span style="background-color:blue;">&nbsp</span>

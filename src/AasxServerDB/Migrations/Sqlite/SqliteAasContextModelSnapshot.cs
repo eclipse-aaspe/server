@@ -26,16 +26,46 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Property<int>("AASXId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Administration")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("AssetKind")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AssetType")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Category")
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DataSpecifications")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DefaultThumbnail")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DisplayName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Extensions")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("GlobalAssetId")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("IdShort")
+                        .HasMaxLength(128)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Identifier")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SpecificAssetIds")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("TimeStamp")
@@ -247,13 +277,45 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Property<int>("AASXId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Administration")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Category")
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DataSpecifications")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DisplayName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Extensions")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("IdShort")
+                        .HasMaxLength(128)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Identifier")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Kind")
+                        .HasMaxLength(8)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Qualifiers")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SemanticId")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SupplementalSemanticIds")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("TimeStamp")

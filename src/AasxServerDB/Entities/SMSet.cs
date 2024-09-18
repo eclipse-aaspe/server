@@ -1,8 +1,11 @@
-using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
-
 namespace AasxServerDB.Entities
 {
+    using System.ComponentModel.DataAnnotations;
+    using System.ComponentModel.DataAnnotations.Schema;
+    using AasCore.Aas3_0;
+    using Microsoft.EntityFrameworkCore;
+
+    // indexes
     [Index(nameof(Id))]
     [Index(nameof(AASXId))]
     [Index(nameof(AASId))]
@@ -12,25 +15,45 @@ namespace AasxServerDB.Entities
 
     public class SMSet
     {
-        public int Id { get; set; }
-
+        // aasx
         [ForeignKey("AASXSet")]
-        public int AASXId { get; set; }
+        public         int      AASXId  { get; set; }
         public virtual AASXSet? AASXSet { get; set; }
 
+        // aas
         [ForeignKey("AASSet")]
-        public int? AASId { get; set; }
+        public         int?    AASId  { get; set; }
         public virtual AASSet? AASSet { get; set; }
 
-        public string? SemanticId { get; set; }
-        public string? Identifier { get; set; }
-        public string? IdShort { get; set; }
+        // id
+        public int Id { get; set; }
 
+        // attributes
+        [StringLength(128)]
+        public string?                           IdShort                 { get; set; }
+        public List<ILangStringNameType>?        DisplayName             { get; set; }
+        [StringLength(128)]
+        public string?                           Category                { get; set; }
+        public List<ILangStringTextType>?        Description             { get; set; }
+        public List<IExtension>?                 Extensions              { get; set; }
+        [MaxLength(2000)]
+        public string?                           Identifier              { get; set; }
+        public IAdministrativeInformation?       Administration          { get; set; }
+        [StringLength(8)]
+        public ModellingKind?                    Kind                    { get; set; }
+        [MaxLength(2000)]
+        public string?                           SemanticId              { get; set; } // change to save the rest of the reference
+        public List<IReference>?                 SupplementalSemanticIds { get; set; }
+        public List<IQualifier>?                 Qualifiers              { get; set; }
+        public List<IEmbeddedDataSpecification>? DataSpecifications      { get; set; }
+
+        // time stamp
         public DateTime TimeStampCreate { get; set; }
-        public DateTime TimeStamp { get; set; }
-        public DateTime TimeStampTree { get; set; }
+        public DateTime TimeStamp       { get; set; }
+        public DateTime TimeStampTree   { get; set; }
         public DateTime TimeStampDelete { get; set; }
 
+        // sme
         public virtual ICollection<SMESet> SMESets { get; } = new List<SMESet>();
     }
 }

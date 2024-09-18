@@ -1,23 +1,16 @@
-using AasCore.Aas3_0;
-using AdminShellNS;
-using static AasCore.Aas3_0.Visitation;
-using Extensions;
-using System.IO.Compression;
-using Microsoft.IdentityModel.Tokens;
-using AasxServerDB.Entities;
-using System.Text;
-using System.Data;
-using Nodes = System.Text.Json.Nodes;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using System.Runtime.InteropServices.JavaScript;
-using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics.X86;
-using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Nodes;
-using System.Collections.Generic;
-
 namespace AasxServerDB
 {
+    using AasCore.Aas3_0;
+    using AdminShellNS;
+    using static AasCore.Aas3_0.Visitation;
+    using Extensions;
+    using System.IO.Compression;
+    using Microsoft.IdentityModel.Tokens;
+    using AasxServerDB.Entities;
+    using System.Text;
+    using Nodes = System.Text.Json.Nodes;
+    using System.Collections.Generic;
+
     public class VisitorAASX : VisitorThrough
     {
         private AASXSet? _aasxDB;
@@ -415,11 +408,6 @@ namespace AasxServerDB
         private SMESet CollectSMEData(ISubmodelElement sme)
         {
             var currentDataTime = DateTime.UtcNow;
-            var timeStampCreate = (sme.TimeStampCreate == default) ? currentDataTime : sme.TimeStampCreate;
-            var timeStamp = (sme.TimeStamp == default) ? currentDataTime : sme.TimeStamp;
-            var timeStampTree = (sme.TimeStampTree == default) ? currentDataTime : sme.TimeStampTree;
-            var timeStampDelete = (sme.TimeStampDelete == default) ? currentDataTime : sme.TimeStampDelete;
-
             var smeDB = new SMESet()
             {
                 ParentSME               = _parSME,
@@ -433,11 +421,10 @@ namespace AasxServerDB
                 SupplementalSemanticIds = sme.SupplementalSemanticIds,
                 Qualifiers              = sme.Qualifiers,
                 DataSpecifications      = sme.EmbeddedDataSpecifications,
-                TValue                  = string.Empty,
-                TimeStampCreate         = timeStampCreate,
-                TimeStamp               = timeStamp,
-                TimeStampTree           = timeStampTree,
-                TimeStampDelete         = timeStampDelete
+                TimeStampCreate         = sme.TimeStampCreate == default ? currentDataTime : sme.TimeStampCreate,
+                TimeStamp               = sme.TimeStamp       == default ? currentDataTime : sme.TimeStamp,
+                TimeStampTree           = sme.TimeStampTree   == default ? currentDataTime : sme.TimeStampTree,
+                TimeStampDelete         = sme.TimeStampDelete == default ? currentDataTime : sme.TimeStampDelete
             };
             SetValues(sme, smeDB);
             _smDB?.SMESets.Add(smeDB);
@@ -460,23 +447,28 @@ namespace AasxServerDB
         public override void VisitAssetAdministrationShell(IAssetAdministrationShell that)
         {
             var currentDataTime = DateTime.UtcNow;
-            var timeStamp = (that.TimeStamp == default) ? currentDataTime : that.TimeStamp;
-            var timeStampCreate = (that.TimeStampCreate == default) ? currentDataTime : that.TimeStampCreate;
-            var timeStampTree = (that.TimeStampTree == default) ? currentDataTime : that.TimeStampTree;
-            var timeStampDelete = (that.TimeStampDelete == default) ? currentDataTime : that.TimeStampDelete;
-
-            var aasDB = new AASSet
-                        {
-                            Identifier      = that.Id,
-                            IdShort         = that.IdShort,
-                            AssetKind       = that.AssetInformation.AssetKind.ToString(),
-                            GlobalAssetId   = that.AssetInformation.GlobalAssetId,
-                            TimeStamp       = timeStamp,
-                            TimeStampCreate = timeStampCreate,
-                            TimeStampTree   = timeStampTree,
-                            TimeStampDelete = timeStampDelete
-                        };
-            _aasxDB.AASSets.Add(aasDB);
+            var aasDB = new AASSet()
+            {
+                IdShort             = that.IdShort,
+                DisplayName         = that.DisplayName,
+                Category            = that.Category,
+                Description         = that.Description,
+                Extensions          = that.Extensions,
+                Identifier          = that.Id,
+                Administration      = that.Administration,
+                DataSpecifications  = that.EmbeddedDataSpecifications,
+                // derivedFrom
+                AssetKind           = that.AssetInformation?.AssetKind,
+                SpecificAssetIds    = that.AssetInformation?.SpecificAssetIds,
+                GlobalAssetId       = that.AssetInformation?.GlobalAssetId,
+                AssetType           = that.AssetInformation?.AssetType,
+                DefaultThumbnail    = that.AssetInformation?.DefaultThumbnail,
+                TimeStampCreate     = that.TimeStampCreate == default ? currentDataTime : that.TimeStampCreate,
+                TimeStamp           = that.TimeStamp       == default ? currentDataTime : that.TimeStamp,
+                TimeStampTree       = that.TimeStampTree   == default ? currentDataTime : that.TimeStampTree,
+                TimeStampDelete     = that.TimeStampDelete == default ? currentDataTime : that.TimeStampDelete
+            };
+            _aasxDB?.AASSets.Add(aasDB);
             base.VisitAssetAdministrationShell(that);
         }
         public override void VisitAssetInformation(IAssetInformation that)
@@ -494,26 +486,26 @@ namespace AasxServerDB
         public override void VisitSubmodel(ISubmodel that)
         {
             var currentDataTime = DateTime.UtcNow;
-            var timeStamp = (that.TimeStamp == default) ? currentDataTime : that.TimeStamp;
-            var timeStampCreate = (that.TimeStampCreate == default) ? currentDataTime : that.TimeStampCreate;
-            var timeStampTree = (that.TimeStampTree == default) ? currentDataTime : that.TimeStampTree;
-            var timeStampDelete = (that.TimeStampDelete == default) ? currentDataTime : that.TimeStampDelete;
-
-            var semanticId = that.SemanticId.GetAsIdentifier();
-            if (semanticId.IsNullOrEmpty())
-                semanticId = string.Empty;
-
-            _smDB = new SMSet
-                    {
-                        SemanticId      = semanticId,
-                        Identifier      = that.Id,
-                        IdShort         = that.IdShort,
-                        TimeStamp       = timeStamp,
-                        TimeStampCreate = timeStampCreate,
-                        TimeStampTree   = timeStampTree,
-                        TimeStampDelete = timeStampDelete
-                    };
-            _aasxDB.SMSets.Add(_smDB);
+            _smDB = new SMSet()
+            {
+                IdShort                 = that.IdShort,
+                DisplayName             = that.DisplayName,
+                Category                = that.Category,
+                Description             = that.Description,
+                Extensions              = that.Extensions,
+                Identifier              = that.Id,
+                Administration          = that.Administration,
+                Kind                    = that.Kind,
+                SemanticId              = that.SemanticId?.GetAsIdentifier(),
+                SupplementalSemanticIds = that.SupplementalSemanticIds,
+                Qualifiers              = that.Qualifiers,
+                DataSpecifications      = that.EmbeddedDataSpecifications,
+                TimeStampCreate         = that.TimeStampCreate == default ? currentDataTime : that.TimeStampCreate,
+                TimeStamp               = that.TimeStamp       == default ? currentDataTime : that.TimeStamp,
+                TimeStampTree           = that.TimeStampTree   == default ? currentDataTime : that.TimeStampTree,
+                TimeStampDelete         = that.TimeStampDelete == default ? currentDataTime : that.TimeStampDelete
+            };
+            _aasxDB?.SMSets.Add(_smDB);
             base.VisitSubmodel(that);
         }
         public override void VisitRelationshipElement(IRelationshipElement that)

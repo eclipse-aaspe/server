@@ -25,7 +25,7 @@ namespace AasxServerDB
                     (searchLower.IsNullOrEmpty() ||
                     (a.IdShort != null && a.IdShort.ToLower().Contains(searchLower)) ||
                     (a.Identifier != null && a.Identifier.ToLower().Contains(searchLower)) ||
-                    (a.AssetKind != null && a.AssetKind.ToLower().Contains(searchLower)) ||
+                    //(a.AssetKind != null && a.AssetKind.ToLower().Contains(searchLower)) ||
                     (a.GlobalAssetId != null && a.GlobalAssetId.ToLower().Contains(searchLower)) ||
                     (withDateTime && a.TimeStampTree.CompareTo(dateTime) > 0)))
                 .Take(size)

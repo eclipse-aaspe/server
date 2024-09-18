@@ -1,54 +1,66 @@
-using System.Text;
-using AasCore.Aas3_0;
-using AasxServerDB.Entities;
-using AdminShellNS;
-using Extensions;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
-using Nodes = System.Text.Json.Nodes;
-
 namespace AasxServerDB
 {
+    using System.Text;
+    using AasCore.Aas3_0;
+    using AasxServerDB.Entities;
+    using AdminShellNS;
+    using Extensions;
+    using Microsoft.IdentityModel.Tokens;
+    using Nodes = System.Text.Json.Nodes;
+
     public class Converter
     {
         public static AdminShellPackageEnv? GetPackageEnv(string path, AASSet? aasDB)
         {
-            using (AasContext db = new AasContext())
+            if (path.IsNullOrEmpty() || aasDB == null)
+                return null;
+
+            var aas = new AssetAdministrationShell(
+                idShort: aasDB.IdShort,
+                displayName: aasDB.DisplayName,
+                category: aasDB.Category,
+                description: aasDB.Description,
+                extensions: aasDB.Extensions,
+                id: aasDB.Identifier,
+                administration: aasDB.Administration,
+                embeddedDataSpecifications: aasDB.DataSpecifications,
+                assetInformation: new AssetInformation(
+                    assetKind: aasDB.AssetKind != null ? (AssetKind)aasDB.AssetKind : AssetKind.Instance,
+                    specificAssetIds: aasDB.SpecificAssetIds,
+                    globalAssetId: aasDB.GlobalAssetId,
+                    assetType: aasDB.AssetType,
+                    defaultThumbnail: aasDB.DefaultThumbnail
+                ),
+                submodels: new List<IReference>()
+            )
             {
-                if (path.IsNullOrEmpty() || aasDB == null)
-                    return null;
+                TimeStampCreate = aasDB.TimeStampCreate,
+                TimeStamp = aasDB.TimeStamp,
+                TimeStampTree = aasDB.TimeStampTree,
+                TimeStampDelete = aasDB.TimeStampDelete
+            };
 
-                AssetAdministrationShell aas = new AssetAdministrationShell(
-                    id: aasDB.Identifier,
-                    idShort: aasDB.IdShort,
-                    assetInformation: new AssetInformation(AssetKind.Type, aasDB.GlobalAssetId),
-                    submodels: new List<AasCore.Aas3_0.IReference>());
-                aas.TimeStampCreate = aasDB.TimeStampCreate;
-                aas.TimeStamp = aasDB.TimeStamp;
-                aas.TimeStampTree = aasDB.TimeStampTree;
-                aas.TimeStampDelete = aasDB.TimeStampDelete;
+            var aasEnv = new AdminShellPackageEnv();
+            aasEnv.SetFilename(path);
+            aasEnv.AasEnv?.AssetAdministrationShells?.Add(aas);
 
-                AdminShellPackageEnv? aasEnv = new AdminShellPackageEnv();
-                aasEnv.SetFilename(path);
-                aasEnv.AasEnv.AssetAdministrationShells?.Add(aas);
-
-                var submodelDBList = db.SMSets
-                    .OrderBy(sm => sm.Id)
-                    .Where(sm => sm.AASId == aasDB.Id)
-                    .ToList();
-                foreach (var sm in submodelDBList.Select(submodelDB => Converter.GetSubmodel(smDB:submodelDB)))
-                {
-                    aas.Submodels?.Add(sm.GetReference());
-                    aasEnv.AasEnv.Submodels?.Add(sm);
-                }
-
-                return aasEnv;
+            var db = new AasContext();
+            var submodelDBList = db.SMSets
+                .OrderBy(sm => sm.Id)
+                .Where(sm => sm.AASId == aasDB.Id)
+                .ToList();
+            foreach (var sm in submodelDBList.Select(selector: submodelDB => GetSubmodel(smDB: submodelDB)))
+            {
+                aas.Submodels?.Add(sm.GetReference());
+                aasEnv.AasEnv?.Submodels?.Add(sm);
             }
+
+            return aasEnv;
         }
 
         public static Submodel? GetSubmodel(SMSet? smDB = null, string smIdentifier = "")
         {
-            using (AasContext db = new AasContext())
+            using (var db = new AasContext())
             {
                 if (!smIdentifier.IsNullOrEmpty())
                 {
@@ -66,17 +78,28 @@ namespace AasxServerDB
                     .Where(sme => sme.SMId == smDB.Id)
                     .ToList();
 
-                var submodel = new Submodel(smDB.Identifier);
-                submodel.IdShort = smDB.IdShort;
-                submodel.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
-                    new List<IKey>() { new Key(KeyTypes.GlobalReference, smDB.SemanticId) });
-                submodel.SubmodelElements = new List<ISubmodelElement>();
+                var submodel = new Submodel(
+                    idShort: smDB.IdShort,
+                    displayName: smDB.DisplayName,
+                    category: smDB.Category,
+                    description: smDB.Description,
+                    extensions: smDB.Extensions,
+                    id: smDB.Identifier,
+                    administration: smDB.Administration,
+                    kind: smDB.Kind,
+                    semanticId: !smDB.SemanticId.IsNullOrEmpty() ?
+                        new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, smDB.SemanticId) }) : null,
+                    supplementalSemanticIds: smDB.SupplementalSemanticIds,
+                    qualifiers: smDB.Qualifiers,
+                    embeddedDataSpecifications: smDB.DataSpecifications,
+                    submodelElements: new List<ISubmodelElement>()
+                );
 
                 LoadSME(submodel, null, null, SMEList);
 
                 submodel.TimeStampCreate = smDB.TimeStampCreate;
-                submodel.TimeStamp = smDB.TimeStamp;
-                submodel.TimeStampTree = smDB.TimeStampTree;
+                submodel.TimeStamp       = smDB.TimeStamp;
+                submodel.TimeStampTree   = smDB.TimeStampTree;
                 submodel.TimeStampDelete = smDB.TimeStampDelete;
                 submodel.SetAllParents();
 
@@ -214,7 +237,7 @@ namespace AasxServerDB
                 case "Ent":
                     var spec = new List<ISpecificAssetId>();
                     if (oValue.ContainsKey("SpecificAssetIds"))
-                        foreach (var item in (Nodes.JsonArray) oValue["SpecificAssetIds"])
+                        foreach (var item in (Nodes.JsonArray)oValue["SpecificAssetIds"])
                             spec.Add(Jsonization.Deserialize.SpecificAssetIdFrom(item));
                     sme = new Entity(
                         statements: new List<ISubmodelElement>(),
@@ -244,19 +267,19 @@ namespace AasxServerDB
             if (sme == null)
                 return null;
 
-            sme.IdShort = smeSet.IdShort;
-            sme.DisplayName = smeSet.DisplayName;
-            sme.Category = smeSet.Category;
-            sme.Description = smeSet.Description;
-            sme.Extensions = smeSet.Extensions;
-            sme.SemanticId = !smeSet.SemanticId.IsNullOrEmpty() ?
+            sme.IdShort         = smeSet.IdShort;
+            sme.DisplayName     = smeSet.DisplayName;
+            sme.Category        = smeSet.Category;
+            sme.Description     = smeSet.Description;
+            sme.Extensions      = smeSet.Extensions;
+            sme.SemanticId      = !smeSet.SemanticId.IsNullOrEmpty() ?
                 new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, smeSet.SemanticId) }) : null;
             sme.SupplementalSemanticIds = smeSet.SupplementalSemanticIds;
-            sme.Qualifiers = smeSet.Qualifiers;
+            sme.Qualifiers      = smeSet.Qualifiers;
             sme.EmbeddedDataSpecifications = smeSet.DataSpecifications;
             sme.TimeStampCreate = smeSet.TimeStampCreate;
-            sme.TimeStamp = smeSet.TimeStamp;
-            sme.TimeStampTree = smeSet.TimeStampTree;
+            sme.TimeStamp       = smeSet.TimeStamp;
+            sme.TimeStampTree   = smeSet.TimeStampTree;
             sme.TimeStampDelete = smeSet.TimeStampDelete;
             return sme;
         }

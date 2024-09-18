@@ -58,7 +58,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                 ad.GlobalAssetId = globalAssetId;
                 //
                 ad.SpecificAssetIds = new List<SpecificAssetId>();
-                var specificAssetId = new SpecificAssetId("AssetKind", aasDB.AssetKind, externalSubjectId: new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, "assetKind") }));
+                var specificAssetId = new SpecificAssetId("AssetKind", AasContext.SerializeElement(aasDB.AssetKind), externalSubjectId: new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, "assetKind") }));
                 ad.SpecificAssetIds.Add(specificAssetId);
 
                 // Submodels
