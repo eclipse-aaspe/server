@@ -89,6 +89,24 @@ namespace AasxServerDB
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<AASSet>()
+                .Property(e => e.Extensions)
+                .HasConversion(
+                    v => v.ToJsonString(null),
+                    v => JsonNode.Parse(v, null, default).AsArray());
+
+            modelBuilder.Entity<SMSet>()
+                .Property(e => e.Extensions)
+                .HasConversion(
+                    v => v.ToJsonString(null),
+                    v => JsonNode.Parse(v, null, default).AsArray());
+
+            modelBuilder.Entity<SMESet>()
+                .Property(e => e.Extensions)
+                .HasConversion(
+                    v => v.ToJsonString(null),
+                    v => JsonNode.Parse(v, null, default).AsArray());
+
             modelBuilder.Entity<OValueSet>()
                 .Property(e => e.Value)
                 .HasConversion(
