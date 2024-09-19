@@ -53,6 +53,7 @@ namespace Events
     }
     public class EventPayload
     {
+        public static object EventLock = new object();
         public EventStatus status { get; set; }
         public string statusData { get; set; } // application status data, continuously sent, can be used for specific reconnect
         public List<EventPayloadEntry> eventEntries { get; set; }
@@ -214,88 +215,91 @@ namespace Events
                 }
             }
 
-            if (referable != null)
+            lock (EventLock)
             {
-                var entry = new EventPayloadEntry();
-                var idShortPath = "";
-                Submodel submodel = null;
-                List<ISubmodelElement> children = null;
-                if (referable is Submodel)
+                if (referable != null)
                 {
-                    submodel = referable as Submodel;
-                    children = submodel.SubmodelElements;
-                    entry.submodelId = submodel.Id;
-                    entry.payloadType = "submodel";
-                }
-                else
-                {
-                    if (referable is SubmodelElementCollection smc)
+                    var entry = new EventPayloadEntry();
+                    var idShortPath = "";
+                    Submodel submodel = null;
+                    List<ISubmodelElement> children = null;
+                    if (referable is Submodel)
                     {
-                        children = smc.Value;
-                    }
-                    if (referable is SubmodelElementList sml)
-                    {
-                        children = sml.Value;
-                    }
-                    var r = referable;
-                    while (r.Parent != null)
-                    {
-                        idShortPath = r.IdShort + "." + idShortPath;
-                        r = r.Parent as IReferable;
-                    }
-                    if (r is Submodel)
-                    {
-                        submodel = r as Submodel;
+                        submodel = referable as Submodel;
+                        children = submodel.SubmodelElements;
                         entry.submodelId = submodel.Id;
+                        entry.payloadType = "submodel";
                     }
-                    entry.payloadType = "sme";
-                    idShortPath = referable.IdShort + ".";
-                }
-
-                e.status.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(referable.TimeStampTree);
-
-                if (isInitial)
-                {
-                    string json = string.Empty;
-                    if (referable != null)
+                    else
                     {
-                        var j = Jsonization.Serialize.ToJsonObject(referable);
-                        json = j.ToJsonString();
+                        if (referable is SubmodelElementCollection smc)
+                        {
+                            children = smc.Value;
+                        }
+                        if (referable is SubmodelElementList sml)
+                        {
+                            children = sml.Value;
+                        }
+                        var r = referable;
+                        while (r.Parent != null)
+                        {
+                            idShortPath = r.IdShort + "." + idShortPath;
+                            r = r.Parent as IReferable;
+                        }
+                        if (r is Submodel)
+                        {
+                            submodel = r as Submodel;
+                            entry.submodelId = submodel.Id;
+                        }
+                        entry.payloadType = "sme";
+                        idShortPath = referable.IdShort + ".";
                     }
 
-                    entry.entryType = "CREATE";
                     e.status.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(referable.TimeStampTree);
-                    if (!noPayload)
+
+                    if (isInitial)
                     {
-                        entry.payload = json;
-                    }
-                    entry.lastUpdate = e.status.lastUpdate;
-                    entry.idShortPath = idShortPath.TrimEnd('.');
-                    e.eventEntries.Add(entry);
-                }
-                else
-                {
-                    var diffTime = DateTime.Parse(diff);
-                    if (changes == null || changes.Contains("CREATE"))
-                    {
-                        collectSubmodelElements(children, diffTime, "CREATE", submodel.Id, idShortPath, e.eventEntries, diffEntry, noPayload);
-                    }
-                    if (changes == null || changes.Contains("DELETE"))
-                    {
-                        if (!(referable is Submodel))
+                        string json = string.Empty;
+                        if (referable != null)
                         {
-                            children = new List<ISubmodelElement>();
-                            children.Add(referable as ISubmodelElement);
-                            collectSubmodelElements(children, diffTime, "DELETE", submodel.Id, "", e.eventEntries, diffEntry, noPayload);
+                            var j = Jsonization.Serialize.ToJsonObject(referable);
+                            json = j.ToJsonString();
                         }
-                        else
+
+                        entry.entryType = "CREATE";
+                        e.status.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(referable.TimeStampTree);
+                        if (!noPayload)
                         {
-                            collectSubmodelElements(children, diffTime, "DELETE", submodel.Id, idShortPath, e.eventEntries, diffEntry, noPayload);
+                            entry.payload = json;
                         }
+                        entry.lastUpdate = e.status.lastUpdate;
+                        entry.idShortPath = idShortPath.TrimEnd('.');
+                        e.eventEntries.Add(entry);
                     }
-                    if (changes == null || changes.Contains("UPDATE"))
+                    else
                     {
-                        collectSubmodelElements(children, diffTime, "UPDATE", submodel.Id, idShortPath, e.eventEntries, diffEntry, noPayload);
+                        var diffTime = DateTime.Parse(diff);
+                        if (changes == null || changes.Contains("CREATE"))
+                        {
+                            collectSubmodelElements(children, diffTime, "CREATE", submodel.Id, idShortPath, e.eventEntries, diffEntry, noPayload);
+                        }
+                        if (changes == null || changes.Contains("DELETE"))
+                        {
+                            if (!(referable is Submodel))
+                            {
+                                children = new List<ISubmodelElement>();
+                                children.Add(referable as ISubmodelElement);
+                                collectSubmodelElements(children, diffTime, "DELETE", submodel.Id, "", e.eventEntries, diffEntry, noPayload);
+                            }
+                            else
+                            {
+                                collectSubmodelElements(children, diffTime, "DELETE", submodel.Id, idShortPath, e.eventEntries, diffEntry, noPayload);
+                            }
+                        }
+                        if (changes == null || changes.Contains("UPDATE"))
+                        {
+                            collectSubmodelElements(children, diffTime, "UPDATE", submodel.Id, idShortPath, e.eventEntries, diffEntry, noPayload);
+                        }
                     }
                 }
             }
@@ -445,6 +449,10 @@ namespace Events
                 if (referable is SubmodelElementCollection smc)
                 {
                     dataCollection = smc;
+                    if (smc.Value == null)
+                    {
+                        smc.Value = new List<ISubmodelElement>();
+                    }
                     data = smc.Value;
                     children = smc.Value;
                 }
@@ -463,56 +471,59 @@ namespace Events
                 }
             }
 
-            foreach (var entry in eventPayload.eventEntries)
+            lock (EventLock)
             {
-                var submodelId = entry.submodelId;
-                ISubmodel receiveSubmodel = null;
-                IAssetAdministrationShell aas = null;
-
-                if (entry.payloadType == "submodel" && entry.payload != "")
+                foreach (var entry in eventPayload.eventEntries)
                 {
-                    MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(entry.payload));
-                    JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
-                    receiveSubmodel = Jsonization.Deserialize.SubmodelFrom(node);
-                    receiveSubmodel.TimeStampCreate = dt;
-                    receiveSubmodel.SetTimeStamp(dt);
-                    receiveSubmodel.SetAllParents(dt);
+                    var submodelId = entry.submodelId;
+                    ISubmodel receiveSubmodel = null;
+                    IAssetAdministrationShell aas = null;
 
-                    if (receiveSubmodel != null)
+                    if (entry.payloadType == "submodel" && entry.payload != "")
                     {
-                        dataCollection.Value = receiveSubmodel.SubmodelElements;
-                        dataCollection.SetTimeStamp(dt);
-                        return 1;
+                        MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(entry.payload));
+                        JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                        receiveSubmodel = Jsonization.Deserialize.SubmodelFrom(node);
+                        receiveSubmodel.TimeStampCreate = dt;
+                        receiveSubmodel.SetTimeStamp(dt);
+                        receiveSubmodel.SetAllParents(dt);
 
-                        if (index != -1) // submodel exisiting
+                        if (receiveSubmodel != null)
                         {
-                            aasEnv.Submodels.Remove(submodel);
-                            aas = aasEnv.FindAasWithSubmodelId(submodel.Id);
+                            dataCollection.Value = receiveSubmodel.SubmodelElements;
+                            dataCollection.SetTimeStamp(dt);
+                            return 1;
 
-                            // aasEnv.Submodels.Insert(index, receiveSubmodel);
-                            aasEnv.Submodels.Add(receiveSubmodel);
-                            env[index].setWrite(true);
-                            count++;
-                            Console.WriteLine("Event Submodel: " + receiveSubmodel.Id);
-                        }
-                        else
-                        {
-                            return 0;
+                            if (index != -1) // submodel exisiting
+                            {
+                                aasEnv.Submodels.Remove(submodel);
+                                aas = aasEnv.FindAasWithSubmodelId(submodel.Id);
 
-                            index = 0;
-                            aasEnv = env[index].AasEnv;
-                            aas = aasEnv.AssetAdministrationShells[0];
-                            aas.Submodels.Add(receiveSubmodel.GetReference());
+                                // aasEnv.Submodels.Insert(index, receiveSubmodel);
+                                aasEnv.Submodels.Add(receiveSubmodel);
+                                env[index].setWrite(true);
+                                count++;
+                                Console.WriteLine("Event Submodel: " + receiveSubmodel.Id);
+                            }
+                            else
+                            {
+                                return 0;
+
+                                index = 0;
+                                aasEnv = env[index].AasEnv;
+                                aas = aasEnv.AssetAdministrationShells[0];
+                                aas.Submodels.Add(receiveSubmodel.GetReference());
+                            }
                         }
                     }
-                }
 
-                if (entry.payloadType == "sme" && referable != null && (entry.payload != "" || entry.notDeletedIdShortList.Count != 0))
-                {
-                    count += changeSubmodelElement(entry, referable as ISubmodelElement, children, "", diffEntry);
-                    if (count > 0)
+                    if (entry.payloadType == "sme" && referable != null && (entry.payload != "" || entry.notDeletedIdShortList.Count != 0))
                     {
-                        env[packageIndex].setWrite(true);
+                        count += changeSubmodelElement(entry, referable as ISubmodelElement, children, "", diffEntry);
+                        if (count > 0)
+                        {
+                            env[packageIndex].setWrite(true);
+                        }
                     }
                 }
             }
@@ -711,11 +722,11 @@ namespace Events
 
         }
 
-        public static Operation FindEvent(ISubmodel submodel)
+        public static Operation FindEvent(ISubmodel submodel, string eventName)
         {
             foreach (var sme in submodel.SubmodelElements)
             {
-                if (sme is Operation op && sme.IdShort.ToLower().StartsWith("eventelement"))
+                if (sme is Operation op && sme.IdShort == eventName)
                 {
                     return op;
                 }
