@@ -19,7 +19,7 @@ namespace AasxServerDB.Entities
         // id
         public int Id { get; set; }
 
-        // attributes
+        // object value // additional attributes
         public string   Attribute { get; set; }
         public JsonNode Value   { get; set; }
     }

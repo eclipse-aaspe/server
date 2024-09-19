@@ -18,18 +18,18 @@ namespace AasxServerDB.Entities
         // id
         public int Id { get; set; }
 
-        // attributes
+        // concept description
         [StringLength(128)]
-        public string? IdShort { get; set; }
-        public List<ILangStringNameType>? DisplayName { get; set; }
+        public string?                           IdShort            { get; set; }
+        public List<ILangStringNameType>?        DisplayName        { get; set; }
         [StringLength(128)]
-        public string? Category { get; set; }
-        public List<ILangStringTextType>? Description { get; set; }
-        public List<IExtension>? Extensions { get; set; }
+        public string?                           Category           { get; set; }
+        public List<ILangStringTextType>?        Description        { get; set; }
+        public List<IExtension>?                 Extensions         { get; set; }
         [MaxLength(2000)]
-        public string? Identifier { get; set; }
-        public IAdministrativeInformation? Administration { get; set; }
-        public List<IReference>? IsCaseOf { get; set; }
+        public string?                           Identifier         { get; set; }
+        public IAdministrativeInformation?       Administration     { get; set; }
+        public List<IReference>?                 IsCaseOf           { get; set; }
         public List<IEmbeddedDataSpecification>? DataSpecifications { get; set; }
 
         // time stamp

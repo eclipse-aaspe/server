@@ -11,48 +11,58 @@ namespace AasxServerDB
         public static List<EnvSet> GetPageEnvData(int size = 1000, string searchLower = "", long envid = 0)
         {
             return new AasContext().EnvSets
-                .Where(a => (envid == 0 || a.Id == envid) &&
-                (searchLower.IsNullOrEmpty() || a.Path.ToLower().Contains(searchLower)))
+                .Where(a =>
+                    (envid == 0 || a.Id == envid) &&
+                    (searchLower.IsNullOrEmpty() || a.Path.ToLower().Contains(searchLower)))
                 .Take(size)
                 .ToList();
         }
 
         public static List<CDSet> GetPageCDData(int size = 1000, DateTime dateTime = new DateTime(), string searchLower = "", long envid = 0, long cdid = 0)
         {
-            bool withDateTime = !dateTime.Equals(DateTime.MinValue);
+            var withDateTime = !dateTime.Equals(DateTime.MinValue);
             return new AasContext().CDSets
-                .Where(a => (envid == 0 || a.EnvId == envid) && (cdid == 0 || a.Id == cdid) &&
+                .Where(a =>
+                    (envid == 0 || a.EnvId == envid) &&
+                    (cdid == 0 || a.Id == cdid) &&
                     (searchLower.IsNullOrEmpty() ||
-                    (a.IdShort != null && a.IdShort.ToLower().Contains(searchLower)) ||
-                    (a.Identifier != null && a.Identifier.ToLower().Contains(searchLower)) ||
-                    (withDateTime && a.TimeStampTree.CompareTo(dateTime) > 0)))
+                        (a.IdShort != null && a.IdShort.ToLower().Contains(searchLower)) ||
+                        (a.Category != null && a.Category.ToLower().Contains(searchLower)) ||
+                        (a.Identifier != null && a.Identifier.ToLower().Contains(searchLower)) ||
+                        (withDateTime && a.TimeStampTree.CompareTo(dateTime) > 0))
+                    )
                 .Take(size)
                 .ToList();
         }
 
         public static List<AASSet> GetPageAASData(int size = 1000, DateTime dateTime = new DateTime(), string searchLower = "", long envid = 0, long aasid = 0)
         {
-            bool withDateTime = !dateTime.Equals(DateTime.MinValue);
+            var withDateTime = !dateTime.Equals(DateTime.MinValue);
             return new AasContext().AASSets
-                .Where(a => (envid == 0 || a.EnvId == envid) && (aasid == 0 || a.Id == aasid) &&
+                .Where(a =>
+                    (envid == 0 || a.EnvId == envid) &&
+                    (aasid == 0 || a.Id == aasid) &&
                     (searchLower.IsNullOrEmpty() ||
-                    (a.IdShort != null && a.IdShort.ToLower().Contains(searchLower)) ||
-                    (a.Identifier != null && a.Identifier.ToLower().Contains(searchLower)) ||
-                    //(a.AssetKind != null && a.AssetKind.ToLower().Contains(searchLower)) ||
-                    (a.GlobalAssetId != null && a.GlobalAssetId.ToLower().Contains(searchLower)) ||
-                    (withDateTime && a.TimeStampTree.CompareTo(dateTime) > 0)))
+                        (a.IdShort != null && a.IdShort.ToLower().Contains(searchLower)) ||
+                        (a.Category != null && a.IdShort.ToLower().Contains(searchLower)) ||
+                        (a.Identifier != null && a.Identifier.ToLower().Contains(searchLower)) ||
+                        (a.GlobalAssetId != null && a.GlobalAssetId.ToLower().Contains(searchLower)) ||
+                        (a.AssetType != null && a.AssetType.ToLower().Contains(searchLower)) ||
+                        (withDateTime && a.TimeStampTree.CompareTo(dateTime) > 0))
+                    )
                 .Take(size)
                 .ToList();
         }
 
         public static List<SMSet> GetPageSMData(int size = 1000, DateTime dateTime = new DateTime(), string searchLower = "", long envid = 0, long aasid = 0, long smid = 0)
         {
-            bool withDateTime = !dateTime.Equals(DateTime.MinValue);
+            var withDateTime = !dateTime.Equals(DateTime.MinValue);
             return new AasContext().SMSets
                 .Where(s => (envid == 0 || s.EnvId == envid) && (aasid == 0 || s.AASId == aasid) && (smid == 0 || s.Id == smid) &&
                     (searchLower.IsNullOrEmpty() ||
-                    (s.Identifier != null && s.Identifier.ToLower().Contains(searchLower)) ||
                     (s.IdShort != null && s.IdShort.ToLower().Contains(searchLower)) ||
+                    (s.Category != null && s.Category.ToLower().Contains(searchLower)) ||
+                    (s.Identifier != null && s.Identifier.ToLower().Contains(searchLower)) ||
                     (s.SemanticId != null && s.SemanticId.ToLower().Contains(searchLower)) ||
                     (withDateTime && s.TimeStampTree.CompareTo(dateTime) > 0)))
                 .Take(size)
@@ -63,15 +73,16 @@ namespace AasxServerDB
         {
             var withDateTime = !dateTime.Equals(DateTime.MinValue);
             var data = new List<SMESet>();
-            using (AasContext db = new AasContext())
+            using (var db = new AasContext())
             {
                 data = db.SMESets
                     .Where(sme => (smid == 0 || sme.SMId == smid) && (smeid == 0 || sme.Id == smeid) && (parid == 0 || sme.ParentSMEId == parid) &&
                         (searchLower.IsNullOrEmpty() ||
-                        (sme.IdShort != null  && sme.IdShort.ToLower().Contains(searchLower)) ||
-                        (sme.SemanticId != null  && sme.SemanticId.ToLower().Contains(searchLower)) ||
-                        (sme.SMEType != null  && sme.SMEType.ToLower().Contains(searchLower)) ||
-                        (sme.TValue != null  && sme.TValue.ToLower().Contains(searchLower)) ||
+                        (sme.IdShort != null && sme.IdShort.ToLower().Contains(searchLower)) ||
+                        (sme.Category != null && sme.Category.ToLower().Contains(searchLower)) ||
+                        (sme.SemanticId != null && sme.SemanticId.ToLower().Contains(searchLower)) ||
+                        (sme.SMEType != null && sme.SMEType.ToLower().Contains(searchLower)) ||
+                        (sme.TValue != null && sme.TValue.ToLower().Contains(searchLower)) ||
                         (withDateTime && sme.TimeStampTree.CompareTo(dateTime) > 0) ||
                         db.OValueSets.Any(sv => sv.SMEId == sme.Id && (sv.Attribute.ToLower().Contains(searchLower) || ((string) sv.Value).ToLower().Contains(searchLower))) ||
                         (sme.TValue != null && (

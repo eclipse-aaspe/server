@@ -20,6 +20,7 @@ namespace AasxServerDB
     using Microsoft.Extensions.Configuration;
     using Microsoft.IdentityModel.Tokens;
     using AasCore.Aas3_0;
+    using System.Xml.Linq;
 
     public class AasContext : DbContext
     {
@@ -106,7 +107,7 @@ namespace AasxServerDB
                 .Property(e => e.Administration)
                 .HasConversion(
                     obj => SerializeElement(obj),
-                    text => DeserializeElement<IAdministrativeInformation>(text));
+                    text => DeserializeElementFromString<IAdministrativeInformation>(text));
             modelBuilder.Entity<CDSet>()
                 .Property(e => e.IsCaseOf)
                 .HasConversion(
@@ -138,17 +139,22 @@ namespace AasxServerDB
                 .Property(e => e.Administration)
                 .HasConversion(
                     obj => SerializeElement(obj),
-                    text => DeserializeElement<IAdministrativeInformation>(text));
+                    text => DeserializeElementFromString<IAdministrativeInformation>(text));
             modelBuilder.Entity<AASSet>()
                 .Property(e => e.DataSpecifications)
                 .HasConversion(
                     obj => SerializeList(obj),
                     text => DeserializeList<IEmbeddedDataSpecification>(text));
             modelBuilder.Entity<AASSet>()
+                .Property(e => e.DerivedFrom)
+                .HasConversion(
+                    obj => SerializeElement(obj),
+                    text => DeserializeElementFromString<IReference?>(text));
+            modelBuilder.Entity<AASSet>()
                 .Property(e => e.AssetKind)
                 .HasConversion(
                     obj => SerializeElement(obj),
-                    text => DeserializeElement<AssetKind>(text));
+                    text => DeserializeElementFromString<AssetKind>(text));
             modelBuilder.Entity<AASSet>()
                 .Property(e => e.SpecificAssetIds)
                 .HasConversion(
@@ -158,7 +164,7 @@ namespace AasxServerDB
                 .Property(e => e.DefaultThumbnail)
                 .HasConversion(
                     obj => SerializeElement(obj),
-                    text => DeserializeElement<IResource>(text));
+                    text => DeserializeElementFromString<IResource>(text));
 
             // SMSet
             modelBuilder.Entity<SMSet>()
@@ -180,12 +186,12 @@ namespace AasxServerDB
                 .Property(e => e.Administration)
                 .HasConversion(
                     obj => SerializeElement(obj),
-                    text => DeserializeElement<IAdministrativeInformation>(text));
+                    text => DeserializeElementFromString<IAdministrativeInformation>(text));
             modelBuilder.Entity<SMSet>()
                 .Property(e => e.Kind)
                 .HasConversion(
                     obj => SerializeElement(obj),
-                    text => DeserializeElement<ModellingKind>(text));
+                    text => DeserializeElementFromString<ModellingKind>(text));
             modelBuilder.Entity<SMSet>()
                 .Property(e => e.SupplementalSemanticIds)
                 .HasConversion(
@@ -284,15 +290,19 @@ namespace AasxServerDB
                 return element.ToString();
             }
             else if (typeof(T).IsAssignableFrom(typeof(IAdministrativeInformation)) ||
-                typeof(T).IsAssignableFrom(typeof(IResource)))
+                typeof(T).IsAssignableFrom(typeof(IResource)) ||
+                typeof(T).IsAssignableFrom(typeof(IReference)))
             {
                 var jsonNode = Jsonization.Serialize.ToJsonObject((IClass)element);
                 return jsonNode?.ToJsonString(null);
             }
-            return null;
+            else
+            {
+                throw new InvalidOperationException("Unsupported type: " + typeof(T).FullName);
+            }
         }
 
-        public static T? DeserializeElement<T>(string? text)
+        public static T? DeserializeElementFromString<T>(string? text)
         {
             // check string
             if (text.IsNullOrEmpty() || text is not string textS)
@@ -307,14 +317,24 @@ namespace AasxServerDB
                 textS = $"\"{textS}\"";
             }
 
-            // convert to JsonArray
+            // convert to JsonNode
             var jsonNode = JsonNode.Parse(textS);
             if (jsonNode == null)
             {
                 throw new InvalidOperationException("Failed to parse JSON.");
             }
+            return DeserializeElementFromJsonNode<T>(jsonNode);
+        }
 
-            // convert to list
+        public static T? DeserializeElementFromJsonNode<T>(JsonNode? jsonNode)
+        {
+            // default
+            if (jsonNode == null)
+            {
+                return default(T);
+            }
+
+            // convert to datatype
             if (typeof(T).IsAssignableFrom(typeof(IAdministrativeInformation)))
             {
                 return (T)(object)Jsonization.Deserialize.AdministrativeInformationFrom(jsonNode);
@@ -331,7 +351,42 @@ namespace AasxServerDB
             {
                 return (T)(object)Jsonization.Deserialize.ResourceFrom(jsonNode);
             }
-            return default;
+            else if (typeof(T).IsAssignableFrom(typeof(IReference)))
+            {
+                return (T)(object)Jsonization.Deserialize.ReferenceFrom(jsonNode);
+            }
+            else if (typeof(T).IsAssignableFrom(typeof(IReference)))
+            {
+                return (T)(object)Jsonization.Deserialize.ReferenceFrom(jsonNode);
+            }
+            else if (typeof(T).IsAssignableFrom(typeof(IQualifier)))
+            {
+                return (T)(object)Jsonization.Deserialize.QualifierFrom(jsonNode);
+            }
+            else if (typeof(T).IsAssignableFrom(typeof(ILangStringNameType)))
+            {
+                return (T)(object)Jsonization.Deserialize.LangStringNameTypeFrom(jsonNode);
+            }
+            else if (typeof(T).IsAssignableFrom(typeof(ILangStringTextType)))
+            {
+                return (T)(object)Jsonization.Deserialize.LangStringTextTypeFrom(jsonNode);
+            }
+            else if (typeof(T).IsAssignableFrom(typeof(IEmbeddedDataSpecification)))
+            {
+                return (T)(object)Jsonization.Deserialize.EmbeddedDataSpecificationFrom(jsonNode);
+            }
+            else if (typeof(T).IsAssignableFrom(typeof(IExtension)))
+            {
+                return (T)(object)Jsonization.Deserialize.ExtensionFrom(jsonNode);
+            }
+            else if (typeof(T).IsAssignableFrom(typeof(ISpecificAssetId)))
+            {
+                return (T)(object)Jsonization.Deserialize.SpecificAssetIdFrom(jsonNode);
+            }
+            else
+            {
+                throw new InvalidOperationException("Unsupported type: " + typeof(T).FullName);
+            }
         }
 
         public static string? SerializeList<T>(List<T>? list)
@@ -387,35 +442,7 @@ namespace AasxServerDB
                     continue;
                 }
 
-                var ele = default(T);
-                if (typeof(T).IsAssignableFrom(typeof(IReference)))
-                {
-                    ele = (T)(object)Jsonization.Deserialize.ReferenceFrom(element);
-                }
-                else if (typeof(T).IsAssignableFrom(typeof(IQualifier)))
-                {
-                    ele = (T)(object)Jsonization.Deserialize.QualifierFrom(element);
-                }
-                else if (typeof(T).IsAssignableFrom(typeof(ILangStringNameType)))
-                {
-                    ele = (T)(object)Jsonization.Deserialize.LangStringNameTypeFrom(element);
-                }
-                else if (typeof(T).IsAssignableFrom(typeof(ILangStringTextType)))
-                {
-                    ele = (T)(object)Jsonization.Deserialize.LangStringTextTypeFrom(element);
-                }
-                else if (typeof(T).IsAssignableFrom(typeof(IEmbeddedDataSpecification)))
-                {
-                    ele = (T)(object)Jsonization.Deserialize.EmbeddedDataSpecificationFrom(element);
-                }
-                else if (typeof(T).IsAssignableFrom(typeof(IExtension)))
-                {
-                    ele = (T)(object)Jsonization.Deserialize.ExtensionFrom(element);
-                }
-                else if (typeof(T).IsAssignableFrom(typeof(ISpecificAssetId)))
-                {
-                    ele = (T)(object)Jsonization.Deserialize.SpecificAssetIdFrom(element);
-                }
+                var ele = DeserializeElementFromJsonNode<T>(element);
 
                 if (ele == null)
                 {

@@ -481,6 +481,7 @@
                         <th style="word-break:keep-all">Identifier</th>
                         <th style="word-break:keep-all">Administration</th>
                         <th style="word-break:keep-all">Data Specifications</th>
+                        <th style="word-break:keep-all">Derived From</th>
                         <th style="word-break:keep-all">Asset Kind</th>
                         <th style="word-break:keep-all">Global Asset Id</th>
                         <th style="word-break:keep-all">Asset Type</th>
@@ -512,6 +513,7 @@
                             <td>@aasDB.Identifier</td>
                             <td style="font-size:small">@AasContext.SerializeElement(aasDB.Administration)</td>
                             <td style="font-size:small">@AasContext.SerializeList(aasDB.DataSpecifications)</td>
+                            <td style="font-size:small">@AasContext.SerializeElement(aasDB.DerivedFrom)</td>
                             <td>@AasContext.SerializeElement(aasDB.AssetKind)</td>
                             <td>@aasDB.GlobalAssetId</td>
                             <td>@aasDB.AssetType</td>
@@ -569,6 +571,8 @@
                         <span>@AasContext.SerializeElement(aasDB.Administration)</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@AasContext.SerializeList(aasDB.DataSpecifications)</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                            <span>@AasContext.SerializeElement(aasDB.DerivedFrom)</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@AasContext.SerializeElement(aasDB.AssetKind)</span>
                         <span style="background-color:blue;">&nbsp</span>

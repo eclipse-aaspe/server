@@ -142,30 +142,9 @@ namespace AasxServerStandardBib.Services
 
         public bool IsAssetAdministrationShellPresent(string aasIdentifier, out IAssetAdministrationShell output, out int packageIndex)
         {
-            output       = null;
-            packageIndex = -1;
-
-            Program.loadPackageForAas(aasIdentifier, out output, out packageIndex);
-
-            foreach (var package in _packages)
-            {
-                if (package != null)
-                {
-                    var env = package.AasEnv;
-                    if (env != null)
-                    {
-                        var aas = env.AssetAdministrationShells.Where(a => a.Id.Equals(aasIdentifier));
-                        if (aas.Any())
-                        {
-                            output       = aas.First();
-                            packageIndex = Array.IndexOf(_packages, package);
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            return false;
+            var success = false;
+            output = Program.LoadPackage<IAssetAdministrationShell>(success: out success, packageIndex: out packageIndex, aasIdentifier: aasIdentifier);
+            return success;
         }
 
         public void UpdateAssetAdministrationShellById(IAssetAdministrationShell body, string aasIdentifier)
@@ -254,40 +233,9 @@ namespace AasxServerStandardBib.Services
 
         public bool IsSubmodelPresent(string submodelIdentifier, out ISubmodel output, out int packageIndex)
         {
-            output       = null;
-            packageIndex = -1;
-
-            Program.loadPackageForSubmodel(submodelIdentifier, out output, out packageIndex);
-
-            foreach (var package in _packages)
-            {
-                if (package != null)
-                {
-                    var env = package.AasEnv;
-                    if (env != null)
-                    {
-                        var submodels = env.Submodels.Where(a => a.Id.Equals(submodelIdentifier));
-                        if (submodels.Any())
-                        {
-                            /*
-                            if (!Program.withDb)
-                            {
-                                output = submodels.First();
-                            }
-                            else
-                            {
-                                output = DBConverter.GetSubmodel(smIdentifier:submodelIdentifier);
-                            }
-                            */
-                            output       = submodels.First();
-                            packageIndex = Array.IndexOf(_packages, package);
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            return false;
+            var success = false;
+            output = Program.LoadPackage<ISubmodel>(success: out success, packageIndex: out packageIndex, smIdentifier: submodelIdentifier);
+            return success;
         }
 
         #endregion
@@ -322,9 +270,8 @@ namespace AasxServerStandardBib.Services
 
         private bool IsConceptDescriptionPresent(string cdIdentifier, out IConceptDescription output, out int packageIndex)
         {
-            packageIndex = -1;
             var success = false;
-            output = Program.loadPackage<IConceptDescription>(out success, out packageIndex, cdIdentifier: cdIdentifier);
+            output = Program.LoadPackage<IConceptDescription>(success: out success, packageIndex: out packageIndex, cdIdentifier: cdIdentifier);
             return success;
         }
 

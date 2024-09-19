@@ -10,38 +10,50 @@ namespace AasxServerDB
 
     public class Converter
     {
-        public static AdminShellPackageEnv? GetPackageEnv(string path, AASSet? aasDB)
+        public static AdminShellPackageEnv? GetPackageEnv(int envId)
         {
-            if (path.IsNullOrEmpty() || aasDB == null)
-                return null;
-
             // env
-            var aasEnv = new AdminShellPackageEnv();
-            aasEnv.SetFilename(path);
-
-            // aas
-            var aas = GetAssetAdministrationShell(aasDB);
-            aasEnv.AasEnv?.AssetAdministrationShells?.Add(aas);
+            var env = new AdminShellPackageEnv();
+            env.AasEnv.ConceptDescriptions = new List<IConceptDescription>();
+            env.AasEnv.AssetAdministrationShells = new List<IAssetAdministrationShell>();
+            env.AasEnv.Submodels = new List<ISubmodel>();
 
             // db
             var db = new AasContext();
 
+            // path
+            env.SetFilename(fileName: GetAASXPath(envId));
+
             // cd
-            var cdDBList = db.CDSets.Where(cd => cd.EnvId == aasDB.EnvId).ToList();
+            var cdDBList = db.CDSets.Where(cd => cd.EnvId == envId).ToList();
             foreach (var cd in cdDBList.Select(selector: cdDB => GetConceptDescription(cdDB: cdDB)))
             {
-                aasEnv.AasEnv?.ConceptDescriptions?.Add(cd);
+                env.AasEnv.ConceptDescriptions?.Add(cd);
+            }
+
+            // aas
+            var aasDBList = db.AASSets.Where(cd => cd.EnvId == envId).ToList();
+            foreach (var aasDB in aasDBList)
+            {
+                var aas = GetAssetAdministrationShell(aasDB: aasDB);
+                env.AasEnv.AssetAdministrationShells?.Add(aas);
+
+                // sm
+                var smAASDBList = db.SMSets.Where(sm => sm.EnvId == envId && sm.AASId == aasDB.Id).ToList();
+                foreach (var sm in smAASDBList.Select(selector: smDB => GetSubmodel(smDB: smDB)))
+                {
+                    aas.Submodels?.Add(sm.GetReference());
+                }
             }
 
             // sm
-            var smDBList = db.SMSets.Where(cd => cd.EnvId == aasDB.EnvId).ToList();
+            var smDBList = db.SMSets.Where(cd => cd.EnvId == envId).ToList();
             foreach (var sm in smDBList.Select(selector: submodelDB => GetSubmodel(smDB: submodelDB)))
             {
-                aas.Submodels?.Add(sm.GetReference());
-                aasEnv.AasEnv?.Submodels?.Add(sm);
+                env.AasEnv.Submodels?.Add(sm);
             }
 
-            return aasEnv;
+            return env;
         }
 
         public static ConceptDescription? GetConceptDescription(CDSet? cdDB = null, string cdIdentifier = "")
@@ -102,6 +114,7 @@ namespace AasxServerDB
                 id: aasDB.Identifier,
                 administration: aasDB.Administration,
                 embeddedDataSpecifications: aasDB.DataSpecifications,
+                derivedFrom: aasDB.DerivedFrom,
                 assetInformation: new AssetInformation(
                     assetKind: aasDB.AssetKind != null ? (AssetKind)aasDB.AssetKind : AssetKind.Instance,
                     specificAssetIds: aasDB.SpecificAssetIds,
@@ -356,10 +369,9 @@ namespace AasxServerDB
                 return new Reference(ReferenceTypes.ExternalReference, new List<IKey>());
         }
 
-        public static string GetAASXPath(string cdId = "", string aasId = "", string smId = "")
+        public static string GetAASXPath(int? envId = null, string cdId = "", string aasId = "", string smId = "")
         {
             using var db = new AasContext();
-            int? envId = null;
             if (!cdId.IsNullOrEmpty())
             {
                 var cdDBList = db.CDSets.Where(s => s.Identifier == cdId);
@@ -369,9 +381,9 @@ namespace AasxServerDB
 
             if (!smId.IsNullOrEmpty())
             {
-                var submodelDBList = db.SMSets.Where(s => s.Identifier == smId);
-                if (submodelDBList.Count() > 0)
-                    envId = submodelDBList.First().EnvId;
+                var smDBList = db.SMSets.Where(s => s.Identifier == smId);
+                if (smDBList.Count() > 0)
+                    envId = smDBList.First().EnvId;
             }
 
             if (!aasId.IsNullOrEmpty())
@@ -384,12 +396,8 @@ namespace AasxServerDB
             if (envId == null)
                 return string.Empty;
 
-            var envDBList = db.EnvSets.Where(a => a.Id == envId);
-            if (!envDBList.Any())
-                return string.Empty;
-
-            var envDB = envDBList.First();
-            return envDB.Path;
+            var path = db.EnvSets.Where(e => e.Id == envId).Select(e => e.Path).FirstOrDefault();
+            return path ?? string.Empty;
         }
     }
 }

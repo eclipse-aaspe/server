@@ -18,7 +18,7 @@ namespace AasxServerDB.Entities
         // aas
         public int Id { get; set; }
 
-        // attributes
+        // asset administration shell
         [StringLength(128)]
         public string?                           IdShort            { get; set; }
         public List<ILangStringNameType>?        DisplayName        { get; set; }
@@ -30,12 +30,14 @@ namespace AasxServerDB.Entities
         public string?                           Identifier         { get; set; }
         public IAdministrativeInformation?       Administration     { get; set; }
         public List<IEmbeddedDataSpecification>? DataSpecifications { get; set; }
-        // derivedFrom
-        public AssetKind?                        AssetKind          { get; set; }
-        public string?                           GlobalAssetId      { get; set; }
-        public string?                           AssetType          { get; set; }
-        public List<ISpecificAssetId>?           SpecificAssetIds   { get; set; }
-        public IResource?                        DefaultThumbnail   { get; set; }
+        public IReference?                       DerivedFrom        { get; set; }
+
+        // asset information
+        public AssetKind?              AssetKind          { get; set; }
+        public string?                 GlobalAssetId      { get; set; }
+        public string?                 AssetType          { get; set; }
+        public List<ISpecificAssetId>? SpecificAssetIds   { get; set; }
+        public IResource?              DefaultThumbnail   { get; set; }
 
         // time stamp
         public DateTime TimeStampCreate { get; set; }

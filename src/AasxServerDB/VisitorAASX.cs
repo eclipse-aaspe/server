@@ -91,16 +91,34 @@ namespace AasxServerDB
             if (envDB == null || asp == null || asp.AasEnv == null)
                 return;
 
+            if (asp.AasEnv.ConceptDescriptions != null)
+                foreach (var cd in asp.AasEnv.ConceptDescriptions)
+                    if (cd != null)
+                        new VisitorAASX(envDB: envDB).Visit(cd);
+
+            var aasToSm = new Dictionary<string, AASSet>();
             if (asp.AasEnv.AssetAdministrationShells != null)
                 foreach (var aas in asp.AasEnv.AssetAdministrationShells)
-                    if (!aas.Id.IsNullOrEmpty() && !aas.AssetInformation.GlobalAssetId.IsNullOrEmpty() &&
-                        !(!aas.IdShort.IsNullOrEmpty() && aas.IdShort.ToLower().Contains("globalsecurity")))
-                        new VisitorAASX(envDB: envDB).Visit(aas);
+                    if (aas != null)
+                        if (!(!aas.IdShort.IsNullOrEmpty() && aas.IdShort.ToLower().Contains("globalsecurity")))
+                        {
+                            new VisitorAASX(envDB: envDB).Visit(aas);
+                            if (aas.Submodels != null)
+                                foreach (var refSm in aas.Submodels)
+                                    if (refSm.Keys != null && refSm.Keys.Count() > 0 && !refSm.Keys[0].Value.IsNullOrEmpty())
+                                        aasToSm.Add(refSm.Keys[0].Value, envDB.AASSets.Last());
+                        }
 
             if (asp.AasEnv.Submodels != null)
                 foreach (var sm in asp.AasEnv.Submodels)
-                    if (!sm.Id.IsNullOrEmpty())
+                    if (sm != null)
+                    {
                         new VisitorAASX(envDB: envDB).Visit(sm);
+                        var smDB = envDB.SMSets.Last();
+                        if (smDB != null && smDB.Identifier != null)
+                            if (aasToSm.ContainsKey(smDB.Identifier))
+                                smDB.AASSet = aasToSm[smDB.Identifier];
+                    }
 
             if (asp.AasEnv.AssetAdministrationShells != null && asp.AasEnv.Submodels != null)
                 foreach (var aas in asp.AasEnv.AssetAdministrationShells)
@@ -117,11 +135,6 @@ namespace AasxServerDB
                             }
                         }
                 }
-
-            if (asp.AasEnv.ConceptDescriptions != null)
-                foreach (var cd in asp.AasEnv.ConceptDescriptions)
-                    if (cd != null)
-                        new VisitorAASX(envDB: envDB).Visit(cd);
         }
 
         private string ShortSMEType(ISubmodelElement sme)
@@ -457,7 +470,7 @@ namespace AasxServerDB
                 Identifier          = that.Id,
                 Administration      = that.Administration,
                 DataSpecifications  = that.EmbeddedDataSpecifications,
-                // derivedFrom
+                DerivedFrom         = that.DerivedFrom,
                 AssetKind           = that.AssetInformation?.AssetKind,
                 SpecificAssetIds    = that.AssetInformation?.SpecificAssetIds,
                 GlobalAssetId       = that.AssetInformation?.GlobalAssetId,

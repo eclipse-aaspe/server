@@ -39,6 +39,7 @@ namespace AasxServerDB.Migrations.Sqlite
                     Identifier = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
                     Administration = table.Column<string>(type: "TEXT", nullable: true),
                     DataSpecifications = table.Column<string>(type: "TEXT", nullable: true),
+                    DerivedFrom = table.Column<string>(type: "TEXT", nullable: true),
                     AssetKind = table.Column<string>(type: "TEXT", nullable: true),
                     GlobalAssetId = table.Column<string>(type: "TEXT", nullable: true),
                     AssetType = table.Column<string>(type: "TEXT", nullable: true),

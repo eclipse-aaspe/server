@@ -28,7 +28,7 @@ namespace AasxServerDB.Entities
         // id
         public int Id { get; set; }
 
-        // attributes
+        // submodel
         [StringLength(128)]
         public string?                           IdShort                 { get; set; }
         public List<ILangStringNameType>?        DisplayName             { get; set; }

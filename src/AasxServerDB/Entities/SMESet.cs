@@ -36,7 +36,7 @@ namespace AasxServerDB.Entities
         [StringLength(9)]
         public string? SMEType { get; set; }
 
-        // attributes
+        // submodel element
         [StringLength(128)]
         public string?                           IdShort                 { get; set; }
         public List<ILangStringNameType>?        DisplayName             { get; set; }
@@ -84,7 +84,7 @@ namespace AasxServerDB.Entities
             return [[string.Empty, string.Empty]];
         }
 
-        // additional attributes / ovalue
+        // object value // additional attributes
         public virtual ICollection<OValueSet> OValueSets { get; } = new List<OValueSet>();
         public Dictionary<string, Nodes.JsonNode> GetOValue()
         {

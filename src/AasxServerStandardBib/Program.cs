@@ -98,7 +98,7 @@ namespace AasxServer
         public static bool isLoadingDB = false;
         static bool isLoaded = false;
 
-        public static void loadAllPackages()
+        public static void LoadAllPackages()
         {
             if (!withDb || isLoadingDB || isLoaded)
                 return;
@@ -107,14 +107,14 @@ namespace AasxServer
             var aasIDDBList = new AasContext().AASSets.Select(aas => aas.Identifier).ToList();
 
             foreach (var aasIDDB in aasIDDBList)
-                loadPackageForAas(aasIDDB, out _, out _);
+                LoadPackage<IAssetAdministrationShell>(success: out _, packageIndex: out _, aasIdentifier: aasIDDB);
 
             isLoaded            = true;
             Program.isLoadingDB = false;
             Program.signalNewData(2);
         }
 
-        public static T? loadPackage<T>(out bool success, out int packageIndex, string aasIdentifier = "", string smIdentifier = "", string cdIdentifier = "")
+        public static T? LoadPackage<T>(out bool success, out int packageIndex, string aasIdentifier = "", string smIdentifier = "", string cdIdentifier = "")
         {
             // default values
             success = false;
@@ -208,35 +208,48 @@ namespace AasxServer
                 {
                     Console.WriteLine("LOAD: " + envFileName[i]);
                     env[i] = new AdminShellPackageEnv(envFileName[i]);
+                    if (env[i].AasEnv == null)
+                    {
+                        return output;
+                    }
 
                     // set all timestamps and find the searched element
                     var timeStamp = DateTime.Now;
-                    foreach (var cd in env[i].AasEnv.ConceptDescriptions)
+                    if (env[i].AasEnv?.ConceptDescriptions != null)
                     {
-                        cd.TimeStampCreate = timeStamp;
-                        cd.SetTimeStamp(timeStamp);
-                        if (!cdIdentifier.IsNullOrEmpty())
+                        foreach (var cd in env[i].AasEnv.ConceptDescriptions)
                         {
-                            output = (T)cd;
+                            cd.TimeStampCreate = timeStamp;
+                            cd.SetTimeStamp(timeStamp);
+                            if (!cdIdentifier.IsNullOrEmpty() && cd.Id != null && cd.Id.Equals(cdIdentifier))
+                            {
+                                output = (T)cd;
+                            }
                         }
                     }
-                    foreach (var aas in env[i].AasEnv.AssetAdministrationShells)
+                    if (env[i].AasEnv?.AssetAdministrationShells != null)
                     {
-                        aas.TimeStampCreate = timeStamp;
-                        aas.SetTimeStamp(timeStamp);
-                        if (!aasIdentifier.IsNullOrEmpty())
+                        foreach (var aas in env[i].AasEnv.AssetAdministrationShells)
                         {
-                            output = (T)aas;
+                            aas.TimeStampCreate = timeStamp;
+                            aas.SetTimeStamp(timeStamp);
+                            if (!aasIdentifier.IsNullOrEmpty() && aas.Id != null && aas.Id.Equals(aasIdentifier))
+                            {
+                                output = (T)aas;
+                            }
                         }
                     }
-                    foreach (var sm in env[i].AasEnv.Submodels)
+                    if (env[i].AasEnv?.Submodels != null)
                     {
-                        sm.TimeStampCreate = timeStamp;
-                        sm.SetTimeStamp(timeStamp);
-                        sm.SetAllParents(timeStamp);
-                        if (!smIdentifier.IsNullOrEmpty())
+                        foreach (var sm in env[i].AasEnv.Submodels)
                         {
-                            output = (T)sm;
+                            sm.TimeStampCreate = timeStamp;
+                            sm.SetTimeStamp(timeStamp);
+                            sm.SetAllParents(timeStamp);
+                            if (!smIdentifier.IsNullOrEmpty() && sm.Id != null && sm.Id.Equals(smIdentifier))
+                            {
+                                output = (T)sm;
+                            }
                         }
                     }
                 }
@@ -266,24 +279,25 @@ namespace AasxServer
                         return output;
                     }
 
-                    // get aas
-                    var aasDB = db.AASSets.Where(aas => aas.EnvId == envId).FirstOrDefault();
-
                     // create package env
-                    env[i] = Converter.GetPackageEnv(path: envFileName[i], aasDB: aasDB);
+                    env[i] = Converter.GetPackageEnv(envId);
+                    if (env[i] == null || env[i].AasEnv == null)
+                    {
+                        return output;
+                    }
 
                     // set output
-                    if (!cdIdentifier.IsNullOrEmpty())
+                    if (!cdIdentifier.IsNullOrEmpty() && env[i].AasEnv?.ConceptDescriptions != null)
                     {
                         output = (T)env[i].AasEnv.ConceptDescriptions.FirstOrDefault(cd => cd.Id != null && cd.Id.Equals(cdIdentifier));
                     }
-                    else if (!aasIdentifier.IsNullOrEmpty())
+                    else if (!aasIdentifier.IsNullOrEmpty() && env[i].AasEnv?.AssetAdministrationShells != null)
                     {
-                        output = (T)env[i].AasEnv.AssetAdministrationShells.FirstOrDefault(aas => aas.Id != null && aas.Id.Equals(cdIdentifier));
+                        output = (T)env[i].AasEnv.AssetAdministrationShells.FirstOrDefault(aas => aas.Id != null && aas.Id.Equals(aasIdentifier));
                     }
-                    else if (!smIdentifier.IsNullOrEmpty())
+                    else if (!smIdentifier.IsNullOrEmpty() && env[i].AasEnv?.Submodels != null)
                     {
-                        output = (T)env[i].AasEnv.Submodels.FirstOrDefault(sm => sm.Id != null && sm.Id.Equals(cdIdentifier));
+                        output = (T)env[i].AasEnv.Submodels.FirstOrDefault(sm => sm.Id != null && sm.Id.Equals(smIdentifier));
                     }
                 }
 
@@ -298,295 +312,6 @@ namespace AasxServer
                 packageIndex = i;
                 signalNewData(2);
                 return output;
-            }
-        }
-
-
-        public static bool loadPackageForConceptDescription(string cdIdentifier, out IConceptDescription output, out int packageIndex)
-        {
-            output = null;
-            packageIndex = -1;
-            if (!withDb || Program.isLoading)
-                return false;
-
-            int i = envimin;
-            while (i < env.Length)
-            {
-                if (env[i] == null)
-                    break;
-
-                var cd = env[i].AasEnv.ConceptDescriptions.Where(cd => cd.Id.Equals(cdIdentifier));
-                if (cd.Any())
-                {
-                    output = cd.First();
-                    packageIndex = i;
-                    return true;
-                }
-
-                i++;
-            }
-
-            // not found in memory
-            if (i == env.Length)
-            {
-                i = oldest++;
-                if (oldest == env.Length)
-                    oldest = envimin;
-            }
-
-            lock (Program.changeAasxFile)
-            {
-                envFileName[i] = Converter.GetAASXPath(cdId: cdIdentifier);
-                if (envFileName[i].Equals(""))
-                    return false;
-
-                if (env[i] != null)
-                {
-                    Console.WriteLine("UNLOAD: " + envFileName[i]);
-                    if (env[i].getWrite())
-                    {
-                        saveEnv(i);
-                        env[i].setWrite(false);
-                    }
-
-                    env[i].Close();
-                }
-
-
-                if (!withDbFiles)
-                {
-                    Console.WriteLine("LOAD: " + envFileName[i]);
-                    env[i] = new AdminShellPackageEnv(envFileName[i]);
-
-                    // set all timestamps
-                    DateTime timeStamp = DateTime.Now;
-                    var a = env[i].AasEnv.AssetAdministrationShells[0];
-                    a.TimeStampCreate = timeStamp;
-                    a.SetTimeStamp(timeStamp);
-                    foreach (var submodel in env[i].AasEnv.Submodels)
-                    {
-                        submodel.TimeStampCreate = timeStamp;
-                        submodel.SetTimeStamp(timeStamp);
-                        submodel.SetAllParents(timeStamp);
-                    }
-
-                    // find cd
-                    var cd = env[i].AasEnv.ConceptDescriptions.Where(s => s.Id.Equals(cdIdentifier));
-                    if (cd.Any())
-                    {
-                        output = cd.First();
-                    }
-                }
-                else
-                {
-                    using (AasContext db = new AasContext())
-                    {
-                        var cdDBList = db.CDSets.Where(cd => cd.Identifier == cdIdentifier).ToList();
-                        var cdDB = cdDBList.First();
-
-                        Console.WriteLine("LOAD ConceptDescriptions: " + cdDB.IdShort);
-                        var aasDBList = db.AASSets.Where(a => a.EnvId == cdDB.EnvId);
-                        var aasDB = aasDBList.First();
-                        env[i] = Converter.GetPackageEnv(envFileName[i], aasDB);
-
-                        // find cd
-                        var cd = env[i].AasEnv.ConceptDescriptions.Where(s => s.Id.Equals(cdIdentifier));
-                        if (cd.Any())
-                        {
-                            output = cd.First();
-                        }
-                    }
-                }
-
-                packageIndex = i;
-                Program.signalNewData(2);
-                return true;
-            }
-        }
-
-        public static bool loadPackageForAas(string aasIdentifier, out IAssetAdministrationShell output, out int packageIndex)
-        {
-            output       = null;
-            packageIndex = -1;
-            if (!withDb || Program.isLoading)
-                return false;
-
-            int i = envimin;
-            while (i < env.Length)
-            {
-                if (env[i] == null)
-                    break;
-
-                var aas = env[i].AasEnv.AssetAdministrationShells.Where(a => a.Id.Equals(aasIdentifier));
-                if (aas.Any())
-                {
-                    output       = aas.First();
-                    packageIndex = i;
-                    return true;
-                }
-
-                i++;
-            }
-
-            // not found in memory
-            if (i == env.Length)
-            {
-                i = oldest++;
-                if (oldest == env.Length)
-                    oldest = envimin;
-            }
-
-            lock (Program.changeAasxFile)
-            {
-                envFileName[i] = Converter.GetAASXPath(aasId: aasIdentifier);
-                if (envFileName[i].Equals(""))
-                    return false;
-
-                if (env[i] != null)
-                {
-                    Console.WriteLine("UNLOAD: " + envFileName[i]);
-                    if (env[i].getWrite())
-                    {
-                        saveEnv(i);
-                        env[i].setWrite(false);
-                    }
-
-                    env[i].Close();
-                }
-
-
-                if (!withDbFiles)
-                {
-                    Console.WriteLine("LOAD: " + envFileName[i]);
-                    env[i] = new AdminShellPackageEnv(envFileName[i]);
-
-                    // set all timestamps
-                    DateTime timeStamp = DateTime.Now;
-                    var      a         = env[i].AasEnv.AssetAdministrationShells[0];
-                    a.TimeStampCreate = timeStamp;
-                    a.SetTimeStamp(timeStamp);
-                    foreach (var submodel in env[i].AasEnv.Submodels)
-                    {
-                        submodel.TimeStampCreate = timeStamp;
-                        submodel.SetTimeStamp(timeStamp);
-                        submodel.SetAllParents(timeStamp);
-                    }
-
-                    // set aas
-                    output = a;
-                }
-                else
-                {
-                    using (AasContext db = new AasContext())
-                    {
-                        Console.WriteLine("LOAD: " + aasIdentifier);
-                        var aasDBList = db.AASSets.Where(a => a.Identifier == aasIdentifier);
-                        var aasDB     = aasDBList.First();
-                        env[i] = Converter.GetPackageEnv(envFileName[i], aasDB);
-
-                        // set aas
-                        output = env[i].AasEnv.AssetAdministrationShells[0];
-                    }
-                }
-
-                packageIndex = i;
-                Program.signalNewData(2);
-                return true;
-            }
-        }
-
-        public static bool loadPackageForSubmodel(string submodelIdentifier, out ISubmodel output, out int packageIndex)
-        {
-            output       = null;
-            packageIndex = -1;
-            if (!withDb || Program.isLoading)
-                return false;
-
-            int i = envimin;
-            while (i < env.Length)
-            {
-                if (env[i] == null)
-                    break;
-
-                var submodels = env[i].AasEnv.Submodels.Where(s => s.Id.Equals(submodelIdentifier));
-                if (submodels.Any())
-                {
-                    output       = submodels.First();
-                    packageIndex = i;
-                    return true;
-                }
-
-                i++;
-            }
-
-            // not found in memory
-            if (i == env.Length)
-            {
-                i = oldest++;
-                if (oldest == env.Length)
-                    oldest = envimin;
-            }
-
-            lock (Program.changeAasxFile)
-            {
-                envFileName[i] = Converter.GetAASXPath(smId: submodelIdentifier);
-                if (envFileName[i].Equals(""))
-                    return false;
-
-                if (env[i] != null)
-                {
-                    Console.WriteLine("UNLOAD: " + envFileName[i]);
-                    if (env[i].getWrite())
-                    {
-                        saveEnv(i);
-                        env[i].setWrite(false);
-                    }
-
-                    env[i].Close();
-                }
-
-                if (!withDbFiles)
-                {
-                    Console.WriteLine("LOAD: " + envFileName[i]);
-                    env[i] = new AdminShellPackageEnv(envFileName[i]);
-
-                    // set all timestamps
-                    DateTime timeStamp = DateTime.Now;
-                    var      a         = env[i].AasEnv.AssetAdministrationShells[0];
-                    a.TimeStampCreate = timeStamp;
-                    a.SetTimeStamp(timeStamp);
-                    foreach (var submodel in env[i].AasEnv.Submodels)
-                    {
-                        submodel.TimeStampCreate = timeStamp;
-                        submodel.SetTimeStamp(timeStamp);
-                        submodel.SetAllParents(timeStamp);
-                    }
-
-                    // find sm
-                    var submodels = env[i].AasEnv.Submodels.Where(s => s.Id.Equals(submodelIdentifier));
-                    if (submodels.Any())
-                    {
-                        output = submodels.First();
-                    }
-                }
-                else
-                {
-                    using (AasContext db = new AasContext())
-                    {
-                        var submodelDBList = db.SMSets.OrderBy(sm => sm.Id).Where(sm => sm.Identifier == submodelIdentifier).ToList();
-                        var submodelDB     = submodelDBList.First();
-
-                        Console.WriteLine("LOAD Submodel: " + submodelDB.IdShort);
-                        var aasDBList = db.AASSets.Where(a => a.EnvId == submodelDB.EnvId);
-                        var aasDB     = aasDBList.First();
-                        env[i] = Converter.GetPackageEnv(envFileName[i], aasDB);
-                        output = Converter.GetSubmodel(smDB: submodelDB);
-                    }
-                }
-
-                packageIndex = i;
-                Program.signalNewData(2);
-                return true;
             }
         }
 

@@ -18,7 +18,7 @@ namespace AasxServerDB.Entities
         // id
         public int Id { get; set; }
 
-        // attributes
+        // integer value
         public long?   Value      { get; set; }
         public string? Annotation { get; set; }
     }
