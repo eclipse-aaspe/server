@@ -1,4 +1,4 @@
-﻿using AdminShellNS;
+using AdminShellNS;
 using Extensions;
 using ScottPlot;
 using System;
@@ -94,6 +94,26 @@ namespace AasxServerStandardBib
 
                 // ScottPlot.Plot plt = new ScottPlot.Plot(2400, 1200);
                 ScottPlot.Plot plt = new ScottPlot.Plot(1800, 900);
+
+                // resort to have timeStamp first
+                foreach (var tsd in this)
+                {
+                    int timeStampIndex = 0;
+                    foreach (var ds in tsd.DataSet)
+                    {
+                        if (ds.DataSetId == "timeStamp")
+                        {
+                            break;
+                        }
+                        timeStampIndex++;
+                    }
+                    if (timeStampIndex != 0)
+                    {
+                        var ts = tsd.DataSet[timeStampIndex];
+                        tsd.DataSet.RemoveAt(timeStampIndex);
+                        tsd.DataSet.Insert(0, ts);
+                    }
+                }
 
                 // go over all groups                
                 foreach (var tsd in this)
