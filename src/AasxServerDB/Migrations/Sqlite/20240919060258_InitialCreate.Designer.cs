@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AasxServerDB.Migrations.Sqlite
 {
     [DbContext(typeof(SqliteAasContext))]
-    [Migration("20240919051823_InitialCreate")]
+    [Migration("20240919060258_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -164,12 +164,9 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Property<int?>("ParentSMEId")
                         .HasColumnType("INTEGER");
 
-<<<<<<< HEAD:src/AasxServerDB/Migrations/Sqlite/20240919051823_InitialCreate.Designer.cs
                     b.Property<string>("Qualifiers")
                         .HasColumnType("TEXT");
 
-=======
->>>>>>> eclipse-server/aorzelski/queries-and-events:src/AasxServerDB/Migrations/Sqlite/20240913113052_InitialCreate.Designer.cs
                     b.Property<string>("SMEType")
                         .HasColumnType("TEXT");
 
