@@ -34,6 +34,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Npgsql.Internal;
 
 namespace IO.Swagger.Lib.V3.Formatters
 {
@@ -105,6 +107,22 @@ namespace IO.Swagger.Lib.V3.Formatters
             else
                 return false;
         }
+        private void SerializeJsonToStream(Stream stream, bool leaveStreamOpen = false)
+        {
+            using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true }))
+            {
+                System.Text.Json.JsonSerializer.Serialize(writer, this);
+            }
+
+            if (leaveStreamOpen)
+            {
+                stream.Flush();
+            }
+            else
+            {
+                stream.Close();
+            }
+        }
         public override Task WriteResponseBodyAsync(OutputFormatterWriteContext context)
         {
             var httpContext = context.HttpContext;
@@ -130,15 +148,16 @@ namespace IO.Swagger.Lib.V3.Formatters
                 var jsonResult = new JsonResult(context.Object)
                 {
                     StatusCode = StatusCodes.Status200OK,
-                    ContentType = "application/json"
+                    // ContentType = "application/json"
+                    ContentType = "text/plain"
                 };
-
-                jsonResult.ExecuteResultAsync(new ActionContext
+                var actionContext = new ActionContext
                 {
                     HttpContext = httpContext,
                     RouteData = httpContext.GetRouteData(),
                     ActionDescriptor = new ActionDescriptor()
-                });
+                };
+                jsonResult.ExecuteResultAsync(actionContext).Wait();
             }
             else if (typeof(IClass).IsAssignableFrom(context.ObjectType))
             {
@@ -246,7 +265,6 @@ namespace IO.Swagger.Lib.V3.Formatters
                 jsonNode.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();
             }
-
             return Task.FromResult(response);
         }
 
