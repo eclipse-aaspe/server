@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AasxServerDB.Migrations.Postgres
 {
     [DbContext(typeof(PostgreAasContext))]
-    [Migration("20240913112934_InitialCreate")]
+    [Migration("20240919051945_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -180,6 +180,9 @@ namespace AasxServerDB.Migrations.Postgres
 
                     b.Property<int?>("ParentSMEId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("Qualifiers")
+                        .HasColumnType("text");
 
                     b.Property<string>("SMEType")
                         .HasColumnType("text");

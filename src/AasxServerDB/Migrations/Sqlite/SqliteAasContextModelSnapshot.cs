@@ -161,6 +161,9 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Property<int?>("ParentSMEId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Qualifiers")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("SMEType")
                         .HasColumnType("TEXT");
 

@@ -98,6 +98,7 @@ namespace AasxServerDB.Migrations.Sqlite
                     SemanticId = table.Column<string>(type: "TEXT", nullable: true),
                     IdShort = table.Column<string>(type: "TEXT", nullable: true),
                     Extensions = table.Column<string>(type: "TEXT", nullable: true),
+                    Qualifiers = table.Column<string>(type: "TEXT", nullable: true),
                     TimeStampCreate = table.Column<DateTime>(type: "TEXT", nullable: false),
                     TimeStamp = table.Column<DateTime>(type: "TEXT", nullable: false),
                     TimeStampTree = table.Column<DateTime>(type: "TEXT", nullable: false),

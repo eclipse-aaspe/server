@@ -178,6 +178,9 @@ namespace AasxServerDB.Migrations.Postgres
                     b.Property<int?>("ParentSMEId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Qualifiers")
+                        .HasColumnType("text");
+
                     b.Property<string>("SMEType")
                         .HasColumnType("text");
 

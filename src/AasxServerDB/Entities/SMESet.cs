@@ -26,7 +26,8 @@ namespace AasxServerDB.Entities
         public string? TValue     { get; set; }
         public string? SemanticId { get; set; }
         public string? IdShort    { get; set; }
-        public JsonArray? Extensions { get; set; }
+        public List<IExtension>? Extensions { get; set; }
+        public List<IQualifier>? Qualifiers { get; set; }
 
         public DateTime TimeStampCreate { get; set; }
         public DateTime TimeStamp       { get; set; }

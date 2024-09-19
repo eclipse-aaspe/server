@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using AasCore.Aas3_0;
 using AasxServerDB;
 using AasxServerDB.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -104,8 +105,16 @@ namespace AasxServerDB
             modelBuilder.Entity<SMESet>()
                 .Property(e => e.Extensions)
                 .HasConversion(
-                    v => v.ToJsonString(null),
-                    v => JsonNode.Parse(v, null, default).AsArray());
+                    obj => SerializeList(obj),
+                    text => DeserializeList<IExtension>(text));
+
+
+            modelBuilder.Entity<SMESet>()
+                .Property(e => e.Qualifiers)
+                .HasConversion(
+                    obj => SerializeList(obj),
+                    text => DeserializeList<IQualifier>(text));
+
 
             modelBuilder.Entity<OValueSet>()
                 .Property(e => e.Value)
@@ -125,5 +134,99 @@ namespace AasxServerDB
             modelBuilder.Entity<SMESet>()
                 .HasIndex(d => d.ParentSMEId);
         }
+
+        public static string? SerializeList<T>(List<T>? list)
+        {
+            // check list
+            if (list == null)
+            {
+                return null;
+            }
+
+            // convert to JsonArray
+            var jsonArray = new JsonArray();
+            foreach (var element in list)
+            {
+                if (element == null)
+                {
+                    continue;
+                }
+
+                jsonArray.Add(Jsonization.Serialize.ToJsonObject((IClass)element));
+            }
+
+            // convert to string
+            var text = jsonArray.ToJsonString();
+            return text;
+        }
+
+        public static List<T>? DeserializeList<T>(string? text)
+        {
+            // check string
+            if (text.IsNullOrEmpty() || text is not string textS)
+            {
+                return null;
+            }
+
+            // convert to JsonArray
+            var jsonArray = JsonNode.Parse(textS);
+            if (jsonArray == null)
+            {
+                throw new InvalidOperationException("Failed to parse JSON.");
+            }
+            if (jsonArray is not JsonArray array)
+            {
+                throw new InvalidOperationException("JSON is not an array.");
+            }
+
+            // convert to list
+            var list = new List<T>();
+            foreach (var element in array)
+            {
+                if (element == null)
+                {
+                    continue;
+                }
+
+                var ele = default(T);
+                if (typeof(T).IsAssignableFrom(typeof(IReference)))
+                {
+                    ele = (T)(object)Jsonization.Deserialize.ReferenceFrom(element);
+                }
+                else if (typeof(T).IsAssignableFrom(typeof(IQualifier)))
+                {
+                    ele = (T)(object)Jsonization.Deserialize.QualifierFrom(element);
+                }
+                else if (typeof(T).IsAssignableFrom(typeof(ILangStringNameType)))
+                {
+                    ele = (T)(object)Jsonization.Deserialize.LangStringNameTypeFrom(element);
+                }
+                else if (typeof(T).IsAssignableFrom(typeof(ILangStringTextType)))
+                {
+                    ele = (T)(object)Jsonization.Deserialize.LangStringTextTypeFrom(element);
+                }
+                else if (typeof(T).IsAssignableFrom(typeof(IEmbeddedDataSpecification)))
+                {
+                    ele = (T)(object)Jsonization.Deserialize.EmbeddedDataSpecificationFrom(element);
+                }
+                else if (typeof(T).IsAssignableFrom(typeof(IExtension)))
+                {
+                    ele = (T)(object)Jsonization.Deserialize.ExtensionFrom(element);
+                }
+                else if (typeof(T).IsAssignableFrom(typeof(ISpecificAssetId)))
+                {
+                    ele = (T)(object)Jsonization.Deserialize.SpecificAssetIdFrom(element);
+                }
+
+                if (ele == null)
+                {
+                    continue;
+                }
+
+                list.Add(ele);
+            }
+            return list;
+        }
+
     }
 }

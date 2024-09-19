@@ -249,7 +249,8 @@ namespace AasxServerDB
                 return null;
 
             sme.IdShort = smeSet.IdShort;
-            sme.Extensions = smeSet.Extensions != null ? DeserializeExtensions(smeSet.Extensions) : null;
+            sme.Qualifiers = smeSet.Qualifiers;
+            sme.Extensions = smeSet.Extensions;
             sme.TimeStamp = smeSet.TimeStamp;
             sme.TimeStampCreate = smeSet.TimeStampCreate;
             sme.TimeStampTree = smeSet.TimeStampTree;

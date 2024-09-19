@@ -582,6 +582,7 @@
                         <th style="word-break:keep-all">Value</th>
                         <th style="word-break:keep-all">Additional Attributes</th>
                         <th style="word-break:keep-all">Extensions</th>
+                        <th style="word-break:keep-all">Qualifiers</th>
                         <th style="word-break:keep-all">TimeStamp</th>
                         <th style="word-break:keep-all">Links</th>
                         <th style="word-break:keep-all">API</th>
@@ -678,7 +679,8 @@
                                     </ul>
                                 }
                             </td>
-                            <td style="word-break:keep-all;font-size:small;max-width:200px">@smeDB.Extensions</td>
+                            <td style="font-size:small">@AasContext.SerializeList(smeDB.Extensions)</td>
+                            <td style="font-size:small">@AasContext.SerializeList(smeDB.Qualifiers)</td>
                             <td style="word-break:keep-all;color:lightgray;font-size:x-small">
                                 @($"UPDATE {TimeStamp.DateTimeToString(smeDB.TimeStamp)}")<br/>
                                 @($"CREATE {TimeStamp.DateTimeToString(smeDB.TimeStampCreate)}")<br/>
@@ -819,7 +821,9 @@
                             }
                         </span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@smeDB.Extensions</span>
+                        <span>@AasContext.SerializeList(smeDB.Extensions)</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@AasContext.SerializeList(smeDB.Qualifiers)</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@($"UPDATE {TimeStamp.DateTimeToString(smeDB.TimeStamp)}")</span>
                         <span>@($"CREATE {TimeStamp.DateTimeToString(smeDB.TimeStampCreate)}")</span>

@@ -99,6 +99,7 @@ namespace AasxServerDB.Migrations.Postgres
                     SemanticId = table.Column<string>(type: "text", nullable: true),
                     IdShort = table.Column<string>(type: "text", nullable: true),
                     Extensions = table.Column<string>(type: "text", nullable: true),
+                    Qualifiers = table.Column<string>(type: "text", nullable: true),
                     TimeStampCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     TimeStamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     TimeStampTree = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
