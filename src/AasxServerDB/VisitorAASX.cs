@@ -97,12 +97,14 @@ namespace AasxServerDB
                         new VisitorAASX(envDB: envDB).Visit(cd);
 
             var aasToSm = new Dictionary<string, AASSet>();
+
             if (asp.AasEnv.AssetAdministrationShells != null)
                 foreach (var aas in asp.AasEnv.AssetAdministrationShells)
                     if (aas != null)
                         if (!(!aas.IdShort.IsNullOrEmpty() && aas.IdShort.ToLower().Contains("globalsecurity")))
                         {
                             new VisitorAASX(envDB: envDB).Visit(aas);
+
                             if (aas.Submodels != null)
                                 foreach (var refSm in aas.Submodels)
                                     if (refSm.Keys != null && refSm.Keys.Count() > 0 && !refSm.Keys[0].Value.IsNullOrEmpty())
@@ -114,13 +116,14 @@ namespace AasxServerDB
                     if (sm != null)
                     {
                         new VisitorAASX(envDB: envDB).Visit(sm);
+
                         var smDB = envDB.SMSets.Last();
                         if (smDB != null && smDB.Identifier != null)
                             if (aasToSm.ContainsKey(smDB.Identifier))
                                 smDB.AASSet = aasToSm[smDB.Identifier];
                     }
 
-            if (asp.AasEnv.AssetAdministrationShells != null && asp.AasEnv.Submodels != null)
+            /*if (asp.AasEnv.AssetAdministrationShells != null && asp.AasEnv.Submodels != null)
                 foreach (var aas in asp.AasEnv.AssetAdministrationShells)
                 {
                     var aasDB = envDB.AASSets.FirstOrDefault(aasV => aas.Id == aasV.Identifier);
@@ -134,7 +137,7 @@ namespace AasxServerDB
                                     smDB.AASSet = aasDB;
                             }
                         }
-                }
+                }*/
         }
 
         private string ShortSMEType(ISubmodelElement sme)
