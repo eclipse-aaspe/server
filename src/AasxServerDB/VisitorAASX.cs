@@ -17,10 +17,10 @@ namespace AasxServerDB
         private SMSet? _smDB;
         private SMESet? _parSME;
         private string _oprPrefix = string.Empty;
-        public static string OPERATION_INPUT = "In";
-        public static string OPERATION_OUTPUT = "Out";
-        public static string OPERATION_INOUTPUT = "IO";
-        public static string OPERATION_SPLIT = "-";
+        public const string OPERATION_INPUT = "In";
+        public const string OPERATION_OUTPUT = "Out";
+        public const string OPERATION_INOUTPUT = "IO";
+        public const string OPERATION_SPLIT = "-";
 
         public VisitorAASX(EnvSet? envDB = null)
         {
@@ -36,7 +36,7 @@ namespace AasxServerDB
                     var envDB = new EnvSet() { Path = filePath };
                     LoadAASInDB(asp, envDB);
 
-                    using AasContext db = new AasContext();
+                    var db = new AasContext();
                     db.Add(envDB);
                     db.SaveChanges();
                 }
@@ -91,76 +91,84 @@ namespace AasxServerDB
             if (envDB == null || asp == null || asp.AasEnv == null)
                 return;
 
+            // ConceptDescriptions
             if (asp.AasEnv.ConceptDescriptions != null)
                 foreach (var cd in asp.AasEnv.ConceptDescriptions)
                     if (cd != null)
                         new VisitorAASX(envDB: envDB).Visit(cd);
 
-            var aasToSm = new Dictionary<string, AASSet>();
+            // dictionary to save connection between aas and sm
+            var aasToSm = new Dictionary<string, AASSet?>();
 
+            // AssetAdministrationShells
             if (asp.AasEnv.AssetAdministrationShells != null)
-                foreach (var aas in asp.AasEnv.AssetAdministrationShells)
-                    if (aas != null)
-                        if (!(!aas.IdShort.IsNullOrEmpty() && aas.IdShort.ToLower().Contains("globalsecurity")))
-                        {
-                            new VisitorAASX(envDB: envDB).Visit(aas);
-
-                            if (aas.Submodels != null)
-                                foreach (var refSm in aas.Submodels)
-                                    if (refSm.Keys != null && refSm.Keys.Count() > 0 && !refSm.Keys[0].Value.IsNullOrEmpty())
-                                        aasToSm.Add(refSm.Keys[0].Value, envDB.AASSets.Last());
-                        }
-
-            if (asp.AasEnv.Submodels != null)
-                foreach (var sm in asp.AasEnv.Submodels)
-                    if (sm != null)
-                    {
-                        new VisitorAASX(envDB: envDB).Visit(sm);
-
-                        var smDB = envDB.SMSets.Last();
-                        if (smDB != null && smDB.Identifier != null)
-                            if (aasToSm.ContainsKey(smDB.Identifier))
-                                smDB.AASSet = aasToSm[smDB.Identifier];
-                    }
-
-            /*if (asp.AasEnv.AssetAdministrationShells != null && asp.AasEnv.Submodels != null)
+            {
                 foreach (var aas in asp.AasEnv.AssetAdministrationShells)
                 {
-                    var aasDB = envDB.AASSets.FirstOrDefault(aasV => aas.Id == aasV.Identifier);
-                    if (aasDB != null && aas.Submodels != null)
-                        foreach (var smRef in aas.Submodels)
-                        {
-                            if (smRef.Keys != null && smRef.Keys.Count > 0)
-                            {
-                                var smDB = envDB.SMSets.FirstOrDefault(smV => smRef.Keys[ 0 ].Value == smV.Identifier);
-                                if (smDB != null)
-                                    smDB.AASSet = aasDB;
-                            }
-                        }
-                }*/
+                    if (aas == null)
+                        continue;
+
+                    if (!aas.IdShort.IsNullOrEmpty() && aas.IdShort.ToLower().Contains("globalsecurity"))
+                    {
+                        if (aas.Submodels == null)
+                            continue;
+
+                        foreach (var refSm in aas.Submodels)
+                            if (refSm.Keys != null && refSm.Keys.Count() > 0 && !refSm.Keys[0].Value.IsNullOrEmpty())
+                                aasToSm.TryAdd(refSm.Keys[0].Value, null);
+
+                        continue;
+                    }
+
+                    new VisitorAASX(envDB: envDB).Visit(aas);
+
+                    if (aas.Submodels == null)
+                        continue;
+
+                    foreach (var refSm in aas.Submodels)
+                        if (refSm.Keys != null && refSm.Keys.Count() > 0 && !refSm.Keys[0].Value.IsNullOrEmpty())
+                            aasToSm.TryAdd(refSm.Keys[0].Value, envDB.AASSets.Last());
+                }
+            }
+
+            // Submodels
+            if (asp.AasEnv.Submodels != null)
+            {
+                foreach (var sm in asp.AasEnv.Submodels)
+                {
+                    if (sm == null)
+                        continue;
+
+                    var found = !sm.Id.IsNullOrEmpty() && aasToSm.ContainsKey(sm.Id);
+                    var aas = found ? aasToSm[sm.Id] : null;
+                    if (found && aas == null)
+                        continue;
+
+                    new VisitorAASX(envDB: envDB).Visit(sm);
+
+                    envDB.SMSets.Last().AASSet = aas;
+                }
+            }
         }
 
-        private string ShortSMEType(ISubmodelElement sme)
+        private string ShortSMEType(ISubmodelElement sme) => _oprPrefix + sme switch
         {
-            return _oprPrefix + sme switch
-                   {
-                       RelationshipElement          => "Rel",
-                       AnnotatedRelationshipElement => "RelA",
-                       Property                     => "Prop",
-                       MultiLanguageProperty        => "MLP",
-                       AasCore.Aas3_0.Range         => "Range",
-                       Blob                         => "Blob",
-                       AasCore.Aas3_0.File          => "File",
-                       ReferenceElement             => "Ref",
-                       Capability                   => "Cap",
-                       SubmodelElementList          => "SML",
-                       SubmodelElementCollection    => "SMC",
-                       Entity                       => "Ent",
-                       BasicEventElement            => "Evt",
-                       Operation                    => "Opr",
-                       _                            => string.Empty
-                   };
-        }
+            RelationshipElement          => "Rel",
+            AnnotatedRelationshipElement => "RelA",
+            Property                     => "Prop",
+            MultiLanguageProperty        => "MLP",
+            AasCore.Aas3_0.Range         => "Range",
+            Blob                         => "Blob",
+            AasCore.Aas3_0.File          => "File",
+            ReferenceElement             => "Ref",
+            Capability                   => "Cap",
+            SubmodelElementList          => "SML",
+            SubmodelElementCollection    => "SMC",
+            Entity                       => "Ent",
+            BasicEventElement            => "Evt",
+            Operation                    => "Opr",
+            _                            => string.Empty
+        };
 
         public static Dictionary<DataTypeDefXsd, string> DataTypeToTable = new Dictionary<DataTypeDefXsd, string>() {
             { DataTypeDefXsd.AnyUri, "S" },

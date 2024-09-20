@@ -20,7 +20,6 @@ namespace AasxServerDB
     using Microsoft.Extensions.Configuration;
     using Microsoft.IdentityModel.Tokens;
     using AasCore.Aas3_0;
-    using System.Xml.Linq;
 
     public class AasContext : DbContext
     {
@@ -28,11 +27,11 @@ namespace AasxServerDB
         public static string?         _dataPath  { get; set; }
         public static bool            IsPostgres { get; set; }
 
-        public DbSet<EnvSet> EnvSets     { get; set; }
-        public DbSet<CDSet> CDSets { get; set; }
-        public DbSet<AASSet> AASSets       { get; set; }
-        public DbSet<SMSet> SMSets         { get; set; }
-        public DbSet<SMESet> SMESets       { get; set; }
+        public DbSet<EnvSet>    EnvSets    { get; set; }
+        public DbSet<CDSet>     CDSets     { get; set; }
+        public DbSet<AASSet>    AASSets    { get; set; }
+        public DbSet<SMSet>     SMSets     { get; set; }
+        public DbSet<SMESet>    SMESets    { get; set; }
         public DbSet<SValueSet> SValueSets { get; set; }
         public DbSet<IValueSet> IValueSets { get; set; }
         public DbSet<DValueSet> DValueSets { get; set; }
@@ -389,22 +388,18 @@ namespace AasxServerDB
             }
         }
 
-        public static string? SerializeList<T>(List<T>? list)
+        public static string SerializeList<T>(List<T>? list)
         {
             // check list
             if (list == null)
-            {
-                return null;
-            }
+                return string.Empty;
 
             // convert to JsonArray
             var jsonArray = new JsonArray();
             foreach (var element in list)
             {
                 if (element == null)
-                {
                     continue;
-                }
 
                 jsonArray.Add(Jsonization.Serialize.ToJsonObject((IClass)element));
             }
