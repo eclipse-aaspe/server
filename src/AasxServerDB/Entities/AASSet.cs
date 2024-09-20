@@ -29,7 +29,7 @@ namespace AasxServerDB.Entities
         [MaxLength(2000)]
         public string?                           Identifier         { get; set; }
         public IAdministrativeInformation?       Administration     { get; set; }
-        public List<IEmbeddedDataSpecification>? DataSpecifications { get; set; }
+        public List<IEmbeddedDataSpecification>? EmbeddedDataSpecifications { get; set; }
         public IReference?                       DerivedFrom        { get; set; }
 
         // asset information

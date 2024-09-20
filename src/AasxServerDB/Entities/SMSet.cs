@@ -45,7 +45,7 @@ namespace AasxServerDB.Entities
         public string?                           SemanticId              { get; set; } // change to save the rest of the reference
         public List<IReference>?                 SupplementalSemanticIds { get; set; }
         public List<IQualifier>?                 Qualifiers              { get; set; }
-        public List<IEmbeddedDataSpecification>? DataSpecifications      { get; set; }
+        public List<IEmbeddedDataSpecification>? EmbeddedDataSpecifications { get; set; }
 
         // time stamp
         public DateTime TimeStampCreate { get; set; }

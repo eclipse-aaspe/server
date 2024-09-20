@@ -30,7 +30,7 @@ namespace AasxServerDB.Entities
         public string?                           Identifier         { get; set; }
         public IAdministrativeInformation?       Administration     { get; set; }
         public List<IReference>?                 IsCaseOf           { get; set; }
-        public List<IEmbeddedDataSpecification>? DataSpecifications { get; set; }
+        public List<IEmbeddedDataSpecification>? EmbeddedDataSpecifications { get; set; }
 
         // time stamp
         public DateTime TimeStampCreate { get; set; }

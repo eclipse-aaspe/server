@@ -79,7 +79,7 @@ namespace AasxServerDB
                 id: cdDB.Identifier,
                 administration: cdDB.Administration,
                 isCaseOf: cdDB.IsCaseOf,
-                embeddedDataSpecifications: cdDB.DataSpecifications
+                embeddedDataSpecifications: cdDB.EmbeddedDataSpecifications
             )
             {
                 TimeStampCreate = cdDB.TimeStampCreate,
@@ -113,7 +113,7 @@ namespace AasxServerDB
                 extensions: aasDB.Extensions,
                 id: aasDB.Identifier,
                 administration: aasDB.Administration,
-                embeddedDataSpecifications: aasDB.DataSpecifications,
+                embeddedDataSpecifications: aasDB.EmbeddedDataSpecifications,
                 derivedFrom: aasDB.DerivedFrom,
                 assetInformation: new AssetInformation(
                     assetKind: aasDB.AssetKind != null ? (AssetKind)aasDB.AssetKind : AssetKind.Instance,
@@ -167,7 +167,7 @@ namespace AasxServerDB
                         new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, smDB.SemanticId) }) : null,
                     supplementalSemanticIds: smDB.SupplementalSemanticIds,
                     qualifiers: smDB.Qualifiers,
-                    embeddedDataSpecifications: smDB.DataSpecifications,
+                    embeddedDataSpecifications: smDB.EmbeddedDataSpecifications,
                     submodelElements: new List<ISubmodelElement>()
                 );
 
@@ -352,7 +352,7 @@ namespace AasxServerDB
                 new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, smeSet.SemanticId) }) : null;
             sme.SupplementalSemanticIds = smeSet.SupplementalSemanticIds;
             sme.Qualifiers      = smeSet.Qualifiers;
-            sme.EmbeddedDataSpecifications = smeSet.DataSpecifications;
+            sme.EmbeddedDataSpecifications = smeSet.EmbeddedDataSpecifications;
             sme.TimeStampCreate = smeSet.TimeStampCreate;
             sme.TimeStamp       = smeSet.TimeStamp;
             sme.TimeStampTree   = smeSet.TimeStampTree;

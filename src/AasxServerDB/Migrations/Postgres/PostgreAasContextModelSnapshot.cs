@@ -43,9 +43,6 @@ namespace AasxServerDB.Migrations.Postgres
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
-                    b.Property<string>("DataSpecifications")
-                        .HasColumnType("text");
-
                     b.Property<string>("DefaultThumbnail")
                         .HasColumnType("text");
 
@@ -56,6 +53,9 @@ namespace AasxServerDB.Migrations.Postgres
                         .HasColumnType("text");
 
                     b.Property<string>("DisplayName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmbeddedDataSpecifications")
                         .HasColumnType("text");
 
                     b.Property<int>("EnvId")
@@ -114,13 +114,13 @@ namespace AasxServerDB.Migrations.Postgres
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
-                    b.Property<string>("DataSpecifications")
-                        .HasColumnType("text");
-
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
                     b.Property<string>("DisplayName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmbeddedDataSpecifications")
                         .HasColumnType("text");
 
                     b.Property<int>("EnvId")
@@ -277,13 +277,13 @@ namespace AasxServerDB.Migrations.Postgres
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
-                    b.Property<string>("DataSpecifications")
-                        .HasColumnType("text");
-
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
                     b.Property<string>("DisplayName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmbeddedDataSpecifications")
                         .HasColumnType("text");
 
                     b.Property<string>("Extensions")
@@ -365,13 +365,13 @@ namespace AasxServerDB.Migrations.Postgres
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
-                    b.Property<string>("DataSpecifications")
-                        .HasColumnType("text");
-
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
                     b.Property<string>("DisplayName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmbeddedDataSpecifications")
                         .HasColumnType("text");
 
                     b.Property<int>("EnvId")

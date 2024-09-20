@@ -36,9 +36,6 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasMaxLength(128)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("DataSpecifications")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("DefaultThumbnail")
                         .HasColumnType("TEXT");
 
@@ -49,6 +46,9 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasColumnType("TEXT");
 
                     b.Property<string>("DisplayName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EmbeddedDataSpecifications")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("EnvId")
@@ -105,13 +105,13 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasMaxLength(128)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("DataSpecifications")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Description")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("DisplayName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EmbeddedDataSpecifications")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("EnvId")
@@ -258,13 +258,13 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasMaxLength(128)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("DataSpecifications")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Description")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("DisplayName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EmbeddedDataSpecifications")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Extensions")
@@ -344,13 +344,13 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasMaxLength(128)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("DataSpecifications")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Description")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("DisplayName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EmbeddedDataSpecifications")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("EnvId")

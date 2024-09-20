@@ -113,7 +113,7 @@ namespace AasxServerDB
                     obj => SerializeList(obj),
                     text => DeserializeList<IReference>(text));
             modelBuilder.Entity<CDSet>()
-                .Property(e => e.DataSpecifications)
+                .Property(e => e.EmbeddedDataSpecifications)
                 .HasConversion(
                     obj => SerializeList(obj),
                     text => DeserializeList<IEmbeddedDataSpecification>(text));
@@ -140,7 +140,7 @@ namespace AasxServerDB
                     obj => SerializeElement(obj),
                     text => DeserializeElementFromString<IAdministrativeInformation>(text));
             modelBuilder.Entity<AASSet>()
-                .Property(e => e.DataSpecifications)
+                .Property(e => e.EmbeddedDataSpecifications)
                 .HasConversion(
                     obj => SerializeList(obj),
                     text => DeserializeList<IEmbeddedDataSpecification>(text));
@@ -202,7 +202,7 @@ namespace AasxServerDB
                     obj => SerializeList(obj),
                     text => DeserializeList<IQualifier>(text));
             modelBuilder.Entity<SMSet>()
-                .Property(e => e.DataSpecifications)
+                .Property(e => e.EmbeddedDataSpecifications)
                 .HasConversion(
                     obj => SerializeList(obj),
                     text => DeserializeList<IEmbeddedDataSpecification>(text));
@@ -234,7 +234,7 @@ namespace AasxServerDB
                     obj => SerializeList(obj),
                     text => DeserializeList<IQualifier>(text));
             modelBuilder.Entity<SMESet>()
-                .Property(e => e.DataSpecifications)
+                .Property(e => e.EmbeddedDataSpecifications)
                 .HasConversion(
                     obj => SerializeList(obj),
                     text => DeserializeList<IEmbeddedDataSpecification>(text));
@@ -330,7 +330,7 @@ namespace AasxServerDB
             // default
             if (jsonNode == null)
             {
-                return default(T);
+                return default;
             }
 
             // convert to datatype
@@ -392,7 +392,9 @@ namespace AasxServerDB
         {
             // check list
             if (list == null)
+            {
                 return string.Empty;
+            }
 
             // convert to JsonArray
             var jsonArray = new JsonArray();
@@ -401,7 +403,8 @@ namespace AasxServerDB
                 if (element == null)
                     continue;
 
-                jsonArray.Add(Jsonization.Serialize.ToJsonObject((IClass)element));
+                var ele = Jsonization.Serialize.ToJsonObject((IClass)element);
+                jsonArray.Add(ele);
             }
 
             // convert to string
@@ -413,36 +416,26 @@ namespace AasxServerDB
         {
             // check string
             if (text.IsNullOrEmpty() || text is not string textS)
-            {
                 return null;
-            }
 
             // convert to JsonArray
             var jsonArray = JsonNode.Parse(textS);
             if (jsonArray == null)
-            {
                 throw new InvalidOperationException("Failed to parse JSON.");
-            }
             if (jsonArray is not JsonArray array)
-            {
                 throw new InvalidOperationException("JSON is not an array.");
-            }
 
             // convert to list
             var list = new List<T>();
             foreach (var element in array)
             {
                 if (element == null)
-                {
                     continue;
-                }
 
                 var ele = DeserializeElementFromJsonNode<T>(element);
 
                 if (ele == null)
-                {
                     continue;
-                }
 
                 list.Add(ele);
             }

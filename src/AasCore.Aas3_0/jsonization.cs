@@ -18462,11 +18462,13 @@ namespace AasCore.Aas3_0
             {
                 var result = new Nodes.JsonObject();
 
-                result["dataSpecification"] = Transform(
-                    that.DataSpecification);
+                /*result["dataSpecification"] = Transform(that.DataSpecification);*/
 
-                result["dataSpecificationContent"] = Transform(
-                    that.DataSpecificationContent);
+                result["dataSpecification"] = that.DataSpecification != null ? Transform(that.DataSpecification) : null;
+
+                /*result["dataSpecificationContent"] = Transform(that.DataSpecificationContent);*/
+
+                result["dataSpecificationContent"] = that.DataSpecificationContent != null ? Transform(that.DataSpecificationContent) : null;
 
                 return result;
             }

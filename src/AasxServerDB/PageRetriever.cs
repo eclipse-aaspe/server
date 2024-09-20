@@ -52,7 +52,7 @@ namespace AasxServerDB
                     (cd.Extensions != null && AasContext.SerializeList(cd.Extensions).ToLower().Contains(searchLower)) ||
                     (cd.Administration != null && AasContext.SerializeElement(cd.Administration).ToLower().Contains(searchLower)) ||
                     (cd.IsCaseOf != null && AasContext.SerializeList(cd.IsCaseOf).ToLower().Contains(searchLower)) ||
-                    (cd.DataSpecifications != null && AasContext.SerializeList(cd.DataSpecifications).ToLower().Contains(searchLower)))
+                    (cd.EmbeddedDataSpecifications != null && AasContext.SerializeList(cd.EmbeddedDataSpecifications).ToLower().Contains(searchLower)))
                 .Take(size);
 
             // Combine and return the results
@@ -100,7 +100,7 @@ namespace AasxServerDB
                     (aas.Description != null && AasContext.SerializeList(aas.Description).ToLower().Contains(searchLower)) ||
                     (aas.Extensions != null && AasContext.SerializeList(aas.Extensions).ToLower().Contains(searchLower)) ||
                     (aas.Administration != null && AasContext.SerializeElement(aas.Administration).ToLower().Contains(searchLower)) ||
-                    (aas.DataSpecifications != null && AasContext.SerializeList(aas.DataSpecifications).ToLower().Contains(searchLower)) ||
+                    (aas.EmbeddedDataSpecifications != null && AasContext.SerializeList(aas.EmbeddedDataSpecifications).ToLower().Contains(searchLower)) ||
                     (aas.DerivedFrom != null && AasContext.SerializeElement(aas.DerivedFrom).ToLower().Contains(searchLower)) ||
                     (aas.AssetKind != null && AasContext.SerializeElement(aas.AssetKind).ToLower().Contains(searchLower)) ||
                     (aas.SpecificAssetIds != null && AasContext.SerializeList(aas.SpecificAssetIds).ToLower().Contains(searchLower)) ||
@@ -155,7 +155,7 @@ namespace AasxServerDB
                     (sm.Kind != null && AasContext.SerializeElement(sm.Kind).ToLower().Contains(searchLower)) ||
                     (sm.SupplementalSemanticIds != null && AasContext.SerializeList(sm.SupplementalSemanticIds).ToLower().Contains(searchLower)) ||
                     (sm.Qualifiers != null && AasContext.SerializeList(sm.Qualifiers).ToLower().Contains(searchLower)) ||
-                    (sm.DataSpecifications != null && AasContext.SerializeList(sm.DataSpecifications).ToLower().Contains(searchLower)))
+                    (sm.EmbeddedDataSpecifications != null && AasContext.SerializeList(sm.EmbeddedDataSpecifications).ToLower().Contains(searchLower)))
                 .Take(size);
 
             // Combine and return the results
@@ -211,7 +211,7 @@ namespace AasxServerDB
                     (sme.Extensions != null && AasContext.SerializeList(sme.Extensions).ToLower().Contains(searchLower)) ||
                     (sme.SupplementalSemanticIds != null && AasContext.SerializeList(sme.SupplementalSemanticIds).ToLower().Contains(searchLower)) ||
                     (sme.Qualifiers != null && AasContext.SerializeList(sme.Qualifiers).ToLower().Contains(searchLower)) ||
-                    (sme.DataSpecifications != null && AasContext.SerializeList(sme.DataSpecifications).ToLower().Contains(searchLower)))
+                    (sme.EmbeddedDataSpecifications != null && AasContext.SerializeList(sme.EmbeddedDataSpecifications).ToLower().Contains(searchLower)))
                 .Take(size);
 
             // Combine and return the results
