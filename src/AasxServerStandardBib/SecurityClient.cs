@@ -1574,15 +1574,21 @@ namespace AasxServer
 
             if (eventData.direction != null && eventData.mode != null)
             {
-                if (eventData.direction.Value == "OUT" && eventData.mode.Value == "PUSH")
+                if (eventData.direction.Value == "OUT" && (eventData.mode.Value == "PUSH" || eventData.mode.Value == "PUT"))
                 {
                     getPut = "put";
                 }
-                if (eventData.direction.Value == "IN" && eventData.mode.Value == "PULL")
+                if (eventData.direction.Value == "IN" && (eventData.mode.Value == "PULL" || eventData.mode.Value == "GET"))
                 {
                     getPut = "get";
                 }
             }
+
+            handler = new HttpClientHandler()
+            {
+                Proxy = HttpClient.DefaultProxy,
+                DefaultProxyCredentials = CredentialCache.DefaultCredentials
+            };
 
             if (getPut == "get")
             {
@@ -1597,15 +1603,27 @@ namespace AasxServer
                     requestPath += "/" + eventData.lastUpdate.Value;
                 }
 
-                handler = new HttpClientHandler();
-
-                if (!requestPath.Contains("localhost"))
+                /*
+                if (false && !requestPath.Contains("localhost"))
                 {
                     if (proxy != null)
                         handler.Proxy = proxy;
                     else
                         handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
                 }
+                */
+
+                /*
+                if (defaultProxy != null)
+                {
+                    defaultProxy.UseDefaultCredentials = true;
+                    proxy = defaultProxy;
+                }
+                if (proxy != null)
+                    handler.Proxy = proxy;
+                else
+                    handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                */
 
                 client = new HttpClient(handler);
                 client.Timeout = TimeSpan.FromSeconds(20);
@@ -1708,9 +1726,9 @@ namespace AasxServer
                             }
                             if (eventData.diff != null)
                             {
-                                eventData.diff.Value = new List<ISubmodelElement>();
                                 if (diffEntry.Count > 0)
                                 {
+                                    eventData.diff.Value = new List<ISubmodelElement>();
                                     int i = 0;
                                     foreach (var d in diffEntry)
                                     {
@@ -1721,8 +1739,8 @@ namespace AasxServer
                                         eventData.diff.Value.Add(p);
                                         i++;
                                     }
+                                    eventData.diff.SetTimeStamp(dt);
                                 }
-                                eventData.diff.SetTimeStamp(dt);
                             }
                         }
                     }
@@ -1794,9 +1812,8 @@ namespace AasxServer
 
                 var json = System.Text.Json.JsonSerializer.Serialize(e);
 
+                /*
                 handler = new HttpClientHandler();
-                client = new HttpClient(handler);
-                client.Timeout = TimeSpan.FromSeconds(20);
 
                 if (!requestPath.Contains("localhost"))
                 {
@@ -1805,6 +1822,10 @@ namespace AasxServer
                     else
                         handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
                 }
+                */
+
+                client = new HttpClient(handler);
+                client.Timeout = TimeSpan.FromSeconds(20);
 
                 int update = 0;
                 try

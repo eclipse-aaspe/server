@@ -157,7 +157,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             if (eventData.dataCollection != null)
             {
                 data = eventData.dataCollection;
-                if (eventData.direction != null && eventData.direction.Value == "IN" && eventData.mode != null && eventData.mode.Value == "PUSH")
+                if (eventData.direction != null && eventData.direction.Value == "IN" && eventData.mode != null && (eventData.mode.Value == "PUSH" || eventData.mode.Value == "PUT"))
                 {
                     if (eventData.dataCollection.Value != null && eventData.dataCollection.Value.Count == 1 && eventData.dataCollection.Value[0] is SubmodelElementCollection)
                     {
@@ -170,9 +170,48 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 return NoContent();
             }
 
+            int depth = 0;
+            if (eventData.direction != null && eventData.direction.Value == "IN" && eventData.mode != null && (eventData.mode.Value == "PUSH" || eventData.mode.Value == "PUT"))
+            {
+                depth = 1;
+            }
+
             List<String> diffEntry = new List<String>();
             string changes = "CREATE UPDATE DELETE";
-            var e = Events.EventPayload.CollectPayload(changes, 1, eventData.statusData, data, diff, diffEntry, np);
+            var e = Events.EventPayload.CollectPayload(changes, 0, eventData.statusData, data, diff, diffEntry, np);
+
+            var timeStamp = DateTime.UtcNow;
+            if (eventData.transmitted != null)
+            {
+                eventData.transmitted.Value = e.status.transmitted;
+                eventData.transmitted.SetTimeStamp(DateTime.UtcNow);
+            }
+            var dt = DateTime.Parse(e.status.lastUpdate);
+            if (eventData.lastUpdate != null)
+            {
+                eventData.lastUpdate.Value = e.status.lastUpdate;
+                eventData.lastUpdate.SetTimeStamp(dt);
+            }
+            if (eventData.diff != null)
+            {
+                if (diffEntry.Count > 0)
+                {
+                    eventData.diff.Value = new List<ISubmodelElement>();
+                    int i = 0;
+                    foreach (var d in diffEntry)
+                    {
+                        var p = new Property(DataTypeDefXsd.String);
+                        p.IdShort = "diff" + i;
+                        p.Value = d;
+                        p.SetTimeStamp(dt);
+                        eventData.diff.Value.Add(p);
+                        i++;
+                    }
+                    eventData.diff.SetTimeStamp(dt);
+                }
+            }
+
+            Program.signalNewData(2);
             return new ObjectResult(e);
         }
 

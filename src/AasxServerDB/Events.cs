@@ -198,6 +198,7 @@ namespace Events
             e.eventEntries = new List<EventPayloadEntry>();
 
             var isInitial = diff == "init";
+            var isStatus = diff == "status";
 
             if (statusData != null && statusData.Value != null)
             {
@@ -211,13 +212,12 @@ namespace Events
                 {
                     var j = Jsonization.Serialize.ToJsonObject(smc);
                     e.statusData = j.ToJsonString();
-
                 }
             }
 
             lock (EventLock)
             {
-                if (referable != null)
+                if (!isStatus && referable != null)
                 {
                     var entry = new EventPayloadEntry();
                     var idShortPath = "";
@@ -275,6 +275,7 @@ namespace Events
                         entry.lastUpdate = e.status.lastUpdate;
                         entry.idShortPath = idShortPath.TrimEnd('.');
                         e.eventEntries.Add(entry);
+                        diffEntry.Add(entry.entryType + " " + entry.idShortPath);
                     }
                     else
                     {
@@ -801,6 +802,7 @@ namespace Events
                             noPayload = p;
                         break;
                     case "data":
+                    case "observed":
                         if (sm != null)
                             dataSubmodel = sm;
                         if (smec != null)
