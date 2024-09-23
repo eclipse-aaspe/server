@@ -45,7 +45,7 @@ namespace AasxServerDB
                 return dbSide.ToList();
 
             // Filter on the client side
-            var clientSide = dbId.AsEnumerable()
+            /*var clientSide = dbId.AsEnumerable()
                 .Where(cd =>
                     (cd.DisplayName != null && AasContext.SerializeList(cd.DisplayName).ToLower().Contains(searchLower)) ||
                     (cd.Description != null && AasContext.SerializeList(cd.Description).ToLower().Contains(searchLower)) ||
@@ -53,10 +53,10 @@ namespace AasxServerDB
                     (cd.Administration != null && AasContext.SerializeElement(cd.Administration).ToLower().Contains(searchLower)) ||
                     (cd.IsCaseOf != null && AasContext.SerializeList(cd.IsCaseOf).ToLower().Contains(searchLower)) ||
                     (cd.EmbeddedDataSpecifications != null && AasContext.SerializeList(cd.EmbeddedDataSpecifications).ToLower().Contains(searchLower)))
-                .Take(size);
+                .Take(size);*/
 
             // Combine and return the results
-            var combine = new HashSet<CDSet>(dbSide).Union(clientSide);
+            var combine = new HashSet<CDSet>(dbSide);//.Union(clientSide);
             var shortCom = combine.Take(size).ToList();
             return shortCom;
         }
@@ -94,7 +94,7 @@ namespace AasxServerDB
                 return dbSide.ToList();
 
             // Filter on the client side
-            var clientSide = dbId.AsEnumerable()
+            /*var clientSide = dbId.AsEnumerable()
                 .Where(aas =>
                     (aas.DisplayName != null && AasContext.SerializeList(aas.DisplayName).ToLower().Contains(searchLower)) ||
                     (aas.Description != null && AasContext.SerializeList(aas.Description).ToLower().Contains(searchLower)) ||
@@ -105,10 +105,10 @@ namespace AasxServerDB
                     (aas.AssetKind != null && AasContext.SerializeElement(aas.AssetKind).ToLower().Contains(searchLower)) ||
                     (aas.SpecificAssetIds != null && AasContext.SerializeList(aas.SpecificAssetIds).ToLower().Contains(searchLower)) ||
                     (aas.DefaultThumbnail != null && AasContext.SerializeElement(aas.DefaultThumbnail).ToLower().Contains(searchLower)))
-                .Take(size);
+                .Take(size);*/
 
             // Combine and return the results
-            var combine = new HashSet<AASSet>(dbSide).Union(clientSide);
+            var combine = new HashSet<AASSet>(dbSide);//.Union(clientSide);
             var shortCom = combine.Take(size).ToList();
             return shortCom;
         }
@@ -146,7 +146,7 @@ namespace AasxServerDB
                 return dbSide.ToList();
 
             // Filter on the client side
-            var clientSide = dbId.AsEnumerable()
+            /*var clientSide = dbId.AsEnumerable()
                 .Where(sm =>
                     (sm.DisplayName != null && AasContext.SerializeList(sm.DisplayName).ToLower().Contains(searchLower)) ||
                     (sm.Description != null && AasContext.SerializeList(sm.Description).ToLower().Contains(searchLower)) ||
@@ -156,10 +156,10 @@ namespace AasxServerDB
                     (sm.SupplementalSemanticIds != null && AasContext.SerializeList(sm.SupplementalSemanticIds).ToLower().Contains(searchLower)) ||
                     (sm.Qualifiers != null && AasContext.SerializeList(sm.Qualifiers).ToLower().Contains(searchLower)) ||
                     (sm.EmbeddedDataSpecifications != null && AasContext.SerializeList(sm.EmbeddedDataSpecifications).ToLower().Contains(searchLower)))
-                .Take(size);
+                .Take(size);*/
 
             // Combine and return the results
-            var combine = new HashSet<SMSet>(dbSide).Union(clientSide);
+            var combine = new HashSet<SMSet>(dbSide);//.Union(clientSide);
             var shortCom = combine.Take(size).ToList();
             return shortCom;
         }
@@ -190,7 +190,7 @@ namespace AasxServerDB
                     (sme.SemanticId != null && sme.SemanticId.ToLower().Contains(searchLower)) ||
                     (sme.TValue != null && sme.TValue.ToLower().Contains(searchLower)) ||
                     (withDateTime && sme.TimeStampTree.CompareTo(dateTime) > 0) ||
-                    db.OValueSets.Any(sv => sv.SMEId == sme.Id && (sv.Attribute.ToLower().Contains(searchLower) || ((string)sv.Value).ToLower().Contains(searchLower))) ||
+                    db.OValueSets.Any(sv => sv.SMEId == sme.Id && (sv.Attribute.ToLower().Contains(searchLower) || sv.Value.ToLower().Contains(searchLower))) ||
                     (sme.TValue != null && (
                         (sme.TValue.Equals("S") && db.SValueSets.Any(sv => sv.SMEId == sme.Id && ((sv.Annotation != null && sv.Annotation.ToLower().Contains(searchLower)) || (sv.Value != null && sv.Value.ToLower().Contains(searchLower))))) ||
                         (sme.TValue.Equals("I") && db.IValueSets.Any(sv => sv.SMEId == sme.Id && ((sv.Annotation != null && sv.Annotation.ToLower().Contains(searchLower)) || (sv.Value != null && sv.Value.ToString().ToLower().Contains(searchLower))))) ||
@@ -204,7 +204,7 @@ namespace AasxServerDB
                 return dbSide.ToList();
 
             // Filter on the client side
-            var clientSide = dbId.AsEnumerable()
+            /*var clientSide = dbId.AsEnumerable()
                 .Where(sme =>
                     (sme.DisplayName != null && AasContext.SerializeList(sme.DisplayName).ToLower().Contains(searchLower)) ||
                     (sme.Description != null && AasContext.SerializeList(sme.Description).ToLower().Contains(searchLower)) ||
@@ -212,10 +212,10 @@ namespace AasxServerDB
                     (sme.SupplementalSemanticIds != null && AasContext.SerializeList(sme.SupplementalSemanticIds).ToLower().Contains(searchLower)) ||
                     (sme.Qualifiers != null && AasContext.SerializeList(sme.Qualifiers).ToLower().Contains(searchLower)) ||
                     (sme.EmbeddedDataSpecifications != null && AasContext.SerializeList(sme.EmbeddedDataSpecifications).ToLower().Contains(searchLower)))
-                .Take(size);
+                .Take(size);*/
 
             // Combine and return the results
-            var combine = new HashSet<SMESet>(dbSide).Union(clientSide);
+            var combine = new HashSet<SMESet>(dbSide);//.Union(clientSide);
             var shortCom = combine.Take(size).ToList();
             return shortCom;
         }
@@ -266,7 +266,7 @@ namespace AasxServerDB
                     (smeid == 0 || v.SMEId == smeid) &&
                     (searchLower.IsNullOrEmpty() ||
                         (v.Attribute != null && v.Attribute.ToLower().Contains(searchLower)) ||
-                        (v.Value != null && ((string) v.Value).ToLower().Contains(searchLower))))
+                        (v.Value != null && v.Value.ToLower().Contains(searchLower))))
                 .Take(size)
                 .ToList();
     }

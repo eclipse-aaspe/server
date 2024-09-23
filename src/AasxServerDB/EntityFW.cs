@@ -87,7 +87,7 @@ namespace AasxServerDB
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // CD
-            modelBuilder.Entity<CDSet>()
+            /*modelBuilder.Entity<CDSet>()
                 .Property(e => e.DisplayName)
                 .HasConversion(
                     obj => SerializeList(obj),
@@ -244,7 +244,7 @@ namespace AasxServerDB
                 .Property(e => e.Value)
                 .HasConversion(
                     v => v.ToJsonString(null),
-                    v => JsonNode.Parse(v, null, default));
+                    v => JsonNode.Parse(v, null, default));*/
         }
 
         public static string SerializeLangText<T>(List<T>? list)
@@ -274,9 +274,10 @@ namespace AasxServerDB
             return result;
         }
 
+        // --------------------Serialize--------------------
         public static string? SerializeElement<T>(T? element)
         {
-            // check element
+            // check if null
             if (element == null)
             {
                 return null;
@@ -293,7 +294,11 @@ namespace AasxServerDB
                 typeof(T).IsAssignableFrom(typeof(IReference)))
             {
                 var jsonNode = Jsonization.Serialize.ToJsonObject((IClass)element);
-                return jsonNode?.ToJsonString(null);
+                if (jsonNode == null)
+                {
+                    return null;
+                }
+                return jsonNode.ToJsonString(null);
             }
             else
             {
@@ -301,39 +306,111 @@ namespace AasxServerDB
             }
         }
 
-        public static T? DeserializeElementFromString<T>(string? text)
+        public static string? SerializeList<T>(List<T>? list)
+        {
+            // check if null
+            if (list == null)
+            {
+                return null;
+            }
+
+            // convert to JsonArray
+            var jsonArray = new JsonArray();
+            foreach (var element in list)
+            {
+                if (element == null)
+                {
+                    continue;
+                }
+
+                // convert to JsonObject
+                var ele = Jsonization.Serialize.ToJsonObject((IClass)element);
+                if (ele == null)
+                {
+                    continue;
+                }
+
+                // add to JsonArray
+                jsonArray.Add(ele);
+            }
+
+            // empty JsonArray
+            if (jsonArray.Count > 0)
+            {
+                return null;
+            }
+
+            // convert to string
+            var text = jsonArray.ToJsonString();
+            return text;
+        }
+
+        // --------------------Deserialize--------------------
+        public static T? DeserializeElement<T>(string? text, bool required = false)
         {
             // check string
             if (text.IsNullOrEmpty() || text is not string textS)
             {
+                if (required)
+                {
+                    return DeserializeElementFromJsonNode<T>(null, required);
+                }
                 return default;
             }
 
             // add " to create JsonValue
-            if (typeof(T).IsAssignableFrom(typeof(AssetKind)) ||
-                typeof(T).IsAssignableFrom(typeof(ModellingKind)))
+            if (!text.IsNullOrEmpty() && (
+                    typeof(T).IsAssignableFrom(typeof(AssetKind)) ||
+                    typeof(T).IsAssignableFrom(typeof(ModellingKind))))
             {
-                textS = $"\"{textS}\"";
+                text = $"\"{text}\"";
             }
 
             // convert to JsonNode
-            var jsonNode = JsonNode.Parse(textS);
+            var jsonNode = JsonNode.Parse(text ?? string.Empty);
             if (jsonNode == null)
             {
                 throw new InvalidOperationException("Failed to parse JSON.");
             }
-            return DeserializeElementFromJsonNode<T>(jsonNode);
+
+            // convert to T
+            var element = DeserializeElementFromJsonNode<T>(jsonNode, required);
+            return element;
         }
 
-        public static T? DeserializeElementFromJsonNode<T>(JsonNode? jsonNode)
+        private static T? DeserializeElementFromJsonNode<T>(JsonNode? jsonNode, bool required = false)
         {
-            // default
+            // check JsonNode
             if (jsonNode == null)
             {
+                // T required
+                if (required)
+                {
+                    if (typeof(T).IsAssignableFrom(typeof(IReference)))
+                    {
+                        return (T)(object)new Reference(ReferenceTypes.ExternalReference, new List<IKey>());
+                    }
+                    else if (typeof(T).IsAssignableFrom(typeof(DataTypeDefXsd)))
+                    {
+                        return (T)(object)DataTypeDefXsd.String;
+                    }
+                    else if (typeof(T).IsAssignableFrom(typeof(bool)))
+                    {
+                        return (T)(object)true;
+                    }
+                    else if (typeof(T).IsAssignableFrom(typeof(EntityType)))
+                    {
+                        return (T)(object)EntityType.SelfManagedEntity;
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Deserialization of the element failed because it is required and no default handling is implemented.");
+                    }
+                }
                 return default;
             }
 
-            // convert to datatype
+            // convert to T
             if (typeof(T).IsAssignableFrom(typeof(IAdministrativeInformation)))
             {
                 return (T)(object)Jsonization.Deserialize.AdministrativeInformationFrom(jsonNode);
@@ -349,10 +426,6 @@ namespace AasxServerDB
             else if (typeof(T).IsAssignableFrom(typeof(IResource)))
             {
                 return (T)(object)Jsonization.Deserialize.ResourceFrom(jsonNode);
-            }
-            else if (typeof(T).IsAssignableFrom(typeof(IReference)))
-            {
-                return (T)(object)Jsonization.Deserialize.ReferenceFrom(jsonNode);
             }
             else if (typeof(T).IsAssignableFrom(typeof(IReference)))
             {
@@ -382,63 +455,73 @@ namespace AasxServerDB
             {
                 return (T)(object)Jsonization.Deserialize.SpecificAssetIdFrom(jsonNode);
             }
+            else if (typeof(T).IsAssignableFrom(typeof(DataTypeDefXsd)))
+            {
+                return (T)(object)Jsonization.Deserialize.DataTypeDefXsdFrom(jsonNode);
+            }
+            else if (typeof(T).IsAssignableFrom(typeof(bool)))
+            {
+                return (T)(object)jsonNode.GetValue<bool>();
+            }
+            else if (typeof(T).IsAssignableFrom(typeof(EntityType)))
+            {
+                return (T)(object)Jsonization.Deserialize.EntityTypeFrom(jsonNode);
+            }
             else
             {
                 throw new InvalidOperationException("Unsupported type: " + typeof(T).FullName);
             }
         }
 
-        public static string SerializeList<T>(List<T>? list)
-        {
-            // check list
-            if (list == null)
-            {
-                return string.Empty;
-            }
-
-            // convert to JsonArray
-            var jsonArray = new JsonArray();
-            foreach (var element in list)
-            {
-                if (element == null)
-                    continue;
-
-                var ele = Jsonization.Serialize.ToJsonObject((IClass)element);
-                jsonArray.Add(ele);
-            }
-
-            // convert to string
-            var text = jsonArray.ToJsonString();
-            return text;
-        }
-
-        public static List<T>? DeserializeList<T>(string? text)
+        public static List<T>? DeserializeList<T>(string? text, bool required = false)
         {
             // check string
             if (text.IsNullOrEmpty() || text is not string textS)
+            {
+                if (required)
+                {
+                    return new List<T>();
+                }
                 return null;
+            }
 
             // convert to JsonArray
             var jsonArray = JsonNode.Parse(textS);
             if (jsonArray == null)
+            {
                 throw new InvalidOperationException("Failed to parse JSON.");
+            }
             if (jsonArray is not JsonArray array)
+            {
                 throw new InvalidOperationException("JSON is not an array.");
+            }
 
             // convert to list
             var list = new List<T>();
             foreach (var element in array)
             {
                 if (element == null)
+                {
                     continue;
+                }
 
+                // convert to T
                 var ele = DeserializeElementFromJsonNode<T>(element);
-
                 if (ele == null)
+                {
                     continue;
+                }
 
+                // add to list
                 list.Add(ele);
             }
+
+            // empty list
+            if (list.Count > 0)
+            {
+                return null;
+            }
+
             return list;
         }
     }

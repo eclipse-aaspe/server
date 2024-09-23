@@ -2,7 +2,6 @@ namespace AasxServerDB.Entities
 {
     using System.ComponentModel.DataAnnotations;
     using System.ComponentModel.DataAnnotations.Schema;
-    using AasCore.Aas3_0;
     using Microsoft.EntityFrameworkCore;
 
     // indexes
@@ -20,24 +19,24 @@ namespace AasxServerDB.Entities
 
         // asset administration shell
         [StringLength(128)]
-        public string?                           IdShort            { get; set; }
-        public List<ILangStringNameType>?        DisplayName        { get; set; }
+        public string? IdShort                    { get; set; }
+        public string? DisplayName                { get; set; }
         [StringLength(128)]
-        public string?                           Category           { get; set; }
-        public List<ILangStringTextType>?        Description        { get; set; }
-        public List<IExtension>?                 Extensions         { get; set; }
+        public string? Category                   { get; set; }
+        public string? Description                { get; set; }
+        public string? Extensions                 { get; set; }
         [MaxLength(2000)]
-        public string?                           Identifier         { get; set; }
-        public IAdministrativeInformation?       Administration     { get; set; }
-        public List<IEmbeddedDataSpecification>? EmbeddedDataSpecifications { get; set; }
-        public IReference?                       DerivedFrom        { get; set; }
+        public string? Identifier                 { get; set; }
+        public string? Administration             { get; set; }
+        public string? EmbeddedDataSpecifications { get; set; }
+        public string? DerivedFrom                { get; set; }
 
         // asset information
-        public AssetKind?              AssetKind          { get; set; }
-        public string?                 GlobalAssetId      { get; set; }
-        public string?                 AssetType          { get; set; }
-        public List<ISpecificAssetId>? SpecificAssetIds   { get; set; }
-        public IResource?              DefaultThumbnail   { get; set; }
+        public string? AssetKind          { get; set; }
+        public string? GlobalAssetId      { get; set; }
+        public string? AssetType          { get; set; }
+        public string? SpecificAssetIds   { get; set; }
+        public string? DefaultThumbnail   { get; set; }
 
         // time stamp
         public DateTime TimeStampCreate { get; set; }

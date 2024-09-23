@@ -5,9 +5,7 @@ namespace AasxServerDB.Entities
     using System.Collections.Generic;
     using System.Linq;
     using Microsoft.IdentityModel.Tokens;
-    using Nodes = System.Text.Json.Nodes;
     using System.ComponentModel.DataAnnotations;
-    using AasCore.Aas3_0;
 
     // indexes
     [Index(nameof(Id))]
@@ -38,20 +36,20 @@ namespace AasxServerDB.Entities
 
         // submodel element
         [StringLength(128)]
-        public string?                           IdShort                 { get; set; }
-        public List<ILangStringNameType>?        DisplayName             { get; set; }
+        public string? IdShort                    { get; set; }
+        public string? DisplayName                { get; set; }
         [StringLength(128)]
-        public string?                           Category                { get; set; }
-        public List<ILangStringTextType>?        Description             { get; set; }
-        public List<IExtension>?                 Extensions              { get; set; }
+        public string? Category                   { get; set; }
+        public string? Description                { get; set; }
+        public string? Extensions                 { get; set; }
         [MaxLength(2000)]
-        public string?                           SemanticId              { get; set; } // change to save the rest of the reference
-        public List<IReference>?                 SupplementalSemanticIds { get; set; }
-        public List<IQualifier>?                 Qualifiers              { get; set; }
-        public List<IEmbeddedDataSpecification>? EmbeddedDataSpecifications { get; set; }
+        public string? SemanticId                 { get; set; } // change to save the rest of the reference
+        public string? SupplementalSemanticIds    { get; set; }
+        public string? Qualifiers                 { get; set; }
+        public string? EmbeddedDataSpecifications { get; set; }
 
         // value
-        [StringLength(1)]
+        [Column(TypeName = "char(1)")]
         public string? TValue { get; set; }
         public virtual ICollection<IValueSet> IValueSets { get; } = new List<IValueSet>();
         public virtual ICollection<DValueSet> DValueSets { get; } = new List<DValueSet>();
@@ -86,12 +84,14 @@ namespace AasxServerDB.Entities
 
         // object value // additional attributes
         public virtual ICollection<OValueSet> OValueSets { get; } = new List<OValueSet>();
-        public Dictionary<string, Nodes.JsonNode> GetOValue()
+        public Dictionary<string, string> GetOValue()
         {
             var dic = new AasContext().OValueSets.Where(s => s.SMEId == Id).ToList().ToDictionary(valueDB => valueDB.Attribute, valueDB => valueDB.Value);
             if (dic != null)
+            {
                 return dic;
-            return new Dictionary<string, Nodes.JsonNode>();
+            }
+            return new Dictionary<string, string>();
         }
 
         // time stamp

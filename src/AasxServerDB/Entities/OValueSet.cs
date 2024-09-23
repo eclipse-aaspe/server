@@ -1,7 +1,6 @@
 namespace AasxServerDB.Entities
 {
     using System.ComponentModel.DataAnnotations.Schema;
-    using System.Text.Json.Nodes;
     using Microsoft.EntityFrameworkCore;
 
     // indexes
@@ -20,7 +19,7 @@ namespace AasxServerDB.Entities
         public int Id { get; set; }
 
         // object value // additional attributes
-        public string   Attribute { get; set; }
-        public JsonNode Value   { get; set; }
+        public string Attribute { get; set; }
+        public string Value     { get; set; }
     }
 }

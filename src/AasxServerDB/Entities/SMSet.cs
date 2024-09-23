@@ -2,7 +2,6 @@ namespace AasxServerDB.Entities
 {
     using System.ComponentModel.DataAnnotations;
     using System.ComponentModel.DataAnnotations.Schema;
-    using AasCore.Aas3_0;
     using Microsoft.EntityFrameworkCore;
 
     // indexes
@@ -30,22 +29,22 @@ namespace AasxServerDB.Entities
 
         // submodel
         [StringLength(128)]
-        public string?                           IdShort                 { get; set; }
-        public List<ILangStringNameType>?        DisplayName             { get; set; }
+        public string? IdShort                    { get; set; }
+        public string? DisplayName                { get; set; }
         [StringLength(128)]
-        public string?                           Category                { get; set; }
-        public List<ILangStringTextType>?        Description             { get; set; }
-        public List<IExtension>?                 Extensions              { get; set; }
+        public string? Category                   { get; set; }
+        public string? Description                { get; set; }
+        public string? Extensions                 { get; set; }
         [MaxLength(2000)]
-        public string?                           Identifier              { get; set; }
-        public IAdministrativeInformation?       Administration          { get; set; }
+        public string? Identifier                 { get; set; }
+        public string? Administration             { get; set; }
         [StringLength(8)]
-        public ModellingKind?                    Kind                    { get; set; }
+        public string? Kind                       { get; set; }
         [MaxLength(2000)]
-        public string?                           SemanticId              { get; set; } // change to save the rest of the reference
-        public List<IReference>?                 SupplementalSemanticIds { get; set; }
-        public List<IQualifier>?                 Qualifiers              { get; set; }
-        public List<IEmbeddedDataSpecification>? EmbeddedDataSpecifications { get; set; }
+        public string? SemanticId                 { get; set; } // change to save the rest of the reference
+        public string? SupplementalSemanticIds    { get; set; }
+        public string? Qualifiers                 { get; set; }
+        public string? EmbeddedDataSpecifications { get; set; }
 
         // time stamp
         public DateTime TimeStampCreate { get; set; }

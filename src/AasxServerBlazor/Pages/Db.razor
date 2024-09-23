@@ -374,14 +374,14 @@
                                     <b>@cdDB.Id</b>
                                 </td>
                                 <td style="word-break:keep-all;max-width:200px">@cdDB.IdShort</td>
-                                <td style="font-size:small">@AasContext.SerializeList(cdDB.DisplayName)</td>
+                                <td style="font-size:small">@cdDB.DisplayName</td>
                                 <td style="word-break:keep-all">@cdDB.Category</td>
-                                <td style="font-size:small">@AasContext.SerializeList(cdDB.Description)</td>
-                                <td style="font-size:small">@AasContext.SerializeList(cdDB.Extensions)</td>
+                                <td style="font-size:small">@cdDB.Description</td>
+                                <td style="font-size:small">@cdDB.Extensions</td>
                                 <td>@cdDB.Identifier</td>
-                                <td style="font-size:small">@AasContext.SerializeElement(cdDB.Administration)</td>
-                                <td style="font-size:small">@AasContext.SerializeList(cdDB.IsCaseOf)</td>
-                                <td style="font-size:small">@AasContext.SerializeList(cdDB.EmbeddedDataSpecifications)</td>
+                                <td style="font-size:small">@cdDB.Administration</td>
+                                <td style="font-size:small">@cdDB.IsCaseOf</td>
+                                <td style="font-size:small">@cdDB.EmbeddedDataSpecifications</td>
                                 <td style="width:175px;color:lightgray;font-size:x-small">
                                     @($"CREATE {TimeStamp.DateTimeToString(cdDB.TimeStampCreate)}")<br />
                                     @($"UPDATE {TimeStamp.DateTimeToString(cdDB.TimeStamp)}")<br />
@@ -420,21 +420,21 @@
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@cdDB.IdShort</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeList(cdDB.DisplayName)</span>
+                        <span>@cdDB.DisplayName</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@cdDB.Category</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeList(cdDB.Description)</span>
+                        <span>@cdDB.Description</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeList(cdDB.Extensions)</span>
+                        <span>@cdDB.Extensions</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@cdDB.Identifier</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeElement(cdDB.Administration)</span>
+                        <span>@cdDB.Administration</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeList(cdDB.IsCaseOf)</span>
+                        <span>@cdDB.IsCaseOf</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeList(cdDB.EmbeddedDataSpecifications)</span>
+                        <span>@cdDB.EmbeddedDataSpecifications</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@($"CREATE {TimeStamp.DateTimeToString(cdDB.TimeStampCreate)}")</span>
                         <span>@($"UPDATE {TimeStamp.DateTimeToString(cdDB.TimeStamp)}")</span>
@@ -506,19 +506,19 @@
                                 <b>@aasDB.Id</b>
                             </td>
                             <td style="word-break:keep-all;max-width:200px">@aasDB.IdShort</td>
-                            <td style="font-size:small">@AasContext.SerializeList(aasDB.DisplayName)</td>
+                            <td style="font-size:small">@aasDB.DisplayName</td>
                             <td style="word-break:keep-all">@aasDB.Category</td>
-                            <td style="font-size:small">@AasContext.SerializeList(aasDB.Description)</td>
-                            <td style="font-size:small">@AasContext.SerializeList(aasDB.Extensions)</td>
+                            <td style="font-size:small">@aasDB.Description</td>
+                            <td style="font-size:small">@aasDB.Extensions</td>
                             <td>@aasDB.Identifier</td>
-                            <td style="font-size:small">@AasContext.SerializeElement(aasDB.Administration)</td>
-                            <td style="font-size:small">@AasContext.SerializeList(aasDB.EmbeddedDataSpecifications)</td>
-                            <td style="font-size:small">@AasContext.SerializeElement(aasDB.DerivedFrom)</td>
-                            <td>@AasContext.SerializeElement(aasDB.AssetKind)</td>
+                            <td style="font-size:small">@aasDB.Administration</td>
+                            <td style="font-size:small">@aasDB.EmbeddedDataSpecifications</td>
+                            <td style="font-size:small">@aasDB.DerivedFrom</td>
+                            <td>@aasDB.AssetKind</td>
                             <td>@aasDB.GlobalAssetId</td>
                             <td>@aasDB.AssetType</td>
-                            <td style="font-size:small">@AasContext.SerializeList(aasDB.SpecificAssetIds)</td>
-                            <td style="font-size:small">@AasContext.SerializeElement(aasDB.DefaultThumbnail)</td>
+                            <td style="font-size:small">@aasDB.SpecificAssetIds</td>
+                            <td style="font-size:small">@aasDB.DefaultThumbnail</td>
                             <td style="width:175px;color:lightgray;font-size:x-small">
                                 @($"CREATE {TimeStamp.DateTimeToString(aasDB.TimeStampCreate)}")<br />
                                 @($"UPDATE {TimeStamp.DateTimeToString(aasDB.TimeStamp)}")<br />
@@ -558,31 +558,31 @@
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@aasDB.IdShort</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeList(aasDB.DisplayName)</span>
+                        <span>@aasDB.DisplayName</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@aasDB.Category</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeList(aasDB.Description)</span>
+                        <span>@aasDB.Description</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeList(aasDB.Extensions)</span>
+                        <span>@aasDB.Extensions</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@aasDB.Identifier</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeElement(aasDB.Administration)</span>
+                        <span>@aasDB.Administration</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeList(aasDB.EmbeddedDataSpecifications)</span>
+                        <span>@aasDB.EmbeddedDataSpecifications</span>
                         <span style="background-color:blue;">&nbsp</span>
-                            <span>@AasContext.SerializeElement(aasDB.DerivedFrom)</span>
+                        <span>@aasDB.DerivedFrom</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeElement(aasDB.AssetKind)</span>
+                        <span>@aasDB.AssetKind</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@aasDB.GlobalAssetId</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@aasDB.AssetType</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeList(aasDB.SpecificAssetIds)</span>
+                        <span>@aasDB.SpecificAssetIds</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeElement(aasDB.DefaultThumbnail)</span>
+                        <span>@aasDB.DefaultThumbnail</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@($"CREATE {TimeStamp.DateTimeToString(aasDB.TimeStampCreate)}")</span>
                         <span>@($"UPDATE {TimeStamp.DateTimeToString(aasDB.TimeStamp)}")</span>
@@ -657,17 +657,17 @@
                                 <b>@smDB.Id</b>
                             </td>
                             <td style="word-break:keep-all;max-width:200px">@smDB.IdShort</td>
-                            <td style="font-size:small">@AasContext.SerializeList(smDB.DisplayName)</td>
+                            <td style="font-size:small">@smDB.DisplayName</td>
                             <td style="word-break:keep-all">@smDB.Category</td>
-                            <td style="font-size:small">@AasContext.SerializeList(smDB.Description)</td>
-                            <td style="font-size:small">@AasContext.SerializeList(smDB.Extensions)</td>
+                            <td style="font-size:small">@smDB.Description</td>
+                            <td style="font-size:small">@smDB.Extensions</td>
                             <td>@smDB.Identifier</td>
-                            <td style="font-size:small">@AasContext.SerializeElement(smDB.Administration)</td>
-                            <td style="word-break:keep-all">@AasContext.SerializeElement(smDB.Kind)</td>
+                            <td style="font-size:small">@smDB.Administration</td>
+                            <td style="word-break:keep-all">@smDB.Kind</td>
                             <td>@smDB.SemanticId</td>
-                            <td style="font-size:small">@AasContext.SerializeList(smDB.SupplementalSemanticIds)</td>
-                            <td style="font-size:small">@AasContext.SerializeList(smDB.Qualifiers)</td>
-                            <td style="font-size:small">@AasContext.SerializeList(smDB.EmbeddedDataSpecifications)</td>
+                            <td style="font-size:small">@smDB.SupplementalSemanticIds</td>
+                            <td style="font-size:small">@smDB.Qualifiers</td>
+                            <td style="font-size:small">@smDB.EmbeddedDataSpecifications</td>
                             <td style="width:175px;color:lightgray;font-size:x-small">
                                 @($"CREATE {TimeStamp.DateTimeToString(smDB.TimeStampCreate)}")<br/>
                                 @($"UPDATE {TimeStamp.DateTimeToString(smDB.TimeStamp)}")<br/>
@@ -710,27 +710,27 @@
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smDB.IdShort</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeList(smDB.DisplayName)</span>
+                        <span>@smDB.DisplayName</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smDB.Category</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeList(smDB.Description)</span>
+                        <span>@smDB.Description</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeList(smDB.Extensions)</span>
+                        <span>@smDB.Extensions</span>
                             <span style="background-color:blue;">&nbsp</span>
                         <span>@smDB.Identifier</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeElement(smDB.Administration)</span>
+                        <span>@smDB.Administration</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeElement(smDB.Kind)</span>
+                        <span>@smDB.Kind</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smDB.SemanticId</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeList(smDB.SupplementalSemanticIds)</span>
+                        <span>@smDB.SupplementalSemanticIds</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeList(smDB.Qualifiers)</span>
+                        <span>@smDB.Qualifiers</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeList(smDB.EmbeddedDataSpecifications)</span>
+                        <span>@smDB.EmbeddedDataSpecifications</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@($"CREATE {TimeStamp.DateTimeToString(smDB.TimeStampCreate)}")</span>
                         <span>@($"UPDATE {TimeStamp.DateTimeToString(smDB.TimeStamp)}")</span>
@@ -841,14 +841,14 @@
                             </td>
                             <td style="word-break:keep-all">@smeDB.SMEType</td>
                             <td style="word-break:keep-all;max-width:200px">@smeDB.IdShort</td>
-                            <td style="font-size:small">@AasContext.SerializeList(smeDB.DisplayName)</td>
+                            <td style="font-size:small">@smeDB.DisplayName</td>
                             <td style="word-break:keep-all">@smeDB.Category</td>
-                            <td style="font-size:small">@AasContext.SerializeList(smeDB.Description)</td>
-                            <td style="font-size:small">@AasContext.SerializeList(smeDB.Extensions)</td>
+                            <td style="font-size:small">@smeDB.Description</td>
+                            <td style="font-size:small">@smeDB.Extensions</td>
                             <td>@smeDB.SemanticId</td>
-                            <td style="font-size:small">@AasContext.SerializeList(smeDB.SupplementalSemanticIds)</td>
-                            <td style="font-size:small">@AasContext.SerializeList(smeDB.Qualifiers)</td>
-                            <td style="font-size:small">@AasContext.SerializeList(smeDB.EmbeddedDataSpecifications)</td>
+                            <td style="font-size:small">@smeDB.SupplementalSemanticIds</td>
+                            <td style="font-size:small">@smeDB.Qualifiers</td>
+                            <td style="font-size:small">@smeDB.EmbeddedDataSpecifications</td>
                             <td>@smeDB.TValue</td>
                             <td>
                                 @if (smeTypeWithoutOperation != null && smeTypeWithoutOperation.Equals("MLP"))
@@ -866,7 +866,7 @@
                                 {
                                     <ul>
                                         @{
-                                            var valueType = (string) db.OValueSets.Where(ovalue => ovalue.SMEId == smeDB.Id && ovalue.Attribute.Equals("ValueType")).Select(ovalue => ovalue.Value).FirstOrDefault();
+                                            var valueType = db.OValueSets.Where(ovalue => ovalue.SMEId == smeDB.Id && ovalue.Attribute.Equals("ValueType")).Select(ovalue => ovalue.Value).FirstOrDefault();
                                             if (!valueType.IsNullOrEmpty())
                                             {
                                                 <li>
@@ -992,21 +992,21 @@
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smeDB.IdShort</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeList(smeDB.DisplayName)</span>
+                        <span>@smeDB.DisplayName</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smeDB.Category</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeList(smeDB.Description)</span>
+                        <span>@smeDB.Description</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeList(smeDB.Extensions)</span>
+                        <span>@smeDB.Extensions</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smeDB.SemanticId</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeList(smeDB.SupplementalSemanticIds)</span>
+                        <span>@smeDB.SupplementalSemanticIds</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeList(smeDB.Qualifiers)</span>
+                        <span>@smeDB.Qualifiers</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@AasContext.SerializeList(smeDB.EmbeddedDataSpecifications)</span>
+                        <span>@smeDB.EmbeddedDataSpecifications</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smeDB.TValue</span>
                         <span style="background-color:blue;">&nbsp</span>
@@ -1022,7 +1022,7 @@
                             }
                             else if (smeTypeWithoutOperation != null && smeTypeWithoutOperation.Equals("Range"))
                             {
-                                var valueType = (string)db.OValueSets.Where(ovalue => ovalue.SMEId == smeDB.Id && ovalue.Attribute.Equals("ValueType")).Select(ovalue => ovalue.Value).FirstOrDefault();
+                                var valueType = db.OValueSets.Where(ovalue => ovalue.SMEId == smeDB.Id && ovalue.Attribute.Equals("ValueType")).Select(ovalue => ovalue.Value).FirstOrDefault();
                                 if (!valueType.IsNullOrEmpty())
                                 {
                                     <span>
