@@ -1703,7 +1703,7 @@ namespace AasxServer
                             }
 
 
-                            int count = Events.EventPayload.changeData(jsonString, eventData.statusData, Program.env, dest, out transmit, out lastDiffValue, out statusValue, diffEntry, envIndex);
+                            int count = Events.EventPayload.changeData(jsonString, eventData, Program.env, dest, out transmit, out lastDiffValue, out statusValue, diffEntry, envIndex);
                             // if (count > 0)
                             {
                                 update = 2;

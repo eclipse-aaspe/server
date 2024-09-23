@@ -40,13 +40,13 @@ namespace Events
 
     public class EventStatus
     {
-        public string mode { get; set; } // PULL or PUSH must be the same in publisher and consumer
+        // public string mode { get; set; } // PULL or PUSH must be the same in publisher and consumer
         public string transmitted { get; set; } // timestamp of GET or PUT
         public string lastUpdate { get; set; } // latest timeStamp for all entries
 
         public EventStatus()
         {
-            mode = "";
+            // mode = "";
             transmitted = "";
             lastUpdate = "";
         }
@@ -308,12 +308,14 @@ namespace Events
             return e;
         }
 
-        public static int changeData(string json, SubmodelElementCollection statusData, AdminShellPackageEnv[] env, IReferable referable, out string transmit, out string lastDiffValue, out string statusValue, List<String> diffEntry, int packageIndex = -1)
+        public static int changeData(string json, EventData eventData, AdminShellPackageEnv[] env, IReferable referable, out string transmit, out string lastDiffValue, out string statusValue, List<String> diffEntry, int packageIndex = -1)
         {
             transmit = "";
             lastDiffValue = "";
             statusValue = "ERROR";
             int count = 0;
+
+            var statusData = eventData.statusData;
 
             EventPayload eventPayload = JsonSerializer.Deserialize<Events.EventPayload>(json);
             transmit = eventPayload.status.transmitted;
@@ -520,7 +522,7 @@ namespace Events
 
                     if (entry.payloadType == "sme" && referable != null && (entry.payload != "" || entry.notDeletedIdShortList.Count != 0))
                     {
-                        count += changeSubmodelElement(entry, referable as ISubmodelElement, children, "", diffEntry);
+                        count += changeSubmodelElement(eventData, entry, referable as ISubmodelElement, children, "", diffEntry);
                         if (count > 0)
                         {
                             env[packageIndex].setWrite(true);
@@ -535,10 +537,16 @@ namespace Events
             return count;
         }
 
-        public static int changeSubmodelElement(EventPayloadEntry entry, IReferable parent, List<ISubmodelElement> submodelElements, string idShortPath, List<String> diffEntry)
+        public static int changeSubmodelElement(EventData eventData, EventPayloadEntry entry, IReferable parent, List<ISubmodelElement> submodelElements, string idShortPath, List<String> diffEntry)
         {
             int count = 0;
             var dt = DateTime.Parse(entry.lastUpdate);
+
+            int maxCount = 0;
+            if (eventData.dataMaxSize != null && eventData.dataMaxSize.Value != null)
+            {
+                maxCount = Convert.ToInt32(eventData.dataMaxSize.Value);
+            }
 
             ISubmodelElement receiveSme = null;
             if (entry.payload != "")
@@ -597,10 +605,10 @@ namespace Events
                             switch (sme)
                             {
                                 case ISubmodelElementCollection smc:
-                                    count += changeSubmodelElement(entry, smc, smc.Value, path, diffEntry);
+                                    count += changeSubmodelElement(eventData, entry, smc, smc.Value, path, diffEntry);
                                     break;
                                 case ISubmodelElementList sml:
-                                    count += changeSubmodelElement(entry, sml, sml.Value, path, diffEntry);
+                                    count += changeSubmodelElement(eventData, entry, sml, sml.Value, path, diffEntry);
                                     break;
                             }
                         }
@@ -630,10 +638,10 @@ namespace Events
                         switch (sme)
                         {
                             case ISubmodelElementCollection smc:
-                                count += changeSubmodelElement(entry, smc, smc.Value, path, diffEntry);
+                                count += changeSubmodelElement(eventData, entry, smc, smc.Value, path, diffEntry);
                                 break;
                             case ISubmodelElementList sml:
-                                count += changeSubmodelElement(entry, sml, sml.Value, path, diffEntry);
+                                count += changeSubmodelElement(eventData, entry, sml, sml.Value, path, diffEntry);
                                 break;
                         }
                     }
@@ -641,50 +649,72 @@ namespace Events
             }
             if (entry.entryType == "DELETE")
             {
-                for (int i = 0; i < submodelElements.Count; i++)
+                if (maxCount == 0 || eventData.dataCollection != parent)
                 {
-                    var sme = submodelElements[i];
-                    List<ISubmodelElement> children = new List<ISubmodelElement>();
-                    switch (sme)
+                    for (int i = 0; i < submodelElements.Count; i++)
                     {
-                        case ISubmodelElementCollection smc:
-                            children = smc.Value;
-                            break;
-                        case ISubmodelElementList sml:
-                            children = sml.Value;
-                            break;
-                    }
-                    if (entry.idShortPath == idShortPath + sme.IdShort)
-                    {
-                        Console.WriteLine("Event DELETE SME: " + entry.idShortPath);
-                        if (children.Count != 0)
+                        var sme = submodelElements[i];
+                        List<ISubmodelElement> children = new List<ISubmodelElement>();
+                        switch (sme)
                         {
-                            int c = 0;
-                            while (c < children.Count)
+                            case ISubmodelElementCollection smc:
+                                children = smc.Value;
+                                break;
+                            case ISubmodelElementList sml:
+                                children = sml.Value;
+                                break;
+                        }
+                        if (entry.idShortPath == idShortPath + sme.IdShort)
+                        {
+                            Console.WriteLine("Event DELETE SME: " + entry.idShortPath);
+                            if (children.Count != 0)
                             {
-                                if (!entry.notDeletedIdShortList.Contains(children[c].IdShort))
+                                int c = 0;
+                                while (c < children.Count)
                                 {
-                                    children.RemoveAt(c);
-                                    sme.SetTimeStampDelete(dt);
-                                    count++;
-                                }
-                                else
-                                {
-                                    c++;
+                                    if (!entry.notDeletedIdShortList.Contains(children[c].IdShort))
+                                    {
+                                        children.RemoveAt(c);
+                                        sme.SetTimeStampDelete(dt);
+                                        count++;
+                                    }
+                                    else
+                                    {
+                                        c++;
+                                    }
                                 }
                             }
+                            diffEntry.Add(entry.entryType + " " + entry.idShortPath + ".*");
+                            count++;
+                            break;
                         }
-                        diffEntry.Add(entry.entryType + " " + entry.idShortPath + ".*");
-                        count++;
-                        return count;
-                    }
-                    var path = idShortPath + sme.IdShort + ".";
-                    if (entry.idShortPath.StartsWith(path))
-                    {
-                        count += changeSubmodelElement(entry, sme, children, path, diffEntry);
+                        var path = idShortPath + sme.IdShort + ".";
+                        if (entry.idShortPath.StartsWith(path))
+                        {
+                            count += changeSubmodelElement(eventData, entry, sme, children, path, diffEntry);
+                        }
                     }
                 }
             }
+
+            if (maxCount != 0 || eventData.dataCollection == parent)
+            {
+                SubmodelElementCollection data = eventData.dataCollection;
+                if (eventData.direction != null && eventData.direction.Value == "IN" && eventData.mode != null && (eventData.mode.Value == "PUSH" || eventData.mode.Value == "PUT"))
+                {
+                    if (eventData.dataCollection.Value != null && eventData.dataCollection.Value.Count == 1 && eventData.dataCollection.Value[0] is SubmodelElementCollection smc)
+                    {
+                        data = smc;
+
+                        while (data.Value != null && data.Value.Count > maxCount)
+                        {
+                            data.Value.RemoveAt(0);
+                        }
+                    }
+                }
+
+            }
+
             return count;
         }
     }
@@ -709,6 +739,7 @@ namespace Events
         public AasCore.Aas3_0.Property endPoint = null;
         public Submodel dataSubmodel = null;
         public SubmodelElementCollection dataCollection = null;
+        public AasCore.Aas3_0.Property dataMaxSize = null;
         public SubmodelElementCollection statusData = null;
         public AasCore.Aas3_0.Property noPayload = null;
 
@@ -807,6 +838,10 @@ namespace Events
                             dataSubmodel = sm;
                         if (smec != null)
                             dataCollection = smec;
+                        break;
+                    case "datamaxsize":
+                        if (p != null)
+                            dataMaxSize = p;
                         break;
                     case "statusdata":
                         if (smec != null)
