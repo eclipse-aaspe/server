@@ -286,7 +286,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             string statusValue = "";
             List<String> diffEntry = new List<string>();
             int count = 0;
-            count = Events.EventPayload.changeData(body, eventData.statusData, Program.env, data, out transmitted, out lastDiffValue, out statusValue, diffEntry, packageIndex);
+            count = Events.EventPayload.changeData(body, eventData, Program.env, data, out transmitted, out lastDiffValue, out statusValue, diffEntry, packageIndex);
 
             if (eventData.transmitted != null)
             {
