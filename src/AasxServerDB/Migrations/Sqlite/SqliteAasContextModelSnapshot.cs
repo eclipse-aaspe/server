@@ -296,8 +296,7 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasColumnType("TEXT");
 
                     b.Property<string>("TValue")
-                        .HasMaxLength(1)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("char(1)");
 
                     b.Property<DateTime>("TimeStamp")
                         .HasColumnType("TEXT");

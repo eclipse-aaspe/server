@@ -8,12 +8,11 @@ namespace AasxServerDB
     using Microsoft.IdentityModel.Tokens;
     using AasxServerDB.Entities;
     using System.Text;
-    using Nodes = System.Text.Json.Nodes;
     using System.Collections.Generic;
 
     public class VisitorAASX : VisitorThrough
     {
-        private EnvSet? _envDB;
+        private EnvSet _envDB;
         private SMSet? _smDB;
         private SMESet? _parSME;
         private string _oprPrefix = string.Empty;
@@ -22,11 +21,16 @@ namespace AasxServerDB
         public const string OPERATION_INOUTPUT = "IO";
         public const string OPERATION_SPLIT = "-";
 
-        public VisitorAASX(EnvSet? envDB = null)
+        public VisitorAASX(EnvSet envDB)
         {
             _envDB = envDB;
         }
 
+
+
+
+
+        // Load AASX
         public static void LoadAASXInDB(string filePath, bool createFilesOnly, bool withDbFiles)
         {
             using (var asp = new AdminShellPackageEnv(filePath, false, true))
@@ -151,15 +155,129 @@ namespace AasxServerDB
             }
         }
 
+
+
+
+
+        // ConceptDescription
+        public override void VisitConceptDescription(IConceptDescription that)
+        {
+            var currentDataTime = DateTime.UtcNow;
+            var cdDB = new CDSet()
+            {
+                IdShort                    = that.IdShort,
+                DisplayName                = AasContext.SerializeList(that.DisplayName),
+                Category                   = that.Category,
+                Description                = AasContext.SerializeList(that.Description),
+                Extensions                 = AasContext.SerializeList(that.Extensions),
+                Identifier                 = that.Id,
+                Administration             = AasContext.SerializeElement(that.Administration),
+                IsCaseOf                   = AasContext.SerializeList(that.IsCaseOf),
+                EmbeddedDataSpecifications = AasContext.SerializeList(that.EmbeddedDataSpecifications),
+                TimeStampCreate            = that.TimeStampCreate == default ? currentDataTime : that.TimeStampCreate,
+                TimeStamp                  = that.TimeStamp       == default ? currentDataTime : that.TimeStamp,
+                TimeStampTree              = that.TimeStampTree   == default ? currentDataTime : that.TimeStampTree,
+                TimeStampDelete            = that.TimeStampDelete == default ? currentDataTime : that.TimeStampDelete
+            };
+            _envDB?.CDSets.Add(cdDB);
+            base.VisitConceptDescription(that);
+        }
+
+        // AssetAdministrationShell
+        public override void VisitAssetAdministrationShell(IAssetAdministrationShell that)
+        {
+            var currentDataTime = DateTime.UtcNow;
+            var aasDB = new AASSet()
+            {
+                IdShort                    = that.IdShort,
+                DisplayName                = AasContext.SerializeList(that.DisplayName),
+                Category                   = that.Category,
+                Description                = AasContext.SerializeList(that.Description),
+                Extensions                 = AasContext.SerializeList(that.Extensions),
+                Identifier                 = that.Id,
+                Administration             = AasContext.SerializeElement(that.Administration),
+                EmbeddedDataSpecifications = AasContext.SerializeList(that.EmbeddedDataSpecifications),
+                DerivedFrom                = AasContext.SerializeElement(that.DerivedFrom),
+                AssetKind                  = AasContext.SerializeElement(that.AssetInformation?.AssetKind),
+                SpecificAssetIds           = AasContext.SerializeList(that.AssetInformation?.SpecificAssetIds),
+                GlobalAssetId              = that.AssetInformation?.GlobalAssetId,
+                AssetType                  = that.AssetInformation?.AssetType,
+                DefaultThumbnail           = AasContext.SerializeElement(that.AssetInformation?.DefaultThumbnail),
+                TimeStampCreate            = that.TimeStampCreate == default ? currentDataTime : that.TimeStampCreate,
+                TimeStamp                  = that.TimeStamp       == default ? currentDataTime : that.TimeStamp,
+                TimeStampTree              = that.TimeStampTree   == default ? currentDataTime : that.TimeStampTree,
+                TimeStampDelete            = that.TimeStampDelete == default ? currentDataTime : that.TimeStampDelete
+            };
+            _envDB?.AASSets.Add(aasDB);
+            base.VisitAssetAdministrationShell(that);
+        }
+
+        // Submodel
+        public override void VisitSubmodel(ISubmodel that)
+        {
+            var currentDataTime = DateTime.UtcNow;
+            _smDB = new SMSet()
+            {
+                IdShort                    = that.IdShort,
+                DisplayName                = AasContext.SerializeList(that.DisplayName),
+                Category                   = that.Category,
+                Description                = AasContext.SerializeList(that.Description),
+                Extensions                 = AasContext.SerializeList(that.Extensions),
+                Identifier                 = that.Id,
+                Administration             = AasContext.SerializeElement(that.Administration),
+                Kind                       = AasContext.SerializeElement(that.Kind),
+                SemanticId                 = that.SemanticId?.GetAsIdentifier(),
+                SupplementalSemanticIds    = AasContext.SerializeList(that.SupplementalSemanticIds),
+                Qualifiers                 = AasContext.SerializeList(that.Qualifiers),
+                EmbeddedDataSpecifications = AasContext.SerializeList(that.EmbeddedDataSpecifications),
+                TimeStampCreate            = that.TimeStampCreate == default ? currentDataTime : that.TimeStampCreate,
+                TimeStamp                  = that.TimeStamp       == default ? currentDataTime : that.TimeStamp,
+                TimeStampTree              = that.TimeStampTree   == default ? currentDataTime : that.TimeStampTree,
+                TimeStampDelete            = that.TimeStampDelete == default ? currentDataTime : that.TimeStampDelete
+            };
+            _envDB?.SMSets.Add(_smDB);
+            base.VisitSubmodel(that);
+        }
+
+
+
+
+
+        // SubmodelElement
+        private SMESet CreateSMESet(ISubmodelElement sme)
+        {
+            var currentDataTime = DateTime.UtcNow;
+            var smeDB = new SMESet()
+            {
+                ParentSME                  = _parSME,
+                SMEType                    = ShortSMEType(sme),
+                IdShort                    = sme.IdShort,
+                DisplayName                = AasContext.SerializeList(sme.DisplayName),
+                Category                   = sme.Category,
+                Description                = AasContext.SerializeList(sme.Description),
+                Extensions                 = AasContext.SerializeList(sme.Extensions),
+                SemanticId                 = sme.SemanticId?.GetAsIdentifier(),
+                SupplementalSemanticIds    = AasContext.SerializeList(sme.SupplementalSemanticIds),
+                Qualifiers                 = AasContext.SerializeList(sme.Qualifiers),
+                EmbeddedDataSpecifications = AasContext.SerializeList(sme.EmbeddedDataSpecifications),
+                TimeStampCreate            = sme.TimeStampCreate == default ? currentDataTime : sme.TimeStampCreate,
+                TimeStamp                  = sme.TimeStamp       == default ? currentDataTime : sme.TimeStamp,
+                TimeStampTree              = sme.TimeStampTree   == default ? currentDataTime : sme.TimeStampTree,
+                TimeStampDelete            = sme.TimeStampDelete == default ? currentDataTime : sme.TimeStampDelete
+            };
+            SetValues(sme, smeDB);
+            _smDB?.SMESets.Add(smeDB);
+            return smeDB;
+        }
         private string ShortSMEType(ISubmodelElement sme) => _oprPrefix + sme switch
         {
             RelationshipElement          => "Rel",
             AnnotatedRelationshipElement => "RelA",
             Property                     => "Prop",
             MultiLanguageProperty        => "MLP",
-            AasCore.Aas3_0.Range         => "Range",
+            Range                        => "Range",
             Blob                         => "Blob",
-            AasCore.Aas3_0.File          => "File",
+            File                         => "File",
             ReferenceElement             => "Ref",
             Capability                   => "Cap",
             SubmodelElementList          => "SML",
@@ -169,7 +287,6 @@ namespace AasxServerDB
             Operation                    => "Opr",
             _                            => string.Empty
         };
-
         public static Dictionary<DataTypeDefXsd, string> DataTypeToTable = new Dictionary<DataTypeDefXsd, string>() {
             { DataTypeDefXsd.AnyUri, "S" },
             { DataTypeDefXsd.Base64Binary, "S" },
@@ -202,7 +319,6 @@ namespace AasxServerDB
             { DataTypeDefXsd.UnsignedLong, "I" },
             { DataTypeDefXsd.UnsignedShort, "I" }
         };
-
         private static bool GetValueAndDataType(string value, DataTypeDefXsd dataType, out string tableDataType, out string sValue, out long iValue, out double dValue)
         {
             tableDataType = DataTypeToTable[dataType];
@@ -246,8 +362,7 @@ namespace AasxServerDB
             tableDataType = "S";
             return true;
         }
-
-        private void SetValues(ISubmodelElement sme, SMESet smeDB)
+        private static void SetValues(ISubmodelElement sme, SMESet smeDB)
         {
             if (sme is RelationshipElement rel)
             {
@@ -400,7 +515,7 @@ namespace AasxServerDB
             else if (sme is Entity ent)
             {
                 smeDB.TValue = "S";
-                smeDB.SValueSets.Add(new SValueSet { Value = ent.GlobalAssetId, Annotation = Jsonization.Serialize.EntityTypeToJsonValue(ent.EntityType).ToString() });
+                smeDB.SValueSets.Add(new SValueSet { Value = ent.GlobalAssetId, Annotation = AasContext.SerializeElement(ent.EntityType) });
 
                 if (ent.SpecificAssetIds != null)
                     smeDB.OValueSets.Add(new OValueSet { Attribute = "SpecificAssetIds", Value = AasContext.SerializeList(ent.SpecificAssetIds) });
@@ -430,186 +545,87 @@ namespace AasxServerDB
             }
         }
 
-        private SMESet CollectSMEData(ISubmodelElement sme)
-        {
-            var currentDataTime = DateTime.UtcNow;
-            var smeDB = new SMESet()
-            {
-                ParentSME               = _parSME,
-                SMEType                 = ShortSMEType(sme),
-                IdShort                 = sme.IdShort,
-                DisplayName             = AasContext.SerializeList(sme.DisplayName),
-                Category                = sme.Category,
-                Description             = AasContext.SerializeList(sme.Description),
-                Extensions              = AasContext.SerializeList(sme.Extensions),
-                SemanticId              = sme.SemanticId?.GetAsIdentifier(),
-                SupplementalSemanticIds = AasContext.SerializeList(sme.SupplementalSemanticIds),
-                Qualifiers              = AasContext.SerializeList(sme.Qualifiers),
-                EmbeddedDataSpecifications = AasContext.SerializeList(sme.EmbeddedDataSpecifications),
-                TimeStampCreate         = sme.TimeStampCreate == default ? currentDataTime : sme.TimeStampCreate,
-                TimeStamp               = sme.TimeStamp       == default ? currentDataTime : sme.TimeStamp,
-                TimeStampTree           = sme.TimeStampTree   == default ? currentDataTime : sme.TimeStampTree,
-                TimeStampDelete         = sme.TimeStampDelete == default ? currentDataTime : sme.TimeStampDelete
-            };
-            SetValues(sme, smeDB);
-            _smDB?.SMESets.Add(smeDB);
 
-            return smeDB;
-        }
 
-        public override void VisitExtension(IExtension that)
+
+
+        // 14 SubmodelElemente (+ OperationVariable)
+        public override void VisitCapability(ICapability that)
         {
-            // base.VisitExtension(that);
-        }
-        public override void VisitAdministrativeInformation(IAdministrativeInformation that)
-        {
-            // base.VisitAdministrativeInformation(that);
-        }
-        public override void VisitQualifier(IQualifier that)
-        {
-            // base.VisitQualifier(that);
-        }
-        public override void VisitAssetAdministrationShell(IAssetAdministrationShell that)
-        {
-            var currentDataTime = DateTime.UtcNow;
-            var aasDB = new AASSet()
-            {
-                IdShort             = that.IdShort,
-                DisplayName         = AasContext.SerializeList(that.DisplayName),
-                Category            = that.Category,
-                Description         = AasContext.SerializeList(that.Description),
-                Extensions          = AasContext.SerializeList(that.Extensions),
-                Identifier          = that.Id,
-                Administration      = AasContext.SerializeElement(that.Administration),
-                EmbeddedDataSpecifications = AasContext.SerializeList(that.EmbeddedDataSpecifications),
-                DerivedFrom         = AasContext.SerializeElement(that.DerivedFrom),
-                AssetKind           = AasContext.SerializeElement(that.AssetInformation?.AssetKind),
-                SpecificAssetIds    = AasContext.SerializeList(that.AssetInformation?.SpecificAssetIds),
-                GlobalAssetId       = that.AssetInformation?.GlobalAssetId,
-                AssetType           = that.AssetInformation?.AssetType,
-                DefaultThumbnail    = AasContext.SerializeElement(that.AssetInformation?.DefaultThumbnail),
-                TimeStampCreate     = that.TimeStampCreate == default ? currentDataTime : that.TimeStampCreate,
-                TimeStamp           = that.TimeStamp       == default ? currentDataTime : that.TimeStamp,
-                TimeStampTree       = that.TimeStampTree   == default ? currentDataTime : that.TimeStampTree,
-                TimeStampDelete     = that.TimeStampDelete == default ? currentDataTime : that.TimeStampDelete
-            };
-            _envDB?.AASSets.Add(aasDB);
-            base.VisitAssetAdministrationShell(that);
-        }
-        public override void VisitAssetInformation(IAssetInformation that)
-        {
-            // base.VisitAssetInformation(that);
-        }
-        public override void VisitResource(IResource that)
-        {
-            // base.VisitResource(that);
-        }
-        public override void VisitSpecificAssetId(ISpecificAssetId that)
-        {
-            //base.VisitSpecificAssetId(that);
-        }
-        public override void VisitSubmodel(ISubmodel that)
-        {
-            var currentDataTime = DateTime.UtcNow;
-            _smDB = new SMSet()
-            {
-                IdShort                 = that.IdShort,
-                DisplayName             = AasContext.SerializeList(that.DisplayName),
-                Category                = that.Category,
-                Description             = AasContext.SerializeList(that.Description),
-                Extensions              = AasContext.SerializeList(that.Extensions),
-                Identifier              = that.Id,
-                Administration          = AasContext.SerializeElement(that.Administration),
-                Kind                    = AasContext.SerializeElement(that.Kind),
-                SemanticId              = that.SemanticId?.GetAsIdentifier(),
-                SupplementalSemanticIds = AasContext.SerializeList(that.SupplementalSemanticIds),
-                Qualifiers              = AasContext.SerializeList(that.Qualifiers),
-                EmbeddedDataSpecifications = AasContext.SerializeList(that.EmbeddedDataSpecifications),
-                TimeStampCreate         = that.TimeStampCreate == default ? currentDataTime : that.TimeStampCreate,
-                TimeStamp               = that.TimeStamp       == default ? currentDataTime : that.TimeStamp,
-                TimeStampTree           = that.TimeStampTree   == default ? currentDataTime : that.TimeStampTree,
-                TimeStampDelete         = that.TimeStampDelete == default ? currentDataTime : that.TimeStampDelete
-            };
-            _envDB?.SMSets.Add(_smDB);
-            base.VisitSubmodel(that);
+            CreateSMESet(that);
+            base.VisitCapability(that);
         }
         public override void VisitRelationshipElement(IRelationshipElement that)
         {
-            CollectSMEData(that);
+            CreateSMESet(that);
             base.VisitRelationshipElement(that);
         }
         public override void VisitSubmodelElementList(ISubmodelElementList that)
         {
-            var smeSet = CollectSMEData(that);
+            var smeSet = CreateSMESet(that);
             _parSME = smeSet;
             base.VisitSubmodelElementList(that);
             _parSME = smeSet.ParentSME;
         }
-
         public override void VisitSubmodelElementCollection(ISubmodelElementCollection that)
         {
-            var smeSet = CollectSMEData(that);
+            var smeSet = CreateSMESet(that);
             _parSME = smeSet;
             base.VisitSubmodelElementCollection(that);
             _parSME = smeSet.ParentSME;
         }
-
         public override void VisitProperty(IProperty that)
         {
-            CollectSMEData(that);
+            CreateSMESet(that);
             base.VisitProperty(that);
         }
         public override void VisitMultiLanguageProperty(IMultiLanguageProperty that)
         {
-            CollectSMEData(that);
+            CreateSMESet(that);
             base.VisitMultiLanguageProperty(that);
         }
         public override void VisitRange(IRange that)
         {
-            CollectSMEData(that);
+            CreateSMESet(that);
             base.VisitRange(that);
         }
         public override void VisitReferenceElement(IReferenceElement that)
         {
-            CollectSMEData(that);
+            CreateSMESet(that);
             base.VisitReferenceElement(that);
         }
         public override void VisitBlob(IBlob that)
         {
-            CollectSMEData(that);
+            CreateSMESet(that);
             base.VisitBlob(that);
         }
         public override void VisitFile(IFile that)
         {
-            CollectSMEData(that);
+            CreateSMESet(that);
             base.VisitFile(that);
         }
         public override void VisitAnnotatedRelationshipElement(IAnnotatedRelationshipElement that)
         {
-            var smeSet = CollectSMEData(that);
+            var smeSet = CreateSMESet(that);
             _parSME = smeSet;
             base.VisitAnnotatedRelationshipElement(that);
             _parSME = smeSet.ParentSME;
         }
         public override void VisitEntity(IEntity that)
         {
-            var smeSet = CollectSMEData(that);
+            var smeSet = CreateSMESet(that);
             _parSME = smeSet;
             base.VisitEntity(that);
             _parSME = smeSet.ParentSME;
         }
-        public override void VisitEventPayload(IEventPayload that)
-        {
-            // base.VisitEventPayload(that);
-        }
         public override void VisitBasicEventElement(IBasicEventElement that)
         {
-            CollectSMEData(that);
+            CreateSMESet(that);
             base.VisitBasicEventElement(that);
         }
         public override void VisitOperation(IOperation that)
         {
-            var smeSet = CollectSMEData(that);
+            var smeSet = CreateSMESet(that);
             _parSME = smeSet;
 
             if (that.InputVariables != null)
@@ -640,34 +656,17 @@ namespace AasxServerDB
         {
             base.VisitOperationVariable(that);
         }
-        public override void VisitCapability(ICapability that)
+
+
+
+
+
+        // Not used
+        public override void VisitEventPayload(IEventPayload that)
         {
-            CollectSMEData(that);
-            base.VisitCapability(that);
+            // base.VisitEventPayload(that);
         }
-        public override void VisitConceptDescription(IConceptDescription that)
-        {
-            var currentDataTime = DateTime.UtcNow;
-            var _cdDB = new CDSet()
-            {
-                IdShort            = that.IdShort,
-                DisplayName        = AasContext.SerializeList(that.DisplayName),
-                Category           = that.Category,
-                Description        = AasContext.SerializeList(that.Description),
-                Extensions         = AasContext.SerializeList(that.Extensions),
-                Identifier         = that.Id,
-                Administration     = AasContext.SerializeElement(that.Administration),
-                IsCaseOf           = AasContext.SerializeList(that.IsCaseOf),
-                EmbeddedDataSpecifications = AasContext.SerializeList(that.EmbeddedDataSpecifications),
-                TimeStampCreate    = that.TimeStampCreate == default ? currentDataTime : that.TimeStampCreate,
-                TimeStamp          = that.TimeStamp == default ? currentDataTime : that.TimeStamp,
-                TimeStampTree      = that.TimeStampTree == default ? currentDataTime : that.TimeStampTree,
-                TimeStampDelete    = that.TimeStampDelete == default ? currentDataTime : that.TimeStampDelete
-            };
-            _envDB?.CDSets.Add(_cdDB);
-            base.VisitConceptDescription(that);
-        }
-        public override void VisitReference(AasCore.Aas3_0.IReference that)
+        public override void VisitReference(IReference that)
         {
             // base.VisitReference(that);
         }
@@ -675,7 +674,7 @@ namespace AasxServerDB
         {
             // base.VisitKey(that);
         }
-        public override void VisitEnvironment(AasCore.Aas3_0.IEnvironment that)
+        public override void VisitEnvironment(IEnvironment that)
         {
             // base.VisitEnvironment(that);
         }
@@ -719,6 +718,30 @@ namespace AasxServerDB
         public override void VisitDataSpecificationIec61360(IDataSpecificationIec61360 that)
         {
             // base.VisitDataSpecificationIec61360(that);
+        }
+        public override void VisitExtension(IExtension that)
+        {
+            // base.VisitExtension(that);
+        }
+        public override void VisitAdministrativeInformation(IAdministrativeInformation that)
+        {
+            // base.VisitAdministrativeInformation(that);
+        }
+        public override void VisitQualifier(IQualifier that)
+        {
+            // base.VisitQualifier(that);
+        }
+        public override void VisitAssetInformation(IAssetInformation that)
+        {
+            // base.VisitAssetInformation(that);
+        }
+        public override void VisitResource(IResource that)
+        {
+            // base.VisitResource(that);
+        }
+        public override void VisitSpecificAssetId(ISpecificAssetId that)
+        {
+            //base.VisitSpecificAssetId(that);
         }
     }
 }

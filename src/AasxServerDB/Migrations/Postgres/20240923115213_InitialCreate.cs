@@ -1,9 +1,10 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace AasxServerDB.Migrations.Sqlite
+namespace AasxServerDB.Migrations.Postgres
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
@@ -15,9 +16,9 @@ namespace AasxServerDB.Migrations.Sqlite
                 name: "EnvSets",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Path = table.Column<string>(type: "TEXT", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Path = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -28,27 +29,27 @@ namespace AasxServerDB.Migrations.Sqlite
                 name: "AASSets",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    EnvId = table.Column<int>(type: "INTEGER", nullable: false),
-                    IdShort = table.Column<string>(type: "TEXT", maxLength: 128, nullable: true),
-                    DisplayName = table.Column<string>(type: "TEXT", nullable: true),
-                    Category = table.Column<string>(type: "TEXT", maxLength: 128, nullable: true),
-                    Description = table.Column<string>(type: "TEXT", nullable: true),
-                    Extensions = table.Column<string>(type: "TEXT", nullable: true),
-                    Identifier = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
-                    Administration = table.Column<string>(type: "TEXT", nullable: true),
-                    EmbeddedDataSpecifications = table.Column<string>(type: "TEXT", nullable: true),
-                    DerivedFrom = table.Column<string>(type: "TEXT", nullable: true),
-                    AssetKind = table.Column<string>(type: "TEXT", nullable: true),
-                    GlobalAssetId = table.Column<string>(type: "TEXT", nullable: true),
-                    AssetType = table.Column<string>(type: "TEXT", nullable: true),
-                    SpecificAssetIds = table.Column<string>(type: "TEXT", nullable: true),
-                    DefaultThumbnail = table.Column<string>(type: "TEXT", nullable: true),
-                    TimeStampCreate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    TimeStamp = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    TimeStampTree = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    TimeStampDelete = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    EnvId = table.Column<int>(type: "integer", nullable: false),
+                    IdShort = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
+                    DisplayName = table.Column<string>(type: "text", nullable: true),
+                    Category = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    Extensions = table.Column<string>(type: "text", nullable: true),
+                    Identifier = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    Administration = table.Column<string>(type: "text", nullable: true),
+                    EmbeddedDataSpecifications = table.Column<string>(type: "text", nullable: true),
+                    DerivedFrom = table.Column<string>(type: "text", nullable: true),
+                    AssetKind = table.Column<string>(type: "text", nullable: true),
+                    GlobalAssetId = table.Column<string>(type: "text", nullable: true),
+                    AssetType = table.Column<string>(type: "text", nullable: true),
+                    SpecificAssetIds = table.Column<string>(type: "text", nullable: true),
+                    DefaultThumbnail = table.Column<string>(type: "text", nullable: true),
+                    TimeStampCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStampTree = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStampDelete = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -65,22 +66,22 @@ namespace AasxServerDB.Migrations.Sqlite
                 name: "CDSets",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    EnvId = table.Column<int>(type: "INTEGER", nullable: false),
-                    IdShort = table.Column<string>(type: "TEXT", maxLength: 128, nullable: true),
-                    DisplayName = table.Column<string>(type: "TEXT", nullable: true),
-                    Category = table.Column<string>(type: "TEXT", maxLength: 128, nullable: true),
-                    Description = table.Column<string>(type: "TEXT", nullable: true),
-                    Extensions = table.Column<string>(type: "TEXT", nullable: true),
-                    Identifier = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
-                    Administration = table.Column<string>(type: "TEXT", nullable: true),
-                    IsCaseOf = table.Column<string>(type: "TEXT", nullable: true),
-                    EmbeddedDataSpecifications = table.Column<string>(type: "TEXT", nullable: true),
-                    TimeStampCreate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    TimeStamp = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    TimeStampTree = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    TimeStampDelete = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    EnvId = table.Column<int>(type: "integer", nullable: false),
+                    IdShort = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
+                    DisplayName = table.Column<string>(type: "text", nullable: true),
+                    Category = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    Extensions = table.Column<string>(type: "text", nullable: true),
+                    Identifier = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    Administration = table.Column<string>(type: "text", nullable: true),
+                    IsCaseOf = table.Column<string>(type: "text", nullable: true),
+                    EmbeddedDataSpecifications = table.Column<string>(type: "text", nullable: true),
+                    TimeStampCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStampTree = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStampDelete = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -97,26 +98,26 @@ namespace AasxServerDB.Migrations.Sqlite
                 name: "SMSets",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    EnvId = table.Column<int>(type: "INTEGER", nullable: false),
-                    AASId = table.Column<int>(type: "INTEGER", nullable: true),
-                    IdShort = table.Column<string>(type: "TEXT", maxLength: 128, nullable: true),
-                    DisplayName = table.Column<string>(type: "TEXT", nullable: true),
-                    Category = table.Column<string>(type: "TEXT", maxLength: 128, nullable: true),
-                    Description = table.Column<string>(type: "TEXT", nullable: true),
-                    Extensions = table.Column<string>(type: "TEXT", nullable: true),
-                    Identifier = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
-                    Administration = table.Column<string>(type: "TEXT", nullable: true),
-                    Kind = table.Column<string>(type: "TEXT", maxLength: 8, nullable: true),
-                    SemanticId = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
-                    SupplementalSemanticIds = table.Column<string>(type: "TEXT", nullable: true),
-                    Qualifiers = table.Column<string>(type: "TEXT", nullable: true),
-                    EmbeddedDataSpecifications = table.Column<string>(type: "TEXT", nullable: true),
-                    TimeStampCreate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    TimeStamp = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    TimeStampTree = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    TimeStampDelete = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    EnvId = table.Column<int>(type: "integer", nullable: false),
+                    AASId = table.Column<int>(type: "integer", nullable: true),
+                    IdShort = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
+                    DisplayName = table.Column<string>(type: "text", nullable: true),
+                    Category = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    Extensions = table.Column<string>(type: "text", nullable: true),
+                    Identifier = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    Administration = table.Column<string>(type: "text", nullable: true),
+                    Kind = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: true),
+                    SemanticId = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    SupplementalSemanticIds = table.Column<string>(type: "text", nullable: true),
+                    Qualifiers = table.Column<string>(type: "text", nullable: true),
+                    EmbeddedDataSpecifications = table.Column<string>(type: "text", nullable: true),
+                    TimeStampCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStampTree = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStampDelete = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -138,25 +139,25 @@ namespace AasxServerDB.Migrations.Sqlite
                 name: "SMESets",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    SMId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ParentSMEId = table.Column<int>(type: "INTEGER", nullable: true),
-                    SMEType = table.Column<string>(type: "TEXT", maxLength: 9, nullable: false),
-                    IdShort = table.Column<string>(type: "TEXT", maxLength: 128, nullable: true),
-                    DisplayName = table.Column<string>(type: "TEXT", nullable: true),
-                    Category = table.Column<string>(type: "TEXT", maxLength: 128, nullable: true),
-                    Description = table.Column<string>(type: "TEXT", nullable: true),
-                    Extensions = table.Column<string>(type: "TEXT", nullable: true),
-                    SemanticId = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
-                    SupplementalSemanticIds = table.Column<string>(type: "TEXT", nullable: true),
-                    Qualifiers = table.Column<string>(type: "TEXT", nullable: true),
-                    EmbeddedDataSpecifications = table.Column<string>(type: "TEXT", nullable: true),
-                    TValue = table.Column<string>(type: "TEXT", maxLength: 1, nullable: true),
-                    TimeStampCreate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    TimeStamp = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    TimeStampTree = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    TimeStampDelete = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SMId = table.Column<int>(type: "integer", nullable: false),
+                    ParentSMEId = table.Column<int>(type: "integer", nullable: true),
+                    SMEType = table.Column<string>(type: "character varying(9)", maxLength: 9, nullable: false),
+                    IdShort = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
+                    DisplayName = table.Column<string>(type: "text", nullable: true),
+                    Category = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    Extensions = table.Column<string>(type: "text", nullable: true),
+                    SemanticId = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    SupplementalSemanticIds = table.Column<string>(type: "text", nullable: true),
+                    Qualifiers = table.Column<string>(type: "text", nullable: true),
+                    EmbeddedDataSpecifications = table.Column<string>(type: "text", nullable: true),
+                    TValue = table.Column<string>(type: "char(1)", nullable: true),
+                    TimeStampCreate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStampTree = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TimeStampDelete = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -178,11 +179,11 @@ namespace AasxServerDB.Migrations.Sqlite
                 name: "DValueSets",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    SMEId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Value = table.Column<double>(type: "REAL", nullable: true),
-                    Annotation = table.Column<string>(type: "TEXT", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SMEId = table.Column<int>(type: "integer", nullable: false),
+                    Value = table.Column<double>(type: "double precision", nullable: true),
+                    Annotation = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -199,11 +200,11 @@ namespace AasxServerDB.Migrations.Sqlite
                 name: "IValueSets",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    SMEId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Value = table.Column<long>(type: "INTEGER", nullable: true),
-                    Annotation = table.Column<string>(type: "TEXT", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SMEId = table.Column<int>(type: "integer", nullable: false),
+                    Value = table.Column<long>(type: "bigint", nullable: true),
+                    Annotation = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -220,11 +221,11 @@ namespace AasxServerDB.Migrations.Sqlite
                 name: "OValueSets",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    SMEId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Attribute = table.Column<string>(type: "TEXT", nullable: false),
-                    Value = table.Column<string>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SMEId = table.Column<int>(type: "integer", nullable: false),
+                    Attribute = table.Column<string>(type: "text", nullable: false),
+                    Value = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -241,11 +242,11 @@ namespace AasxServerDB.Migrations.Sqlite
                 name: "SValueSets",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    SMEId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Value = table.Column<string>(type: "TEXT", nullable: true),
-                    Annotation = table.Column<string>(type: "TEXT", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SMEId = table.Column<int>(type: "integer", nullable: false),
+                    Value = table.Column<string>(type: "text", nullable: true),
+                    Annotation = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {

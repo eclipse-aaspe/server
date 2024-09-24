@@ -392,7 +392,10 @@
                                     <a href="@($"{shorturl}/env?envid={cdDB.EnvId}")" target="_blank">env</a>
                                 </td>
                                 <td style="word-break:keep-all">
-                                    <a href="@link" target="_blank">api</a>
+                                    @if (!cdDB.Identifier.IsNullOrEmpty())
+                                    {
+                                        <a href="@link" target="_blank">api</a>
+                                    }
                                 </td>
                             </tr>
                         }
@@ -443,7 +446,10 @@
                         <span style="background-color:blue;">&nbsp</span>
                         <a href="@($"{shorturl}/env?envid={cdDB.EnvId}")" target="_blank">env</a>
                         <span style="background-color:blue;">&nbsp</span>
-                        <a href="@link" target="_blank">api</a>
+                        @if (!cdDB.Identifier.IsNullOrEmpty())
+                        {
+                            <a href="@link" target="_blank">api</a>
+                        }
                         <br />
                     }
 
@@ -530,7 +536,10 @@
                                 <a href="@($"{shorturl}/sm?aasid={aasDB.Id}")" target="_blank">sm</a>
                             </td>
                             <td style="word-break:keep-all">
-                                <a href="@link" target="_blank">api</a>
+                                @if (!aasDB.Identifier.IsNullOrEmpty())
+                                {
+                                    <a href="@link" target="_blank">api</a>
+                                }
                             </td>
                         </tr>
                     }
@@ -592,7 +601,10 @@
                         <a href="@($"{shorturl}/env?envid={aasDB.EnvId}")" target="_blank">env </a>
                         <a href="@($"{shorturl}/sm?aasid={aasDB.Id}")" target="_blank">sm</a>
                         <span style="background-color:blue;">&nbsp</span>
-                        <a href="@link" target="_blank">api</a>
+                            @if (!aasDB.Identifier.IsNullOrEmpty())
+                        {
+                            <a href="@link" target="_blank">api</a>
+                        }
                         <br/>
                     }
 
@@ -680,7 +692,10 @@
                                 <a href="@($"{shorturl}/sme?smid={smDB.Id}")" target="_blank">sme:@(smeCount)</a>
                             </td>
                             <td style="word-break:keep-all">
-                                <a href="@link" target="_blank">api</a>
+                                @if (!smDB.Identifier.IsNullOrEmpty())
+                                {
+                                    <a href="@link" target="_blank">api</a>
+                                }
                             </td>
                         </tr>
                     }
@@ -741,7 +756,10 @@
                         <a href="@($"{shorturl}/aas?aasid={smDB.AASId}")" target="_blank">aas </a>
                         <a href="@($"{shorturl}/sme?smid={smDB.Id}")" target="_blank">sme:@(smeCount)</a>
                         <span style="background-color:blue;">&nbsp</span>
-                        <a href="@link" target="_blank">api</a>
+                        @if (!smDB.Identifier.IsNullOrEmpty())
+                        {
+                            <a href="@link" target="_blank">api</a>
+                        }
                         <br/>
                     }
 
@@ -816,11 +834,17 @@
                     @for (int i = 0; i < data.Count && i < 1000; i++)
                     {
                         var smeDB = data[i];
+                        var pathSuccess = !smeDB.IdShort.IsNullOrEmpty();
                         string path = smeDB.IdShort;
                         int? pId = smeDB.ParentSMEId;
-                        while (pId != null)
+                        while (pId != null && pathSuccess)
                         {
                             var smeDBP = db.SMESets.Where(s => s.Id == pId).First();
+                            if (smeDBP.IdShort.IsNullOrEmpty())
+                            {
+                                pathSuccess = false;
+                                break;
+                            }
                             path = $"{smeDBP.IdShort}.{path}";
                             pId = smeDBP.ParentSMEId;
                         }
@@ -901,7 +925,7 @@
                                 {
                                     var dic = smeDB.GetOValue();
                                     <ul>
-                                        @foreach(KeyValuePair<string, Nodes.JsonNode> dicValue in dic)
+                                        @foreach(KeyValuePair<string, string> dicValue in dic)
                                         {
                                             <li>
                                                 @dicValue.Key = @dicValue.Value.ToString()
@@ -947,7 +971,10 @@
                                 }
                                 </td>
                             <td style="word-break:keep-all">
-                                <a href="@link" target="_blank">api</a>
+                                @if (pathSuccess)
+                                {
+                                    <a href="@link" target="_blank">api</a>
+                                }
                             </td>
                         </tr>
                     }
@@ -963,11 +990,17 @@
                     {
 
                         var smeDB = data[i];
+                        var pathSuccess = !smeDB.IdShort.IsNullOrEmpty();
                         string path = smeDB.IdShort;
                         int? pId = smeDB.ParentSMEId;
-                        while (pId != null)
+                        while (pId != null && pathSuccess)
                         {
                             var smeDBP = db.SMESets.Where(s => s.Id == pId).First();
+                            if (smeDBP.IdShort.IsNullOrEmpty())
+                            {
+                                pathSuccess = false;
+                                break;
+                            }
                             path = $"{smeDBP.IdShort}.{path}";
                             pId = smeDBP.ParentSMEId;
                         }
@@ -1054,7 +1087,7 @@
                             {
                                 var dic = smeDB.GetOValue();
                                 <span>
-                                    @foreach (KeyValuePair<string, Nodes.JsonNode> valueDic in dic)
+                                    @foreach (KeyValuePair<string, string> valueDic in dic)
                                     {
                                         <span>
                                             @valueDic.Key = @valueDic.Value.ToString()
@@ -1098,7 +1131,10 @@
                             <a href="@($"{shorturl}/ovalue?smeid={smeDB.Id}")" target="_blank">ovalue </a>
                         }
                         <span style="background-color:blue;">&nbsp</span>
-                        <a href="@link" target="_blank">api</a>
+                        @if (pathSuccess)
+                        {
+                            <a href="@link" target="_blank">api</a>
+                        }
                         <br/>
                     }
 

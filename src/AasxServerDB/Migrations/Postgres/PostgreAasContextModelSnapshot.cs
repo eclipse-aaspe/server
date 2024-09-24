@@ -315,8 +315,7 @@ namespace AasxServerDB.Migrations.Postgres
                         .HasColumnType("text");
 
                     b.Property<string>("TValue")
-                        .HasMaxLength(1)
-                        .HasColumnType("character varying(1)");
+                        .HasColumnType("char(1)");
 
                     b.Property<DateTime>("TimeStamp")
                         .HasColumnType("timestamp with time zone");
