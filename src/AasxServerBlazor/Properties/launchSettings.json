@@ -10,7 +10,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--no-security --save-temp 5 --external-blazor http://127.0.0.1:5001 --edit --data-path \"C:\\Users\\Y97CO3\\OneDrive - PHOENIX CONTACT GmbH & Co. KG\\04_Abteilung_DI\\02_Projekte\\02_Aasx_Server\\01_AASX-Server_AASen\\aasx_bachelor\\aasx_5000\" --start-index 0 --with-db",
+      "commandLineArgs": "--no-security --save-temp 5 --external-blazor http://127.0.0.1:5001 --edit --data-path \"C:\\Users\\Y97CO3\\OneDrive - PHOENIX CONTACT GmbH & Co. KG\\04_Abteilung_DI\\02_Projekte\\02_Aasx_Server\\01_AASX-Server_AASen\\aasx_bachelor\\aasx_5000\" --start-index 10000 --with-db",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
