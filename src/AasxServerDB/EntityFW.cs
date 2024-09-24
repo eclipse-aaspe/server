@@ -20,8 +20,6 @@ namespace AasxServerDB
     using Microsoft.Extensions.Configuration;
     using Microsoft.IdentityModel.Tokens;
     using AasCore.Aas3_0;
-    using System.Reflection;
-    using static System.Net.Mime.MediaTypeNames;
 
     public class AasContext : DbContext
     {

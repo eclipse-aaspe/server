@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AasxServerDB.Migrations.Sqlite
 {
     [DbContext(typeof(SqliteAasContext))]
-    [Migration("20240923113147_InitialCreate")]
+    [Migration("20240924094346_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
