@@ -23,7 +23,7 @@ namespace AasxServerDB.Migrations.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Administration")
+                    b.Property<string>("AEmbeddedDataSpecifications")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("AssetKind")
@@ -36,7 +36,15 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasMaxLength(128)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("DefaultThumbnail")
+                    b.Property<string>("Creator")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DefaultThumbnailContentType")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DefaultThumbnailPath")
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("DerivedFrom")
@@ -68,7 +76,15 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Revision")
+                        .HasMaxLength(4)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("SpecificAssetIds")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TemplateId")
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("TimeStamp")
@@ -81,6 +97,10 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("TimeStampTree")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Version")
+                        .HasMaxLength(4)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -98,11 +118,14 @@ namespace AasxServerDB.Migrations.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Administration")
+                    b.Property<string>("AEmbeddedDataSpecifications")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Category")
                         .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Creator")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
@@ -131,6 +154,14 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Property<string>("IsCaseOf")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Revision")
+                        .HasMaxLength(4)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TemplateId")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("TimeStamp")
                         .HasColumnType("TEXT");
 
@@ -141,6 +172,10 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("TimeStampTree")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Version")
+                        .HasMaxLength(4)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -336,11 +371,14 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Property<int?>("AASId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Administration")
+                    b.Property<string>("AEmbeddedDataSpecifications")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Category")
                         .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Creator")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
@@ -373,11 +411,19 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Property<string>("Qualifiers")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Revision")
+                        .HasMaxLength(4)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("SemanticId")
                         .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SupplementalSemanticIds")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TemplateId")
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("TimeStamp")
@@ -390,6 +436,10 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("TimeStampTree")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Version")
+                        .HasMaxLength(4)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

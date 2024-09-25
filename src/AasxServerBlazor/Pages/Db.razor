@@ -352,9 +352,13 @@
                             <th style="word-break:keep-all">Description</th>
                             <th style="word-break:keep-all">Extensions</th>
                             <th style="word-break:keep-all">Identifier</th>
-                            <th style="word-break:keep-all">Administration</th>
                             <th style="word-break:keep-all">Is Case Of</th>
                             <th style="word-break:keep-all">Embedded Data Specifications</th>
+                            <th style="word-break:keep-all">Version</th>
+                            <th style="word-break:keep-all">Revision</th>
+                            <th style="word-break:keep-all">Creator</th>
+                            <th style="word-break:keep-all">Template Id</th>
+                            <th style="word-break:keep-all">A Embedded Data Specifications</th>
                             <th style="word-break:keep-all">Time Stamp</th>
                             <th style="word-break:keep-all">Links</th>
                             <th style="word-break:keep-all">API</th>
@@ -379,9 +383,13 @@
                                 <td style="font-size:small">@cdDB.Description</td>
                                 <td style="font-size:small">@cdDB.Extensions</td>
                                 <td>@cdDB.Identifier</td>
-                                <td style="font-size:small">@cdDB.Administration</td>
                                 <td style="font-size:small">@cdDB.IsCaseOf</td>
                                 <td style="font-size:small">@cdDB.EmbeddedDataSpecifications</td>
+                                <td>@cdDB.Version</td>
+                                <td>@cdDB.Revision</td>
+                                <td style="font-size:small">@cdDB.Creator</td>
+                                <td>@cdDB.TemplateId</td>
+                                <td style="font-size:small">@cdDB.AEmbeddedDataSpecifications</td>
                                 <td style="width:175px;color:lightgray;font-size:x-small">
                                     @($"CREATE {TimeStamp.DateTimeToString(cdDB.TimeStampCreate)}")<br />
                                     @($"UPDATE {TimeStamp.DateTimeToString(cdDB.TimeStamp)}")<br />
@@ -433,11 +441,19 @@
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@cdDB.Identifier</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@cdDB.Administration</span>
-                        <span style="background-color:blue;">&nbsp</span>
                         <span>@cdDB.IsCaseOf</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@cdDB.EmbeddedDataSpecifications</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@cdDB.Version</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@cdDB.Revision</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@cdDB.Creator</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@cdDB.TemplateId</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@cdDB.AEmbeddedDataSpecifications</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@($"CREATE {TimeStamp.DateTimeToString(cdDB.TimeStampCreate)}")</span>
                         <span>@($"UPDATE {TimeStamp.DateTimeToString(cdDB.TimeStamp)}")</span>
@@ -485,14 +501,19 @@
                         <th style="word-break:keep-all">Description</th>
                         <th style="word-break:keep-all">Extensions</th>
                         <th style="word-break:keep-all">Identifier</th>
-                        <th style="word-break:keep-all">Administration</th>
                         <th style="word-break:keep-all">Embedded Data Specifications</th>
                         <th style="word-break:keep-all">Derived From</th>
+                        <th style="word-break:keep-all">Version</th>
+                        <th style="word-break:keep-all">Revision</th>
+                        <th style="word-break:keep-all">Creator</th>
+                        <th style="word-break:keep-all">Template Id</th>
+                        <th style="word-break:keep-all">A Embedded Data Specifications</th>
                         <th style="word-break:keep-all">Asset Kind</th>
                         <th style="word-break:keep-all">Global Asset Id</th>
                         <th style="word-break:keep-all">Asset Type</th>
                         <th style="word-break:keep-all">Specific Asset Ids</th>
-                        <th style="word-break:keep-all">Default Thumbnail</th>
+                        <th style="word-break:keep-all">Default Thumbnail Path</th>
+                        <th style="word-break:keep-all">Default Thumbnail Content Type</th>
                         <th style="word-break:keep-all">Time Stamp</th>
                         <th style="word-break:keep-all">Links</th>
                         <th style="word-break:keep-all">API</th>
@@ -517,14 +538,19 @@
                             <td style="font-size:small">@aasDB.Description</td>
                             <td style="font-size:small">@aasDB.Extensions</td>
                             <td>@aasDB.Identifier</td>
-                            <td style="font-size:small">@aasDB.Administration</td>
                             <td style="font-size:small">@aasDB.EmbeddedDataSpecifications</td>
                             <td style="font-size:small">@aasDB.DerivedFrom</td>
+                            <td>@aasDB.Version</td>
+                            <td>@aasDB.Revision</td>
+                            <td style="font-size:small">@aasDB.Creator</td>
+                            <td>@aasDB.TemplateId</td>
+                            <td style="font-size:small">@aasDB.AEmbeddedDataSpecifications</td>
                             <td>@aasDB.AssetKind</td>
                             <td>@aasDB.GlobalAssetId</td>
                             <td>@aasDB.AssetType</td>
                             <td style="font-size:small">@aasDB.SpecificAssetIds</td>
-                            <td style="font-size:small">@aasDB.DefaultThumbnail</td>
+                            <td>@aasDB.DefaultThumbnailPath</td>
+                            <td>@aasDB.DefaultThumbnailContentType</td>
                             <td style="width:175px;color:lightgray;font-size:x-small">
                                 @($"CREATE {TimeStamp.DateTimeToString(aasDB.TimeStampCreate)}")<br />
                                 @($"UPDATE {TimeStamp.DateTimeToString(aasDB.TimeStamp)}")<br />
@@ -577,11 +603,19 @@
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@aasDB.Identifier</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@aasDB.Administration</span>
-                        <span style="background-color:blue;">&nbsp</span>
                         <span>@aasDB.EmbeddedDataSpecifications</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@aasDB.DerivedFrom</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@aasDB.Version</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@aasDB.Revision</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@aasDB.Creator</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@aasDB.TemplateId</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@aasDB.AEmbeddedDataSpecifications</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@aasDB.AssetKind</span>
                         <span style="background-color:blue;">&nbsp</span>
@@ -591,7 +625,9 @@
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@aasDB.SpecificAssetIds</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@aasDB.DefaultThumbnail</span>
+                        <span>@aasDB.DefaultThumbnailPath</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@aasDB.DefaultThumbnailContentType</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@($"CREATE {TimeStamp.DateTimeToString(aasDB.TimeStampCreate)}")</span>
                         <span>@($"UPDATE {TimeStamp.DateTimeToString(aasDB.TimeStamp)}")</span>
@@ -643,12 +679,16 @@
                         <th style="word-break:keep-all">Description</th>
                         <th style="word-break:keep-all">Extensions</th>
                         <th style="word-break:keep-all">Identifier</th>
-                        <th style="word-break:keep-all">Administration</th>
                         <th style="word-break:keep-all">Kind</th>
                         <th style="word-break:keep-all">Semantic Id</th>
                         <th style="word-break:keep-all">Supplemental Semantic Ids</th>
                         <th style="word-break:keep-all">Qualifiers</th>
                         <th style="word-break:keep-all">Embedded Data Specifications</th>
+                        <th style="word-break:keep-all">Version</th>
+                        <th style="word-break:keep-all">Revision</th>
+                        <th style="word-break:keep-all">Creator</th>
+                        <th style="word-break:keep-all">Template Id</th>
+                        <th style="word-break:keep-all">A EmbeddedData Specifications</th>
                         <th style="word-break:keep-all">Time Stamp</th>
                         <th style="word-break:keep-all">Links</th>
                         <th style="word-break:keep-all">API</th>
@@ -674,12 +714,16 @@
                             <td style="font-size:small">@smDB.Description</td>
                             <td style="font-size:small">@smDB.Extensions</td>
                             <td>@smDB.Identifier</td>
-                            <td style="font-size:small">@smDB.Administration</td>
                             <td style="word-break:keep-all">@smDB.Kind</td>
                             <td>@smDB.SemanticId</td>
                             <td style="font-size:small">@smDB.SupplementalSemanticIds</td>
                             <td style="font-size:small">@smDB.Qualifiers</td>
                             <td style="font-size:small">@smDB.EmbeddedDataSpecifications</td>
+                            <td>@smDB.Version</td>
+                            <td>@smDB.Revision</td>
+                            <td style="font-size:small">@smDB.Creator</td>
+                            <td>@smDB.TemplateId</td>
+                            <td style="font-size:small">@smDB.AEmbeddedDataSpecifications</td>
                             <td style="width:175px;color:lightgray;font-size:x-small">
                                 @($"CREATE {TimeStamp.DateTimeToString(smDB.TimeStampCreate)}")<br/>
                                 @($"UPDATE {TimeStamp.DateTimeToString(smDB.TimeStamp)}")<br/>
@@ -732,10 +776,8 @@
                         <span>@smDB.Description</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smDB.Extensions</span>
-                            <span style="background-color:blue;">&nbsp</span>
-                        <span>@smDB.Identifier</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@smDB.Administration</span>
+                        <span>@smDB.Identifier</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smDB.Kind</span>
                         <span style="background-color:blue;">&nbsp</span>
@@ -746,6 +788,16 @@
                         <span>@smDB.Qualifiers</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smDB.EmbeddedDataSpecifications</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smDB.Version</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smDB.Revision</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smDB.Creator</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smDB.TemplateId</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smDB.AEmbeddedDataSpecifications</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@($"CREATE {TimeStamp.DateTimeToString(smDB.TimeStampCreate)}")</span>
                         <span>@($"UPDATE {TimeStamp.DateTimeToString(smDB.TimeStamp)}")</span>

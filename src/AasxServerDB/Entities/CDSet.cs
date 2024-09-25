@@ -27,9 +27,18 @@ namespace AasxServerDB.Entities
         public string? Extensions                 { get; set; }
         [MaxLength(2000)]
         public string? Identifier                 { get; set; }
-        public string? Administration             { get; set; }
         public string? IsCaseOf                   { get; set; }
         public string? EmbeddedDataSpecifications { get; set; }
+
+        // administration
+        [StringLength(4)]
+        public string? Version                     { get; set; }
+        [StringLength(4)]
+        public string? Revision                    { get; set; }
+        public string? Creator                     { get; set; }
+        [MaxLength(2000)]
+        public string? TemplateId                  { get; set; }
+        public string? AEmbeddedDataSpecifications { get; set; }
 
         // time stamp
         public DateTime TimeStampCreate { get; set; }

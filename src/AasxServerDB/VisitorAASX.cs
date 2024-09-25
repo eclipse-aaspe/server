@@ -165,19 +165,23 @@ namespace AasxServerDB
             var currentDataTime = DateTime.UtcNow;
             var cdDB = new CDSet()
             {
-                IdShort                    = that.IdShort,
-                DisplayName                = AasContext.SerializeList(that.DisplayName),
-                Category                   = that.Category,
-                Description                = AasContext.SerializeList(that.Description),
-                Extensions                 = AasContext.SerializeList(that.Extensions),
-                Identifier                 = that.Id,
-                Administration             = AasContext.SerializeElement(that.Administration),
-                IsCaseOf                   = AasContext.SerializeList(that.IsCaseOf),
-                EmbeddedDataSpecifications = AasContext.SerializeList(that.EmbeddedDataSpecifications),
-                TimeStampCreate            = that.TimeStampCreate == default ? currentDataTime : that.TimeStampCreate,
-                TimeStamp                  = that.TimeStamp       == default ? currentDataTime : that.TimeStamp,
-                TimeStampTree              = that.TimeStampTree   == default ? currentDataTime : that.TimeStampTree,
-                TimeStampDelete            = that.TimeStampDelete == default ? currentDataTime : that.TimeStampDelete
+                IdShort                     = that.IdShort,
+                DisplayName                 = AasContext.SerializeList(that.DisplayName),
+                Category                    = that.Category,
+                Description                 = AasContext.SerializeList(that.Description),
+                Extensions                  = AasContext.SerializeList(that.Extensions),
+                Identifier                  = that.Id,
+                IsCaseOf                    = AasContext.SerializeList(that.IsCaseOf),
+                EmbeddedDataSpecifications  = AasContext.SerializeList(that.EmbeddedDataSpecifications),
+                Version                     = that.Administration?.Version,
+                Revision                    = that.Administration?.Revision,
+                Creator                     = AasContext.SerializeElement(that.Administration?.Creator),
+                TemplateId                  = that.Administration?.TemplateId,
+                AEmbeddedDataSpecifications = AasContext.SerializeList(that.Administration?.EmbeddedDataSpecifications),
+                TimeStampCreate             = that.TimeStampCreate == default ? currentDataTime : that.TimeStampCreate,
+                TimeStamp                   = that.TimeStamp       == default ? currentDataTime : that.TimeStamp,
+                TimeStampTree               = that.TimeStampTree   == default ? currentDataTime : that.TimeStampTree,
+                TimeStampDelete             = that.TimeStampDelete == default ? currentDataTime : that.TimeStampDelete
             };
             _envDB?.CDSets.Add(cdDB);
             base.VisitConceptDescription(that);
@@ -189,24 +193,29 @@ namespace AasxServerDB
             var currentDataTime = DateTime.UtcNow;
             var aasDB = new AASSet()
             {
-                IdShort                    = that.IdShort,
-                DisplayName                = AasContext.SerializeList(that.DisplayName),
-                Category                   = that.Category,
-                Description                = AasContext.SerializeList(that.Description),
-                Extensions                 = AasContext.SerializeList(that.Extensions),
-                Identifier                 = that.Id,
-                Administration             = AasContext.SerializeElement(that.Administration),
-                EmbeddedDataSpecifications = AasContext.SerializeList(that.EmbeddedDataSpecifications),
-                DerivedFrom                = AasContext.SerializeElement(that.DerivedFrom),
-                AssetKind                  = AasContext.SerializeElement(that.AssetInformation?.AssetKind),
-                SpecificAssetIds           = AasContext.SerializeList(that.AssetInformation?.SpecificAssetIds),
-                GlobalAssetId              = that.AssetInformation?.GlobalAssetId,
-                AssetType                  = that.AssetInformation?.AssetType,
-                DefaultThumbnail           = AasContext.SerializeElement(that.AssetInformation?.DefaultThumbnail),
-                TimeStampCreate            = that.TimeStampCreate == default ? currentDataTime : that.TimeStampCreate,
-                TimeStamp                  = that.TimeStamp       == default ? currentDataTime : that.TimeStamp,
-                TimeStampTree              = that.TimeStampTree   == default ? currentDataTime : that.TimeStampTree,
-                TimeStampDelete            = that.TimeStampDelete == default ? currentDataTime : that.TimeStampDelete
+                IdShort                     = that.IdShort,
+                DisplayName                 = AasContext.SerializeList(that.DisplayName),
+                Category                    = that.Category,
+                Description                 = AasContext.SerializeList(that.Description),
+                Extensions                  = AasContext.SerializeList(that.Extensions),
+                Identifier                  = that.Id,
+                EmbeddedDataSpecifications  = AasContext.SerializeList(that.EmbeddedDataSpecifications),
+                DerivedFrom                 = AasContext.SerializeElement(that.DerivedFrom),
+                Version                     = that.Administration?.Version,
+                Revision                    = that.Administration?.Revision,
+                Creator                     = AasContext.SerializeElement(that.Administration?.Creator),
+                TemplateId                  = that.Administration?.TemplateId,
+                AEmbeddedDataSpecifications = AasContext.SerializeList(that.Administration?.EmbeddedDataSpecifications),
+                AssetKind                   = AasContext.SerializeElement(that.AssetInformation?.AssetKind),
+                SpecificAssetIds            = AasContext.SerializeList(that.AssetInformation?.SpecificAssetIds),
+                GlobalAssetId               = that.AssetInformation?.GlobalAssetId,
+                AssetType                   = that.AssetInformation?.AssetType,
+                DefaultThumbnailPath        = that.AssetInformation?.DefaultThumbnail?.Path,
+                DefaultThumbnailContentType = that.AssetInformation?.DefaultThumbnail?.ContentType,
+                TimeStampCreate             = that.TimeStampCreate == default ? currentDataTime : that.TimeStampCreate,
+                TimeStamp                   = that.TimeStamp       == default ? currentDataTime : that.TimeStamp,
+                TimeStampTree               = that.TimeStampTree   == default ? currentDataTime : that.TimeStampTree,
+                TimeStampDelete             = that.TimeStampDelete == default ? currentDataTime : that.TimeStampDelete
             };
             _envDB?.AASSets.Add(aasDB);
             base.VisitAssetAdministrationShell(that);
@@ -218,22 +227,26 @@ namespace AasxServerDB
             var currentDataTime = DateTime.UtcNow;
             _smDB = new SMSet()
             {
-                IdShort                    = that.IdShort,
-                DisplayName                = AasContext.SerializeList(that.DisplayName),
-                Category                   = that.Category,
-                Description                = AasContext.SerializeList(that.Description),
-                Extensions                 = AasContext.SerializeList(that.Extensions),
-                Identifier                 = that.Id,
-                Administration             = AasContext.SerializeElement(that.Administration),
-                Kind                       = AasContext.SerializeElement(that.Kind),
-                SemanticId                 = that.SemanticId?.GetAsIdentifier(),
-                SupplementalSemanticIds    = AasContext.SerializeList(that.SupplementalSemanticIds),
-                Qualifiers                 = AasContext.SerializeList(that.Qualifiers),
-                EmbeddedDataSpecifications = AasContext.SerializeList(that.EmbeddedDataSpecifications),
-                TimeStampCreate            = that.TimeStampCreate == default ? currentDataTime : that.TimeStampCreate,
-                TimeStamp                  = that.TimeStamp       == default ? currentDataTime : that.TimeStamp,
-                TimeStampTree              = that.TimeStampTree   == default ? currentDataTime : that.TimeStampTree,
-                TimeStampDelete            = that.TimeStampDelete == default ? currentDataTime : that.TimeStampDelete
+                IdShort                     = that.IdShort,
+                DisplayName                 = AasContext.SerializeList(that.DisplayName),
+                Category                    = that.Category,
+                Description                 = AasContext.SerializeList(that.Description),
+                Extensions                  = AasContext.SerializeList(that.Extensions),
+                Identifier                  = that.Id,
+                Kind                        = AasContext.SerializeElement(that.Kind),
+                SemanticId                  = that.SemanticId?.GetAsIdentifier(),
+                SupplementalSemanticIds     = AasContext.SerializeList(that.SupplementalSemanticIds),
+                Qualifiers                  = AasContext.SerializeList(that.Qualifiers),
+                EmbeddedDataSpecifications  = AasContext.SerializeList(that.EmbeddedDataSpecifications),
+                Version                     = that.Administration?.Version,
+                Revision                    = that.Administration?.Revision,
+                Creator                     = AasContext.SerializeElement(that.Administration?.Creator),
+                TemplateId                  = that.Administration?.TemplateId,
+                AEmbeddedDataSpecifications = AasContext.SerializeList(that.Administration?.EmbeddedDataSpecifications),
+                TimeStampCreate             = that.TimeStampCreate == default ? currentDataTime : that.TimeStampCreate,
+                TimeStamp                   = that.TimeStamp       == default ? currentDataTime : that.TimeStamp,
+                TimeStampTree               = that.TimeStampTree   == default ? currentDataTime : that.TimeStampTree,
+                TimeStampDelete             = that.TimeStampDelete == default ? currentDataTime : that.TimeStampDelete
             };
             _envDB?.SMSets.Add(_smDB);
             base.VisitSubmodel(that);

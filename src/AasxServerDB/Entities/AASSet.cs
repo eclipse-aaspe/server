@@ -27,16 +27,28 @@ namespace AasxServerDB.Entities
         public string? Extensions                 { get; set; }
         [MaxLength(2000)]
         public string? Identifier                 { get; set; }
-        public string? Administration             { get; set; }
         public string? EmbeddedDataSpecifications { get; set; }
         public string? DerivedFrom                { get; set; }
 
+        // administration
+        [StringLength(4)]
+        public string? Version                     { get; set; }
+        [StringLength(4)]
+        public string? Revision                    { get; set; }
+        public string? Creator                     { get; set; }
+        [MaxLength(2000)]
+        public string? TemplateId                  { get; set; }
+        public string? AEmbeddedDataSpecifications { get; set; }
+
         // asset information
-        public string? AssetKind          { get; set; }
-        public string? GlobalAssetId      { get; set; }
-        public string? AssetType          { get; set; }
-        public string? SpecificAssetIds   { get; set; }
-        public string? DefaultThumbnail   { get; set; }
+        public string? AssetKind                   { get; set; }
+        public string? GlobalAssetId               { get; set; }
+        public string? AssetType                   { get; set; }
+        public string? SpecificAssetIds            { get; set; }
+        [MaxLength(2000)]
+        public string? DefaultThumbnailPath        { get; set; }
+        [MaxLength(100)]
+        public string? DefaultThumbnailContentType { get; set; }
 
         // time stamp
         public DateTime TimeStampCreate { get; set; }

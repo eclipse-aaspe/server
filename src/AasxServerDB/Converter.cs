@@ -76,9 +76,15 @@ namespace AasxServerDB
                 description:                AasContext.DeserializeList<ILangStringTextType>(cdDB.Description),
                 extensions:                 AasContext.DeserializeList<IExtension>(cdDB.Extensions),
                 id:                         cdDB.Identifier,
-                administration:             AasContext.DeserializeElement<IAdministrativeInformation>(cdDB.Administration),
                 isCaseOf:                   AasContext.DeserializeList<IReference>(cdDB.IsCaseOf),
-                embeddedDataSpecifications: AasContext.DeserializeList<IEmbeddedDataSpecification>(cdDB.EmbeddedDataSpecifications)
+                embeddedDataSpecifications: AasContext.DeserializeList<IEmbeddedDataSpecification>(cdDB.EmbeddedDataSpecifications),
+                administration:             new AdministrativeInformation(
+                    version:                    cdDB.Version,
+                    revision:                   cdDB.Revision,
+                    creator:                    AasContext.DeserializeElement<IReference>(cdDB.Creator),
+                    templateId:                 cdDB.TemplateId,
+                    embeddedDataSpecifications: AasContext.DeserializeList<IEmbeddedDataSpecification>(cdDB.AEmbeddedDataSpecifications)
+                )
             )
             {
                 TimeStampCreate = cdDB.TimeStampCreate,
@@ -111,17 +117,25 @@ namespace AasxServerDB
                 description:                AasContext.DeserializeList<ILangStringTextType>(aasDB.Description),
                 extensions:                 AasContext.DeserializeList<IExtension>(aasDB.Extensions),
                 id:                         aasDB.Identifier,
-                administration:             AasContext.DeserializeElement<IAdministrativeInformation>(aasDB.Administration),
                 embeddedDataSpecifications: AasContext.DeserializeList<IEmbeddedDataSpecification>(aasDB.EmbeddedDataSpecifications),
                 derivedFrom:                AasContext.DeserializeElement<IReference>(aasDB.DerivedFrom),
                 submodels: new List<IReference>(),
-
+                administration: new AdministrativeInformation(
+                    version: aasDB.Version,
+                    revision: aasDB.Revision,
+                    creator: AasContext.DeserializeElement<IReference>(aasDB.Creator),
+                    templateId: aasDB.TemplateId,
+                    embeddedDataSpecifications: AasContext.DeserializeList<IEmbeddedDataSpecification>(aasDB.AEmbeddedDataSpecifications)
+                ),
                 assetInformation: new AssetInformation(
                     assetKind:        AasContext.DeserializeElement<AssetKind>(aasDB.AssetKind),
                     specificAssetIds: AasContext.DeserializeList<ISpecificAssetId>(aasDB.SpecificAssetIds),
                     globalAssetId:    aasDB.GlobalAssetId,
                     assetType:        aasDB.AssetType,
-                    defaultThumbnail: AasContext.DeserializeElement<IResource>(aasDB.DefaultThumbnail)
+                    defaultThumbnail: new Resource(
+                        path: aasDB.DefaultThumbnailPath,
+                        contentType: aasDB.DefaultThumbnailContentType
+                    )
                 )
             )
             {
@@ -161,12 +175,18 @@ namespace AasxServerDB
                     description:                AasContext.DeserializeList<ILangStringTextType>(smDB.Description),
                     extensions:                 AasContext.DeserializeList<IExtension>(smDB.Extensions),
                     id:                         smDB.Identifier,
-                    administration:             AasContext.DeserializeElement<IAdministrativeInformation>(smDB.Administration),
                     kind:                       AasContext.DeserializeElement<ModellingKind>(smDB.Kind),
                     semanticId:                 !smDB.SemanticId.IsNullOrEmpty() ? new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, smDB.SemanticId) }) : null,
                     supplementalSemanticIds:    AasContext.DeserializeList<IReference>(smDB.SupplementalSemanticIds),
                     qualifiers:                 AasContext.DeserializeList<IQualifier>(smDB.Qualifiers),
                     embeddedDataSpecifications: AasContext.DeserializeList<IEmbeddedDataSpecification>(smDB.EmbeddedDataSpecifications),
+                    administration: new AdministrativeInformation(
+                        version: smDB.Version,
+                        revision: smDB.Revision,
+                        creator: AasContext.DeserializeElement<IReference>(smDB.Creator),
+                        templateId: smDB.TemplateId,
+                        embeddedDataSpecifications: AasContext.DeserializeList<IEmbeddedDataSpecification>(smDB.AEmbeddedDataSpecifications)
+                    ),
                     submodelElements:           new List<ISubmodelElement>()
                 );
 
