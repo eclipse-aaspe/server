@@ -78,7 +78,7 @@ namespace AasxServerDB
             Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
 
             watch.Restart();
-            var result = GetSMEResult(query);
+            var result = GetSMEResult((IQueryable<CombinedSMEResult>)query);
             Console.WriteLine("Collect results\tin " + watch.ElapsedMilliseconds + " ms\nSMEs found\t" + result.Count + "/" + db.SMESets.Count());
 
             return result;
@@ -409,23 +409,11 @@ namespace AasxServerDB
                     url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sm.Identifier ?? string.Empty)}"
                 })
                 .ToList();
-            /*var result = new List<SMResult>();
-            foreach (var sm in query)
-            {
-                result.Add(
-                    new SMResult
-                    {
-                        smId = sm.Identifier,
-                        timeStampTree = sm.TimeStampTree,
-                        url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sm.Identifier ?? string.Empty)}"
-                    }
-                );
-            }*/
             return result;
         }
 
         // --------------- SME Methodes ---------------
-        private static IQueryable<CombinedSMEResult>? GetSMEs(AasContext db, bool withCount = false, string smSemanticId = "", string smIdentifier = "", string semanticId = "",
+        private static IQueryable? GetSMEs(AasContext db, bool withCount = false, string smSemanticId = "", string smIdentifier = "", string semanticId = "",
             string diffString = "", string contains = "", string equal = "", string lower = "", string upper = "", string expression = "")
         {
             // analyse parameters
@@ -668,59 +656,56 @@ namespace AasxServerDB
                     $")";
             }
 
-            if (!withCount)
+            if (withCount)
             {
-                // get path
-                rawSQL += $", \n" +
-                    $"RecursiveSME AS( \n" +
-                        $"WITH RECURSIVE SME_CTE AS ( \n" +
-                            $"SELECT Id, IdShort, ParentSMEId, IdShort AS IdShortPath, Id AS StartId \n" +
-                            $"FROM SMESets \n" +
-                            $"WHERE Id IN (SELECT Id FROM FilteredSMAndSMEAndValue) \n" +
-                            $"UNION ALL \n" +
-                            $"SELECT x.Id, x.IdShort, x.ParentSMEId, x.IdShort || '.' || c.IdShortPath, c.StartId \n" +
-                            $"FROM SMESets x \n" +
-                            $"INNER JOIN SME_CTE c ON x.Id = c.ParentSMEId \n" +
-                        $") \n" +
-                        $"SELECT StartId AS Id, IdShortPath \n" +
-                        $"FROM SME_CTE \n" +
-                        $"WHERE ParentSMEId IS NULL \n" +
-                    $") \n";
+                //select
+                rawSQL += $"\nSELECT sme.Id \nFROM FilteredSMAndSMEAndValue AS sme";
 
-                //select
-                rawSQL += "SELECT sme.Identifier, r.IdShortPath, sme.TimeStamp, sme.Value \n" +
-                    "FROM FilteredSMAndSMEAndValue AS sme \n" +
-                    "INNER JOIN RecursiveSME AS r ON sme.Id = r.Id";
+                // create queryable
+                var resultCount = db.Database.SqlQueryRaw<int>(rawSQL);
+                return resultCount;
             }
-            else
-            {
-                //select
-                rawSQL += "\nSELECT sme.Identifier, NULL AS IdShortPath, sme.TimeStamp, sme.Value \n" +
-                    "FROM FilteredSMAndSMEAndValue AS sme";
-            }
+
+            // get path
+            rawSQL += $", \n" +
+                $"RecursiveSME AS( \n" +
+                    $"WITH RECURSIVE SME_CTE AS ( \n" +
+                        $"SELECT Id, IdShort, ParentSMEId, IdShort AS IdShortPath, Id AS StartId \n" +
+                        $"FROM SMESets \n" +
+                        $"WHERE Id IN (SELECT Id FROM FilteredSMAndSMEAndValue) \n" +
+                        $"UNION ALL \n" +
+                        $"SELECT x.Id, x.IdShort, x.ParentSMEId, x.IdShort || '.' || c.IdShortPath, c.StartId \n" +
+                        $"FROM SMESets x \n" +
+                        $"INNER JOIN SME_CTE c ON x.Id = c.ParentSMEId \n" +
+                    $") \n" +
+                    $"SELECT StartId AS Id, IdShortPath \n" +
+                    $"FROM SME_CTE \n" +
+                    $"WHERE ParentSMEId IS NULL \n" +
+                $") \n";
+
+            //select
+            rawSQL += $"SELECT sme.Identifier, r.IdShortPath, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', sme.TimeStamp) AS TimeStamp, sme.Value \n" +
+                "FROM FilteredSMAndSMEAndValue AS sme \n" +
+                "INNER JOIN RecursiveSME AS r ON sme.Id = r.Id";
 
             // create queryable
             var result = db.Database.SqlQueryRaw<CombinedSMEResult>(rawSQL);
             return result;
         }
 
-
         private static List<SMEResult> GetSMEResult(IQueryable<CombinedSMEResult> query)
         {
-            var result = new List<SMEResult>();
-            foreach (var sm_sme_v in query)
-            {
-                result.Add(
-                    new SMEResult()
-                    {
-                        smId = sm_sme_v.Identifier,
-                        idShortPath = sm_sme_v.IdShortPath,
-                        timeStamp = TimeStamp.TimeStamp.DateTimeToString(sm_sme_v.TimeStamp),
-                        value = sm_sme_v.Value,
-                        url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sm_sme_v.Identifier ?? string.Empty)}/submodel-elements/{sm_sme_v.IdShortPath}"
-                    }
-                );
-            }
+            var result = query
+                .AsEnumerable()
+                .Select(sm_sme_v => new SMEResult()
+                {
+                    smId = sm_sme_v.Identifier,
+                    idShortPath = sm_sme_v.IdShortPath,
+                    timeStamp = sm_sme_v.TimeStamp,
+                    value = sm_sme_v.Value,
+                    url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sm_sme_v.Identifier ?? string.Empty)}/submodel-elements/{sm_sme_v.IdShortPath}"
+                })
+                .ToList();
             return result;
         }
 

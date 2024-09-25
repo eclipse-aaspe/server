@@ -1,4 +1,4 @@
-﻿namespace AasxServerDB
+namespace AasxServerDB
 {
     public partial class Query
     {
@@ -6,7 +6,7 @@
         {
             public string? Identifier { get; set; }
             public string? IdShortPath { get; set; }
-            public DateTime TimeStamp { get; set; }
+            public string? TimeStamp { get; set; }
             public string? Value { get; set; }
         }
     }
