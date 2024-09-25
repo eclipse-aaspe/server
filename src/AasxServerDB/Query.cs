@@ -11,24 +11,9 @@ namespace AasxServerDB
     using QueryParserTest;
     using System.Linq;
 
-    public class Query
+    public partial class Query
     {
         public static string? ExternalBlazor { get; set; }
-
-        // --------------- Help Class ---------------
-        private class CombinedSMResult
-        {
-            public string? Identifier { get; set; }
-            public DateTime TimeStampTree { get; set; }
-        }
-
-        private class CombinedSMEResult
-        {
-            public string? Identifier { get; set; }
-            public string? IdShortPath { get; set; }
-            public DateTime TimeStamp { get; set; }
-            public string? Value { get; set; }
-        }
 
         // --------------- API ---------------
         public List<SMResult> SearchSMs(string semanticId = "", string identifier = "", string diff = "", string expression = "")
@@ -405,6 +390,9 @@ namespace AasxServerDB
             // change INSTR to LIKE
             smQueryString = withExpression ? ChangeINSTRToLIKE(smQueryString) : smQueryString;
 
+            // format date time
+            smQueryString = FormatDateTimeInSQL(smQueryString);
+
             // create queryable
             var result = db.Database.SqlQueryRaw<CombinedSMResult>(smQueryString);
             return result;
@@ -412,18 +400,27 @@ namespace AasxServerDB
 
         private static List<SMResult> GetSMResult(IQueryable<CombinedSMResult> query)
         {
-            var result = new List<SMResult>();
+            var result = query
+                .AsEnumerable()
+                .Select(sm => new SMResult()
+                {
+                    smId = sm.Identifier,
+                    timeStampTree = sm.TimeStampTree,
+                    url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sm.Identifier ?? string.Empty)}"
+                })
+                .ToList();
+            /*var result = new List<SMResult>();
             foreach (var sm in query)
             {
                 result.Add(
                     new SMResult
                     {
                         smId = sm.Identifier,
-                        timeStampTree = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree),
+                        timeStampTree = sm.TimeStampTree,
                         url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sm.Identifier ?? string.Empty)}"
                     }
                 );
-            }
+            }*/
             return result;
         }
 
@@ -707,6 +704,27 @@ namespace AasxServerDB
             return result;
         }
 
+
+        private static List<SMEResult> GetSMEResult(IQueryable<CombinedSMEResult> query)
+        {
+            var result = new List<SMEResult>();
+            foreach (var sm_sme_v in query)
+            {
+                result.Add(
+                    new SMEResult()
+                    {
+                        smId = sm_sme_v.Identifier,
+                        idShortPath = sm_sme_v.IdShortPath,
+                        timeStamp = TimeStamp.TimeStamp.DateTimeToString(sm_sme_v.TimeStamp),
+                        value = sm_sme_v.Value,
+                        url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sm_sme_v.Identifier ?? string.Empty)}/submodel-elements/{sm_sme_v.IdShortPath}"
+                    }
+                );
+            }
+            return result;
+        }
+
+        // --------------- Help Methodes ---------------
         private static string SetParameter(string rawSQL)
         {
             var parameters = new Dictionary<string, string>();
@@ -752,22 +770,19 @@ namespace AasxServerDB
             return result;
         }
 
-        private static List<SMEResult> GetSMEResult(IQueryable<CombinedSMEResult> query)
+        private static string FormatDateTimeInSQL(string rawSQL)
         {
-            var result = new List<SMEResult>();
-            foreach (var sm_sme_v in query)
+            var replaced = false;
+            var result = Regex.Replace(rawSQL, @", ""([a-zA-Z])?""\.\""TimeStampTree\""", match =>
             {
-                result.Add(
-                    new SMEResult()
-                    {
-                        smId = sm_sme_v.Identifier,
-                        idShortPath = sm_sme_v.IdShortPath,
-                        timeStamp = TimeStamp.TimeStamp.DateTimeToString(sm_sme_v.TimeStamp),
-                        value = sm_sme_v.Value,
-                        url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sm_sme_v.Identifier ?? string.Empty)}/submodel-elements/{sm_sme_v.IdShortPath}"
-                    }
-                );
-            }
+                if (!replaced)
+                {
+                    replaced = true;
+                    return $", strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', \"{match.Groups[1].Value}\".\"TimeStampTree\") AS \"TimeStampTree\"";
+                }
+                return match.Value;
+            }, RegexOptions.None, TimeSpan.FromMilliseconds(500));
+            //var result = Regex.Replace(rawSQL, @", ""([a-zA-Z])?""\.\""TimeStampTree\""", @", strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', ""$1"".""TimeStampTree"") AS ""TimeStampTree""", RegexOptions.None, TimeSpan.FromMilliseconds(500));
             return result;
         }
     }
