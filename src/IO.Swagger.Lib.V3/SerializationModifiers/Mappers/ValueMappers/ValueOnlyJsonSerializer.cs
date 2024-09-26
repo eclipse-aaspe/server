@@ -218,6 +218,11 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
                 return valueObject;
             }
 
+            if (isParentSML)
+            {
+                return valueObject;
+            }
+
             var result = new JsonObject();
             result[submodelElementCollectionValue.IdShort] = valueObject;
 
@@ -234,6 +239,9 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             {
                 return valueObject;
             }
+
+            var result = new JsonObject();
+            result[relationshipElementValue.IdShort] = valueObject;
 
             var result = new JsonObject();
             result[relationshipElementValue.IdShort] = valueObject;
