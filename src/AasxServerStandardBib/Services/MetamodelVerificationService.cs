@@ -33,7 +33,7 @@ namespace AasxServerStandardBib.Services
         }
         public void VerifyRequestBody(IClass body)
         {
-            if (_configuration.GetValue<bool>("IsMetamodelVerificationStrict"))
+            /*if (_configuration.GetValue<bool>("IsMetamodelVerificationStrict"))
             {
                 var errorList = Verification.Verify(body).ToList();
                 if (errorList.Any())
@@ -46,7 +46,7 @@ namespace AasxServerStandardBib.Services
             else
             {
                 _logger.LogDebug("Metamodel verification is not strict. Therefore, skipping the verification.");
-            }
+            }*/
         }
     }
 }
