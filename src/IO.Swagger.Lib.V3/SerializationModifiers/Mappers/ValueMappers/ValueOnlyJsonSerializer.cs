@@ -243,9 +243,6 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             var result = new JsonObject();
             result[relationshipElementValue.IdShort] = valueObject;
 
-            var result = new JsonObject();
-            result[relationshipElementValue.IdShort] = valueObject;
-
             return result;
         }
 
