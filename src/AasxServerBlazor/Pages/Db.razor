@@ -45,6 +45,9 @@
             list = query.Get("envid");
             if (!list.IsNullOrEmpty())
                 envid = Convert.ToInt32(list);
+            list = query.Get("cdid");
+            if (!list.IsNullOrEmpty())
+                cdid = Convert.ToInt32(list);
             list = query.Get("aasid");
             if (!list.IsNullOrEmpty())
                 aasid = Convert.ToInt32(list);
@@ -317,6 +320,7 @@
                         <a href="@($"{shorturl}/aas?envid={envDB.Id}")" target="_blank">aas </a>
                         <a href="@($"{shorturl}/sm?envid={envDB.Id}")" target="_blank">sm</a>
                         <a href="@($"{shorturl}/cd?envid={envDB.Id}")" target="_blank">cd</a>
+                        <span style="background-color:blue;">&nbsp</span>
                         <br/>
                     }
 
@@ -465,8 +469,8 @@
                         @if (!cdDB.Identifier.IsNullOrEmpty())
                         {
                             <a href="@link" target="_blank">api</a>
-                            }
-                            <span style="background-color:blue;">&nbsp</span>
+                        }
+                        <span style="background-color:blue;">&nbsp</span>
                         <br />
                     }
 
@@ -641,8 +645,8 @@
                             @if (!aasDB.Identifier.IsNullOrEmpty())
                         {
                             <a href="@link" target="_blank">api</a>
-                            }
-                            <span style="background-color:blue;">&nbsp</span>
+                        }
+                        <span style="background-color:blue;">&nbsp</span>
                         <br/>
                     }
 
@@ -813,8 +817,8 @@
                         @if (!smDB.Identifier.IsNullOrEmpty())
                         {
                             <a href="@link" target="_blank">api</a>
-                            }
-                            <span style="background-color:blue;">&nbsp</span>
+                        }
+                        <span style="background-color:blue;">&nbsp</span>
                         <br/>
                     }
 
@@ -1189,8 +1193,8 @@
                         @if (pathSuccess)
                         {
                             <a href="@link" target="_blank">api</a>
-                            }
-                            <span style="background-color:blue;">&nbsp</span>
+                        }
+                        <span style="background-color:blue;">&nbsp</span>
                         <br/>
                     }
 
@@ -1257,8 +1261,8 @@
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smeDB.Annotation</span>
                         <span style="background-color:blue;">&nbsp</span>
-                            <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
-                            <span style="background-color:blue;">&nbsp</span>
+                        <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
+                        <span style="background-color:blue;">&nbsp</span>
                         <br/>
                     }
 
@@ -1325,8 +1329,8 @@
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smeDB.Annotation</span>
                         <span style="background-color:blue;">&nbsp</span>
-                            <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
-                            <span style="background-color:blue;">&nbsp</span>
+                        <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
+                        <span style="background-color:blue;">&nbsp</span>
                         <br/>
                     }
 
@@ -1393,8 +1397,8 @@
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smeDB.Annotation</span>
                         <span style="background-color:blue;">&nbsp</span>
-                            <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par </a>
-                            <span style="background-color:blue;">&nbsp</span>
+                        <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par </a>
+                        <span style="background-color:blue;">&nbsp</span>
                         <br/>
                     }
 
@@ -1461,8 +1465,8 @@
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smeDB.Value</span>
                         <span style="background-color:blue;">&nbsp</span>
-                            <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par </a>
-                            <span style="background-color:blue;">&nbsp</span>
+                        <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par </a>
+                        <span style="background-color:blue;">&nbsp</span>
                         <br />
                     }
 

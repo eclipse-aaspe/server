@@ -1,3 +1,28 @@
+/********************************************************************************
+* Copyright (c) {2019 - 2024} Contributors to the Eclipse Foundation
+*
+* See the NOTICE file(s) distributed with this work for additional
+* information regarding copyright ownership.
+*
+* This program and the accompanying materials are made available under the
+* terms of the Apache License Version 2.0 which is available at
+* https://www.apache.org/licenses/LICENSE-2.0
+*
+* SPDX-License-Identifier: Apache-2.0
+********************************************************************************/
+
+using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using AasxServerDB;
+using AasxServerDB.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
+
 /*
  * https://learn.microsoft.com/en-us/ef/core/get-started/overview/first-app?tabs=netcore-cli
  * 

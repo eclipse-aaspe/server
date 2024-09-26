@@ -1,3 +1,32 @@
+/********************************************************************************
+* Copyright (c) {2019 - 2024} Contributors to the Eclipse Foundation
+*
+* See the NOTICE file(s) distributed with this work for additional
+* information regarding copyright ownership.
+*
+* This program and the accompanying materials are made available under the
+* terms of the Apache License Version 2.0 which is available at
+* https://www.apache.org/licenses/LICENSE-2.0
+*
+* SPDX-License-Identifier: Apache-2.0
+********************************************************************************/
+
+using AasCore.Aas3_0;
+using AdminShellNS;
+using static AasCore.Aas3_0.Visitation;
+using Extensions;
+using System.IO.Compression;
+using Microsoft.IdentityModel.Tokens;
+using AasxServerDB.Entities;
+using System.Text;
+using System.Data;
+using Nodes = System.Text.Json.Nodes;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Runtime.InteropServices.JavaScript;
+using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics.X86;
+using System.ComponentModel.DataAnnotations;
+
 namespace AasxServerDB
 {
     using AasCore.Aas3_0;
