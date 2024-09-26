@@ -7,9 +7,6 @@ using Extensions;
 using Jose;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Opc.Ua;
-using Opc.Ua.Configuration;
-using Opc.Ua.Server;
 using System;
 using System.Collections.Generic;
 using System.CommandLine;
@@ -309,7 +306,7 @@ namespace AasxServer
         public static void  changeDataVersion() { dataVersion++; }
         public static ulong getDataVersion()    { return (dataVersion); }
 
-        static Dictionary<string, SampleClient.UASampleClient> OPCClients = new Dictionary<string, SampleClient.UASampleClient>();
+        //static Dictionary<string, SampleClient.UASampleClient> OPCClients = new Dictionary<string, SampleClient.UASampleClient>();
         static readonly object opcclientAddLock = new object(); // object for lock around connecting to an external opc server
 
         static MqttServer AASMqttServer = new MqttServer();
@@ -974,7 +971,7 @@ namespace AasxServer
                 Console.WriteLine("MQTT Publisher started.");
             }
 
-            MySampleServer server = null;
+            /*MySampleServer server = null;
             if (a.Opc)
             {
                 server = new MySampleServer(_autoAccept: true, _stopTimeout: 0, _aasxEnv: env);
@@ -992,7 +989,7 @@ namespace AasxServer
 
                 Console.WriteLine($"OPC client will be updating every: {a.OpcClientRate} milliseconds");
                 SetOPCClientTimer((double)a.OpcClientRate); // read again everytime timer expires
-            }
+            }*/
 
             SetScriptTimer(1000); // also updates balzor view
 
@@ -1040,9 +1037,9 @@ namespace AasxServer
 
             Program.signalNewData(3);
 
-            if (a.Opc && server != null)
+            if (a.Opc /*&& server != null*/ )
             {
-                server.Run(); // wait for CTRL-C
+                //server.Run(); // wait for CTRL-C
             }
             else
             {
@@ -2023,7 +2020,7 @@ namespace AasxServer
         }
         */
 
-        public static void OnOPCClientNextTimedEvent()
+        /*public static void OnOPCClientNextTimedEvent()
         {
             ReadOPCClient(false);
             // RunScript(false);
@@ -2035,7 +2032,7 @@ namespace AasxServer
             ReadOPCClient(false);
             // RunScript(false);
             NewDataAvailable?.Invoke(null, EventArgs.Empty);
-        }
+        }*/
 
         private static System.Timers.Timer scriptTimer;
 
@@ -2228,7 +2225,7 @@ namespace AasxServer
             worker.RunWorkerAsync();
         }
 
-        private static Boolean OPCWrite(string nodeId, object value)
+        /*private static Boolean OPCWrite(string nodeId, object value)
             /// <summary>
             /// Writes to (i.e. updates values of) Nodes in the AAS OPC Server
             /// </summary>
@@ -2438,7 +2435,7 @@ namespace AasxServer
             }
 
             return true;
-        }
+        }*/
 
         static void RunScript(bool init)
         {
@@ -2754,7 +2751,7 @@ namespace AasxServer
             return ok;
         }
 
-        private static void WalkSubmodelElement(ISubmodelElement sme, string nodePath, string serverNodePrefix, SampleClient.UASampleClient client, int clientNamespace)
+        /*private static void WalkSubmodelElement(ISubmodelElement sme, string nodePath, string serverNodePrefix, SampleClient.UASampleClient client, int clientNamespace)
         {
             if (sme is Property)
             {
@@ -2823,10 +2820,10 @@ namespace AasxServer
                 if (!OPCWrite(serverNodeId, value))
                     Console.WriteLine("OPC write not successful.");
             }
-        }
+        }*/
     }
 
-    public class ApplicationMessageDlg : IApplicationMessageDlg
+    /*public class ApplicationMessageDlg : IApplicationMessageDlg
     {
         private string message = string.Empty;
         private bool ask = false;
@@ -3047,5 +3044,5 @@ namespace AasxServer
                 await Task.Delay(1000);
             }
         }
-    }
+    }*/
 }
