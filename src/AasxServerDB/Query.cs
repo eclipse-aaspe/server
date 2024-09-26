@@ -11,14 +11,6 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-using System.Collections.Generic;
-using System.Runtime.Intrinsics.X86;
-using AasxServerDB.Entities;
-using AasxServerDB.Result;
-using Extensions;
-using Microsoft.IdentityModel.Tokens;
-using TimeStamp;
-
 namespace AasxServerDB
 {
     using System.Diagnostics;

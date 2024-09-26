@@ -15,7 +15,6 @@ namespace AasxServerDB.Entities
 {
     using System.ComponentModel.DataAnnotations.Schema;
     using Microsoft.EntityFrameworkCore;
-    using System.Text.Json.Nodes;
 
     // indexes
     [Index(nameof(Id))]

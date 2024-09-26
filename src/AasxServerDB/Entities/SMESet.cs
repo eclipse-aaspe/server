@@ -11,16 +11,6 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-using Microsoft.EntityFrameworkCore;
-using Extensions;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Collections.Generic;
-using AasCore.Aas3_0;
-using System.Linq;
-using Newtonsoft.Json.Linq;
-using Microsoft.IdentityModel.Tokens;
-using Nodes = System.Text.Json.Nodes;
-
 namespace AasxServerDB.Entities
 {
     using Microsoft.EntityFrameworkCore;

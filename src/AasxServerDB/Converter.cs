@@ -19,14 +19,6 @@ namespace AasxServerDB
     using AdminShellNS;
     using Extensions;
     using Microsoft.IdentityModel.Tokens;
-    using Newtonsoft.Json;
-    using Nodes = System.Text.Json.Nodes;
-    using System.Text;
-    using AasCore.Aas3_0;
-    using AasxServerDB.Entities;
-    using AdminShellNS;
-    using Extensions;
-    using Microsoft.IdentityModel.Tokens;
 
     public class Converter
     {

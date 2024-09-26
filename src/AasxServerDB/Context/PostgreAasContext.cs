@@ -11,8 +11,6 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-using Microsoft.EntityFrameworkCore;
-
 /*
  * https://learn.microsoft.com/en-us/ef/core/get-started/overview/first-app?tabs=netcore-cli
  * 
@@ -29,6 +27,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AasxServerDB.Context
 {
+
+    using Microsoft.EntityFrameworkCore;
+
     public class PostgreAasContext : AasContext
     {
         protected override void OnConfiguring(DbContextOptionsBuilder options)

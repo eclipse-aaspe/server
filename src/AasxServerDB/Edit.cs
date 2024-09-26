@@ -11,12 +11,13 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-using AdminShellNS;
-using Microsoft.EntityFrameworkCore;
-using AasxServerDB.Entities;
 
 namespace AasxServerDB
 {
+    using AdminShellNS;
+    using Microsoft.EntityFrameworkCore;
+    using AasxServerDB.Entities;
+
     public class Edit
     {
         static public void Update(AdminShellPackageEnv env)

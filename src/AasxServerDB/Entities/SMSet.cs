@@ -11,8 +11,6 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-using System.ComponentModel.DataAnnotations.Schema;
-
 namespace AasxServerDB.Entities
 {
     using System.ComponentModel.DataAnnotations;

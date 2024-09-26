@@ -11,12 +11,6 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-using System.ComponentModel.DataAnnotations;
-using AasCore.Aas3_0;
-using AasxServerDB.Entities;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json.Linq;
-
 namespace AasxServerDB
 {
     using System.Linq;
