@@ -255,70 +255,47 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent
 
         public override IClass TransformOperation(IOperation that, LevelExtentModifierContext context)
         {
+            if (context.IsRoot && !context.IsGetAllSmes)
+            {
+                if (context.Extent == ExtentEnum.WithBlobValue)
+                {
+                    throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
+                }
+                if (context.Level == LevelEnum.Core)
+                {
+                    throw new InvalidSerializationModifierException("Level", that.GetType().Name);
+                }
+            }
+
             var output = Copying.Deep(that);
 
             if (output != null)
             {
                 context.IsRoot = false;
-                if (context.Level == LevelEnum.Core)
+                if (that.InputVariables != null)
                 {
-                    if (that.InputVariables != null)
+                    output.InputVariables = new List<IOperationVariable>();
+                    foreach (var child in that.InputVariables)
                     {
-                        output.InputVariables = new List<IOperationVariable>();
-                        foreach (var child in that.InputVariables)
-                        {
-                            context.IncludeChildren = false;
-                            output.InputVariables.Add((IOperationVariable)Transform(child, context));
-                        }
-                    }
-
-                    if (that.OutputVariables != null)
-                    {
-                        output.OutputVariables = new List<IOperationVariable>();
-                        foreach (var child in that.OutputVariables)
-                        {
-                            context.IncludeChildren = false;
-                            output.OutputVariables.Add((IOperationVariable)Transform(child, context));
-                        }
-                    }
-
-                    if (that.InoutputVariables != null)
-                    {
-                        output.InoutputVariables = new List<IOperationVariable>();
-                        foreach (var child in that.InoutputVariables)
-                        {
-                            context.IncludeChildren = false;
-                            output.OutputVariables.Add((IOperationVariable)Transform(child, context));
-                        }
+                        output.InputVariables.Add((IOperationVariable)Transform(child, context));
                     }
                 }
-                else
+
+                if (that.OutputVariables != null)
                 {
-                    if (that.InputVariables != null)
+                    output.OutputVariables = new List<IOperationVariable>();
+                    foreach (var child in that.OutputVariables)
                     {
-                        output.InputVariables = new List<IOperationVariable>();
-                        foreach (var child in that.InputVariables)
-                        {
-                            output.InputVariables.Add((IOperationVariable)Transform(child, context));
-                        }
+                        output.OutputVariables.Add((IOperationVariable)Transform(child, context));
                     }
+                }
 
-                    if (that.OutputVariables != null)
+                if (that.InoutputVariables != null)
+                {
+                    output.InoutputVariables = new List<IOperationVariable>();
+                    foreach (var child in that.InoutputVariables)
                     {
-                        output.OutputVariables = new List<IOperationVariable>();
-                        foreach (var child in that.OutputVariables)
-                        {
-                            output.OutputVariables.Add((IOperationVariable)Transform(child, context));
-                        }
-                    }
-
-                    if (that.InoutputVariables != null)
-                    {
-                        output.InoutputVariables = new List<IOperationVariable>();
-                        foreach (var child in that.InoutputVariables)
-                        {
-                            output.OutputVariables.Add((IOperationVariable)Transform(child, context));
-                        }
+                        output.OutputVariables.Add((IOperationVariable)Transform(child, context));
                     }
                 }
             }
