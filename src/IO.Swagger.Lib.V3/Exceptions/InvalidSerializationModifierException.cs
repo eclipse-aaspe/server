@@ -21,5 +21,10 @@ namespace IO.Swagger.Lib.V3.Exceptions
         {
 
         }
+
+        public InvalidSerializationModifierException() : base($"Invalid serialization modifier combination Level = Deeep & Content = Reference.")
+        {
+
+        }
     }
 }

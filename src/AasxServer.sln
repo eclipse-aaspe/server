@@ -7,15 +7,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AasxServerStandardBib", "Aa
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B8C116C4-932B-4071-9DCC-D4F64E3C4E6F}"
 	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		..\.gitignore = ..\.gitignore
 		..\CHANGELOG.md = ..\CHANGELOG.md
-		..\README.md = ..\README.md
 		..\CONTRIBUTING.md = ..\CONTRIBUTING.md
-		..\LICENSE.TXT = ..\LICENSE.TXT
 		..\CONTRIBUTORS.md = ..\CONTRIBUTORS.md
 		current_version.cfg = current_version.cfg
 		global.json = global.json
-		..\.gitignore = ..\.gitignore
-		.editorconfig = .editorconfig
+		..\LICENSE.TXT = ..\LICENSE.TXT
+		..\README.md = ..\README.md
 		..\SECURITY.md = ..\SECURITY.md
 	EndProjectSection
 EndProject
@@ -45,8 +45,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AasxServerDB", "AasxServerD
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{F847719C-7CF2-40D5-BF7B-6F51E551E13F}"
 	ProjectSection(SolutionItems) = preProject
-		..\.github\pull_request_template.md = ..\.github\pull_request_template.md
 		..\.github\changelog_configuration.json = ..\.github\changelog_configuration.json
+		..\.github\pull_request_template.md = ..\.github\pull_request_template.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "issue_templates", "issue_templates", "{6F3BB70E-0095-4D58-AE5E-D7D02FD7BB01}"
@@ -60,10 +60,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 	ProjectSection(SolutionItems) = preProject
 		..\.github\workflows\build-and-publish-docker-images.yml = ..\.github\workflows\build-and-publish-docker-images.yml
 		..\.github\workflows\check-release.yml = ..\.github\workflows\check-release.yml
-		..\.github\workflows\draft-release-on-merge-to-release-branch.yml = ..\.github\workflows\draft-release-on-merge-to-release-branch.yml
-		..\.github\workflows\prerelease-on-merge-to-main.yml = ..\.github\workflows\prerelease-on-merge-to-main.yml
 		..\.github\workflows\code-analysis.yml = ..\.github\workflows\code-analysis.yml
 		..\.github\workflows\create-developer-prerelease.yml = ..\.github\workflows\create-developer-prerelease.yml
+		..\.github\workflows\draft-release-on-merge-to-release-branch.yml = ..\.github\workflows\draft-release-on-merge-to-release-branch.yml
+		..\.github\workflows\prerelease-on-merge-to-main.yml = ..\.github\workflows\prerelease-on-merge-to-main.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ProjectScripts", "ProjectScripts", "{39F9287F-CBC6-4F56-AA55-81A013A89AAE}"
@@ -71,6 +71,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ProjectScripts", "ProjectSc
 		AdditionalVerbsInImperativeMood.txt = AdditionalVerbsInImperativeMood.txt
 		BuildDockerImages.ps1 = BuildDockerImages.ps1
 		BuildForRelease.ps1 = BuildForRelease.ps1
+		BuildVersionNumber.ps1 = BuildVersionNumber.ps1
 		Check.ps1 = Check.ps1
 		CheckFormat.ps1 = CheckFormat.ps1
 		CheckHelpInReadme.ps1 = CheckHelpInReadme.ps1
@@ -78,27 +79,26 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ProjectScripts", "ProjectSc
 		CopyLicense.ps1 = CopyLicense.ps1
 		FormatCode.ps1 = FormatCode.ps1
 		PackageRelease.ps1 = PackageRelease.ps1
-		BuildVersionNumber.ps1 = BuildVersionNumber.ps1
 		UpdateProjectVersions.ps1 = UpdateProjectVersions.ps1
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker", "Docker", "{9787F0F9-A50D-4E8E-8AEA-BC7242740BE9}"
 	ProjectSection(SolutionItems) = preProject
-		docker\docker-compose.yaml = docker\docker-compose.yaml
 		docker\docker-compose-demo.yaml = docker\docker-compose-demo.yaml
+		docker\docker-compose.yaml = docker\docker-compose.yaml
 		docker\Dockerfile-AasxServerAspNetCore = docker\Dockerfile-AasxServerAspNetCore
 		docker\Dockerfile-AasxServerBlazor = docker\Dockerfile-AasxServerBlazor
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AasSecurityTests", "AasSecurityTests\AasSecurityTests.csproj", "{716CC065-F58C-455E-8079-3A21C59D42E3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AasSecurityTests", "AasSecurityTests\AasSecurityTests.csproj", "{716CC065-F58C-455E-8079-3A21C59D42E3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IO.Swagger.Lib.V3.Tests", "IO.Swagger.Lib.V3.Tests\IO.Swagger.Lib.V3.Tests.csproj", "{64148CC9-DE3E-465A-98E8-370431226E70}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IO.Swagger.Lib.V3.Tests", "IO.Swagger.Lib.V3.Tests\IO.Swagger.Lib.V3.Tests.csproj", "{64148CC9-DE3E-465A-98E8-370431226E70}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IO.Swagger.Registry.Lib.V3.Tests", "IO.Swagger.Registry.Lib.V3.Tests\IO.Swagger.Registry.Lib.V3.Tests.csproj", "{CF9C2ABA-944C-46EB-8788-346D432321D5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IO.Swagger.Registry.Lib.V3.Tests", "IO.Swagger.Registry.Lib.V3.Tests\IO.Swagger.Registry.Lib.V3.Tests.csproj", "{CF9C2ABA-944C-46EB-8788-346D432321D5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AasxServerBlazorTests", "AasxServerBlazorTests\AasxServerBlazorTests.csproj", "{731275DC-5730-49FB-A721-3A39EE3F516E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AasxServerBlazorTests", "AasxServerBlazorTests\AasxServerBlazorTests.csproj", "{731275DC-5730-49FB-A721-3A39EE3F516E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AasxCsharpLibrary.Tests", "AasxCsharpLibrary.Tests\AasxCsharpLibrary.Tests.csproj", "{B9B7BFEC-AEBB-42DB-A1C5-DAB16029F850}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AasxCsharpLibrary.Tests", "AasxCsharpLibrary.Tests\AasxCsharpLibrary.Tests.csproj", "{B9B7BFEC-AEBB-42DB-A1C5-DAB16029F850}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -441,14 +441,14 @@ Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {A6054B71-0BA2-4582-9B76-805D46670242}
-	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{F847719C-7CF2-40D5-BF7B-6F51E551E13F} = {B8C116C4-932B-4071-9DCC-D4F64E3C4E6F}
 		{6F3BB70E-0095-4D58-AE5E-D7D02FD7BB01} = {F847719C-7CF2-40D5-BF7B-6F51E551E13F}
 		{01BD6F10-2DE0-4D88-8EB0-62705AE8F6FC} = {F847719C-7CF2-40D5-BF7B-6F51E551E13F}
 		{39F9287F-CBC6-4F56-AA55-81A013A89AAE} = {B8C116C4-932B-4071-9DCC-D4F64E3C4E6F}
 		{9787F0F9-A50D-4E8E-8AEA-BC7242740BE9} = {B8C116C4-932B-4071-9DCC-D4F64E3C4E6F}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A6054B71-0BA2-4582-9B76-805D46670242}
 	EndGlobalSection
 EndGlobal
