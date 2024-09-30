@@ -33,6 +33,7 @@ namespace AasxServerDB
     using Microsoft.Extensions.Configuration;
     using Microsoft.IdentityModel.Tokens;
     using AasCore.Aas3_0;
+    using AasxServerDB.Context;
 
     public class AasContext : DbContext
     {
@@ -71,6 +72,31 @@ namespace AasxServerDB
             {
                 IsPostgres = false;
                 options.UseSqlite(connectionString);
+            }
+        }
+
+        public static async Task InitDB(int startIndex, bool createFilesOnly)
+        {
+            // Create or Update DB
+            if (IsPostgres)
+            {
+                Console.WriteLine("Use POSTGRES");
+                var db = new PostgreAasContext();
+                db.Database.Migrate();
+            }
+            else
+            {
+                Console.WriteLine("Use SQLITE");
+                var db = new SqliteAasContext();
+                db.Database.Migrate();
+            }
+
+            // Clear DB
+            if (startIndex == 0 && !createFilesOnly)
+            {
+                Console.WriteLine("Clear DB");
+                var db = new AasContext();
+                await db.ClearDB();
             }
         }
 

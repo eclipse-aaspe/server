@@ -753,35 +753,9 @@ namespace AasxServer
 
             int envi = 0;
 
-            // Migrate always
+            // Init DB
             if (withDb)
-            {
-                if (AasContext.IsPostgres)
-                {
-                    Console.WriteLine("Use POSTGRES");
-                    using (PostgreAasContext db = new PostgreAasContext())
-                    {
-                        db.Database.Migrate();
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Use SQLITE");
-                    using (SqliteAasContext db = new SqliteAasContext())
-                    {
-                        db.Database.Migrate();
-                    }
-                }
-            }
-
-            // Clear DB
-            if (withDb && startIndex == 0 && !createFilesOnly)
-            {
-                using (AasContext db = new AasContext())
-                {
-                    await db.ClearDB();
-                }
-            }
+                await AasContext.InitDB(startIndex, createFilesOnly);
 
             string[] fileNames = null;
             if (Directory.Exists(AasxHttpContextHelper.DataPath))
