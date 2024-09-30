@@ -27,6 +27,7 @@
 
 namespace AasxServerDB
 {
+    using System;
     using System.Text.Json.Nodes;
     using AasxServerDB.Entities;
     using Microsoft.EntityFrameworkCore;
@@ -34,6 +35,10 @@ namespace AasxServerDB
     using Microsoft.IdentityModel.Tokens;
     using AasCore.Aas3_0;
     using AasxServerDB.Context;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Threading.Tasks;
+    using System.Text.RegularExpressions;
 
     public class AasContext : DbContext
     {
@@ -53,49 +58,65 @@ namespace AasxServerDB
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
-            if (_con == null)
-                throw new Exception("No Configuration!");
+            var connectionString = GetConnectionString();
 
+            if (IsPostgres) // PostgreSQL
+                options.UseNpgsql(connectionString);
+            else // SQLite
+                options.UseSqlite(connectionString);
+        }
+
+        public static string GetConnectionString()
+        {
+            // Get configuration
+            if (_con == null)
+                _con = new ConfigurationBuilder()
+                    .SetBasePath(Directory.GetCurrentDirectory())
+                    .AddJsonFile("appsettings.json")
+                    .Build();
+            if (_con == null)
+                throw new Exception("No configuration");
+
+            // Get ConnectionString
             var connectionString = _con["DatabaseConnection:ConnectionString"];
             if (connectionString.IsNullOrEmpty())
                 throw new Exception("No connectionString in appsettings");
 
-            if (connectionString != null && connectionString.Contains("$DATAPATH"))
+            // Get data path
+            if (connectionString.Contains("$DATAPATH"))
+            {
+                if (_dataPath.IsNullOrEmpty())
+                {
+                    var conCommand = new ConfigurationBuilder()
+                        .SetBasePath(Directory.GetCurrentDirectory())
+                        .AddJsonFile("Properties/launchSettings.json")
+                        .Build();
+                    var commandLineArgs = conCommand["profiles:AasxServerBlazor:commandLineArgs"];
+                    commandLineArgs = commandLineArgs ?? conCommand["profiles:AasxServerAspNetCore:commandLineArgs"];
+                    var match = Regex.Match(commandLineArgs, $@"--data-path\s+(?:""([^""]+)""|(\S+))");
+                    _dataPath = match.Success ? (match.Groups[1].Success ? match.Groups[1].Value : match.Groups[2].Value) : null;
+                    if (_dataPath.IsNullOrEmpty())
+                        throw new Exception("No datapath");
+                }
                 connectionString = connectionString.Replace("$DATAPATH", _dataPath);
-
-            if (connectionString != null && connectionString.ToLower().Contains("host")) // PostgreSQL
-            {
-                IsPostgres = true;
-                options.UseNpgsql(connectionString);
             }
-            else // SQLite
-            {
-                IsPostgres = false;
-                options.UseSqlite(connectionString);
-            }
+            return connectionString;
         }
 
         public static async Task InitDB(int startIndex, bool createFilesOnly)
         {
-            // Create or Update DB
-            if (IsPostgres)
-            {
-                Console.WriteLine("Use POSTGRES");
-                var db = new PostgreAasContext();
-                db.Database.Migrate();
-            }
-            else
-            {
-                Console.WriteLine("Use SQLITE");
-                var db = new SqliteAasContext();
-                db.Database.Migrate();
-            }
+            // Get DB
+            Console.WriteLine($"Use {(IsPostgres ? "POSTGRES" : "SQLITE")}");
+            AasContext db = IsPostgres ? new PostgreAasContext() : new SqliteAasContext();
+
+            // Create the DB if it does not exist
+            // Applies any pending migrations  
+            db.Database.Migrate();
 
             // Clear DB
             if (startIndex == 0 && !createFilesOnly)
             {
                 Console.WriteLine("Clear DB");
-                var db = new AasContext();
                 await db.ClearDB();
             }
         }
@@ -121,33 +142,6 @@ namespace AasxServerDB
 
             // Save changes to the database
             SaveChanges();
-        }
-
-        public static string SerializeLangText<T>(List<T>? list)
-        {
-            // convert to formatted text
-            var result = string.Empty;
-            if (list == null)
-            {
-                return result;
-            }
-            foreach (var element in list)
-            {
-                if (element == null)
-                {
-                    continue;
-                }
-
-                if (element is ILangStringNameType langName)
-                {
-                    result += $"[ {langName.Language} ] {langName.Text}\n";
-                }
-                else if (element is ILangStringTextType langText)
-                {
-                    result += $"[ {langText.Language} ] {langText.Text}\n";
-                }
-            }
-            return result;
         }
 
         // --------------------Serialize--------------------
