@@ -94,9 +94,6 @@ namespace AasxServerDB.Migrations.Postgres
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
-                    b.Property<string>("Test")
-                        .HasColumnType("text");
-
                     b.Property<DateTime>("TimeStamp")
                         .HasColumnType("timestamp with time zone");
 

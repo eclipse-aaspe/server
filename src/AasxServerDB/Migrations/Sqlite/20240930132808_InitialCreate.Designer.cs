@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AasxServerDB.Migrations.Sqlite
 {
     [DbContext(typeof(SqliteAasContext))]
-    [Migration("20240930124831_XXX")]
-    partial class XXX
+    [Migration("20240930132808_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -88,9 +88,6 @@ namespace AasxServerDB.Migrations.Sqlite
 
                     b.Property<string>("TemplateId")
                         .HasMaxLength(2000)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Test")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("TimeStamp")

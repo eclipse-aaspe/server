@@ -14,13 +14,15 @@
 /*
  * https://learn.microsoft.com/en-us/ef/core/get-started/overview/first-app?tabs=netcore-cli
  * 
- * Initial Migration
+ * Initial migration
  * Add-Migration InitialCreate -Context SqliteAasContext -OutputDir Migrations\Sqlite
  * Add-Migration InitialCreate -Context PostgreAasContext -OutputDir Migrations\Postgres
  * 
- * Change database
+ * Add a new migration
  * Add-Migration XXX -Context SqliteAasContext
  * Add-Migration XXX -Context PostgreAasContext
+ * 
+ * Change database
  * Update-Database -Context SqliteAasContext
  * Update-Database -Context PostgreAasContext
  */
