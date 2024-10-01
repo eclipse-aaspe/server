@@ -14,17 +14,18 @@
 /*
  * https://learn.microsoft.com/en-us/ef/core/get-started/overview/first-app?tabs=netcore-cli
  * 
- * Initial migration
- * Add-Migration InitialCreate -Context SqliteAasContext -OutputDir Migrations\Sqlite
- * Add-Migration InitialCreate -Context PostgreAasContext -OutputDir Migrations\Postgres
- * 
- * Add a new migration
- * Add-Migration XXX -Context SqliteAasContext
- * Add-Migration XXX -Context PostgreAasContext
- * 
- * Change database
- * Update-Database -Context SqliteAasContext
- * Update-Database -Context PostgreAasContext
+ * Steps to modify the database
+ * 1. Change the database context
+ * 2. Open package management console
+ * 3. Optional: if initial migration
+ *      Add-Migration InitialCreate -Context SqliteAasContext -OutputDir Migrations\Sqlite
+ *      Add-Migration InitialCreate -Context PostgreAasContext -OutputDir Migrations\Postgres
+ * 4. Add a new migration
+ *      Add-Migration <name of new migration> -Context SqliteAasContext
+ *      Add-Migration <name of new migration> -Context PostgreAasContext
+ * 5. Optional: Update database to new schema
+ *      Update-Database -Context SqliteAasContext
+ *      Update-Database -Context PostgreAasContext
  */
 
 namespace AasxServerDB
@@ -44,8 +45,8 @@ namespace AasxServerDB
 
     public class AasContext : DbContext
     {
-        public static IConfiguration? _con       { get; set; }
-        public static string?         _dataPath  { get; set; }
+        public static IConfiguration? Config     { get; set; }
+        public static string?         DataPath   { get; set; }
         public static bool            IsPostgres { get; set; }
 
         public DbSet<EnvSet>    EnvSets    { get; set; }
@@ -71,36 +72,36 @@ namespace AasxServerDB
         public static string GetConnectionString()
         {
             // Get configuration
-            if (_con == null)
-                _con = new ConfigurationBuilder()
+            if (Config == null)
+                Config = new ConfigurationBuilder()
                     .SetBasePath(Directory.GetCurrentDirectory())
                     .AddJsonFile("appsettings.json")
                     .Build();
-            if (_con == null)
+            if (Config == null)
                 throw new Exception("No configuration");
 
-            // Get ConnectionString
-            var connectionString = _con["DatabaseConnection:ConnectionString"];
+            // Get connection string
+            var connectionString = Config["DatabaseConnection:ConnectionString"];
             if (connectionString.IsNullOrEmpty())
                 throw new Exception("No connectionString in appsettings");
 
             // Get data path
             if (connectionString.Contains("$DATAPATH"))
             {
-                if (_dataPath.IsNullOrEmpty())
+                if (DataPath.IsNullOrEmpty())
                 {
-                    var conCommand = new ConfigurationBuilder()
+                    var configDataPath = new ConfigurationBuilder()
                         .SetBasePath(Directory.GetCurrentDirectory())
                         .AddJsonFile("Properties/launchSettings.json")
                         .Build();
-                    var commandLineArgs = conCommand["profiles:AasxServerBlazor:commandLineArgs"];
-                    commandLineArgs = commandLineArgs ?? conCommand["profiles:AasxServerAspNetCore:commandLineArgs"];
+                    var commandLineArgs = configDataPath["profiles:AasxServerBlazor:commandLineArgs"];
+                    commandLineArgs     = commandLineArgs ?? configDataPath["profiles:AasxServerAspNetCore:commandLineArgs"];
                     var match = Regex.Match(commandLineArgs, $@"--data-path\s+(?:""([^""]+)""|(\S+))");
-                    _dataPath = match.Success ? (match.Groups[1].Success ? match.Groups[1].Value : match.Groups[2].Value) : null;
-                    if (_dataPath.IsNullOrEmpty())
+                    DataPath = match.Success ? (match.Groups[1].Success ? match.Groups[1].Value : match.Groups[2].Value) : null;
+                    if (DataPath.IsNullOrEmpty())
                         throw new Exception("No datapath");
                 }
-                connectionString = connectionString.Replace("$DATAPATH", _dataPath);
+                connectionString = connectionString.Replace("$DATAPATH", DataPath);
             }
             return connectionString;
         }

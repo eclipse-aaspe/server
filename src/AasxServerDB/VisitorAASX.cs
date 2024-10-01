@@ -69,8 +69,8 @@ namespace AasxServerDB
                         Uri? dummy = null;
                         using (var st = asp.GetLocalThumbnailStream(ref dummy, init: true))
                         {
-                            Console.WriteLine("Copy " + AasContext._dataPath + "/files/" + temporaryFileName + ".dat");
-                            var fst = System.IO.File.Create(AasContext._dataPath + "/files/" + temporaryFileName + ".dat");
+                            Console.WriteLine("Copy " + AasContext.DataPath + "/files/" + temporaryFileName + ".dat");
+                            var fst = System.IO.File.Create(AasContext.DataPath + "/files/" + temporaryFileName + ".dat");
                             if (st != null)
                             {
                                 st.CopyTo(fst);
@@ -79,7 +79,7 @@ namespace AasxServerDB
                     }
                     catch { }
 
-                    using (var fileStream = new FileStream(AasContext._dataPath + "/files/" + name + ".zip", FileMode.Create))
+                    using (var fileStream = new FileStream(AasContext.DataPath + "/files/" + name + ".zip", FileMode.Create))
                     using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
                     {
                         var files = asp.GetListOfSupplementaryFiles();
@@ -90,7 +90,7 @@ namespace AasxServerDB
                                 using (var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true))
                                 {
                                     var archiveFile = archive.CreateEntry(f.Uri.OriginalString);
-                                    Console.WriteLine("Copy " + AasContext._dataPath + "/" + name + "/" + f.Uri.OriginalString);
+                                    Console.WriteLine("Copy " + AasContext.DataPath + "/" + name + "/" + f.Uri.OriginalString);
 
                                     using var archiveStream = archiveFile.Open();
                                     s.CopyTo(archiveStream);

@@ -555,7 +555,7 @@ namespace AasxServer
             {
                 Console.WriteLine($"Serving the AASXs from: {a.DataPath}");
                 AasxHttpContextHelper.DataPath = a.DataPath;
-                AasContext._dataPath           = AasxHttpContextHelper.DataPath;
+                AasContext.DataPath           = AasxHttpContextHelper.DataPath;
             }
 
             Program.runOPC     = a.Opc;
@@ -1126,7 +1126,7 @@ namespace AasxServer
                 // AppContext.SetSwitch("System.Net.Http.UseSocketsHttpHandler", false);
             }
 
-            AasContext._con = con;
+            AasContext.Config = con;
             AasContext.IsPostgres = AasContext.GetConnectionString().ToLower().Contains("host");
 
             string nl = System.Environment.NewLine;
