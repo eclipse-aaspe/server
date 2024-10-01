@@ -23,7 +23,8 @@
  * 4. Add a new migration
  *      Add-Migration <name of new migration> -Context SqliteAasContext
  *      Add-Migration <name of new migration> -Context PostgreAasContext
- * 5. Optional: Update database to new schema
+ * 5. Review the migration for accuracy
+ * 6. Optional: Update database to new schema
  *      Update-Database -Context SqliteAasContext
  *      Update-Database -Context PostgreAasContext
  */
@@ -41,7 +42,6 @@ namespace AasxServerDB
     using System.Collections.Generic;
     using System.IO;
     using System.Threading.Tasks;
-    using System.Text.RegularExpressions;
 
     public class AasContext : DbContext
     {
@@ -50,6 +50,7 @@ namespace AasxServerDB
         public static bool            IsPostgres { get; set; }
 
         public DbSet<EnvSet>    EnvSets    { get; set; }
+        public DbSet<EnvCDSet>  EnvCDSets  { get; set; }
         public DbSet<CDSet>     CDSets     { get; set; }
         public DbSet<AASSet>    AASSets    { get; set; }
         public DbSet<SMSet>     SMSets     { get; set; }
@@ -83,26 +84,9 @@ namespace AasxServerDB
             // Get connection string
             var connectionString = Config["DatabaseConnection:ConnectionString"];
             if (connectionString.IsNullOrEmpty())
-                throw new Exception("No connectionString in appsettings");
+                throw new Exception("No ConnectionString in appsettings");
+            IsPostgres = connectionString.ToLower().Contains("host");
 
-            // Get data path
-            if (connectionString.Contains("$DATAPATH"))
-            {
-                if (DataPath.IsNullOrEmpty())
-                {
-                    var configDataPath = new ConfigurationBuilder()
-                        .SetBasePath(Directory.GetCurrentDirectory())
-                        .AddJsonFile("Properties/launchSettings.json")
-                        .Build();
-                    var commandLineArgs = configDataPath["profiles:AasxServerBlazor:commandLineArgs"];
-                    commandLineArgs     = commandLineArgs ?? configDataPath["profiles:AasxServerAspNetCore:commandLineArgs"];
-                    var match = Regex.Match(commandLineArgs, $@"--data-path\s+(?:""([^""]+)""|(\S+))");
-                    DataPath = match.Success ? (match.Groups[1].Success ? match.Groups[1].Value : match.Groups[2].Value) : null;
-                    if (DataPath.IsNullOrEmpty())
-                        throw new Exception("No datapath");
-                }
-                connectionString = connectionString.Replace("$DATAPATH", DataPath);
-            }
             return connectionString;
         }
 
@@ -113,8 +97,23 @@ namespace AasxServerDB
             AasContext db = IsPostgres ? new PostgreAasContext() : new SqliteAasContext();
 
             // Create the DB if it does not exist
-            // Applies any pending migrations  
-            db.Database.Migrate();
+            // Applies any pending migrations
+            try
+            {
+                db.Database.Migrate();
+            }
+            catch (Exception ex)
+            {
+                // Clear DB
+                if (startIndex == 0 && !createFilesOnly)
+                {
+                    Console.WriteLine("Migration failed, try recreating database");
+                    db.Database.EnsureDeleted();
+                    db.Database.Migrate();
+                }
+                else
+                    throw ex;
+            }
 
             // Clear DB
             if (startIndex == 0 && !createFilesOnly)
@@ -130,6 +129,7 @@ namespace AasxServerDB
             var tasks = new List<Task<int>>
             {
                 EnvSets.ExecuteDeleteAsync(),
+                EnvCDSets.ExecuteDeleteAsync(),
                 CDSets.ExecuteDeleteAsync(),
                 AASSets.ExecuteDeleteAsync(),
                 SMSets.ExecuteDeleteAsync(),

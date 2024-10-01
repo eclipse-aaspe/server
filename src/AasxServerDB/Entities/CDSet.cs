@@ -14,7 +14,6 @@
 namespace AasxServerDB.Entities
 {
     using System.ComponentModel.DataAnnotations;
-    using System.ComponentModel.DataAnnotations.Schema;
     using Microsoft.EntityFrameworkCore;
 
     // indexes
@@ -23,9 +22,7 @@ namespace AasxServerDB.Entities
     public class CDSet
     {
         // env
-        [ForeignKey("EnvSet")]
-        public         int     EnvId  { get; set; }
-        public virtual EnvSet? EnvSet { get; set; }
+        public virtual ICollection<EnvCDSet?> EnvCDSets { get; } = new List<EnvCDSet?>();
 
         // id
         public int Id { get; set; }

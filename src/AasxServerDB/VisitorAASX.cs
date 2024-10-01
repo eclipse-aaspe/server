@@ -28,6 +28,7 @@ namespace AasxServerDB
         private EnvSet _envDB;
         private SMSet? _smDB;
         private SMESet? _parSME;
+        private static Dictionary<string, int> _cdDBId = new Dictionary<string, int>();
         private string _oprPrefix = string.Empty;
         public const string OPERATION_INPUT = "In";
         public const string OPERATION_OUTPUT = "Out";
@@ -56,6 +57,10 @@ namespace AasxServerDB
                     var db = new AasContext();
                     db.Add(envDB);
                     db.SaveChanges();
+
+                    // CD
+                    foreach (var envcdSet in envDB.EnvCDSets.Where(envcdSet => envcdSet.CDSet != null))
+                        _cdDBId.TryAdd(envcdSet.CDSet.Identifier, envcdSet.CDSet.Id);
                 }
 
                 if (withDbFiles)
@@ -110,9 +115,20 @@ namespace AasxServerDB
 
             // ConceptDescriptions
             if (asp.AasEnv.ConceptDescriptions != null)
+            {
                 foreach (var cd in asp.AasEnv.ConceptDescriptions)
-                    if (cd != null)
-                        new VisitorAASX(envDB: envDB).Visit(cd);
+                {
+                    if (cd == null || cd.Id.IsNullOrEmpty())
+                        continue;
+
+                    if (_cdDBId.ContainsKey(cd.Id))
+                    {
+                        envDB.EnvCDSets.Add(new EnvCDSet() { EnvSet = envDB, CDId = _cdDBId[cd.Id] });
+                        continue;
+                    }
+                    new VisitorAASX(envDB: envDB).Visit(cd);
+                }
+            }
 
             // dictionary to save connection between aas and sm
             var aasToSm = new Dictionary<string, AASSet?>();
@@ -196,7 +212,7 @@ namespace AasxServerDB
                 TimeStampTree               = that.TimeStampTree   == default ? currentDataTime : that.TimeStampTree,
                 TimeStampDelete             = that.TimeStampDelete == default ? currentDataTime : that.TimeStampDelete
             };
-            _envDB?.CDSets.Add(cdDB);
+            _envDB?.EnvCDSets.Add(new EnvCDSet() { EnvSet = _envDB, CDSet = cdDB });
             base.VisitConceptDescription(that);
         }
 

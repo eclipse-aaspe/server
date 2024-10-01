@@ -13,19 +13,37 @@
 
 namespace AasxServerDB
 {
+    using System;
     using System.Linq;
     using AasxServerDB.Entities;
     using Microsoft.IdentityModel.Tokens;
 
     public class PageRetriever
     {
-        public static List<EnvSet> GetPageEnvData(int size = 1000, string searchLower = "", long envid = 0) =>
-            new AasContext().EnvSets
-                .Where(a =>
-                    (envid == 0 || a.Id == envid) &&
-                    (searchLower.IsNullOrEmpty() || a.Path.ToLower().Contains(searchLower)))
-                .Take(size)
-                .ToList();
+        public static List<EnvSet> GetPageEnvData(int size = 1000, string searchLower = "", long envid = 0, long cdid = 0)
+        {
+            // Create a query to filter by ids
+            var db = new AasContext();
+            IEnumerable<EnvSet> query;
+            if (cdid != 0)
+                query = db.EnvCDSets
+                    .Where(envcd =>
+                        envcd.CDId == cdid &&
+                        (envid == 0 || envcd.EnvId == envid))
+                    .Join(db.EnvSets, envcd => envcd.EnvId, env => env.Id, (envcd, env) => env);
+            else
+                query = db.EnvSets
+                    .Where(env => envid == 0 || env.Id == envid);
+
+            // If the search string is specified and elements match the previous condition
+            if (!searchLower.IsNullOrEmpty() && query.Any())
+                query = query.Where(env =>
+                    env.Path != null && env.Path.ToLower().Contains(searchLower));
+
+            // Return the results
+            var result = query.Take(size).ToList();
+            return result;
+        }
 
         public static List<CDSet> GetPageCDData(int size = 1000, DateTime dateTime = new DateTime(), string searchLower = "", long envid = 0, long cdid = 0)
         {
@@ -34,10 +52,16 @@ namespace AasxServerDB
 
             // Create a query to filter by ids
             var db = new AasContext();
-            var query = db.CDSets
-                .Where(cd =>
-                    (envid == 0 || cd.EnvId == envid) &&
-                    (cdid == 0  || cd.Id == cdid));
+            IEnumerable<CDSet> query;
+            if (envid != 0)
+                query = db.EnvCDSets
+                    .Where(envcd =>
+                        envcd.EnvId == envid &&
+                        (cdid == 0  || envcd.CDId == cdid))
+                    .Join(db.CDSets, envcd => envcd.CDId, cd => cd.Id, (envcd, cd) => cd);
+            else
+                query = db.CDSets
+                    .Where(cd => cdid == 0 || cd.Id == cdid);
 
             // If the search string is specified and elements match the previous condition
             if (!searchLower.IsNullOrEmpty() && query.Any())

@@ -137,9 +137,6 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Property<string>("EmbeddedDataSpecifications")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("EnvId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("Extensions")
                         .HasColumnType("TEXT");
 
@@ -180,8 +177,6 @@ namespace AasxServerDB.Migrations.Sqlite
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EnvId");
-
                     b.HasIndex("Id");
 
                     b.ToTable("CDSets");
@@ -211,6 +206,27 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.HasIndex("Value");
 
                     b.ToTable("DValueSets");
+                });
+
+            modelBuilder.Entity("AasxServerDB.Entities.EnvCDSet", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CDId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("EnvId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CDId");
+
+                    b.HasIndex("EnvId");
+
+                    b.ToTable("EnvCDSets");
                 });
 
             modelBuilder.Entity("AasxServerDB.Entities.EnvSet", b =>
@@ -496,17 +512,6 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Navigation("EnvSet");
                 });
 
-            modelBuilder.Entity("AasxServerDB.Entities.CDSet", b =>
-                {
-                    b.HasOne("AasxServerDB.Entities.EnvSet", "EnvSet")
-                        .WithMany("CDSets")
-                        .HasForeignKey("EnvId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("EnvSet");
-                });
-
             modelBuilder.Entity("AasxServerDB.Entities.DValueSet", b =>
                 {
                     b.HasOne("AasxServerDB.Entities.SMESet", "SMESet")
@@ -516,6 +521,25 @@ namespace AasxServerDB.Migrations.Sqlite
                         .IsRequired();
 
                     b.Navigation("SMESet");
+                });
+
+            modelBuilder.Entity("AasxServerDB.Entities.EnvCDSet", b =>
+                {
+                    b.HasOne("AasxServerDB.Entities.CDSet", "CDSet")
+                        .WithMany("EnvCDSets")
+                        .HasForeignKey("CDId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AasxServerDB.Entities.EnvSet", "EnvSet")
+                        .WithMany("EnvCDSets")
+                        .HasForeignKey("EnvId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CDSet");
+
+                    b.Navigation("EnvSet");
                 });
 
             modelBuilder.Entity("AasxServerDB.Entities.IValueSet", b =>
@@ -590,11 +614,16 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Navigation("SMSets");
                 });
 
+            modelBuilder.Entity("AasxServerDB.Entities.CDSet", b =>
+                {
+                    b.Navigation("EnvCDSets");
+                });
+
             modelBuilder.Entity("AasxServerDB.Entities.EnvSet", b =>
                 {
                     b.Navigation("AASSets");
 
-                    b.Navigation("CDSets");
+                    b.Navigation("EnvCDSets");
 
                     b.Navigation("SMSets");
                 });

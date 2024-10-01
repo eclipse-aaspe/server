@@ -263,8 +263,8 @@
 
             if (url.EndsWith("/env"))
             {
-                List<EnvSet> data = PageRetriever.GetPageEnvData(size, searchLower, envid);
-                <span>&nbsp&nbsp@($"Env#: {data.Count}/{db.EnvSets.Count()} size={size} search={search} envid={envid}")</span>
+                List<EnvSet> data = PageRetriever.GetPageEnvData(size, searchLower, envid, cdid);
+                <span>&nbsp&nbsp@($"Env#: {data.Count}/{db.EnvSets.Count()} size={size} search={search} envid={envid} cdid={cdid}")</span>
                 <br/>
                 <br/>
                 @if (size > 1000 && data.Count > 1000)
@@ -294,8 +294,12 @@
                             <td>@envDB.Path</td>
                             <td style="word-break:keep-all">
                                 <a href="@($"{shorturl}/aas?envid={envDB.Id}")" target="_blank">aas </a>
-                                <a href="@($"{shorturl}/sm?envid={envDB.Id}")" target="_blank">sm</a>
-                                <a href="@($"{shorturl}/cd?envid={envDB.Id}")" target="_blank">cd</a>
+                                <a href="@($"{shorturl}/sm?envid={envDB.Id}")" target="_blank">sm </a>
+                                <a href="@($"{shorturl}/cd?envid={envDB.Id}")" target="_blank">cd </a>
+                                @if (cdid != 0)
+                                {
+                                    <a href="@($"{shorturl}/cd?envid={envDB.Id}&cdid={cdid}")" target="_blank">givenCd</a>
+                                }
                             </td>
                         </tr>
                     }
@@ -318,8 +322,12 @@
                         <span>@envDB.Path</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <a href="@($"{shorturl}/aas?envid={envDB.Id}")" target="_blank">aas </a>
-                        <a href="@($"{shorturl}/sm?envid={envDB.Id}")" target="_blank">sm</a>
-                        <a href="@($"{shorturl}/cd?envid={envDB.Id}")" target="_blank">cd</a>
+                        <a href="@($"{shorturl}/sm?envid={envDB.Id}")" target="_blank">sm </a>
+                        <a href="@($"{shorturl}/cd?envid={envDB.Id}")" target="_blank">cd </a>
+                        @if (cdid != 0)
+                        {
+                            <a href="@($"{shorturl}/cd?envid={envDB.Id}&cdid={cdid}")" target="_blank">givenCd</a>
+                        }
                         <span style="background-color:blue;">&nbsp</span>
                         <br/>
                     }
@@ -348,7 +356,6 @@
                 <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
                     <thead>
                         <tr>
-                            <th style="word-break:keep-all">Env#</th>
                             <th style="word-break:keep-all">CD#</th>
                             <th style="word-break:keep-all">Id Short</th>
                             <th style="word-break:keep-all">Display Name</th>
@@ -377,7 +384,6 @@
                             var link = $"{AasxServer.Program.externalBlazor}/concept-descriptions/{cd64}";
 
                             <tr>
-                                <td style="word-break:keep-all">@cdDB.EnvId</td>
                                 <td style="word-break:keep-all">
                                     <b>@cdDB.Id</b>
                                 </td>
@@ -401,7 +407,11 @@
                                     @($"DELETE {TimeStamp.DateTimeToString(cdDB.TimeStampDelete)}")
                                 </td>
                                 <td style="word-break:keep-all">
-                                    <a href="@($"{shorturl}/env?envid={cdDB.EnvId}")" target="_blank">env</a>
+                                    <a href="@($"{shorturl}/env?cdid={cdDB.Id}")" target="_blank">env </a>
+                                    @if (envid != 0)
+                                    {
+                                        <a href="@($"{shorturl}/env?cdid={cdDB.Id}&envid={envid}")" target="_blank">givenEnv</a>
+                                    }
                                 </td>
                                 <td style="word-break:keep-all">
                                     @if (!cdDB.Identifier.IsNullOrEmpty())
@@ -426,8 +436,6 @@
                         var link = $"{AasxServer.Program.externalBlazor}/concept-descriptions/{cd64}";
 
 
-                        <span style="background-color:blue;">&nbsp</span>
-                        <span>@cdDB.EnvId</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>
                             <b>@cdDB.Id</b>
@@ -464,7 +472,11 @@
                         <span>@($"TREE {TimeStamp.DateTimeToString(cdDB.TimeStampTree)}")</span>
                         <span>@($"DELETE {TimeStamp.DateTimeToString(cdDB.TimeStampDelete)}")</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <a href="@($"{shorturl}/env?envid={cdDB.EnvId}")" target="_blank">env</a>
+                        <a href="@($"{shorturl}/env?cdid={cdDB.Id}")" target="_blank">env </a>
+                        @if (envid != 0)
+                        {
+                            <a href="@($"{shorturl}/env?cdid={cdDB.Id}&envid={envid}")" target="_blank">givenEnv </a>
+                        }
                         <span style="background-color:blue;">&nbsp</span>
                         @if (!cdDB.Identifier.IsNullOrEmpty())
                         {

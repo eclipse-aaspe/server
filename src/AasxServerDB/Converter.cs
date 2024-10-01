@@ -37,7 +37,7 @@ namespace AasxServerDB
             env.SetFilename(fileName: GetAASXPath(envId));
 
             // cd
-            var cdDBList = db.CDSets.Where(cd => cd.EnvId == envId).ToList();
+            var cdDBList = db.EnvCDSets.Where(envcd => envcd.EnvId == envId).Join(db.CDSets, envcd => envcd.CDId, cd => cd.Id, (envcd, cd) => cd).ToList();
             foreach (var cd in cdDBList.Select(selector: cdDB => GetConceptDescription(cdDB: cdDB)))
             {
                 env.AasEnv.ConceptDescriptions?.Add(cd);
@@ -390,15 +390,15 @@ namespace AasxServerDB
             using var db = new AasContext();
             if (!cdId.IsNullOrEmpty())
             {
-                var cdDBList = db.CDSets.Where(s => s.Identifier == cdId);
-                if (cdDBList.Count() > 0)
+                var cdDBList = db.CDSets.Where(cd => cd.Identifier == cdId).Join(db.EnvCDSets, cd => cd.Id, envcd => envcd.CDId, (cd, envcd) => envcd);
+                if (cdDBList.Any())
                     envId = cdDBList.First().EnvId;
             }
 
             if (!smId.IsNullOrEmpty())
             {
                 var smDBList = db.SMSets.Where(s => s.Identifier == smId);
-                if (smDBList.Count() > 0)
+                if (smDBList.Any())
                     envId = smDBList.First().EnvId;
             }
 

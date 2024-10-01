@@ -264,7 +264,7 @@ namespace AasxServer
                     var envId = 0;
                     if (!cdIdentifier.IsNullOrEmpty())
                     {
-                        envId = db.CDSets.Where(cd => cd.Identifier == cdIdentifier).Select(cd => cd.EnvId).FirstOrDefault();
+                        envId = db.CDSets.Where(cd => cd.Identifier == cdIdentifier).Join(db.EnvCDSets, cd => cd.Id, envcd => envcd.CDId, (cd, envcd) => envcd.EnvId).FirstOrDefault();
                     }
                     else if (!aasIdentifier.IsNullOrEmpty())
                     {
