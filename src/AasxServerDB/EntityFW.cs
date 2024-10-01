@@ -95,6 +95,14 @@ namespace AasxServerDB
             // Get DB
             Console.WriteLine($"Use {(IsPostgres ? "POSTGRES" : "SQLITE")}");
             AasContext db = IsPostgres ? new PostgreAasContext() : new SqliteAasContext();
+            Console.WriteLine($"Database ConnectionString: {db.Database.GetConnectionString()}");
+
+            // Clear database
+            if (startIndex == 0 && !createFilesOnly)
+            {
+                Console.WriteLine("Clear database");
+                db.Database.EnsureDeleted();
+            }
 
             // Create the DB if it does not exist
             // Applies any pending migrations
@@ -114,37 +122,6 @@ namespace AasxServerDB
                 else
                     throw ex;
             }
-
-            // Clear DB
-            if (startIndex == 0 && !createFilesOnly)
-            {
-                Console.WriteLine("Clear DB");
-                await db.ClearDB();
-            }
-        }
-
-        public async Task ClearDB()
-        {
-            // Queue up all delete operations asynchronously
-            var tasks = new List<Task<int>>
-            {
-                EnvSets.ExecuteDeleteAsync(),
-                EnvCDSets.ExecuteDeleteAsync(),
-                CDSets.ExecuteDeleteAsync(),
-                AASSets.ExecuteDeleteAsync(),
-                SMSets.ExecuteDeleteAsync(),
-                SMESets.ExecuteDeleteAsync(),
-                IValueSets.ExecuteDeleteAsync(),
-                SValueSets.ExecuteDeleteAsync(),
-                DValueSets.ExecuteDeleteAsync(),
-                OValueSets.ExecuteDeleteAsync()
-            };
-
-            // Wait for all delete tasks to complete
-            await Task.WhenAll(tasks);
-
-            // Save changes to the database
-            SaveChanges();
         }
 
         // --------------------Serialize--------------------
