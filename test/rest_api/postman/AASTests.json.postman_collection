@@ -1,0 +1,1500 @@
+{
+	"info": {
+		"_postman_id": "26fd34cc-315f-472a-8ceb-bf50be7f65a6",
+		"name": "AASTests",
+		"description": "Collection dedicated for basic Operations on Submodel Elements.\n\nSome test data is predefined and is available in a special aasx demo file.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "37965578"
+	},
+	"item": [
+		{
+			"name": "Packages",
+			"item": [
+				{
+					"name": "/packages",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Result is 4 or greater\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.result).to.be.an('array').that.has.lengthOf.at.least(4);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Package is defined correctly\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.result[0].aasIds).to.be.an('array').that.has.lengthOf(1);\r",
+									"    pm.expect(response.result[0].packageId).to.equal(\"0\"); \r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/packages"
+					},
+					"response": []
+				},
+				{
+					"name": "/packages/{{packageId}}",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "file",
+							"file": {}
+						},
+						"url": "{{baseUrl}}/packages/{{packageId}}"
+					},
+					"response": []
+				},
+				{
+					"name": "/packages?limit=2",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Result is 2\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response.result).to.be.an('array').that.has.lengthOf.at.least(2);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/packages?limit=2",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"packages"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/packages?aasId=",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Result is 1\", () => {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.result).to.be.an('array').that.has.lengthOf(1);",
+									"});",
+									"",
+									"pm.test(\"Package is correct\", () => {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.result[0].aasIds).to.be.an('array').that.has.lengthOf(1);",
+									"    pm.expect(response.result[0].aasIds[0]).to.equal(\"www.example.com/ids/sm/8132_4102_8042_7561\")",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/packages?aasId=d3d3LmV4YW1wbGUuY29tL2lkcy9zbS84MTMyXzQxMDJfODA0Ml83NTYx",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"packages"
+							],
+							"query": [
+								{
+									"key": "aasId",
+									"value": "d3d3LmV4YW1wbGUuY29tL2lkcy9zbS84MTMyXzQxMDJfODA0Ml83NTYx"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							"pm.test(\"Result is defined and not null\", () => {",
+							"    const response = pm.response.json();",
+							"    pm.expect(response.result).to.not.be.undefined;",
+							"    pm.expect(response.result).to.not.be.null;",
+							"});",
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "AASRegistry",
+			"item": [
+				{
+					"name": "shell-descriptors",
+					"item": [
+						{
+							"name": "/shell-descriptors",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": "{{baseUrl}}/shell-descriptors"
+							},
+							"response": []
+						},
+						{
+							"name": "/shell-descriptors/{{aas_id_b64}}/submodel-descriptors/{{sm_id_b64}}",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": "{{baseUrl}}/shell-descriptors/{{aas_id_b64}}/submodel-descriptors/{{sm_id_b64}}"
+							},
+							"response": []
+						},
+						{
+							"name": "/shell-descriptors/{{aas_id_b64}}",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": "{{baseUrl}}/shell-descriptors/{{aas_id_b64}}"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "/lookup/shells",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/lookup/shells"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "AASRepository",
+			"item": [
+				{
+					"name": "Shells",
+					"item": [
+						{
+							"name": "Submodels",
+							"item": [
+								{
+									"name": "SubmodelElements",
+									"item": [
+										{
+											"name": "/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"exec": [
+															"pm.test(\"Result is array and not empty\", () => {",
+															"    const response = pm.response.json().result;",
+															"    pm.expect(response).to.be.an(\"array\").with.lengthOf.greaterThan(0)",
+															"})",
+															"",
+															""
+														],
+														"type": "text/javascript",
+														"packages": {}
+													}
+												}
+											],
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"shells",
+														":aasIdentifier",
+														"submodels",
+														":submodelIdentifier",
+														"submodel-elements"
+													],
+													"variable": [
+														{
+															"key": "aasIdentifier",
+															"value": "{{aas_id_b64}}"
+														},
+														{
+															"key": "submodelIdentifier",
+															"value": "{{sm_id_b64}}"
+														}
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/TestProp_Level1",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"exec": [
+															"pm.test(\"Result is not empty\", () => {",
+															"  const response = pm.response.json();",
+															"  pm.expect(response).to.be.an(\"object\").and.not.empty;",
+															"})",
+															"",
+															"pm.test(\"ModelType is Property\", () => {",
+															"    const response = pm.response.json();",
+															"    pm.expect(response.modelType).to.be.equal(\"Property\")",
+															"})"
+														],
+														"type": "text/javascript",
+														"packages": {}
+													}
+												}
+											],
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/:idShortPath",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"shells",
+														":aasIdentifier",
+														"submodels",
+														":submodelIdentifier",
+														"submodel-elements",
+														":idShortPath"
+													],
+													"variable": [
+														{
+															"key": "aasIdentifier",
+															"value": "{{aas_id_b64}}"
+														},
+														{
+															"key": "submodelIdentifier",
+															"value": "{{sm_id_b64}}"
+														},
+														{
+															"key": "idShortPath",
+															"value": "TestProp_Level1"
+														}
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/TestSMC_Level1",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"exec": [
+															"const response = pm.response.json();",
+															"",
+															"pm.test(\"Result is not empty\", () => {",
+															"    pm.expect(response).to.be.an(\"object\").and.not.empty;",
+															"})",
+															"",
+															"pm.test(\"ModelType is SubmodelElementCollection\", () => {",
+															"    pm.expect(response.modelType).to.be.equal(\"SubmodelElementCollection\")",
+															"})",
+															"",
+															"pm.test(\"Value is array and not empty\", () => {",
+															"    pm.expect(response.value).to.be.an(\"array\").with.lengthOf.greaterThan(0)",
+															"})",
+															"",
+															"",
+															""
+														],
+														"type": "text/javascript",
+														"packages": {}
+													}
+												}
+											],
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/:idShortPath",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"shells",
+														":aasIdentifier",
+														"submodels",
+														":submodelIdentifier",
+														"submodel-elements",
+														":idShortPath"
+													],
+													"variable": [
+														{
+															"key": "aasIdentifier",
+															"value": "{{aas_id_b64}}"
+														},
+														{
+															"key": "submodelIdentifier",
+															"value": "{{sm_id_b64}}"
+														},
+														{
+															"key": "idShortPath",
+															"value": "TestSMC_Level1"
+														}
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/TestSMC_Level1.TestProp_Level2",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"exec": [
+															"const response = pm.response.json();",
+															"",
+															"pm.test(\"Result is not empty\", () => {",
+															"    pm.expect(response).to.be.an(\"object\").and.not.empty;",
+															"})",
+															"",
+															"pm.test(\"ModelType is Property\", () => {",
+															"    pm.expect(response.modelType).to.be.equal(\"Property\")",
+															"})",
+															"",
+															"pm.test(\"IdShort is not empty\", () => {",
+															"    pm.expect(response.idShort).is.a(\"string\");",
+															"    pm.expect(response.idShort).is.not.empty;",
+															"})",
+															"",
+															"pm.test(\"Value is not empty\", () => {",
+															"    pm.expect(response.value).is.a(\"string\");",
+															"    pm.expect(response.value).is.not.empty;",
+															"})",
+															"",
+															"pm.test(\"ValueType is not empty and starts with xs:\", () => {",
+															"    pm.expect(response.valueType).is.a(\"string\");",
+															"    pm.expect(response.valueType).is.not.empty;",
+															"    pm.expect(response.valueType).to.contain(\"xs:\")",
+															"})"
+														],
+														"type": "text/javascript",
+														"packages": {}
+													}
+												}
+											],
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/:idShortPath",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"shells",
+														":aasIdentifier",
+														"submodels",
+														":submodelIdentifier",
+														"submodel-elements",
+														":idShortPath"
+													],
+													"variable": [
+														{
+															"key": "aasIdentifier",
+															"value": "{{aas_id_b64}}"
+														},
+														{
+															"key": "submodelIdentifier",
+															"value": "{{sm_id_b64}}"
+														},
+														{
+															"key": "idShortPath",
+															"value": "TestSMC_Level1.TestProp_Level2"
+														}
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/TestSMC_Level1.TestRefEle_Level2",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"exec": [
+															"const response = pm.response.json();",
+															"",
+															"pm.test(\"Result is not empty\", () => {",
+															"    pm.expect(response).to.be.an(\"object\").and.not.empty;",
+															"})",
+															"",
+															"pm.test(\"ModelType is ReferenceElement\", () => {",
+															"    pm.expect(response.modelType).to.be.equal(\"ReferenceElement\")",
+															"})",
+															"",
+															"pm.test(\"IdShort is not empty\", () => {",
+															"    pm.expect(response.idShort).is.a(\"string\");",
+															"    pm.expect(response.idShort).is.not.empty;",
+															"})",
+															"",
+															"pm.test(\"Value is Reference and not empty\", () => {",
+															"    pm.expect(response.value.type).to.be.a(\"string\").and.not.empty;",
+															"    pm.expect(response.value.keys).to.be.an(\"array\").with.lengthOf.greaterThan(0);",
+															"})",
+															"",
+															"pm.test(\"Reference keys are defined correctly\", () => {",
+															"    for(let i = 0; i < response.value.keys.length; i++){",
+															"        pm.expect(response.value.keys[i].type).to.be.a(\"string\").and.not.empty;",
+															"        pm.expect(response.value.keys[i].value).to.be.a(\"string\").and.not.empty;",
+															"    }",
+															"})"
+														],
+														"type": "text/javascript",
+														"packages": {}
+													}
+												}
+											],
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/:idShortPath",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"shells",
+														":aasIdentifier",
+														"submodels",
+														":submodelIdentifier",
+														"submodel-elements",
+														":idShortPath"
+													],
+													"variable": [
+														{
+															"key": "aasIdentifier",
+															"value": "{{aas_id_b64}}"
+														},
+														{
+															"key": "submodelIdentifier",
+															"value": "{{sm_id_b64}}"
+														},
+														{
+															"key": "idShortPath",
+															"value": "TestSMC_Level1.TestRefEle_Level2"
+														}
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/TestSMC_Level1.TestRelEle_Level2",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"exec": [
+															"const response = pm.response.json();",
+															"",
+															"pm.test(\"Result is not empty\", () => {",
+															"    pm.expect(response).to.be.an(\"object\").and.not.empty;",
+															"})",
+															"",
+															"pm.test(\"ModelType is RelationshipElement\", () => {",
+															"    pm.expect(response.modelType).to.be.equal(\"RelationshipElement\")",
+															"})",
+															"",
+															"pm.test(\"IdShort is not empty\", () => {",
+															"    pm.expect(response.idShort).is.a(\"string\");",
+															"    pm.expect(response.idShort).is.not.empty;",
+															"})",
+															"",
+															"pm.test(\"First is Reference and not empty\", () => {",
+															"    pm.expect(response.first.type).to.be.a(\"string\").and.not.empty;",
+															"    pm.expect(response.first.keys).to.be.an(\"array\").with.lengthOf.greaterThan(0);",
+															"})",
+															"",
+															"pm.test(\"Second is Reference and not empty\", () => {",
+															"    pm.expect(response.second.type).to.be.a(\"string\").and.not.empty;",
+															"    pm.expect(response.second.keys).to.be.an(\"array\").with.lengthOf.greaterThan(0);",
+															"})",
+															"",
+															"pm.test(\"First Reference keys are defined correctly\", () => {",
+															"    for(let i = 0; i < response.first.keys.length; i++){",
+															"        pm.expect(response.first.keys[i].type).to.be.a(\"string\").and.not.empty;",
+															"        pm.expect(response.first.keys[i].value).to.be.a(\"string\").and.not.empty;",
+															"    }",
+															"})",
+															"",
+															"pm.test(\"Second Reference keys are defined correctly\", () => {",
+															"    for(let i = 0; i < response.second.keys.length; i++){",
+															"        pm.expect(response.second.keys[i].type).to.be.a(\"string\").and.not.empty;",
+															"        pm.expect(response.second.keys[i].value).to.be.a(\"string\").and.not.empty;",
+															"    }",
+															"})"
+														],
+														"type": "text/javascript",
+														"packages": {}
+													}
+												}
+											],
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/:idShortPath",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"shells",
+														":aasIdentifier",
+														"submodels",
+														":submodelIdentifier",
+														"submodel-elements",
+														":idShortPath"
+													],
+													"variable": [
+														{
+															"key": "aasIdentifier",
+															"value": "{{aas_id_b64}}"
+														},
+														{
+															"key": "submodelIdentifier",
+															"value": "{{sm_id_b64}}"
+														},
+														{
+															"key": "idShortPath",
+															"value": "TestSMC_Level1.TestRelEle_Level2"
+														}
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/TestSMC_Level1.TestRange_Level2",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"exec": [
+															"const response = pm.response.json();",
+															"",
+															"pm.test(\"Result is not empty\", () => {",
+															"    pm.expect(response).to.be.an(\"object\").and.not.empty;",
+															"})",
+															"",
+															"pm.test(\"ModelType is Range\", () => {",
+															"    pm.expect(response.modelType).to.be.equal(\"Range\")",
+															"})",
+															"",
+															"pm.test(\"IdShort is not empty\", () => {",
+															"    pm.expect(response.idShort).is.a(\"string\");",
+															"    pm.expect(response.idShort).is.not.empty;",
+															"})",
+															"",
+															"pm.test(\"Min is defined and not null\", () => {",
+															"    const response = pm.response.json();",
+															"    pm.expect(response.min).to.be.not.undefined;",
+															"    pm.expect(response.min).to.be.not.null;",
+															"});",
+															"",
+															"pm.test(\"Max is defined and not null\", () => {",
+															"    const response = pm.response.json();",
+															"    pm.expect(response.max).to.be.not.undefined;",
+															"    pm.expect(response.max).to.be.not.null;",
+															"});",
+															"",
+															"pm.test(\"ValueType is not empty and starts with xs:\", () => {",
+															"    pm.expect(response.valueType).is.a(\"string\");",
+															"    pm.expect(response.valueType).is.not.empty;",
+															"    pm.expect(response.valueType).to.contain(\"xs:\")",
+															"})"
+														],
+														"type": "text/javascript",
+														"packages": {}
+													}
+												}
+											],
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/:idShortPath",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"shells",
+														":aasIdentifier",
+														"submodels",
+														":submodelIdentifier",
+														"submodel-elements",
+														":idShortPath"
+													],
+													"variable": [
+														{
+															"key": "aasIdentifier",
+															"value": "{{aas_id_b64}}"
+														},
+														{
+															"key": "submodelIdentifier",
+															"value": "{{sm_id_b64}}"
+														},
+														{
+															"key": "idShortPath",
+															"value": "TestSMC_Level1.TestRange_Level2"
+														}
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/TestSMC_Level1.TestFile_Level2",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"exec": [
+															"const response = pm.response.json();",
+															"",
+															"pm.test(\"Result is not empty\", () => {",
+															"    pm.expect(response).to.be.an(\"object\").and.not.empty;",
+															"})",
+															"",
+															"pm.test(\"ModelType is File\", () => {",
+															"    pm.expect(response.modelType).to.be.equal(\"File\")",
+															"})",
+															"",
+															"pm.test(\"IdShort is not empty\", () => {",
+															"    pm.expect(response.idShort).is.a(\"string\");",
+															"    pm.expect(response.idShort).is.not.empty;",
+															"})",
+															"",
+															"pm.test(\"Value is not empty\", () => {",
+															"    pm.expect(response.value).is.a(\"string\");",
+															"    pm.expect(response.value).is.not.empty;",
+															"})",
+															"",
+															"pm.test(\"Value is a path\", () => {",
+															"    pm.expect(response.value).to.match(/^(.+)\\/([^\\/]+)$/);",
+															"})",
+															"",
+															"pm.test(\"ContentType is defined and contains /\", () => {",
+															"    pm.expect(response.contentType).to.be.a(\"string\");",
+															"    pm.expect(response.contentType).contains(\"/\");",
+															"});",
+															""
+														],
+														"type": "text/javascript",
+														"packages": {}
+													}
+												}
+											],
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/:idShortPath",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"shells",
+														":aasIdentifier",
+														"submodels",
+														":submodelIdentifier",
+														"submodel-elements",
+														":idShortPath"
+													],
+													"variable": [
+														{
+															"key": "aasIdentifier",
+															"value": "{{aas_id_b64}}"
+														},
+														{
+															"key": "submodelIdentifier",
+															"value": "{{sm_id_b64}}"
+														},
+														{
+															"key": "idShortPath",
+															"value": "TestSMC_Level1.TestFile_Level2"
+														}
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/TestSMC_Level1.TestRange_Level2 Copy",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"exec": [
+															"const response = pm.response.json();",
+															"",
+															"pm.test(\"Result is not empty\", () => {",
+															"    pm.expect(response).to.be.an(\"object\").and.not.empty;",
+															"})",
+															"",
+															"pm.test(\"ModelType is Range\", () => {",
+															"    pm.expect(response.modelType).to.be.equal(\"Range\")",
+															"})",
+															"",
+															"pm.test(\"IdShort is not empty\", () => {",
+															"    pm.expect(response.idShort).is.a(\"string\");",
+															"    pm.expect(response.idShort).is.not.empty;",
+															"})",
+															"",
+															"pm.test(\"Min is defined and not null\", () => {",
+															"    const response = pm.response.json();",
+															"    pm.expect(response.min).to.be.not.undefined;",
+															"    pm.expect(response.min).to.be.not.null;",
+															"});",
+															"",
+															"pm.test(\"Max is defined and not null\", () => {",
+															"    const response = pm.response.json();",
+															"    pm.expect(response.max).to.be.not.undefined;",
+															"    pm.expect(response.max).to.be.not.null;",
+															"});",
+															"",
+															"pm.test(\"ValueType is not empty and starts with xs:\", () => {",
+															"    pm.expect(response.valueType).is.a(\"string\");",
+															"    pm.expect(response.valueType).is.not.empty;",
+															"    pm.expect(response.valueType).to.contain(\"xs:\")",
+															"})"
+														],
+														"type": "text/javascript",
+														"packages": {}
+													}
+												}
+											],
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/:idShortPath",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"shells",
+														":aasIdentifier",
+														"submodels",
+														":submodelIdentifier",
+														"submodel-elements",
+														":idShortPath"
+													],
+													"variable": [
+														{
+															"key": "aasIdentifier",
+															"value": "{{aas_id_b64}}"
+														},
+														{
+															"key": "submodelIdentifier",
+															"value": "{{sm_id_b64}}"
+														},
+														{
+															"key": "idShortPath",
+															"value": "TestSMC_Level1.TestRange_Level2"
+														}
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/TestSMC_Level1.TestBlob_Level2",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"exec": [
+															"const response = pm.response.json();",
+															"",
+															"pm.test(\"Result is not empty\", () => {",
+															"    pm.expect(response).to.be.an(\"object\").and.not.empty;",
+															"})",
+															"",
+															"pm.test(\"ModelType is Blob\", () => {",
+															"    pm.expect(response.modelType).to.be.equal(\"Blob\")",
+															"})",
+															"",
+															"pm.test(\"IdShort is not empty\", () => {",
+															"    pm.expect(response.idShort).is.a(\"string\");",
+															"    pm.expect(response.idShort).is.not.empty;",
+															"})",
+															"",
+															"pm.test(\"ContentType is defined and contains /\", () => {",
+															"    pm.expect(response.contentType).to.be.a(\"string\");",
+															"    pm.expect(response.contentType).contains(\"/\")",
+															"});"
+														],
+														"type": "text/javascript",
+														"packages": {}
+													}
+												}
+											],
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/:idShortPath",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"shells",
+														":aasIdentifier",
+														"submodels",
+														":submodelIdentifier",
+														"submodel-elements",
+														":idShortPath"
+													],
+													"variable": [
+														{
+															"key": "aasIdentifier",
+															"value": "{{aas_id_b64}}"
+														},
+														{
+															"key": "submodelIdentifier",
+															"value": "{{sm_id_b64}}"
+														},
+														{
+															"key": "idShortPath",
+															"value": "TestSMC_Level1.TestBlob_Level2"
+														}
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/TestSMC_Level1.TestEvent_Level2",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"exec": [
+															"const response = pm.response.json();",
+															"",
+															"pm.test(\"Result is not empty\", () => {",
+															"    pm.expect(response).to.be.an(\"object\").and.not.empty;",
+															"})",
+															"",
+															"pm.test(\"ModelType is BasicEventElement\", () => {",
+															"    pm.expect(response.modelType).to.be.equal(\"BasicEventElement\")",
+															"})",
+															"",
+															"pm.test(\"IdShort is not empty\", () => {",
+															"    pm.expect(response.idShort).is.a(\"string\");",
+															"    pm.expect(response.idShort).is.not.empty;",
+															"})",
+															"",
+															"pm.test(\"Direction is not empty\", () => {",
+															"    pm.expect(response.direction).is.a(\"string\");",
+															"    pm.expect(response.direction).is.not.empty;",
+															"})",
+															"",
+															"pm.test(\"State is not empty\", () => {",
+															"    pm.expect(response.state).is.a(\"string\");",
+															"    pm.expect(response.state).is.not.empty;",
+															"})",
+															"",
+															"pm.test(\"Observed is Reference and not empty\", () => {",
+															"    pm.expect(response.observed.type).to.be.a(\"string\").and.not.empty;",
+															"    pm.expect(response.observed.keys).to.be.an(\"array\").with.lengthOf.greaterThan(0);",
+															"})",
+															"",
+															"pm.test(\"Observed keys are defined correctly\", () => {",
+															"    for(let i = 0; i < response.observed.keys.length; i++){",
+															"        pm.expect(response.observed.keys[i].type).to.be.a(\"string\").and.not.empty;",
+															"        pm.expect(response.observed.keys[i].value).to.be.a(\"string\").and.not.empty;",
+															"    }",
+															"})"
+														],
+														"type": "text/javascript",
+														"packages": {}
+													}
+												}
+											],
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/:idShortPath",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"shells",
+														":aasIdentifier",
+														"submodels",
+														":submodelIdentifier",
+														"submodel-elements",
+														":idShortPath"
+													],
+													"variable": [
+														{
+															"key": "aasIdentifier",
+															"value": "{{aas_id_b64}}"
+														},
+														{
+															"key": "submodelIdentifier",
+															"value": "{{sm_id_b64}}"
+														},
+														{
+															"key": "idShortPath",
+															"value": "TestSMC_Level1.TestEvent_Level2"
+														}
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/TestSMC_Level1.TestCapability_Level2",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"exec": [
+															"const response = pm.response.json();",
+															"",
+															"pm.test(\"Result is not empty\", () => {",
+															"    pm.expect(response).to.be.an(\"object\").and.not.empty;",
+															"})",
+															"",
+															"pm.test(\"ModelType is Capability\", () => {",
+															"    pm.expect(response.modelType).to.be.equal(\"Capability\")",
+															"})"
+														],
+														"type": "text/javascript",
+														"packages": {}
+													}
+												}
+											],
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/shells/:aasIdentifier/submodels/:submodelIdentifier/submodel-elements/:idShortPath",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"shells",
+														":aasIdentifier",
+														"submodels",
+														":submodelIdentifier",
+														"submodel-elements",
+														":idShortPath"
+													],
+													"variable": [
+														{
+															"key": "aasIdentifier",
+															"value": "{{aas_id_b64}}"
+														},
+														{
+															"key": "submodelIdentifier",
+															"value": "{{sm_id_b64}}"
+														},
+														{
+															"key": "idShortPath",
+															"value": "TestSMC_Level1.TestCapability_Level2"
+														}
+													]
+												}
+											},
+											"response": []
+										}
+									]
+								},
+								{
+									"name": "shells/:aasIdentifier/submodels/:submodelIdentifier",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"ModelType is Submodel\", () => {",
+													"    const response = pm.response.json();",
+													"    pm.expect(response.modelType).is.equal(\"Submodel\")",
+													"});",
+													"",
+													"pm.test(\"Submodel Ids are correct\", () => {",
+													"    const response = pm.response.json();",
+													"    pm.expect(response.idShort).to.be.a('string').that.is.not.empty;",
+													"    pm.expect(response.id).to.be.a('string').that.is.not.empty;",
+													"    pm.expect(response.kind).to.be.a('string').that.is.not.empty;",
+													"});",
+													"",
+													"pm.test(\"SubmodelElements is array and not empty\", () => {",
+													"    const response = pm.response.json().submodelElements;",
+													"    pm.expect(response).to.be.an(\"array\").with.lengthOf.greaterThan(0)",
+													"})",
+													"",
+													""
+												],
+												"type": "text/javascript",
+												"packages": {}
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/shells/:aasIdentifier/submodels/:submodelIdentifier",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"shells",
+												":aasIdentifier",
+												"submodels",
+												":submodelIdentifier"
+											],
+											"variable": [
+												{
+													"key": "aasIdentifier",
+													"value": "{{aas_id_b64}}"
+												},
+												{
+													"key": "submodelIdentifier",
+													"value": "{{sm_id_b64}}"
+												}
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "/shells",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"AAS count is greater than one\", () => {",
+											"    const response = pm.response.json().result",
+											"    pm.expect(response).to.be.an(\"array\").with.lengthOf.greaterThan(1)",
+											"});",
+											"",
+											"pm.test(\"Result is defined correctly\", () => {",
+											"  const response = pm.response.json();",
+											"  pm.expect(response.result).to.not.be.undefined;",
+											"  pm.expect(response.result).to.be.an(\"array\").that.is.not.empty;",
+											"});",
+											"",
+											"pm.test(\"Result Ids are correct\", () => {",
+											"    const response = pm.response.json();",
+											"    pm.expect(response.result[0].idShort).to.be.a('string').that.is.not.empty;",
+											"    pm.expect(response.result[0].id).to.be.a('string').that.is.not.empty;",
+											"});",
+											"",
+											"pm.test(\"ModelType is correct\", () => {",
+											"    const response = pm.response.json().result[0];",
+											"    pm.expect(response.modelType).is.equal(\"AssetAdministrationShell\")",
+											"});",
+											"",
+											"pm.test(\"Result AssetInformation is correct\", () => {",
+											"    const response = pm.response.json().result[0].assetInformation;",
+											"    pm.expect(response.assetKind).to.be.a('string').that.is.not.empty;",
+											"    pm.expect(response.globalAssetId).to.be.a('string').that.is.not.empty;",
+											"    pm.expect(response.assetType).to.be.a('string').that.is.not.empty;",
+											"    pm.expect(response.defaultThumbnail).to.be.an(\"object\").that.is.not.empty;",
+											"    pm.expect(response.defaultThumbnail.path).to.be.a(\"string\").that.is.not.empty;",
+											"});",
+											"",
+											"pm.test(\"Result Submodels is correct\", () => {",
+											"    const response = pm.response.json().result[0].submodels;",
+											"    for(let i = 0; i < response.length; i++){",
+											"        const submodel = response[i];",
+											"        pm.expect(submodel.type).to.be.a('string').that.is.equal(\"ModelReference\")",
+											"        pm.expect(submodel.keys).to.be.an(\"array\").that.has.lengthOf.greaterThan(0)",
+											"    }",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": "{{baseUrl}}/shells"
+							},
+							"response": []
+						},
+						{
+							"name": "/shells/:aasIdentifier",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Result is defined correctly\", () => {",
+											"  const response = pm.response.json();",
+											"  pm.expect(response).to.not.be.undefined;",
+											"  pm.expect(response).to.be.an(\"object\").that.is.not.empty;",
+											"});",
+											"",
+											"pm.test(\"Result Ids are correct\", () => {",
+											"    const response = pm.response.json();",
+											"    pm.expect(response.idShort).to.be.a('string').that.is.not.empty;",
+											"    pm.expect(response.id).to.be.a('string').that.is.not.empty;",
+											"});",
+											"",
+											"pm.test(\"ModelType is AssetAdministrationShell\", () => {",
+											"    const response = pm.response.json();",
+											"    pm.expect(response.modelType).is.equal(\"AssetAdministrationShell\")",
+											"});",
+											"",
+											"pm.test(\"Result AssetInformation is correct\", () => {",
+											"    const response = pm.response.json().assetInformation;",
+											"    pm.expect(response.assetKind).to.be.a('string').that.is.not.empty;",
+											"    pm.expect(response.globalAssetId).to.be.a('string').that.is.not.empty;",
+											"    pm.expect(response.assetType).to.be.a('string').that.is.not.empty;",
+											"    pm.expect(response.defaultThumbnail).to.be.an(\"object\").that.is.not.empty;",
+											"    pm.expect(response.defaultThumbnail.path).to.be.a(\"string\").that.is.not.empty;",
+											"});",
+											"",
+											"pm.test(\"Result Submodels is correct\", () => {",
+											"    const response = pm.response.json().submodels;",
+											"    for(let i = 0; i < response.length; i++){",
+											"        const submodel = response[i];",
+											"        pm.expect(submodel.type).to.be.a('string').that.is.equal(\"ModelReference\")",
+											"        pm.expect(submodel.keys).to.be.an(\"array\").that.has.lengthOf.greaterThan(0)",
+											"    }",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/shells/:aasIdentifier",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"shells",
+										":aasIdentifier"
+									],
+									"variable": [
+										{
+											"key": "aasIdentifier",
+											"value": "{{aas_id_b64}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "/shells/:aasIdentifier/submodel-refs",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const response = pm.response.json().result;",
+											"pm.test(\"Result is array and not empty\", () => {",
+											"    pm.expect(response).to.be.an(\"array\").with.lengthOf.greaterThan(0)",
+											"});",
+											"",
+											"pm.test(\"SubmodelRefs are defined correctly\", () => {",
+											"    for(let i = 0; i < response.length; i++){",
+											"        pm.expect(response[i].type).to.be.a(\"string\").and.to.be.not.empty;",
+											"        pm.expect(response[i].keys).to.be.an(\"array\").with.lengthOf.greaterThan(0);",
+											"    }",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/shells/:aasIdentifier/submodel-refs",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"shells",
+										":aasIdentifier",
+										"submodel-refs"
+									],
+									"variable": [
+										{
+											"key": "aasIdentifier",
+											"value": "{{aas_id_b64}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "/shells/:aasIdentifier/asset-information",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const response = pm.response.json();",
+											"",
+											"pm.test(\"Result is object and not empty\", () => {",
+											"    pm.expect(response).to.be.an(\"object\").and.not.empty;",
+											"});",
+											"",
+											"pm.test(\"assetKind is defined and not empty\", () => {",
+											"    pm.expect(response.assetKind).to.be.a(\"string\").and.not.empty;",
+											"});",
+											"",
+											"pm.test(\"globalAssetId is defined and not empty\", () => {",
+											"    pm.expect(response.globalAssetId).to.be.a(\"string\").and.not.empty;",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/shells/:aasIdentifier/asset-information",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"shells",
+										":aasIdentifier",
+										"asset-information"
+									],
+									"variable": [
+										{
+											"key": "aasIdentifier",
+											"value": "{{aas_id_b64}}"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"packages": {},
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"packages": {},
+								"exec": [
+									""
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "ConceptDescription",
+			"item": []
+		},
+		{
+			"name": "Description",
+			"item": [
+				{
+					"name": "/description",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const profiles = pm.response.json().profiles;",
+									"pm.test(\"Profiles is defined and not empty\", () => {",
+									"    pm.expect(profiles).to.be.an(\"array\").with.lengthOf.greaterThan(0)",
+									"})",
+									"",
+									"pm.test(\"Profiles are urls\", () => {",
+									"    for(let i = 0; i < profiles.length; i++){",
+									"        pm.expect(profiles[i]).to.match(/[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&//=]*)/)",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/description"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Submodels",
+			"item": [
+				{
+					"name": "/submodels",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const submodels = pm.response.json().result;",
+									"",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{baseUrl}}/submodels"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"pm.test(\"Status is 200\", () => pm.response.to.have.status(200));"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "aas_id_b64",
+			"value": "d3d3LmV4YW1wbGUuY29tL2lkcy9zbS84MTMyXzQxMDJfODA0Ml8xODYx",
+			"type": "string"
+		},
+		{
+			"key": "sm_id_b64",
+			"value": "d3d3LmV4YW1wbGUuY29tL2lkcy9zbS84MTMyXzQxMDJfODA0Ml8xODYx",
+			"type": "string"
+		},
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:5003",
+			"type": "string"
+		},
+		{
+			"key": "packageId",
+			"value": "NA"
+		}
+	]
+}
