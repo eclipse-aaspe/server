@@ -112,7 +112,7 @@ namespace AasxServerDB
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Migration failed. Try dropping the database or set startIndex = 0 to have the server drop the database.");
+                Console.WriteLine("Migration failed. Try dropping the database.");
                 throw ex;
             }
         }
