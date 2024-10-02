@@ -30,10 +30,10 @@ jobs:
     - name: Start Test Server And Execute Test Scripts
       run: |
        cd build
-       dotnet ./AasxServerBlazor.dll --aspnet --data-path ../test/rest_api/data &
+       dotnet ./AasxServerBlazor.dll --rest --no-security --data-path ../test/rest_api/data --host 0.0.0.0 &
        sleep 10
        cd ..
-       newman run ./test/rest_api/postman/SubmodelElementTest.json.postman_collection -e ./test/rest_api/postman/GitHubActionEnvironment.json.postman_environment --reporters cli,htmlextra --reporter-htmlextra-export report.html --insecure
+       newman run ./test/rest_api/AASTests.json.postman_collection -e ./test/rest_api/postman/GitHubActionEnvironment.json.postman_environment --reporters cli,htmlextra --reporter-htmlextra-export report.html --insecure
        kill -9 `lsof -i:5001 -t`
     - name: Upload Report
       uses: actions/upload-artifact@v2
