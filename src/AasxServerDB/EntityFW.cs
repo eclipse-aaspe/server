@@ -90,7 +90,7 @@ namespace AasxServerDB
             return connectionString;
         }
 
-        public static async Task InitDB(bool reloadDB)
+        public static void InitDB(bool reloadDB)
         {
             // Get database
             Console.WriteLine($"Use {(IsPostgres ? "POSTGRES" : "SQLITE")}");
@@ -112,7 +112,7 @@ namespace AasxServerDB
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Migration failed. Try dropping the database.");
+                Console.WriteLine("Migration failed. Try deleting the database.");
                 throw ex;
             }
         }
