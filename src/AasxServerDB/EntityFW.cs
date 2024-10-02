@@ -90,21 +90,21 @@ namespace AasxServerDB
             return connectionString;
         }
 
-        public static async Task InitDB(int startIndex, bool createFilesOnly)
+        public static async Task InitDB(bool reloadDB)
         {
-            // Get DB
+            // Get database
             Console.WriteLine($"Use {(IsPostgres ? "POSTGRES" : "SQLITE")}");
             AasContext db = IsPostgres ? new PostgreAasContext() : new SqliteAasContext();
             Console.WriteLine($"Database ConnectionString: {db.Database.GetConnectionString()}");
 
-            // Clear database
-            if (startIndex == 0 && !createFilesOnly)
+            // Delete database
+            if (reloadDB)
             {
-                Console.WriteLine("Clear database");
+                Console.WriteLine("Delete database.");
                 db.Database.EnsureDeleted();
             }
 
-            // Create the DB if it does not exist
+            // Create the database if it does not exist
             // Applies any pending migrations
             try
             {
@@ -112,15 +112,8 @@ namespace AasxServerDB
             }
             catch (Exception ex)
             {
-                // Clear DB
-                if (startIndex == 0 && !createFilesOnly)
-                {
-                    Console.WriteLine("Migration failed, try recreating database");
-                    db.Database.EnsureDeleted();
-                    db.Database.Migrate();
-                }
-                else
-                    throw ex;
+                Console.WriteLine("Migration failed. Try dropping the database or set startIndex = 0 to have the server drop the database.");
+                throw ex;
             }
         }
 

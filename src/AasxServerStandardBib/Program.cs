@@ -755,7 +755,7 @@ namespace AasxServer
 
             // Init DB
             if (withDb)
-                await AasContext.InitDB(startIndex, createFilesOnly);
+                await AasContext.InitDB(startIndex == 0 && !createFilesOnly);
 
             string[] fileNames = null;
             if (Directory.Exists(AasxHttpContextHelper.DataPath))
