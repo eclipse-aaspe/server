@@ -23,6 +23,7 @@ using QueryParserTest;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using Newtonsoft.Json.Linq;
 using System.Linq;
+using Irony.Parsing;
 
 namespace AasxServerDB
 {
@@ -570,12 +571,20 @@ namespace AasxServerDB
         private static void QuerySMorSME_normal(ref List<SMSet>? smSet, ref List<SMEWithValue>? smeSet, string expression = "")
         {
             bool log = false;
+            bool withQueryLanguage = false;
 
             if (expression.StartsWith("$LOG"))
             {
                 log = true;
                 expression = expression.Replace("$LOG", "");
                 Console.WriteLine("$LOG");
+            }
+
+            if (expression.StartsWith("$QL"))
+            {
+                withQueryLanguage = true;
+                expression = expression.Replace("$QL", "");
+                Console.WriteLine("$QL");
             }
 
             if (expression == "" || (smSet == null && smeSet == null))
@@ -587,54 +596,113 @@ namespace AasxServerDB
             {
                 var watch = System.Diagnostics.Stopwatch.StartNew();
 
-                expression = expression.Replace("\n", "").Replace(" ", "");
+                string combinedCondition = "";
+                string conditionSM = "";
+                string conditionSME = "";
+                string conditionSMEValue = "";
+                string conditionStr = "";
+                string conditionNum = "";
 
-                // Parser
-                int countTypePrefix = 0;
-                var parser = new ParserWithAST(new Lexer(expression));
-                var ast = parser.Parse();
+                if (!withQueryLanguage)
+                {
+                    expression = expression.Replace("\n", "").Replace(" ", "");
 
-                var combinedCondition = parser.GenerateSql(ast, "", ref countTypePrefix, "filter");
-                Console.WriteLine("combinedCondition: " + combinedCondition);
+                    // Parser
+                    int countTypePrefix = 0;
+                    var parser = new ParserWithAST(new Lexer(expression));
+                    var ast = parser.Parse();
 
-                var conditionSM = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_submodel");
-                if (conditionSM == "")
-                {
-                    conditionSM = parser.GenerateSql(ast, "sm.", ref countTypePrefix, "filter");
+                    combinedCondition = parser.GenerateSql(ast, "", ref countTypePrefix, "filter");
+                    Console.WriteLine("combinedCondition: " + combinedCondition);
+
+                    conditionSM = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_submodel");
+                    if (conditionSM == "")
+                    {
+                        conditionSM = parser.GenerateSql(ast, "sm.", ref countTypePrefix, "filter");
+                    }
+                    conditionSM = conditionSM.Replace("sm.", "");
+                    Console.WriteLine("condition sm. #" + countTypePrefix + ": " + conditionSM);
+                    conditionSME = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_submodel_elements");
+                    if (conditionSME == "")
+                    {
+                        conditionSME = parser.GenerateSql(ast, "sme.", ref countTypePrefix, "filter");
+                    }
+                    conditionSME = conditionSME.Replace("sme.", "");
+                    Console.WriteLine("condition sme. #" + countTypePrefix + ": " + conditionSME);
+                    conditionSMEValue = parser.GenerateSql(ast, "sme.value", ref countTypePrefix, "filter");
+                    Console.WriteLine("condition sme.value #" + countTypePrefix + ": " + conditionSMEValue);
+                    conditionStr = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_str");
+                    if (conditionStr == "")
+                    {
+                        conditionStr = parser.GenerateSql(ast, "sValue", ref countTypePrefix, "filter");
+                    }
+                    if (conditionStr == "true")
+                    {
+                        conditionStr = "sValue != null";
+                    }
+                    conditionStr = conditionStr.Replace("sValue", "Value");
+                    Console.WriteLine("condition sValue #" + countTypePrefix + ": " + conditionStr);
+                    conditionNum = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_num");
+                    if (conditionNum == "")
+                    {
+                        conditionNum = parser.GenerateSql(ast, "mValue", ref countTypePrefix, "filter");
+                    }
+                    if (conditionNum == "true")
+                    {
+                        conditionNum = "mValue != null";
+                    }
+                    conditionNum = conditionNum.Replace("mValue", "Value");
+                    Console.WriteLine("condition mValue #" + countTypePrefix + ": " + conditionNum);
                 }
-                conditionSM = conditionSM.Replace("sm.", "");
-                Console.WriteLine("condition sm. #" + countTypePrefix + ": " + conditionSM);
-                var conditionSME = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_submodel_elements");
-                if (conditionSME == "")
+                else
                 {
-                    conditionSME = parser.GenerateSql(ast, "sme.", ref countTypePrefix, "filter");
+                    // with newest query language from QueryParser.cs
+                    var grammar = new QueryGrammar();
+                    var parser = new Parser(grammar);
+                    parser.Context.TracingEnabled = true;
+                    var parseTree = parser.Parse(expression);
+
+                    if (parseTree.HasErrors())
+                    {
+                        var pos = parser.Context.CurrentToken.Location.Position;
+                        var text = expression.Substring(0, pos) + "$$$" + expression.Substring(pos);
+                        Console.WriteLine(string.Join("\n", parseTree.ParserMessages) + "\nSee $$$: " + text);
+                        return;
+                    }
+                    else
+                    {
+                        int countTypePrefix = 0;
+                        combinedCondition = QueryGrammar.ParseTreeToExpression(parseTree.Root, "", ref countTypePrefix);
+
+                        countTypePrefix = 0;
+                        conditionSM = QueryGrammar.ParseTreeToExpression(parseTree.Root, "sm.", ref countTypePrefix);
+                        if (conditionSM == "$SKIP")
+                        {
+                            conditionSM = "";
+                        }
+
+                        countTypePrefix = 0;
+                        conditionSME = QueryGrammar.ParseTreeToExpression(parseTree.Root, "sme.", ref countTypePrefix);
+                        if (conditionSME == "$SKIP")
+                        {
+                            conditionSME = "";
+                        }
+
+                        countTypePrefix = 0;
+                        conditionStr = QueryGrammar.ParseTreeToExpression(parseTree.Root, "str()", ref countTypePrefix);
+                        if (conditionStr == "$SKIP")
+                        {
+                            conditionStr = "";
+                        }
+
+                        countTypePrefix = 0;
+                        conditionNum = QueryGrammar.ParseTreeToExpression(parseTree.Root, "num()", ref countTypePrefix);
+                        if (conditionNum == "$SKIP")
+                        {
+                            conditionNum = "";
+                        }
+                    }
                 }
-                conditionSME = conditionSME.Replace("sme.", "");
-                Console.WriteLine("condition sme. #" + countTypePrefix + ": " + conditionSME);
-                var conditionSMEValue = parser.GenerateSql(ast, "sme.value", ref countTypePrefix, "filter");
-                Console.WriteLine("condition sme.value #" + countTypePrefix + ": " + conditionSMEValue);
-                var conditionStr = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_str");
-                if (conditionStr == "")
-                {
-                    conditionStr = parser.GenerateSql(ast, "sValue", ref countTypePrefix, "filter");
-                }
-                if (conditionStr == "true")
-                {
-                    conditionStr = "sValue != null";
-                }
-                conditionStr = conditionStr.Replace("sValue", "Value");
-                Console.WriteLine("condition sValue #" + countTypePrefix + ": " + conditionStr);
-                var conditionNum = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_num");
-                if (conditionNum == "")
-                {
-                    conditionNum = parser.GenerateSql(ast, "mValue", ref countTypePrefix, "filter");
-                }
-                if (conditionNum == "true")
-                {
-                    conditionNum = "mValue != null";
-                }
-                conditionNum = conditionNum.Replace("mValue", "Value");
-                Console.WriteLine("condition mValue #" + countTypePrefix + ": " + conditionNum);
 
                 // Dynamic condition
                 var querySM = db.SMSets.AsQueryable();
@@ -676,7 +744,7 @@ namespace AasxServerDB
                 Console.WriteLine(sLog + " filterd SM+SME in " + watch.ElapsedMilliseconds + "ms");
                 watch.Restart();
 
-                if (smeSet == null)
+                if (conditionStr == "" && conditionNum == "" && smeSet == null)
                 {
                     if (smSet != null)
                     {
