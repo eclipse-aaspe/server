@@ -670,8 +670,15 @@ namespace AasxServerDB
                     {
                         var pos = parser.Context.CurrentToken.Location.Position;
                         var text = expression.Substring(0, pos) + "$$$" + expression.Substring(pos);
-                        Console.WriteLine(string.Join("\n", parseTree.ParserMessages) + "\nSee $$$: " + text);
-                        return;
+                        text = string.Join("\n", parseTree.ParserMessages) + "\nSee $$$: " + text;
+                        Console.WriteLine(text);
+                        while (text != text.Replace("\n  ", "\n "))
+                        {
+                            text = text.Replace("\n  ", "\n ");
+                        };
+                        text = text.Replace("\n", "\n");
+                        text = text.Replace("\n", " ");
+                        throw new Exception(text);
                     }
                     else
                     {
