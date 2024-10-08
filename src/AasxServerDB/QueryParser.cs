@@ -1,7 +1,10 @@
 using System;
+using System.Data;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Security;
 using System.Text.RegularExpressions;
+using AasSecurity.Models;
 using Irony.Parsing;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.Extensions.DependencyInjection;
@@ -479,5 +482,69 @@ public class QueryGrammar : Grammar
                 return "Regex";
         }
         return " $ERROR ";
+    }
+
+    public static void ParseAccessRules(ParseTreeNode node)
+    {
+        if (SecurityRoles != null)
+        {
+            int i = 0;
+            while (i < SecurityRoles.Count)
+            {
+                if (SecurityRoles[i].QueryLanguage)
+                {
+                    SecurityRoles.RemoveAt(i);
+                }
+                else
+                {
+                    i++;
+                }
+            }
+        }
+
+        ParseAccessRule(node);
+    }
+    static void ParseAccessRule(ParseTreeNode node)
+    {
+        switch (node.Term.Name)
+        {
+            case "stringComparison":
+                string semanticId = node.ChildNodes[2].Token.Value.ToString();
+                if (semanticId != "$DELETE")
+                {
+                    AddSecurityRule(semanticId);
+                }
+                break;
+            default:
+                foreach (var c in node.ChildNodes)
+                {
+                    ParseAccessRule(c);
+                }
+                break;
+        }
+    }
+
+    public static void AddSecurityRule(string semanticId)
+    {
+        SecurityRole role = new SecurityRole();
+
+        role.Name = "isNotAuthenticated";
+        role.Kind = KindOfPermissionEnum.Allow;
+        role.Permission = AccessRights.READ;
+        role.ObjectType = "semanticid";
+        role.ApiOperation = "";
+        role.SemanticId = semanticId;
+        role.RulePath = "";
+        role.QueryLanguage = true;
+
+        if (SecurityRoles != null)
+        {
+            SecurityRoles.Add(role);
+        }
+    }
+    static List<SecurityRole> SecurityRoles = null;
+    public static void storeSecurityRoles(List<SecurityRole> sr)
+    {
+        SecurityRoles = sr;
     }
 }
