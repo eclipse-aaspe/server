@@ -665,6 +665,13 @@ namespace AasxServerDB
                     }
                     else
                     {
+                        // Security
+                        if (parseTree.Root.Term.Name == "AllRules")
+                        {
+                            QueryGrammar.ParseAccessRules(parseTree.Root);
+                            throw new Exception("Access Rules parsed!");
+                        }
+
                         int countTypePrefix = 0;
                         combinedCondition = QueryGrammar.ParseTreeToExpression(parseTree.Root, "", ref countTypePrefix);
 

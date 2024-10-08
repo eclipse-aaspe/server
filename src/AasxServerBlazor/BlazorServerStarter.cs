@@ -1,4 +1,4 @@
-﻿using AasSecurity;
+using AasSecurity;
 using AasxServer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -34,6 +34,7 @@ public static class BlazorServerStarter
         Program.con = config;
         Program.Main(args);
         SecurityHelper.SecurityInit();
+        QueryGrammar.storeSecurityRoles(GlobalSecurityVariables.SecurityRoles);
     }
 
     private static IHost BuildHost(string[] args, IConfiguration config)
