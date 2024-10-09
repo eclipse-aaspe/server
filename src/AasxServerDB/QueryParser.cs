@@ -305,14 +305,32 @@ public class QueryGrammar : Grammar
                     }
                     return value.Replace("sme.", "");
                 }
-                // string value table and num value table
-                if (typePrefix == "str()" || typePrefix == "num()")
+                // string value table
+                if (typePrefix == "str()")
                 {
-                    upperCountTypePrefix++;
                     if (value != "sme.value")
                     {
                         return "$SKIP";
                     }
+                    if (parentName == "numericalComparison")
+                    {
+                        return "$SKIP";
+                    }
+                    upperCountTypePrefix++;
+                    return "value";
+                }
+                // num value table
+                if (typePrefix == "num()")
+                {
+                    if (value != "sme.value")
+                    {
+                        return "$SKIP";
+                    }
+                    if (parentName != "numericalComparison")
+                    {
+                        return "$SKIP";
+                    }
+                    upperCountTypePrefix++;
                     return "value";
                 }
 
@@ -376,6 +394,14 @@ public class QueryGrammar : Grammar
                     {
                         return "false";
                     }
+                    if (arg1 == "true")
+                    {
+                        return arg2;
+                    }
+                    if (arg2 == "true")
+                    {
+                        return arg1;
+                    }
                     op = "&&";
                 }
                 else
@@ -387,6 +413,14 @@ public class QueryGrammar : Grammar
                     if (arg1 == "false" && arg2 == "false")
                     {
                         return "false";
+                    }
+                    if (arg1 == "false")
+                    {
+                        return arg2;
+                    }
+                    if (arg2 == "false")
+                    {
+                        return arg1;
                     }
                     op = "||";
                 }
@@ -431,7 +465,7 @@ public class QueryGrammar : Grammar
                 */
                 op = ParseTreeToExpression(node.ChildNodes[1], typePrefix, ref countTypePrefix1, name);
                 arg1 = ParseTreeToExpression(node.ChildNodes[0], typePrefix, ref countTypePrefix1, name);
-                arg2 += ParseTreeToExpression(node.ChildNodes[2], typePrefix, ref countTypePrefix2, name);
+                arg2 = ParseTreeToExpression(node.ChildNodes[2], typePrefix, ref countTypePrefix2, name);
                 upperCountTypePrefix += countTypePrefix1 + countTypePrefix2;
                 if (arg1 == "$SKIP" || arg2 == "$SKIP")
                 {
@@ -445,10 +479,12 @@ public class QueryGrammar : Grammar
                 {
                     if (name == "stringComparison")
                     {
+                        /*
                         if (countTypePrefix1 != 0 || countTypePrefix2 != 0)
                         {
                             return "true";
                         }
+                        */
                         return "$SKIP";
                     }
                 }
@@ -456,10 +492,12 @@ public class QueryGrammar : Grammar
                 {
                     if (name == "numericalComparison")
                     {
+                        /*
                         if (countTypePrefix1 != 0 || countTypePrefix2 != 0)
                         {
                             return "true";
                         }
+                        */
                         return "$SKIP";
                     }
                 }

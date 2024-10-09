@@ -160,13 +160,14 @@ namespace AasxServerDB
             {
                 // shorten expression
                 expression = expression.Replace("$REVERSE", "");
-                // expression = Regex.Replace(expression, @"\s+", replacement: string.Empty);
 
                 string combinedCondition = "";
                 string conditionSM = "";
 
                 if (!withQueryLanguage)
                 {
+                    expression = Regex.Replace(expression, @"\s+", replacement: string.Empty);
+
                     // init parser
                     var countTypePrefix = 0;
                     var parser = new ParserWithAST(new Lexer(expression));
@@ -337,7 +338,6 @@ namespace AasxServerDB
 
                 // shorten expression
                 expression = expression.Replace("$REVERSE", "").Replace("$LOG", "");
-                // expression = Regex.Replace(expression, @"\s+", string.Empty);
 
                 string combinedCondition = "";
                 string conditionSM = "";
@@ -347,6 +347,8 @@ namespace AasxServerDB
 
                 if (!withQueryLanguage)
                 {
+                    expression = Regex.Replace(expression, @"\s+", string.Empty);
+
                     // init parser
                     var countTypePrefix = 0;
                     var parser = new ParserWithAST(new Lexer(expression));
