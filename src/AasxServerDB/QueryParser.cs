@@ -398,6 +398,10 @@ public class QueryGrammar : Grammar
                 {
                     return "$SKIP";
                 }
+                if (arg1 == "true")
+                {
+                    return "true";
+                }
                 return "!" + arg1;
             case "stringOperation":
                 if (typePrefix == "num()")
