@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using AdminShellNS;
 
 namespace AasSecurity.Models
@@ -7,6 +8,7 @@ namespace AasSecurity.Models
         public string?                     RulePath        { get; set; }
         public string?                     Condition       { get; set; }
         public string?                     Name            { get; set; }
+        public List<string>?               NameList { get; set; }
         public string?                     ObjectType      { get; set; }
         public string?                     ApiOperation    { get; set; }
         public IClass?                     ObjectReference { get; set; }
@@ -15,6 +17,7 @@ namespace AasSecurity.Models
         public KindOfPermissionEnum?       Kind            { get; set; }
         public ISubmodel?                  Submodel        { get; set; }
         public string?                     SemanticId      { get; set; }
+        public List<string>?               SemanticIdList { get; set; }
         public ISubmodelElementCollection? Usage           { get; set; }
         public string?                     AAS             { get; set; }
         public AdminShellPackageEnv?       UsageEnv        { get; set; }
