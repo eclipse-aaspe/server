@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Security;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using AasSecurity.Models;
 using Irony.Parsing;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
@@ -144,7 +145,7 @@ public class QueryGrammar : Grammar
         dateTimeToNum.Rule = (ToTerm("dayOfWeek") | "dayOfMonth" | "month" | "year") + "(" + dateTimeOperand + ")";
 
         operand.Rule = stringOperand | numericalOperand | hexOperand | boolOperand | dateTimeOperand | timeOperand;
-        stringOperand.Rule = FieldIdentifierString | stringLiteral | castToString;
+        stringOperand.Rule = FieldIdentifierString | stringLiteral | castToString | singleAttribute;
         numericalOperand.Rule = numericalLiteral | castToNumerical | dateTimeToNum;
         hexOperand.Rule = hexLiteral | castToHex;
         boolOperand.Rule = boolLiteral | castToBool;
@@ -486,6 +487,7 @@ public class QueryGrammar : Grammar
 
     public static void ParseAccessRules(ParseTreeNode node)
     {
+        /*
         if (SecurityRoles != null)
         {
             int i = 0;
@@ -501,18 +503,75 @@ public class QueryGrammar : Grammar
                 }
             }
         }
+        */
+        SecurityRoles.Clear();
 
         ParseAccessRule(node);
     }
+    static List<string> Names = new List<string>();
+    static string access = "";
+    static string right = "";
     static void ParseAccessRule(ParseTreeNode node)
     {
         switch (node.Term.Name)
         {
-            case "stringComparison":
-                string semanticId = node.ChildNodes[2].Token.Value.ToString();
-                if (semanticId != "$DELETE")
+            case "AccessRule":
+                Names = new List<string>();
+                access = "";
+                right = "";
+                foreach (var c in node.ChildNodes)
                 {
-                    AddSecurityRule(semanticId);
+                    ParseAccessRule(c);
+                }
+                break;
+            case "Access":
+                access = node.ChildNodes[0].Term.Name;
+                break;
+            case "Right":
+                right = node.ChildNodes[0].Term.Name;
+                break;
+            case "stringComparison":
+                if (node.ChildNodes[0].Term.Name == "SingleAttribute")
+                {
+                    var claim = node.ChildNodes[0].ChildNodes[0];
+                    if (claim.ChildNodes[1].Token.Value.ToString() == "ROLE")
+                    {
+                        Names.Add(node.ChildNodes[2].Token.Value.ToString());
+                    }
+
+                }
+                else
+                {
+                    string semanticId = node.ChildNodes[2].Token.Value.ToString();
+                    if (semanticId != "$DELETE")
+                    {
+                        foreach (var n in Names)
+                        {
+                            SecurityRole role = new SecurityRole();
+
+                            role.Name = n;
+                            if (access != "ALLOW")
+                            {
+                                continue;
+                            }
+                            role.Kind = KindOfPermissionEnum.Allow;
+                            if (right != "READ")
+                            {
+                                continue;
+                            }
+                            role.Permission = AccessRights.READ;
+                            role.ObjectType = "semanticid";
+                            role.ApiOperation = "";
+                            role.SemanticId = semanticId;
+                            role.RulePath = "";
+                            role.QueryLanguage = true;
+
+                            if (SecurityRoles != null)
+                            {
+                                SecurityRoles.Add(role);
+                            }
+                        }
+                    }
                 }
                 break;
             default:
@@ -524,24 +583,6 @@ public class QueryGrammar : Grammar
         }
     }
 
-    public static void AddSecurityRule(string semanticId)
-    {
-        SecurityRole role = new SecurityRole();
-
-        role.Name = "isNotAuthenticated";
-        role.Kind = KindOfPermissionEnum.Allow;
-        role.Permission = AccessRights.READ;
-        role.ObjectType = "semanticid";
-        role.ApiOperation = "";
-        role.SemanticId = semanticId;
-        role.RulePath = "";
-        role.QueryLanguage = true;
-
-        if (SecurityRoles != null)
-        {
-            SecurityRoles.Add(role);
-        }
-    }
     static List<SecurityRole> SecurityRoles = null;
     public static void storeSecurityRoles(List<SecurityRole> sr)
     {
