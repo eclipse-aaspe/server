@@ -127,10 +127,7 @@ public class ConceptDescriptionRepositoryAPIApiController : ControllerBase
         var reqDataSpecificationRef = _jsonQueryDeserializer.DeserializeReference("dataSpecificationRef", dataSpecificationRef);
 
         var cdList = new List<IConceptDescription>();
-        if (reqDataSpecificationRef != null)
-        {
-            cdList = _cdService.GetAllConceptDescriptions(idShort, reqIsCaseOf, reqDataSpecificationRef);
-        }
+        cdList = _cdService.GetAllConceptDescriptions(idShort, reqIsCaseOf, reqDataSpecificationRef);
 
         var authResult = _authorizationService.AuthorizeAsync(User, cdList, "SecurityPolicy").Result;
         if (!authResult.Succeeded)
