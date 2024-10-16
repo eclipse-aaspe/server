@@ -48,6 +48,8 @@ using System.Net.Mime;
 using Microsoft.AspNetCore.Http;
 using System.Xml.Linq;
 using System.IO;
+using AdminShellNS.Extensions;
+using System.Text.Json.Nodes;
 
 namespace IO.Swagger.Controllers
 { 
@@ -394,12 +396,20 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        //TODO:: jtikekar(2024-08-30) Support encoded Specific Asset ids
-        public virtual IActionResult GetAllAssetAdministrationShells([FromQuery] List<SpecificAssetId> assetIds, [FromQuery] string? idShort, [FromQuery] int? limit, [FromQuery] string? cursor)
+        public virtual IActionResult GetAllAssetAdministrationShells([FromQuery] string? assetIds, [FromQuery] string? idShort, [FromQuery] int? limit, [FromQuery] string? cursor)
         {
             _logger.LogInformation($"Received the request to get all Asset Administration Shells.");
 
-            var aasList = _aasService.GetAllAssetAdministrationShells(assetIds, idShort);
+            ISpecificAssetId reqAssetId = null;
+            
+            if (!string.IsNullOrEmpty(assetIds))
+            {
+                var decodedAssetIdString = _decoderService.Decode("assetIds", assetIds);
+                var assetJsonNode = JsonNode.Parse(decodedAssetIdString);
+                reqAssetId = Jsonization.Deserialize.SpecificAssetIdFrom(assetJsonNode); 
+            }
+
+            var aasList = _aasService.GetAllAssetAdministrationShells(reqAssetId, idShort);
             var output = _paginationService.GetPaginatedList(aasList, new PaginationParameters(cursor, limit));
             return new ObjectResult(output);
         }
@@ -427,13 +437,21 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        //TODO:: jtikekar(2024-08-30) Support encoded Specific Asset ids
-        public virtual IActionResult GetAllAssetAdministrationShellsReference([FromQuery] List<SpecificAssetId> assetIds, [FromQuery] string? idShort,
+        public virtual IActionResult GetAllAssetAdministrationShellsReference([FromQuery] string? assetIds, [FromQuery] string? idShort,
             [FromQuery] int? limit, [FromQuery] string? cursor)
         {
             _logger.LogInformation($"Received the request to get all Asset Administration Shells.");
 
-            var aasList = _aasService.GetAllAssetAdministrationShells(assetIds, idShort);
+            ISpecificAssetId reqAssetId = null;
+
+            if (!string.IsNullOrEmpty(assetIds))
+            {
+                var decodedAssetIdString = _decoderService.Decode("assetIds", assetIds);
+                var assetJsonNode = JsonNode.Parse(decodedAssetIdString);
+                reqAssetId = Jsonization.Deserialize.SpecificAssetIdFrom(assetJsonNode);
+            }
+
+            var aasList = _aasService.GetAllAssetAdministrationShells(reqAssetId, idShort);
             var aasPaginatedList = _paginationService.GetPaginatedList(aasList, new PaginationParameters(cursor, limit));
             var references = _referenceModifierService.GetReferenceResult(aasPaginatedList.result.ConvertAll(a => (IReferable)a));
             var output = new ReferencePagedResult(references, aasPaginatedList.paging_metadata);
