@@ -1,4 +1,4 @@
-/********************************************************************************
+﻿/********************************************************************************
 * Copyright (c) {2019 - 2024} Contributors to the Eclipse Foundation
 *
 * See the NOTICE file(s) distributed with this work for additional
@@ -11,9 +11,9 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-namespace DataTransferObjects.CommonDTOs
+namespace AdminShellNS.DiaryData
 {
-    public record class LangStringTextTypeDTO(
-            string Language,
-            string Text) : IDTO;
+    public interface IAasDiaryEntry
+    {
+    }
 }

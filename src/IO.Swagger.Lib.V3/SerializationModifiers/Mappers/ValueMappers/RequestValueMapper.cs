@@ -87,16 +87,16 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 
         private static IClass? Transform(BasicEventElementValue valueDTO)
         {
-            return new BasicEventElement(TransformReference(valueDTO.observed), Direction.Output, StateOfEvent.On, idShort: valueDTO.idShort);
+            return new BasicEventElement(TransformReference(valueDTO.Observed), Direction.Output, StateOfEvent.On, idShort: valueDTO.IdShort);
         }
 
         private static IClass Transform(SubmodelValue valueDTO)
         {
             List<ISubmodelElement> submodelElements = null;
-            if (valueDTO.submodelElements != null)
+            if (valueDTO.SubmodelElements != null)
             {
                 submodelElements = new List<ISubmodelElement>();
-                foreach (var element in valueDTO.submodelElements)
+                foreach (var element in valueDTO.SubmodelElements)
                 {
                     submodelElements.Add((ISubmodelElement)Map(element));
                 }
@@ -107,107 +107,107 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 
         private static IClass Transform(RangeValue valueDTO)
         {
-            return new AasCore.Aas3_0.Range(DataTypeDefXsd.String, idShort: valueDTO.idShort, min: valueDTO.min, max: valueDTO.max);
+            return new AasCore.Aas3_0.Range(DataTypeDefXsd.String, idShort: valueDTO.IdShort, min: valueDTO.Min, max: valueDTO.Max);
         }
 
         private static IClass Transform(SubmodelElementListValue valueDTO)
         {
             List<ISubmodelElement> value = null;
-            if (valueDTO.value != null)
+            if (valueDTO.Value != null)
             {
                 value = new List<ISubmodelElement>();
-                foreach (var element in valueDTO.value)
+                foreach (var element in valueDTO.Value)
                 {
                     value.Add((ISubmodelElement)Map(element));
                 }
             }
 
-            return new SubmodelElementList(AasSubmodelElements.SubmodelElement, idShort: valueDTO.idShort, value: value);
+            return new SubmodelElementList(AasSubmodelElements.SubmodelElement, idShort: valueDTO.IdShort, value: value);
         }
 
         private static IClass Transform(MultiLanguagePropertyValue valueDTO)
         {
             var value = new List<ILangStringTextType>();
-            foreach (var langString in valueDTO.langStrings)
+            foreach (var langString in valueDTO.LangStrings)
             {
                 value.Add(new LangStringTextType(langString.Key, langString.Value));
             }
-            return new MultiLanguageProperty(idShort: valueDTO.idShort, value: value);
+            return new MultiLanguageProperty(idShort: valueDTO.IdShort, value: value);
         }
 
         private static IClass Transform(SubmodelElementCollectionValue valueDTO)
         {
             List<ISubmodelElement> value = null;
-            if (valueDTO.value != null)
+            if (valueDTO.Value != null)
             {
                 value = new List<ISubmodelElement>();
-                foreach (var element in valueDTO.value)
+                foreach (var element in valueDTO.Value)
                 {
                     value.Add((ISubmodelElement)Map(element));
                 }
             }
 
-            return new SubmodelElementCollection(idShort: valueDTO.idShort, value: value);
+            return new SubmodelElementCollection(idShort: valueDTO.IdShort, value: value);
         }
 
         private static IClass Transform(EntityValue valueDTO)
         {
             List<ISubmodelElement> statements = null;
-            if (valueDTO.statements != null)
+            if (valueDTO.Statements != null)
             {
                 statements = new List<ISubmodelElement>();
-                foreach (var element in valueDTO.statements)
+                foreach (var element in valueDTO.Statements)
                 {
                     statements.Add((ISubmodelElement)Map(element));
                 }
             }
-            return new Entity(valueDTO.entityType, idShort: valueDTO.idShort, statements: statements, globalAssetId: valueDTO.globalAssetId);
+            return new Entity(valueDTO.EntityType, idShort: valueDTO.IdShort, statements: statements, globalAssetId: valueDTO.GlobalAssetId);
         }
 
         private static IClass Transform(ReferenceElementValue valueDTO)
         {
-            return new ReferenceElement(idShort: valueDTO.idShort, value: TransformReference(valueDTO.value));
+            return new ReferenceElement(idShort: valueDTO.IdShort, value: TransformReference(valueDTO.Value));
         }
 
         private static IClass Transform(RelationshipElementValue valueDTO)
         {
-            return new RelationshipElement(TransformReference(valueDTO.first), TransformReference(valueDTO.second), idShort: valueDTO.idShort);
+            return new RelationshipElement(TransformReference(valueDTO.First), TransformReference(valueDTO.Second), idShort: valueDTO.IdShort);
         }
 
         private static IClass? Transform(AnnotatedRelationshipElementValue valueDTO)
         {
             List<IDataElement> annotations = null;
-            if (valueDTO.annotations != null)
+            if (valueDTO.Annotations != null)
             {
                 annotations = new List<IDataElement>();
-                foreach (var element in valueDTO.annotations)
+                foreach (var element in valueDTO.Annotations)
                 {
                     annotations.Add((IDataElement)Map(element));
                 }
             }
-            return new AnnotatedRelationshipElement(TransformReference(valueDTO.first), TransformReference(valueDTO.second), idShort: valueDTO.idShort, annotations: annotations);
+            return new AnnotatedRelationshipElement(TransformReference(valueDTO.First), TransformReference(valueDTO.Second), idShort: valueDTO.IdShort, annotations: annotations);
         }
 
         private static IClass Transform(FileValue valueDTO)
         {
-            return new File(valueDTO.contentType, idShort: valueDTO.idShort, value: valueDTO.value);
+            return new File(valueDTO.ContentType, idShort: valueDTO.IdShort, value: valueDTO.Value);
         }
 
         private static IClass Transform(BlobValue valueDTO)
         {
-            return new Blob(valueDTO.contentType, idShort: valueDTO.idShort, value: valueDTO.value);
+            return new Blob(valueDTO.ContentType, idShort: valueDTO.IdShort, value: valueDTO.Value);
         }
 
         private static IClass Transform(PropertyValue valueDTO)
         {
-            return new Property(DataTypeDefXsd.String, idShort: valueDTO.idShort, value: valueDTO.value);
+            return new Property(DataTypeDefXsd.String, idShort: valueDTO.IdShort, value: valueDTO.Value);
         }
 
         private static IReference? TransformReference(ReferenceDTO referenceDTO)
         {
             if (referenceDTO == null)
                 return null;
-            return new Reference(referenceDTO.type, TransformKeys(referenceDTO.keys), TransformReference(referenceDTO.referredSemanticId));
+            return new Reference(referenceDTO.Type, TransformKeys(referenceDTO.Keys), TransformReference(referenceDTO.ReferredSemanticId));
         }
 
         private static List<IKey>? TransformKeys(List<KeyDTO>? keys)
@@ -217,7 +217,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             var result = new List<IKey>();
             foreach (var key in keys)
             {
-                result.Add(new Key(key.type, key.value));
+                result.Add(new Key(key.Type, key.Value));
             }
 
             return result;

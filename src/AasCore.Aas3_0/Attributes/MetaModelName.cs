@@ -1,4 +1,4 @@
-/********************************************************************************
+﻿/********************************************************************************
 * Copyright (c) {2019 - 2024} Contributors to the Eclipse Foundation
 *
 * See the NOTICE file(s) distributed with this work for additional
@@ -11,19 +11,18 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace IO.Swagger.Lib.V3.Exceptions
+namespace AasCore.Aas3_0.Attributes
 {
-    public class NoIdentifierException : Exception
+    /// <summary>
+    /// This attribute indicates, that the field / property is searchable
+    /// </summary>
+    [System.AttributeUsage(System.AttributeTargets.Field | System.AttributeTargets.Property, AllowMultiple = true)]
+    public class MetaModelName : System.Attribute
     {
-        public NoIdentifierException(string fieldName) : base($"No identifier found in {fieldName}.")
+        public string name;
+        public MetaModelName(string name)
         {
-
+            this.name = name;
         }
     }
 }
