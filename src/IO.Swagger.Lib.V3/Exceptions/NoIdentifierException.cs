@@ -21,7 +21,7 @@ namespace IO.Swagger.Lib.V3.Exceptions
 {
     public class NoIdentifierException : Exception
     {
-        public NoIdentifierException(string fieldName) : base($"No indentier found in {fieldName}.")
+        public NoIdentifierException(string fieldName) : base($"No identifier found in {fieldName}.")
         {
 
         }

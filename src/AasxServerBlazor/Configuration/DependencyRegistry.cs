@@ -67,5 +67,6 @@ public static class DependencyRegistry
         services.AddTransient<ISubmodelPropertyExtractionService, SubmodelPropertyExtractionService>();
         services.AddTransient<ISubmodelService, SubmodelService>();
         services.AddTransient<IValueOnlyJsonDeserializer, ValueOnlyJsonDeserializer>();
+        services.AddTransient<IValidateSerializationModifierService, ValidateSerializationModifierService>();
     }
 }

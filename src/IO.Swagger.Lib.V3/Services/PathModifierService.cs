@@ -50,7 +50,7 @@ namespace IO.Swagger.Lib.V3.Services
 
             foreach (var submodelElement in submodelElementList)
             {
-                var context = new PathModifierContext();
+                var context = new PathModifierContext(isGetAllSmes: true);
                 var path = _pathTransformer.Transform(submodelElement, context);
                 output.Add(path);
             }

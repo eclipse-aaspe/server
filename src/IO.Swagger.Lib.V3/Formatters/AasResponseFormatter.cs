@@ -34,6 +34,10 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using DataTransferObjects.MetadataDTOs;
+using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers;
+using IO.Swagger.Lib.V3.Models;
+using System.Text.Json.Serialization;
 
 namespace IO.Swagger.Lib.V3.Formatters
 {
@@ -95,6 +99,18 @@ namespace IO.Swagger.Lib.V3.Formatters
                 return base.CanWriteResult(context);
             }
             if (typeof(PagedResult).IsAssignableFrom(context.ObjectType))
+            {
+                return base.CanWriteResult(context);
+            }
+            if (typeof(IMetadataDTO).IsAssignableFrom(context.ObjectType))
+            {
+                return base.CanWriteResult(context);
+            }
+            if (typeof(MetadataPagedResult).IsAssignableFrom(context.ObjectType))
+            {
+                return base.CanWriteResult(context);
+            }
+            if (typeof(PathPagedResult).IsAssignableFrom(context.ObjectType))
             {
                 return base.CanWriteResult(context);
             }
@@ -215,6 +231,53 @@ namespace IO.Swagger.Lib.V3.Formatters
                 }
                 var writer = new Utf8JsonWriter(response.Body);
                 jsonArray.WriteTo(writer);
+                writer.FlushAsync().GetAwaiter().GetResult();
+            }
+            else if(typeof(IMetadataDTO).IsAssignableFrom(context.ObjectType))
+            {
+                JsonNode? json = MetadataJsonSerializer.ToJsonObject((IMetadataDTO)context.Object);
+                var writer = new Utf8JsonWriter(response.Body);
+                json.WriteTo(writer);
+                writer.FlushAsync().GetAwaiter().GetResult();
+            }
+            else if (typeof(MetadataPagedResult).IsAssignableFrom(context.ObjectType))
+            {
+                var jsonArray = new JsonArray();
+                string cursor = null;
+                if (context.Object is MetadataPagedResult pagedResult)
+                {
+                    cursor = pagedResult.paging_metadata.cursor;
+                    foreach (var item in pagedResult.result)
+                    {
+                        var json = MetadataJsonSerializer.ToJsonObject(item);
+                        jsonArray.Add(json);
+                    }
+                }
+                JsonObject jsonNode = new JsonObject();
+                jsonNode["result"] = jsonArray;
+                var pagingMetadata = new JsonObject();
+                if (cursor != null)
+                {
+                    pagingMetadata["cursor"] = cursor;
+                }
+                jsonNode["paging_metadata"] = pagingMetadata;
+                var writer = new Utf8JsonWriter(response.Body);
+                jsonNode.WriteTo(writer);
+                writer.FlushAsync().GetAwaiter().GetResult();
+            }
+            else if (typeof(PathPagedResult).IsAssignableFrom(context.ObjectType))
+            {
+                JsonNode jsonNode = null;
+                var options = new JsonSerializerOptions
+                {
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                };
+                if (context.Object is PathPagedResult pagedResult)
+                {
+                    jsonNode = JsonSerializer.SerializeToNode(pagedResult, options);
+                }
+                var writer = new Utf8JsonWriter(response.Body);
+                jsonNode.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();
             }
             else if (typeof(PagedResult).IsAssignableFrom(context.ObjectType))
