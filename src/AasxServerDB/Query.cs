@@ -137,8 +137,8 @@ namespace AasxServerDB
             if (withExpression == withParameters)
                 return null;
 
-            bool log = false;
-            bool withQueryLanguage = false;
+            var log = false;
+            var withQueryLanguage = false;
 
             if (expression.StartsWith("$LOG"))
             {
@@ -313,8 +313,8 @@ namespace AasxServerDB
             IQueryable<IValueSet>? iValueTable;
             IQueryable<DValueSet>? dValueTable;
 
-            bool log = false;
-            bool withQueryLanguage = false;
+            var log = false;
+            var withQueryLanguage = false;
 
             if (expression.StartsWith("$LOG"))
             {
@@ -330,7 +330,21 @@ namespace AasxServerDB
                 Console.WriteLine("$QL");
             }
 
+            // check additional columns for expression
+            var needSmSemanticId = false;
+            var needSmIdShort = false;
+            var needSmDisplayName = false;
+            var needSmDescription = false;
+            var needSmId = false;
+            var needSmeSemanticId = false;
+            var needSmeIdShort = false;
+            var needSmeDisplayName = false;
+            var needSmeDescription = false;
+            var needSmeValue = false;
+            var needSmeValueType = false; // <-- is unclear
+
             // get data
+            string combinedCondition = "";
             if (withExpression) // with expression
             {
                 // direction
@@ -339,7 +353,6 @@ namespace AasxServerDB
                 // shorten expression
                 expression = expression.Replace("$REVERSE", "").Replace("$LOG", "");
 
-                string combinedCondition = "";
                 string conditionSM = "";
                 string conditionSME = "";
                 string conditionStr = "";
@@ -447,6 +460,7 @@ namespace AasxServerDB
                             conditionNum = "";
                         }
                     }
+
                 }
 
                 // check restrictions
@@ -462,6 +476,23 @@ namespace AasxServerDB
                 sValueTable = restrictValue ? (restrictSVaue ? db.SValueSets.Where(conditionStr) : null) : db.SValueSets;
                 iValueTable = restrictValue ? (restrictNumVaue ? db.IValueSets.Where(conditionNum) : null) : db.IValueSets;
                 dValueTable = restrictValue ? (restrictNumVaue ? db.DValueSets.Where(conditionNum) : null) : db.DValueSets;
+
+                // check additional columns for expression
+                needSmSemanticId = combinedCondition.Contains("sm.semanticId");
+                needSmIdShort = combinedCondition.Contains("sm.idShort");
+                needSmDisplayName = combinedCondition.Contains("sm.displayName");
+                needSmDescription = combinedCondition.Contains("sm.description");
+                needSmId = combinedCondition.Contains("sm.id");
+                needSmeSemanticId = combinedCondition.Contains("sme.semanticId");
+                needSmeIdShort = combinedCondition.Contains("sme.idShort");
+                needSmeDisplayName = combinedCondition.Contains("sme.displayName");
+                needSmeDescription = combinedCondition.Contains("sme.description");
+                needSmeValue = combinedCondition.Contains("sme.value");
+                needSmeValueType = combinedCondition.Contains("sme.valueType");
+
+                // convert to sql
+                combinedCondition = ConvertToSqlString(combinedCondition);
+                combinedCondition = "WHERE " + combinedCondition;
             }
             else // with parameters
             {
@@ -484,8 +515,24 @@ namespace AasxServerDB
             }
 
             // set select
-            var smSelect = smTable.Select(sm => new { sm.Id, sm.Identifier });
-            var smeSelect = smeTable.Select(sme => new { sme.SMId, sme.Id, sme.TimeStamp, sme.TValue });
+            var smSelect = smTable.Select(sm => new {
+                sm.Id,
+                SemanticId = needSmSemanticId ? sm.SemanticId : null,
+                IdShort = needSmIdShort ? sm.IdShort : null,
+                DisplayName = needSmDisplayName ? sm.DisplayName : null,
+                Description = needSmDescription ? sm.Description : null,
+                sm.Identifier
+            });
+            var smeSelect = smeTable.Select(sme => new {
+                sme.SMId,
+                sme.Id,
+                SemanticId = needSmeSemanticId ? sme.SemanticId : null,
+                IdShort = needSmeIdShort ? sme.IdShort : null,
+                DisplayName = needSmeDisplayName ? sme.DisplayName : null,
+                Description = needSmeDescription ? sme.Description : null,
+                sme.TimeStamp,
+                sme.TValue
+            });
             var sValueSelect = sValueTable?.Select(sV => new { sV.SMEId, sV.Value });
             var iValueSelect = iValueTable?.Select(iV => new { iV.SMEId, iV.Value });
             var dValueSelect = dValueTable?.Select(dV => new { dV.SMEId, dV.Value });
@@ -525,16 +572,44 @@ namespace AasxServerDB
                 // SM => SME
                 rawSQL +=
                     $"FilteredSMAndSME AS ( \n" +
-                        $"SELECT sm.Identifier, sme.Id, sme.TimeStamp, sme.TValue \n" +
+                        $"SELECT " +
+                            $"{(needSmSemanticId ? "sm.SemanticId AS SM_SemanticId, " : string.Empty)}" +
+                            $"{(needSmIdShort ? "sm.IdShort AS SM_IdShort, " : string.Empty)}" +
+                            $"{(needSmDisplayName ? "sm.DisplayName AS SM_DisplayName, " : string.Empty)}" +
+                            $"{(needSmDescription ? "sm.Description AS SM_Description, " : string.Empty)}" +
+                            $"sm.Identifier, " +
+
+                            $"{(needSmeSemanticId ? "sme.SemanticId AS SME_SemanticId, " : string.Empty)}" +
+                            $"{(needSmeIdShort ? "sme.IdShort AS SME_IdShort, " : string.Empty)}" +
+                            $"{(needSmeDisplayName ? "sme.DisplayName AS SME_DisplayName, " : string.Empty)}" +
+                            $"{(needSmeDescription ? "sme.Description AS SME_Description, " : string.Empty)}" +
+                            $"sme.Id, " +
+                            $"sme.TimeStamp, " +
+                            $"sme.TValue \n" +
                         $"FROM FilteredSM AS sm \n" +
                         $"INNER JOIN FilteredSME AS sme ON sm.Id = sme.SMId \n" +
                     $"), \n";
 
                 // SM-SME => VALUE
-                var selectStart = $"SELECT sm_sme.Identifier, sm_sme.Id, sm_sme.TimeStamp, v.Value \n" +
+                var selectStart =
+                    $"SELECT " +
+                        $"{(needSmSemanticId ? "sm_sme.SM_SemanticId, " : string.Empty)}" +
+                        $"{(needSmIdShort ? "sm_sme.SM_IdShort, " : string.Empty)}" +
+                        $"{(needSmDisplayName ? "sm_sme.SM_DisplayName, " : string.Empty)}" +
+                        $"{(needSmDescription ? "sm_sme.SM_Description, " : string.Empty)}" +
+                        $"sm_sme.Identifier, " +
+
+                        $"{(needSmeSemanticId ? "sm_sme.SME_SemanticId, " : string.Empty)}" +
+                        $"{(needSmeIdShort ? "sm_sme.SME_IdShort, " : string.Empty)}" +
+                        $"{(needSmeDisplayName ? "sm_sme.SME_DisplayName, " : string.Empty)}" +
+                        $"{(needSmeDescription ? "sm_sme.SME_Description, " : string.Empty)}" +
+                        $"sm_sme.Id, " +
+                        $"sm_sme.TimeStamp, " +
+                        $"v.Value \n" +
                     $"FROM FilteredSMAndSME AS sm_sme \n" +
                     $"INNER JOIN ";
-                var selectEnd = $" AS v ON sm_sme.Id = v.SMEId \n ";
+                var selectEnd = $" AS v ON sm_sme.Id = v.SMEId \n" +
+                    $"{combinedCondition.Replace("sme.", "sm_sme.").Replace("sm.", "sm_sme.")}\n ";
                 rawSQL +=
                     $"FilteredSMAndSMEAndValue AS ( \n" +
                         (!sValueQueryString.IsNullOrEmpty() ? $"{selectStart}FilteredSValue{selectEnd}" : string.Empty) +
@@ -544,9 +619,22 @@ namespace AasxServerDB
                         (!dValueQueryString.IsNullOrEmpty() ? $"{selectStart}FilteredDValue{selectEnd}" : string.Empty) +
                         ((withParameters && !withContains && !withEqualString && !withEqualNum && !withCompare) ?
                             $"UNION ALL \n" +
-                            $"SELECT sm_sme.Identifier, sm_sme.Id, sm_sme.TimeStamp, NULL \n" +
+                            $"SELECT " +
+                                $"{(needSmSemanticId ? "sm_sme.SM_SemanticId, " : string.Empty)}" +
+                                $"{(needSmIdShort ? "sm_sme.SM_IdShort, " : string.Empty)}" +
+                                $"{(needSmDisplayName ? "sm_sme.SM_DisplayName, " : string.Empty)}" +
+                                $"{(needSmDescription ? "sm_sme.SM_Description, " : string.Empty)}" +
+                                $"sm_sme.Identifier, " +
+
+                                $"{(needSmeSemanticId ? "sm_sme.SME_SemanticId, " : string.Empty)}" +
+                                $"{(needSmeIdShort ? "sm_sme.SME_IdShort, " : string.Empty)}" +
+                                $"{(needSmeDisplayName ? "sm_sme.SME_DisplayName, " : string.Empty)}" +
+                                $"{(needSmeDescription ? "sm_sme.SME_Description, " : string.Empty)}" +
+                                $"sm_sme.Id, " +
+                                $"sm_sme.TimeStamp, " +
+                                $"NULL \n" +
                             $"FROM FilteredSMAndSME AS sm_sme \n" +
-                            $"WHERE sm_sme.TValue IS NULL OR sm_sme.TValue = ''\n" : string.Empty) +
+                            $"WHERE sm_sme.TValue IS NULL OR sm_sme.TValue = '' {(withExpression ? $"AND ({combinedCondition})" : string.Empty)} \n" : string.Empty) +
                     $")";
             }
             else if (direction == 1) // middle-out
@@ -554,16 +642,44 @@ namespace AasxServerDB
                 // SME => SM
                 rawSQL +=
                     $"FilteredSMAndSME AS ( \n" +
-                        $"SELECT sm.Identifier, sme.Id, sme.TimeStamp, sme.TValue \n" +
+                        $"SELECT " +
+                            $"{(needSmSemanticId ? "sm.SemanticId AS SM_SemanticId, " : string.Empty)}" +
+                            $"{(needSmIdShort ? "sm.IdShort AS SM_IdShort, " : string.Empty)}" +
+                            $"{(needSmDisplayName ? "sm.DisplayName AS SM_DisplayName, " : string.Empty)}" +
+                            $"{(needSmDescription ? "sm.Description AS SM_Description, " : string.Empty)}" +
+                            $"sm.Identifier, " +
+
+                            $"{(needSmeSemanticId ? "sme.SemanticId AS SME_SemanticId, " : string.Empty)}" +
+                            $"{(needSmeIdShort ? "sme.IdShort AS SME_IdShort, " : string.Empty)}" +
+                            $"{(needSmeDisplayName ? "sme.DisplayName AS SME_DisplayName, " : string.Empty)}" +
+                            $"{(needSmeDescription ? "sme.Description AS SME_Description, " : string.Empty)}" +
+                            $"sme.Id, " +
+                            $"sme.TimeStamp, " +
+                            $"sme.TValue \n" +
                         $"FROM FilteredSME AS sme \n" +
                         $"INNER JOIN FilteredSM AS sm ON sm.Id = sme.SMId \n" +
                     $"), \n";
 
                 // SME-SM => VALUE
-                var selectStart = $"SELECT sm_sme.Identifier, sm_sme.Id, sm_sme.TimeStamp, v.Value \n" +
+                var selectStart =
+                    $"SELECT " +
+                        $"{(needSmSemanticId ? "sm_sme.SM_SemanticId, " : string.Empty)}" +
+                        $"{(needSmIdShort ? "sm_sme.SM_IdShort, " : string.Empty)}" +
+                        $"{(needSmDisplayName ? "sm_sme.SM_DisplayName, " : string.Empty)}" +
+                        $"{(needSmDescription ? "sm_sme.SM_Description, " : string.Empty)}" +
+                        $"sm_sme.Identifier, " +
+
+                        $"{(needSmeSemanticId ? "sm_sme.SME_SemanticId, " : string.Empty)}" +
+                        $"{(needSmeIdShort ? "sm_sme.SME_IdShort, " : string.Empty)}" +
+                        $"{(needSmeDisplayName ? "sm_sme.SME_DisplayName, " : string.Empty)}" +
+                        $"{(needSmeDescription ? "sm_sme.SME_Description, " : string.Empty)}" +
+                        $"sm_sme.Id, " +
+                        $"sm_sme.TimeStamp, " +
+                        $"v.Value \n" +
                     $"FROM FilteredSMAndSME AS sm_sme \n" +
                     $"INNER JOIN ";
-                var selectEnd = $" AS v ON sm_sme.Id = v.SMEId \n ";
+                var selectEnd = $" AS v ON sm_sme.Id = v.SMEId\n" +
+                    $"{combinedCondition.Replace("sme.", "sm_sme.").Replace("sm.", "sm_sme.")}\n ";
                 rawSQL +=
                     $"FilteredSMAndSMEAndValue AS ( \n" +
                         (!sValueQueryString.IsNullOrEmpty() ? $"{selectStart}FilteredSValue{selectEnd}" : string.Empty) +
@@ -573,7 +689,20 @@ namespace AasxServerDB
                         (!dValueQueryString.IsNullOrEmpty() ? $"{selectStart}FilteredDValue{selectEnd}" : string.Empty) +
                         ((withParameters && !withContains && !withEqualString && !withEqualNum && !withCompare) ?
                             $"UNION ALL \n" +
-                            $"SELECT sm_sme.Identifier, sm_sme.Id, sm_sme.TimeStamp, NULL \n" +
+                            $"SELECT " +
+                                $"{(needSmSemanticId ? "sm_sme.SM_SemanticId, " : string.Empty)}" +
+                                $"{(needSmIdShort ? "sm_sme.SM_IdShort, " : string.Empty)}" +
+                                $"{(needSmDisplayName ? "sm_sme.SM_DisplayName, " : string.Empty)}" +
+                                $"{(needSmDescription ? "sm_sme.SM_Description, " : string.Empty)}" +
+                                $"sm_sme.Identifier, " +
+
+                                $"{(needSmeSemanticId ? "sm_sme.SME_SemanticId, " : string.Empty)}" +
+                                $"{(needSmeIdShort ? "sm_sme.SME_IdShort, " : string.Empty)}" +
+                                $"{(needSmeDisplayName ? "sm_sme.SME_DisplayName, " : string.Empty)}" +
+                                $"{(needSmeDescription ? "sm_sme.SME_Description, " : string.Empty)}" +
+                                $"sm_sme.Id, " +
+                                $"sm_sme.TimeStamp, " +
+                                $"NULL \n" +
                             $"FROM FilteredSMAndSME AS sm_sme \n" +
                             $"WHERE sm_sme.TValue IS NULL OR sm_sme.TValue = ''\n" : string.Empty) +
                     $")";
@@ -581,7 +710,17 @@ namespace AasxServerDB
             else if (direction == 2) // bottom-up
             {
                 // VALUE => SME
-                var selectWithStart = $"SELECT sme.SMId, sme.Id, sme.TimeStamp, v.Value \n " +
+                var selectWithStart =
+                    $"SELECT " +
+                        $"sme.SMId, " +
+
+                        $"{(needSmeSemanticId ? "sme.SemanticId AS SME_SemanticId, " : string.Empty)}" +
+                        $"{(needSmeIdShort ? "sme.IdShort AS SME_IdShort, " : string.Empty)}" +
+                        $"{(needSmeDisplayName ? "sme.DisplayName AS SME_DisplayName, " : string.Empty)}" +
+                        $"{(needSmeDescription ? "sme.Description AS SME_Description, " : string.Empty)}" +
+                        $"sme.Id, " +
+                        $"sme.TimeStamp, " +
+                        $"v.Value \n " +
                     $"FROM ";
                 var selectWithEnd = $" AS v \n" +
                     $"INNER JOIN FilteredSME AS sme ON sme.Id = v.SMEId \n ";
@@ -594,7 +733,16 @@ namespace AasxServerDB
                         (!dValueQueryString.IsNullOrEmpty() ? $"{selectWithStart}FilteredDValue{selectWithEnd}" : string.Empty) +
                         ((withParameters && !withContains && !withEqualString && !withEqualNum && !withCompare) ?
                             $"UNION ALL \n" +
-                            $"SELECT sme.SMId, sme.Id, sme.TimeStamp, NULL \n" +
+                            $"SELECT " +
+                                $"sme.SMId, " +
+
+                                $"{(needSmeSemanticId ? "sme.SemanticId AS SME_SemanticId, " : string.Empty)}" +
+                                $"{(needSmeIdShort ? "sme.IdShort AS SME_IdShort, " : string.Empty)}" +
+                                $"{(needSmeDisplayName ? "sme.DisplayName AS SME_DisplayName, " : string.Empty)}" +
+                                $"{(needSmeDescription ? "sme.Description AS SME_Description, " : string.Empty)}" +
+                                $"sme.Id, " +
+                                $"sme.TimeStamp, " +
+                                $"NULL \n" +
                             $"FROM FilteredSME AS sme \n" +
                             $"WHERE sme.TValue IS NULL OR sme.TValue = ''\n" : string.Empty) +
                     $"), \n";
@@ -602,15 +750,29 @@ namespace AasxServerDB
                 // VALUE-SME => SM
                 rawSQL +=
                     $"FilteredSMAndSMEAndValue AS ( \n" +
-                        $"SELECT sm.Identifier, sme_v.Id, sme_v.TimeStamp, sme_v.Value \n" +
+                        $"SELECT " +
+                            $"{(needSmSemanticId ? "sm.SemanticId AS SM_SemanticId, " : string.Empty)}" +
+                            $"{(needSmIdShort ? "sm.IdShort AS SM_IdShort, " : string.Empty)}" +
+                            $"{(needSmDisplayName ? "sm.DisplayName AS SM_DisplayName, " : string.Empty)}" +
+                            $"{(needSmDescription ? "sm.Description AS SM_Description, " : string.Empty)}" +
+                            $"sm.Identifier, " +
+
+                            $"{(needSmeSemanticId ? "sme_v.SME_SemanticId, " : string.Empty)}" +
+                            $"{(needSmeIdShort ? "sme_v.SME_IdShort, " : string.Empty)}" +
+                            $"{(needSmeDisplayName ? "sme_v.SME_DisplayName, " : string.Empty)}" +
+                            $"{(needSmeDescription ? "sme_v.SME_Description, " : string.Empty)}" +
+                            $"sme_v.Id, " +
+                            $"sme_v.TimeStamp, " +
+                            $"sme_v.Value \n" +
                         $"FROM FilteredSMEAndValue AS sme_v \n" +
                         $"INNER JOIN FilteredSM AS sm ON sme_v.SMId = sm.Id \n" +
+                        $"{combinedCondition.Replace("sme.", "sm_sme.").Replace("v.", "sme_v.")}\n" +
                     $")";
             }
 
             if (withCount)
             {
-                //select
+                // select
                 rawSQL += $"\nSELECT sme.Id \nFROM FilteredSMAndSMEAndValue AS sme";
 
                 // create queryable
@@ -635,14 +797,29 @@ namespace AasxServerDB
                     $"WHERE ParentSMEId IS NULL \n" +
                 $") \n";
 
-            //select
+            // select
             rawSQL += $"SELECT sme.Identifier, r.IdShortPath, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', sme.TimeStamp) AS TimeStamp, sme.Value \n" +
                 "FROM FilteredSMAndSMEAndValue AS sme \n" +
                 "INNER JOIN RecursiveSME AS r ON sme.Id = r.Id";
 
             // create queryable
             var result = db.Database.SqlQueryRaw<CombinedSMEResult>(rawSQL);
+
             return result;
+        }
+
+        public static string ConvertToSqlString(string prediction)
+        {
+            prediction = Regex.Replace(prediction, @"\.Contains\(""([^""]+)""\)", " LIKE '%$1%'");
+            var sqlString = prediction
+                .Replace("&&", " AND ")
+                .Replace("||", " OR ")
+                .Replace("sm.idShort", "sm.SM_IdShort")
+                .Replace("sme.idShort", "sme.SME_IdShort")
+                .Replace("mvalue", "v.Value")
+                .Replace("svalue", "v.Value");
+
+            return sqlString;
         }
 
         private static List<SMEResult> GetSMEResult(IQueryable<CombinedSMEResult> query)

@@ -95,12 +95,30 @@ namespace AasxServerDB
             // Get database
             Console.WriteLine($"Use {(IsPostgres ? "POSTGRES" : "SQLITE")}");
             AasContext db = IsPostgres ? new PostgreAasContext() : new SqliteAasContext();
-            Console.WriteLine($"Database ConnectionString: {db.Database.GetConnectionString()}");
+
+            // Get path
+            var connectionString = db.Database.GetConnectionString();
+            Console.WriteLine($"Database connection string: {connectionString}");
+            if (connectionString.IsNullOrEmpty())
+            {
+                throw new Exception("Database connection string is empty.");
+            }
+            if (!IsPostgres && !Directory.Exists(Path.GetDirectoryName(connectionString.Replace("Data Source=", string.Empty))))
+            {
+                throw new Exception($"Directory to the database does not exist. Check appsettings.json. Connection string: {connectionString}");
+            }
+
+            // Check if db exists
+            var canConnect = db.Database.CanConnect();
+            if (!canConnect)
+            {
+                Console.WriteLine($"Unable to connect to the database.");
+            }
 
             // Delete database
-            if (reloadDB)
+            if (canConnect && reloadDB)
             {
-                Console.WriteLine("Delete database.");
+                Console.WriteLine("Clear database.");
                 db.Database.EnsureDeleted();
             }
 
@@ -112,8 +130,7 @@ namespace AasxServerDB
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Migration failed. Try deleting the database.");
-                throw ex;
+                throw new Exception($"Migration failed: {ex.Message}\nTry deleting the database.");
             }
         }
 
