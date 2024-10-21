@@ -196,7 +196,7 @@ namespace AasxServerStandardBib.Services
 
 
 
-        public List<IAssetAdministrationShell> GetAllAssetAdministrationShells(ISpecificAssetId? assetId = null, string? idShort = null)
+        public List<IAssetAdministrationShell> GetAllAssetAdministrationShells(List<ISpecificAssetId> assetIds = null, string? idShort = null)
         {
             var output = _packageEnvService.GetAllAssetAdministrationShells();
 
@@ -214,26 +214,34 @@ namespace AasxServerStandardBib.Services
                     }
                 }
 
-                if (assetId != null)
+                if (!assetIds.IsNullOrEmpty())
                 {
                     _logger.LogDebug($"Filtering AASs with requested assetIds.");
                     var aasList = new List<IAssetAdministrationShell>();
-                    if(!string.IsNullOrEmpty(assetId.Name))
+                    foreach (var assetId in assetIds)
                     {
-                        if(assetId.Name.Equals("globalAssetId", StringComparison.OrdinalIgnoreCase))
+                        var result = new List<IAssetAdministrationShell>();
+                        if (!string.IsNullOrEmpty(assetId.Name))
                         {
-                            aasList = output.Where(a => a.AssetInformation.GlobalAssetId!.Equals(assetId.Value)).ToList();
+                            if (assetId.Name.Equals("globalAssetId", StringComparison.OrdinalIgnoreCase))
+                            {
+                                result = output.Where(a => a.AssetInformation.GlobalAssetId!.Equals(assetId.Value)).ToList();
+                            }
+                            else
+                            {
+                                result = output.Where(a => a.AssetInformation.SpecificAssetIds!.ContainsSpecificAssetId(assetId)).ToList();
+                            }
                         }
                         else
                         {
-                            aasList = output.Where(a => a.AssetInformation.SpecificAssetIds!.ContainsSpecificAssetId(assetId)).ToList();
+                            throw new InvalidOperationException("The attribute Name cannot be null in the requested assetId.");
+                        }
+
+                        if (result.Count != 0)
+                        {
+                            aasList.AddRange(result);
                         }
                     }
-                    else
-                    {
-                        throw new InvalidOperationException("The attribute Name cannot be null in the requested assetId.");
-                    }
-                    
 
                     if (aasList.Count != 0)
                     {
