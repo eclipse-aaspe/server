@@ -114,18 +114,10 @@ namespace IO.Swagger.Lib.V3.Middleware
                 case JsonDeserializationException:
                 case Base64UrlDecoderException:
                 case InvalidOperationException:
-                    {
+                case InvalidSerializationModifierException:
+                {
                         context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
                         message.Code = HttpStatusCode.BadRequest.ToString();
-                        message.Text = exception.Message;
-                        message.Timestamp = currentDateTime;
-                        message.MessageType = MessageTypeEnum.Error;
-                        break;
-                    }
-                case InvalidSerializationModifierException:
-                    {
-                        context.Response.StatusCode = (int)HttpStatusCode.MethodNotAllowed;
-                        message.Code = HttpStatusCode.MethodNotAllowed.ToString();
                         message.Text = exception.Message;
                         message.Timestamp = currentDateTime;
                         message.MessageType = MessageTypeEnum.Error;

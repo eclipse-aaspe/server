@@ -79,29 +79,11 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent
 
         public override IClass TransformBasicEventElement(IBasicEventElement that, LevelExtentModifierContext context)
         {
-            if (context.IsRoot && !context.IsGetAllSmes)
-            {
-                if (context.Extent == ExtentEnum.WithBlobValue)
-                {
-                    throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
-                }
-                if (context.Level == LevelEnum.Core)
-                {
-                    throw new InvalidSerializationModifierException("Level", that.GetType().Name);
-                }
-            }
             return Copying.Deep(that);
         }
 
         public override IClass TransformBlob(IBlob that, LevelExtentModifierContext context)
         {
-            if (context.IsRoot && !context.IsGetAllSmes)
-            {
-                if (context.Level == LevelEnum.Core)
-                {
-                    throw new InvalidSerializationModifierException("Level", that.GetType().Name);
-                }
-            }
             var output = Copying.Deep(that);
             if (context.Extent == ExtentEnum.WithoutBlobValue)
             {
@@ -113,17 +95,6 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent
 
         public override IClass TransformCapability(ICapability that, LevelExtentModifierContext context)
         {
-            if (context.IsRoot && !context.IsGetAllSmes)
-            {
-                if (context.Extent == ExtentEnum.WithBlobValue)
-                {
-                    throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
-                }
-                if (context.Level == LevelEnum.Core)
-                {
-                    throw new InvalidSerializationModifierException("Level", that.GetType().Name);
-                }
-            }
             return Copying.Deep(that);
         }
 
@@ -201,17 +172,6 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent
 
         public override IClass TransformFile(IFile that, LevelExtentModifierContext context)
         {
-            if (context.IsRoot && !context.IsGetAllSmes)
-            {
-                if (context.Extent == ExtentEnum.WithBlobValue)
-                {
-                    throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
-                }
-                if (context.Level == LevelEnum.Core)
-                {
-                    throw new InvalidSerializationModifierException("Level", that.GetType().Name);
-                }
-            }
             return Copying.Deep(that);
         }
 
@@ -252,34 +212,11 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent
 
         public override IClass TransformMultiLanguageProperty(IMultiLanguageProperty that, LevelExtentModifierContext context)
         {
-            if (context.IsRoot && !context.IsGetAllSmes)
-            {
-                if (context.Extent == ExtentEnum.WithBlobValue)
-                {
-                    throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
-                }
-                if (context.Level == LevelEnum.Core)
-                {
-                    throw new InvalidSerializationModifierException("Level", that.GetType().Name);
-                }
-            }
             return Copying.Deep(that);
         }
 
         public override IClass TransformOperation(IOperation that, LevelExtentModifierContext context)
         {
-            if (context.IsRoot && !context.IsGetAllSmes)
-            {
-                if (context.Extent == ExtentEnum.WithBlobValue)
-                {
-                    throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
-                }
-                if (context.Level == LevelEnum.Core)
-                {
-                    throw new InvalidSerializationModifierException("Level", that.GetType().Name);
-                }
-            }
-
             var output = Copying.Deep(that);
 
             if (output != null)
@@ -308,7 +245,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent
                     output.InoutputVariables = new List<IOperationVariable>();
                     foreach (var child in that.InoutputVariables)
                     {
-                        output.OutputVariables.Add((IOperationVariable)Transform(child, context));
+                        output.InoutputVariables.Add((IOperationVariable)Transform(child, context));
                     }
                 }
             }
@@ -329,17 +266,6 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent
 
         public override IClass TransformProperty(IProperty that, LevelExtentModifierContext context)
         {
-            if (context.IsRoot && !context.IsGetAllSmes)
-            {
-                if (context.Extent == ExtentEnum.WithBlobValue)
-                {
-                    throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
-                }
-                if (context.Level == LevelEnum.Core)
-                {
-                    throw new InvalidSerializationModifierException("Level", that.GetType().Name);
-                }
-            }
             return Copying.Deep(that);
         }
 
@@ -350,17 +276,6 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent
 
         public override IClass TransformRange(IRange that, LevelExtentModifierContext context)
         {
-            if (context.IsRoot && !context.IsGetAllSmes)
-            {
-                if (context.Extent == ExtentEnum.WithBlobValue)
-                {
-                    throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
-                }
-                if (context.Level == LevelEnum.Core)
-                {
-                    throw new InvalidSerializationModifierException("Level", that.GetType().Name);
-                }
-            }
             return Copying.Deep(that);
         }
 
@@ -371,33 +286,11 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent
 
         public override IClass TransformReferenceElement(IReferenceElement that, LevelExtentModifierContext context)
         {
-            if (context.IsRoot && !context.IsGetAllSmes)
-            {
-                if (context.Extent == ExtentEnum.WithBlobValue)
-                {
-                    throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
-                }
-                if (context.Level == LevelEnum.Core)
-                {
-                    throw new InvalidSerializationModifierException("Level", that.GetType().Name);
-                }
-            }
             return Copying.Deep(that);
         }
 
         public override IClass TransformRelationshipElement(IRelationshipElement that, LevelExtentModifierContext context)
         {
-            if (context.IsRoot && !context.IsGetAllSmes)
-            {
-                if (context.Extent == ExtentEnum.WithBlobValue)
-                {
-                    throw new InvalidSerializationModifierException("Extent", that.GetType().Name);
-                }
-                if (context.Level == LevelEnum.Core)
-                {
-                    throw new InvalidSerializationModifierException("Level", that.GetType().Name);
-                }
-            }
             return Copying.Deep(that);
         }
 

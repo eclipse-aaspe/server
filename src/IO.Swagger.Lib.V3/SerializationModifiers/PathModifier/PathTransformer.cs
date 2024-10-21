@@ -31,7 +31,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformAnnotatedRelationshipElement(IAnnotatedRelationshipElement that, PathModifierContext context)
         {
-            if (context.IdShortPaths.Count == 0)
+            if (context.IdShortPaths.Count == 0 || string.IsNullOrEmpty(context.ParentPath))
             {
                 context.IdShortPaths.Add(that.IdShort);
             }
@@ -126,7 +126,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformEntity(IEntity that, PathModifierContext context)
         {
-            if (context.IdShortPaths.Count == 0)
+            if (context.IdShortPaths.Count == 0 || string.IsNullOrEmpty(context.ParentPath))
             {
                 context.IdShortPaths.Add(that.IdShort ?? string.Empty);
             }
@@ -231,7 +231,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformOperation(IOperation that, PathModifierContext context)
         {
-            if (context.IdShortPaths.Count == 0)
+            if (context.IdShortPaths.Count == 0 || string.IsNullOrEmpty(context.ParentPath))
             {
                 context.IdShortPaths.Add(that.IdShort);
             }
@@ -385,7 +385,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformSubmodelElementCollection(ISubmodelElementCollection that, PathModifierContext context)
         {
-            if (context.IdShortPaths.Count == 0)
+            if (context.IdShortPaths.Count == 0 || string.IsNullOrEmpty(context.ParentPath))
             {
                 context.IdShortPaths.Add(that.IdShort);
             }
@@ -410,7 +410,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformSubmodelElementList(ISubmodelElementList that, PathModifierContext context)
         {
-            if (context.IdShortPaths.Count == 0)
+            if (context.IdShortPaths.Count == 0 || string.IsNullOrEmpty(context.ParentPath))
             {
                 context.IdShortPaths.Add(that.IdShort);
             }

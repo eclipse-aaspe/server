@@ -37,6 +37,7 @@ using System.Threading.Tasks;
 using DataTransferObjects.MetadataDTOs;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers;
 using IO.Swagger.Lib.V3.Models;
+using System.Text.Json.Serialization;
 
 namespace IO.Swagger.Lib.V3.Formatters
 {
@@ -267,9 +268,13 @@ namespace IO.Swagger.Lib.V3.Formatters
             else if (typeof(PathPagedResult).IsAssignableFrom(context.ObjectType))
             {
                 JsonNode jsonNode = null;
-                if(context.Object is PathPagedResult pagedResult)
+                var options = new JsonSerializerOptions
                 {
-                    jsonNode = JsonSerializer.SerializeToNode(pagedResult);
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                };
+                if (context.Object is PathPagedResult pagedResult)
+                {
+                    jsonNode = JsonSerializer.SerializeToNode(pagedResult, options);
                 }
                 var writer = new Utf8JsonWriter(response.Body);
                 jsonNode.WriteTo(writer);
