@@ -316,14 +316,14 @@ namespace AasxServerDB
             var log = false;
             var withQueryLanguage = false;
 
-            if (expression.StartsWith("$LOG"))
+            if (withExpression && expression.StartsWith("$LOG"))
             {
                 log = true;
                 expression = expression.Replace("$LOG", "");
                 Console.WriteLine("$LOG");
             }
 
-            if (expression.StartsWith("$QL"))
+            if (withExpression && expression.StartsWith("$QL"))
             {
                 withQueryLanguage = true;
                 expression = expression.Replace("$QL", "");
@@ -344,7 +344,7 @@ namespace AasxServerDB
             var needSmeValueType = false; // <-- is unclear
 
             // get data
-            string combinedCondition = "";
+            var combiCondition = string.Empty; // this saves the combinedCondition but in a way that raw sql can work with it
             if (withExpression) // with expression
             {
                 // direction
@@ -353,10 +353,11 @@ namespace AasxServerDB
                 // shorten expression
                 expression = expression.Replace("$REVERSE", "").Replace("$LOG", "");
 
-                string conditionSM = "";
-                string conditionSME = "";
-                string conditionStr = "";
-                string conditionNum = "";
+                var combinedCondition = string.Empty;
+                var conditionSM = string.Empty;
+                var conditionSME = string.Empty;
+                var conditionStr = string.Empty;
+                var conditionNum = string.Empty;
 
                 if (!withQueryLanguage)
                 {
@@ -478,21 +479,21 @@ namespace AasxServerDB
                 dValueTable = restrictValue ? (restrictNumVaue ? db.DValueSets.Where(conditionNum) : null) : db.DValueSets;
 
                 // check additional columns for expression
-                needSmSemanticId = combinedCondition.Contains("sm.semanticId");
-                needSmIdShort = combinedCondition.Contains("sm.idShort");
-                needSmDisplayName = combinedCondition.Contains("sm.displayName");
-                needSmDescription = combinedCondition.Contains("sm.description");
-                needSmId = combinedCondition.Contains("sm.id");
-                needSmeSemanticId = combinedCondition.Contains("sme.semanticId");
-                needSmeIdShort = combinedCondition.Contains("sme.idShort");
+                needSmSemanticId   = combinedCondition.Contains("sm.semanticId");
+                needSmIdShort      = combinedCondition.Contains("sm.idShort");
+                needSmDisplayName  = combinedCondition.Contains("sm.displayName");
+                needSmDescription  = combinedCondition.Contains("sm.description");
+                needSmId           = combinedCondition.Contains("sm.id");
+                needSmeSemanticId  = combinedCondition.Contains("sme.semanticId");
+                needSmeIdShort     = combinedCondition.Contains("sme.idShort");
                 needSmeDisplayName = combinedCondition.Contains("sme.displayName");
                 needSmeDescription = combinedCondition.Contains("sme.description");
-                needSmeValue = combinedCondition.Contains("sme.value");
-                needSmeValueType = combinedCondition.Contains("sme.valueType");
+                needSmeValue       = combinedCondition.Contains("sme.value");
+                needSmeValueType   = combinedCondition.Contains("sme.valueType");
 
                 // convert to sql
-                combinedCondition = ConvertToSqlString(combinedCondition);
-                combinedCondition = "WHERE " + combinedCondition;
+                combiCondition = ConvertToSqlString(combinedCondition);
+                combiCondition = "WHERE " + combiCondition;
             }
             else // with parameters
             {
@@ -569,6 +570,10 @@ namespace AasxServerDB
             // join direction
             if (direction == 0) // top-down
             {
+                // add SM_ and SME_ to front 
+                combiCondition = AddSMToFront(combiCondition);
+                combiCondition = AddSMEToFront(combiCondition);
+
                 // SM => SME
                 rawSQL +=
                     $"FilteredSMAndSME AS ( \n" +
@@ -609,7 +614,7 @@ namespace AasxServerDB
                     $"FROM FilteredSMAndSME AS sm_sme \n" +
                     $"INNER JOIN ";
                 var selectEnd = $" AS v ON sm_sme.Id = v.SMEId \n" +
-                    $"{combinedCondition.Replace("sme.", "sm_sme.").Replace("sm.", "sm_sme.")}\n ";
+                    $"{combiCondition.Replace("sme.", "sm_sme.").Replace("sm.", "sm_sme.")}\n ";
                 rawSQL +=
                     $"FilteredSMAndSMEAndValue AS ( \n" +
                         (!sValueQueryString.IsNullOrEmpty() ? $"{selectStart}FilteredSValue{selectEnd}" : string.Empty) +
@@ -634,11 +639,15 @@ namespace AasxServerDB
                                 $"sm_sme.TimeStamp, " +
                                 $"NULL \n" +
                             $"FROM FilteredSMAndSME AS sm_sme \n" +
-                            $"WHERE sm_sme.TValue IS NULL OR sm_sme.TValue = '' {(withExpression ? $"AND ({combinedCondition})" : string.Empty)} \n" : string.Empty) +
+                            $"WHERE sm_sme.TValue IS NULL OR sm_sme.TValue = '' {(withExpression ? $"AND ({combiCondition})" : string.Empty)} \n" : string.Empty) +
                     $")";
             }
             else if (direction == 1) // middle-out
             {
+                // add SM_ and SME_ to front 
+                combiCondition = AddSMToFront(combiCondition);
+                combiCondition = AddSMEToFront(combiCondition);
+
                 // SME => SM
                 rawSQL +=
                     $"FilteredSMAndSME AS ( \n" +
@@ -679,7 +688,7 @@ namespace AasxServerDB
                     $"FROM FilteredSMAndSME AS sm_sme \n" +
                     $"INNER JOIN ";
                 var selectEnd = $" AS v ON sm_sme.Id = v.SMEId\n" +
-                    $"{combinedCondition.Replace("sme.", "sm_sme.").Replace("sm.", "sm_sme.")}\n ";
+                    $"{combiCondition.Replace("sme.", "sm_sme.").Replace("sm.", "sm_sme.")}\n ";
                 rawSQL +=
                     $"FilteredSMAndSMEAndValue AS ( \n" +
                         (!sValueQueryString.IsNullOrEmpty() ? $"{selectStart}FilteredSValue{selectEnd}" : string.Empty) +
@@ -709,6 +718,9 @@ namespace AasxServerDB
             }
             else if (direction == 2) // bottom-up
             {
+                // add SME_ to front 
+                combiCondition = AddSMEToFront(combiCondition);
+
                 // VALUE => SME
                 var selectWithStart =
                     $"SELECT " +
@@ -766,7 +778,7 @@ namespace AasxServerDB
                             $"sme_v.Value \n" +
                         $"FROM FilteredSMEAndValue AS sme_v \n" +
                         $"INNER JOIN FilteredSM AS sm ON sme_v.SMId = sm.Id \n" +
-                        $"{combinedCondition.Replace("sme.", "sm_sme.").Replace("v.", "sme_v.")}\n" +
+                        $"{combiCondition.Replace("v.", "sme_v.").Replace("sme.", "sme_v.")}\n" +
                     $")";
             }
 
@@ -808,14 +820,34 @@ namespace AasxServerDB
             return result;
         }
 
+        public static string AddSMToFront(string prediction)
+        {
+            var sqlString = prediction
+                .Replace("sm.semanticId", "sm.SM_SemanticId")
+                .Replace("sm.idShort", "sm.SM_IdShort")
+                .Replace("sm.displayName", "sm.SM_DisplayName")
+                .Replace("sm.description", "sm.SM_Description");
+
+            return sqlString;
+        }
+
+        public static string AddSMEToFront(string prediction)
+        {
+            var sqlString = prediction
+                .Replace("sme.semanticId", "sme.SME_SemanticId")
+                .Replace("sme.idShort", "sme.SME_IdShort")
+                .Replace("sme.displayName", "sme.SME_DisplayName")
+                .Replace("sme.description", "sme.SME_Description");
+
+            return sqlString;
+        }
+
         public static string ConvertToSqlString(string prediction)
         {
             prediction = Regex.Replace(prediction, @"\.Contains\(""([^""]+)""\)", " LIKE '%$1%'");
             var sqlString = prediction
                 .Replace("&&", " AND ")
                 .Replace("||", " OR ")
-                .Replace("sm.idShort", "sm.SM_IdShort")
-                .Replace("sme.idShort", "sme.SME_IdShort")
                 .Replace("mvalue", "v.Value")
                 .Replace("svalue", "v.Value");
 
