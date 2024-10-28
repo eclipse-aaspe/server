@@ -30,11 +30,21 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Web;
 using File = AasCore.Aas3_0.File;
+using Contracts;
 
 namespace AasSecurity
 {
-    public class SecurityService : ISecurityService
+    public class SecurityService : ISecurityService, IContractSecurityRules
     {
+        public void ClearSecurityRules()
+        {
+        }
+
+        public void AddSecurityRule(string acccess, string right, string objectType, string semanticId)
+        {
+
+        }
+
         private static readonly ILogger _logger = ApplicationLogging.CreateLogger("SecurityService");
 
         public AuthenticationTicket? AuthenticateRequest(HttpContext context, string route, string httpOperation, string? authenticationSchemeName)

@@ -24,6 +24,8 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using Newtonsoft.Json.Linq;
 using System.Linq;
 using Irony.Parsing;
+using Microsoft.Extensions.DependencyInjection;
+using Contracts;
 
 namespace AasxServerDB
 {
@@ -658,6 +660,7 @@ namespace AasxServerDB
                 {
                     // with newest query language from QueryParser.cs
                     var grammar = new QueryGrammar();
+                    // var grammar = serviceProvider.GetService<QueryGrammar>();
                     var parser = new Parser(grammar);
                     parser.Context.TracingEnabled = true;
                     var parseTree = parser.Parse(expression);
@@ -681,36 +684,36 @@ namespace AasxServerDB
                         // Security
                         if (parseTree.Root.Term.Name == "AllRules")
                         {
-                            QueryGrammar.ParseAccessRules(parseTree.Root);
+                            grammar.ParseAccessRules(parseTree.Root);
                             throw new Exception("Access Rules parsed!");
                         }
 
                         int countTypePrefix = 0;
-                        combinedCondition = QueryGrammar.ParseTreeToExpression(parseTree.Root, "", ref countTypePrefix);
+                        combinedCondition = grammar.ParseTreeToExpression(parseTree.Root, "", ref countTypePrefix);
 
                         countTypePrefix = 0;
-                        conditionSM = QueryGrammar.ParseTreeToExpression(parseTree.Root, "sm.", ref countTypePrefix);
+                        conditionSM = grammar.ParseTreeToExpression(parseTree.Root, "sm.", ref countTypePrefix);
                         if (conditionSM == "$SKIP")
                         {
                             conditionSM = "";
                         }
 
                         countTypePrefix = 0;
-                        conditionSME = QueryGrammar.ParseTreeToExpression(parseTree.Root, "sme.", ref countTypePrefix);
+                        conditionSME = grammar.ParseTreeToExpression(parseTree.Root, "sme.", ref countTypePrefix);
                         if (conditionSME == "$SKIP")
                         {
                             conditionSME = "";
                         }
 
                         countTypePrefix = 0;
-                        conditionStr = QueryGrammar.ParseTreeToExpression(parseTree.Root, "str()", ref countTypePrefix);
+                        conditionStr = grammar.ParseTreeToExpression(parseTree.Root, "str()", ref countTypePrefix);
                         if (conditionStr == "$SKIP")
                         {
                             conditionStr = "";
                         }
 
                         countTypePrefix = 0;
-                        conditionNum = QueryGrammar.ParseTreeToExpression(parseTree.Root, "num()", ref countTypePrefix);
+                        conditionNum = grammar.ParseTreeToExpression(parseTree.Root, "num()", ref countTypePrefix);
                         if (conditionNum == "$SKIP")
                         {
                             conditionNum = "";
