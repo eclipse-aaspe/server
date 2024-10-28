@@ -15,8 +15,10 @@ using IO.Swagger.Controllers;
 
 namespace AasxServerBlazorTests.Controllers;
 
+using System.Reflection.Emit;
 using System.Security.Claims;
 using System.Security.Principal;
+using System.Xml.Linq;
 using AasCore.Aas3_0;
 using AasxServer;
 using AasxServerStandardBib.Interfaces;
@@ -282,9 +284,10 @@ public class SubmodelRepositoryAPIApiControllerTests
 
         _authorizationServiceMock.Setup(x => x.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<ISubmodel>(), "SecurityPolicy"))
                                  .Returns(Task.FromResult(AuthorizationResult.Success()));
-
+        var levelString = nameof(level);
+        var extentString = nameof(extent);
         // Act
-        var result = _controller.GetAllSubmodelElements(submodelIdentifier, limit, cursor, level, extent, diff);
+        var result = _controller.GetAllSubmodelElements(submodelIdentifier, limit, cursor, levelString, extentString, diff);
 
         // Assert
         result.Should().BeOfType<ObjectResult>();
@@ -303,8 +306,11 @@ public class SubmodelRepositoryAPIApiControllerTests
 
         _decoderServiceMock.Setup(x => x.Decode("submodelIdentifier", submodelIdentifier)).Returns((string)null);
 
+        var levelString = nameof(LevelEnum.Deep);
+        var extentString = nameof(ExtentEnum.WithoutBlobValue);
+
         // Act
-        Action action = () => _controller.GetAllSubmodelElements(submodelIdentifier, null, null, LevelEnum.Deep, ExtentEnum.WithoutBlobValue, null);
+        Action action = () => _controller.GetAllSubmodelElements(submodelIdentifier, null, null, levelString, extentString, null);
 
         // Assert
         action.Should().ThrowExactly<AasSecurity.Exceptions.NotAllowed>().WithMessage($"Decoding {submodelIdentifier} returned null");
@@ -325,8 +331,11 @@ public class SubmodelRepositoryAPIApiControllerTests
 
         Program.noSecurity = false;
 
+        var levelString = nameof(LevelEnum.Core);
+        var extentString = nameof(ExtentEnum.WithBlobValue);
+
         // Act
-        Action action = () => _controller.GetAllSubmodelElements(submodelIdentifier, null, null, LevelEnum.Core, ExtentEnum.WithBlobValue, null);
+        Action action = () => _controller.GetAllSubmodelElements(submodelIdentifier, null, null, levelString, extentString, null);
 
         // Assert
         action.Should().ThrowExactly<AasSecurity.Exceptions.NotAllowed>();
@@ -352,8 +361,12 @@ public class SubmodelRepositoryAPIApiControllerTests
 
         //_paginationServiceMock.Setup(x => x.GetPaginatedList(It.IsAny<List<ISubmodelElement>>(), It.IsAny<PaginationParameters>()))
         //                      .Returns((List<ISubmodelElement> elements, PaginationParameters parameters) => new List<ISubmodelElement>(elements));
+
+        var levelString = nameof(LevelEnum.Deep);
+        var extentString = nameof(ExtentEnum.WithoutBlobValue);
+
         // Act
-        Action action = () => _controller.GetAllSubmodelElements(submodelIdentifier, null, null, LevelEnum.Deep, ExtentEnum.WithBlobValue, diffParameterValue);
+        Action action = () => _controller.GetAllSubmodelElements(submodelIdentifier, null, null, levelString, extentString, diffParameterValue);
 
         // Assert
         action.Should().NotThrow(); // Ensure no exception is thrown
