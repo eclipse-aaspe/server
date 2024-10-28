@@ -1,4 +1,4 @@
-﻿using AasSecurity;
+using AasSecurity;
 using AasxServerBlazor.Data;
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AasxServerBlazor.Configuration;
 
+using Contracts;
 using IO.Swagger.Models;
 
 public static class DependencyRegistry
@@ -54,5 +55,8 @@ public static class DependencyRegistry
         services.AddTransient<ISubmodelPropertyExtractionService, SubmodelPropertyExtractionService>();
         services.AddTransient<ISubmodelService, SubmodelService>();
         services.AddTransient<IValueOnlyJsonDeserializer, ValueOnlyJsonDeserializer>();
+
+        services.AddTransient<IContractSecurityRules, SecurityService>();
+        services.AddTransient<QueryGrammar>();
     }
 }

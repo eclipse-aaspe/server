@@ -34,7 +34,7 @@ public static class BlazorServerStarter
         Program.con = config;
         Program.Main(args);
         SecurityHelper.SecurityInit();
-        QueryGrammar.storeSecurityRoles(GlobalSecurityVariables.SecurityRoles);
+        // QueryGrammar.storeSecurityRoles(GlobalSecurityVariables.SecurityRoles);
     }
 
     private static IHost BuildHost(string[] args, IConfiguration config)

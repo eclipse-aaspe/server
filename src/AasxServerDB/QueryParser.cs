@@ -10,10 +10,11 @@ using Irony.Parsing;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.Extensions.DependencyInjection;
 using QueryParserTest;
+using Contracts;
 
 public class QueryGrammar : Grammar
 {
-    public QueryGrammar() : base(caseSensitive: true)
+    public QueryGrammar(IContractSecurityRules contractSecurityRules) : base(caseSensitive: true)
     {
         // Define non-terminals
         // <grammar> ::= <queryParameter> | <AllRules>
@@ -204,7 +205,7 @@ public class QueryGrammar : Grammar
 
     static List<string> skip = new List<string>() { "str", "num", "hex", "bool" };
 
-    public static void PrintParseTree(ParseTreeNode node, int indent, StringWriter sw)
+    public void PrintParseTree(ParseTreeNode node, int indent, StringWriter sw)
     {
         if (node == null)
             return;
@@ -242,7 +243,7 @@ public class QueryGrammar : Grammar
         }
     }
 
-    public static string ParseTreeToExpression(ParseTreeNode node, string typePrefix, ref int upperCountTypePrefix, string parentName = "")
+    public string ParseTreeToExpression(ParseTreeNode node, string typePrefix, ref int upperCountTypePrefix, string parentName = "")
     {
         if (node == null)
             return "";
@@ -485,7 +486,7 @@ public class QueryGrammar : Grammar
         return " $ERROR ";
     }
 
-    public static void ParseAccessRules(ParseTreeNode node)
+    public void ParseAccessRules(ParseTreeNode node)
     {
         /*
         if (SecurityRoles != null)
@@ -505,6 +506,7 @@ public class QueryGrammar : Grammar
         }
         */
         SecurityRoles.Clear();
+        
 
         ParseAccessRule(node);
     }
@@ -584,7 +586,7 @@ public class QueryGrammar : Grammar
     }
 
     static List<SecurityRole> SecurityRoles = null;
-    public static void storeSecurityRoles(List<SecurityRole> sr)
+    public void storeSecurityRoles(List<SecurityRole> sr)
     {
         SecurityRoles = sr;
     }
