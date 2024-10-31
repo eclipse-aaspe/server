@@ -26,5 +26,5 @@ public interface IGenerateSerializationService
     /// <param name="aasIds">Optional list of AAS IDs to include in the serialized output.</param>
     /// <param name="submodelIds">Optional list of Submodel IDs to include in the serialized output.</param>
     /// <returns>An <see cref="Environment"/> object containing the specified AAS and Submodels.</returns>
-    Environment GenerateSerializationByIds(List<string?>? aasIds = null, List<string?>? submodelIds = null);
+    Environment GenerateSerializationByIds(List<string?>? aasIds = null, List<string?>? submodelIds = null, bool? includeCD = false);
 }

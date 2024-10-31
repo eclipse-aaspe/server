@@ -52,10 +52,11 @@ using AdminShellNS.Extensions;
 using System.Text.Json.Nodes;
 
 namespace IO.Swagger.Controllers
-{ 
+{
     /// <summary>
     /// 
     /// </summary>
+    [Authorize(AuthenticationSchemes = "AasSecurityAuth")]
     [ApiController]
     public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
     {

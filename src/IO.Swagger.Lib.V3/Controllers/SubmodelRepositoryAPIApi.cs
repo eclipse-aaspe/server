@@ -257,8 +257,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetAllSubmodelElements([FromRoute][Required] string submodelIdentifier,
-    [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] string level,
-    [FromQuery] string extent, [FromQuery] string? diff)
+    [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] string? level,
+    [FromQuery] string? extent, [FromQuery] string? diff)
     {
         //Validate level and extent
         var levelEnum = _validateModifierService.ValidateLevel(level);
@@ -543,7 +543,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetAllSubmodelElementsReferenceSubmodelRepo([FromRoute][Required]string submodelIdentifier, [FromQuery]int? limit, 
-																			    [FromQuery]string? cursor, [FromQuery]string level)
+																			    [FromQuery]string? cursor, [FromQuery]string? level)
     { 
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -599,8 +599,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetAllSubmodelElementsValueOnlySubmodelRepo([FromRoute][Required]string submodelIdentifier, 
-																				[FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]string level, 
-																				[FromQuery]string extent, [FromQuery] string? diff)
+	[FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]string? level, 
+    [FromQuery]string? extent, [FromQuery] string? diff)
     {
         //Validate level and extent
         var levelEnum = _validateModifierService.ValidateLevel(level);
@@ -796,6 +796,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     public virtual IActionResult GetAllSubmodelsReference([FromQuery][StringLength(3072, MinimumLength=1)]string? semanticId, [FromQuery]string? idShort, [FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]string? level)
     { 
         _logger.LogInformation($"Received a request to get all the submodels.");
+        var levelEnum = _validateModifierService.ValidateLevel(level);
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
 
         var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
@@ -833,7 +834,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult GetAllSubmodelsValueOnly([FromQuery][StringLength(3072, MinimumLength=1)]string? semanticId, [FromQuery]string? idShort, [FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]string level, [FromQuery]string extent)
+    public virtual IActionResult GetAllSubmodelsValueOnly([FromQuery][StringLength(3072, MinimumLength=1)]string? semanticId, [FromQuery]string? idShort, [FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]string? level, [FromQuery]string? extent)
     {
         //Validate level and extent
         var levelEnum = _validateModifierService.ValidateLevel(level);
@@ -1077,7 +1078,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult GetSubmodelById([FromRoute][Required] string submodelIdentifier, [FromQuery] string level, [FromQuery] string extent)
+    public virtual IActionResult GetSubmodelById([FromRoute][Required] string submodelIdentifier, [FromQuery] string? level, [FromQuery] string? extent)
     {
         //Validate level and extent
         var levelEnum = _validateModifierService.ValidateLevel(level);
@@ -1180,7 +1181,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult GetSubmodelByIdPath([FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
+    public virtual IActionResult GetSubmodelByIdPath([FromRoute][Required] string submodelIdentifier, [FromQuery] string? level)
     {
         //Validate level and extent
         var levelEnum = _validateModifierService.ValidateLevel(level);
@@ -1279,7 +1280,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult GetSubmodelByIdValueOnly([FromRoute][Required] string submodelIdentifier, [FromQuery] string level, [FromQuery] string extent)
+    public virtual IActionResult GetSubmodelByIdValueOnly([FromRoute][Required] string submodelIdentifier, [FromQuery] string? level, [FromQuery] string? extent)
     {
         //Validate level and extent
         var levelEnum = _validateModifierService.ValidateLevel(level);
@@ -1384,7 +1385,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult GetSubmodelElementByPathPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string level)
+    public virtual IActionResult GetSubmodelElementByPathPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string? level)
     {
         //Validate level and extent
         var levelEnum = _validateModifierService.ValidateLevel(level);
@@ -1497,7 +1498,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetSubmodelElementByPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, 
-	[FromQuery] string level, [FromQuery] string extent)
+	[FromQuery] string? level, [FromQuery] string? extent)
     {
         //Validate level and extent
         var levelEnum = _validateModifierService.ValidateLevel(level);
@@ -1558,7 +1559,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetSubmodelElementByPathValueOnlySubmodelRepo([FromRoute][Required] string submodelIdentifier,
-    [FromRoute][Required] string idShortPath, [FromQuery] string level, [FromQuery] string extent)
+    [FromRoute][Required] string idShortPath, [FromQuery] string? level, [FromQuery] string? extent)
     {
         //Validate level and extent
         var levelEnum = _validateModifierService.ValidateLevel(level);
@@ -1730,7 +1731,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult PatchSubmodelById([FromBody]Submodel? body, [FromRoute][Required] string submodelIdentifier, [FromQuery] string level)
+    public virtual IActionResult PatchSubmodelById([FromBody]Submodel? body, [FromRoute][Required] string submodelIdentifier, [FromQuery] string? level)
     {
         if (body == null)
         {
@@ -1822,7 +1823,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult PatchSubmodelByIdValueOnly([FromBody]SubmodelValue? body, [FromRoute][Required]string submodelIdentifier, 
-	[FromQuery]string level)
+	[FromQuery]string? level)
     {
         if (body == null)
         {
@@ -1924,7 +1925,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult PatchSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement? body, [FromRoute][Required] string submodelIdentifier,
-    [FromRoute][Required] string idShortPath, [FromQuery] string level)
+    [FromRoute][Required] string idShortPath, [FromQuery] string? level)
     {
         if (body == null)
         {
@@ -1969,7 +1970,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult PatchSubmodelElementByPathValueOnlySubmodelRepo([FromBody] ISubmodelElementValue? body,
     [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath,
-    [FromQuery] string level)
+    [FromQuery] string? level)
     {
         if (body == null)
         {
@@ -2230,7 +2231,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult PutSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement? body,
     [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath,
-    [FromQuery] string level)
+    [FromQuery] string? level)
     {
         if (body == null)
         {
