@@ -77,15 +77,7 @@ namespace IO.Swagger.Controllers
         public virtual IActionResult GenerateSerializationByIds([FromQuery] List<string>? aasIds, [FromQuery] List<string>? submodelIds,
         [FromQuery] bool? includeConceptDescriptions)
         {
-            if (aasIds == null)
-            {
-                throw new NotAllowed($"Cannot proceed as {nameof(aasIds)} is null");
-            }
-
-            if (submodelIds == null)
-            {
-                throw new NotAllowed($"Cannot proceed as {nameof(submodelIds)} is null");
-            }
+            _logger.LogDebug($"Received a request an appropriate serialization");
 
             var decodedAasIds = aasIds.Select(aasId => _decoderService.Decode("aasIdentifier", aasId)).ToList();
 

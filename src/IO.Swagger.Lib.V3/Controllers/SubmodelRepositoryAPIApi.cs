@@ -474,15 +474,12 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetAllSubmodelElementsPathSubmodelRepo([FromRoute][Required]string submodelIdentifier, 
-																		[FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]string? level,
-																		[FromQuery] string? diff)
-    { 
-        var decodedSubmodelIdentifier = _decoderService.Decode($"submodelIdentifier", submodelIdentifier);
+	[FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]string? level, [FromQuery] string? diff)
+    {
+        //Validate level and extent
+        var levelEnum = _validateModifierService.ValidateLevel(level);
 
-	    if (decodedSubmodelIdentifier == null)
-	    {
-	        throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
-	    }
+        var decodedSubmodelIdentifier = _decoderService.Decode($"submodelIdentifier", submodelIdentifier);
 
 	    _logger.LogDebug($"Received request to get all the submodel elements from the submodel with id {decodedSubmodelIdentifier}");
 	    if (!Program.noSecurity)
@@ -513,10 +510,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 	    else
 	        filtered = submodelElementList;
 
-	    // TODO (jtikekar, 2023-09-04): pagination and modifier
-	    // TODO (jtikekar, 2023-09-04): not complete implemented
-	    var output = _pathModifierService.ToIdShortPath(filtered);
-	    return new ObjectResult(output);
+        var smePaginated = _paginationService.GetPaginatedList(filtered, new PaginationParameters(cursor, limit));
+        var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginated.result ?? [], levelEnum);
+        var smePathList = _pathModifierService.ToIdShortPath(smeLevelList.ConvertAll(sme => (ISubmodelElement)sme));
+        var output = new PathPagedResult { result = smePathList, paging_metadata = smePaginated.paging_metadata };
+        return new ObjectResult(output);
     }
 
     /// <summary>
@@ -675,9 +673,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult GetAllSubmodels([FromQuery][StringLength(3072, MinimumLength=1)] string? semanticId, [FromQuery]string? idShort, 
-		                                            [FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]string level, 
-													[FromQuery]string extent)
+    public virtual IActionResult GetAllSubmodels([FromQuery][StringLength(3072, MinimumLength=1)] string? semanticId, [FromQuery]string? idShort, [FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]string? level, [FromQuery]string? extent)
     {
         //Validate level and extent
         var levelEnum = _validateModifierService.ValidateLevel(level);
@@ -686,17 +682,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
 
-        var submodelList = new List<ISubmodel>();
-
-        if (reqSemanticId != null)
-        {
-            submodelList.AddRange(_adminShellPackageEnvironmentService.GetSubmodelsBySemanticId(reqSemanticId));
-        }
-
-        if (idShort != null)
-        {
-            submodelList.AddRange(_adminShellPackageEnvironmentService.GetSubmodelsByIdShort(idShort));
-        }
+        var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
         var submodelsPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
         var smLevelList        = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result, levelEnum, extentEnum);
@@ -728,24 +714,13 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult GetAllSubmodelsMetadata([FromQuery][StringLength(3072, MinimumLength=1)]string? semanticId, [FromQuery]string? idShort, 
-														    [FromQuery]int? limit, [FromQuery]string? cursor)
+    public virtual IActionResult GetAllSubmodelsMetadata([FromQuery][StringLength(3072, MinimumLength=1)]string? semanticId, [FromQuery]string? idShort, [FromQuery]int? limit, [FromQuery]string? cursor)
     {
         _logger.LogInformation($"Received request to get the metadata of all the submodels.");
 
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
 
-        var submodelList = new List<ISubmodel>();
-
-        if (reqSemanticId != null)
-        {
-            submodelList.AddRange(_adminShellPackageEnvironmentService.GetSubmodelsBySemanticId(reqSemanticId));
-        }
-
-        if (idShort != null)
-        {
-            submodelList.AddRange(_adminShellPackageEnvironmentService.GetSubmodelsByIdShort(idShort));
-        }
+        var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
         var submodelPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
         var smMetadataList    = _mappingService.Map(submodelPagedList.result, "metadata");
@@ -777,8 +752,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult GetAllSubmodelsPath([FromQuery][StringLength(3072, MinimumLength=1)]string? semanticId, [FromQuery]string? idShort, 
-													    [FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]string level)
+    public virtual IActionResult GetAllSubmodelsPath([FromQuery][StringLength(3072, MinimumLength=1)]string? semanticId, [FromQuery]string? idShort, [FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]string? level)
     {
         //Validate level and extent
         var levelEnum = _validateModifierService.ValidateLevel(level);
@@ -786,21 +760,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
 
-        var submodelList = new List<ISubmodel>();
-
-        if (reqSemanticId != null)
-        {
-            submodelList.AddRange(_adminShellPackageEnvironmentService.GetSubmodelsBySemanticId(reqSemanticId));
-        }
-
-        if (idShort != null)
-        {
-            submodelList.AddRange(_adminShellPackageEnvironmentService.GetSubmodelsByIdShort(idShort));
-        }
+        var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
         var submodelPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
         var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelPagedList.result, levelEnum);
-        // TODO (jtikekar, 2023-09-04): @Andreas, what if the first element is property, where path is not applicable
         var submodelsPath = _pathModifierService.ToIdShortPath(submodelLevelList.ConvertAll(sm => (ISubmodel)sm));
         var output        = new PathPagedResult() {result = submodelsPath, paging_metadata = submodelPagedList.paging_metadata};
         return new ObjectResult(output);
@@ -830,23 +793,12 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult GetAllSubmodelsReference([FromQuery][StringLength(3072, MinimumLength=1)]string? semanticId, [FromQuery]string? idShort, 
-															[FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]string level)
+    public virtual IActionResult GetAllSubmodelsReference([FromQuery][StringLength(3072, MinimumLength=1)]string? semanticId, [FromQuery]string? idShort, [FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]string? level)
     { 
         _logger.LogInformation($"Received a request to get all the submodels.");
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
 
-        var submodelList = new List<ISubmodel>();
-
-        if (reqSemanticId != null)
-        {
-            submodelList.AddRange(_adminShellPackageEnvironmentService.GetSubmodelsBySemanticId(reqSemanticId));
-        }
-
-        if (idShort != null)
-        {
-            submodelList.AddRange(_adminShellPackageEnvironmentService.GetSubmodelsByIdShort(idShort));
-        }
+        var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
         var submodelsPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
         var smReferences       = _referenceModifierService.GetReferenceResult(submodelsPagedList.result.ConvertAll(sm => (IReferable)sm));
@@ -881,9 +833,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult GetAllSubmodelsValueOnly([FromQuery][StringLength(3072, MinimumLength=1)]string? semanticId, [FromQuery]string? idShort, 
-		                                                    [FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]string level, 
-															[FromQuery]string extent)
+    public virtual IActionResult GetAllSubmodelsValueOnly([FromQuery][StringLength(3072, MinimumLength=1)]string? semanticId, [FromQuery]string? idShort, [FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]string level, [FromQuery]string extent)
     {
         //Validate level and extent
         var levelEnum = _validateModifierService.ValidateLevel(level);
@@ -892,17 +842,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
 
-        var submodelList = new List<ISubmodel>();
-
-        if (reqSemanticId != null)
-        {
-            submodelList.AddRange(_adminShellPackageEnvironmentService.GetSubmodelsBySemanticId(reqSemanticId));
-        }
-
-        if (idShort != null)
-        {
-            submodelList.AddRange(_adminShellPackageEnvironmentService.GetSubmodelsByIdShort(idShort));
-        }
+        var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
         var submodelsPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
         var submodelLevelList  = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result, levelEnum, extentEnum);

@@ -39,14 +39,14 @@ public partial class ServiceDescription : IEquatable<ServiceDescription>, IServi
 {
     /// <inheritdoc />
     [DataMember(Name = "profiles")]
-    public List<ServiceProfiles>? Profiles { get; set; }
+    public List<ServiceProfiles>? profiles { get; set; }
 
     /// <inheritdoc cref="IServiceDescription.ToString" />
     public override string ToString()
     {
         var sb = new StringBuilder();
         sb.Append("class ServiceDescription {\n");
-        sb.Append("  Profiles: ").Append(Profiles).Append('\n');
+        sb.Append("  Profiles: ").Append(profiles).Append('\n');
         sb.Append("}\n");
         return sb.ToString();
     }
@@ -56,12 +56,11 @@ public partial class ServiceDescription : IEquatable<ServiceDescription>, IServi
     public string ToJson() => JsonSerializer.Serialize(this, Options);
 
     private static readonly JsonSerializerOptions Options = new()
-                                                            {
-                                                                WriteIndented          = true,
-                                                                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-                                                                //Converters             = {new JsonStringEnumConverter()}
-                                                                Converters             = {new ServiceProfileEnumValueConverter()}
-                                                            };
+    {
+        WriteIndented = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        Converters = { new ServiceProfileEnumValueConverter() }
+    };
 
 
     /// <inheritdoc cref="IServiceDescription.Equals(object?)" />
@@ -95,9 +94,9 @@ public partial class ServiceDescription : IEquatable<ServiceDescription>, IServi
         }
 
         return
-            other.Profiles != null && (Profiles == other.Profiles ||
-                                       (Profiles != null &&
-                                        Profiles.SequenceEqual(other.Profiles)));
+            other.profiles != null && (profiles == other.profiles ||
+                                       (profiles != null &&
+                                        profiles.SequenceEqual(other.profiles)));
     }
 
 
@@ -108,9 +107,9 @@ public partial class ServiceDescription : IEquatable<ServiceDescription>, IServi
         {
             var hashCode = 41;
             // Suitable nullity checks etc., of course :)
-            if (Profiles != null)
+            if (profiles != null)
             {
-                hashCode = (hashCode * 59) + Profiles.GetHashCode();
+                hashCode = (hashCode * 59) + profiles.GetHashCode();
             }
 
             return hashCode;

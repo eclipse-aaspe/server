@@ -31,7 +31,7 @@ public class DescriptionAPIApiControllerTests
         var mockServiceDescription = new Mock<IServiceDescription>();
         var expectedServiceDescription = new ServiceDescription
                                          {
-                                             Profiles = new List<ServiceDescription.ServiceProfiles>
+                                             profiles = new List<ServiceDescription.ServiceProfiles>
                                                         {
                                                             ServiceDescription.ServiceProfiles.AasxFileServerServiceSpecificationSSP001,
                                                             ServiceDescription.ServiceProfiles.SubmodelRepositoryServiceSpecificationSSP001,

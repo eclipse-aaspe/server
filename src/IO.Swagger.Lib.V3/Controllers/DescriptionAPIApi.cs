@@ -55,7 +55,7 @@ namespace IO.Swagger.Controllers
         public virtual IActionResult GetDescription()
         {
             var output = new ServiceDescription();
-            _serviceDescription.Profiles = new List<ServiceProfiles>
+            _serviceDescription.profiles = new List<ServiceProfiles>
                                                     {
                                                         ServiceProfiles.AasxFileServerServiceSpecificationSSP001,
                                                         ServiceProfiles.SubmodelRepositoryServiceSpecificationSSP001,
