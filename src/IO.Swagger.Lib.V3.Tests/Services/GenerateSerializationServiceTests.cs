@@ -25,6 +25,7 @@ public class GenerateSerializationServiceTests
     private readonly Mock<IAppLogger<GenerateSerializationService>> _mockLogger;
     private readonly Mock<IAssetAdministrationShellService> _mockAasService;
     private readonly Mock<ISubmodelService> _mockSubmodelService;
+    private readonly Mock<IConceptDescriptionService> _mockCdService;
     private readonly GenerateSerializationService _service;
 
     public GenerateSerializationServiceTests()
@@ -32,27 +33,27 @@ public class GenerateSerializationServiceTests
         _mockLogger          = new Mock<IAppLogger<GenerateSerializationService>>();
         _mockAasService      = new Mock<IAssetAdministrationShellService>();
         _mockSubmodelService = new Mock<ISubmodelService>();
-        _service             = new GenerateSerializationService(_mockLogger.Object, _mockAasService.Object, _mockSubmodelService.Object);
+        _service             = new GenerateSerializationService(_mockLogger.Object, _mockAasService.Object, _mockSubmodelService.Object, _mockCdService.Object);
     }
 
     [Fact]
     public void Constructor_ShouldThrowArgumentNullException_WhenLoggerIsNull()
     {
-        Action act = () => new GenerateSerializationService(null, _mockAasService.Object, _mockSubmodelService.Object);
+        Action act = () => new GenerateSerializationService(null, _mockAasService.Object, _mockSubmodelService.Object, _mockCdService.Object);
         act.Should().Throw<ArgumentNullException>().WithParameterName("logger");
     }
 
     [Fact]
     public void Constructor_ShouldThrowArgumentNullException_WhenAasServiceIsNull()
     {
-        Action act = () => new GenerateSerializationService(_mockLogger.Object, null, _mockSubmodelService.Object);
+        Action act = () => new GenerateSerializationService(_mockLogger.Object, null, _mockSubmodelService.Object, _mockCdService.Object);
         act.Should().Throw<ArgumentNullException>().WithParameterName("aasService");
     }
 
     [Fact]
     public void Constructor_ShouldThrowArgumentNullException_WhenSubmodelServiceIsNull()
     {
-        Action act = () => new GenerateSerializationService(_mockLogger.Object, _mockAasService.Object, null);
+        Action act = () => new GenerateSerializationService(_mockLogger.Object, _mockAasService.Object, null, _mockCdService.Object);
         act.Should().Throw<ArgumentNullException>().WithParameterName("submodelService");
     }
 
