@@ -32,12 +32,13 @@ public interface IPathModifierService
     /// </summary>
     /// <param name="submodelList">The list of submodels to transform.</param>
     /// <returns>A list of lists of strings representing the transformed paths.</returns>
-    List<List<string>> ToIdShortPath(List<ISubmodel> submodelList);
+    List<string> ToIdShortPath(List<ISubmodel> submodelList);
 
     /// <summary>
     /// Transforms the paths of a list of submodel elements into short ID paths.
     /// </summary>
     /// <param name="submodelElementList">The list of submodel elements to transform.</param>
     /// <returns>A list of lists of strings representing the transformed paths.</returns>
-    List<List<string>> ToIdShortPath(List<ISubmodelElement> submodelElementList);
+    //List<List<string>> ToIdShortPath(List<ISubmodelElement> submodelElementList);
+    List<string> ToIdShortPath(List<ISubmodelElement> submodelElementList);
 }

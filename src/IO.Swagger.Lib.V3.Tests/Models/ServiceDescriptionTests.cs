@@ -25,7 +25,7 @@ public class ServiceDescriptionTests
             // Arrange
             var serviceDescription = new ServiceDescription
             {
-                Profiles = new List<ServiceDescription.ServiceProfiles>
+                profiles = new List<ServiceDescription.ServiceProfiles>
                 {
                     ServiceDescription.ServiceProfiles.DiscoveryServiceSpecificationSSP001
                 }
@@ -45,7 +45,7 @@ public class ServiceDescriptionTests
             // Arrange
             var serviceDescription = new ServiceDescription
             {
-                Profiles = new List<ServiceDescription.ServiceProfiles>
+                profiles = new List<ServiceDescription.ServiceProfiles>
                 {
                     ServiceDescription.ServiceProfiles.DiscoveryServiceSpecificationSSP001
                 }
@@ -66,7 +66,7 @@ public class ServiceDescriptionTests
             // Arrange
             var serviceDescription = new ServiceDescription
             {
-                Profiles = new List<ServiceDescription.ServiceProfiles>
+                profiles = new List<ServiceDescription.ServiceProfiles>
                 {
                     ServiceDescription.ServiceProfiles.DiscoveryServiceSpecificationSSP001
                 }
@@ -88,8 +88,8 @@ public class ServiceDescriptionTests
                 ServiceDescription.ServiceProfiles.DiscoveryServiceSpecificationSSP001
             };
 
-            var serviceDescription1 = new ServiceDescription { Profiles = profiles };
-            var serviceDescription2 = new ServiceDescription { Profiles = profiles };
+            var serviceDescription1 = new ServiceDescription { profiles = profiles };
+            var serviceDescription2 = new ServiceDescription { profiles = profiles };
 
             // Act
             var result = serviceDescription1.Equals(serviceDescription2);
@@ -104,7 +104,7 @@ public class ServiceDescriptionTests
             // Arrange
             var serviceDescription1 = new ServiceDescription
             {
-                Profiles = new List<ServiceDescription.ServiceProfiles>
+                profiles = new List<ServiceDescription.ServiceProfiles>
                 {
                     ServiceDescription.ServiceProfiles.DiscoveryServiceSpecificationSSP001
                 }
@@ -112,7 +112,7 @@ public class ServiceDescriptionTests
 
             var serviceDescription2 = new ServiceDescription
             {
-                Profiles = new List<ServiceDescription.ServiceProfiles>
+                profiles = new List<ServiceDescription.ServiceProfiles>
                 {
                     ServiceDescription.ServiceProfiles.AssetAdministrationShellRepositoryServiceSpecificationSSP001
                 }
@@ -134,7 +134,7 @@ public class ServiceDescriptionTests
                 ServiceDescription.ServiceProfiles.DiscoveryServiceSpecificationSSP001
             };
 
-            var serviceDescription = new ServiceDescription { Profiles = profiles };
+            var serviceDescription = new ServiceDescription { profiles = profiles };
             var expectedHashCode = 41;
             expectedHashCode = (expectedHashCode * 59) + profiles.GetHashCode();
 
@@ -154,8 +154,8 @@ public class ServiceDescriptionTests
                 ServiceDescription.ServiceProfiles.DiscoveryServiceSpecificationSSP001
             };
 
-            var serviceDescription1 = new ServiceDescription { Profiles = profiles };
-            var serviceDescription2 = new ServiceDescription { Profiles = profiles };
+            var serviceDescription1 = new ServiceDescription { profiles = profiles };
+            var serviceDescription2 = new ServiceDescription { profiles = profiles };
 
             // Act
             var result = serviceDescription1 == serviceDescription2;
@@ -170,7 +170,7 @@ public class ServiceDescriptionTests
             // Arrange
             var serviceDescription1 = new ServiceDescription
             {
-                Profiles = new List<ServiceDescription.ServiceProfiles>
+                profiles = new List<ServiceDescription.ServiceProfiles>
                 {
                     ServiceDescription.ServiceProfiles.DiscoveryServiceSpecificationSSP001
                 }
@@ -178,7 +178,7 @@ public class ServiceDescriptionTests
 
             var serviceDescription2 = new ServiceDescription
             {
-                Profiles = new List<ServiceDescription.ServiceProfiles>
+                profiles = new List<ServiceDescription.ServiceProfiles>
                 {
                     ServiceDescription.ServiceProfiles.SubmodelServiceSpecificationSSP002
                 }

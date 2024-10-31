@@ -231,7 +231,9 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformOperation(IOperation that, PathModifierContext context)
         {
-            if (context.IdShortPaths.Count == 0 || string.IsNullOrEmpty(context.ParentPath))
+            if (context.IsRoot && !context.IsGetAllSmes)
+                throw new InvalidSerializationModifierException("Path", that.GetType().Name);
+            if (string.IsNullOrEmpty(context.ParentPath))
             {
                 context.IdShortPaths.Add(that.IdShort);
             }
@@ -239,38 +241,6 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
             {
                 context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
             }
-
-            var currentParentPath = string.IsNullOrEmpty(context.ParentPath) ? that.IdShort : $"{context.ParentPath}.{that.IdShort}";
-            if (that.InputVariables != null)
-            {
-                foreach (var element in that.InputVariables)
-                {
-                    context.IsRoot = false;
-                    context.ParentPath = currentParentPath;
-                    Transform(element, context);
-                }
-            }
-
-            if (that.OutputVariables != null)
-            {
-                foreach (var element in that.OutputVariables)
-                {
-                    context.IsRoot = false;
-                    context.ParentPath = currentParentPath;
-                    Transform(element, context);
-                }
-            }
-
-            if (that.InoutputVariables != null)
-            {
-                foreach (var element in that.InoutputVariables)
-                {
-                    context.IsRoot = false;
-                    context.ParentPath = currentParentPath;
-                    Transform(element, context);
-                }
-            }
-
             return context.IdShortPaths;
         }
 
