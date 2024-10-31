@@ -83,7 +83,7 @@ namespace IO.Swagger.Controllers
 
             var decodedSubmodelIds = submodelIds.Select(submodelId => _decoderService.Decode("submodelIdentifier", submodelId)).ToList();
 
-            var environment = _serializationService.GenerateSerializationByIds(decodedAasIds, decodedSubmodelIds);
+            var environment = _serializationService.GenerateSerializationByIds(decodedAasIds, decodedSubmodelIds, includeConceptDescriptions);
 
             HttpContext.Request.Headers.TryGetValue("Content-Type", out var contentType);
             if (!contentType.Equals("application/xml"))

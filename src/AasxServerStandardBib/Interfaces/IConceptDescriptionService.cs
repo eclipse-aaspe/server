@@ -20,7 +20,7 @@ namespace AasxServerStandardBib.Interfaces
     {
         IConceptDescription CreateConceptDescription(IConceptDescription body);
         void DeleteConceptDescriptionById(string cdIdentifier);
-        List<IConceptDescription> GetAllConceptDescriptions(string idShort, Reference isCaseOf, Reference dataSpecificationRef);
+        List<IConceptDescription> GetAllConceptDescriptions(string idShort = null, Reference isCaseOf = null, Reference dataSpecificationRef = null);
         IConceptDescription GetConceptDescriptionById(string cdIdentifier);
         void UpdateConceptDescriptionById(ConceptDescription body, string cdIdentifier);
     }
