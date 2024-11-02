@@ -72,7 +72,7 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpDelete]
-    [Route("/shell-descriptors/{aasIdentifier}")]
+    [Route("/api/v3.0/shell-descriptors/{aasIdentifier}")]
     [ValidateModelState]
     [SwaggerOperation("DeleteAssetAdministrationShellDescriptorById")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -110,7 +110,7 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpDelete]
-    [Route("/shell-descriptors/{aasIdentifier}/submodel-descriptors/{submodelIdentifier}")]
+    [Route("/api/v3.0/shell-descriptors/{aasIdentifier}/submodel-descriptors/{submodelIdentifier}")]
     [ValidateModelState]
     [SwaggerOperation("DeleteSubmodelDescriptorByIdThroughSuperpath")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -151,7 +151,7 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/shell-descriptors")]
+    [Route("/api/v3.0/shell-descriptors")]
     [ValidateModelState]
     [SwaggerOperation("GetAllAssetAdministrationShellDescriptors")]
     [SwaggerResponse(statusCode: 200, type: typeof(List<AssetAdministrationShellDescriptor>), description: "Requested Asset Administration Shell Descriptors")]
@@ -205,7 +205,7 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/shell-descriptors/{aasIdentifier}/submodel-descriptors")]
+    [Route("/api/v3.0/shell-descriptors/{aasIdentifier}/submodel-descriptors")]
     [ValidateModelState]
     [SwaggerOperation("GetAllSubmodelDescriptorsThroughSuperpath")]
     [SwaggerResponse(statusCode: 200, type: typeof(List<SubmodelDescriptor>), description: "Requested Submodel Descriptors")]
@@ -252,7 +252,7 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/shell-descriptors/{aasIdentifier}")]
+    [Route("/api/v3.0/shell-descriptors/{aasIdentifier}")]
     [ValidateModelState]
     [SwaggerOperation("GetAssetAdministrationShellDescriptorById")]
     [SwaggerResponse(statusCode: 200, type: typeof(AssetAdministrationShellDescriptor), description: "Requested Asset Administration Shell Descriptor")]
@@ -304,7 +304,7 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/shell-descriptors/{aasIdentifier}/submodel-descriptors/{submodelIdentifier}")]
+    [Route("/api/v3.0/shell-descriptors/{aasIdentifier}/submodel-descriptors/{submodelIdentifier}")]
     [ValidateModelState]
     [SwaggerOperation("GetSubmodelDescriptorByIdThroughSuperpath")]
     [SwaggerResponse(statusCode: 200, type: typeof(SubmodelDescriptor), description: "Requested Submodel Descriptor")]
@@ -348,7 +348,7 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
     /// <response code="0">Default error handling for unmentioned status codes</response>
     //TODO (jtikekar, 2023-09-04): Routes are different than old impl
     [HttpPost]
-    [Route("/shell-descriptors")]
+    [Route("/api/v3.0/shell-descriptors")]
     [ValidateModelState]
     [SwaggerOperation("PostAssetAdministrationShellDescriptor")]
     [SwaggerResponse(statusCode: 201, type: typeof(AssetAdministrationShellDescriptor), description: "Asset Administration Shell Descriptor created successfully")]
@@ -391,7 +391,7 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpPost]
-    [Route("/shell-descriptors/{aasIdentifier}/submodel-descriptors")]
+    [Route("/api/v3.0/shell-descriptors/{aasIdentifier}/submodel-descriptors")]
     [ValidateModelState]
     [SwaggerOperation("PostSubmodelDescriptorThroughSuperpath")]
     [SwaggerResponse(statusCode: 201, type: typeof(SubmodelDescriptor), description: "Submodel Descriptor created successfully")]
@@ -440,7 +440,7 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpPut]
-    [Route("/shell-descriptors/{aasIdentifier}")]
+    [Route("/api/v3.0/shell-descriptors/{aasIdentifier}")]
     [ValidateModelState]
     [SwaggerOperation("PutAssetAdministrationShellDescriptorById")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -485,7 +485,7 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpPut]
-    [Route("/shell-descriptors/{aasIdentifier}/submodel-descriptors/{submodelIdentifier}")]
+    [Route("/api/v3.0/shell-descriptors/{aasIdentifier}/submodel-descriptors/{submodelIdentifier}")]
     [ValidateModelState]
     [SwaggerOperation("PutSubmodelDescriptorByIdThroughSuperpath")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -518,7 +518,7 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
     }
 
     [HttpPost]
-    [Route("/overwrite-shell-descriptors")]
+    [Route("/api/v3.0/overwrite-shell-descriptors")]
     [ValidateModelState]
     [SwaggerOperation("PostMultipleAssetAdministrationShellDescriptors")]
     [SwaggerResponse(statusCode: 201, type: typeof(List<AssetAdministrationShellDescriptor>), description: "Asset Administration Shell Descriptors created successfully")]
@@ -548,7 +548,7 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
     /// <param name="assetId">An Asset identifier (BASE64-URL-encoded identifier)</param>
     /// <response code="200">Requested Asset Administration Shell ids</response>
     [HttpGet]
-    [Route("/lookup/shells")]
+    [Route("/api/v3.0/lookup/shells")]
     [ValidateModelState]
     [SwaggerOperation("GetAllAssetAdministrationShellIdsByAssetLink")]
     [SwaggerResponse(statusCode: 200, type: typeof(List<string>), description: "Requested Asset Administration Shell ids")]

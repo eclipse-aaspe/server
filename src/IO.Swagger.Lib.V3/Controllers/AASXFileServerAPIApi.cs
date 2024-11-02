@@ -79,7 +79,7 @@ public class AASXFileServerAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpDelete]
-    [Route("/packages/{packageId}")]
+    [Route("/api/v3.0/packages/{packageId}")]
     [ValidateModelState]
     [SwaggerOperation("DeleteAASXByPackageId")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -128,7 +128,7 @@ public class AASXFileServerAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/packages/{packageId}")]
+    [Route("/api/v3.0/packages/{packageId}")]
     [ValidateModelState]
     [SwaggerOperation("GetAASXByPackageId")]
     [SwaggerResponse(statusCode: 200, type: typeof(byte[]), description: "Requested AASX package")]
@@ -193,7 +193,7 @@ public class AASXFileServerAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/packages")]
+    [Route("/api/v3.0/packages")]
     [ValidateModelState]
     [SwaggerOperation("GetAllAASXPackageIds")]
     [SwaggerResponse(statusCode: 200, type: typeof(PackageDescriptionPagedResult), description: "Requested package list")]
@@ -236,7 +236,7 @@ public class AASXFileServerAPIApiController : ControllerBase
     /// <param name="file">AASX Package</param>
     /// <returns></returns>
     [HttpPost]
-    [Route("/packages")]
+    [Route("/api/v3.0/packages")]
     [ValidateModelState]
     [SwaggerOperation("PostAASXPackage")]
     public virtual IActionResult PostAASXPackage([FromQuery] string? aasIds, IFormFile? file)
@@ -280,7 +280,7 @@ public class AASXFileServerAPIApiController : ControllerBase
     /// <param name="aasIds">Included AAS Identifiers</param>
     /// <returns></returns>
     [HttpPut]
-    [Route("/packages/{packageId}")]
+    [Route("/api/v3.0/packages/{packageId}")]
     [ValidateModelState]
     [SwaggerOperation("PutAASXPackageById")]
     public virtual IActionResult PutAASXPackageById([FromRoute] [Required] string packageId, IFormFile? file, [FromQuery] string? aasIds)
