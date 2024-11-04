@@ -25,11 +25,31 @@ namespace AasSecurity
     {
         public void ClearSecurityRules()
         {
+            GlobalSecurityVariables.SecurityRoles.Clear();
         }
 
-        public void AddSecurityRule(string acccess, string right, string objectType, string semanticId)
+        public void AddSecurityRule(string name, string access, string right, string objectType, string semanticId)
         {
+            SecurityRole role = new SecurityRole();
 
+            role.Name = name;
+            if (access != "ALLOW")
+            {
+                return;
+            }
+            role.Kind = KindOfPermissionEnum.Allow;
+            if (right != "READ")
+            {
+                return;
+            }
+            role.Permission = AccessRights.READ;
+            role.ObjectType = "semanticid";
+            role.ApiOperation = "";
+            role.SemanticId = semanticId;
+            role.RulePath = "";
+            role.QueryLanguage = true;
+
+            GlobalSecurityVariables.SecurityRoles.Add(role);
         }
 
         private static readonly ILogger _logger = ApplicationLogging.CreateLogger("SecurityService");

@@ -16,6 +16,8 @@ public class QueryGrammar : Grammar
 {
     public QueryGrammar(IContractSecurityRules contractSecurityRules) : base(caseSensitive: true)
     {
+        mySecurityRules = contractSecurityRules;
+
         // Define non-terminals
         // <grammar> ::= <queryParameter> | <AllRules>
         // <queryParameter> ::= <logicalExpression>
@@ -202,6 +204,8 @@ public class QueryGrammar : Grammar
         MarkTransient(stringOperand, numericalOperand, hexOperand, boolOperand, dateTimeOperand, timeOperand);
         MarkTransient(castToString, castToNumerical, castToHex, castToBool, castToDateTime, castToTime);
     }
+
+    private IContractSecurityRules mySecurityRules;
 
     static List<string> skip = new List<string>() { "str", "num", "hex", "bool" };
 
@@ -505,15 +509,15 @@ public class QueryGrammar : Grammar
             }
         }
         */
-        SecurityRoles.Clear();
-        
+        // SecurityRoles.Clear();
+        mySecurityRules.ClearSecurityRules();
 
         ParseAccessRule(node);
     }
     static List<string> Names = new List<string>();
     static string access = "";
     static string right = "";
-    static void ParseAccessRule(ParseTreeNode node)
+    void ParseAccessRule(ParseTreeNode node)
     {
         switch (node.Term.Name)
         {
@@ -568,10 +572,13 @@ public class QueryGrammar : Grammar
                             role.RulePath = "";
                             role.QueryLanguage = true;
 
+                            /*
                             if (SecurityRoles != null)
                             {
                                 SecurityRoles.Add(role);
                             }
+                            */
+                            mySecurityRules.AddSecurityRule(n, access, right, "semanticid", semanticId);
                         }
                     }
                 }

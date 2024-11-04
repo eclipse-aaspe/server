@@ -18,6 +18,11 @@ namespace AasxServerDB
 {
     public class Query
     {
+        public Query(QueryGrammar queryGrammar)
+        {
+            grammar = queryGrammar;
+        }
+        private readonly QueryGrammar grammar;
         public static string? ExternalBlazor { get; set; }
 
         // --------------- API ---------------
@@ -345,7 +350,7 @@ namespace AasxServerDB
             public double? mValue { get; set; }
         }
 
-        private static void QuerySMorSME(ref List<SMSet>? smSet, ref List<SMEWithValue>? smeSet, string expression = "")
+        private void QuerySMorSME(ref List<SMSet>? smSet, ref List<SMEWithValue>? smeSet, string expression = "")
         {
             if (expression.StartsWith("$REVERSE"))
             {
@@ -557,7 +562,7 @@ namespace AasxServerDB
             }
         }
 
-        private static void QuerySMorSME_normal(ref List<SMSet>? smSet, ref List<SMEWithValue>? smeSet, string expression = "")
+        private void QuerySMorSME_normal(ref List<SMSet>? smSet, ref List<SMEWithValue>? smeSet, string expression = "")
         {
             bool log = false;
             bool withQueryLanguage = false;
@@ -646,7 +651,6 @@ namespace AasxServerDB
                 else
                 {
                     // with newest query language from QueryParser.cs
-                    var grammar = new QueryGrammar();
                     // var grammar = serviceProvider.GetService<QueryGrammar>();
                     var parser = new Parser(grammar);
                     parser.Context.TracingEnabled = true;
@@ -860,7 +864,7 @@ namespace AasxServerDB
         }
 
         // --------------- SM Methodes ---------------
-        private static List<SMSet> GetSMSet(string semanticId = "", string identifier = "", string diffString = "", string expression = "")
+        private List<SMSet> GetSMSet(string semanticId = "", string identifier = "", string diffString = "", string expression = "")
         {
             var withSemanticId = !semanticId.IsNullOrEmpty();
             var withIdentifier = !identifier.IsNullOrEmpty();
