@@ -31,7 +31,9 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
 
         public List<string> TransformAnnotatedRelationshipElement(IAnnotatedRelationshipElement that, PathModifierContext context)
         {
-            if (context.IdShortPaths.Count == 0 || string.IsNullOrEmpty(context.ParentPath))
+            if (context.IsRoot && !context.IsGetAllSmes)
+                throw new InvalidSerializationModifierException("Path", that.GetType().Name);
+            if (string.IsNullOrEmpty(context.ParentPath))
             {
                 context.IdShortPaths.Add(that.IdShort);
             }
@@ -39,18 +41,6 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.PathModifier
             {
                 context.IdShortPaths.Add($"{context.ParentPath}.{that.IdShort}");
             }
-
-            if (that.Annotations != null)
-            {
-                var currentParentPath = string.IsNullOrEmpty(context.ParentPath) ? that.IdShort : $"{context.ParentPath}.{that.IdShort}";
-                foreach (ISubmodelElement? item in that.Annotations)
-                {
-                    context.IsRoot = false;
-                    context.ParentPath = currentParentPath;
-                    Transform(item, context);
-                }
-            }
-
             return context.IdShortPaths;
         }
 
