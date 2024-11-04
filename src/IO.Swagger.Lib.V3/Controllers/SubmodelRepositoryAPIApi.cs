@@ -401,7 +401,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetAllSubmodelElementsMetadataSubmodelRepo([FromRoute] [Required] string submodelIdentifier,
-                                                                            [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] LevelEnum level,
+                                                                            [FromQuery] int? limit, [FromQuery] string? cursor,
                                                                             [FromQuery] string? diff)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -441,8 +441,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             filtered = smeList;
 
         var smePagedList    = _paginationService.GetPaginatedList(filtered, new PaginationParameters(cursor, limit));
-        var smeListLevel    = _levelExtentModifierService.ApplyLevelExtent(smePagedList.result, level);
-        var smeMetadataList = _mappingService.Map(smeListLevel, "metadata");
+        var smeMetadataList = _mappingService.Map(smePagedList.result, "metadata");
         var output          = new MetadataPagedResult() {result = smeMetadataList.ConvertAll(sme => (IMetadataDTO)sme), paging_metadata = smePagedList.paging_metadata};
         return new ObjectResult(output);
     }
