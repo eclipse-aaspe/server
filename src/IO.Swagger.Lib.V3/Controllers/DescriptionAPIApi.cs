@@ -46,7 +46,7 @@ namespace IO.Swagger.Controllers
         /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
         /// <response code="403">Forbidden</response>
         [HttpGet]
-        [Route("/api/v3.0/description")]
+        [Route("description")]
         [ValidateModelState]
         [SwaggerOperation("GetDescription")]
         [SwaggerResponse(statusCode: 200, type: typeof(ServiceDescription), description: "Requested Description")]
