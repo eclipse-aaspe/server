@@ -127,6 +127,7 @@ public static class ServerConfiguration
         app.UseMiddleware<ExceptionMiddleware>();
 
         app.UseStaticFiles();
+        app.UsePathBase("/api/v3.0");
         app.UseRouting();
         app.UseAuthorization();
         app.UseCors(CorsPolicyName);

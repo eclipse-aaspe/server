@@ -77,7 +77,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpDelete]
-        [Route("/api/v3.0/concept-descriptions/{cdIdentifier}")]
+        [Route("concept-descriptions/{cdIdentifier}")]
         [ValidateModelState]
         [SwaggerOperation("DeleteConceptDescriptionById")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -113,7 +113,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/concept-descriptions")]
+        [Route("concept-descriptions")]
         [ValidateModelState]
         [SwaggerOperation("GetAllConceptDescriptions")]
         [SwaggerResponse(statusCode: 200, type: typeof(List<ConceptDescription>), description: "Requested Concept Descriptions")]
@@ -155,7 +155,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/concept-descriptions/{cdIdentifier}")]
+        [Route("concept-descriptions/{cdIdentifier}")]
         [ValidateModelState]
         [SwaggerOperation("GetConceptDescriptionById")]
         [SwaggerResponse(statusCode: 200, type: typeof(ConceptDescription), description: "Requested Concept Description")]
@@ -196,7 +196,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPost]
-        [Route("/api/v3.0/concept-descriptions")]
+        [Route("concept-descriptions")]
         [ValidateModelState]
         [SwaggerOperation("PostConceptDescription")]
         [SwaggerResponse(statusCode: 201, type: typeof(ConceptDescription), description: "Concept Description created successfully")]
@@ -225,7 +225,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPut]
-        [Route("/api/v3.0/concept-descriptions/{cdIdentifier}")]
+        [Route("concept-descriptions/{cdIdentifier}")]
         [ValidateModelState]
         [SwaggerOperation("PutConceptDescriptionById")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]

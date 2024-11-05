@@ -65,7 +65,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/serialization")]
+        [Route("serialization")]
         [ValidateModelState]
         [SwaggerOperation("GenerateSerializationByIds")]
         [SwaggerResponse(statusCode: 200, type: typeof(byte[]), description: "Requested serialization based on SerializationFormat")]
@@ -75,7 +75,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GenerateSerializationByIds([FromQuery] List<string>? aasIds, [FromQuery] List<string>? submodelIds,
-        [FromQuery] bool? includeConceptDescriptions)
+        [FromQuery] bool? includeConceptDescriptions = false)
         {
             _logger.LogDebug($"Received a request an appropriate serialization");
 

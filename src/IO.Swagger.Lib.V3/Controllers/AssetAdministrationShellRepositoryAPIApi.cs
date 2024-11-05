@@ -116,7 +116,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpDelete]
-        [Route("/api/v3.0/shells/{aasIdentifier}")]
+        [Route("shells/{aasIdentifier}")]
         [ValidateModelState]
         [SwaggerOperation("DeleteAssetAdministrationShellById")]
         [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
@@ -148,7 +148,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpDelete]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/attachment")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/attachment")]
         [ValidateModelState]
         [SwaggerOperation("DeleteFileByPathAasRepository")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -207,7 +207,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpDelete]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}")]
         [ValidateModelState]
         [SwaggerOperation("DeleteSubmodelByIdAasRepository")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -252,7 +252,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpDelete]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
         [ValidateModelState]
         [SwaggerOperation("DeleteSubmodelElementByPathAasRepository")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -310,7 +310,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpDelete]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodel-refs/{submodelIdentifier}")]
+        [Route("shells/{aasIdentifier}/submodel-refs/{submodelIdentifier}")]
         [ValidateModelState]
         [SwaggerOperation("DeleteSubmodelReferenceByIdAasRepository")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -352,7 +352,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpDelete]
-        [Route("/api/v3.0/shells/{aasIdentifier}/asset-information/thumbnail")]
+        [Route("shells/{aasIdentifier}/asset-information/thumbnail")]
         [ValidateModelState]
         [SwaggerOperation("DeleteThumbnailAasRepository")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -391,7 +391,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells")]
+        [Route("shells")]
         [ValidateModelState]
         [SwaggerOperation("GetAllAssetAdministrationShells")]
         [SwaggerResponse(statusCode: 200, type: typeof(PagedResult), description: "Requested Asset Administration Shells")]
@@ -437,7 +437,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells/$reference")]
+        [Route("shells/$reference")]
         [ValidateModelState]
         [SwaggerOperation("GetAllAssetAdministrationShellsReference")]
         [SwaggerResponse(statusCode: 200, type: typeof(GetReferencesResult), description: "Requested Asset Administration Shells as a list of References")]
@@ -489,7 +489,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements")]
         [ValidateModelState]
         [SwaggerOperation("GetAllSubmodelElementsAasRepository")]
         [SwaggerResponse(statusCode: 200, type: typeof(GetSubmodelElementsResult), description: "List of found submodel elements")]
@@ -552,7 +552,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/$metadata")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/$metadata")]
         [ValidateModelState]
         [SwaggerOperation("GetAllSubmodelElementsMetadataAasRepository")]
         [SwaggerResponse(statusCode: 200, type: typeof(MetadataPagedResult), description: "List of found submodel elements")]
@@ -614,7 +614,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/$path")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/$path")]
         [ValidateModelState]
         [SwaggerOperation("GetAllSubmodelElementsPathAasRepository")]
         [SwaggerResponse(statusCode: 200, type: typeof(GetPathItemsResult), description: "List of found submodel elements in the Path notation")]
@@ -680,7 +680,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/$reference")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/$reference")]
         [ValidateModelState]
         [SwaggerOperation("GetAllSubmodelElementsReferenceAasRepository")]
         [SwaggerResponse(statusCode: 200, type: typeof(GetReferencesResult), description: "List of References of the found submodel elements")]
@@ -742,7 +742,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/$value")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/$value")]
         [ValidateModelState]
         [SwaggerOperation("GetAllSubmodelElementsValueOnlyAasRepository")]
         [SwaggerResponse(statusCode: 200, type: typeof(ValueOnlyPagedResult), description: "List of found submodel elements in their ValueOnly representation")]
@@ -805,7 +805,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodel-refs")]
+        [Route("shells/{aasIdentifier}/submodel-refs")]
         [ValidateModelState]
         [SwaggerOperation("GetAllSubmodelReferencesAasRepository")]
         [SwaggerResponse(statusCode: 200, type: typeof(GetReferencesResult), description: "Requested submodel references")]
@@ -843,7 +843,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells/{aasIdentifier}")]
+        [Route("shells/{aasIdentifier}")]
         [ValidateModelState]
         [SwaggerOperation("GetAssetAdministrationShellById")]
         [SwaggerResponse(statusCode: 200, type: typeof(AssetAdministrationShell), description: "Requested Asset Administration Shell")]
@@ -892,7 +892,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells/{aasIdentifier}/$reference")]
+        [Route("shells/{aasIdentifier}/$reference")]
         [ValidateModelState]
         [SwaggerOperation("GetAssetAdministrationShellByIdReferenceAasRepository")]
         [SwaggerResponse(statusCode: 200, type: typeof(Reference), description: "Requested Asset Administration Shell")]
@@ -932,7 +932,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells/{aasIdentifier}/asset-information")]
+        [Route("shells/{aasIdentifier}/asset-information")]
         [ValidateModelState]
         [SwaggerOperation("GetAssetInformationAasRepository")]
         [SwaggerResponse(statusCode: 200, type: typeof(AssetInformation), description: "Requested Asset Information")]
@@ -972,7 +972,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/attachment")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/attachment")]
         [ValidateModelState]
         [SwaggerOperation("GetFileByPathAasRepository")]
         [SwaggerResponse(statusCode: 200, type: typeof(byte[]), description: "Requested file")]
@@ -1050,7 +1050,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/operation-results/{handleId}")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/operation-results/{handleId}")]
         [ValidateModelState]
         [SwaggerOperation("GetOperationAsyncResultAasRepository")]
         [SwaggerResponse(statusCode: 200, type: typeof(OperationResult), description: "Operation result object")]
@@ -1081,7 +1081,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/operation-results/{handleId}/$value")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/operation-results/{handleId}/$value")]
         [ValidateModelState]
         [SwaggerOperation("GetOperationAsyncResultValueOnlyAasRepository")]
         [SwaggerResponse(statusCode: 200, type: typeof(Object), description: "Operation result object")]
@@ -1113,7 +1113,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/operation-status/{handleId}")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/operation-status/{handleId}")]
         [ValidateModelState]
         [SwaggerOperation("GetOperationAsyncStatusAasRepository")]
         [SwaggerResponse(statusCode: 200, type: typeof(BaseOperationResult), description: "Operation result object containing information that the &#x27;executionState&#x27; is still &#x27;Running&#x27;")]
@@ -1144,7 +1144,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}")]
         [ValidateModelState]
         [SwaggerOperation("GetSubmodelByIdAasRepository")]
         [SwaggerResponse(statusCode: 200, type: typeof(Submodel), description: "Requested Submodel")]
@@ -1205,7 +1205,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/$metadata")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/$metadata")]
         [ValidateModelState]
         [SwaggerOperation("GetSubmodelByIdMetadataAasRepository")]
         [SwaggerResponse(statusCode: 200, type: typeof(Object), description: "Requested Submodel")]
@@ -1261,7 +1261,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/$path")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/$path")]
         [ValidateModelState]
         [SwaggerOperation("GetSubmodelByIdPathAasRepository")]
         [SwaggerResponse(statusCode: 200, type: typeof(List<string>), description: "Requested Submodel in Path notation")]
@@ -1321,7 +1321,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/$reference")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/$reference")]
         [ValidateModelState]
         [SwaggerOperation("GetSubmodelByIdReferenceAasRepository")]
         [SwaggerResponse(statusCode: 200, type: typeof(Reference), description: "Requested Submodel as a Reference")]
@@ -1378,7 +1378,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/$value")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/$value")]
         [ValidateModelState]
         [SwaggerOperation("GetSubmodelByIdValueOnlyAasRepository")]
         [SwaggerResponse(statusCode: 200, type: typeof(SubmodelValue), description: "Requested Submodel")]
@@ -1442,7 +1442,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
         [ValidateModelState]
         [SwaggerOperation("GetSubmodelElementByPathAasRepository")]
         [SwaggerResponse(statusCode: 200, type: typeof(ISubmodelElement), description: "Requested submodel element")]
@@ -1508,7 +1508,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$metadata")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$metadata")]
         [ValidateModelState]
         [SwaggerOperation("GetSubmodelElementByPathMetadataAasRepository")]
         [SwaggerResponse(statusCode: 200, type: typeof(ISubmodelElementMetadata), description: "Requested submodel element")]
@@ -1570,7 +1570,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$path")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$path")]
         [ValidateModelState]
         [SwaggerOperation("GetSubmodelElementByPathPathAasRepository")]
         [SwaggerResponse(statusCode: 200, type: typeof(List<string>), description: "Requested submodel element in the Path notation")]
@@ -1635,7 +1635,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$reference")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$reference")]
         [ValidateModelState]
         [SwaggerOperation("GetSubmodelElementByPathReferenceAasRepository")]
         [SwaggerResponse(statusCode: 200, type: typeof(Reference), description: "Requested submodel element in its ValueOnly representation")]
@@ -1690,7 +1690,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$value")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$value")]
         [ValidateModelState]
         [SwaggerOperation("GetSubmodelElementByPathValueOnlyAasRepository")]
         [SwaggerResponse(statusCode: 200, type: typeof(IValueDTO), description: "Requested submodel element in its ValueOnly representation")]
@@ -1754,7 +1754,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpGet]
-        [Route("/api/v3.0/shells/{aasIdentifier}/asset-information/thumbnail")]
+        [Route("shells/{aasIdentifier}/asset-information/thumbnail")]
         [ValidateModelState]
         [SwaggerOperation("GetThumbnailAasRepository")]
         [SwaggerResponse(statusCode: 200, type: typeof(byte[]), description: "The thumbnail of the Asset Information.")]
@@ -1801,7 +1801,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPost]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/invoke")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/invoke")]
         [ValidateModelState]
         [SwaggerOperation("InvokeOperationAasRepository")]
         [SwaggerResponse(statusCode: 200, type: typeof(OperationResult), description: "Operation result object")]
@@ -1832,7 +1832,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPost]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/invoke-async")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/invoke-async")]
         [ValidateModelState]
         [SwaggerOperation("InvokeOperationAsyncAasRepository")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -1862,7 +1862,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPost]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/invoke-async/$value")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/invoke-async/$value")]
         [ValidateModelState]
         [SwaggerOperation("InvokeOperationAsyncValueOnlyAasRepository")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -1892,7 +1892,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPost]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/invoke/$value")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/invoke/$value")]
         [ValidateModelState]
         [SwaggerOperation("InvokeOperationValueOnlyAasRepository")]
         [SwaggerResponse(statusCode: 200, type: typeof(OperationResultValueOnly), description: "Operation result object")]
@@ -1923,7 +1923,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPatch]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}")]
         [ValidateModelState]
         [SwaggerOperation("PatchSubmodelAasRepository")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -1958,7 +1958,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPatch]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/$metadata")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/$metadata")]
         [ValidateModelState]
         [SwaggerOperation("PatchSubmodelByIdMetadataAasRepository")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -2019,7 +2019,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPatch]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/$value")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/$value")]
         [ValidateModelState]
         [SwaggerOperation("PatchSubmodelByIdValueOnlyAasRepository")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -2078,7 +2078,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPatch]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
         [ValidateModelState]
         [SwaggerOperation("PatchSubmodelElementValueByPathAasRepository")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -2129,7 +2129,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPatch]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$metadata")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$metadata")]
         [ValidateModelState]
         [SwaggerOperation("PatchSubmodelElementValueByPathMetadata")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -2188,7 +2188,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPatch]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$value")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$value")]
         [ValidateModelState]
         [SwaggerOperation("PatchSubmodelElementValueByPathValueOnly")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -2244,7 +2244,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPost]
-        [Route("/api/v3.0/shells")]
+        [Route("shells")]
         [ValidateModelState]
         [SwaggerOperation("PostAssetAdministrationShell")]
         [SwaggerResponse(statusCode: 201, type: typeof(AssetAdministrationShell), description: "Asset Administration Shell created successfully")]
@@ -2281,7 +2281,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPost]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements")]
         [ValidateModelState]
         [SwaggerOperation("PostSubmodelElementAasRepository")]
         [SwaggerResponse(statusCode: 201, type: typeof(ISubmodelElement), description: "Submodel element created successfully")]
@@ -2348,7 +2348,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPost]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
         [ValidateModelState]
         [SwaggerOperation("PostSubmodelElementByPathAasRepository")]
         [SwaggerResponse(statusCode: 201, type: typeof(ISubmodelElement), description: "Submodel element created successfully")]
@@ -2413,7 +2413,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPost]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodel-refs")]
+        [Route("shells/{aasIdentifier}/submodel-refs")]
         [ValidateModelState]
         [SwaggerOperation("PostSubmodelReferenceAasRepository")]
         [SwaggerResponse(statusCode: 201, type: typeof(Reference), description: "Submodel reference created successfully")]
@@ -2457,7 +2457,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPut]
-        [Route("/api/v3.0/shells/{aasIdentifier}")]
+        [Route("shells/{aasIdentifier}")]
         [ValidateModelState]
         [SwaggerOperation("PutAssetAdministrationShellById")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -2498,7 +2498,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPut]
-        [Route("/api/v3.0/shells/{aasIdentifier}/asset-information")]
+        [Route("shells/{aasIdentifier}/asset-information")]
         [ValidateModelState]
         [SwaggerOperation("PutAssetInformationAasRepository")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -2541,7 +2541,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPut]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}")]
         [ValidateModelState]
         [SwaggerOperation("PutSubmodelByIdAasRepository")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -2591,7 +2591,7 @@ namespace IO.Swagger.Controllers
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPut]
-        [Route("/api/v3.0/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
         [ValidateModelState]
         [SwaggerOperation("PutSubmodelElementByPathAasRepository")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -2638,7 +2638,7 @@ namespace IO.Swagger.Controllers
         /// <response code="404">Not Found</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPut]
-        [Route("/shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/attachment")]
+        [Route("shells/{aasIdentifier}/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/attachment")]
         [ValidateModelState]
         [SwaggerOperation("PutFileByPath")]
         [SwaggerResponse(statusCode: 204, type: typeof(Result), description: "Submodel element updated successfully")]
@@ -2692,7 +2692,7 @@ namespace IO.Swagger.Controllers
         /// <response code="404">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
         [HttpPut]
-        [Route("/shells/{aasIdentifier}/asset-information/thumbnail")]
+        [Route("shells/{aasIdentifier}/asset-information/thumbnail")]
         [ValidateModelState]
         [SwaggerOperation("PutThumbnail")]
         [SwaggerResponse(statusCode: 204, type: typeof(Result), description: "Thumbnail updated successfully")]

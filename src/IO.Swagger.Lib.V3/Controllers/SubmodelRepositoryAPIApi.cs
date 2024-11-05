@@ -103,7 +103,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpDelete]
-    [Route("/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/attachment")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/attachment")]
     [ValidateModelState]
     [SwaggerOperation("DeleteFileByPathSubmodelRepo")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -153,7 +153,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpDelete]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}")]
+    [Route("submodels/{submodelIdentifier}")]
     [ValidateModelState]
     [SwaggerOperation("DeleteSubmodelById")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -190,7 +190,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpDelete]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
     [ValidateModelState]
     [SwaggerOperation("DeleteSubmodelElementByPathSubmodelRepo")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -246,7 +246,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/submodel-elements")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements")]
     [ValidateModelState]
     [SwaggerOperation("GetAllSubmodelElements")]
     [SwaggerResponse(statusCode: 200, type: typeof(GetSubmodelElementsResult), description: "List of found submodel elements")]
@@ -390,7 +390,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/submodels/{submodelIdentifier}/submodel-elements/$metadata")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/$metadata")]
     [ValidateModelState]
     [SwaggerOperation("GetAllSubmodelElementsMetadataSubmodelRepo")]
     [SwaggerResponse(statusCode: 200, type: typeof(MetadataPagedResult), description: "List of found submodel elements")]
@@ -462,7 +462,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/submodel-elements/$path")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/$path")]
     [ValidateModelState]
     [SwaggerOperation("GetAllSubmodelElementsPathSubmodelRepo")]
     [SwaggerResponse(statusCode: 200, type: typeof(List<List<string>>), description: "List of found submodel elements in the Path notation")]
@@ -531,7 +531,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/submodel-elements/$reference")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/$reference")]
     [ValidateModelState]
     [SwaggerOperation("GetAllSubmodelElementsReferenceSubmodelRepo")]
     [SwaggerResponse(statusCode: 200, type: typeof(GetReferencesResult), description: "List of found submodel elements")]
@@ -587,7 +587,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/submodel-elements/$value")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/$value")]
     [ValidateModelState]
     [SwaggerOperation("GetAllSubmodelElementsValueOnlySubmodelRepo")]
     [SwaggerResponse(statusCode: 200, type: typeof(ValueOnlyPagedResult), description: "List of found submodel elements")]
@@ -663,7 +663,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/api/v3.0/submodels")]
+    [Route("submodels")]
     [ValidateModelState]
     [SwaggerOperation("GetAllSubmodels")]
     [SwaggerResponse(statusCode: 200, type: typeof(PagedResult), description: "Requested Submodels")]
@@ -704,7 +704,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/api/v3.0/submodels/$metadata")]
+    [Route("submodels/$metadata")]
     [ValidateModelState]
     [SwaggerOperation("GetAllSubmodelsMetadata")]
     [SwaggerResponse(statusCode: 200, type: typeof(MetadataPagedResult), description: "Requested Submodels")]
@@ -742,7 +742,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/api/v3.0/submodels/$path")]
+    [Route("submodels/$path")]
     [ValidateModelState]
     [SwaggerOperation("GetAllSubmodelsPath")]
     [SwaggerResponse(statusCode: 200, type: typeof(GetPathItemsResult), description: "Requested Submodels")]
@@ -783,7 +783,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/api/v3.0/submodels/$reference")]
+    [Route("submodels/$reference")]
     [ValidateModelState]
     [SwaggerOperation("GetAllSubmodelsReference")]
     [SwaggerResponse(statusCode: 200, type: typeof(GetReferencesResult), description: "References of the requested Submodels")]
@@ -823,7 +823,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/api/v3.0/submodels/$value")]
+    [Route("submodels/$value")]
     [ValidateModelState]
     [SwaggerOperation("GetAllSubmodelsValueOnly")]
     [SwaggerResponse(statusCode: 200, type: typeof(ValueOnlyPagedResult), description: "Requested Submodels")]
@@ -865,7 +865,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/attachment")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/attachment")]
     [ValidateModelState]
     [SwaggerOperation("GetFileByPathSubmodelRepo")]
     [SwaggerResponse(statusCode: 200, type: typeof(byte[]), description: "Requested file")]
@@ -939,7 +939,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/operation-results/{handleId}")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/operation-results/{handleId}")]
     [ValidateModelState]
     [SwaggerOperation("GetOperationAsyncResult")]
     [SwaggerResponse(statusCode: 200, type: typeof(OperationResult), description: "Operation result object")]
@@ -966,7 +966,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/operation-results/{handleId}/$value")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/operation-results/{handleId}/$value")]
     [ValidateModelState]
     [SwaggerOperation("GetOperationAsyncResultValueOnly")]
     [SwaggerResponse(statusCode: 200, type: typeof(IValueDTO), description: "Value of the operation result object")]
@@ -994,7 +994,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/operation-status/{handleId}")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/operation-status/{handleId}")]
     [ValidateModelState]
     [SwaggerOperation("GetOperationAsyncStatus")]
     [SwaggerResponse(statusCode: 200, type: typeof(BaseOperationResult), description: "Operation result object containing information that the &#x27;executionState&#x27; is still &#x27;Running&#x27;")]
@@ -1020,7 +1020,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpHead]
-    [Route("/submodels/{submodelIdentifier}")]
+    [Route("submodels/{submodelIdentifier}")]
     [ValidateModelState]
     [SwaggerOperation("GetSubmodelPolicyHeader")]
     [SwaggerResponse(statusCode: 200, type: typeof(Submodel), description: "Requested Header")]
@@ -1067,7 +1067,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}")]
+    [Route("submodels/{submodelIdentifier}")]
     [ValidateModelState]
     [SwaggerOperation("GetSubmodelById")]
     [SwaggerResponse(statusCode: 200, type: typeof(Submodel), description: "Requested Submodel")]
@@ -1123,7 +1123,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/$metadata")]
+    [Route("submodels/{submodelIdentifier}/$metadata")]
     [ValidateModelState]
     [SwaggerOperation("GetSubmodelByIdMetadata")]
     [SwaggerResponse(statusCode: 200, type: typeof(SubmodelMetadata), description: "Requested Submodel in the metadata representation")]
@@ -1170,7 +1170,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/$path")]
+    [Route("submodels/{submodelIdentifier}/$path")]
     [ValidateModelState]
     [SwaggerOperation("GetSubmodelByIdPath")]
     [SwaggerResponse(statusCode: 200, type: typeof(List<string>), description: "Requested Submodel")]
@@ -1220,7 +1220,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/$reference")]
+    [Route("submodels/{submodelIdentifier}/$reference")]
     [ValidateModelState]
     [SwaggerOperation("GetSubmodelByIdReference")]
     [SwaggerResponse(statusCode: 200, type: typeof(Reference), description: "Requested Submodel")]
@@ -1269,7 +1269,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/$value")]
+    [Route("submodels/{submodelIdentifier}/$value")]
     [ValidateModelState]
     [SwaggerOperation("GetSubmodelByIdValueOnly")]
     [SwaggerResponse(statusCode: 200, type: typeof(SubmodelValue), description: "Requested Submodel")]
@@ -1321,7 +1321,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$metadata")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$metadata")]
     [ValidateModelState]
     [SwaggerOperation("GetSubmodelElementByPathMetadataSubmodelRepo")]
     [SwaggerResponse(statusCode: 200, type: typeof(ISubmodelElementMetadata), description: "Metadata attributes of the requested submodel element")]
@@ -1374,7 +1374,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$path")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$path")]
     [ValidateModelState]
     [SwaggerOperation("GetSubmodelElementByPathPathSubmodelRepo")]
     [SwaggerResponse(statusCode: 200, type: typeof(List<string>), description: "Submodel elements in path notation")]
@@ -1429,7 +1429,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$reference")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$reference")]
     [ValidateModelState]
     [SwaggerOperation("GetSubmodelElementByPathReferenceSubmodelRepo")]
     [SwaggerResponse(statusCode: 200, type: typeof(Reference), description: "Requested submodel element")]
@@ -1486,7 +1486,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
     [ValidateModelState]
     [SwaggerOperation("GetSubmodelElementByPathSubmodelRepo")]
     [SwaggerResponse(statusCode: 200, type: typeof(ISubmodelElement), description: "Requested submodel element")]
@@ -1547,7 +1547,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpGet]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$value")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$value")]
     [ValidateModelState]
     [SwaggerOperation("GetSubmodelElementByPathValueOnlySubmodelRepo")]
     [SwaggerResponse(statusCode: 200, type: typeof(ISubmodelElementValue), description: "Requested submodel element")]
@@ -1607,7 +1607,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpPost]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/invoke-async")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/invoke-async")]
     [ValidateModelState]
     [SwaggerOperation("InvokeOperationAsync")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -1635,7 +1635,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpPost]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/invoke-async/$value")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/invoke-async/$value")]
     [ValidateModelState]
     [SwaggerOperation("InvokeOperationAsyncValueOnly")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -1663,7 +1663,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpPost]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/invoke")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/invoke")]
     [ValidateModelState]
     [SwaggerOperation("InvokeOperationSubmodelRepo")]
     [SwaggerResponse(statusCode: 200, type: typeof(OperationResult), description: "Operation result object")]
@@ -1693,7 +1693,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpPost]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/invoke/$value")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/invoke/$value")]
     [ValidateModelState]
     [SwaggerOperation("InvokeOperationValueOnly")]
     [SwaggerResponse(statusCode: 200, type: typeof(IValueDTO), description: "Operation result object")]
@@ -1721,7 +1721,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpPatch]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}")]
+    [Route("submodels/{submodelIdentifier}")]
     [ValidateModelState]
     [SwaggerOperation("PatchSubmodelById")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -1763,7 +1763,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpPatch]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/$metadata")]
+    [Route("submodels/{submodelIdentifier}/$metadata")]
     [ValidateModelState]
     [SwaggerOperation("PatchSubmodelByIdMetadata")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -1812,7 +1812,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpPatch]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/$value")]
+    [Route("submodels/{submodelIdentifier}/$value")]
     [ValidateModelState]
     [SwaggerOperation("PatchSubmodelByIdValueOnly")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -1862,7 +1862,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpPatch]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$metadata")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$metadata")]
     [ValidateModelState]
     [SwaggerOperation("PatchSubmodelElementByPathMetadataSubmodelRepo")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -1914,7 +1914,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpPatch]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
     [ValidateModelState]
     [SwaggerOperation("PatchSubmodelElementByPathSubmodelRepo")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -1958,7 +1958,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpPatch]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$value")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$value")]
     [ValidateModelState]
     [SwaggerOperation("PatchSubmodelElementByPathValueOnlySubmodelRepo")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -2007,7 +2007,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpPost]
-    [Route("/api/v3.0/submodels")]
+    [Route("submodels")]
     [ValidateModelState]
     [SwaggerOperation("PostSubmodel")]
     [SwaggerResponse(statusCode: 201, type: typeof(Submodel), description: "Submodel created successfully")]
@@ -2053,7 +2053,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpPost]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
     [ValidateModelState]
     [SwaggerOperation("PostSubmodelElementByPathSubmodelRepo")]
     [SwaggerResponse(statusCode: 201, type: typeof(ISubmodelElement), description: "Submodel element created successfully")]
@@ -2114,7 +2114,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpPost]
-    [Route("/submodels/{submodelIdentifier}/submodel-elements")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements")]
     [ValidateModelState]
     [SwaggerOperation("PostSubmodelElementSubmodelRepo")]
     [SwaggerResponse(statusCode: 201, type: typeof(ISubmodelElement), description: "Submodel element created successfully")]
@@ -2175,7 +2175,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpPut]
-    [Route("/submodels/{submodelIdentifier}")]
+    [Route("submodels/{submodelIdentifier}")]
     [ValidateModelState]
     [SwaggerOperation("PutSubmodelById")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -2219,7 +2219,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="500">Internal Server Error</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpPut]
-    [Route("/api/v3.0/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
     [ValidateModelState]
     [SwaggerOperation("PutSubmodelElementByPathSubmodelRepo")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
@@ -2274,7 +2274,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <response code="404">Not Found</response>
     /// <response code="0">Default error handling for unmentioned status codes</response>
     [HttpPut]
-    [Route("/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/attachment")]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/attachment")]
     [ValidateModelState]
     [SwaggerOperation("PutFileByPathSubmodelRepo")]
     [SwaggerResponse(statusCode: 204, type: typeof(Result), description: "Submodel element updated successfully")]
