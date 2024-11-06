@@ -1,0 +1,222 @@
+{
+  "definitions": {
+    "standardString": {
+      "type": "string",
+      "pattern": "^(?!\\$).*"
+    },
+    "specialString": {
+      "type": "string",
+      "pattern": "^\\$(aas|sm|sme|cd|aasdesc|smdesc)\\.(idShort|displayName|description|id|assetKind|assetType|globalAssetId|specificAssetId|submodel|semanticId|value|valueType|submodelDescriptor)$"
+    },
+    "number": {
+      "type": "number"
+    },
+    "trueConstant": {
+      "const": true
+    },
+    "falseConstant": {
+      "const": false
+    },
+    "castToNumber": {
+      "type": "object",
+      "properties": {
+        "$num": {
+          "oneOf": [
+            { "$ref": "#/definitions/standardString" },
+            { "$ref": "#/definitions/specialString" }
+          ]
+        }
+      },
+      "required": [ "$num" ]
+    },
+    "castToString": {
+      "type": "object",
+      "properties": {
+        "$str": { "type": "number" }
+      },
+      "required": [ "$str" ]
+    },
+    "comparisonItems": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "oneOf": [
+        {
+          "items": [
+            {
+              "oneOf": [
+                { "$ref": "#/definitions/standardString" },
+                { "$ref": "#/definitions/castToString" }
+              ]
+            },
+            {
+              "oneOf": [
+                { "$ref": "#/definitions/standardString" },
+                { "$ref": "#/definitions/castToString" }
+              ]
+            }
+          ]
+        },
+        {
+          "items": [
+            {
+              "oneOf": [
+                { "$ref": "#/definitions/number" },
+                { "$ref": "#/definitions/castToNumber" }
+              ]
+            },
+            {
+              "oneOf": [
+                { "$ref": "#/definitions/number" },
+                { "$ref": "#/definitions/castToNumber" }
+              ]
+            }
+          ]
+        },
+        {
+          "items": [
+            { "$ref": "#/definitions/specialString" },
+            {
+              "oneOf": [
+                { "$ref": "#/definitions/standardString" },
+                { "$ref": "#/definitions/number" },
+                { "$ref": "#/definitions/castToNumber" },
+                { "$ref": "#/definitions/castToString" }
+              ]
+            }
+          ]
+        },
+        {
+          "items": [
+            {
+              "oneOf": [
+                { "$ref": "#/definitions/standardString" },
+                { "$ref": "#/definitions/number" },
+                { "$ref": "#/definitions/castToNumber" },
+                { "$ref": "#/definitions/castToString" }
+              ]
+            },
+            { "$ref": "#/definitions/specialString" }
+          ]
+        },
+        {
+          "items": [
+            { "$ref": "#/definitions/specialString" },
+            { "$ref": "#/definitions/specialString" }
+          ]
+        }
+      ]
+    },
+    "stringItems": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "oneOf": [
+        {
+          "items": [
+            {
+              "oneOf": [
+                { "$ref": "#/definitions/standardString" },
+                { "$ref": "#/definitions/castToString" }
+              ]
+            },
+            {
+              "oneOf": [
+                { "$ref": "#/definitions/standardString" },
+                { "$ref": "#/definitions/castToString" }
+              ]
+            }
+          ]
+        },
+        {
+          "items": [
+            { "$ref": "#/definitions/specialString" },
+            {
+              "oneOf": [
+                { "$ref": "#/definitions/standardString" },
+                { "$ref": "#/definitions/castToString" }
+              ]
+            }
+          ]
+        },
+        {
+          "items": [
+            {
+              "oneOf": [
+                { "$ref": "#/definitions/standardString" },
+                { "$ref": "#/definitions/castToString" }
+              ]
+            },
+            { "$ref": "#/definitions/specialString" }
+          ]
+        },
+        {
+          "items": [
+            { "$ref": "#/definitions/specialString" },
+            { "$ref": "#/definitions/specialString" }
+          ]
+        }
+      ]
+    },
+    "logicalExpression": {
+      "type": "object",
+      "properties": {
+        "$and": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/definitions/logicalExpression"
+              },
+              { "type": "boolean" }
+            ]
+          }
+        },
+        "$or": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/definitions/logicalExpression"
+              },
+              { "type": "boolean" }
+            ]
+          }
+        },
+        "$not": {
+          "oneOf": [
+            { "$ref": "#/definitions/logicalExpression" },
+            {
+              "type": "boolean"
+            }
+          ]
+        },
+        "$eq": { "$ref": "#/definitions/comparisonItems" },
+        "$ne": { "$ref": "#/definitions/comparisonItems" },
+        "$gt": { "$ref": "#/definitions/comparisonItems" },
+        "$ge": { "$ref": "#/definitions/comparisonItems" },
+        "$lt": { "$ref": "#/definitions/comparisonItems" },
+        "$le": { "$ref": "#/definitions/comparisonItems" },
+        "$contains": { "$ref": "#/definitions/stringItems" },
+        "$starts-with": { "$ref": "#/definitions/stringItems" },
+        "$ends-with": { "$ref": "#/definitions/stringItems" },
+        "$regex": { "$ref": "#/definitions/stringItems" },
+        "$cast": {
+          "oneOf": [
+            { "$ref": "#/definitions/castToNumber" },
+            { "$ref": "#/definitions/castToString" }
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "properties": {
+    "queryParameter": { "$ref": "#/definitions/logicalExpression" }
+  },
+  "required": [ "queryParameter" ],
+  "additionalProperties": false
+}
