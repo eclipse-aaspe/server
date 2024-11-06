@@ -39,7 +39,7 @@ namespace AasxServerDB
             qResult.Messages.Add(text);
 
             watch.Restart();
-            var smList = GetSMSet(semanticId, identifier, diff, expression);
+            var smList = GetSMSet(qResult.Messages, semanticId, identifier, diff, expression);
             text = "Found " + smList.Count + " SM in " + watch.ElapsedMilliseconds + "ms";
             Console.WriteLine(text);
             qResult.Messages.Add(text);
@@ -63,7 +63,8 @@ namespace AasxServerDB
             Console.WriteLine("Total number of SMs " + new AasContext().SMSets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
 
             watch.Restart();
-            var smList = GetSMSet(semanticId, identifier, diff);
+            var messages = new List<string>();
+            var smList = GetSMSet(messages, semanticId, identifier, diff);
             var count = smList.Count;
             Console.WriteLine("Found " + count + " SM in " + watch.ElapsedMilliseconds + "ms");
 
@@ -85,7 +86,7 @@ namespace AasxServerDB
             qResult.Messages.Add(text);
 
             watch.Restart();
-            var smeWithValue = GetSMEWithValue(smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
+            var smeWithValue = GetSMEWithValue(qResult.Messages, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
             text = "Found " + smeWithValue.Count + " SMEs in " + watch.ElapsedMilliseconds + "ms";
             Console.WriteLine(text);
             qResult.Messages.Add(text);
@@ -130,7 +131,8 @@ namespace AasxServerDB
             }
             else
             {
-                var smeWithValue = GetSMEWithValue(smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper);
+                var messages = new List<string>();
+                var smeWithValue = GetSMEWithValue(messages, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper);
                 count = smeWithValue.Count;
             }
 
@@ -370,7 +372,7 @@ namespace AasxServerDB
             public double? mValue { get; set; }
         }
 
-        private void QuerySMorSME(ref List<SMSet>? smSet, ref List<SMEWithValue>? smeSet, string expression = "")
+        private void QuerySMorSME(List<string> messages, ref List<SMSet>? smSet, ref List<SMEWithValue>? smeSet, string expression = "")
         {
             if (expression.StartsWith("$REVERSE"))
             {
@@ -379,7 +381,8 @@ namespace AasxServerDB
                 QuerySMorSME_reverse(ref smSet, ref smeSet, expression);
                 return;
             }
-            QuerySMorSME_normal(ref smSet, ref smeSet, expression);
+            QuerySMorSME_normal(messages, ref smSet, ref smeSet, expression);
+            messages.Add("");
         }
         private static void QuerySMorSME_reverse(ref List<SMSet>? smSet, ref List<SMEWithValue>? smeSet, string expression = "")
         {
@@ -582,7 +585,7 @@ namespace AasxServerDB
             }
         }
 
-        private void QuerySMorSME_normal(ref List<SMSet>? smSet, ref List<SMEWithValue>? smeSet, string expression = "")
+        private void QuerySMorSME_normal(List<string> messages, ref List<SMSet>? smSet, ref List<SMEWithValue>? smeSet, string expression = "")
         {
             bool log = false;
             int queryLanguage = 0;
@@ -685,16 +688,16 @@ namespace AasxServerDB
                     if (parseTree.HasErrors())
                     {
                         var pos = parser.Context.CurrentToken.Location.Position;
-                        var text = expression.Substring(0, pos) + "$$$" + expression.Substring(pos);
-                        text = string.Join("\n", parseTree.ParserMessages) + "\nSee $$$: " + text;
-                        Console.WriteLine(text);
-                        while (text != text.Replace("\n  ", "\n "))
+                        var t = expression.Substring(0, pos) + "$$$" + expression.Substring(pos);
+                        t = string.Join("\n", parseTree.ParserMessages) + "\nSee $$$: " + t;
+                        Console.WriteLine(t);
+                        while (t!= t.Replace("\n  ", "\n "))
                         {
-                            text = text.Replace("\n  ", "\n ");
+                            t = t.Replace("\n  ", "\n ");
                         };
-                        text = text.Replace("\n", "\n");
-                        text = text.Replace("\n", " ");
-                        throw new Exception(text);
+                        t = t.Replace("\n", "\n");
+                        t = t.Replace("\n", " ");
+                        throw new Exception(t);
                     }
                     else
                     {
@@ -741,9 +744,11 @@ namespace AasxServerDB
                 {
                     // JSON Query Language from JsonParser.cs
                     var jParser = new JsonParser();
+                    messages.Add("");
 
                     int countTypePrefix = 0;
                     combinedCondition = jParser.ParseTreeToExpression(expression, "", ref countTypePrefix);
+                    messages.Add("combinedCondition: " + combinedCondition);
 
                     countTypePrefix = 0;
                     conditionSM = jParser.ParseTreeToExpression(expression, "sm.", ref countTypePrefix);
@@ -751,6 +756,7 @@ namespace AasxServerDB
                     {
                         conditionSM = "";
                     }
+                    messages.Add("conditionSM: " + conditionSM);
 
                     countTypePrefix = 0;
                     conditionSME = jParser.ParseTreeToExpression(expression, "sme.", ref countTypePrefix);
@@ -758,6 +764,7 @@ namespace AasxServerDB
                     {
                         conditionSME = "";
                     }
+                    messages.Add("conditionSME: " + conditionSME);
 
                     countTypePrefix = 0;
                     conditionStr = jParser.ParseTreeToExpression(expression, "str()", ref countTypePrefix);
@@ -765,6 +772,7 @@ namespace AasxServerDB
                     {
                         conditionStr = "";
                     }
+                    messages.Add("conditionStr: " + conditionStr);
 
                     countTypePrefix = 0;
                     conditionNum = jParser.ParseTreeToExpression(expression, "num()", ref countTypePrefix);
@@ -772,6 +780,8 @@ namespace AasxServerDB
                     {
                         conditionNum = "";
                     }
+                    messages.Add("conditionNum: " + conditionNum);
+                    messages.Add("");
                 }
 
                 // Dynamic condition
@@ -787,10 +797,13 @@ namespace AasxServerDB
                     querySMWhere = querySMWhere.Where(conditionSM);
                 }
 
+                string text = "";
                 if (conditionSME == "" && conditionStr == "" && conditionNum == "" && smeSet == null)
                 {
                     smSet = querySMWhere.Distinct().ToList();
-                    Console.WriteLine("smSet in " + watch.ElapsedMilliseconds + "ms");
+                    text = "smSet in " + watch.ElapsedMilliseconds + "ms";
+                    Console.WriteLine(text);
+                    messages.Add(text);
                     return;
                 }
 
@@ -811,7 +824,9 @@ namespace AasxServerDB
                 {
                     sLog = "Found " + querySMandSME.Count();
                 }
-                Console.WriteLine(sLog + " filterd SM+SME in " + watch.ElapsedMilliseconds + "ms");
+                text = sLog + " filterd SM+SME in " + watch.ElapsedMilliseconds + "ms";
+                Console.WriteLine(text);
+                messages.Add(text);
                 watch.Restart();
 
                 if (conditionStr == "" && conditionNum == "" && smeSet == null)
@@ -819,7 +834,9 @@ namespace AasxServerDB
                     if (smSet != null)
                     {
                         smSet = querySMandSME.Select(result => result.sm).Distinct().ToList();
-                        Console.WriteLine("smSet in " + watch.ElapsedMilliseconds + "ms");
+                        text = "smSet in " + watch.ElapsedMilliseconds + "ms";
+                        Console.WriteLine(text);
+                        messages.Add(text);
                         watch.Restart();
                     }
 
@@ -843,7 +860,9 @@ namespace AasxServerDB
                 {
                     sLog = "Found " + querySMandSMEandSValue.Count();
                 }
-                Console.WriteLine(sLog + " filtered SM+SME+SVALUE in " + watch.ElapsedMilliseconds + "ms");
+                text = sLog + " filtered SM+SME+SVALUE in " + watch.ElapsedMilliseconds + "ms";
+                Console.WriteLine(text);
+                messages.Add(text);
                 watch.Restart();
 
                 var queryIValueWhere = queryIValue;
@@ -863,7 +882,9 @@ namespace AasxServerDB
                 {
                     sLog = "Found " + querySMandSMEandIValue.Count();
                 }
-                Console.WriteLine(sLog + " filtered SM+SME+IVALUE in " + watch.ElapsedMilliseconds + "ms");
+                text = sLog + " filtered SM+SME+IVALUE in " + watch.ElapsedMilliseconds + "ms";
+                Console.WriteLine(text);
+                messages.Add(text);
                 watch.Restart();
 
                 var queryDValueWhere = queryDValue;
@@ -883,7 +904,9 @@ namespace AasxServerDB
                 {
                     sLog = "Found " + querySMandSMEandDValue.Count();
                 }
-                Console.WriteLine(sLog + " filtered SM+SME+DVALUE in " + watch.ElapsedMilliseconds + "ms");
+                text = sLog + " filtered SM+SME+DVALUE in " + watch.ElapsedMilliseconds + "ms";
+                Console.WriteLine(text);
+                messages.Add(text);
                 watch.Restart();
 
                 var queryUnion = querySMandSMEandSValue.Union(querySMandSMEandIValue).Union(querySMandSMEandDValue).Distinct();
@@ -896,13 +919,17 @@ namespace AasxServerDB
                 {
                     sLog = "Found " + query.Count();
                 }
-                Console.WriteLine(sLog + " Union in " + watch.ElapsedMilliseconds + "ms");
+                text = sLog + " Union in " + watch.ElapsedMilliseconds + "ms";
+                Console.WriteLine(text);
+                messages.Add(text);
                 watch.Restart();
 
                 if (smSet != null)
                 {
                     smSet = query.Select(result => result.sm).Distinct().ToList();
-                    Console.WriteLine("smSet in " + watch.ElapsedMilliseconds + "ms");
+                    text = "smSet in " + watch.ElapsedMilliseconds + "ms";
+                    Console.WriteLine(text);
+                    messages.Add(text);
                     watch.Restart();
                 }
 
@@ -917,7 +944,9 @@ namespace AasxServerDB
                         })
                         .Distinct()
                         .ToList();
-                    Console.WriteLine("smeSet in " + watch.ElapsedMilliseconds + "ms");
+                    text = "smeSet in " + watch.ElapsedMilliseconds + "ms";
+                    Console.WriteLine(text);
+                    messages.Add(text);
                     watch.Restart();
                 }
 
@@ -926,7 +955,7 @@ namespace AasxServerDB
         }
 
         // --------------- SM Methodes ---------------
-        private List<SMSet> GetSMSet(string semanticId = "", string identifier = "", string diffString = "", string expression = "")
+        private List<SMSet> GetSMSet(List<string> messages, string semanticId = "", string identifier = "", string diffString = "", string expression = "")
         {
             var withSemanticId = !semanticId.IsNullOrEmpty();
             var withIdentifier = !identifier.IsNullOrEmpty();
@@ -952,7 +981,7 @@ namespace AasxServerDB
                     return x.ToList();
                 }
 
-                QuerySMorSME(ref listSMset, ref notUsed, expression);
+                QuerySMorSME(messages, ref listSMset, ref notUsed, expression);
             }
 
             return listSMset;
@@ -982,7 +1011,7 @@ namespace AasxServerDB
             public string? value;
         }
 
-        private List<SMEWithValue> GetSMEWithValue(string smSemanticId = "", string smIdentifier = "", string semanticId = "",
+        private List<SMEWithValue> GetSMEWithValue(List<string> messages, string smSemanticId = "", string smIdentifier = "", string semanticId = "",
             string diff = "", string contains = "", string equal = "", string lower = "", string upper = "", string expression = "")
         {
             var result = new List<SMEWithValue>();
@@ -1029,7 +1058,7 @@ namespace AasxServerDB
             }
 
             List<SMSet> notUsed = null;
-            QuerySMorSME(ref notUsed, ref result, expression);
+            QuerySMorSME(messages, ref notUsed, ref result, expression);
 
             return result;
         }
