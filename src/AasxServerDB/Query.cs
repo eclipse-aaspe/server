@@ -39,22 +39,33 @@ namespace AasxServerDB
         public static string? ExternalBlazor { get; set; }
 
         // --------------- API ---------------
-        public List<SMResult> SearchSMs(string semanticId = "", string identifier = "", string diff = "", string expression = "")
+        public QueryResult SearchSMs(string semanticId = "", string identifier = "", string diff = "", string expression = "")
         {
+            var qResult = new QueryResult();
+            qResult.Messages = new List<string>();
+
             var watch = System.Diagnostics.Stopwatch.StartNew();
             Console.WriteLine();
             Console.WriteLine("SearchSMs");
-            Console.WriteLine("Total number of SMs " + new AasContext().SMSets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
+            var text = "Total number of SMs " + new AasContext().SMSets.Count() + " in " + watch.ElapsedMilliseconds + "ms";
+            Console.WriteLine(text);
+            qResult.Messages.Add(text);
 
             watch.Restart();
             var smList = GetSMSet(semanticId, identifier, diff, expression);
-            Console.WriteLine("Found " + smList.Count + " SM in " + watch.ElapsedMilliseconds + "ms");
+            text = "Found " + smList.Count + " SM in " + watch.ElapsedMilliseconds + "ms";
+            Console.WriteLine(text);
+            qResult.Messages.Add(text);
 
             watch.Restart();
             var result = GetSMResult(smList);
-            Console.WriteLine("Collected result in " + watch.ElapsedMilliseconds + "ms");
+            text = "Collected result in " + watch.ElapsedMilliseconds + "ms";
+            Console.WriteLine(text);
+            qResult.Messages.Add(text);
 
-            return result;
+            qResult.SMResults = result;
+
+            return qResult;
         }
 
         public int CountSMs(string semanticId = "", string identifier = "", string diff = "")
@@ -72,26 +83,35 @@ namespace AasxServerDB
             return count;
         }
 
-        public List<SMEResult> SearchSMEs(
+        public QueryResult SearchSMEs(
             string smSemanticId = "", string smIdentifier = "", string semanticId = "", string diff = "",
             string contains = "", string equal = "", string lower = "", string upper = "", string expression = "")
         {
+            var qResult = new QueryResult();
+            qResult.Messages = new List<string>();
+
             var watch = System.Diagnostics.Stopwatch.StartNew();
             Console.WriteLine();
             Console.WriteLine("SearchSMEs");
-            Console.WriteLine("Total number of SMEs " + new AasContext().SMESets.Count() + " in " + watch.ElapsedMilliseconds + "ms");
+            var text = "Total number of SMEs " + new AasContext().SMESets.Count() + " in " + watch.ElapsedMilliseconds + "ms";
+            Console.WriteLine(text);
+            qResult.Messages.Add(text);
 
             watch.Restart();
             var smeWithValue = GetSMEWithValue(smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
-            Console.WriteLine("Found " + smeWithValue.Count + " SMEs in " + watch.ElapsedMilliseconds + "ms");
+            text = "Found " + smeWithValue.Count + " SMEs in " + watch.ElapsedMilliseconds + "ms";
+            Console.WriteLine(text);
+            qResult.Messages.Add(text);
 
             watch.Restart();
             var result = GetSMEResult(smeWithValue);
-            Console.WriteLine("Collected result in " + watch.ElapsedMilliseconds + "ms");
+            text = "Collected result in " + watch.ElapsedMilliseconds + "ms";
+            Console.WriteLine(text);
+            qResult.Messages.Add(text);
 
-            return result;
+            qResult.SMEResults = result;
 
-
+            return qResult;
         }
 
         public int CountSMEs(
@@ -578,7 +598,7 @@ namespace AasxServerDB
         private void QuerySMorSME_normal(ref List<SMSet>? smSet, ref List<SMEWithValue>? smeSet, string expression = "")
         {
             bool log = false;
-            bool withQueryLanguage = false;
+            int queryLanguage = 0;
 
             if (expression.StartsWith("$LOG"))
             {
@@ -589,9 +609,15 @@ namespace AasxServerDB
 
             if (expression.StartsWith("$QL"))
             {
-                withQueryLanguage = true;
+                queryLanguage = 1;
                 expression = expression.Replace("$QL", "");
                 Console.WriteLine("$QL");
+            }
+            if (expression.StartsWith("$JSON"))
+            {
+                queryLanguage = 2;
+                expression = expression.Replace("$JSON", "");
+                Console.WriteLine("$JSON");
             }
 
             if (expression == "" || (smSet == null && smeSet == null))
@@ -610,7 +636,7 @@ namespace AasxServerDB
                 string conditionStr = "";
                 string conditionNum = "";
 
-                if (!withQueryLanguage)
+                if (queryLanguage == 0)
                 {
                     expression = expression.Replace("\n", "").Replace(" ", "");
 
@@ -661,9 +687,9 @@ namespace AasxServerDB
                     conditionNum = conditionNum.Replace("mValue", "Value");
                     Console.WriteLine("condition mValue #" + countTypePrefix + ": " + conditionNum);
                 }
-                else
+                else if (queryLanguage == 1)
                 {
-                    // with newest query language from QueryParser.cs
+                    // with query language from QueryParser.cs
                     // var grammar = serviceProvider.GetService<QueryGrammar>();
                     var parser = new Parser(grammar);
                     parser.Context.TracingEnabled = true;
@@ -722,6 +748,42 @@ namespace AasxServerDB
                         {
                             conditionNum = "";
                         }
+                    }
+                }
+                else
+                {
+                    // JSON Query Language from JsonParser.cs
+                    var jParser = new JsonParser();
+
+                    int countTypePrefix = 0;
+                    combinedCondition = jParser.ParseTreeToExpression(expression, "", ref countTypePrefix);
+
+                    countTypePrefix = 0;
+                    conditionSM = jParser.ParseTreeToExpression(expression, "sm.", ref countTypePrefix);
+                    if (conditionSM == "$SKIP")
+                    {
+                        conditionSM = "";
+                    }
+
+                    countTypePrefix = 0;
+                    conditionSME = jParser.ParseTreeToExpression(expression, "sme.", ref countTypePrefix);
+                    if (conditionSME == "$SKIP")
+                    {
+                        conditionSME = "";
+                    }
+
+                    countTypePrefix = 0;
+                    conditionStr = jParser.ParseTreeToExpression(expression, "str()", ref countTypePrefix);
+                    if (conditionStr == "$SKIP")
+                    {
+                        conditionStr = "";
+                    }
+
+                    countTypePrefix = 0;
+                    conditionNum = jParser.ParseTreeToExpression(expression, "num()", ref countTypePrefix);
+                    if (conditionNum == "$SKIP")
+                    {
+                        conditionNum = "";
                     }
                 }
 
