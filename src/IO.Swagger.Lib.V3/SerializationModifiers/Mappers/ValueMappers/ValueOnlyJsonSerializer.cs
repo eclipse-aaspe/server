@@ -112,9 +112,6 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             var result = new JsonObject();
             result[entityValue.IdShort] = valueObject;
 
-            var result = new JsonObject();
-            result[entityValue.IdShort] = valueObject;
-
             return result;
         }
 
@@ -257,9 +254,6 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
             {
                 return valueObject;
             }
-
-            var result = new JsonObject();
-            result[referenceElementValue.IdShort] = valueObject;
 
             var result = new JsonObject();
             result[referenceElementValue.IdShort] = valueObject;
