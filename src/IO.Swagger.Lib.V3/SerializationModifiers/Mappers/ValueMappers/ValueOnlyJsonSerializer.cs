@@ -221,6 +221,11 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
                 return valueObject;
             }
 
+            if (isParentSML)
+            {
+                return valueObject;
+            }
+
             var result = new JsonObject();
             result[submodelElementCollectionValue.IdShort] = valueObject;
 
