@@ -23,7 +23,7 @@ public interface IServiceDescription
     /// <summary>
     /// Gets or Sets Profiles
     /// </summary>
-    List<ServiceDescription.ServiceProfiles>? Profiles { get; set; }
+    List<ServiceDescription.ServiceProfiles>? profiles { get; set; }
 
     /// <summary>
     /// Returns the string presentation of the object

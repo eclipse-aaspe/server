@@ -14,6 +14,6 @@
 namespace DataTransferObjects.CommonDTOs
 {
     public record class LangStringTextTypeDTO(
-            string? language,
-            string? text) : IDTO;
+            string Language,
+            string Text) : IDTO;
 }

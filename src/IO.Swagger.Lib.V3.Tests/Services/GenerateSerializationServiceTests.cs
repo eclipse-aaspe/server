@@ -25,6 +25,7 @@ public class GenerateSerializationServiceTests
     private readonly Mock<IAppLogger<GenerateSerializationService>> _mockLogger;
     private readonly Mock<IAssetAdministrationShellService> _mockAasService;
     private readonly Mock<ISubmodelService> _mockSubmodelService;
+    private readonly Mock<IConceptDescriptionService> _mockCdService;
     private readonly GenerateSerializationService _service;
 
     public GenerateSerializationServiceTests()
@@ -32,27 +33,27 @@ public class GenerateSerializationServiceTests
         _mockLogger          = new Mock<IAppLogger<GenerateSerializationService>>();
         _mockAasService      = new Mock<IAssetAdministrationShellService>();
         _mockSubmodelService = new Mock<ISubmodelService>();
-        _service             = new GenerateSerializationService(_mockLogger.Object, _mockAasService.Object, _mockSubmodelService.Object);
+        _service             = new GenerateSerializationService(_mockLogger.Object, _mockAasService.Object, _mockSubmodelService.Object, _mockCdService.Object);
     }
 
     [Fact]
     public void Constructor_ShouldThrowArgumentNullException_WhenLoggerIsNull()
     {
-        Action act = () => new GenerateSerializationService(null, _mockAasService.Object, _mockSubmodelService.Object);
+        Action act = () => new GenerateSerializationService(null, _mockAasService.Object, _mockSubmodelService.Object, _mockCdService.Object);
         act.Should().Throw<ArgumentNullException>().WithParameterName("logger");
     }
 
     [Fact]
     public void Constructor_ShouldThrowArgumentNullException_WhenAasServiceIsNull()
     {
-        Action act = () => new GenerateSerializationService(_mockLogger.Object, null, _mockSubmodelService.Object);
+        Action act = () => new GenerateSerializationService(_mockLogger.Object, null, _mockSubmodelService.Object, _mockCdService.Object);
         act.Should().Throw<ArgumentNullException>().WithParameterName("aasService");
     }
 
     [Fact]
     public void Constructor_ShouldThrowArgumentNullException_WhenSubmodelServiceIsNull()
     {
-        Action act = () => new GenerateSerializationService(_mockLogger.Object, _mockAasService.Object, null);
+        Action act = () => new GenerateSerializationService(_mockLogger.Object, _mockAasService.Object, null, _mockCdService.Object);
         act.Should().Throw<ArgumentNullException>().WithParameterName("submodelService");
     }
 
@@ -60,8 +61,8 @@ public class GenerateSerializationServiceTests
     public void GenerateSerializationByIds_ShouldReturnEmptyEnvironment_WhenNoIdsProvided()
     {
         // Arrange
-        _mockAasService.Setup(x => x.GetAllAssetAdministrationShells(It.IsAny<List<SpecificAssetId>?>(), It.IsAny<string?>())).Returns([]);
-        _mockSubmodelService.Setup(x => x.GetAllSubmodels()).Returns([]);
+        _mockAasService.Setup(x => x.GetAllAssetAdministrationShells(It.IsAny<List<ISpecificAssetId>?>(), It.IsAny<string?>())).Returns([]);
+        _mockSubmodelService.Setup(x => x.GetAllSubmodels(It.IsAny<IReference?>(), It.IsAny<string?>())).Returns([]);
 
         // Act
         var result = _service.GenerateSerializationByIds();
@@ -79,8 +80,8 @@ public class GenerateSerializationServiceTests
         var mockAas = new Mock<IAssetAdministrationShell>();
         mockAas.SetupGet(x => x.Id).Returns(aasId);
 
-        _mockAasService.Setup(x => x.GetAllAssetAdministrationShells(It.IsAny<List<SpecificAssetId>?>(), It.IsAny<string?>())).Returns([mockAas.Object]);
-        _mockSubmodelService.Setup(x => x.GetAllSubmodels()).Returns([]);
+        _mockAasService.Setup(x => x.GetAllAssetAdministrationShells(It.IsAny<List<ISpecificAssetId>?>(), It.IsAny<string?>())).Returns([mockAas.Object]);
+        _mockSubmodelService.Setup(x => x.GetAllSubmodels(It.IsAny<IReference?>(), It.IsAny<string?>())).Returns([]);
 
         // Act
         var result = _service.GenerateSerializationByIds(new List<string> {aasId});
@@ -98,8 +99,8 @@ public class GenerateSerializationServiceTests
         var mockSubmodel = new Mock<ISubmodel>();
         mockSubmodel.SetupGet(x => x.Id).Returns(submodelId);
 
-        _mockAasService.Setup(x => x.GetAllAssetAdministrationShells(It.IsAny<List<SpecificAssetId>?>(), It.IsAny<string?>())).Returns([]);
-        _mockSubmodelService.Setup(x => x.GetAllSubmodels()).Returns([mockSubmodel.Object]);
+        _mockAasService.Setup(x => x.GetAllAssetAdministrationShells(It.IsAny<List<ISpecificAssetId>?>(), It.IsAny<string?>())).Returns([]);
+        _mockSubmodelService.Setup(x => x.GetAllSubmodels(It.IsAny<IReference?>(), It.IsAny<string?>())).Returns([mockSubmodel.Object]);
 
         // Act
         var result = _service.GenerateSerializationByIds(null, new List<string> {submodelId});
@@ -122,8 +123,8 @@ public class GenerateSerializationServiceTests
         var mockSubmodel = new Mock<ISubmodel>();
         mockSubmodel.SetupGet(x => x.Id).Returns(submodelId);
 
-        _mockAasService.Setup(x => x.GetAllAssetAdministrationShells(It.IsAny<List<SpecificAssetId>?>(), It.IsAny<string?>())).Returns([mockAas.Object]);
-        _mockSubmodelService.Setup(x => x.GetAllSubmodels()).Returns([mockSubmodel.Object]);
+        _mockAasService.Setup(x => x.GetAllAssetAdministrationShells(It.IsAny<List<ISpecificAssetId>?>(), It.IsAny<string?>())).Returns([mockAas.Object]);
+        _mockSubmodelService.Setup(x => x.GetAllSubmodels(It.IsAny<IReference?>(), It.IsAny<string?>())).Returns([mockSubmodel.Object]);
 
         // Act
         var result = _service.GenerateSerializationByIds(new List<string> {aasId}, new List<string> {submodelId});

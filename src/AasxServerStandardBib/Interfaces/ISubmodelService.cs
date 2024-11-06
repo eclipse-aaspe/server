@@ -25,7 +25,7 @@ namespace AasxServerStandardBib.Interfaces
         void                   DeleteSubmodelById(string submodelIdentifier);
         void                   DeleteSubmodelElementByPath(string submodelIdentifier, string idShortPath);
         List<ISubmodelElement> GetAllSubmodelElements(string submodelIdentifier);
-        List<ISubmodel>        GetAllSubmodels();
+        List<ISubmodel>        GetAllSubmodels(IReference reqSemanticId = null, string idShort = null);
         string                 GetFileByPath(string submodelIdentifier, string idShortPath, out byte[] byteArray, out long fileSize);
         ISubmodel              GetSubmodelById(string submodelIdentifier);
         ISubmodelElement       GetSubmodelElementByPath(string submodelIdentifier, string idShortPath);

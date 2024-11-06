@@ -58,7 +58,7 @@ namespace AasxServerStandardBib.Services
             _packageEnvService.DeleteConceptDescriptionById(cdIdentifier);
         }
 
-        public List<IConceptDescription> GetAllConceptDescriptions(string idShort, Reference isCaseOf, Reference dataSpecificationRef)
+        public List<IConceptDescription> GetAllConceptDescriptions(string idShort = null, Reference isCaseOf = null, Reference dataSpecificationRef = null)
         {
             //Get All Concept descriptions
             var output = _packageEnvService.GetAllConceptDescriptions();

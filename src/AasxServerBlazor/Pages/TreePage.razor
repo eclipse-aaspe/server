@@ -337,7 +337,8 @@
                     {
                         if (parent is ISubmodelElementList parentList)
                         {
-                            if (path.Equals(sme.IdShort))
+                            //Considering child elements of SML can have null idShorts
+                            if (path == null || path.Equals(sme.IdShort))
                             {
                                 var index = parentList.Value?.IndexOf(sme);
                                 path = $"[{index}]";
@@ -553,11 +554,13 @@
 
                 if (SelectedNode is {Tag: BasicEventElement be} && be.Observed != null)
                 {
-                    var observedSingleKey = be.Observed.GetAsExactlyOneKey().ToStringExtended();
+                    // var observedSingleKey = be.Observed.GetAsExactlyOneKey().ToStringExtended();
+                    var observedSingleKey = be.Observed.Keys.ToStringExtended();
                     <span style="color:white;background-color:blue;">Observed</span>
                     <span>@($" {observedSingleKey}")</span>
                     <br/>
-                    var refsme = Program.env[0].AasEnv.FindReferableByReference(be.Observed);
+                    // var refsme = Program.env[0].AasEnv.FindReferableByReference(be.Observed);
+                    var refsme = Program.env[SelectedNode.envIndex].AasEnv.FindReferableByReference(be.Observed);
                     if (refsme != null)
                     {
                         <span style="color:lightgray;">UPDATE @TimeStamp.DateTimeToString(refsme.TimeStamp)</span>

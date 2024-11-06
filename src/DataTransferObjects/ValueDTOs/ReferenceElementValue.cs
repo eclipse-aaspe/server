@@ -15,5 +15,7 @@ using DataTransferObjects.CommonDTOs;
 
 namespace DataTransferObjects.ValueDTOs
 {
-    public record class ReferenceElementValue(string idShort, ReferenceDTO? value = null) : ISubmodelElementValue;
+    public record class ReferenceElementValue(
+        string IdShort,
+        ReferenceDTO? Value = null) : ISubmodelElementValue;
 }

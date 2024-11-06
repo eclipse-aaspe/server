@@ -14,6 +14,7 @@
 using IO.Swagger.Lib.V3.Interfaces;
 using IO.Swagger.Lib.V3.SerializationModifiers.PathModifier;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace IO.Swagger.Lib.V3.Services
 {
@@ -30,29 +31,29 @@ namespace IO.Swagger.Lib.V3.Services
             return _pathTransformer.Transform(that, context);
         }
 
-        public List<List<string>> ToIdShortPath(List<ISubmodel?> submodelList)
+        public List<string> ToIdShortPath(List<ISubmodel?> submodelList)
         {
-            var output = new List<List<string>>();
+            var output = new List<string>();
 
             foreach (var submodel in submodelList)
             {
                 var context = new PathModifierContext();
                 var path = _pathTransformer.Transform(submodel, context);
-                output.Add(path);
+                output.AddRange(path);
             }
 
             return output;
         }
 
-        public List<List<string>> ToIdShortPath(List<ISubmodelElement?> submodelElementList)
+        public List<string> ToIdShortPath(List<ISubmodelElement?> submodelElementList)
         {
-            var output = new List<List<string>>();
-
+            //var output = new List<List<string>>();
+            var output = new List<string>();
             foreach (var submodelElement in submodelElementList)
             {
-                var context = new PathModifierContext();
+                var context = new PathModifierContext(isGetAllSmes: true);
                 var path = _pathTransformer.Transform(submodelElement, context);
-                output.Add(path);
+                output.AddRange(path);
             }
 
             return output;

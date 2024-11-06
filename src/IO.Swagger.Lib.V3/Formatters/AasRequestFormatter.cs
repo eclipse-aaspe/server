@@ -189,9 +189,6 @@ namespace IO.Swagger.Lib.V3.Formatters
                 return output;
             }
 
-            // Deserialize submodelElements
-            var valueMetadata = ISubmodelElementMetadatListFrom(obj["submodelElements"]);
-
             var jsonString = obj.ToString();
 
             // Deserialize using System.Text.Json
@@ -205,19 +202,18 @@ namespace IO.Swagger.Lib.V3.Formatters
             if (submodelMetadata != null)
             {
                 output = new SubmodelMetadata(
-                                              submodelMetadata.id,
-                                              submodelMetadata.extensions,
-                                              submodelMetadata.category,
-                                              submodelMetadata.idShort,
-                                              submodelMetadata.displayName,
-                                              submodelMetadata.description,
-                                              submodelMetadata.administration,
-                                              submodelMetadata.kind,
-                                              submodelMetadata.semanticId,
-                                              submodelMetadata.supplementalSemanticIds,
-                                              submodelMetadata.qualifiers,
-                                              submodelMetadata.embeddedDataSpecifications,
-                                              valueMetadata);
+                                              submodelMetadata.Id,
+                                              submodelMetadata.Extensions,
+                                              submodelMetadata.Category,
+                                              submodelMetadata.IdShort,
+                                              submodelMetadata.DisplayName,
+                                              submodelMetadata.Description,
+                                              submodelMetadata.Administration,
+                                              submodelMetadata.Kind,
+                                              submodelMetadata.SemanticId,
+                                              submodelMetadata.SupplementalSemanticIds,
+                                              submodelMetadata.Qualifiers,
+                                              submodelMetadata.EmbeddedDataSpecifications);
             }
 
             return output;
@@ -273,15 +269,13 @@ namespace IO.Swagger.Lib.V3.Formatters
                 }
                 case "annotatedrelationshipelement":
                 {
-                    var valueMetadata = ISubmodelElementMetadatListFrom(obj["annotations"]);
-
                     node["annotations"] = null;
                     var annotatedRelElement = JsonSerializer.Deserialize<AnnotatedRelationshipElementMetadata>(node.ToJsonString(), serializerOptions);
 
-                    output = new AnnotatedRelationshipElementMetadata(annotatedRelElement.extensions, annotatedRelElement.category, annotatedRelElement.idShort,
-                                                                      annotatedRelElement.displayName, annotatedRelElement.description, annotatedRelElement.semanticId,
-                                                                      annotatedRelElement.supplementalSemanticIds, annotatedRelElement.qualifiers,
-                                                                      annotatedRelElement.embeddedDataSpecifications, valueMetadata);
+                    output = new AnnotatedRelationshipElementMetadata(annotatedRelElement.Extensions, annotatedRelElement.Category, annotatedRelElement.IdShort,
+                                                                      annotatedRelElement.DisplayName, annotatedRelElement.Description, annotatedRelElement.SemanticId,
+                                                                      annotatedRelElement.SupplementalSemanticIds, annotatedRelElement.Qualifiers,
+                                                                      annotatedRelElement.EmbeddedDataSpecifications);
                     break;
                 }
                 case "basiceventelement":
@@ -292,13 +286,10 @@ namespace IO.Swagger.Lib.V3.Formatters
                     break;
                 case "entity":
                 {
-                    var valueMetadata = ISubmodelElementMetadatListFrom(obj["statements"]);
-
-                    node["statements"] = null;
                     var entity = JsonSerializer.Deserialize<EntityMetadata>(node.ToJsonString(), serializerOptions);
 
-                    output = new EntityMetadata(entity.entityType, entity.extensions, entity.category, entity.idShort, entity.displayName, entity.description,
-                                                entity.semanticId, entity.supplementalSemanticIds, entity.qualifiers, entity.embeddedDataSpecifications, valueMetadata);
+                    output = new EntityMetadata(entity.EntityType, entity.Extensions, entity.Category, entity.IdShort, entity.DisplayName, entity.Description,
+                                                entity.SemanticId, entity.SupplementalSemanticIds, entity.Qualifiers, entity.EmbeddedDataSpecifications);
                     break;
                 }
                 case "file":
@@ -321,28 +312,21 @@ namespace IO.Swagger.Lib.V3.Formatters
                     break;
                 case "submodelelementcollection":
                 {
-                    var valueMetadata = ISubmodelElementMetadatListFrom(obj["value"]);
-
-                    node["value"] = null;
                     var smeColl = JsonSerializer.Deserialize<SubmodelElementCollectionMetadata>(node.ToJsonString(), serializerOptions);
 
-                    output = new SubmodelElementCollectionMetadata(smeColl.extensions, smeColl.category, smeColl.idShort, smeColl.displayName, smeColl.description,
-                                                                   smeColl.semanticId, smeColl.supplementalSemanticIds, smeColl.qualifiers, smeColl.embeddedDataSpecifications,
-                                                                   valueMetadata);
+                    output = new SubmodelElementCollectionMetadata(smeColl.Extensions, smeColl.Category, smeColl.IdShort, smeColl.DisplayName, smeColl.Description,
+                                                                   smeColl.SemanticId, smeColl.SupplementalSemanticIds, smeColl.Qualifiers, smeColl.EmbeddedDataSpecifications);
 
                     break;
                 }
                 case "submodelelementlist":
                 {
-                    var valueMetadata = ISubmodelElementMetadatListFrom(obj["value"]);
-
-                    node["value"] = null;
                     var smeList = JsonSerializer.Deserialize<SubmodelElementListMetadata>(node.ToJsonString(), serializerOptions);
 
-                    output = new SubmodelElementListMetadata(smeList.typeValueListElement, smeList.extensions, smeList.category, smeList.idShort, smeList.displayName,
-                                                             smeList.description, smeList.semanticId, smeList.supplementalSemanticIds, smeList.qualifiers,
-                                                             smeList.embeddedDataSpecifications, smeList.orderRelevant, smeList.semanticIdListElement,
-                                                             smeList.valueTypeListElement, valueMetadata);
+                    output = new SubmodelElementListMetadata(smeList.TypeValueListElement, smeList.Extensions, smeList.Category, smeList.IdShort, smeList.DisplayName,
+                                                             smeList.Description, smeList.SemanticId, smeList.SupplementalSemanticIds, smeList.Qualifiers,
+                                                             smeList.EmbeddedDataSpecifications, smeList.OrderRelevant, smeList.SemanticIdListElement,
+                                                             smeList.ValueTypeListElement);
                     break;
                 }
             }

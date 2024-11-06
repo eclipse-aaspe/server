@@ -16,10 +16,12 @@ using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
 using AasxServerStandardBib.Transformers;
+using AdminShellNS.Extensions;
 using Extensions;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -488,7 +490,35 @@ namespace AasxServerStandardBib.Services
             }
         }
 
-        public List<ISubmodel> GetAllSubmodels() => _packageEnvService.GetAllSubmodels();
+        public List<ISubmodel> GetAllSubmodels(IReference reqSemanticId = null, string idShort = null)
+        {
+            var output = _packageEnvService.GetAllSubmodels();
+
+            if(!output.IsNullOrEmpty())
+            {
+                if (!string.IsNullOrEmpty(idShort))
+                {
+                    _logger.LogDebug($"Filtering Submodels with idShort {idShort}.");
+                    output = output.Where(s => s.IdShort.Equals(idShort)).ToList();
+                    if (output.IsNullOrEmpty())
+                    {
+                        _logger.LogInformation($"No Submodels with idShort {idShort} found.");
+                    }
+                }
+
+                if(reqSemanticId != null)
+                {
+                    _logger.LogDebug($"Filtering Submodels with requested Semnatic Id.");
+                    output = output.Where(s => s.SemanticId != null && s.SemanticId.Matches(reqSemanticId)).ToList();
+                    if (output.IsNullOrEmpty())
+                    {
+                        _logger.LogInformation($"No Submodels with requested semanticId found.");
+                    }
+                }
+            }
+
+            return output;
+        }
 
         public ISubmodel CreateSubmodel(ISubmodel newSubmodel, string aasIdentifier)
         {
