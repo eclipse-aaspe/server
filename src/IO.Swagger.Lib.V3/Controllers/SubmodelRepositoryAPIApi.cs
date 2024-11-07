@@ -813,8 +813,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual IActionResult GetAllSubmodelElementsReferenceSubmodelRepo([FromRoute][Required]string submodelIdentifier, [FromQuery]int? limit, 
-																			    [FromQuery]string? cursor, [FromQuery]string? level)
-    { 
+	[FromQuery]string? cursor, [FromQuery]string? level)
+    {
+        //Validate level and extent
+        var levelEnum = _validateModifierService.ValidateLevel(level);
+
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
         if (decodedSubmodelIdentifier == null)
@@ -836,7 +839,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var smeList = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
         var smePagedList  = _paginationService.GetPaginatedList(smeList, new PaginationParameters(cursor, limit));
-        var smeReferences = _referenceModifierService.GetReferenceResult(smePagedList.result.ConvertAll(sme => (IReferable)sme));
+        var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePagedList.result ?? [], levelEnum);
+        var smeReferences = _referenceModifierService.GetReferenceResult(smeLevelList.ConvertAll(sme => (IReferable)sme));
         var output = new ReferencePagedResult(smeReferences, smePagedList.paging_metadata);
         return new ObjectResult(output);
     }
@@ -1066,13 +1070,17 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     public virtual IActionResult GetAllSubmodelsReference([FromQuery][StringLength(3072, MinimumLength=1)]string? semanticId, [FromQuery]string? idShort, [FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]string? level)
     { 
         _logger.LogInformation($"Received a request to get all the submodels.");
+
+        //Validate level and extent
         var levelEnum = _validateModifierService.ValidateLevel(level);
+
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
 
         var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
 
         var submodelsPagedList = _paginationService.GetPaginatedList(submodelList, new PaginationParameters(cursor, limit));
-        var smReferences       = _referenceModifierService.GetReferenceResult(submodelsPagedList.result.ConvertAll(sm => (IReferable)sm));
+        var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result, levelEnum);
+        var smReferences       = _referenceModifierService.GetReferenceResult(submodelLevelList.ConvertAll(sm => (IReferable)sm));
         var output = new ReferencePagedResult(smReferences, submodelsPagedList.paging_metadata);
         return new ObjectResult(output);
     }
