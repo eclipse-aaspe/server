@@ -692,7 +692,10 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAllSubmodelElementsReferenceAasRepository([FromRoute][Required]string aasIdentifier, [FromRoute][Required]string submodelIdentifier, 
 		[FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]string? level)
-        { 
+        {
+            //Validate level and extent
+            var levelEnum = _validateModifierService.ValidateLevel(level);
+
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -721,7 +724,8 @@ namespace IO.Swagger.Controllers
 
             // TODO (jtikekar, 2023-09-04): check performace imapct due to ConvertAll
             var smePaginated = _paginationService.GetPaginatedList(smeList, new PaginationParameters(cursor, limit));
-            var smeReferenceList = _referenceModifierService.GetReferenceResult(smePaginated.result.ConvertAll(sme => (IReferable)sme));
+            var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginated.result ?? [], levelEnum);
+            var smeReferenceList = _referenceModifierService.GetReferenceResult(smeLevelList.ConvertAll(sme => (IReferable)sme));
             var output = new ReferencePagedResult(smeReferenceList, smePaginated.paging_metadata);
             return new ObjectResult(output);
         }
