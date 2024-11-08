@@ -38,7 +38,6 @@ using DataTransferObjects.MetadataDTOs;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers;
 using IO.Swagger.Lib.V3.Models;
 using System.Text.Json.Serialization;
-using Newtonsoft.Json;
 using Npgsql.Internal;
 
 namespace IO.Swagger.Lib.V3.Formatters

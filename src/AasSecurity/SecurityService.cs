@@ -60,7 +60,6 @@ namespace AasSecurity
             role.ApiOperation = "";
             role.SemanticId = semanticId;
             role.RulePath = "";
-            role.QueryLanguage = true;
 
             GlobalSecurityVariables.SecurityRoles.Add(role);
         }

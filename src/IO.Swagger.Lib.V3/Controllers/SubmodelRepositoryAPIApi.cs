@@ -742,22 +742,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
 	    var submodelElementList = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
-	    var filtered = new List<ISubmodelElement?>();
-	    if (!diff.IsNullOrEmpty())
-	    {
-	        try
-	        {
-	            var _diff = TimeStamp.TimeStamp.StringToDateTime(diff);
-	            filtered = filterSubmodelElements(submodelElementList, _diff);
-	        }
-	        catch
-	        {
-	            // ignored
-	        }
-	    }
-	    else
-	        filtered = submodelElementList;
-
         var filtered = new List<ISubmodelElement?>();
         if (!diff.IsNullOrEmpty())
         {

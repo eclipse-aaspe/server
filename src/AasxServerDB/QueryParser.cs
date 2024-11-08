@@ -492,24 +492,6 @@ public class QueryGrammar : Grammar
 
     public void ParseAccessRules(ParseTreeNode node)
     {
-        /*
-        if (SecurityRoles != null)
-        {
-            int i = 0;
-            while (i < SecurityRoles.Count)
-            {
-                if (SecurityRoles[i].QueryLanguage)
-                {
-                    SecurityRoles.RemoveAt(i);
-                }
-                else
-                {
-                    i++;
-                }
-            }
-        }
-        */
-        // SecurityRoles.Clear();
         mySecurityRules.ClearSecurityRules();
 
         ParseAccessRule(node);
@@ -570,14 +552,7 @@ public class QueryGrammar : Grammar
                             role.ApiOperation = "";
                             role.SemanticId = semanticId;
                             role.RulePath = "";
-                            role.QueryLanguage = true;
 
-                            /*
-                            if (SecurityRoles != null)
-                            {
-                                SecurityRoles.Add(role);
-                            }
-                            */
                             mySecurityRules.AddSecurityRule(n, access, right, "semanticid", semanticId);
                         }
                     }
@@ -590,11 +565,5 @@ public class QueryGrammar : Grammar
                 }
                 break;
         }
-    }
-
-    static List<SecurityRole> SecurityRoles = null;
-    public void storeSecurityRoles(List<SecurityRole> sr)
-    {
-        SecurityRoles = sr;
     }
 }
