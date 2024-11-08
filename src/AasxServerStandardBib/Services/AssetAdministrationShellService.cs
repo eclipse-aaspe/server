@@ -243,14 +243,11 @@ namespace AasxServerStandardBib.Services
                         }
                     }
 
-                    if (aasList.Count != 0)
-                    {
-                        output = aasList;
-                    }
-                    else
+                    if (aasList.Count == 0)
                     {
                         _logger.LogInformation($"No AAS with requested assetId found.");
                     }
+                    output = aasList;
                 }
             }
 
