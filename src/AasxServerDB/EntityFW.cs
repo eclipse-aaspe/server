@@ -90,7 +90,7 @@ namespace AasxServerDB
             return connectionString;
         }
 
-        public static void InitDB(bool reloadDB)
+        public static void InitDB(bool reloadDB, string dataPath)
         {
             // Get database
             Console.WriteLine($"Use {(IsPostgres ? "POSTGRES" : "SQLITE")}");
@@ -98,6 +98,10 @@ namespace AasxServerDB
 
             // Get path
             var connectionString = db.Database.GetConnectionString();
+            if (connectionString.Contains("$DATAPATH"))
+            {
+                connectionString = connectionString.Replace("$DATAPATH", dataPath);
+            }
             Console.WriteLine($"Database connection string: {connectionString}");
             if (connectionString.IsNullOrEmpty())
             {

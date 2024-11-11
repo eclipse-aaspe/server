@@ -339,7 +339,7 @@ namespace AasxServerDB
         }
 
         // --------------- SME Methods ---------------
-        private static IQueryable? GetSMEs(AasContext db, bool withCount = false, string smSemanticId = "", string smIdentifier = "", string semanticId = "",
+        private IQueryable? GetSMEs(AasContext db, bool withCount = false, string smSemanticId = "", string smIdentifier = "", string semanticId = "",
             string diffString = "", string contains = "", string equal = "", string lower = "", string upper = "", string expression = "")
         {
             // analyse parameters
