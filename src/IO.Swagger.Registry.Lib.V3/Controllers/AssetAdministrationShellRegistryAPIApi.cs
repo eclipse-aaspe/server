@@ -35,6 +35,9 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 
+// MIHO added
+using AasxServerStandardBib.Interfaces;
+
 namespace IO.Swagger.Controllers;
 
 using AasSecurity.Exceptions;
@@ -47,16 +50,22 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
 {
     private readonly IAppLogger<AssetAdministrationShellRegistryAPIApiController> _logger;
     private readonly IBase64UrlDecoderService _decoderService;
+    private readonly IAssetAdministrationShellService _aasService; // MIHO added
     private readonly IAasRegistryService _aasRegistryService;
     private readonly IRegistryInitializerService _registryInitializerService;
     private readonly IAasDescriptorPaginationService _paginationService;
 
-    public AssetAdministrationShellRegistryAPIApiController(IAppLogger<AssetAdministrationShellRegistryAPIApiController> logger, IBase64UrlDecoderService decoderService,
-                                                            IAasRegistryService aasRegistryService, IRegistryInitializerService registryInitializerService,
-                                                            IAasDescriptorPaginationService paginationService)
+    public AssetAdministrationShellRegistryAPIApiController(
+        IAppLogger<AssetAdministrationShellRegistryAPIApiController> logger,
+        IBase64UrlDecoderService decoderService,
+        IAssetAdministrationShellService aasService, // MIHO added
+        IAasRegistryService aasRegistryService,
+        IRegistryInitializerService registryInitializerService,
+        IAasDescriptorPaginationService paginationService)
     {
         _logger                     = logger;
         _decoderService             = decoderService;
+        _aasService                 = aasService; // MIHO added
         _aasRegistryService         = aasRegistryService;
         _registryInitializerService = registryInitializerService;
         _paginationService          = paginationService;
@@ -575,6 +584,19 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
                 var aasDescriptorList = _aasRegistryService.GetAllAssetAdministrationShellDescriptors(assetList: assetList);
 
                 aasList.AddRange(aasDescriptorList.OfType<AssetAdministrationShellDescriptor>().Select(ad => ad.Id));
+
+                // MIHO added this!
+                foreach (var localAAS in _aasService?.GetAllAssetAdministrationShells())
+                {
+                    var locAssId = localAAS?.AssetInformation?.GlobalAssetId?.Trim();
+                    if (locAssId == null || localAAS.Id == null || localAAS.Id.Trim().Length < 1)
+                        continue;
+
+                    if (!assetList.Contains(locAssId))
+                        continue;
+
+                    aasList.Add(localAAS.Id);
+                }
             }
             else
             {

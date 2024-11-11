@@ -1,22 +1,15 @@
-﻿{
-  "iisSettings": {
-    "windowsAuthentication": false,
-    "anonymousAuthentication": true,
-    "iisExpress": {
-      "applicationUrl": "http://localhost:13138",
-      "sslPort": 0
-    }
-  },
+{
   "profiles": {
     "AasxServerAspNetCore": {
       "commandName": "Project",
-      "commandLineArgs": "--aasx-in-memory 1000 --data-path \"C:\\Development\\AASX\\v3security\" --edit --external-blazor http://localhost:5001",
-      "dotnetRunMessages": true,
-      "launchBrowser": false,
-      "applicationUrl": "http://localhost:5001",
+      "commandLineArgs": "--no-security --secret-string-api 1234 --aasx-in-memory 1000 --data-path \"C:\\HOMI\\Develop\\Aasx\\aasx-server-docker\\aasxs\" --external-blazor http://localhost:5001",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      }
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "Kestrel__Endpoints__Http__Url": "http://*:5001",
+        "DOTNET_gcServer": "1"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "http://localhost:5001"
     },
     "IIS Express": {
       "commandName": "IISExpress",
@@ -24,6 +17,14 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
+    }
+  },
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:13138",
+      "sslPort": 0
     }
   }
 }
