@@ -14,23 +14,20 @@
 namespace AasxServerDB.Entities
 {
     using System.ComponentModel.DataAnnotations;
-    using System.ComponentModel.DataAnnotations.Schema;
     using Microsoft.EntityFrameworkCore;
 
     // indexes
     [Index(nameof(Id))]
 
-    public class AASSet
+    public class CDSet
     {
         // env
-        [ForeignKey("EnvSet")]
-        public         int      EnvId  { get; set; }
-        public virtual EnvSet? EnvSet { get; set; }
+        public virtual ICollection<EnvCDSet?> EnvCDSets { get; } = new List<EnvCDSet?>();
 
-        // aas
+        // id
         public int Id { get; set; }
 
-        // asset administration shell
+        // concept description
         [StringLength(128)]
         public string? IdShort                    { get; set; }
         public string? DisplayName                { get; set; }
@@ -40,8 +37,8 @@ namespace AasxServerDB.Entities
         public string? Extensions                 { get; set; }
         [MaxLength(2000)]
         public string? Identifier                 { get; set; }
+        public string? IsCaseOf                   { get; set; }
         public string? EmbeddedDataSpecifications { get; set; }
-        public string? DerivedFrom                { get; set; }
 
         // administration
         [StringLength(4)]
@@ -53,23 +50,10 @@ namespace AasxServerDB.Entities
         public string? TemplateId                  { get; set; }
         public string? AEmbeddedDataSpecifications { get; set; }
 
-        // asset information
-        public string? AssetKind                   { get; set; }
-        public string? GlobalAssetId               { get; set; }
-        public string? AssetType                   { get; set; }
-        public string? SpecificAssetIds            { get; set; }
-        [MaxLength(2000)]
-        public string? DefaultThumbnailPath        { get; set; }
-        [MaxLength(100)]
-        public string? DefaultThumbnailContentType { get; set; }
-
         // time stamp
         public DateTime TimeStampCreate { get; set; }
         public DateTime TimeStamp       { get; set; }
         public DateTime TimeStampTree   { get; set; }
         public DateTime TimeStampDelete { get; set; }
-
-        // sm
-        public virtual ICollection<SMSet> SMSets { get; } = new List<SMSet>();
     }
 }

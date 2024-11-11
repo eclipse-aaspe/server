@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AasxServerDB.Migrations.Postgres
 {
     [DbContext(typeof(PostgreAasContext))]
-    [Migration("20240913112934_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20241001083526_AddEnvCDSet")]
+    partial class AddEnvCDSet
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -33,11 +33,44 @@ namespace AasxServerDB.Migrations.Postgres
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AASXId")
-                        .HasColumnType("integer");
+                    b.Property<string>("AEmbeddedDataSpecifications")
+                        .HasColumnType("text");
 
                     b.Property<string>("AssetKind")
                         .HasColumnType("text");
+
+                    b.Property<string>("AssetType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Category")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("Creator")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DefaultThumbnailContentType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("DefaultThumbnailPath")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("DerivedFrom")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DisplayName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmbeddedDataSpecifications")
+                        .HasColumnType("text");
+
+                    b.Property<int>("EnvId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Extensions")
                         .HasColumnType("text");
@@ -46,10 +79,23 @@ namespace AasxServerDB.Migrations.Postgres
                         .HasColumnType("text");
 
                     b.Property<string>("IdShort")
-                        .HasColumnType("text");
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
 
                     b.Property<string>("Identifier")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Revision")
+                        .HasMaxLength(4)
+                        .HasColumnType("character varying(4)");
+
+                    b.Property<string>("SpecificAssetIds")
                         .HasColumnType("text");
+
+                    b.Property<string>("TemplateId")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
 
                     b.Property<DateTime>("TimeStamp")
                         .HasColumnType("timestamp with time zone");
@@ -63,14 +109,20 @@ namespace AasxServerDB.Migrations.Postgres
                     b.Property<DateTime>("TimeStampTree")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Version")
+                        .HasMaxLength(4)
+                        .HasColumnType("character varying(4)");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("AASXId");
+                    b.HasIndex("EnvId");
+
+                    b.HasIndex("Id");
 
                     b.ToTable("AASSets");
                 });
 
-            modelBuilder.Entity("AasxServerDB.Entities.AASXSet", b =>
+            modelBuilder.Entity("AasxServerDB.Entities.CDSet", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -78,12 +130,68 @@ namespace AasxServerDB.Migrations.Postgres
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AASX")
+                    b.Property<string>("AEmbeddedDataSpecifications")
                         .HasColumnType("text");
+
+                    b.Property<string>("Category")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("Creator")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DisplayName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmbeddedDataSpecifications")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Extensions")
+                        .HasColumnType("text");
+
+                    b.Property<string>("IdShort")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("Identifier")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("IsCaseOf")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Revision")
+                        .HasMaxLength(4)
+                        .HasColumnType("character varying(4)");
+
+                    b.Property<string>("TemplateId")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime>("TimeStamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("TimeStampCreate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("TimeStampDelete")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("TimeStampTree")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Version")
+                        .HasMaxLength(4)
+                        .HasColumnType("character varying(4)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("AASXSets");
+                    b.HasIndex("Id");
+
+                    b.ToTable("CDSets");
                 });
 
             modelBuilder.Entity("AasxServerDB.Entities.DValueSet", b =>
@@ -105,11 +213,54 @@ namespace AasxServerDB.Migrations.Postgres
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Id");
+
                     b.HasIndex("SMEId");
 
                     b.HasIndex("Value");
 
                     b.ToTable("DValueSets");
+                });
+
+            modelBuilder.Entity("AasxServerDB.Entities.EnvCDSet", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CDId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EnvId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CDId");
+
+                    b.HasIndex("EnvId");
+
+                    b.ToTable("EnvCDSets");
+                });
+
+            modelBuilder.Entity("AasxServerDB.Entities.EnvSet", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Path")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Id");
+
+                    b.ToTable("EnvSets");
                 });
 
             modelBuilder.Entity("AasxServerDB.Entities.IValueSet", b =>
@@ -130,6 +281,8 @@ namespace AasxServerDB.Migrations.Postgres
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Id");
 
                     b.HasIndex("SMEId");
 
@@ -159,7 +312,11 @@ namespace AasxServerDB.Migrations.Postgres
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Id");
+
                     b.HasIndex("SMEId");
+
+                    b.HasIndex("Value");
 
                     b.ToTable("OValueSets");
                 });
@@ -172,26 +329,49 @@ namespace AasxServerDB.Migrations.Postgres
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Category")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DisplayName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmbeddedDataSpecifications")
+                        .HasColumnType("text");
+
                     b.Property<string>("Extensions")
                         .HasColumnType("text");
 
                     b.Property<string>("IdShort")
-                        .HasColumnType("text");
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
 
                     b.Property<int?>("ParentSMEId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("SMEType")
+                    b.Property<string>("Qualifiers")
                         .HasColumnType("text");
+
+                    b.Property<string>("SMEType")
+                        .IsRequired()
+                        .HasMaxLength(9)
+                        .HasColumnType("character varying(9)");
 
                     b.Property<int>("SMId")
                         .HasColumnType("integer");
 
                     b.Property<string>("SemanticId")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("SupplementalSemanticIds")
                         .HasColumnType("text");
 
                     b.Property<string>("TValue")
-                        .HasColumnType("text");
+                        .HasColumnType("char(1)");
 
                     b.Property<DateTime>("TimeStamp")
                         .HasColumnType("timestamp with time zone");
@@ -207,9 +387,17 @@ namespace AasxServerDB.Migrations.Postgres
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Id");
+
+                    b.HasIndex("IdShort");
+
                     b.HasIndex("ParentSMEId");
 
                     b.HasIndex("SMId");
+
+                    b.HasIndex("SemanticId");
+
+                    b.HasIndex("TimeStamp");
 
                     b.ToTable("SMESets");
                 });
@@ -225,20 +413,60 @@ namespace AasxServerDB.Migrations.Postgres
                     b.Property<int?>("AASId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("AASXId")
+                    b.Property<string>("AEmbeddedDataSpecifications")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Category")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("Creator")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DisplayName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmbeddedDataSpecifications")
+                        .HasColumnType("text");
+
+                    b.Property<int>("EnvId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Extensions")
                         .HasColumnType("text");
 
                     b.Property<string>("IdShort")
-                        .HasColumnType("text");
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
 
                     b.Property<string>("Identifier")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Kind")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<string>("Qualifiers")
                         .HasColumnType("text");
 
+                    b.Property<string>("Revision")
+                        .HasMaxLength(4)
+                        .HasColumnType("character varying(4)");
+
                     b.Property<string>("SemanticId")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("SupplementalSemanticIds")
                         .HasColumnType("text");
+
+                    b.Property<string>("TemplateId")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
 
                     b.Property<DateTime>("TimeStamp")
                         .HasColumnType("timestamp with time zone");
@@ -252,11 +480,23 @@ namespace AasxServerDB.Migrations.Postgres
                     b.Property<DateTime>("TimeStampTree")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Version")
+                        .HasMaxLength(4)
+                        .HasColumnType("character varying(4)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AASId");
 
-                    b.HasIndex("AASXId");
+                    b.HasIndex("EnvId");
+
+                    b.HasIndex("Id");
+
+                    b.HasIndex("Identifier");
+
+                    b.HasIndex("SemanticId");
+
+                    b.HasIndex("TimeStampTree");
 
                     b.ToTable("SMSets");
                 });
@@ -280,6 +520,8 @@ namespace AasxServerDB.Migrations.Postgres
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Id");
+
                     b.HasIndex("SMEId");
 
                     b.HasIndex("Value");
@@ -289,13 +531,13 @@ namespace AasxServerDB.Migrations.Postgres
 
             modelBuilder.Entity("AasxServerDB.Entities.AASSet", b =>
                 {
-                    b.HasOne("AasxServerDB.Entities.AASXSet", "AASXSet")
+                    b.HasOne("AasxServerDB.Entities.EnvSet", "EnvSet")
                         .WithMany("AASSets")
-                        .HasForeignKey("AASXId")
+                        .HasForeignKey("EnvId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("AASXSet");
+                    b.Navigation("EnvSet");
                 });
 
             modelBuilder.Entity("AasxServerDB.Entities.DValueSet", b =>
@@ -307,6 +549,25 @@ namespace AasxServerDB.Migrations.Postgres
                         .IsRequired();
 
                     b.Navigation("SMESet");
+                });
+
+            modelBuilder.Entity("AasxServerDB.Entities.EnvCDSet", b =>
+                {
+                    b.HasOne("AasxServerDB.Entities.CDSet", "CDSet")
+                        .WithMany("EnvCDSets")
+                        .HasForeignKey("CDId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AasxServerDB.Entities.EnvSet", "EnvSet")
+                        .WithMany("EnvCDSets")
+                        .HasForeignKey("EnvId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CDSet");
+
+                    b.Navigation("EnvSet");
                 });
 
             modelBuilder.Entity("AasxServerDB.Entities.IValueSet", b =>
@@ -354,15 +615,15 @@ namespace AasxServerDB.Migrations.Postgres
                         .WithMany("SMSets")
                         .HasForeignKey("AASId");
 
-                    b.HasOne("AasxServerDB.Entities.AASXSet", "AASXSet")
+                    b.HasOne("AasxServerDB.Entities.EnvSet", "EnvSet")
                         .WithMany("SMSets")
-                        .HasForeignKey("AASXId")
+                        .HasForeignKey("EnvId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("AASSet");
 
-                    b.Navigation("AASXSet");
+                    b.Navigation("EnvSet");
                 });
 
             modelBuilder.Entity("AasxServerDB.Entities.SValueSet", b =>
@@ -381,9 +642,16 @@ namespace AasxServerDB.Migrations.Postgres
                     b.Navigation("SMSets");
                 });
 
-            modelBuilder.Entity("AasxServerDB.Entities.AASXSet", b =>
+            modelBuilder.Entity("AasxServerDB.Entities.CDSet", b =>
+                {
+                    b.Navigation("EnvCDSets");
+                });
+
+            modelBuilder.Entity("AasxServerDB.Entities.EnvSet", b =>
                 {
                     b.Navigation("AASSets");
+
+                    b.Navigation("EnvCDSets");
 
                     b.Navigation("SMSets");
                 });

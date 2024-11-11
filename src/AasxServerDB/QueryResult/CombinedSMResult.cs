@@ -11,17 +11,14 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-namespace AasxServerDB.Context
+namespace AasxServerDB
 {
-
-    using Microsoft.EntityFrameworkCore;
-
-    public class SqliteAasContext : AasContext
+    public partial class Query
     {
-        protected override void OnConfiguring(DbContextOptionsBuilder options)
+        private class CombinedSMResult
         {
-            var connectionString = GetConnectionString();
-            options.UseSqlite(connectionString);
+            public string? Identifier { get; set; }
+            public string? TimeStampTree { get; set; }
         }
     }
 }

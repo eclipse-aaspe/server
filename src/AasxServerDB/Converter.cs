@@ -11,59 +11,159 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-using System.Text;
-using AasCore.Aas3_0;
-using AasxServerDB.Entities;
-using AdminShellNS;
-using Extensions;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Nodes = System.Text.Json.Nodes;
-
 namespace AasxServerDB
 {
+    using System.Text;
+    using AasCore.Aas3_0;
+    using AasxServerDB.Entities;
+    using AdminShellNS;
+    using Extensions;
+    using Microsoft.IdentityModel.Tokens;
+
     public class Converter
     {
-        public static AdminShellPackageEnv? GetPackageEnv(string path, AASSet? aasDB) 
+        public static AdminShellPackageEnv? GetPackageEnv(int envId)
         {
-            using (AasContext db = new AasContext())
+            // env
+            var env = new AdminShellPackageEnv();
+            env.AasEnv.ConceptDescriptions = new List<IConceptDescription>();
+            env.AasEnv.AssetAdministrationShells = new List<IAssetAdministrationShell>();
+            env.AasEnv.Submodels = new List<ISubmodel>();
+
+            // db
+            var db = new AasContext();
+
+            // path
+            env.SetFilename(fileName: GetAASXPath(envId));
+
+            // cd
+            var cdDBList = db.EnvCDSets.Where(envcd => envcd.EnvId == envId).Join(db.CDSets, envcd => envcd.CDId, cd => cd.Id, (envcd, cd) => cd).ToList();
+            foreach (var cd in cdDBList.Select(selector: cdDB => GetConceptDescription(cdDB: cdDB)))
             {
-                if (path.IsNullOrEmpty() || aasDB == null)
-                    return null;
+                env.AasEnv.ConceptDescriptions?.Add(cd);
+            }
 
-                AssetAdministrationShell aas = new AssetAdministrationShell(
-                    id: aasDB.Identifier,
-                    idShort: aasDB.IdShort,
-                    assetInformation: new AssetInformation(AssetKind.Type, aasDB.GlobalAssetId),
-                    extensions: aasDB.Extensions != null ? DeserializeExtensions(aasDB.Extensions) : null,
-                    submodels: new List<AasCore.Aas3_0.IReference>());
-                aas.TimeStampCreate = aasDB.TimeStampCreate;
-                aas.TimeStamp = aasDB.TimeStamp;
-                aas.TimeStampTree = aasDB.TimeStampTree;
-                aas.TimeStampDelete = aasDB.TimeStampDelete;
+            // aas
+            var aasDBList = db.AASSets.Where(cd => cd.EnvId == envId).ToList();
+            foreach (var aasDB in aasDBList)
+            {
+                var aas = GetAssetAdministrationShell(aasDB: aasDB);
+                env.AasEnv.AssetAdministrationShells?.Add(aas);
 
-                AdminShellPackageEnv? aasEnv = new AdminShellPackageEnv();
-                aasEnv.SetFilename(path);
-                aasEnv.AasEnv.AssetAdministrationShells?.Add(aas);
-
-                var submodelDBList = db.SMSets
-                    .OrderBy(sm => sm.Id)
-                    .Where(sm => sm.AASId == aasDB.Id)
-                    .ToList();
-                foreach (var sm in submodelDBList.Select(submodelDB => Converter.GetSubmodel(smDB:submodelDB)))
+                // sm
+                var smAASDBList = db.SMSets.Where(sm => sm.EnvId == envId && sm.AASId == aasDB.Id).ToList();
+                foreach (var sm in smAASDBList.Select(selector: smDB => GetSubmodel(smDB: smDB)))
                 {
                     aas.Submodels?.Add(sm.GetReference());
-                    aasEnv.AasEnv.Submodels?.Add(sm);
                 }
-
-                return aasEnv;
             }
+
+            // sm
+            var smDBList = db.SMSets.Where(cd => cd.EnvId == envId).ToList();
+            foreach (var sm in smDBList.Select(selector: submodelDB => GetSubmodel(smDB: submodelDB)))
+            {
+                env.AasEnv.Submodels?.Add(sm);
+            }
+
+            return env;
+        }
+
+        public static ConceptDescription? GetConceptDescription(CDSet? cdDB = null, string cdIdentifier = "")
+        {
+            var db = new AasContext();
+            if (!cdIdentifier.IsNullOrEmpty())
+            {
+                var cdList = db.CDSets.Where(cd => cd.Identifier == cdIdentifier).ToList();
+                if (cdList.Count == 0)
+                    return null;
+                cdDB = cdList.First();
+            }
+
+            if (cdDB == null)
+                return null;
+
+            var cd = new ConceptDescription(
+                idShort:                    cdDB.IdShort,
+                displayName:                AasContext.DeserializeList<ILangStringNameType>(cdDB.DisplayName),
+                category:                   cdDB.Category,
+                description:                AasContext.DeserializeList<ILangStringTextType>(cdDB.Description),
+                extensions:                 AasContext.DeserializeList<IExtension>(cdDB.Extensions),
+                id:                         cdDB.Identifier,
+                isCaseOf:                   AasContext.DeserializeList<IReference>(cdDB.IsCaseOf),
+                embeddedDataSpecifications: AasContext.DeserializeList<IEmbeddedDataSpecification>(cdDB.EmbeddedDataSpecifications),
+                administration:             new AdministrativeInformation(
+                    version:                    cdDB.Version,
+                    revision:                   cdDB.Revision,
+                    creator:                    AasContext.DeserializeElement<IReference>(cdDB.Creator),
+                    templateId:                 cdDB.TemplateId,
+                    embeddedDataSpecifications: AasContext.DeserializeList<IEmbeddedDataSpecification>(cdDB.AEmbeddedDataSpecifications)
+                )
+            )
+            {
+                TimeStampCreate = cdDB.TimeStampCreate,
+                TimeStamp       = cdDB.TimeStamp,
+                TimeStampTree   = cdDB.TimeStampTree,
+                TimeStampDelete = cdDB.TimeStampDelete
+            };
+
+            return cd;
+        }
+
+        public static AssetAdministrationShell? GetAssetAdministrationShell(AASSet? aasDB = null, string aasIdentifier = "")
+        {
+            var db = new AasContext();
+            if (!aasIdentifier.IsNullOrEmpty())
+            {
+                var aasList = db.AASSets.Where(cd => cd.Identifier == aasIdentifier).ToList();
+                if (aasList.Count == 0)
+                    return null;
+                aasDB = aasList.First();
+            }
+
+            if (aasDB == null)
+                return null;
+
+            var aas = new AssetAdministrationShell(
+                idShort:                    aasDB.IdShort,
+                displayName:                AasContext.DeserializeList<ILangStringNameType>(aasDB.DisplayName),
+                category:                   aasDB.Category,
+                description:                AasContext.DeserializeList<ILangStringTextType>(aasDB.Description),
+                extensions:                 AasContext.DeserializeList<IExtension>(aasDB.Extensions),
+                id:                         aasDB.Identifier,
+                embeddedDataSpecifications: AasContext.DeserializeList<IEmbeddedDataSpecification>(aasDB.EmbeddedDataSpecifications),
+                derivedFrom:                AasContext.DeserializeElement<IReference>(aasDB.DerivedFrom),
+                submodels: new List<IReference>(),
+                administration: new AdministrativeInformation(
+                    version: aasDB.Version,
+                    revision: aasDB.Revision,
+                    creator: AasContext.DeserializeElement<IReference>(aasDB.Creator),
+                    templateId: aasDB.TemplateId,
+                    embeddedDataSpecifications: AasContext.DeserializeList<IEmbeddedDataSpecification>(aasDB.AEmbeddedDataSpecifications)
+                ),
+                assetInformation: new AssetInformation(
+                    assetKind:        AasContext.DeserializeElement<AssetKind>(aasDB.AssetKind),
+                    specificAssetIds: AasContext.DeserializeList<ISpecificAssetId>(aasDB.SpecificAssetIds),
+                    globalAssetId:    aasDB.GlobalAssetId,
+                    assetType:        aasDB.AssetType,
+                    defaultThumbnail: new Resource(
+                        path: aasDB.DefaultThumbnailPath,
+                        contentType: aasDB.DefaultThumbnailContentType
+                    )
+                )
+            )
+            {
+                TimeStampCreate = aasDB.TimeStampCreate,
+                TimeStamp       = aasDB.TimeStamp,
+                TimeStampTree   = aasDB.TimeStampTree,
+                TimeStampDelete = aasDB.TimeStampDelete
+            };
+
+            return aas;
         }
 
         public static Submodel? GetSubmodel(SMSet? smDB = null, string smIdentifier = "")
         {
-            using (AasContext db = new AasContext())
+            using (var db = new AasContext())
             {
                 if (!smIdentifier.IsNullOrEmpty())
                 {
@@ -81,18 +181,33 @@ namespace AasxServerDB
                     .Where(sme => sme.SMId == smDB.Id)
                     .ToList();
 
-                var submodel = new Submodel(smDB.Identifier);
-                submodel.IdShort = smDB.IdShort;
-                submodel.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
-                    new List<IKey>() { new Key(KeyTypes.GlobalReference, smDB.SemanticId) });
-                submodel.Extensions = smDB.Extensions != null ? DeserializeExtensions(smDB.Extensions) : null;
-                submodel.SubmodelElements = new List<ISubmodelElement>();
+                var submodel = new Submodel(
+                    idShort:                    smDB.IdShort,
+                    displayName:                AasContext.DeserializeList<ILangStringNameType>(smDB.DisplayName),
+                    category:                   smDB.Category,
+                    description:                AasContext.DeserializeList<ILangStringTextType>(smDB.Description),
+                    extensions:                 AasContext.DeserializeList<IExtension>(smDB.Extensions),
+                    id:                         smDB.Identifier,
+                    kind:                       AasContext.DeserializeElement<ModellingKind>(smDB.Kind),
+                    semanticId:                 !smDB.SemanticId.IsNullOrEmpty() ? new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, smDB.SemanticId) }) : null,
+                    supplementalSemanticIds:    AasContext.DeserializeList<IReference>(smDB.SupplementalSemanticIds),
+                    qualifiers:                 AasContext.DeserializeList<IQualifier>(smDB.Qualifiers),
+                    embeddedDataSpecifications: AasContext.DeserializeList<IEmbeddedDataSpecification>(smDB.EmbeddedDataSpecifications),
+                    administration: new AdministrativeInformation(
+                        version: smDB.Version,
+                        revision: smDB.Revision,
+                        creator: AasContext.DeserializeElement<IReference>(smDB.Creator),
+                        templateId: smDB.TemplateId,
+                        embeddedDataSpecifications: AasContext.DeserializeList<IEmbeddedDataSpecification>(smDB.AEmbeddedDataSpecifications)
+                    ),
+                    submodelElements:           new List<ISubmodelElement>()
+                );
 
                 LoadSME(submodel, null, null, SMEList);
 
                 submodel.TimeStampCreate = smDB.TimeStampCreate;
-                submodel.TimeStamp = smDB.TimeStamp;
-                submodel.TimeStampTree = smDB.TimeStampTree;
+                submodel.TimeStamp       = smDB.TimeStamp;
+                submodel.TimeStampTree   = smDB.TimeStampTree;
                 submodel.TimeStampDelete = smDB.TimeStampDelete;
                 submodel.SetAllParents();
 
@@ -170,89 +285,83 @@ namespace AasxServerDB
             {
                 case "Rel":
                     sme = new RelationshipElement(
-                        first: oValue.ContainsKey("First") ? CreateReferenceFromObject(oValue["First"]) : new Reference(ReferenceTypes.ExternalReference, new List<IKey>()),
-                        second: oValue.ContainsKey("Second") ? CreateReferenceFromObject(oValue["Second"]) : new Reference(ReferenceTypes.ExternalReference, new List<IKey>()));
+                        first:  AasContext.DeserializeElement<IReference>(oValue.ContainsKey("First")  ? oValue["First"]  : null, true),
+                        second: AasContext.DeserializeElement<IReference>(oValue.ContainsKey("Second") ? oValue["Second"] : null, true));
                     break;
                 case "RelA":
                     sme = new AnnotatedRelationshipElement(
-                        first: oValue.ContainsKey("First") ? CreateReferenceFromObject(oValue["First"]) : new Reference(ReferenceTypes.ExternalReference, new List<IKey>()),
-                        second: oValue.ContainsKey("Second") ? CreateReferenceFromObject(oValue["Second"]) : new Reference(ReferenceTypes.ExternalReference, new List<IKey>()),
+                        first:       AasContext.DeserializeElement<IReference>(oValue.ContainsKey("First")  ? oValue["First"]  : null, true),
+                        second:      AasContext.DeserializeElement<IReference>(oValue.ContainsKey("Second") ? oValue["Second"] : null, true),
                         annotations: new List<IDataElement>());
                     break;
                 case "Prop":
                     sme = new Property(
-                        valueType: Jsonization.Deserialize.DataTypeDefXsdFrom(value.First()[1]),
-                        value: value.First()[0],
-                        valueId: oValue.ContainsKey("ValueId") ? CreateReferenceFromObject(oValue["ValueId"]) : null);
+                        value:     value.First()[0],
+                        valueType: AasContext.DeserializeElement<DataTypeDefXsd>(value.First()[1], true),
+                        valueId:   AasContext.DeserializeElement<IReference>(oValue.ContainsKey("ValueId") ? oValue["ValueId"] : null));
                     break;
                 case "MLP":
                     sme = new MultiLanguageProperty(
-                        value: value.ConvertAll<ILangStringTextType>(val => new LangStringTextType(val[1], val[0])),
-                        valueId: oValue.ContainsKey("ValueId") ? CreateReferenceFromObject(oValue["ValueId"]) : null);
+                        value:   value.ConvertAll<ILangStringTextType>(val => new LangStringTextType(val[1], val[0])),
+                        valueId: AasContext.DeserializeElement<IReference>(oValue.ContainsKey("ValueId") ? oValue["ValueId"] : null));
                     break;
                 case "Range":
-                    var findMin = value.Find(val => val[1].Equals("Min"));
-                    var findMax = value.Find(val => val[1].Equals("Max"));
                     sme = new AasCore.Aas3_0.Range(
-                        valueType: Jsonization.Deserialize.DataTypeDefXsdFrom(oValue["ValueType"]),
-                        min: findMin != null ? findMin[0] : string.Empty,
-                        max: findMax != null ? findMax[0] : string.Empty);
+                        valueType: AasContext.DeserializeElement<DataTypeDefXsd>(oValue["ValueType"], true),
+                        min:       value.Find(val => val[1].Equals("Min")).FirstOrDefault(string.Empty),
+                        max:       value.Find(val => val[1].Equals("Max")).FirstOrDefault(string.Empty));
                     break;
                 case "Blob":
                     sme = new Blob(
-                        value: Encoding.ASCII.GetBytes(value.First()[0]),
+                        value:       Encoding.ASCII.GetBytes(value.First()[0]),
                         contentType: value.First()[1]);
                     break;
                 case "File":
                     sme = new AasCore.Aas3_0.File(
-                        value: value.First()[0],
+                        value:       value.First()[0],
                         contentType: value.First()[1]);
                     break;
                 case "Ref":
                     sme = new ReferenceElement(
-                        value: oValue.ContainsKey("Value") ? CreateReferenceFromObject(oValue["Value"]) : null);
+                        value: AasContext.DeserializeElement<IReference>(oValue.ContainsKey("Value") ? oValue["Value"] : null));
                     break;
                 case "Cap":
                     sme = new Capability();
                     break;
                 case "SML":
                     sme = new SubmodelElementList(
-                        orderRelevant: oValue.ContainsKey("OrderRelevant") ? (bool?)oValue["OrderRelevant"] : true,
-                        semanticIdListElement: oValue.ContainsKey("SemanticIdListElement") ? CreateReferenceFromObject(oValue["SemanticIdListElement"]) : null,
-                        typeValueListElement: Jsonization.Deserialize.AasSubmodelElementsFrom(oValue["TypeValueListElement"]),
-                        valueTypeListElement: oValue.ContainsKey("ValueTypeListElement") ? Jsonization.Deserialize.DataTypeDefXsdFrom(oValue["ValueTypeListElement"]) : null,
-                        value: new List<ISubmodelElement>());
+                        orderRelevant:         AasContext.DeserializeElement<bool>(oValue.ContainsKey("OrderRelevant") ? oValue["OrderRelevant"] : null, true),
+                        semanticIdListElement: AasContext.DeserializeElement<IReference>(oValue.ContainsKey("SemanticIdListElement") ? oValue["SemanticIdListElement"] : null),
+                        typeValueListElement:  AasContext.DeserializeElement<AasSubmodelElements>(oValue.ContainsKey("TypeValueListElement") ? oValue["TypeValueListElement"] : null, true),
+                        valueTypeListElement:  AasContext.DeserializeElement<DataTypeDefXsd>(oValue.ContainsKey("ValueTypeListElement") ? oValue["ValueTypeListElement"] : null),
+                        value:                 new List<ISubmodelElement>());
                     break;
                 case "SMC":
                     sme = new SubmodelElementCollection(
                         value: new List<ISubmodelElement>());
                     break;
                 case "Ent":
-                    var spec = new List<ISpecificAssetId>();
-                    if (oValue.ContainsKey("SpecificAssetIds"))
-                        foreach (var item in (Nodes.JsonArray) oValue["SpecificAssetIds"])
-                            spec.Add(Jsonization.Deserialize.SpecificAssetIdFrom(item));
                     sme = new Entity(
-                        statements: new List<ISubmodelElement>(),
-                        entityType: Jsonization.Deserialize.EntityTypeFrom(value.First()[1]),
-                        globalAssetId: value.First()[0],
-                        specificAssetIds: oValue.ContainsKey("SpecificAssetIds") ? spec : null);
+                        statements:       new List<ISubmodelElement>(),
+                        entityType:       AasContext.DeserializeElement<EntityType>(value.First()[1], true),
+                        globalAssetId:    value.First()[0],
+                        specificAssetIds: AasContext.DeserializeList<ISpecificAssetId>(oValue.ContainsKey("SpecificAssetIds") ? oValue["SpecificAssetIds"] : null));
                     break;
                 case "Evt":
                     sme = new BasicEventElement(
-                        observed: oValue.ContainsKey("Observed") ? CreateReferenceFromObject(oValue["Observed"]) : new Reference(ReferenceTypes.ExternalReference, new List<IKey>()),
-                        direction: Jsonization.Deserialize.DirectionFrom(oValue["Direction"]),
-                        state: Jsonization.Deserialize.StateOfEventFrom(oValue["State"]),
-                        messageTopic: oValue.ContainsKey("MessageTopic") ? oValue["MessageTopic"].ToString() : null,
-                        messageBroker: oValue.ContainsKey("MessageBroker") ? CreateReferenceFromObject(oValue["MessageBroker"]) : null,
-                        lastUpdate: oValue.ContainsKey("LastUpdate") ? oValue["LastUpdate"].ToString() : null,
-                        minInterval: oValue.ContainsKey("MinInterval") ? oValue["MinInterval"].ToString() : null,
-                        maxInterval: oValue.ContainsKey("MaxInterval") ? oValue["MaxInterval"].ToString() : null);
+                        observed:      AasContext.DeserializeElement<IReference>(oValue.ContainsKey("Observed") ? oValue["Observed"] : null),
+                        direction:     AasContext.DeserializeElement<Direction>(oValue.ContainsKey("Direction") ? oValue["Direction"] : null, true),
+                        state:         AasContext.DeserializeElement<StateOfEvent>(oValue.ContainsKey("State") ? oValue["State"] : null, true),
+                        messageTopic:  oValue.ContainsKey("MessageTopic") ? oValue["MessageTopic"] : null,
+                        messageBroker: AasContext.DeserializeElement<IReference>(oValue.ContainsKey("MessageBroker") ? oValue["MessageBroker"] : null),
+                        lastUpdate:    oValue.ContainsKey("LastUpdate") ? oValue["LastUpdate"] : null,
+                        minInterval:   oValue.ContainsKey("MinInterval") ? oValue["MinInterval"] : null,
+                        maxInterval:   oValue.ContainsKey("MaxInterval") ? oValue["MaxInterval"] : null);
                     break;
                 case "Opr":
                     sme = new Operation(
-                        inputVariables: new List<IOperationVariable>(),
-                        outputVariables: new List<IOperationVariable>(),
+                        inputVariables:    new List<IOperationVariable>(),
+                        outputVariables:   new List<IOperationVariable>(),
                         inoutputVariables: new List<IOperationVariable>());
                     break;
             }
@@ -260,63 +369,51 @@ namespace AasxServerDB
             if (sme == null)
                 return null;
 
-            sme.IdShort = smeSet.IdShort;
-            sme.Extensions = smeSet.Extensions != null ? DeserializeExtensions(smeSet.Extensions) : null;
-            sme.TimeStamp = smeSet.TimeStamp;
-            sme.TimeStampCreate = smeSet.TimeStampCreate;
-            sme.TimeStampTree = smeSet.TimeStampTree;
-            sme.TimeStampDelete = smeSet.TimeStampDelete;
-            if (!smeSet.SemanticId.IsNullOrEmpty())
-                sme.SemanticId = new Reference(ReferenceTypes.ExternalReference,
-                    new List<IKey>() { new Key(KeyTypes.GlobalReference, smeSet.SemanticId) });
-
+            sme.IdShort                    = smeSet.IdShort;
+            sme.DisplayName                = AasContext.DeserializeList<ILangStringNameType>(smeSet.DisplayName);
+            sme.Category                   = smeSet.Category;
+            sme.Description                = AasContext.DeserializeList<ILangStringTextType>(smeSet.Description);
+            sme.Extensions                 = AasContext.DeserializeList<IExtension>(smeSet.Extensions);
+            sme.SemanticId                 = !smeSet.SemanticId.IsNullOrEmpty() ? new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, smeSet.SemanticId) }) : null;
+            sme.SupplementalSemanticIds    = AasContext.DeserializeList<IReference>(smeSet.SupplementalSemanticIds);
+            sme.Qualifiers                 = AasContext.DeserializeList<IQualifier>(smeSet.Qualifiers);
+            sme.EmbeddedDataSpecifications = AasContext.DeserializeList<IEmbeddedDataSpecification>(smeSet.EmbeddedDataSpecifications);
+            sme.TimeStampCreate            = smeSet.TimeStampCreate;
+            sme.TimeStamp                  = smeSet.TimeStamp;
+            sme.TimeStampTree              = smeSet.TimeStampTree;
+            sme.TimeStampDelete            = smeSet.TimeStampDelete;
             return sme;
         }
 
-        private static Reference CreateReferenceFromObject(Nodes.JsonNode obj)
-        {
-            var result = Jsonization.Deserialize.ReferenceFrom(obj);
-            if (result != null)
-                return result;
-            else
-                return new Reference(ReferenceTypes.ExternalReference, new List<IKey>());
-        }
-
-        public static string GetAASXPath(string aasId = "", string submodelId = "")
+        public static string GetAASXPath(int? envId = null, string cdId = "", string aasId = "", string smId = "")
         {
             using var db = new AasContext();
-            int? aasxId = null;
-            if (!submodelId.IsNullOrEmpty())
+            if (!cdId.IsNullOrEmpty())
             {
-                var submodelDBList = db.SMSets.Where(s => s.Identifier == submodelId);
-                if (submodelDBList.Count() > 0)
-                    aasxId = submodelDBList.First().AASXId;
+                var cdDBList = db.CDSets.Where(cd => cd.Identifier == cdId).Join(db.EnvCDSets, cd => cd.Id, envcd => envcd.CDId, (cd, envcd) => envcd);
+                if (cdDBList.Any())
+                    envId = cdDBList.First().EnvId;
+            }
+
+            if (!smId.IsNullOrEmpty())
+            {
+                var smDBList = db.SMSets.Where(s => s.Identifier == smId);
+                if (smDBList.Any())
+                    envId = smDBList.First().EnvId;
             }
 
             if (!aasId.IsNullOrEmpty())
             {
                 var aasDBList = db.AASSets.Where(a => a.Identifier == aasId);
                 if (aasDBList.Any())
-                    aasxId = aasDBList.First().AASXId;
+                    envId = aasDBList.First().EnvId;
             }
 
-            if (aasxId == null)
+            if (envId == null)
                 return string.Empty;
 
-            var aasxDBList = db.AASXSets.Where(a => a.Id == aasxId);
-            if (!aasxDBList.Any())
-                return string.Empty;
-
-            var aasxDB = aasxDBList.First();
-            return aasxDB.AASX;
-        }
-
-        private static List<IExtension> DeserializeExtensions(Nodes.JsonArray extensions)
-        {
-            var list = new List<IExtension>();
-            foreach (var item in extensions)
-                list.Add(Jsonization.Deserialize.ExtensionFrom(item));
-            return list;
+            var path = db.EnvSets.Where(e => e.Id == envId).Select(e => e.Path).FirstOrDefault();
+            return path ?? string.Empty;
         }
     }
 }

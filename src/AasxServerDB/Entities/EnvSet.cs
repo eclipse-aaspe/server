@@ -13,27 +13,22 @@
 
 namespace AasxServerDB.Entities
 {
-    using System;
-    using System.ComponentModel.DataAnnotations.Schema;
     using Microsoft.EntityFrameworkCore;
 
     // indexes
     [Index(nameof(Id))]
-    [Index(nameof(SMEId))]
-    [Index(nameof(Value))]
 
-    public class SValueSet
+    public class EnvSet
     {
-        // sme
-        [ForeignKey("SMESet")]
-        public         int     SMEId  { get; set; }
-        public virtual SMESet? SMESet { get; set; }
-
         // id
         public int Id { get; set; }
 
-        // string value
-        public string? Value      { get; set; }
-        public string? Annotation { get; set; }
+        // path
+        public string? Path { get; set; }
+
+        // cd, aas, sm
+        public virtual ICollection<EnvCDSet?> EnvCDSets { get; } = new List<EnvCDSet?>();
+        public virtual ICollection<AASSet?> AASSets     { get; } = new List<AASSet?>();
+        public virtual ICollection<SMSet?> SMSets       { get; } = new List<SMSet?>();
     }
 }

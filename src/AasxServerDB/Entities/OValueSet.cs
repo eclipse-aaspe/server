@@ -11,22 +11,28 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Nodes;
-using Microsoft.EntityFrameworkCore;
-using System.Text.Json.Nodes;
-
 namespace AasxServerDB.Entities
 {
+    using System.ComponentModel.DataAnnotations.Schema;
+    using Microsoft.EntityFrameworkCore;
+
+    // indexes
+    [Index(nameof(Id))]
+    [Index(nameof(SMEId))]
+    [Index(nameof(Value))]
+
     public class OValueSet
     {
-        public int Id { get; set; }
-
+        // sme
         [ForeignKey("SMESet")]
         public         int     SMEId  { get; set; }
         public virtual SMESet? SMESet { get; set; }
 
+        // id
+        public int Id { get; set; }
+
+        // object value // additional attributes
         public string Attribute { get; set; }
-        public JsonNode Value   { get; set; }
+        public string Value     { get; set; }
     }
 }

@@ -1,5 +1,6 @@
 @page "/db";
-@page "/db/aasx";
+@page "/db/env";
+@page "/db/cd";
 @page "/db/aas";
 @page "/db/sm";
 @page "/db/smjson";
@@ -41,9 +42,12 @@
             list = query.Get("search");
             if (!list.IsNullOrEmpty())
                 search = list;
-            list = query.Get("aasxid");
+            list = query.Get("envid");
             if (!list.IsNullOrEmpty())
-                aasxid = Convert.ToInt32(list);
+                envid = Convert.ToInt32(list);
+            list = query.Get("cdid");
+            if (!list.IsNullOrEmpty())
+                cdid = Convert.ToInt32(list);
             list = query.Get("aasid");
             if (!list.IsNullOrEmpty())
                 aasid = Convert.ToInt32(list);
@@ -62,7 +66,7 @@
         }
 
         // change parameters to input window
-        if (url.EndsWith("/aasx") || url.EndsWith("/aas") || url.EndsWith("/sm")
+        if (url.EndsWith("/env") || url.EndsWith("/cd") || url.EndsWith("/aas") || url.EndsWith("/sm")
             || url.EndsWith("/sme") || url.EndsWith("/svalue") || url.EndsWith("/ivalue") || url.EndsWith("/dvalue") || url.EndsWith("/ovalue"))
         {
             <input @bind="CurrentValue" style="width:200px; border-width: 1px; border-color: black;"/>
@@ -84,10 +88,15 @@
                         case "search":
                             search = splitCur[ 1 ];
                             break;
-                        case "aasxid":
-                            aasxid = 0;
+                        case "envid":
+                            envid = 0;
                             if (!splitCur[ 1 ].IsNullOrEmpty())
-                                aasxid = Convert.ToInt32(splitCur[ 1 ]);
+                                    envid = Convert.ToInt32(splitCur[1]);
+                            break;
+                        case "cdid":
+                            cdid = 0;
+                            if (!splitCur[ 1 ].IsNullOrEmpty())
+                                    cdid = Convert.ToInt32(splitCur[1]);
                             break;
                         case "aasid":
                             aasid = 0;
@@ -121,7 +130,7 @@
 
         using (AasContext db = new AasContext())
         {
-            if (!(url.EndsWith("/aasx") || url.EndsWith("/aas") || url.EndsWith("/sm") || url.EndsWith("/smjson")
+            if (!(url.EndsWith("/env") || url.EndsWith("/cd") || url.EndsWith("/aas") || url.EndsWith("/sm") || url.EndsWith("/smjson")
                 || url.EndsWith("/sme") || url.EndsWith("/svalue") || url.EndsWith("/ivalue") || url.EndsWith("/dvalue") || url.EndsWith("/ovalue")))
             {
                 if (AasContext.IsPostgres)
@@ -147,13 +156,24 @@
                     <tbody>
                     <tr>
                         <td>
-                            <span>AASX#:</span>
+                            <span>Env#:</span>
                         </td>
                         <td>
-                            <span>@db.AASXSets.Count()</span>
+                            <span>@db.EnvSets.Count()</span>
                         </td>
                         <td>
-                            <a href="@($"{url}/aasx")" target="_blank">aasx</a>
+                            <a href="@($"{url}/env")" target="_blank">env</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span>CD#:</span>
+                        </td>
+                        <td>
+                            <span>@db.CDSets.Count()</span>
+                        </td>
+                        <td>
+                            <a href="@($"{url}/cd")" target="_blank">cd</a>
                         </td>
                     </tr>
                     <tr>
@@ -241,10 +261,10 @@
                 <img src="db-schema.jpg"/>
             }
 
-            if (url.EndsWith("/aasx"))
+            if (url.EndsWith("/env"))
             {
-                List<AASXSet> data = PageRetriever.GetPageAASXData(size, searchLower, aasxid);
-                <span>&nbsp&nbsp@($"AASX#: {data.Count}/{db.AASXSets.Count()} size={size} search={search} aasxid={aasxid}")</span>
+                List<EnvSet> data = PageRetriever.GetPageEnvData(size, searchLower, envid, cdid);
+                <span>&nbsp&nbsp@($"Env#: {data.Count}/{db.EnvSets.Count()} size={size} search={search} envid={envid} cdid={cdid}")</span>
                 <br/>
                 <br/>
                 @if (size > 1000 && data.Count > 1000)
@@ -258,23 +278,28 @@
                 <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
                     <thead>
                     <tr>
-                        <th style="word-break:keep-all">AASX#</th>
-                        <th style="word-break:keep-all">AASX</th>
+                        <th style="word-break:keep-all">Env#</th>
+                        <th style="word-break:keep-all">Path</th>
                         <th style="word-break:keep-all">Links</th>
                     </tr>
                     </thead>
                     <tbody>
                     @for (int i = 0; i < data.Count && i < 1000; i++)
                     {
-                        var aasxDB = data[ i ];
+                        var envDB = data[ i ];
                         <tr>
                             <td style="word-break:keep-all">
-                                <b>@aasxDB.Id</b>
+                                <b>@envDB.Id</b>
                             </td>
-                            <td>@aasxDB.AASX</td>
+                            <td>@envDB.Path</td>
                             <td style="word-break:keep-all">
-                                <a href="@($"{shorturl}/aas?aasxid={aasxDB.Id}")" target="_blank">aas </a>
-                                <a href="@($"{shorturl}/sm?aasxid={aasxDB.Id}")" target="_blank">sm</a>
+                                <a href="@($"{shorturl}/aas?envid={envDB.Id}")" target="_blank">aas </a>
+                                <a href="@($"{shorturl}/sm?envid={envDB.Id}")" target="_blank">sm </a>
+                                <a href="@($"{shorturl}/cd?envid={envDB.Id}")" target="_blank">cd </a>
+                                @if (cdid != 0)
+                                {
+                                    <a href="@($"{shorturl}/cd?envid={envDB.Id}&cdid={cdid}")" target="_blank">givenCd</a>
+                                }
                             </td>
                         </tr>
                     }
@@ -288,16 +313,22 @@
                     <br/>
                     @for (int i = 1000; i < data.Count; i++)
                     {
-                        var aasxDB = data[ i ];
+                        var envDB = data[ i ];
                         <span style="background-color:blue;">&nbsp</span>
                         <span>
-                            <b>@aasxDB.Id</b>
+                            <b>@envDB.Id</b>
                         </span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@aasxDB.AASX</span>
+                        <span>@envDB.Path</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <a href="@($"{shorturl}/aas?aasxid={aasxDB.Id}")" target="_blank">aas </a>
-                        <a href="@($"{shorturl}/sm?aasxid={aasxDB.Id}")" target="_blank">sm</a>
+                        <a href="@($"{shorturl}/aas?envid={envDB.Id}")" target="_blank">aas </a>
+                        <a href="@($"{shorturl}/sm?envid={envDB.Id}")" target="_blank">sm </a>
+                        <a href="@($"{shorturl}/cd?envid={envDB.Id}")" target="_blank">cd </a>
+                        @if (cdid != 0)
+                        {
+                            <a href="@($"{shorturl}/cd?envid={envDB.Id}&cdid={cdid}")" target="_blank">givenCd</a>
+                        }
+                        <span style="background-color:blue;">&nbsp</span>
                         <br/>
                     }
 
@@ -308,10 +339,164 @@
                 <br/>
             }
 
+            if (url.EndsWith("/cd"))
+            {
+                List<CDSet> data = PageRetriever.GetPageCDData(size, TimeStamp.StringToDateTime(searchLower), searchLower, envid, cdid);
+                <span>&nbsp&nbsp@($"CD#: {data.Count}/{db.AASSets.Count()} size={size} search={search} envid={envid} cdid={cdid}")</span>
+                <br />
+                <br />
+                @if (size > 1000 && data.Count > 1000)
+                {
+                    <b>
+                        <span style="color:red;">First 1000 as TABLE</span>
+                    </b>
+                    <br />
+                }
+
+                <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
+                    <thead>
+                        <tr>
+                            <th style="word-break:keep-all">CD#</th>
+                            <th style="word-break:keep-all">Id Short</th>
+                            <th style="word-break:keep-all">Display Name</th>
+                            <th style="word-break:keep-all">Category</th>
+                            <th style="word-break:keep-all">Description</th>
+                            <th style="word-break:keep-all">Extensions</th>
+                            <th style="word-break:keep-all">Identifier</th>
+                            <th style="word-break:keep-all">Is Case Of</th>
+                            <th style="word-break:keep-all">Embedded Data Specifications</th>
+                            <th style="word-break:keep-all">Version</th>
+                            <th style="word-break:keep-all">Revision</th>
+                            <th style="word-break:keep-all">Creator</th>
+                            <th style="word-break:keep-all">Template Id</th>
+                            <th style="word-break:keep-all">A Embedded Data Specifications</th>
+                            <th style="word-break:keep-all">Time Stamp</th>
+                            <th style="word-break:keep-all">Links</th>
+                            <th style="word-break:keep-all">API</th>
+
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < data.Count && i < 1000; i++)
+                        {
+                            var cdDB = data[i];
+                            var cd64 = Base64UrlEncoder.Encode(cdDB.Identifier);
+                            var link = $"{AasxServer.Program.externalBlazor}/concept-descriptions/{cd64}";
+
+                            <tr>
+                                <td style="word-break:keep-all">
+                                    <b>@cdDB.Id</b>
+                                </td>
+                                <td style="word-break:keep-all;max-width:200px">@cdDB.IdShort</td>
+                                <td style="font-size:small">@cdDB.DisplayName</td>
+                                <td style="word-break:keep-all">@cdDB.Category</td>
+                                <td style="font-size:small">@cdDB.Description</td>
+                                <td style="font-size:small">@cdDB.Extensions</td>
+                                <td>@cdDB.Identifier</td>
+                                <td style="font-size:small">@cdDB.IsCaseOf</td>
+                                <td style="font-size:small">@cdDB.EmbeddedDataSpecifications</td>
+                                <td>@cdDB.Version</td>
+                                <td>@cdDB.Revision</td>
+                                <td style="font-size:small">@cdDB.Creator</td>
+                                <td>@cdDB.TemplateId</td>
+                                <td style="font-size:small">@cdDB.AEmbeddedDataSpecifications</td>
+                                <td style="width:175px;color:lightgray;font-size:x-small">
+                                    @($"CREATE {TimeStamp.DateTimeToString(cdDB.TimeStampCreate)}")<br />
+                                    @($"UPDATE {TimeStamp.DateTimeToString(cdDB.TimeStamp)}")<br />
+                                    @($"TREE {TimeStamp.DateTimeToString(cdDB.TimeStampTree)}")<br />
+                                    @($"DELETE {TimeStamp.DateTimeToString(cdDB.TimeStampDelete)}")
+                                </td>
+                                <td style="word-break:keep-all">
+                                    <a href="@($"{shorturl}/env?cdid={cdDB.Id}")" target="_blank">env </a>
+                                    @if (envid != 0)
+                                    {
+                                        <a href="@($"{shorturl}/env?cdid={cdDB.Id}&envid={envid}")" target="_blank">givenEnv</a>
+                                    }
+                                </td>
+                                <td style="word-break:keep-all">
+                                    @if (!cdDB.Identifier.IsNullOrEmpty())
+                                    {
+                                        <a href="@link" target="_blank">api</a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                @if (size > 1000 && data.Count > 1000)
+                {
+                    <b>
+                        <span style="color:red;">All other as text</span>
+                    </b>
+                    <br />
+                    @for (int i = 1000; i < data.Count; i++)
+                    {
+                        var cdDB = data[i];
+                        var cd64 = Base64UrlEncoder.Encode(cdDB.Identifier);
+                        var link = $"{AasxServer.Program.externalBlazor}/concept-descriptions/{cd64}";
+
+
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>
+                            <b>@cdDB.Id</b>
+                        </span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@cdDB.IdShort</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@cdDB.DisplayName</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@cdDB.Category</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@cdDB.Description</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@cdDB.Extensions</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@cdDB.Identifier</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@cdDB.IsCaseOf</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@cdDB.EmbeddedDataSpecifications</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@cdDB.Version</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@cdDB.Revision</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@cdDB.Creator</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@cdDB.TemplateId</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@cdDB.AEmbeddedDataSpecifications</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@($"CREATE {TimeStamp.DateTimeToString(cdDB.TimeStampCreate)}")</span>
+                        <span>@($"UPDATE {TimeStamp.DateTimeToString(cdDB.TimeStamp)}")</span>
+                        <span>@($"TREE {TimeStamp.DateTimeToString(cdDB.TimeStampTree)}")</span>
+                        <span>@($"DELETE {TimeStamp.DateTimeToString(cdDB.TimeStampDelete)}")</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <a href="@($"{shorturl}/env?cdid={cdDB.Id}")" target="_blank">env </a>
+                        @if (envid != 0)
+                        {
+                            <a href="@($"{shorturl}/env?cdid={cdDB.Id}&envid={envid}")" target="_blank">givenEnv </a>
+                        }
+                        <span style="background-color:blue;">&nbsp</span>
+                        @if (!cdDB.Identifier.IsNullOrEmpty())
+                        {
+                            <a href="@link" target="_blank">api</a>
+                        }
+                        <span style="background-color:blue;">&nbsp</span>
+                        <br />
+                    }
+
+                    <br />
+                }
+
+                <span>@($"Count: {data.Count}")</span>
+                <br />
+            }
+
             if (url.EndsWith("/aas"))
             {
-                List<AASSet> data = PageRetriever.GetPageAASData(size, TimeStamp.StringToDateTime(searchLower), searchLower, aasxid, aasid);
-                <span>&nbsp&nbsp@($"AAS#: {data.Count}/{db.AASSets.Count()} size={size} search={search} aasxid={aasxid} aasid={aasid}")</span>
+                List<AASSet> data = PageRetriever.GetPageAASData(size, TimeStamp.StringToDateTime(searchLower), searchLower, envid, aasid);
+                <span>&nbsp&nbsp@($"AAS#: {data.Count}/{db.AASSets.Count()} size={size} search={search} envid={envid} aasid={aasid}")</span>
                 <br/>
                 <br/>
                 @if (size > 1000 && data.Count > 1000)
@@ -325,16 +510,31 @@
                 <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
                     <thead>
                     <tr>
-                        <th style="word-break:keep-all">AASX#</th>
+                        <th style="word-break:keep-all">Env#</th>
                         <th style="word-break:keep-all">AAS#</th>
-                        <th style="word-break:keep-all">Id</th>
-                        <th style="word-break:keep-all">IdShort</th>
-                        <th style="word-break:keep-all">AssetKind</th>
-                        <th style="word-break:keep-all">GlobalAssetId</th>
+                        <th style="word-break:keep-all">Id Short</th>
+                        <th style="word-break:keep-all">Display Name</th>
+                        <th style="word-break:keep-all">Category</th>
+                        <th style="word-break:keep-all">Description</th>
                         <th style="word-break:keep-all">Extensions</th>
-                        <th style="word-break:keep-all">TimeStamp</th>
+                        <th style="word-break:keep-all">Identifier</th>
+                        <th style="word-break:keep-all">Embedded Data Specifications</th>
+                        <th style="word-break:keep-all">Derived From</th>
+                        <th style="word-break:keep-all">Version</th>
+                        <th style="word-break:keep-all">Revision</th>
+                        <th style="word-break:keep-all">Creator</th>
+                        <th style="word-break:keep-all">Template Id</th>
+                        <th style="word-break:keep-all">A Embedded Data Specifications</th>
+                        <th style="word-break:keep-all">Asset Kind</th>
+                        <th style="word-break:keep-all">Global Asset Id</th>
+                        <th style="word-break:keep-all">Asset Type</th>
+                        <th style="word-break:keep-all">Specific Asset Ids</th>
+                        <th style="word-break:keep-all">Default Thumbnail Path</th>
+                        <th style="word-break:keep-all">Default Thumbnail Content Type</th>
+                        <th style="word-break:keep-all">Time Stamp</th>
                         <th style="word-break:keep-all">Links</th>
                         <th style="word-break:keep-all">API</th>
+
                     </tr>
                     </thead>
                     <tbody>
@@ -343,28 +543,46 @@
                         var    aasDB = data[ i ];
                         var aas64 = Base64UrlEncoder.Encode(aasDB.Identifier);
                         var link  = $"{AasxServer.Program.externalBlazor}/shells/{aas64}";
+
                         <tr>
-                            <td style="word-break:keep-all">@aasDB.AASXId</td>
+                            <td style="word-break:keep-all">@aasDB.EnvId</td>
                             <td style="word-break:keep-all">
                                 <b>@aasDB.Id</b>
                             </td>
+                            <td style="word-break:keep-all;max-width:200px">@aasDB.IdShort</td>
+                            <td style="font-size:small">@aasDB.DisplayName</td>
+                            <td style="word-break:keep-all">@aasDB.Category</td>
+                            <td style="font-size:small">@aasDB.Description</td>
+                            <td style="font-size:small">@aasDB.Extensions</td>
                             <td>@aasDB.Identifier</td>
-                            <td>@aasDB.IdShort</td>
+                            <td style="font-size:small">@aasDB.EmbeddedDataSpecifications</td>
+                            <td style="font-size:small">@aasDB.DerivedFrom</td>
+                            <td>@aasDB.Version</td>
+                            <td>@aasDB.Revision</td>
+                            <td style="font-size:small">@aasDB.Creator</td>
+                            <td>@aasDB.TemplateId</td>
+                            <td style="font-size:small">@aasDB.AEmbeddedDataSpecifications</td>
                             <td>@aasDB.AssetKind</td>
                             <td>@aasDB.GlobalAssetId</td>
-                            <td style="word-break:keep-all;font-size:small;max-width:200px">@aasDB.Extensions</td>
-                            <td style="word-break:keep-all;color:lightgray;font-size:x-small">
-                                @($"UPDATE {TimeStamp.DateTimeToString(aasDB.TimeStamp)}")<br/>
-                                @($"CREATE {TimeStamp.DateTimeToString(aasDB.TimeStampCreate)}")<br/>
+                            <td>@aasDB.AssetType</td>
+                            <td style="font-size:small">@aasDB.SpecificAssetIds</td>
+                            <td>@aasDB.DefaultThumbnailPath</td>
+                            <td>@aasDB.DefaultThumbnailContentType</td>
+                            <td style="width:175px;color:lightgray;font-size:x-small">
+                                @($"CREATE {TimeStamp.DateTimeToString(aasDB.TimeStampCreate)}")<br />
+                                @($"UPDATE {TimeStamp.DateTimeToString(aasDB.TimeStamp)}")<br />
                                 @($"TREE {TimeStamp.DateTimeToString(aasDB.TimeStampTree)}")<br />
                                 @($"DELETE {TimeStamp.DateTimeToString(aasDB.TimeStampDelete)}")
                             </td>
                             <td style="word-break:keep-all">
-                                <a href="@($"{shorturl}/aasx?aasxid={aasDB.AASXId}")" target="_blank">aasx </a>
+                                <a href="@($"{shorturl}/env?envid={aasDB.EnvId}")" target="_blank">env </a>
                                 <a href="@($"{shorturl}/sm?aasid={aasDB.Id}")" target="_blank">sm</a>
                             </td>
-                            <td>
-                                <a href="@link" target="_blank">@link</a>
+                            <td style="word-break:keep-all">
+                                @if (!aasDB.Identifier.IsNullOrEmpty())
+                                {
+                                    <a href="@link" target="_blank">api</a>
+                                }
                             </td>
                         </tr>
                     }
@@ -381,32 +599,66 @@
                         var    aasDB = data[ i ];
                         var aas64 = Base64UrlEncoder.Encode(aasDB.Identifier);
                         var link  = $"{AasxServer.Program.externalBlazor}/shells/{aas64}";
+
+                        
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@aasDB.AASXId</span>
+                        <span>@aasDB.EnvId</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>
                             <b>@aasDB.Id</b>
                         </span>
-                        <span smDB="background-color:blue;">&nbsp</span>
-                        <span>@aasDB.Identifier</span>
-                        <span smDB="background-color:blue;">&nbsp</span>
+                        <span style="background-color:blue;">&nbsp</span>
                         <span>@aasDB.IdShort</span>
-                        <span smDB="background-color:blue;">&nbsp</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@aasDB.DisplayName</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@aasDB.Category</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@aasDB.Description</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@aasDB.Extensions</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@aasDB.Identifier</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@aasDB.EmbeddedDataSpecifications</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@aasDB.DerivedFrom</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@aasDB.Version</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@aasDB.Revision</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@aasDB.Creator</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@aasDB.TemplateId</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@aasDB.AEmbeddedDataSpecifications</span>
+                        <span style="background-color:blue;">&nbsp</span>
                         <span>@aasDB.AssetKind</span>
-                        <span smDB="background-color:blue;">&nbsp</span>
+                        <span style="background-color:blue;">&nbsp</span>
                         <span>@aasDB.GlobalAssetId</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <td>@aasDB.Extensions</td>
+                        <span>@aasDB.AssetType</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@($"UPDATE {TimeStamp.DateTimeToString(aasDB.TimeStamp)}")</span>
+                        <span>@aasDB.SpecificAssetIds</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@aasDB.DefaultThumbnailPath</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@aasDB.DefaultThumbnailContentType</span>
+                        <span style="background-color:blue;">&nbsp</span>
                         <span>@($"CREATE {TimeStamp.DateTimeToString(aasDB.TimeStampCreate)}")</span>
+                        <span>@($"UPDATE {TimeStamp.DateTimeToString(aasDB.TimeStamp)}")</span>
                         <span>@($"TREE {TimeStamp.DateTimeToString(aasDB.TimeStampTree)}")</span>
                         <span>@($"DELETE {TimeStamp.DateTimeToString(aasDB.TimeStampDelete)}")</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <a href="@($"{shorturl}/aasx?aasxid={aasDB.AASXId}")" target="_blank">aasx </a>
+                        <a href="@($"{shorturl}/env?envid={aasDB.EnvId}")" target="_blank">env </a>
                         <a href="@($"{shorturl}/sm?aasid={aasDB.Id}")" target="_blank">sm</a>
                         <span style="background-color:blue;">&nbsp</span>
-                        <a href="@link" target="_blank">@link</a>
+                            @if (!aasDB.Identifier.IsNullOrEmpty())
+                        {
+                            <a href="@link" target="_blank">api</a>
+                        }
+                        <span style="background-color:blue;">&nbsp</span>
                         <br/>
                     }
 
@@ -419,9 +671,9 @@
 
             if (url.EndsWith("/sm"))
             {
-                List<SMSet> data = PageRetriever.GetPageSMData(size, TimeStamp.StringToDateTime(searchLower), searchLower, aasxid, aasid, smid);
+                List<SMSet> data = PageRetriever.GetPageSMData(size, TimeStamp.StringToDateTime(searchLower), searchLower, envid, aasid, smid);
                 <span>
-                    &nbsp&nbsp@($"SM#: {data.Count}/{db.SMSets.Count()} size={size} search={search} aasxid={aasxid} aasid={aasid} smid={smid}")
+                    &nbsp&nbsp@($"SM#: {data.Count}/{db.SMSets.Count()} size={size} search={search} envid={envid} aasid={aasid} smid={smid}")
                 </span>
                 <br/>
                 <br/>
@@ -436,14 +688,26 @@
                 <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
                     <thead>
                     <tr>
-                        <th style="word-break:keep-all">AASX#</th>
+                        <th style="word-break:keep-all">Env#</th>
                         <th style="word-break:keep-all">AAS#</th>
                         <th style="word-break:keep-all">SM#</th>
-                        <th style="word-break:keep-all">Identifier</th>
-                        <th style="word-break:keep-all">IdShort</th>
-                        <th style="word-break:keep-all">SemanticId</th>
+                        <th style="word-break:keep-all">Id Short</th>
+                        <th style="word-break:keep-all">Display Name</th>
+                        <th style="word-break:keep-all">Category</th>
+                        <th style="word-break:keep-all">Description</th>
                         <th style="word-break:keep-all">Extensions</th>
-                        <th style="word-break:keep-all">TimeStamp</th>
+                        <th style="word-break:keep-all">Identifier</th>
+                        <th style="word-break:keep-all">Kind</th>
+                        <th style="word-break:keep-all">Semantic Id</th>
+                        <th style="word-break:keep-all">Supplemental Semantic Ids</th>
+                        <th style="word-break:keep-all">Qualifiers</th>
+                        <th style="word-break:keep-all">Embedded Data Specifications</th>
+                        <th style="word-break:keep-all">Version</th>
+                        <th style="word-break:keep-all">Revision</th>
+                        <th style="word-break:keep-all">Creator</th>
+                        <th style="word-break:keep-all">Template Id</th>
+                        <th style="word-break:keep-all">A EmbeddedData Specifications</th>
+                        <th style="word-break:keep-all">Time Stamp</th>
                         <th style="word-break:keep-all">Links</th>
                         <th style="word-break:keep-all">API</th>
                     </tr>
@@ -457,28 +721,43 @@
                         var smeCount   = db.SMESets.Where(sme => sme.SMId == smDB.Id).Count();
 
                         <tr>
-                            <td style="word-break:keep-all">@smDB.AASXId</td>
+                            <td style="word-break:keep-all">@smDB.EnvId</td>
                             <td style="word-break:keep-all">@smDB.AASId</td>
                             <td style="word-break:keep-all">
                                 <b>@smDB.Id</b>
                             </td>
+                            <td style="word-break:keep-all;max-width:200px">@smDB.IdShort</td>
+                            <td style="font-size:small">@smDB.DisplayName</td>
+                            <td style="word-break:keep-all">@smDB.Category</td>
+                            <td style="font-size:small">@smDB.Description</td>
+                            <td style="font-size:small">@smDB.Extensions</td>
                             <td>@smDB.Identifier</td>
-                            <td>@smDB.IdShort</td>
+                            <td style="word-break:keep-all">@smDB.Kind</td>
                             <td>@smDB.SemanticId</td>
-                            <td style="word-break:keep-all;font-size:small;max-width:200px">@smDB.Extensions</td>
-                            <td style="word-break:keep-all;color:lightgray;font-size:x-small">
-                                @($"UPDATE {TimeStamp.DateTimeToString(smDB.TimeStamp)}")<br/>
+                            <td style="font-size:small">@smDB.SupplementalSemanticIds</td>
+                            <td style="font-size:small">@smDB.Qualifiers</td>
+                            <td style="font-size:small">@smDB.EmbeddedDataSpecifications</td>
+                            <td>@smDB.Version</td>
+                            <td>@smDB.Revision</td>
+                            <td style="font-size:small">@smDB.Creator</td>
+                            <td>@smDB.TemplateId</td>
+                            <td style="font-size:small">@smDB.AEmbeddedDataSpecifications</td>
+                            <td style="width:175px;color:lightgray;font-size:x-small">
                                 @($"CREATE {TimeStamp.DateTimeToString(smDB.TimeStampCreate)}")<br/>
+                                @($"UPDATE {TimeStamp.DateTimeToString(smDB.TimeStamp)}")<br/>
                                 @($"TREE {TimeStamp.DateTimeToString(smDB.TimeStampTree)}")<br />
                                 @($"DELETE {TimeStamp.DateTimeToString(smDB.TimeStampDelete)}")
                             </td>
                             <td style="word-break:keep-all">
-                                <a href="@($"{shorturl}/aasx?aasxid={smDB.AASXId}")" target="_blank">aasx </a>
+                                <a href="@($"{shorturl}/env?envid={smDB.EnvId}")" target="_blank">env </a>
                                 <a href="@($"{shorturl}/aas?aasid={smDB.AASId}")" target="_blank">aas </a>
                                 <a href="@($"{shorturl}/sme?smid={smDB.Id}")" target="_blank">sme:@(smeCount)</a>
                             </td>
-                            <td>
-                                <a href="@link" target="_blank">@link</a>
+                            <td style="word-break:keep-all">
+                                @if (!smDB.Identifier.IsNullOrEmpty())
+                                {
+                                    <a href="@link" target="_blank">api</a>
+                                }
                             </td>
                         </tr>
                     }
@@ -496,33 +775,62 @@
                         var submodel64 = Base64UrlEncoder.Encode(smDB.Identifier);
                         var link       = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}";
                         var smeCount   = db.SMESets.Where(sme => sme.SMId == smDB.Id).Count();
+
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@smDB.AASXId</span>
+                        <span>@smDB.EnvId</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smDB.AASId</span>
-                        <span smDB="background-color:blue;">&nbsp</span>
+                            <span style="background-color:blue;">&nbsp</span>
                         <span>
                             <b>@smDB.Id</b>
                         </span>
-                        <span smDB="background-color:blue;">&nbsp</span>
-                        <span>@smDB.Identifier</span>
-                        <span smDB="background-color:blue;">&nbsp</span>
+                        <span style="background-color:blue;">&nbsp</span>
                         <span>@smDB.IdShort</span>
-                        <span smDB="background-color:blue;">&nbsp</span>
-                        <span>@smDB.SemanticId</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smDB.DisplayName</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smDB.Category</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smDB.Description</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smDB.Extensions</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@($"UPDATE {TimeStamp.DateTimeToString(smDB.TimeStamp)}")</span>
+                        <span>@smDB.Identifier</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smDB.Kind</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smDB.SemanticId</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smDB.SupplementalSemanticIds</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smDB.Qualifiers</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smDB.EmbeddedDataSpecifications</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smDB.Version</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smDB.Revision</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smDB.Creator</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smDB.TemplateId</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smDB.AEmbeddedDataSpecifications</span>
+                        <span style="background-color:blue;">&nbsp</span>
                         <span>@($"CREATE {TimeStamp.DateTimeToString(smDB.TimeStampCreate)}")</span>
+                        <span>@($"UPDATE {TimeStamp.DateTimeToString(smDB.TimeStamp)}")</span>
                         <span>@($"TREE {TimeStamp.DateTimeToString(smDB.TimeStampTree)}")</span>
                         <span>@($"DELETE {TimeStamp.DateTimeToString(smDB.TimeStampDelete)}")</span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <a href="@($"{shorturl}/aasx?aasxid={smDB.AASXId}")" target="_blank">aasx </a>
+                        <a href="@($"{shorturl}/env?envid={smDB.EnvId}")" target="_blank">env </a>
                         <a href="@($"{shorturl}/aas?aasid={smDB.AASId}")" target="_blank">aas </a>
                         <a href="@($"{shorturl}/sme?smid={smDB.Id}")" target="_blank">sme:@(smeCount)</a>
                         <span style="background-color:blue;">&nbsp</span>
-                        <a href="@link" target="_blank">@link</a>
+                        @if (!smDB.Identifier.IsNullOrEmpty())
+                        {
+                            <a href="@link" target="_blank">api</a>
+                        }
+                        <span style="background-color:blue;">&nbsp</span>
                         <br/>
                     }
 
@@ -575,14 +883,20 @@
                         <th style="word-break:keep-all">SM#</th>
                         <th style="word-break:keep-all">Par#</th>
                         <th style="word-break:keep-all">SME#</th>
-                        <th style="word-break:keep-all">Type</th>
-                        <th style="word-break:keep-all">IdShort</th>
-                        <th style="word-break:keep-all">SemanticId</th>
+                        <th style="word-break:keep-all">SME Type</th>
+                        <th style="word-break:keep-all">Id Short</th>
+                        <th style="word-break:keep-all">Display Name</th>
+                        <th style="word-break:keep-all">Category</th>
+                        <th style="word-break:keep-all">Description</th>
+                        <th style="word-break:keep-all">Extensions</th>
+                        <th style="word-break:keep-all">Semantic Id</th>
+                        <th style="word-break:keep-all">Supplemental Semantic Ids</th>
+                        <th style="word-break:keep-all">Qualifiers</th>
+                        <th style="word-break:keep-all">Embedded Data Specifications</th>
                         <th style="word-break:keep-all">TValue</th>
                         <th style="word-break:keep-all">Value</th>
                         <th style="word-break:keep-all">Additional Attributes</th>
-                        <th style="word-break:keep-all">Extensions</th>
-                        <th style="word-break:keep-all">TimeStamp</th>
+                        <th style="word-break:keep-all">Time Stamp</th>
                         <th style="word-break:keep-all">Links</th>
                         <th style="word-break:keep-all">API</th>
                     </tr>
@@ -591,11 +905,17 @@
                     @for (int i = 0; i < data.Count && i < 1000; i++)
                     {
                         var smeDB = data[i];
+                        var pathSuccess = !smeDB.IdShort.IsNullOrEmpty();
                         string path = smeDB.IdShort;
                         int? pId = smeDB.ParentSMEId;
-                        while (pId != null)
+                        while (pId != null && pathSuccess)
                         {
                             var smeDBP = db.SMESets.Where(s => s.Id == pId).First();
+                            if (smeDBP.IdShort.IsNullOrEmpty())
+                            {
+                                pathSuccess = false;
+                                break;
+                            }
                             path = $"{smeDBP.IdShort}.{path}";
                             pId = smeDBP.ParentSMEId;
                         }
@@ -615,9 +935,16 @@
                                 <b>@smeDB.Id</b>
                             </td>
                             <td style="word-break:keep-all">@smeDB.SMEType</td>
-                            <td>@smeDB.IdShort</td>
+                            <td style="word-break:keep-all;max-width:200px">@smeDB.IdShort</td>
+                            <td style="font-size:small">@smeDB.DisplayName</td>
+                            <td style="word-break:keep-all">@smeDB.Category</td>
+                            <td style="font-size:small">@smeDB.Description</td>
+                            <td style="font-size:small">@smeDB.Extensions</td>
                             <td>@smeDB.SemanticId</td>
-                            <td style="word-break:keep-all">@smeDB.TValue</td>
+                            <td style="font-size:small">@smeDB.SupplementalSemanticIds</td>
+                            <td style="font-size:small">@smeDB.Qualifiers</td>
+                            <td style="font-size:small">@smeDB.EmbeddedDataSpecifications</td>
+                            <td>@smeDB.TValue</td>
                             <td>
                                 @if (smeTypeWithoutOperation != null && smeTypeWithoutOperation.Equals("MLP"))
                                 {
@@ -634,7 +961,7 @@
                                 {
                                     <ul>
                                         @{
-                                            var valueType = (string) db.OValueSets.Where(ovalue => ovalue.SMEId == smeDB.Id && ovalue.Attribute.Equals("ValueType")).Select(ovalue => ovalue.Value).FirstOrDefault();
+                                            var valueType = db.OValueSets.Where(ovalue => ovalue.SMEId == smeDB.Id && ovalue.Attribute.Equals("ValueType")).Select(ovalue => ovalue.Value).FirstOrDefault();
                                             if (!valueType.IsNullOrEmpty())
                                             {
                                                 <li>
@@ -664,12 +991,12 @@
                                     @value.First()[0]
                                 }
                             </td>
-                            <td style="word-break:keep-all;font-size:small;max-width:200px">
+                            <td style="font-size:small">
                                 @if (db.OValueSets.Where(value => value.SMEId == smeDB.Id).Any())
                                 {
                                     var dic = smeDB.GetOValue();
                                     <ul>
-                                        @foreach(KeyValuePair<string, Nodes.JsonNode> dicValue in dic)
+                                        @foreach(KeyValuePair<string, string> dicValue in dic)
                                         {
                                             <li>
                                                 @dicValue.Key = @dicValue.Value.ToString()
@@ -678,10 +1005,9 @@
                                     </ul>
                                 }
                             </td>
-                            <td style="word-break:keep-all;font-size:small;max-width:200px">@smeDB.Extensions</td>
-                            <td style="word-break:keep-all;color:lightgray;font-size:x-small">
-                                @($"UPDATE {TimeStamp.DateTimeToString(smeDB.TimeStamp)}")<br/>
+                            <td style="width:175px;color:lightgray;font-size:x-small">
                                 @($"CREATE {TimeStamp.DateTimeToString(smeDB.TimeStampCreate)}")<br/>
+                                @($"UPDATE {TimeStamp.DateTimeToString(smeDB.TimeStamp)}")<br/>
                                 @($"TREE {TimeStamp.DateTimeToString(smeDB.TimeStampTree)}")<br />
                                 @($"DELETE {TimeStamp.DateTimeToString(smeDB.TimeStampDelete)}")
                             </td>
@@ -715,8 +1041,11 @@
                                     <a href="@($"{shorturl}/ovalue?smeid={smeDB.Id}")" target="_blank">ovalue </a>
                                 }
                                 </td>
-                            <td>
-                                <a href="@link" target="_blank">@link</a>
+                            <td style="word-break:keep-all">
+                                @if (pathSuccess)
+                                {
+                                    <a href="@link" target="_blank">api</a>
+                                }
                             </td>
                         </tr>
                     }
@@ -732,11 +1061,17 @@
                     {
 
                         var smeDB = data[i];
+                        var pathSuccess = !smeDB.IdShort.IsNullOrEmpty();
                         string path = smeDB.IdShort;
                         int? pId = smeDB.ParentSMEId;
-                        while (pId != null)
+                        while (pId != null && pathSuccess)
                         {
                             var smeDBP = db.SMESets.Where(s => s.Id == pId).First();
+                            if (smeDBP.IdShort.IsNullOrEmpty())
+                            {
+                                pathSuccess = false;
+                                break;
+                            }
                             path = $"{smeDBP.IdShort}.{path}";
                             pId = smeDBP.ParentSMEId;
                         }
@@ -761,7 +1096,21 @@
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smeDB.IdShort</span>
                         <span style="background-color:blue;">&nbsp</span>
+                        <span>@smeDB.DisplayName</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smeDB.Category</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smeDB.Description</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smeDB.Extensions</span>
+                        <span style="background-color:blue;">&nbsp</span>
                         <span>@smeDB.SemanticId</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smeDB.SupplementalSemanticIds</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smeDB.Qualifiers</span>
+                        <span style="background-color:blue;">&nbsp</span>
+                        <span>@smeDB.EmbeddedDataSpecifications</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smeDB.TValue</span>
                         <span style="background-color:blue;">&nbsp</span>
@@ -777,7 +1126,7 @@
                             }
                             else if (smeTypeWithoutOperation != null && smeTypeWithoutOperation.Equals("Range"))
                             {
-                                var valueType = (string)db.OValueSets.Where(ovalue => ovalue.SMEId == smeDB.Id && ovalue.Attribute.Equals("ValueType")).Select(ovalue => ovalue.Value).FirstOrDefault();
+                                var valueType = db.OValueSets.Where(ovalue => ovalue.SMEId == smeDB.Id && ovalue.Attribute.Equals("ValueType")).Select(ovalue => ovalue.Value).FirstOrDefault();
                                 if (!valueType.IsNullOrEmpty())
                                 {
                                     <span>
@@ -809,7 +1158,7 @@
                             {
                                 var dic = smeDB.GetOValue();
                                 <span>
-                                    @foreach (KeyValuePair<string, Nodes.JsonNode> valueDic in dic)
+                                    @foreach (KeyValuePair<string, string> valueDic in dic)
                                     {
                                         <span>
                                             @valueDic.Key = @valueDic.Value.ToString()
@@ -819,10 +1168,8 @@
                             }
                         </span>
                         <span style="background-color:blue;">&nbsp</span>
-                        <span>@smeDB.Extensions</span>
-                        <span style="background-color:blue;">&nbsp</span>
-                        <span>@($"UPDATE {TimeStamp.DateTimeToString(smeDB.TimeStamp)}")</span>
                         <span>@($"CREATE {TimeStamp.DateTimeToString(smeDB.TimeStampCreate)}")</span>
+                        <span>@($"UPDATE {TimeStamp.DateTimeToString(smeDB.TimeStamp)}")</span>
                         <span>@($"TREE {TimeStamp.DateTimeToString(smeDB.TimeStampTree)}")</span>
                         <span>@($"DELETE {TimeStamp.DateTimeToString(smeDB.TimeStampDelete)}")</span>
                         <span style="background-color:blue;">&nbsp</span>
@@ -855,7 +1202,11 @@
                             <a href="@($"{shorturl}/ovalue?smeid={smeDB.Id}")" target="_blank">ovalue </a>
                         }
                         <span style="background-color:blue;">&nbsp</span>
-                        <a href="@link" target="_blank">@link</a>
+                        @if (pathSuccess)
+                        {
+                            <a href="@link" target="_blank">api</a>
+                        }
+                        <span style="background-color:blue;">&nbsp</span>
                         <br/>
                     }
 
@@ -923,6 +1274,7 @@
                         <span>@smeDB.Annotation</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
+                        <span style="background-color:blue;">&nbsp</span>
                         <br/>
                     }
 
@@ -990,6 +1342,7 @@
                         <span>@smeDB.Annotation</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par</a>
+                        <span style="background-color:blue;">&nbsp</span>
                         <br/>
                     }
 
@@ -1057,6 +1410,7 @@
                         <span>@smeDB.Annotation</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par </a>
+                        <span style="background-color:blue;">&nbsp</span>
                         <br/>
                     }
 
@@ -1124,6 +1478,7 @@
                         <span>@smeDB.Value</span>
                         <span style="background-color:blue;">&nbsp</span>
                         <a href="@($"{shorturl}/sme?smeid={smeDB.SMEId}")" target="_blank">par </a>
+                        <span style="background-color:blue;">&nbsp</span>
                         <br />
                     }
 
@@ -1147,10 +1502,11 @@
 @code {
     int size = 1000;
     string search = string.Empty;
-    long aasxid = 0;
+    long envid = 0;
     long aasid = 0;
     long smid = 0;
     long smeid = 0;
     long parid = 0;
+    long cdid = 0;
     string smidentifier = string.Empty;
 }

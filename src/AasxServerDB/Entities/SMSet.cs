@@ -11,33 +11,70 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Nodes;
-
 namespace AasxServerDB.Entities
 {
+    using System.ComponentModel.DataAnnotations;
+    using System.ComponentModel.DataAnnotations.Schema;
+    using Microsoft.EntityFrameworkCore;
+
+    // indexes
+    [Index(nameof(Id))]
+    [Index(nameof(EnvId))]
+    [Index(nameof(AASId))]
+    [Index(nameof(SemanticId))]
+    [Index(nameof(Identifier))]
+    [Index(nameof(TimeStampTree))]
+
     public class SMSet
     {
-        public int Id { get; set; }
+        // env
+        [ForeignKey("EnvSet")]
+        public         int      EnvId  { get; set; }
+        public virtual EnvSet? EnvSet { get; set; }
 
-        [ForeignKey("AASXSet")]
-        public int AASXId { get; set; }
-        public virtual AASXSet? AASXSet { get; set; }
-
+        // aas
         [ForeignKey("AASSet")]
-        public int? AASId { get; set; }
+        public         int?    AASId  { get; set; }
         public virtual AASSet? AASSet { get; set; }
 
-        public string? SemanticId { get; set; }
-        public string? Identifier { get; set; }
-        public string? IdShort { get; set; }
-        public JsonArray? Extensions { get; set; }
+        // id
+        public int Id { get; set; }
 
+        // submodel
+        [StringLength(128)]
+        public string? IdShort                    { get; set; }
+        public string? DisplayName                { get; set; }
+        [StringLength(128)]
+        public string? Category                   { get; set; }
+        public string? Description                { get; set; }
+        public string? Extensions                 { get; set; }
+        [MaxLength(2000)]
+        public string? Identifier                 { get; set; }
+        [StringLength(8)]
+        public string? Kind                       { get; set; }
+        [MaxLength(2000)]
+        public string? SemanticId                 { get; set; } // change to save the rest of the reference
+        public string? SupplementalSemanticIds    { get; set; }
+        public string? Qualifiers                 { get; set; }
+        public string? EmbeddedDataSpecifications { get; set; }
+
+        // administration
+        [StringLength(4)]
+        public string? Version                     { get; set; }
+        [StringLength(4)]
+        public string? Revision                    { get; set; }
+        public string? Creator                     { get; set; }
+        [MaxLength(2000)]
+        public string? TemplateId                  { get; set; }
+        public string? AEmbeddedDataSpecifications { get; set; }
+
+        // time stamp
         public DateTime TimeStampCreate { get; set; }
-        public DateTime TimeStamp { get; set; }
-        public DateTime TimeStampTree { get; set; }
+        public DateTime TimeStamp       { get; set; }
+        public DateTime TimeStampTree   { get; set; }
         public DateTime TimeStampDelete { get; set; }
 
+        // sme
         public virtual ICollection<SMESet> SMESets { get; } = new List<SMESet>();
     }
 }

@@ -23,11 +23,44 @@ namespace AasxServerDB.Migrations.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("AASXId")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("AEmbeddedDataSpecifications")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("AssetKind")
                         .HasColumnType("TEXT");
+
+                    b.Property<string>("AssetType")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Category")
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Creator")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DefaultThumbnailContentType")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DefaultThumbnailPath")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DerivedFrom")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DisplayName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EmbeddedDataSpecifications")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("EnvId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Extensions")
                         .HasColumnType("TEXT");
@@ -36,9 +69,22 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasColumnType("TEXT");
 
                     b.Property<string>("IdShort")
+                        .HasMaxLength(128)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Identifier")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Revision")
+                        .HasMaxLength(4)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SpecificAssetIds")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TemplateId")
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("TimeStamp")
@@ -53,25 +99,87 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Property<DateTime>("TimeStampTree")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Version")
+                        .HasMaxLength(4)
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("AASXId");
+                    b.HasIndex("EnvId");
+
+                    b.HasIndex("Id");
 
                     b.ToTable("AASSets");
                 });
 
-            modelBuilder.Entity("AasxServerDB.Entities.AASXSet", b =>
+            modelBuilder.Entity("AasxServerDB.Entities.CDSet", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("AASX")
+                    b.Property<string>("AEmbeddedDataSpecifications")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Category")
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Creator")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DisplayName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EmbeddedDataSpecifications")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Extensions")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("IdShort")
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Identifier")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("IsCaseOf")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Revision")
+                        .HasMaxLength(4)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TemplateId")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("TimeStamp")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("TimeStampCreate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("TimeStampDelete")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("TimeStampTree")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Version")
+                        .HasMaxLength(4)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.ToTable("AASXSets");
+                    b.HasIndex("Id");
+
+                    b.ToTable("CDSets");
                 });
 
             modelBuilder.Entity("AasxServerDB.Entities.DValueSet", b =>
@@ -91,11 +199,50 @@ namespace AasxServerDB.Migrations.Sqlite
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Id");
+
                     b.HasIndex("SMEId");
 
                     b.HasIndex("Value");
 
                     b.ToTable("DValueSets");
+                });
+
+            modelBuilder.Entity("AasxServerDB.Entities.EnvCDSet", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CDId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("EnvId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CDId");
+
+                    b.HasIndex("EnvId");
+
+                    b.ToTable("EnvCDSets");
+                });
+
+            modelBuilder.Entity("AasxServerDB.Entities.EnvSet", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Path")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Id");
+
+                    b.ToTable("EnvSets");
                 });
 
             modelBuilder.Entity("AasxServerDB.Entities.IValueSet", b =>
@@ -114,6 +261,8 @@ namespace AasxServerDB.Migrations.Sqlite
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Id");
 
                     b.HasIndex("SMEId");
 
@@ -141,7 +290,11 @@ namespace AasxServerDB.Migrations.Sqlite
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Id");
+
                     b.HasIndex("SMEId");
+
+                    b.HasIndex("Value");
 
                     b.ToTable("OValueSets");
                 });
@@ -152,26 +305,49 @@ namespace AasxServerDB.Migrations.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Category")
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DisplayName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EmbeddedDataSpecifications")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Extensions")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("IdShort")
+                        .HasMaxLength(128)
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("ParentSMEId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Qualifiers")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("SMEType")
+                        .IsRequired()
+                        .HasMaxLength(9)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("SMId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("SemanticId")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SupplementalSemanticIds")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("TValue")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("char(1)");
 
                     b.Property<DateTime>("TimeStamp")
                         .HasColumnType("TEXT");
@@ -187,9 +363,17 @@ namespace AasxServerDB.Migrations.Sqlite
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Id");
+
+                    b.HasIndex("IdShort");
+
                     b.HasIndex("ParentSMEId");
 
                     b.HasIndex("SMId");
+
+                    b.HasIndex("SemanticId");
+
+                    b.HasIndex("TimeStamp");
 
                     b.ToTable("SMESets");
                 });
@@ -203,19 +387,59 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Property<int?>("AASId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("AASXId")
+                    b.Property<string>("AEmbeddedDataSpecifications")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Category")
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Creator")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DisplayName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EmbeddedDataSpecifications")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("EnvId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Extensions")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("IdShort")
+                        .HasMaxLength(128)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Identifier")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Kind")
+                        .HasMaxLength(8)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Qualifiers")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Revision")
+                        .HasMaxLength(4)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SemanticId")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SupplementalSemanticIds")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TemplateId")
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("TimeStamp")
@@ -230,11 +454,23 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Property<DateTime>("TimeStampTree")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Version")
+                        .HasMaxLength(4)
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AASId");
 
-                    b.HasIndex("AASXId");
+                    b.HasIndex("EnvId");
+
+                    b.HasIndex("Id");
+
+                    b.HasIndex("Identifier");
+
+                    b.HasIndex("SemanticId");
+
+                    b.HasIndex("TimeStampTree");
 
                     b.ToTable("SMSets");
                 });
@@ -256,6 +492,8 @@ namespace AasxServerDB.Migrations.Sqlite
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Id");
+
                     b.HasIndex("SMEId");
 
                     b.HasIndex("Value");
@@ -265,13 +503,13 @@ namespace AasxServerDB.Migrations.Sqlite
 
             modelBuilder.Entity("AasxServerDB.Entities.AASSet", b =>
                 {
-                    b.HasOne("AasxServerDB.Entities.AASXSet", "AASXSet")
+                    b.HasOne("AasxServerDB.Entities.EnvSet", "EnvSet")
                         .WithMany("AASSets")
-                        .HasForeignKey("AASXId")
+                        .HasForeignKey("EnvId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("AASXSet");
+                    b.Navigation("EnvSet");
                 });
 
             modelBuilder.Entity("AasxServerDB.Entities.DValueSet", b =>
@@ -283,6 +521,25 @@ namespace AasxServerDB.Migrations.Sqlite
                         .IsRequired();
 
                     b.Navigation("SMESet");
+                });
+
+            modelBuilder.Entity("AasxServerDB.Entities.EnvCDSet", b =>
+                {
+                    b.HasOne("AasxServerDB.Entities.CDSet", "CDSet")
+                        .WithMany("EnvCDSets")
+                        .HasForeignKey("CDId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AasxServerDB.Entities.EnvSet", "EnvSet")
+                        .WithMany("EnvCDSets")
+                        .HasForeignKey("EnvId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CDSet");
+
+                    b.Navigation("EnvSet");
                 });
 
             modelBuilder.Entity("AasxServerDB.Entities.IValueSet", b =>
@@ -330,15 +587,15 @@ namespace AasxServerDB.Migrations.Sqlite
                         .WithMany("SMSets")
                         .HasForeignKey("AASId");
 
-                    b.HasOne("AasxServerDB.Entities.AASXSet", "AASXSet")
+                    b.HasOne("AasxServerDB.Entities.EnvSet", "EnvSet")
                         .WithMany("SMSets")
-                        .HasForeignKey("AASXId")
+                        .HasForeignKey("EnvId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("AASSet");
 
-                    b.Navigation("AASXSet");
+                    b.Navigation("EnvSet");
                 });
 
             modelBuilder.Entity("AasxServerDB.Entities.SValueSet", b =>
@@ -357,9 +614,16 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Navigation("SMSets");
                 });
 
-            modelBuilder.Entity("AasxServerDB.Entities.AASXSet", b =>
+            modelBuilder.Entity("AasxServerDB.Entities.CDSet", b =>
+                {
+                    b.Navigation("EnvCDSets");
+                });
+
+            modelBuilder.Entity("AasxServerDB.Entities.EnvSet", b =>
                 {
                     b.Navigation("AASSets");
+
+                    b.Navigation("EnvCDSets");
 
                     b.Navigation("SMSets");
                 });

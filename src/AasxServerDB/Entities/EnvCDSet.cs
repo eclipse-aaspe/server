@@ -13,13 +13,26 @@
 
 namespace AasxServerDB.Entities
 {
-    public class AASXSet
+    using System.ComponentModel.DataAnnotations.Schema;
+    using Microsoft.EntityFrameworkCore;
+
+    // indexes
+    [Index(nameof(EnvId))]
+    [Index(nameof(CDId))]
+
+    public class EnvCDSet
     {
+        // id
         public int Id { get; set; }
 
-        public string? AASX { get; set; }
+        // env
+        [ForeignKey("EnvSet")]
+        public int EnvId { get; set; }
+        public virtual EnvSet? EnvSet { get; set; }
 
-        public virtual ICollection<AASSet> AASSets { get; } = new List<AASSet>();
-        public virtual ICollection<SMSet?> SMSets  { get; } = new List<SMSet?>();
+        // cd
+        [ForeignKey("CDSet")]
+        public int CDId { get; set; }
+        public virtual CDSet? CDSet { get; set; }
     }
 }

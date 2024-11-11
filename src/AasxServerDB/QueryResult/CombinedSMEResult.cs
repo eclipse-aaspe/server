@@ -11,14 +11,16 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-namespace AasxServerDB.Result
+namespace AasxServerDB
 {
-    public class SMEResult
+    public partial class Query
     {
-        public string? smId          { get; set; }
-        public string  idShortPath   { get; set; }
-        public string? value         { get; set; }
-        public string? url           { get; set; }
-        public string? timeStamp { get; set; }
+        private class CombinedSMEResult
+        {
+            public string? Identifier { get; set; }
+            public string? IdShortPath { get; set; }
+            public string? TimeStamp { get; set; }
+            public string? Value { get; set; }
+        }
     }
 }
