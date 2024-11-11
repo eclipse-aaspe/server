@@ -24,7 +24,6 @@ namespace AasxServerDB
     using QueryParserTest;
     using System.Linq;
     using Irony.Parsing;
-    using QueryResult;
     using System.Reflection.Metadata;
 
     public partial class Query

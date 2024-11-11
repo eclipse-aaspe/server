@@ -1,6 +1,6 @@
 using AasxServerDB.Result;
 
-namespace AasxServerDB.QueryResult
+namespace AasxServerDB
 {
     public class QResult
     {
