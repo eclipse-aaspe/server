@@ -25,6 +25,8 @@ namespace AasxServerDB
     using System.Linq;
     using Irony.Parsing;
     using System.Reflection.Metadata;
+    using HotChocolate.Resolvers;
+    using HotChocolate.Language;
 
     public partial class Query
     {
@@ -36,7 +38,7 @@ namespace AasxServerDB
         public static string? ExternalBlazor { get; set; }
 
         // --------------- API ---------------
-        public QResult SearchSMs(string semanticId = "", string identifier = "", string diff = "", string expression = "")
+        public QResult SearchSMs(IResolverContext context, string semanticId = "", string identifier = "", string diff = "", string expression = "")
         {
             var qResult = new QResult();
             qResult.Messages = new List<string>();
@@ -62,7 +64,10 @@ namespace AasxServerDB
 
                 watch.Restart();
                 var result = GetSMResult(query);
-                text = "Collect results in " + watch.ElapsedMilliseconds + " ms\nSMs found\t" + result.Count + "/" + db.SMSets.Count();
+                text = "Collect results in " + watch.ElapsedMilliseconds + " ms";
+                Console.WriteLine(text);
+                qResult.Messages.Add(text);
+                text = "SMs found " + result.Count + "/" + db.SMSets.Count();
                 Console.WriteLine(text);
                 qResult.Messages.Add(text);
 
@@ -95,9 +100,21 @@ namespace AasxServerDB
         }
 
         public QResult SearchSMEs(
+            IResolverContext context,
             string smSemanticId = "", string smIdentifier = "", string semanticId = "", string diff = "",
             string contains = "", string equal = "", string lower = "", string upper = "", string expression = "")
         {
+            // Get the requested fields
+            string  requested = "";
+            var requestedFields = context.Selection.SyntaxNode.SelectionSet.Selections;
+            foreach (var selection in requestedFields)
+            {
+                if (selection is FieldNode field)
+                {
+                    requested += " " + field.ToString();
+                }
+            }
+
             var qResult = new QResult();
             qResult.Messages = new List<string>();
             var text = "";
@@ -107,7 +124,7 @@ namespace AasxServerDB
             Console.WriteLine("\nSearchSMEs");
 
             watch.Restart();
-            var query = GetSMEs(qResult.Messages, db, false, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
+            var query = GetSMEs(qResult.Messages, requested, db, false, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
             if (query == null)
             {
                 text = "No query is generated due to incorrect parameter combination.";
@@ -121,8 +138,11 @@ namespace AasxServerDB
                 qResult.Messages.Add(text);
 
                 watch.Restart();
-                var result = GetSMEResult((IQueryable<CombinedSMEResult>)query);
-                text = "Collect results in " + watch.ElapsedMilliseconds + " ms\nSMEs found\t" + result.Count + "/" + db.SMESets.Count();
+                var result = GetSMEResult(requested, (IQueryable<CombinedSMEResult>)query);
+                text = "SMEs found " + result.Count + "/" + db.SMESets.Count();
+                Console.WriteLine(text);
+                qResult.Messages.Add(text);
+                text = "Collect results in " + watch.ElapsedMilliseconds + " ms";
                 Console.WriteLine(text);
                 qResult.Messages.Add(text);
 
@@ -141,7 +161,7 @@ namespace AasxServerDB
             Console.WriteLine("\nCountSMEs");
 
             watch.Restart();
-            var query = GetSMEs(new List<string>(), db, true, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
+            var query = GetSMEs(new List<string>(), "", db, true, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
             if (query == null)
             {
                 Console.WriteLine("No query is generated due to incorrect parameter combination.");
@@ -355,7 +375,8 @@ namespace AasxServerDB
         }
 
         // --------------- SME Methods ---------------
-        private IQueryable? GetSMEs(List<string> messages, AasContext db, bool withCount = false, string smSemanticId = "", string smIdentifier = "", string semanticId = "",
+        private IQueryable? GetSMEs(List<string> messages, string requested, AasContext db,
+            bool withCount = false, string smSemanticId = "", string smIdentifier = "", string semanticId = "",
             string diffString = "", string contains = "", string equal = "", string lower = "", string upper = "", string expression = "")
         {
             // analyse parameters
@@ -378,7 +399,7 @@ namespace AasxServerDB
             if (withExpression == withParameters ||
                 (withEqualString && (withContains || withLower || withUpper)) ||
                 (withContains && (withLower || withUpper)) ||
-                (withLower != withUpper))
+                (withLower != withUpper) || requested.IsNullOrEmpty())
                 return null;
 
             // direction
@@ -960,6 +981,9 @@ namespace AasxServerDB
                 return resultCount;
             }
 
+
+            /* old
+
             // get path
             rawSQL += $", \n" +
                 $"RecursiveSME AS( \n" +
@@ -983,6 +1007,46 @@ namespace AasxServerDB
                 "INNER JOIN RecursiveSME AS r ON sme.Id = r.Id";
 
             // create queryable
+            var result = db.Database.SqlQueryRaw<CombinedSMEResult>(rawSQL);
+
+            return result;
+            */
+
+            if (requested.Contains("idShortPath") || requested.Contains("url"))
+            {
+                // Append the "get path" section
+                rawSQL += $"\n ," +
+                    $"RecursiveSME AS( \n" +
+                        $"WITH RECURSIVE SME_CTE AS ( \n" +
+                            $"SELECT Id, IdShort, ParentSMEId, IdShort AS IdShortPath, Id AS StartId \n" +
+                            $"FROM SMESets \n" +
+                            $"WHERE Id IN (SELECT Id FROM FilteredSMAndSMEAndValue) \n" +
+                            $"UNION ALL \n" +
+                            $"SELECT x.Id, x.IdShort, x.ParentSMEId, x.IdShort || '.' || c.IdShortPath, c.StartId \n" +
+                            $"FROM SMESets x \n" +
+                            $"INNER JOIN SME_CTE c ON x.Id = c.ParentSMEId \n" +
+                        $") \n" +
+                        $"SELECT StartId AS Id, IdShortPath \n" +
+                        $"FROM SME_CTE \n" +
+                        $"WHERE ParentSMEId IS NULL \n" +
+                    $") \n";
+            }
+
+            if (requested.Contains("idShortPath") || requested.Contains("url"))
+            {
+                // Join with RecursiveSME if path is included
+                rawSQL += $"SELECT sme.Identifier, r.IdShortPath, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', sme.TimeStamp) AS TimeStamp, sme.Value \n" +
+                    "FROM FilteredSMAndSMEAndValue AS sme \n" +
+                    "INNER JOIN RecursiveSME AS r ON sme.Id = r.Id \n";
+            }
+            else
+            {
+                // Complete the select statement
+                rawSQL += $"SELECT sme.Identifier, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', sme.TimeStamp) AS TimeStamp, sme.Value \n" +
+                          "FROM FilteredSMAndSMEAndValue AS sme \n";
+            }
+
+            // Create queryable
             var result = db.Database.SqlQueryRaw<CombinedSMEResult>(rawSQL);
 
             return result;
@@ -1022,20 +1086,28 @@ namespace AasxServerDB
             return sqlString;
         }
 
-        private static List<SMEResult> GetSMEResult(IQueryable<CombinedSMEResult> query)
+        private static List<SMEResult> GetSMEResult(string requested, IQueryable<CombinedSMEResult> query)
         {
-            var result = query
-                .AsEnumerable()
-                .Select(sm_sme_v => new SMEResult()
-                {
-                    smId = sm_sme_v.Identifier,
-                    idShortPath = sm_sme_v.IdShortPath,
-                    timeStamp = sm_sme_v.TimeStamp,
-                    value = sm_sme_v.Value,
-                    url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sm_sme_v.Identifier ?? string.Empty)}/submodel-elements/{sm_sme_v.IdShortPath}"
-                })
-                .ToList();
-            return result;
+            bool withSmId = requested.Contains("smId");
+            bool withTimeStamp = requested.Contains("timeStamp");
+            bool withValue = requested.Contains("value");
+            bool withIdShortPath = requested.Contains("idShortPath");
+            bool withUrl = requested.Contains("url");
+
+            var q = query.Select(sm_sme_v => new SMEResult
+            {
+                smId = withSmId ? sm_sme_v.Identifier : null,
+                timeStamp = withTimeStamp ? sm_sme_v.TimeStamp : null,
+                value = withValue ? sm_sme_v.Value : null,
+                idShortPath = withIdShortPath ? sm_sme_v.IdShortPath : null,
+                url = withUrl && sm_sme_v.Identifier != null && sm_sme_v.IdShortPath != null
+                    ? $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sm_sme_v.Identifier)}/submodel-elements/{sm_sme_v.IdShortPath}"
+                    : null
+            });
+
+            var smeResults = q.ToList();
+
+            return smeResults;
         }
 
         // --------------- Help Methodes ---------------
