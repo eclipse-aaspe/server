@@ -47,7 +47,7 @@ namespace AasxServerDB
             Console.WriteLine("\nSearchSMs");
 
             watch.Restart();
-            var query = GetSMs(db, semanticId, identifier, diff, expression);
+            var query = GetSMs(qResult.Messages, db, semanticId, identifier, diff, expression);
             if (query == null)
             {
                 text = "No query is generated due to incorrect parameter combination.";
@@ -56,13 +56,13 @@ namespace AasxServerDB
             }
             else
             {
-                text = "Generate query\tin " + watch.ElapsedMilliseconds + " ms";
+                text = "Generate query in " + watch.ElapsedMilliseconds + " ms";
                 Console.WriteLine(text);
                 qResult.Messages.Add(text);
 
                 watch.Restart();
                 var result = GetSMResult(query);
-                text = "Collect results\tin " + watch.ElapsedMilliseconds + " ms\nSMs found\t" + result.Count + "/" + db.SMSets.Count();
+                text = "Collect results in " + watch.ElapsedMilliseconds + " ms\nSMs found\t" + result.Count + "/" + db.SMSets.Count();
                 Console.WriteLine(text);
                 qResult.Messages.Add(text);
 
@@ -79,17 +79,17 @@ namespace AasxServerDB
             Console.WriteLine("\nCountSMs");
 
             watch.Restart();
-            var query = GetSMs(db, semanticId, identifier, diff, expression);
+            var query = GetSMs(new List<string>(), db, semanticId, identifier, diff, expression);
             if (query == null)
             {
                 Console.WriteLine("No query is generated due to incorrect parameter combination.");
                 return 0;
             }
-            Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
+            Console.WriteLine("Generate query in " + watch.ElapsedMilliseconds + " ms");
 
             watch.Restart();
             var result = query.Count();
-            Console.WriteLine("Collect results\tin " + watch.ElapsedMilliseconds + " ms\nSMs found\t" + result + "/" + db.SMSets.Count());
+            Console.WriteLine("Collect results in " + watch.ElapsedMilliseconds + " ms\nSMs found\t" + result + "/" + db.SMSets.Count());
 
             return result;
         }
@@ -107,7 +107,7 @@ namespace AasxServerDB
             Console.WriteLine("\nSearchSMEs");
 
             watch.Restart();
-            var query = GetSMEs(db, false, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
+            var query = GetSMEs(qResult.Messages, db, false, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
             if (query == null)
             {
                 text = "No query is generated due to incorrect parameter combination.";
@@ -116,13 +116,13 @@ namespace AasxServerDB
             }
             else
             {
-                text = "Generate query\tin " + watch.ElapsedMilliseconds + " ms";
+                text = "Generate query in " + watch.ElapsedMilliseconds + " ms";
                 Console.WriteLine(text);
                 qResult.Messages.Add(text);
 
                 watch.Restart();
                 var result = GetSMEResult((IQueryable<CombinedSMEResult>)query);
-                text = "Collect results\tin " + watch.ElapsedMilliseconds + " ms\nSMEs found\t" + result.Count + "/" + db.SMESets.Count();
+                text = "Collect results in " + watch.ElapsedMilliseconds + " ms\nSMEs found\t" + result.Count + "/" + db.SMESets.Count();
                 Console.WriteLine(text);
                 qResult.Messages.Add(text);
 
@@ -141,23 +141,23 @@ namespace AasxServerDB
             Console.WriteLine("\nCountSMEs");
 
             watch.Restart();
-            var query = GetSMEs(db, true, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
+            var query = GetSMEs(new List<string>(), db, true, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
             if (query == null)
             {
                 Console.WriteLine("No query is generated due to incorrect parameter combination.");
                 return 0;
             }
-            Console.WriteLine("Generate query\tin " + watch.ElapsedMilliseconds + " ms");
+            Console.WriteLine("Generate query in " + watch.ElapsedMilliseconds + " ms");
 
             watch.Restart();
             var result = query.Count();
-            Console.WriteLine("Collect results\tin " + watch.ElapsedMilliseconds + " ms\nSMEs found\t" + result + "/" + db.SMESets.Count());
+            Console.WriteLine("Collect results in " + watch.ElapsedMilliseconds + " ms\nSMEs found\t" + result + "/" + db.SMESets.Count());
 
             return result;
         }
 
         // --------------- SM Methods ---------------
-        private IQueryable<CombinedSMResult>? GetSMs(AasContext db, string semanticId = "", string identifier = "", string diffString = "", string expression = "")
+        private IQueryable<CombinedSMResult>? GetSMs(List<string> messages, AasContext db, string semanticId = "", string identifier = "", string diffString = "", string expression = "")
         {
             // analyse parameters
             var withSemanticId = !semanticId.IsNullOrEmpty();
@@ -166,6 +166,7 @@ namespace AasxServerDB
             var withDiff = !diff.Equals(DateTime.MinValue);
             var withParameters = withSemanticId || withIdentifier || withDiff;
             var withExpression = !expression.IsNullOrEmpty();
+            var text = "";
 
             // wrong parameters
             if (withExpression == withParameters)
@@ -179,6 +180,7 @@ namespace AasxServerDB
                 log = true;
                 expression = expression.Replace("$LOG", "");
                 Console.WriteLine("$LOG");
+                messages.Add("$LOG");
             }
 
             if (expression.StartsWith("$QL"))
@@ -186,6 +188,7 @@ namespace AasxServerDB
                 withQueryLanguage = 1;
                 expression = expression.Replace("$QL", "");
                 Console.WriteLine("$QL");
+                messages.Add("$QL");
             }
 
             if (expression.StartsWith("$JSON"))
@@ -193,6 +196,7 @@ namespace AasxServerDB
                 withQueryLanguage = 2;
                 expression = expression.Replace("$JSON", "");
                 Console.WriteLine("$JSON");
+                messages.Add("$JSON");
             }
 
             // get data
@@ -216,12 +220,18 @@ namespace AasxServerDB
 
                     // combined condition
                     combinedCondition = parser.GenerateSql(ast, "", ref countTypePrefix, "filter");
+                    text = "combinedCondition: " + combinedCondition;
+                    Console.WriteLine(text);
+                    messages.Add(text);
 
                     // sm condition
                     conditionSM = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_submodel");
                     if (conditionSM.IsNullOrEmpty())
                         conditionSM = parser.GenerateSql(ast, "sm.", ref countTypePrefix, "filter");
                     conditionSM = conditionSM.Replace("sm.", "");
+                    text = "conditionSM: " + conditionSM;
+                    Console.WriteLine(text);
+                    messages.Add(text);
 
                     // check restrictions
                     var restrictSM = !conditionSM.IsNullOrEmpty() && !conditionSM.Equals("true");
@@ -241,9 +251,10 @@ namespace AasxServerDB
                     if (parseTree.HasErrors())
                     {
                         var pos = parser.Context.CurrentToken.Location.Position;
-                        var text = expression.Substring(0, pos) + "$$$" + expression.Substring(pos);
+                        text = expression.Substring(0, pos) + "$$$" + expression.Substring(pos);
                         text = string.Join("\n", parseTree.ParserMessages) + "\nSee $$$: " + text;
                         Console.WriteLine(text);
+                        messages.Add(text);
                         while (text != text.Replace("\n  ", "\n "))
                         {
                             text = text.Replace("\n  ", "\n ");
@@ -263,6 +274,9 @@ namespace AasxServerDB
 
                         int countTypePrefix = 0;
                         combinedCondition = grammar.ParseTreeToExpression(parseTree.Root, "", ref countTypePrefix);
+                        text = "combinedCondition: " + combinedCondition;
+                        Console.WriteLine(text);
+                        messages.Add(text);
 
                         countTypePrefix = 0;
                         conditionSM = grammar.ParseTreeToExpression(parseTree.Root, "sm.", ref countTypePrefix);
@@ -270,11 +284,13 @@ namespace AasxServerDB
                         {
                             conditionSM = "";
                         }
+                        text = "conditionSM: " + conditionSM;
+                        Console.WriteLine(text);
+                        messages.Add(text);
                     }
                 }
                 else
                 {
-                    List<string> messages = new List<string>();
                     // JSON Query Language from JsonParser.cs
                     var jParser = new JsonParser();
                     messages.Add("");
@@ -339,7 +355,7 @@ namespace AasxServerDB
         }
 
         // --------------- SME Methods ---------------
-        private IQueryable? GetSMEs(AasContext db, bool withCount = false, string smSemanticId = "", string smIdentifier = "", string semanticId = "",
+        private IQueryable? GetSMEs(List<string> messages, AasContext db, bool withCount = false, string smSemanticId = "", string smIdentifier = "", string semanticId = "",
             string diffString = "", string contains = "", string equal = "", string lower = "", string upper = "", string expression = "")
         {
             // analyse parameters
@@ -356,6 +372,7 @@ namespace AasxServerDB
             var withCompare = withLower && withUpper;
             var withParameters = withSMSemanticId || withSMIdentifier || withSemanticId || withDiff || withContains || withEqualString || withLower || withUpper;
             var withExpression = !expression.IsNullOrEmpty();
+            string text = "";
 
             // wrong parameters
             if (withExpression == withParameters ||
@@ -382,6 +399,7 @@ namespace AasxServerDB
                 log = true;
                 expression = expression.Replace("$LOG", "");
                 Console.WriteLine("$LOG");
+                messages.Add("$LOG");
             }
 
             if (withExpression && expression.StartsWith("$QL"))
@@ -389,6 +407,7 @@ namespace AasxServerDB
                 withQueryLanguage = 1;
                 expression = expression.Replace("$QL", "");
                 Console.WriteLine("$QL");
+                messages.Add("$QL");
             }
 
             if (expression.StartsWith("$JSON"))
@@ -396,6 +415,7 @@ namespace AasxServerDB
                 withQueryLanguage = 2;
                 expression = expression.Replace("$JSON", "");
                 Console.WriteLine("$JSON");
+                messages.Add("$JSON");
             }
 
             // check additional columns for expression
@@ -429,6 +449,8 @@ namespace AasxServerDB
 
                 if (withQueryLanguage == 0)
                 {
+                    messages.Add("");
+
                     expression = Regex.Replace(expression, @"\s+", string.Empty);
 
                     // init parser
@@ -438,18 +460,27 @@ namespace AasxServerDB
 
                     // combined condition
                     combinedCondition = parser.GenerateSql(ast, "", ref countTypePrefix, "filter");
+                    text = "combinedCondition: " + combinedCondition;
+                    Console.WriteLine(text);
+                    messages.Add(text);
 
                     // sm condition
                     conditionSM = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_submodel");
                     if (conditionSM.IsNullOrEmpty())
                         conditionSM = parser.GenerateSql(ast, "sm.", ref countTypePrefix, "filter");
                     conditionSM = conditionSM.Replace("sm.", "");
+                    text = "conditionSM: " + conditionSM;
+                    Console.WriteLine(text);
+                    messages.Add(text);
 
                     // sme condition
                     conditionSME = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_submodel_elements");
                     if (conditionSME.IsNullOrEmpty())
                         conditionSME = parser.GenerateSql(ast, "sme.", ref countTypePrefix, "filter");
                     conditionSME = conditionSME.Replace("sme.", "");
+                    text = "conditionSME: " + conditionSME;
+                    Console.WriteLine(text);
+                    messages.Add(text);
 
                     // string condition
                     conditionStr = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_str");
@@ -458,6 +489,9 @@ namespace AasxServerDB
                     if (conditionStr.Equals("true"))
                         conditionStr = "sValue != null";
                     conditionStr = conditionStr.Replace("sValue", "Value");
+                    text = "conditionStr: " + conditionStr;
+                    Console.WriteLine(text);
+                    messages.Add(text);
 
                     // num condition
                     conditionNum = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_num");
@@ -466,6 +500,11 @@ namespace AasxServerDB
                     if (conditionNum.Equals("true"))
                         conditionNum = "mValue != null";
                     conditionNum = conditionNum.Replace("mValue", "Value");
+                    text = "conditionNum: " + conditionNum;
+                    Console.WriteLine(text);
+                    messages.Add(text);
+
+                    messages.Add("");
                 }
                 else if (withQueryLanguage == 1)
                 {
@@ -478,7 +517,7 @@ namespace AasxServerDB
                     if (parseTree.HasErrors())
                     {
                         var pos = parser.Context.CurrentToken.Location.Position;
-                        var text = expression.Substring(0, pos) + "$$$" + expression.Substring(pos);
+                        text = expression.Substring(0, pos) + "$$$" + expression.Substring(pos);
                         text = string.Join("\n", parseTree.ParserMessages) + "\nSee $$$: " + text;
                         Console.WriteLine(text);
                         while (text != text.Replace("\n  ", "\n "))
@@ -491,6 +530,8 @@ namespace AasxServerDB
                     }
                     else
                     {
+                        messages.Add("");
+
                         // Security
                         if (parseTree.Root.Term.Name == "AllRules")
                         {
@@ -500,6 +541,9 @@ namespace AasxServerDB
 
                         int countTypePrefix = 0;
                         combinedCondition = grammar.ParseTreeToExpression(parseTree.Root, "", ref countTypePrefix);
+                        text = "combinedCondition: " + combinedCondition;
+                        Console.WriteLine(text);
+                        messages.Add(text);
 
                         countTypePrefix = 0;
                         conditionSM = grammar.ParseTreeToExpression(parseTree.Root, "sm.", ref countTypePrefix);
@@ -507,6 +551,9 @@ namespace AasxServerDB
                         {
                             conditionSM = "";
                         }
+                        text = "conditionSM: " + conditionSM;
+                        Console.WriteLine(text);
+                        messages.Add(text);
 
                         countTypePrefix = 0;
                         conditionSME = grammar.ParseTreeToExpression(parseTree.Root, "sme.", ref countTypePrefix);
@@ -514,6 +561,9 @@ namespace AasxServerDB
                         {
                             conditionSME = "";
                         }
+                        text = "conditionSME: " + conditionSME;
+                        Console.WriteLine(text);
+                        messages.Add(text);
 
                         countTypePrefix = 0;
                         conditionStr = grammar.ParseTreeToExpression(parseTree.Root, "str()", ref countTypePrefix);
@@ -521,6 +571,9 @@ namespace AasxServerDB
                         {
                             conditionStr = "";
                         }
+                        text = "conditionStr: " + conditionStr;
+                        Console.WriteLine(text);
+                        messages.Add(text);
 
                         countTypePrefix = 0;
                         conditionNum = grammar.ParseTreeToExpression(parseTree.Root, "num()", ref countTypePrefix);
@@ -528,11 +581,15 @@ namespace AasxServerDB
                         {
                             conditionNum = "";
                         }
+                        text = "conditionNum: " + conditionNum;
+                        Console.WriteLine(text);
+                        messages.Add(text);
+
+                        messages.Add("");
                     }
                 }
                 else
                 {
-                    List<string> messages = new List<string>();
                     // JSON Query Language from JsonParser.cs
                     var jParser = new JsonParser();
                     messages.Add("");

@@ -85,6 +85,10 @@ namespace AasxServerDB
             var connectionString = Config["DatabaseConnection:ConnectionString"];
             if (connectionString.IsNullOrEmpty())
                 throw new Exception("No ConnectionString in appsettings");
+            if (connectionString.Contains("$DATAPATH"))
+            {
+                connectionString = connectionString.Replace("$DATAPATH", DataPath);
+            }
             IsPostgres = connectionString.ToLower().Contains("host");
 
             return connectionString;
@@ -92,16 +96,14 @@ namespace AasxServerDB
 
         public static void InitDB(bool reloadDB, string dataPath)
         {
+            DataPath = dataPath;
+
             // Get database
             Console.WriteLine($"Use {(IsPostgres ? "POSTGRES" : "SQLITE")}");
             AasContext db = IsPostgres ? new PostgreAasContext() : new SqliteAasContext();
 
             // Get path
             var connectionString = db.Database.GetConnectionString();
-            if (connectionString.Contains("$DATAPATH"))
-            {
-                connectionString = connectionString.Replace("$DATAPATH", dataPath);
-            }
             Console.WriteLine($"Database connection string: {connectionString}");
             if (connectionString.IsNullOrEmpty())
             {

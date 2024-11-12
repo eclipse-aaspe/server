@@ -1128,8 +1128,8 @@ namespace AasxServer
                 // AppContext.SetSwitch("System.Net.Http.UseSocketsHttpHandler", false);
             }
 
-            AasContext.Config = con;
-            AasContext.IsPostgres = AasContext.GetConnectionString().ToLower().Contains("host");
+            // AasContext.Config = con;
+            // AasContext.IsPostgres = AasContext.GetConnectionString().ToLower().Contains("host");
 
             string nl = System.Environment.NewLine;
 
