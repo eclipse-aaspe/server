@@ -13235,6 +13235,7 @@ namespace AasCore.Aas3_0
                     }
                 }
 
+                /*
                 if (theDataSpecification == null)
                 {
                     error = new Reporting.Error(
@@ -13256,6 +13257,11 @@ namespace AasCore.Aas3_0
                     theDataSpecificationContent
                          ?? throw new System.InvalidOperationException(
                             "Unexpected null, had to be handled before"));
+                */
+
+                return new Aas.EmbeddedDataSpecification(
+                    theDataSpecification,
+                    theDataSpecificationContent);
             }  // internal static EmbeddedDataSpecificationFrom
 
             /// <summary>
