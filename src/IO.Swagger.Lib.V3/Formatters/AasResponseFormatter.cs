@@ -114,6 +114,10 @@ namespace IO.Swagger.Lib.V3.Formatters
             {
                 return base.CanWriteResult(context);
             }
+            if (typeof(PackageDescriptionPagedResult).IsAssignableFrom(context.ObjectType))
+            {
+                return base.CanWriteResult(context);
+            }
             else
                 return false;
         }
@@ -304,6 +308,23 @@ namespace IO.Swagger.Lib.V3.Formatters
                 var writer = new Utf8JsonWriter(response.Body);
                 jsonNode.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();
+            }
+            else if(typeof(PackageDescriptionPagedResult).IsAssignableFrom(context.ObjectType))
+            {
+                JsonNode jsonNode = null;
+                var options = new JsonSerializerOptions
+                {
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                };
+                if (context.Object is PackageDescriptionPagedResult pagedResult)
+                {
+                    jsonNode = JsonSerializer.SerializeToNode(pagedResult, options);
+                }
+                var writer = new Utf8JsonWriter(response.Body);
+                jsonNode.WriteTo(writer);
+                writer.FlushAsync().GetAwaiter().GetResult();
+                writer.Dispose();
             }
 
             return Task.FromResult(response);
