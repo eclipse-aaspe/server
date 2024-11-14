@@ -1871,6 +1871,7 @@ namespace AasxServer
                                             d = eventPayload.status.lastUpdate;
                                             eventData.lastUpdate.Value = d;
                                             eventData.statusData.SetAllParentsAndTimestamps(eventData.statusData.Parent as IReferable, dt, dt, DateTime.MinValue);
+                                            Program.signalNewData(2);
                                         }
                                     }
                                 }

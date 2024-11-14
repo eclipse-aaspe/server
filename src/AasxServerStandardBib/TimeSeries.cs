@@ -777,18 +777,21 @@ namespace AasxTimeSeries
                                     case "lowDataIndex":
                                         if (tsb.lowDataIndex != null && tsb.latestData.Value[ld] is Property p1)
                                         {
-                                            tsb.lowDataIndex.Value = p1.Value;
+                                            // tsb.lowDataIndex.Value = p1.Value;
+                                            tsb.lowDataIndex = p1;
                                         }
                                         break;
                                     case "highDataIndex":
                                         if (tsb.highDataIndex != null && tsb.latestData.Value[ld] is Property p2)
                                         {
-                                            tsb.highDataIndex.Value = p2.Value;
+                                            tsb.highDataIndex = p2;
                                         }
                                         break;
                                 }
                             }
+                            tsb.lowDataIndex.Value = "" + (Convert.ToInt32(tsb.highDataIndex.Value) + 1);
                             tsb.sampleStatus.Value = "start";
+                            Program.signalNewData(2);
                         }
                     }
 
@@ -1123,7 +1126,7 @@ namespace AasxTimeSeries
                                         // tsb.lowDataIndex++;
                                         int index = Convert.ToInt32(tsb.lowDataIndex.Value);
                                         tsb.lowDataIndex.Value = (index + 1).ToString();
-                                        updateMode             = 1;
+                                        updateMode = 1;
                                     }
                                 }
                             }
