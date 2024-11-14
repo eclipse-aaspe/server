@@ -205,11 +205,10 @@ public class AASXFileServerAPIApiController : ControllerBase
     public virtual IActionResult GetAllAASXPackageIds([FromQuery] string? aasId, [FromQuery] int? limit, [FromQuery] string? cursor)
     {
         _logger.LogInformation($"Received request to get all the AASX packages.");
-        var decodedAasId = _decoderService.Decode("aasId", aasId);
-
-        if (decodedAasId == null)
+        string decodedAasId = null;
+        if (!string.IsNullOrEmpty(aasId))
         {
-            throw new NotAllowed($"Cannot proceed as {nameof(decodedAasId)} is null");
+            decodedAasId = _decoderService.Decode("aasId", aasId); 
         }
 
         var packages = _fileService.GetAllAASXPackageIds(decodedAasId);
@@ -217,7 +216,7 @@ public class AASXFileServerAPIApiController : ControllerBase
         var authResult = _authorizationService.AuthorizeAsync(User, packages, "SecurityPolicy").Result;
         if (!authResult.Succeeded)
         {
-            var failedReasons               = authResult.Failure.FailureReasons;
+            var failedReasons = authResult.Failure.FailureReasons;
             var authorizationFailureReasons = failedReasons.ToList();
             if (authorizationFailureReasons.Count != 0)
             {
