@@ -324,6 +324,7 @@ namespace IO.Swagger.Lib.V3.Formatters
                 var writer = new Utf8JsonWriter(response.Body);
                 jsonNode.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();
+                writer.Dispose();
             }
 
             return Task.FromResult(response);
