@@ -113,7 +113,7 @@ namespace AasxTimeSeries
                             var sm = env.AasEnv.FindSubmodel(smr);
                             if (sm != null && sm.IdShort != null)
                             {
-                                sm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp, timeStamp);
+                                sm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp, DateTime.MinValue);
                                 sm.SetTimeStamp(timeStamp);
                                 if (sm.SubmodelElements == null)
                                     continue;
@@ -749,8 +749,54 @@ namespace AasxTimeSeries
 
             foreach (var tsb in timeSeriesBlockList)
             {
-                if (tsb.sampleStatus == null)
+                if (tsb.sampleStatus == null || tsb.sampleStatus.Value == null)
                     continue;
+
+                // Check for reconnect of Events
+                if (tsb.sampleStatus.Value == "reconnect")
+                {
+                    bool reconnect = false;
+
+                    if (tsb.latestData != null)
+                    {
+                        for (int ld = 0; ld < tsb.latestData.Value.Count; ld++)
+                        {
+                            if (tsb.latestData.Value[ld].IdShort == "__RECONNECT__")
+                            {
+                                reconnect = true;
+                                tsb.latestData.Value.RemoveAt(ld);
+                                ld--;
+                            }
+                        }
+                        if (reconnect)
+                        {
+                            for (int ld = 0; ld < tsb.latestData.Value.Count; ld++)
+                            {
+                                switch (tsb.latestData.Value[ld].IdShort)
+                                {
+                                    case "lowDataIndex":
+                                        if (tsb.lowDataIndex != null && tsb.latestData.Value[ld] is Property p1)
+                                        {
+                                            tsb.lowDataIndex.Value = p1.Value;
+                                        }
+                                        break;
+                                    case "highDataIndex":
+                                        if (tsb.highDataIndex != null && tsb.latestData.Value[ld] is Property p2)
+                                        {
+                                            tsb.highDataIndex.Value = p2.Value;
+                                        }
+                                        break;
+                                }
+                            }
+                            tsb.sampleStatus.Value = "start";
+                        }
+                    }
+
+                    if (!reconnect)
+                        continue;
+                }
+                // End reconnect
+
 
                 if (tsb.sampleStatus.Value == "stop")
                 {

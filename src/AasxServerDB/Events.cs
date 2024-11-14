@@ -709,6 +709,7 @@ namespace Events
                         while (data.Value != null && data.Value.Count > maxCount)
                         {
                             data.Value.RemoveAt(0);
+                            data.SetTimeStampDelete(dt);
                         }
                     }
                 }

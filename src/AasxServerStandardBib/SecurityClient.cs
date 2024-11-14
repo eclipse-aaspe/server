@@ -1798,115 +1798,217 @@ namespace AasxServer
                 {
                     d = eventData.lastUpdate.Value;
                 }
-                List<String> diffEntry = new List<String>();
-                bool np = false;
-                np = eventData.noPayload != null && eventData.noPayload.Value != null && eventData.noPayload.Value.ToLower() == "true";
-                string c = "";
-                if (eventData.changes != null)
+
+                // reconnect
+                if (d == "reconnect")
                 {
-                    c = eventData.changes.Value;
-                }
-                var e = Events.EventPayload.CollectPayload(c, 0, eventData.statusData, source, d, diffEntry, np);
-
-                Console.WriteLine("PUT Events: " + requestPath + "/" + d);
-
-                var json = System.Text.Json.JsonSerializer.Serialize(e);
-
-                /*
-                handler = new HttpClientHandler();
-
-                if (!requestPath.Contains("localhost"))
-                {
-                    if (proxy != null)
-                        handler.Proxy = proxy;
-                    else
-                        handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
-                }
-                */
-
-                client = new HttpClient(handler);
-                client.Timeout = TimeSpan.FromSeconds(20);
-
-                int update = 0;
-                try
-                {
-                    using (var requestMessage = new HttpRequestMessage(HttpMethod.Put, requestPath))
+                    try
                     {
-                        if (eventData.accessToken != null && eventData.accessToken.Value != null && eventData.accessToken.Value != "")
+                        using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestPath + "/status"))
                         {
-                            client.SetBearerToken(eventData.accessToken.Value);
-                        }
-                        else
-                        {
-                            if (eventData.userName != null && eventData.passWord != null)
+                            if (eventData.accessToken != null && eventData.accessToken.Value != null && eventData.accessToken.Value != "")
                             {
-                                requestMessage.Headers.Authorization = new BasicAuthenticationHeaderValue(eventData.userName.Value, eventData.passWord.Value);
-                            }
-                        }
-
-                        var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-                        requestMessage.Content = content;
-
-                        HttpResponseMessage response = null;
-                        var task = Task.Run(async () =>
-                        {
-                            response = await client.SendAsync(requestMessage);
-
-                            if (!response.IsSuccessStatusCode)
-                            {
-                                if (eventData.status != null)
-                                {
-                                    eventData.message.Value = "ERROR: " +
-                                        response.StatusCode.ToString() + " ; " +
-                                        response.Content.ReadAsStringAsync().Result +
-                                        " ; PUT " + requestPath;
-                                    eventData.status.SetTimeStamp(DateTime.UtcNow);
-                                }
+                                client.SetBearerToken(eventData.accessToken.Value);
                             }
                             else
                             {
-                                if (eventData.transmitted != null)
+                                if (eventData.userName != null && eventData.passWord != null)
                                 {
-                                    eventData.transmitted.Value = e.status.transmitted;
-                                    eventData.transmitted.SetTimeStamp(DateTime.UtcNow);
-                                }
-                                var dt = DateTime.Parse(e.status.lastUpdate);
-                                if (eventData.lastUpdate != null)
-                                {
-                                    eventData.lastUpdate.Value = e.status.lastUpdate;
-                                    eventData.lastUpdate.SetTimeStamp(dt);
-                                }
-                                if (eventData.status != null)
-                                {
-                                    eventData.message.Value = "on";
-                                    eventData.status.SetTimeStamp(DateTime.UtcNow);
-                                }
-                                if (eventData.diff != null && diffEntry.Count > 0)
-                                {
-                                    eventData.diff.Value = new List<ISubmodelElement>();
-                                    int i = 0;
-                                    foreach (var d in diffEntry)
-                                    {
-                                        var p = new Property(DataTypeDefXsd.String);
-                                        p.IdShort = "diff" + i;
-                                        p.Value = d;
-                                        p.SetTimeStamp(dt);
-                                        eventData.diff.Value.Add(p);
-                                        i++;
-                                    }
-                                    eventData.diff.SetTimeStamp(dt);
+                                    requestMessage.Headers.Authorization = new BasicAuthenticationHeaderValue(eventData.userName.Value, eventData.passWord.Value);
                                 }
                             }
-                        });
-                        task.Wait();
+
+                            HttpResponseMessage response = null;
+
+                            client = new HttpClient(handler);
+                            client.Timeout = TimeSpan.FromSeconds(20);
+
+                            var task = Task.Run(async () => { response = await client.SendAsync(requestMessage); });
+                            task.Wait();
+
+                            {
+                                var now = DateTime.UtcNow;
+                                if (!response.IsSuccessStatusCode)
+                                {
+                                    if (eventData.status != null)
+                                    {
+                                        eventData.message.Value = "ERROR: " +
+                                            response.StatusCode.ToString() + " ; " +
+                                            response.Content.ReadAsStringAsync().Result +
+                                            " ; RECONNECT " + requestPath;
+                                        eventData.status.SetTimeStamp(now);
+                                        d = eventData.lastUpdate.Value = "reconnect";
+                                        eventData.lastUpdate.SetTimeStamp(now);
+                                    }
+                                }
+                                else
+                                {
+                                    string jsonString = null;
+                                    task = Task.Run(async () =>
+                                    {
+                                        using (var stream = await response.Content.ReadAsStreamAsync())
+                                        {
+                                            var reader = new StreamReader(stream);
+                                            jsonString = reader.ReadToEnd();
+                                        }
+                                    });
+                                    task.Wait();
+
+                                    Events.EventPayload eventPayload = System.Text.Json.JsonSerializer.Deserialize<Events.EventPayload>(jsonString);
+
+                                    ISubmodelElement receiveSme = null;
+                                    MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(eventPayload.statusData));
+                                    JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                                    receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
+                                    if (receiveSme != null && receiveSme is SubmodelElementCollection smc)
+                                    {
+                                        if (smc.Value != null && smc.Value.Count != 0 && smc.Value[0] is SubmodelElementCollection smcValue)
+                                        {
+                                            var dt = eventData.statusData.TimeStamp;
+                                            eventData.statusData.Value = smcValue.Value;
+                                            var p = new Property(DataTypeDefXsd.String, idShort: "__RECONNECT__", value: "1");
+                                            eventData.statusData.Value.Add(p);
+                                            d = eventPayload.status.lastUpdate;
+                                            eventData.lastUpdate.Value = d;
+                                            eventData.statusData.SetAllParentsAndTimestamps(eventData.statusData.Parent as IReferable, dt, dt, DateTime.MinValue);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        eventData.message.Value = "ERROR: " +
+                            ex.Message +
+                            " ; RECONNECT " + requestPath;
+                        var now = DateTime.UtcNow;
+                        eventData.status.SetTimeStamp(now);
+                        eventData.status.SetTimeStamp(now);
+                        d = eventData.lastUpdate.Value = "reconnect";
+                        eventData.lastUpdate.SetTimeStamp(now);
                     }
                 }
-                catch (Exception ex)
+
+                if (d != "reconnect")
                 {
-                    eventData.message.Value = "ERROR: " +
-                        ex.Message +
-                        " ; PUT " + requestPath;
-                    eventData.status.SetTimeStamp(DateTime.UtcNow);
+                    List<String> diffEntry = new List<String>();
+                    bool np = false;
+                    np = eventData.noPayload != null && eventData.noPayload.Value != null && eventData.noPayload.Value.ToLower() == "true";
+                    string c = "";
+                    if (eventData.changes != null)
+                    {
+                        c = eventData.changes.Value;
+                    }
+                    var e = Events.EventPayload.CollectPayload(c, 0, eventData.statusData, source, d, diffEntry, np);
+
+                    Console.WriteLine("PUT Events: " + requestPath + "/" + d);
+
+                    var json = System.Text.Json.JsonSerializer.Serialize(e);
+
+                    /*
+                    handler = new HttpClientHandler();
+
+                    if (!requestPath.Contains("localhost"))
+                    {
+                        if (proxy != null)
+                            handler.Proxy = proxy;
+                        else
+                            handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                    }
+                    */
+
+                    client = new HttpClient(handler);
+                    client.Timeout = TimeSpan.FromSeconds(20);
+
+                    int update = 0;
+                    try
+                    {
+                        using (var requestMessage = new HttpRequestMessage(HttpMethod.Put, requestPath))
+                        {
+                            if (eventData.accessToken != null && eventData.accessToken.Value != null && eventData.accessToken.Value != "")
+                            {
+                                client.SetBearerToken(eventData.accessToken.Value);
+                            }
+                            else
+                            {
+                                if (eventData.userName != null && eventData.passWord != null)
+                                {
+                                    requestMessage.Headers.Authorization = new BasicAuthenticationHeaderValue(eventData.userName.Value, eventData.passWord.Value);
+                                }
+                            }
+
+                            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                            requestMessage.Content = content;
+
+                            HttpResponseMessage response = null;
+                            var task = Task.Run(async () =>
+                            {
+                                response = await client.SendAsync(requestMessage);
+
+                                var now = DateTime.UtcNow;
+                                if (!response.IsSuccessStatusCode)
+                                {
+                                    if (eventData.status != null)
+                                    {
+                                        eventData.message.Value = "ERROR: " +
+                                            response.StatusCode.ToString() + " ; " +
+                                            response.Content.ReadAsStringAsync().Result +
+                                            " ; PUT " + requestPath;
+                                        eventData.status.SetTimeStamp(now);
+                                        d = eventData.lastUpdate.Value = "reconnect";
+                                        eventData.lastUpdate.SetTimeStamp(now);
+                                    }
+                                }
+                                else
+                                {
+                                    if (eventData.transmitted != null)
+                                    {
+                                        eventData.transmitted.Value = e.status.transmitted;
+                                        eventData.transmitted.SetTimeStamp(now);
+                                    }
+                                    var dt = DateTime.Parse(e.status.lastUpdate);
+                                    if (eventData.lastUpdate != null)
+                                    {
+                                        eventData.lastUpdate.Value = e.status.lastUpdate;
+                                        eventData.lastUpdate.SetTimeStamp(dt);
+                                    }
+                                    if (eventData.status != null)
+                                    {
+                                        eventData.message.Value = "on";
+                                        eventData.status.SetTimeStamp(now);
+                                    }
+                                    if (eventData.diff != null && diffEntry.Count > 0)
+                                    {
+                                        eventData.diff.Value = new List<ISubmodelElement>();
+                                        int i = 0;
+                                        foreach (var d in diffEntry)
+                                        {
+                                            var p = new Property(DataTypeDefXsd.String);
+                                            p.IdShort = "diff" + i;
+                                            p.Value = d;
+                                            p.SetTimeStamp(dt);
+                                            eventData.diff.Value.Add(p);
+                                            i++;
+                                        }
+                                        eventData.diff.SetTimeStamp(dt);
+                                    }
+                                }
+                            });
+                            task.Wait();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        eventData.message.Value = "ERROR: " +
+                            ex.Message +
+                            " ; PUT " + requestPath;
+                        var now = DateTime.UtcNow;
+                        eventData.status.SetTimeStamp(now);
+                        eventData.status.SetTimeStamp(now);
+                        d = eventData.lastUpdate.Value = "reconnect";
+                        eventData.lastUpdate.SetTimeStamp(now);
+                    }
                 }
 
                 Program.signalNewData(2);

@@ -135,7 +135,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 np = (bool)noPayload;
             }
 
-            string sourceUrl = Program.externalBlazor + $"/getevents/{submodelIdentifier}";
+            string sourceUrl = Program.externalBlazor + $"/{submodelIdentifier}/events/" + eventName;
             if (diff.StartsWith("refresh="))
             {
                 diff = diff.Replace("refresh=", "");
@@ -179,34 +179,44 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             string changes = "CREATE UPDATE DELETE";
             var e = Events.EventPayload.CollectPayload(changes, 0, eventData.statusData, data, diff, diffEntry, np);
 
-            var timeStamp = DateTime.UtcNow;
-            if (eventData.transmitted != null)
+            if (diff == "status")
             {
-                eventData.transmitted.Value = e.status.transmitted;
-                eventData.transmitted.SetTimeStamp(DateTime.UtcNow);
-            }
-            var dt = DateTime.Parse(e.status.lastUpdate);
-            if (eventData.lastUpdate != null)
-            {
-                eventData.lastUpdate.Value = e.status.lastUpdate;
-                eventData.lastUpdate.SetTimeStamp(dt);
-            }
-            if (eventData.diff != null)
-            {
-                if (diffEntry.Count > 0)
+                if (eventData.lastUpdate != null)
                 {
-                    eventData.diff.Value = new List<ISubmodelElement>();
-                    int i = 0;
-                    foreach (var d in diffEntry)
+                    e.status.lastUpdate = eventData.lastUpdate.Value;
+                }
+            }
+            else
+            {
+                var timeStamp = DateTime.UtcNow;
+                if (eventData.transmitted != null)
+                {
+                    eventData.transmitted.Value = e.status.transmitted;
+                    eventData.transmitted.SetTimeStamp(DateTime.UtcNow);
+                }
+                var dt = DateTime.Parse(e.status.lastUpdate);
+                if (eventData.lastUpdate != null)
+                {
+                    eventData.lastUpdate.Value = e.status.lastUpdate;
+                    eventData.lastUpdate.SetTimeStamp(dt);
+                }
+                if (eventData.diff != null)
+                {
+                    if (diffEntry.Count > 0)
                     {
-                        var p = new Property(DataTypeDefXsd.String);
-                        p.IdShort = "diff" + i;
-                        p.Value = d;
-                        p.SetTimeStamp(dt);
-                        eventData.diff.Value.Add(p);
-                        i++;
+                        eventData.diff.Value = new List<ISubmodelElement>();
+                        int i = 0;
+                        foreach (var d in diffEntry)
+                        {
+                            var p = new Property(DataTypeDefXsd.String);
+                            p.IdShort = "diff" + i;
+                            p.Value = d;
+                            p.SetTimeStamp(dt);
+                            eventData.diff.Value.Add(p);
+                            i++;
+                        }
+                        eventData.diff.SetTimeStamp(dt);
                     }
-                    eventData.diff.SetTimeStamp(dt);
                 }
             }
 
