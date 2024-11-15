@@ -13,7 +13,6 @@
 
 using AasxServer;
 using Extensions;
-using Opc.Ua;
 using Org.Webpki.JsonCanonicalizer;
 using SampleClient;
 using System;
@@ -500,7 +499,7 @@ namespace AasxTimeSeries
                 opcClientCount += ms;
                 if (opcClientCount >= opcClientRate)
                 {
-                    AasxServer.Program.OnOPCClientNextTimedEvent();
+                    //AasxServer.Program.OnOPCClientNextTimedEvent();
                     opcClientCount = 0;
                 }
             }
@@ -1417,8 +1416,8 @@ namespace AasxTimeSeries
 
         static List<List<object>> table = null;
         static string ErrorMessage { get; set; }
-        static UASampleClient opc = null;
-        static Opc.Ua.Client.Session session = null;
+        //static UASampleClient opc = null;
+        //static Opc.Ua.Client.Session session = null;
         static DateTime startTime;
         static DateTime endTime;
         static List<string> opcDAValues = null;
@@ -1512,7 +1511,7 @@ namespace AasxTimeSeries
             Console.WriteLine("Read OPC DA Data:");
             try
             {
-                ErrorMessage = "";
+                /*ErrorMessage = "";
                 if (session == null)
                     Connect(tsb);
                 if (session != null)
@@ -1521,10 +1520,10 @@ namespace AasxTimeSeries
                     for (int i = 0; i < tsb.opcNodes.Count; i++)
                     {
                         string[] split = tsb.opcNodes[i].Split(',');
-                        string   value = opc.ReadSubmodelElementValue(split[1], (ushort)Convert.ToInt32(split[0]));
-                        opcDAValues.Add(value);
+                        //string   value = opc.ReadSubmodelElementValue(split[1], (ushort)Convert.ToInt32(split[0]));
+                        //opcDAValues.Add(value);
                     }
-                }
+                }*/
             }
             catch (Exception ex)
             {
@@ -1542,7 +1541,7 @@ namespace AasxTimeSeries
 
         public static void GetHistory(TimeSeriesBlock tsb)
         {
-            Console.WriteLine("Read OPC UA Historical Data:");
+            /*Console.WriteLine("Read OPC UA Historical Data:");
             try
             {
                 ErrorMessage = "";
@@ -1551,7 +1550,7 @@ namespace AasxTimeSeries
                 startTime = tsb.opcLastTimeStamp;
                 // get current time on server
                 if (session != null)
-                    endTime = (DateTime)session.ReadValue(new NodeId(2258, 0)).Value;
+                    //endTime = (DateTime)session.ReadValue(new NodeId(2258, 0)).Value;
                 GetData(tsb);
             }
             catch (Exception ex)
@@ -1561,8 +1560,8 @@ namespace AasxTimeSeries
                 session?.Close();
                 session?.Dispose();
                 session = null;
-                opc     = null;
-            }
+                //opc     = null;
+            }*/
             /*
             session?.Close();
             session?.Dispose();
@@ -1573,11 +1572,11 @@ namespace AasxTimeSeries
         public static void Connect(TimeSeriesBlock tsb)
         {
             Console.WriteLine("Connect OPC UA");
-            if (opc == null)
+            /*if (opc == null)
                 opc = new UASampleClient(tsb.sourceAddress, true, 10000, tsb.username, tsb.password);
             opc.ConsoleSampleClient().Wait();
-            session = opc.session;
-            if (session == null)
+            session = opc.session;*/
+            /*if (session == null)
             {
                 Console.WriteLine("ERROR: Session not connected "
                                   + tsb.sourceAddress + " " + tsb.username + " " + tsb.password);
@@ -1585,14 +1584,14 @@ namespace AasxTimeSeries
             else
             {
                 // get current time on server
-                tsb.opcLastTimeStamp =  (DateTime)session.ReadValue(new NodeId(2258, 0)).Value;
+                //tsb.opcLastTimeStamp =  (DateTime)session.ReadValue(new NodeId(2258, 0)).Value;
                 tsb.opcLastTimeStamp -= TimeSpan.FromMinutes(1);
-            }
+            }*/
         }
 
         public static void GetData(TimeSeriesBlock tsb)
         {
-            if (session != null)
+            /*if (session != null)
             {
                 ReadRawModifiedDetails details = new ReadRawModifiedDetails();
                 details.StartTime        = startTime;
@@ -1690,7 +1689,7 @@ namespace AasxTimeSeries
                         nodesToRead[i].ContinuationPoint = results[i].ContinuationPoint;
                     }
                 }
-            }
+            }*/
         }
     }
 }
