@@ -36,6 +36,7 @@ namespace AasxTimeSeries
     {
         public class TimeSeriesBlock
         {
+            public int envIndex = -1;
             public ISubmodel submodel = null;
             public SubmodelElementCollection block = null;
             public SubmodelElementCollection data = null;
@@ -121,7 +122,7 @@ namespace AasxTimeSeries
                                 for (int iSme = 0; iSme < countSme; iSme++)
                                 {
                                     var sme = sm.SubmodelElements[iSme];
-                                    if (sme is SubmodelElementCollection && sme.IdShort.Contains("TimeSeries"))
+                                    if (sme is SubmodelElementCollection && sme.IdShort.StartsWith("TimeSeries"))
                                     {
                                         bool nextSme = false;
                                         if (sme.Qualifiers != null && sme.Qualifiers.Count > 0)
@@ -148,6 +149,7 @@ namespace AasxTimeSeries
                                         int countSmec = smec.Value.Count;
 
                                         var tsb = new TimeSeriesBlock();
+                                        tsb.envIndex = i;
                                         tsb.submodel          = sm;
                                         tsb.block             = smec;
                                         tsb.data              = tsb.block;
@@ -282,6 +284,7 @@ namespace AasxTimeSeries
                                                         if (sme2 is Property)
                                                         {
                                                             tsb.sampleStatus = sme2 as Property;
+                                                            tsb.sampleStatus.Value = "reconnect";
                                                         }
 
                                                         break;
@@ -753,43 +756,58 @@ namespace AasxTimeSeries
                     continue;
 
                 // Check for reconnect of Events
-                if (tsb.sampleStatus.Value == "reconnect")
+                bool reconnect = false;
+                if (tsb.latestData != null)
                 {
-                    bool reconnect = false;
+                    for (int ld = 0; ld < tsb.latestData.Value.Count; ld++)
+                    {
+                        if (tsb.latestData.Value[ld].IdShort == "__RECONNECT__")
+                        {
+                            reconnect = true;
+                            tsb.latestData.Value.RemoveAt(ld);
+                            ld--;
+                        }
+                    }
+                }
 
+                if (reconnect || tsb.sampleStatus.Value == "reconnect")
+                {
                     if (tsb.latestData != null)
                     {
-                        for (int ld = 0; ld < tsb.latestData.Value.Count; ld++)
-                        {
-                            if (tsb.latestData.Value[ld].IdShort == "__RECONNECT__")
-                            {
-                                reconnect = true;
-                                tsb.latestData.Value.RemoveAt(ld);
-                                ld--;
-                            }
-                        }
                         if (reconnect)
                         {
+                            tsb.highDataIndex = new Property(DataTypeDefXsd.String, idShort: "highDataIndex", value: "-1");
+                            tsb.lowDataIndex = new Property(DataTypeDefXsd.String, idShort: "lowDataIndex", value: "0");
+                            tsb.totalSamples = new Property(DataTypeDefXsd.String, idShort: "totalSamples", value: "0");
                             for (int ld = 0; ld < tsb.latestData.Value.Count; ld++)
                             {
                                 switch (tsb.latestData.Value[ld].IdShort)
                                 {
                                     case "lowDataIndex":
-                                        if (tsb.lowDataIndex != null && tsb.latestData.Value[ld] is Property p1)
+                                        if (tsb.latestData.Value[ld] is Property p1)
                                         {
-                                            // tsb.lowDataIndex.Value = p1.Value;
                                             tsb.lowDataIndex = p1;
                                         }
                                         break;
                                     case "highDataIndex":
-                                        if (tsb.highDataIndex != null && tsb.latestData.Value[ld] is Property p2)
+                                        if (tsb.latestData.Value[ld] is Property p2)
                                         {
                                             tsb.highDataIndex = p2;
+                                        }
+                                        break;
+                                    case "totalSamples":
+                                        if (tsb.latestData.Value[ld] is Property p3)
+                                        {
+                                            tsb.totalSamples = p3;
+                                            tsb.totalSamples.Value = "0";
                                         }
                                         break;
                                 }
                             }
                             tsb.lowDataIndex.Value = "" + (Convert.ToInt32(tsb.highDataIndex.Value) + 1);
+                            tsb.actualSamples.Value = "0";
+                            tsb.actualSamplesInCollection.Value = "0";
+                            tsb.data.Value.Clear();
                             tsb.sampleStatus.Value = "start";
                             Program.signalNewData(2);
                         }
@@ -800,11 +818,10 @@ namespace AasxTimeSeries
                 }
                 // End reconnect
 
-
                 if (tsb.sampleStatus.Value == "stop")
                 {
                     tsb.sampleStatus.Value = "stopped";
-                    final                  = true;
+                    final = true;
                 }
                 else
                 {
@@ -977,7 +994,7 @@ namespace AasxTimeSeries
                             updateMode = 1;
                             for (int i = 0; i < tsb.samplesProperties.Count; i++)
                             {
-                                string latestDataName  = tsb.samplesProperties[i].IdShort;
+                                string latestDataName = tsb.samplesProperties[i].IdShort;
                                 string latestDataValue = "";
 
                                 if (tsb.samplesValues[i] != "")
@@ -1450,7 +1467,10 @@ namespace AasxTimeSeries
                         }
                     }
 
-                    //// if (updateMode != 0)
+                    if (updateMode != 0)
+                    {
+                        Program.env[tsb.envIndex].setWrite(true);
+                    }
                     Program.signalNewData(updateMode);
                 }
             }

@@ -22,6 +22,24 @@ namespace AasxServerDB
 
     public class Converter
     {
+        public static void GetFilteredPackages(string filterPath, List<AdminShellPackageEnv> list, List<string> paths)
+        {
+            var db = new AasContext();
+
+            var envList = db.EnvSets.Where(e => e.Path.Contains(filterPath));
+
+            foreach (var env in envList)
+            {
+                var p = GetPackageEnv(env.Id);
+                if (p != null)
+                {
+                    list.Add(p);
+                    paths.Add(env.Path);
+                }
+            }
+
+            return;
+        }
         public static AdminShellPackageEnv? GetPackageEnv(int envId)
         {
             // env

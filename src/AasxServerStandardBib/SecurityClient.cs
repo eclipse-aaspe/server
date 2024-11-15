@@ -205,7 +205,7 @@ namespace AasxServer
             // MICHA
             tasksThread.Start();
         }
-
+        static bool firstCycle = true;
         static void runOperations(SubmodelElementCollection smec, int envIndex, DateTime timeStamp)
         {
             int countSmec = smec.Value.Count;
@@ -260,6 +260,7 @@ namespace AasxServer
                     }
                 }
             }
+            firstCycle = false;
         }
 
         static void operation_authenticate(Operation op, int envIndex, DateTime timeStamp)
@@ -1594,7 +1595,7 @@ namespace AasxServer
             {
                 string requestPath = eventData.endPoint.Value;
 
-                if (eventData.lastUpdate.Value == null)
+                if (eventData.lastUpdate.Value == null || eventData.lastUpdate.Value == "")
                 {
                     requestPath += "/init";
                 }
@@ -1790,13 +1791,20 @@ namespace AasxServer
                 */
 
                 string d = "";
-                if (eventData.lastUpdate.Value == null)
+                if (firstCycle)
                 {
-                    d = "init";
+                    d = "reconnect";
                 }
                 else
                 {
-                    d = eventData.lastUpdate.Value;
+                    if (eventData.lastUpdate.Value == null)
+                    {
+                        d = "init";
+                    }
+                    else
+                    {
+                        d = eventData.lastUpdate.Value;
+                    }
                 }
 
                 // reconnect
@@ -1862,13 +1870,37 @@ namespace AasxServer
                                     receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
                                     if (receiveSme != null && receiveSme is SubmodelElementCollection smc)
                                     {
-                                        if (smc.Value != null && smc.Value.Count != 0 && smc.Value[0] is SubmodelElementCollection smcValue)
+                                        if (smc.Value != null)
                                         {
+                                            if (smc.Value.Count != 0 && smc.Value[0] is SubmodelElementCollection smcValue)
+                                            {
+                                                eventData.statusData.Value = smcValue.Value;
+                                            }
+                                            else
+                                            {
+                                                eventData.statusData.Value.Clear();
+                                            }
+
                                             var dt = eventData.statusData.TimeStamp;
-                                            eventData.statusData.Value = smcValue.Value;
-                                            var p = new Property(DataTypeDefXsd.String, idShort: "__RECONNECT__", value: "1");
-                                            eventData.statusData.Value.Add(p);
+                                            bool withReconnect = false;
+                                            foreach (var r in eventData.statusData.Value)
+                                            {
+                                                if (r is Property p2 && p2.IdShort == "__RECONNECT__")
+                                                {
+                                                    p2.Value = "" + (Convert.ToInt32(p2.Value) + 1);
+                                                    withReconnect = true;
+                                                }
+                                            }
+                                            if (!withReconnect)
+                                            {
+                                                var p = new Property(DataTypeDefXsd.String, idShort: "__RECONNECT__", value: "1");
+                                                eventData.statusData.Value.Add(p);
+                                            }
                                             d = eventPayload.status.lastUpdate;
+                                            if (d == "")
+                                            {
+                                                d = "init";
+                                            }
                                             eventData.lastUpdate.Value = d;
                                             eventData.statusData.SetAllParentsAndTimestamps(eventData.statusData.Parent as IReferable, dt, dt, DateTime.MinValue);
                                             Program.signalNewData(2);

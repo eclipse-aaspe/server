@@ -127,7 +127,8 @@ namespace AasxServer
             }
 
             // search in memory
-            var i = envimin;
+            // var i = envimin;
+            var i = 0;
             while (i < env.Length)
             {
                 if (env[i] == null)
@@ -894,6 +895,20 @@ namespace AasxServer
 
                 if (withDb)
                 {
+                    // preload AASX from DB and keep in memory
+                    var packages = new List<AdminShellPackageEnv>();
+                    var paths = new List<String>();
+                    Converter.GetFilteredPackages("--memory", packages, paths);
+
+                    for (var p = 0; p < packages.Count && p < paths.Count; p++)
+                    {
+                        envFileName[envi] = paths[p];
+                        env[envi] = packages[p];
+                        envi++;
+                    }
+                    envimin = envi;
+                    oldest = envi;
+
                     /*
                     Console.WriteLine("DB Save Changes");
                     db.SaveChanges();
