@@ -80,8 +80,17 @@ namespace AasxServerDB
 
                 var submodel = new Submodel(smDB.Identifier);
                 submodel.IdShort = smDB.IdShort;
+
+                // MIHO CHANGED this!!
+#if __original
                 submodel.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ExternalReference,
                     new List<IKey>() { new Key(KeyTypes.GlobalReference, smDB.SemanticId) });
+#else
+                submodel.SemanticId = new Reference(AasCore.Aas3_0.ReferenceTypes.ModelReference,
+                    new List<IKey>() { new Key(KeyTypes.Submodel, smDB.SemanticId) });
+#endif
+                // END of CHANGE
+
                 submodel.SubmodelElements = new List<ISubmodelElement>();
 
                 LoadSME(submodel, null, null, SMEList);
