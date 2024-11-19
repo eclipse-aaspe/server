@@ -1851,60 +1851,71 @@ namespace AasxServer
                                 }
                                 else
                                 {
-                                    string jsonString = null;
-                                    task = Task.Run(async () =>
+                                    if (response.StatusCode == HttpStatusCode.NoContent)
                                     {
-                                        using (var stream = await response.Content.ReadAsStreamAsync())
-                                        {
-                                            var reader = new StreamReader(stream);
-                                            jsonString = reader.ReadToEnd();
-                                        }
-                                    });
-                                    task.Wait();
-
-                                    Events.EventPayload eventPayload = System.Text.Json.JsonSerializer.Deserialize<Events.EventPayload>(jsonString);
-
-                                    ISubmodelElement receiveSme = null;
-                                    MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(eventPayload.statusData));
-                                    JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
-                                    receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
-                                    if (receiveSme != null && receiveSme is SubmodelElementCollection smc)
+                                        d = "init";
+                                        eventData.lastUpdate.Value = d;
+                                        var dt = DateTime.UtcNow;
+                                        eventData.statusData.SetAllParentsAndTimestamps(eventData.statusData.Parent as IReferable, dt, dt, DateTime.MinValue);
+                                        Program.signalNewData(2);
+                                    }
+                                    else
                                     {
-                                        if (smc.Value != null)
+                                        string jsonString = null;
+                                        task = Task.Run(async () =>
                                         {
-                                            if (smc.Value.Count != 0 && smc.Value[0] is SubmodelElementCollection smcValue)
+                                            using (var stream = await response.Content.ReadAsStreamAsync())
                                             {
-                                                eventData.statusData.Value = smcValue.Value;
+                                                var reader = new StreamReader(stream);
+                                                jsonString = reader.ReadToEnd();
                                             }
-                                            else
-                                            {
-                                                eventData.statusData.Value.Clear();
-                                            }
+                                        });
+                                        task.Wait();
 
-                                            var dt = eventData.statusData.TimeStamp;
-                                            bool withReconnect = false;
-                                            foreach (var r in eventData.statusData.Value)
+                                        Events.EventPayload eventPayload = System.Text.Json.JsonSerializer.Deserialize<Events.EventPayload>(jsonString);
+
+                                        ISubmodelElement receiveSme = null;
+                                        MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(eventPayload.statusData));
+                                        JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                                        receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
+                                        if (receiveSme != null && receiveSme is SubmodelElementCollection smc)
+                                        {
+                                            if (smc.Value != null)
                                             {
-                                                if (r is Property p2 && p2.IdShort == "__RECONNECT__")
+                                                if (smc.Value.Count != 0 && smc.Value[0] is SubmodelElementCollection smcValue)
                                                 {
-                                                    p2.Value = "" + (Convert.ToInt32(p2.Value) + 1);
-                                                    withReconnect = true;
+                                                    eventData.statusData.Value = smcValue.Value;
                                                 }
+                                                else
+                                                {
+                                                    eventData.statusData.Value.Clear();
+                                                }
+
+                                                var dt = eventData.statusData.TimeStamp;
+                                                d = eventPayload.status.lastUpdate;
+                                                if (d == "")
+                                                {
+                                                    d = "init";
+                                                }
+                                                eventData.lastUpdate.Value = d;
+                                                eventData.statusData.SetAllParentsAndTimestamps(eventData.statusData.Parent as IReferable, dt, dt, DateTime.MinValue);
+                                                Program.signalNewData(2);
                                             }
-                                            if (!withReconnect)
-                                            {
-                                                var p = new Property(DataTypeDefXsd.String, idShort: "__RECONNECT__", value: "1");
-                                                eventData.statusData.Value.Add(p);
-                                            }
-                                            d = eventPayload.status.lastUpdate;
-                                            if (d == "")
-                                            {
-                                                d = "init";
-                                            }
-                                            eventData.lastUpdate.Value = d;
-                                            eventData.statusData.SetAllParentsAndTimestamps(eventData.statusData.Parent as IReferable, dt, dt, DateTime.MinValue);
-                                            Program.signalNewData(2);
                                         }
+                                    }
+                                    bool withReconnect = false;
+                                    foreach (var r in eventData.statusData.Value)
+                                    {
+                                        if (r is Property p2 && p2.IdShort == "__RECONNECT__")
+                                        {
+                                            p2.Value = "" + (Convert.ToInt32(p2.Value) + 1);
+                                            withReconnect = true;
+                                        }
+                                    }
+                                    if (!withReconnect)
+                                    {
+                                        var p = new Property(DataTypeDefXsd.String, idShort: "__RECONNECT__", value: "1");
+                                        eventData.statusData.Value.Add(p);
                                     }
                                 }
                             }

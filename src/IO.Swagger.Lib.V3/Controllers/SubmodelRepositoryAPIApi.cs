@@ -156,6 +156,17 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             if (eventData.dataCollection != null)
             {
                 data = eventData.dataCollection;
+                // OUT: data
+                // IN: data.sme[0], copy
+                if (eventData.direction != null && eventData.direction.Value == "IN")
+                {
+                    data = null;
+                    if (eventData.dataCollection.Value != null && eventData.dataCollection.Value.Count == 1 && eventData.dataCollection.Value[0] is SubmodelElementCollection smc)
+                    {
+                        data = smc;
+                    }
+                }
+                /*
                 if (eventData.direction != null && eventData.direction.Value == "IN" && eventData.mode != null && (eventData.mode.Value == "PUSH" || eventData.mode.Value == "PUT"))
                 {
                     if (eventData.dataCollection.Value != null && eventData.dataCollection.Value.Count == 1 && eventData.dataCollection.Value[0] is SubmodelElementCollection)
@@ -163,6 +174,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                         data = eventData.dataCollection.Value[0];
                     }
                 }
+                */
             }
             if (data == null)
             {

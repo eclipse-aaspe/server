@@ -47,7 +47,7 @@ namespace AasxServerDB
                 }
             }
             env.setWrite(false);
-            Console.WriteLine("SAVE AASX: " + env.Filename);
+            Console.WriteLine("SAVE AASX TO DB: " + env.Filename);
         }
     }
 }

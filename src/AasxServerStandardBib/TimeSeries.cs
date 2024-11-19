@@ -105,8 +105,11 @@ namespace AasxTimeSeries
                     //AasxCompatibilityModels.AdministrationShell aasV2 = new AasxCompatibilityModels.AdministrationShell();
                     //aasV2.TimeStampCreate = timeStamp;
 
-                    aas.TimeStampCreate = timeStamp;
-                    aas.SetTimeStamp(timeStamp);
+                    if (aas.TimeStamp == DateTime.MinValue)
+                    {
+                        aas.TimeStampCreate = timeStamp;
+                        aas.SetTimeStamp(timeStamp);
+                    }
                     if (aas.Submodels != null && aas.Submodels.Count > 0)
                     {
                         foreach (var smr in aas.Submodels)
@@ -114,8 +117,11 @@ namespace AasxTimeSeries
                             var sm = env.AasEnv.FindSubmodel(smr);
                             if (sm != null && sm.IdShort != null)
                             {
-                                sm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp, DateTime.MinValue);
-                                sm.SetTimeStamp(timeStamp);
+                                if (sm.TimeStamp == DateTime.MinValue)
+                                {
+                                    sm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp, DateTime.MinValue);
+                                    sm.SetTimeStamp(timeStamp);
+                                }
                                 if (sm.SubmodelElements == null)
                                     continue;
                                 int countSme = sm.SubmodelElements.Count;

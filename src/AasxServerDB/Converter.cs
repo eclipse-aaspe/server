@@ -19,6 +19,7 @@ namespace AasxServerDB
     using AdminShellNS;
     using Extensions;
     using Microsoft.IdentityModel.Tokens;
+    using TimeStamp;
 
     public class Converter
     {
@@ -42,6 +43,8 @@ namespace AasxServerDB
         }
         public static AdminShellPackageEnv? GetPackageEnv(int envId)
         {
+            var timeStamp = DateTime.UtcNow;
+
             // env
             var env = new AdminShellPackageEnv();
             env.AasEnv.ConceptDescriptions = new List<IConceptDescription>();
@@ -66,6 +69,11 @@ namespace AasxServerDB
             foreach (var aasDB in aasDBList)
             {
                 var aas = GetAssetAdministrationShell(aasDB: aasDB);
+                if (aas.TimeStamp == DateTime.MinValue)
+                {
+                    aas.TimeStampCreate = timeStamp;
+                    aas.SetTimeStamp(timeStamp);
+                }
                 env.AasEnv.AssetAdministrationShells?.Add(aas);
 
                 // sm
@@ -80,6 +88,11 @@ namespace AasxServerDB
             var smDBList = db.SMSets.Where(cd => cd.EnvId == envId).ToList();
             foreach (var sm in smDBList.Select(selector: submodelDB => GetSubmodel(smDB: submodelDB)))
             {
+                if (sm.TimeStamp == DateTime.MinValue)
+                {
+                    sm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp, DateTime.MinValue);
+                    sm.SetTimeStamp(timeStamp);
+                }
                 env.AasEnv.Submodels?.Add(sm);
             }
 
