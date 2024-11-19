@@ -142,9 +142,35 @@ namespace AasxServerStandardBib.Services
 
         public bool IsAssetAdministrationShellPresent(string aasIdentifier, out IAssetAdministrationShell output, out int packageIndex)
         {
-            var success = false;
-            output = Program.LoadPackage<IAssetAdministrationShell>(success: out success, packageIndex: out packageIndex, aasIdentifier: aasIdentifier);
-            return success;
+            if (Program.withDb)
+            {
+                var success = false;
+                output = Program.LoadPackage<IAssetAdministrationShell>(success: out success, packageIndex: out packageIndex, aasIdentifier: aasIdentifier);
+                return success;
+            }
+
+            output = null;
+            packageIndex = -1;
+
+            foreach (var package in _packages)
+            {
+                if (package != null)
+                {
+                    var env = package.AasEnv;
+                    if (env != null)
+                    {
+                        var aas = env.AssetAdministrationShells.Where(a => a.Id.Equals(aasIdentifier));
+                        if (aas.Any())
+                        {
+                            output = aas.First();
+                            packageIndex = Array.IndexOf(_packages, package);
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
         }
 
         public void UpdateAssetAdministrationShellById(IAssetAdministrationShell body, string aasIdentifier)
@@ -233,9 +259,35 @@ namespace AasxServerStandardBib.Services
 
         public bool IsSubmodelPresent(string submodelIdentifier, out ISubmodel output, out int packageIndex)
         {
-            var success = false;
-            output = Program.LoadPackage<ISubmodel>(success: out success, packageIndex: out packageIndex, smIdentifier: submodelIdentifier);
-            return success;
+            if (Program.withDb)
+            {
+                var success = false;
+                output = Program.LoadPackage<ISubmodel>(success: out success, packageIndex: out packageIndex, smIdentifier: submodelIdentifier);
+                return success;
+            }
+
+            output = null;
+            packageIndex = -1;
+
+            foreach (var package in _packages)
+            {
+                if (package != null)
+                {
+                    var env = package.AasEnv;
+                    if (env != null)
+                    {
+                        var submodels = env.Submodels.Where(a => a.Id.Equals(submodelIdentifier));
+                        if (submodels.Any())
+                        {
+                            output = submodels.First();
+                            packageIndex = Array.IndexOf(_packages, package);
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
         }
 
         #endregion
@@ -270,9 +322,34 @@ namespace AasxServerStandardBib.Services
 
         private bool IsConceptDescriptionPresent(string cdIdentifier, out IConceptDescription output, out int packageIndex)
         {
-            var success = false;
-            output = Program.LoadPackage<IConceptDescription>(success: out success, packageIndex: out packageIndex, cdIdentifier: cdIdentifier);
-            return success;
+            if (Program.withDb)
+            {
+                var success = false;
+                output = Program.LoadPackage<IConceptDescription>(success: out success, packageIndex: out packageIndex, cdIdentifier: cdIdentifier);
+                return success;
+            }
+
+            output = null;
+            packageIndex = -1;
+            foreach (var package in _packages)
+            {
+                if (package != null)
+                {
+                    var env = package.AasEnv;
+                    if (env != null)
+                    {
+                        var conceptDescriptions = env.ConceptDescriptions.Where(c => c.Id.Equals(cdIdentifier));
+                        if (conceptDescriptions.Any())
+                        {
+                            output = conceptDescriptions.First();
+                            packageIndex = Array.IndexOf(_packages, package);
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
         }
 
         public List<IConceptDescription> GetAllConceptDescriptions()
