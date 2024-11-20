@@ -573,6 +573,13 @@ namespace AasxServerStandardBib.Services
         /// <returns>A list of all submodels.</returns>
         public List<ISubmodel> GetAllSubmodels()
         {
+            if (Program.withDb)
+            {
+                // workround to have submodels in memory
+                // will only work if all packages fit into memory
+                Program.LoadAllPackages();
+            }
+
             var output = new List<ISubmodel>();
 
             foreach (var package in _packages)
