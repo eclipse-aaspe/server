@@ -1431,7 +1431,7 @@ namespace AdminShellNS
                 string fcopy = Path.GetFileName(Filename) + "__thumbnail";
                 fcopy = fcopy.Replace("/", "_");
                 fcopy = fcopy.Replace(".", "_");
-                var s = System.IO.File.OpenRead(dataPath + "/files/" + fcopy + ".dat");
+                var s = System.IO.File.Open(dataPath + "/files/" + fcopy + ".dat", FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                 return s;
             }
 
