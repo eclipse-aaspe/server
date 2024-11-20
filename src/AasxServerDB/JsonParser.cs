@@ -124,7 +124,10 @@ public class JsonParser
 
         if (errorText == "")
         {
-            Console.WriteLine("JSON is valid.");
+            if (typePrefix == "")
+            {
+                Console.WriteLine("JSON is valid.");
+            }
             var json = JsonNode.Parse(jsonText);
 
             string argumentType = "";

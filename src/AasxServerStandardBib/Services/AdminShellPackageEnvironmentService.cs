@@ -4,17 +4,20 @@ zur Foerderung der angewandten Forschung e.V.
  */
 
 using AasxServer;
+using AasxServerDB;
 using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
 using AdminShellNS;
 using Extensions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using TimeStamp;
 
 namespace AasxServerStandardBib.Services
 {
@@ -106,14 +109,79 @@ namespace AasxServerStandardBib.Services
         {
             List<IAssetAdministrationShell> output = new List<IAssetAdministrationShell>();
 
-            foreach (var package in _packages)
+            if (!Program.withDb)
             {
-                if (package != null)
+                foreach (var package in _packages)
                 {
-                    var env = package.AasEnv;
-                    if (env != null && env.AssetAdministrationShells != null && env.AssetAdministrationShells.Count != 0)
+                    if (package != null)
                     {
-                        output.AddRange(env.AssetAdministrationShells);
+                        var env = package.AasEnv;
+                        if (env != null && env.AssetAdministrationShells != null && env.AssetAdministrationShells.Count != 0)
+                        {
+                            output.AddRange(env.AssetAdministrationShells);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                /*
+                var db = new AasContext();
+                var timeStamp = DateTime.UtcNow;
+
+                var aasDBList = db.AASSets.ToList();
+                foreach (var aasDB in aasDBList)
+                {
+                    int envId = aasDB.EnvId;
+
+                    var aas = Converter.GetAssetAdministrationShell(aasDB: aasDB);
+                    if (aas.TimeStamp == DateTime.MinValue)
+                    {
+                        aas.TimeStampCreate = timeStamp;
+                        aas.SetTimeStamp(timeStamp);
+                    }
+
+                    // sm
+                    var smAASDBList = db.SMSets.Where(sm => sm.EnvId == envId && sm.AASId == aasDB.Id).ToList();
+                    foreach (var sm in smAASDBList)
+                    {
+                        aas.Submodels?.Add(new Reference(type: ReferenceTypes.ModelReference,
+                            keys: new List<IKey>() { new Key(KeyTypes.Submodel, sm.Identifier) }
+                            ));
+                    }
+
+                    output.Add(aas);
+                }
+                */
+
+                using (var db = new AasContext())
+                {
+                    var timeStamp = DateTime.UtcNow;
+
+                    var aasDBList = db.AASSets
+                        .Include(aas => aas.SMSets) // Include related SMSets
+                        .ToList();
+
+                    foreach (var aasDB in aasDBList)
+                    {
+                        int envId = aasDB.EnvId;
+
+                        var aas = Converter.GetAssetAdministrationShell(aasDB: aasDB);
+                        if (aas.TimeStamp == DateTime.MinValue)
+                        {
+                            aas.TimeStampCreate = timeStamp;
+                            aas.SetTimeStamp(timeStamp);
+                        }
+
+                        // sm
+                        foreach (var sm in aasDB.SMSets.Where(sm => sm.EnvId == envId))
+                        {
+                            aas.Submodels?.Add(new Reference(type: ReferenceTypes.ModelReference,
+                                keys: new List<IKey>() { new Key(KeyTypes.Submodel, sm.Identifier) }
+                            ));
+                        }
+
+                        output.Add(aas);
                     }
                 }
             }
