@@ -322,9 +322,24 @@ public class JsonParser
                                 argsCount--;
                                 i--;
                             }
+                            else
+                            {
+                                // constant
+                                if ((property.Key == "$and" && args[i] == "true") || (property.Key == "$or" && args[i] == "false"))
+                                {
+                                    args.RemoveAt(i);
+                                    count.RemoveAt(i);
+                                    argsCount--;
+                                    i--;
+                                }
+                            }
                         }
                     }
 
+                    if (args.Count == 0)
+                    {
+                        return "$SKIP";
+                    }
                     // and
                     if (property.Key == "$and")
                     {

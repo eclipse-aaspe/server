@@ -202,10 +202,22 @@ namespace AasxServerDB
                 return null;
 
             // direction 0 = top-down, 1 = middle-out, 2 = bottom-up
-            var direction = !expression.Contains("$REVERSE") ? 0 : 2;
+            var direction = 0;
+            if (expression.Contains("$BOTTOMUP") || expression.Contains("$REVERSE"))
+            {
+                messages.Add("$BOTTOMUP");
+                direction = 2;
+            }
+            if (expression.Contains("$MIDDLEOUT"))
+            {
+                messages.Add("$MIDDLEOUT");
+                direction = 1;
+            }
 
             // shorten expression
             expression = expression.Replace("$REVERSE", string.Empty);
+            expression = expression.Replace("$BOTTOMUP", string.Empty);
+            expression = expression.Replace("$MIDDLEOUT", string.Empty);
 
             // get condition out of expression
             var conditionsExpression = ConditionFromExpression(messages, expression);
@@ -336,12 +348,27 @@ namespace AasxServerDB
                 return null;
 
             // direction 0 = top-down, 1 = middle-out, 2 = bottom-up
-            var direction = withExpression ?
-                (!expression.Contains("$REVERSE") ? 0 : 2) :
-                ((withSMSemanticId || withSMIdentifier) ? 0 : ((withContains || withEqualString || withLower || withUpper) ? 2 : 1));
+            var direction = 0;
+            if (withSMSemanticId || withSMIdentifier)
+            {
+                direction = (withContains || withEqualString || withLower || withUpper) ? 2 : 1;
+            }
+
+            if (expression.Contains("$BOTTOMUP") || expression.Contains("$REVERSE"))
+            {
+                messages.Add("$BOTTOMUP");
+                direction = 2;
+            }
+            if (expression.Contains("$MIDDLEOUT"))
+            {
+                messages.Add("$MIDDLEOUT");
+                direction = 1;
+            }
 
             // shorten expression
             expression = expression.Replace("$REVERSE", string.Empty);
+            expression = expression.Replace("$BOTTOMUP", string.Empty);
+            expression = expression.Replace("$MIDDLEOUT", string.Empty);
 
             // get condition out of expression
             var conditionsExpression = ConditionFromExpression(messages, expression);
