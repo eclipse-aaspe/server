@@ -24,7 +24,6 @@ namespace AasxServerDB
     using QueryParserTest;
     using System.Linq;
     using Irony.Parsing;
-    using System.Reflection.Metadata;
     using HotChocolate.Resolvers;
     using HotChocolate.Language;
 
@@ -35,21 +34,27 @@ namespace AasxServerDB
             grammar = queryGrammar;
         }
         private readonly QueryGrammar grammar;
+
         public static string? ExternalBlazor { get; set; }
 
         // --------------- API ---------------
         public QResult SearchSMs(IResolverContext context, string semanticId = "", string identifier = "", string diff = "", string expression = "")
         {
-            var qResult = new QResult();
-            qResult.Messages = new List<string>();
-            var text = "";
+            var qResult = new QResult()
+            {
+                Messages = new List<string>(),
+                SMResults = new List<SMResult>(),
+                SMEResults = new List<SMEResult>()
+            };
+
+            var text = string.Empty;
 
             var watch = Stopwatch.StartNew();
             using AasContext db = new();
             Console.WriteLine("\nSearchSMs");
 
             watch.Restart();
-            var query = GetSMs(qResult.Messages, db, semanticId, identifier, diff, expression);
+            var query = GetSMs(qResult.Messages, db, false, semanticId, identifier, diff, expression);
             if (query == null)
             {
                 text = "No query is generated due to incorrect parameter combination.";
@@ -63,7 +68,7 @@ namespace AasxServerDB
                 qResult.Messages.Add(text);
 
                 watch.Restart();
-                var result = GetSMResult(query);
+                var result = GetSMResult((IQueryable<CombinedSMResult>)query);
                 text = "Collect results in " + watch.ElapsedMilliseconds + " ms";
                 Console.WriteLine(text);
                 qResult.Messages.Add(text);
@@ -84,7 +89,7 @@ namespace AasxServerDB
             Console.WriteLine("\nCountSMs");
 
             watch.Restart();
-            var query = GetSMs(new List<string>(), db, semanticId, identifier, diff, expression);
+            var query = GetSMs(new List<string>(), db, true, semanticId, identifier, diff, expression);
             if (query == null)
             {
                 Console.WriteLine("No query is generated due to incorrect parameter combination.");
@@ -105,7 +110,7 @@ namespace AasxServerDB
             string contains = "", string equal = "", string lower = "", string upper = "", string expression = "")
         {
             // Get the requested fields
-            string  requested = "";
+            var requested = string.Empty;
             var requestedFields = context.Selection.SyntaxNode.SelectionSet.Selections;
             foreach (var selection in requestedFields)
             {
@@ -115,9 +120,14 @@ namespace AasxServerDB
                 }
             }
 
-            var qResult = new QResult();
-            qResult.Messages = new List<string>();
-            var text = "";
+            var qResult = new QResult()
+            {
+                Messages = new List<string>(),
+                SMResults = new List<SMResult>(),
+                SMEResults = new List<SMEResult>()
+            };
+
+            var text = string.Empty;
 
             var watch = Stopwatch.StartNew();
             using AasContext db = new();
@@ -177,7 +187,7 @@ namespace AasxServerDB
         }
 
         // --------------- SM Methods ---------------
-        private IQueryable<CombinedSMResult>? GetSMs(List<string> messages, AasContext db, string semanticId = "", string identifier = "", string diffString = "", string expression = "")
+        private IQueryable? GetSMs(List<string> messages, AasContext db, bool withCount = false, string semanticId = "", string identifier = "", string diffString = "", string expression = "")
         {
             // analyse parameters
             var withSemanticId = !semanticId.IsNullOrEmpty();
@@ -186,177 +196,98 @@ namespace AasxServerDB
             var withDiff = !diff.Equals(DateTime.MinValue);
             var withParameters = withSemanticId || withIdentifier || withDiff;
             var withExpression = !expression.IsNullOrEmpty();
-            var text = "";
 
             // wrong parameters
             if (withExpression == withParameters)
                 return null;
 
-            var log = false;
-            int withQueryLanguage = 0;
+            // direction 0 = top-down, 1 = middle-out, 2 = bottom-up
+            var direction = !expression.Contains("$REVERSE") ? 0 : 2;
 
-            if (expression.StartsWith("$LOG"))
-            {
-                log = true;
-                expression = expression.Replace("$LOG", "");
-                Console.WriteLine("$LOG");
-                messages.Add("$LOG");
-            }
+            // shorten expression
+            expression = expression.Replace("$REVERSE", string.Empty);
 
-            if (expression.StartsWith("$QL"))
-            {
-                withQueryLanguage = 1;
-                expression = expression.Replace("$QL", "");
-                Console.WriteLine("$QL");
-                messages.Add("$QL");
-            }
+            // get condition out of expression
+            var conditionsExpression = ConditionFromExpression(messages, expression);
 
-            if (expression.StartsWith("$JSON"))
-            {
-                withQueryLanguage = 2;
-                expression = expression.Replace("$JSON", "");
-                Console.WriteLine("$JSON");
-                messages.Add("$JSON");
-            }
+            // restrictions in which tables 
+            var restrictSM = false;
+            var restrictSME = false;
+            var restrictSValue = false;
+            var restrictNValue = false;
+            var restrictValue = false;
+
+            // restrict all tables seperate
+            IQueryable<CombinedSMSMEV> comTable;
+            IQueryable<SMSet> smTable;
+            IQueryable<SMESet> smeTable;
+            IQueryable<SValueSet>? sValueTable;
+            IQueryable<IValueSet>? iValueTable;
+            IQueryable<DValueSet>? dValueTable;
 
             // get data
-            IQueryable<SMSet> smTable;
             if (withExpression) // with expression
             {
-                // shorten expression
-                expression = expression.Replace("$REVERSE", "");
+                // check restrictions
+                restrictSM = !conditionsExpression["sm"].IsNullOrEmpty() && !conditionsExpression["sm"].Equals("true");
+                restrictSME = !conditionsExpression["sme"].IsNullOrEmpty() && !conditionsExpression["sme"].Equals("true");
+                restrictSValue = !conditionsExpression["svalue"].IsNullOrEmpty() && !conditionsExpression["svalue"].Equals("true");
+                restrictNValue = !conditionsExpression["nvalue"].IsNullOrEmpty() && !conditionsExpression["nvalue"].Equals("true");
+                restrictValue = restrictSValue || restrictNValue;
 
-                string combinedCondition = "";
-                string conditionSM = "";
+                // restrict all tables seperate
+                smTable = restrictSM ? db.SMSets.Where(conditionsExpression["sm"]) : db.SMSets;
+                smeTable = restrictSME ? db.SMESets.Where(conditionsExpression["sme"]) : db.SMESets;
+                sValueTable = restrictValue ? (restrictSValue ? db.SValueSets.Where(conditionsExpression["svalue"]) : null) : db.SValueSets;
+                iValueTable = restrictValue ? (restrictNValue ? db.IValueSets.Where(conditionsExpression["nvalue"]) : null) : db.IValueSets;
+                dValueTable = restrictValue ? (restrictNValue ? db.DValueSets.Where(conditionsExpression["nvalue"]) : null) : db.DValueSets;
 
-                if (withQueryLanguage == 0)
-                {
-                    expression = Regex.Replace(expression, @"\s+", replacement: string.Empty);
+                // combine tables to a raw sql 
+                var rawSQLEx = CombineTablesToRawSQL(direction, smTable, smeTable, sValueTable, iValueTable, dValueTable, false);
 
-                    // init parser
-                    var countTypePrefix = 0;
-                    var parser = new ParserWithAST(new Lexer(expression));
-                    var ast = parser.Parse();
-
-                    // combined condition
-                    combinedCondition = parser.GenerateSql(ast, "", ref countTypePrefix, "filter");
-                    text = "combinedCondition: " + combinedCondition;
-                    Console.WriteLine(text);
-                    messages.Add(text);
-
-                    // sm condition
-                    conditionSM = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_submodel");
-                    if (conditionSM.IsNullOrEmpty())
-                        conditionSM = parser.GenerateSql(ast, "sm.", ref countTypePrefix, "filter");
-                    conditionSM = conditionSM.Replace("sm.", "");
-                    text = "conditionSM: " + conditionSM;
-                    Console.WriteLine(text);
-                    messages.Add(text);
-
-                    // check restrictions
-                    var restrictSM = !conditionSM.IsNullOrEmpty() && !conditionSM.Equals("true");
-
-                    // get data
-                    if (!restrictSM)
-                        return null;
-                }
-                else if (withQueryLanguage == 1)
-                {
-                    // with newest query language from QueryParser.cs
-                    // var grammar = new QueryGrammar();
-                    var parser = new Parser(grammar);
-                    parser.Context.TracingEnabled = true;
-                    var parseTree = parser.Parse(expression);
-
-                    if (parseTree.HasErrors())
-                    {
-                        var pos = parser.Context.CurrentToken.Location.Position;
-                        text = expression.Substring(0, pos) + "$$$" + expression.Substring(pos);
-                        text = string.Join("\n", parseTree.ParserMessages) + "\nSee $$$: " + text;
-                        Console.WriteLine(text);
-                        messages.Add(text);
-                        while (text != text.Replace("\n  ", "\n "))
-                        {
-                            text = text.Replace("\n  ", "\n ");
-                        };
-                        text = text.Replace("\n", "\n");
-                        text = text.Replace("\n", " ");
-                        throw new Exception(text);
-                    }
-                    else
-                    {
-                        // Security
-                        if (parseTree.Root.Term.Name == "AllRules")
-                        {
-                            grammar.ParseAccessRules(parseTree.Root);
-                            throw new Exception("Access Rules parsed!");
-                        }
-
-                        int countTypePrefix = 0;
-                        combinedCondition = grammar.ParseTreeToExpression(parseTree.Root, "", ref countTypePrefix);
-                        text = "combinedCondition: " + combinedCondition;
-                        Console.WriteLine(text);
-                        messages.Add(text);
-
-                        countTypePrefix = 0;
-                        conditionSM = grammar.ParseTreeToExpression(parseTree.Root, "sm.", ref countTypePrefix);
-                        if (conditionSM == "$SKIP")
-                        {
-                            conditionSM = "";
-                        }
-                        text = "conditionSM: " + conditionSM;
-                        Console.WriteLine(text);
-                        messages.Add(text);
-                    }
-                }
-                else
-                {
-                    // JSON Query Language from JsonParser.cs
-                    var jParser = new JsonParser();
-                    messages.Add("");
-
-                    int countTypePrefix = 0;
-                    combinedCondition = jParser.ParseTreeToExpression(expression, "", ref countTypePrefix);
-                    messages.Add("combinedCondition: " + combinedCondition);
-
-                    countTypePrefix = 0;
-                    conditionSM = jParser.ParseTreeToExpression(expression, "sm.", ref countTypePrefix);
-                    if (conditionSM == "$SKIP")
-                    {
-                        conditionSM = "";
-                    }
-                    messages.Add("conditionSM: " + conditionSM);
-                    messages.Add("");
-                }
-
-                smTable = db.SMSets.Where(conditionSM);
+                // create queryable
+                comTable = db.Database.SqlQueryRaw<CombinedSMSMEV>(rawSQLEx);
+                var combi = conditionsExpression["all"].Replace("svalue", "V_Value").Replace("mvalue", "V_D_Value").Replace("sm.idShort", "SM_IdShort").Replace("sme.idShort", "SME_IdShort");
+                comTable = comTable.Where(combi).Distinct();
             }
             else // with parameters
             {
+                // set conditions
                 smTable = db.SMSets
                     .Where(s =>
                         (!withSemanticId || (s.SemanticId != null && s.SemanticId.Equals(semanticId))) &&
                         (!withIdentifier || (s.Identifier != null && s.Identifier.Equals(identifier))) &&
                         (!withDiff || s.TimeStampTree.CompareTo(diff) > 0));
+
+                // Convert to CombinedSMSMEV
+                comTable = smTable.Select(sm => new CombinedSMSMEV { SM_Identifier = sm.Identifier, SM_TimeStampTree = sm.TimeStampTree }).Distinct();
             }
 
-            // set select
-            var smSelect = smTable.Select(sm => new { sm.Identifier, sm.TimeStampTree });
+            // modifiy raw sql
+            var comTableQueryString = comTable.ToQueryString();
+            comTableQueryString = ModifiyRawSQL(comTableQueryString);
+            comTable = db.Database.SqlQueryRaw<CombinedSMSMEV>(comTableQueryString);
 
-            // to query string
-            var smQueryString = smSelect.ToQueryString();
+            // select for count
+            if (withCount)
+            {
+                var qCount = comTable.Select(sm => sm.SM_Identifier);
+                return qCount;
+            }
 
-            // set parameters
-            smQueryString = SetParameter(smQueryString);
-
-            // change INSTR to LIKE
-            smQueryString = withExpression ? ChangeINSTRToLIKE(smQueryString) : smQueryString;
-
-            // format date time
-            smQueryString = FormatDateTimeInSQL(smQueryString);
+            // change the first select
+            var smRawSQL = comTable.ToQueryString();
+            var index = smRawSQL.IndexOf("FROM");
+            if (index == -1)
+                return null;
+            smRawSQL = smRawSQL.Substring(index);
+            if (withExpression)
+                smRawSQL = $"SELECT DISTINCT a.SM_Identifier AS Identifier, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', a.SM_TimeStampTree) AS TimeStampTree \n {smRawSQL}";
+            else
+                smRawSQL = $"SELECT DISTINCT s.Identifier, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', s.TimeStampTree) AS TimeStampTree \n {smRawSQL}";
 
             // create queryable
-            var result = db.Database.SqlQueryRaw<CombinedSMResult>(smQueryString);
+            var result = db.Database.SqlQueryRaw<CombinedSMResult>(smRawSQL);
             return result;
         }
 
@@ -375,8 +306,8 @@ namespace AasxServerDB
         }
 
         // --------------- SME Methods ---------------
-        private IQueryable? GetSMEs(List<string> messages, string requested, AasContext db,
-            bool withCount = false, string smSemanticId = "", string smIdentifier = "", string semanticId = "",
+        private IQueryable? GetSMEs(List<string> messages, string requested, AasContext db, bool withCount = false,
+            string smSemanticId = "", string smIdentifier = "", string semanticId = "",
             string diffString = "", string contains = "", string equal = "", string lower = "", string upper = "", string expression = "")
         {
             // analyse parameters
@@ -392,635 +323,116 @@ namespace AasxServerDB
             var withUpper = Int64.TryParse(upper, out var upperNum);
             var withCompare = withLower && withUpper;
             var withParameters = withSMSemanticId || withSMIdentifier || withSemanticId || withDiff || withContains || withEqualString || withLower || withUpper;
+            var withParaWithoutValue = withParameters && !withContains && !withEqualString && !withEqualNum && !withCompare;
             var withExpression = !expression.IsNullOrEmpty();
-            string text = "";
+            var text = string.Empty;
 
             // wrong parameters
             if (withExpression == withParameters ||
                 (withEqualString && (withContains || withLower || withUpper)) ||
                 (withContains && (withLower || withUpper)) ||
-                (withLower != withUpper) || requested.IsNullOrEmpty())
+                (withLower != withUpper) ||
+                (!withCount && requested.IsNullOrEmpty()))
                 return null;
 
-            // direction
-            var direction = 0; // 0 = top-down, 1 = middle-out, 2 = bottom-up
+            // direction 0 = top-down, 1 = middle-out, 2 = bottom-up
+            var direction = withExpression ?
+                (!expression.Contains("$REVERSE") ? 0 : 2) :
+                ((withSMSemanticId || withSMIdentifier) ? 0 : ((withContains || withEqualString || withLower || withUpper) ? 2 : 1));
 
-            // restrict all tables seperate
+            // shorten expression
+            expression = expression.Replace("$REVERSE", string.Empty);
+
+            // get condition out of expression
+            var conditionsExpression = ConditionFromExpression(messages, expression);
+
+            // restrictions in which tables 
+            var restrictSM = false;
+            var restrictSME = false;
+            var restrictSValue = false;
+            var restrictNValue = false;
+            var restrictValue = false;
+
+            // restrict all tables seperate 
             IQueryable<SMSet> smTable;
             IQueryable<SMESet> smeTable;
             IQueryable<SValueSet>? sValueTable;
             IQueryable<IValueSet>? iValueTable;
             IQueryable<DValueSet>? dValueTable;
 
-            var log = false;
-            int withQueryLanguage = 0;
-
-            if (withExpression && expression.StartsWith("$LOG"))
-            {
-                log = true;
-                expression = expression.Replace("$LOG", "");
-                Console.WriteLine("$LOG");
-                messages.Add("$LOG");
-            }
-
-            if (withExpression && expression.StartsWith("$QL"))
-            {
-                withQueryLanguage = 1;
-                expression = expression.Replace("$QL", "");
-                Console.WriteLine("$QL");
-                messages.Add("$QL");
-            }
-
-            if (expression.StartsWith("$JSON"))
-            {
-                withQueryLanguage = 2;
-                expression = expression.Replace("$JSON", "");
-                Console.WriteLine("$JSON");
-                messages.Add("$JSON");
-            }
-
-            // check additional columns for expression
-            var needSmSemanticId = false;
-            var needSmIdShort = false;
-            var needSmDisplayName = false;
-            var needSmDescription = false;
-            var needSmId = false;
-            var needSmeSemanticId = false;
-            var needSmeIdShort = false;
-            var needSmeDisplayName = false;
-            var needSmeDescription = false;
-            var needSmeValue = false;
-            var needSmeValueType = false; // <-- is unclear
-
             // get data
-            var combiCondition = string.Empty; // this saves the combinedCondition but in a way that raw sql can work with it
             if (withExpression) // with expression
             {
-                // direction
-                direction = !expression.Contains("$REVERSE") ? 0 : 2;
-
-                // shorten expression
-                expression = expression.Replace("$REVERSE", "").Replace("$LOG", "");
-
-                var combinedCondition = string.Empty;
-                var conditionSM = string.Empty;
-                var conditionSME = string.Empty;
-                var conditionStr = string.Empty;
-                var conditionNum = string.Empty;
-
-                if (withQueryLanguage == 0)
-                {
-                    messages.Add("");
-
-                    expression = Regex.Replace(expression, @"\s+", string.Empty);
-
-                    // init parser
-                    var countTypePrefix = 0;
-                    var parser = new ParserWithAST(new Lexer(expression));
-                    var ast = parser.Parse();
-
-                    // combined condition
-                    combinedCondition = parser.GenerateSql(ast, "", ref countTypePrefix, "filter");
-                    text = "combinedCondition: " + combinedCondition;
-                    Console.WriteLine(text);
-                    messages.Add(text);
-
-                    // sm condition
-                    conditionSM = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_submodel");
-                    if (conditionSM.IsNullOrEmpty())
-                        conditionSM = parser.GenerateSql(ast, "sm.", ref countTypePrefix, "filter");
-                    conditionSM = conditionSM.Replace("sm.", "");
-                    text = "conditionSM: " + conditionSM;
-                    Console.WriteLine(text);
-                    messages.Add(text);
-
-                    // sme condition
-                    conditionSME = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_submodel_elements");
-                    if (conditionSME.IsNullOrEmpty())
-                        conditionSME = parser.GenerateSql(ast, "sme.", ref countTypePrefix, "filter");
-                    conditionSME = conditionSME.Replace("sme.", "");
-                    text = "conditionSME: " + conditionSME;
-                    Console.WriteLine(text);
-                    messages.Add(text);
-
-                    // string condition
-                    conditionStr = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_str");
-                    if (conditionStr.IsNullOrEmpty())
-                        conditionStr = parser.GenerateSql(ast, "sValue", ref countTypePrefix, "filter");
-                    if (conditionStr.Equals("true"))
-                        conditionStr = "sValue != null";
-                    conditionStr = conditionStr.Replace("sValue", "Value");
-                    text = "conditionStr: " + conditionStr;
-                    Console.WriteLine(text);
-                    messages.Add(text);
-
-                    // num condition
-                    conditionNum = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_num");
-                    if (conditionNum.IsNullOrEmpty())
-                        conditionNum = parser.GenerateSql(ast, "mValue", ref countTypePrefix, "filter");
-                    if (conditionNum.Equals("true"))
-                        conditionNum = "mValue != null";
-                    conditionNum = conditionNum.Replace("mValue", "Value");
-                    text = "conditionNum: " + conditionNum;
-                    Console.WriteLine(text);
-                    messages.Add(text);
-
-                    messages.Add("");
-                }
-                else if (withQueryLanguage == 1)
-                {
-                    // with newest query language from QueryParser.cs
-                    // var grammar = new QueryGrammar();
-                    var parser = new Parser(grammar);
-                    parser.Context.TracingEnabled = true;
-                    var parseTree = parser.Parse(expression);
-
-                    if (parseTree.HasErrors())
-                    {
-                        var pos = parser.Context.CurrentToken.Location.Position;
-                        text = expression.Substring(0, pos) + "$$$" + expression.Substring(pos);
-                        text = string.Join("\n", parseTree.ParserMessages) + "\nSee $$$: " + text;
-                        Console.WriteLine(text);
-                        while (text != text.Replace("\n  ", "\n "))
-                        {
-                            text = text.Replace("\n  ", "\n ");
-                        };
-                        text = text.Replace("\n", "\n");
-                        text = text.Replace("\n", " ");
-                        throw new Exception(text);
-                    }
-                    else
-                    {
-                        messages.Add("");
-
-                        // Security
-                        if (parseTree.Root.Term.Name == "AllRules")
-                        {
-                            grammar.ParseAccessRules(parseTree.Root);
-                            throw new Exception("Access Rules parsed!");
-                        }
-
-                        int countTypePrefix = 0;
-                        combinedCondition = grammar.ParseTreeToExpression(parseTree.Root, "", ref countTypePrefix);
-                        text = "combinedCondition: " + combinedCondition;
-                        Console.WriteLine(text);
-                        messages.Add(text);
-
-                        countTypePrefix = 0;
-                        conditionSM = grammar.ParseTreeToExpression(parseTree.Root, "sm.", ref countTypePrefix);
-                        if (conditionSM == "$SKIP")
-                        {
-                            conditionSM = "";
-                        }
-                        text = "conditionSM: " + conditionSM;
-                        Console.WriteLine(text);
-                        messages.Add(text);
-
-                        countTypePrefix = 0;
-                        conditionSME = grammar.ParseTreeToExpression(parseTree.Root, "sme.", ref countTypePrefix);
-                        if (conditionSME == "$SKIP")
-                        {
-                            conditionSME = "";
-                        }
-                        text = "conditionSME: " + conditionSME;
-                        Console.WriteLine(text);
-                        messages.Add(text);
-
-                        countTypePrefix = 0;
-                        conditionStr = grammar.ParseTreeToExpression(parseTree.Root, "str()", ref countTypePrefix);
-                        if (conditionStr == "$SKIP")
-                        {
-                            conditionStr = "";
-                        }
-                        text = "conditionStr: " + conditionStr;
-                        Console.WriteLine(text);
-                        messages.Add(text);
-
-                        countTypePrefix = 0;
-                        conditionNum = grammar.ParseTreeToExpression(parseTree.Root, "num()", ref countTypePrefix);
-                        if (conditionNum == "$SKIP")
-                        {
-                            conditionNum = "";
-                        }
-                        text = "conditionNum: " + conditionNum;
-                        Console.WriteLine(text);
-                        messages.Add(text);
-
-                        messages.Add("");
-                    }
-                }
-                else
-                {
-                    // JSON Query Language from JsonParser.cs
-                    var jParser = new JsonParser();
-                    messages.Add("");
-
-                    int countTypePrefix = 0;
-                    combinedCondition = jParser.ParseTreeToExpression(expression, "", ref countTypePrefix);
-                    messages.Add("combinedCondition: " + combinedCondition);
-
-                    countTypePrefix = 0;
-                    conditionSM = jParser.ParseTreeToExpression(expression, "sm.", ref countTypePrefix);
-                    if (conditionSM == "$SKIP")
-                    {
-                        conditionSM = "";
-                    }
-                    messages.Add("conditionSM: " + conditionSM);
-
-                    countTypePrefix = 0;
-                    conditionSME = jParser.ParseTreeToExpression(expression, "sme.", ref countTypePrefix);
-                    if (conditionSME == "$SKIP")
-                    {
-                        conditionSME = "";
-                    }
-                    messages.Add("conditionSME: " + conditionSME);
-
-                    countTypePrefix = 0;
-                    conditionStr = jParser.ParseTreeToExpression(expression, "str()", ref countTypePrefix);
-                    if (conditionStr == "$SKIP")
-                    {
-                        conditionStr = "";
-                    }
-                    messages.Add("conditionStr: " + conditionStr);
-
-                    countTypePrefix = 0;
-                    conditionNum = jParser.ParseTreeToExpression(expression, "num()", ref countTypePrefix);
-                    if (conditionNum == "$SKIP")
-                    {
-                        conditionNum = "";
-                    }
-                    messages.Add("conditionNum: " + conditionNum);
-                    messages.Add("");
-                }
-
                 // check restrictions
-                var restrictSM = !conditionSM.IsNullOrEmpty() && !conditionSM.Equals("true");
-                var restrictSME = !conditionSME.IsNullOrEmpty() && !conditionSME.Equals("true");
-                var restrictSVaue = !conditionStr.IsNullOrEmpty() && !conditionStr.Equals("true");
-                var restrictNumVaue = !conditionNum.IsNullOrEmpty() && !conditionNum.Equals("true");
-                var restrictValue = restrictSVaue || restrictNumVaue;
+                restrictSM = !conditionsExpression["sm"].IsNullOrEmpty() && !conditionsExpression["sm"].Equals("true");
+                restrictSME = !conditionsExpression["sme"].IsNullOrEmpty() && !conditionsExpression["sme"].Equals("true");
+                restrictSValue = !conditionsExpression["svalue"].IsNullOrEmpty() && !conditionsExpression["svalue"].Equals("true");
+                restrictNValue = !conditionsExpression["nvalue"].IsNullOrEmpty() && !conditionsExpression["nvalue"].Equals("true");
+                restrictValue = restrictSValue || restrictNValue;
 
-                // restrict all tables seperate 
-                smTable = restrictSM ? db.SMSets.Where(conditionSM) : db.SMSets;
-                smeTable = restrictSME ? db.SMESets.Where(conditionSME) : db.SMESets;
-                sValueTable = restrictValue ? (restrictSVaue ? db.SValueSets.Where(conditionStr) : null) : db.SValueSets;
-                iValueTable = restrictValue ? (restrictNumVaue ? db.IValueSets.Where(conditionNum) : null) : db.IValueSets;
-                dValueTable = restrictValue ? (restrictNumVaue ? db.DValueSets.Where(conditionNum) : null) : db.DValueSets;
-
-                // check additional columns for expression
-                needSmSemanticId = combinedCondition.Contains("sm.semanticId");
-                needSmIdShort = combinedCondition.Contains("sm.idShort");
-                needSmDisplayName = combinedCondition.Contains("sm.displayName");
-                needSmDescription = combinedCondition.Contains("sm.description");
-                needSmId = combinedCondition.Contains("sm.id");
-                needSmeSemanticId = combinedCondition.Contains("sme.semanticId");
-                needSmeIdShort = combinedCondition.Contains("sme.idShort");
-                needSmeDisplayName = combinedCondition.Contains("sme.displayName");
-                needSmeDescription = combinedCondition.Contains("sme.description");
-                needSmeValue = combinedCondition.Contains("sme.value");
-                needSmeValueType = combinedCondition.Contains("sme.valueType");
-
-                // convert to sql
-                combiCondition = ConvertToSqlString(combinedCondition);
-                combiCondition = "WHERE " + combiCondition;
+                // restrict all tables seperate
+                smTable = restrictSM ? db.SMSets.Where(conditionsExpression["sm"]) : db.SMSets;
+                smeTable = restrictSME ? db.SMESets.Where(conditionsExpression["sme"]) : db.SMESets;
+                sValueTable = restrictValue ? (restrictSValue ? db.SValueSets.Where(conditionsExpression["svalue"]) : null) : db.SValueSets;
+                iValueTable = restrictValue ? (restrictNValue ? db.IValueSets.Where(conditionsExpression["nvalue"]) : null) : db.IValueSets;
+                dValueTable = restrictValue ? (restrictNValue ? db.DValueSets.Where(conditionsExpression["nvalue"]) : null) : db.DValueSets;
             }
             else // with parameters
             {
-                // direction
-                direction = (withSMSemanticId || withSMIdentifier) ? 0 : ((withContains || withEqualString || withLower || withUpper) ? 2 : 1);
-
                 // check restrictions
-                var restrictSM = withSMSemanticId || withSMIdentifier;
-                var restrictSME = withSemanticId || withDiff;
-                var restrictSValue = withContains || withEqualString;
-                var restrictNumValue = withEqualNum || withCompare;
-                var restrictValue = restrictSValue || restrictNumValue;
+                restrictSM = withSMSemanticId || withSMIdentifier;
+                restrictSME = withSemanticId || withDiff;
+                restrictSValue = withContains || withEqualString;
+                restrictNValue = withEqualNum || withCompare;
+                restrictValue = restrictSValue || restrictNValue;
 
                 // restrict all tables seperate 
                 smTable = restrictSM ? db.SMSets.Where(sm => (!withSMSemanticId || (sm.SemanticId != null && sm.SemanticId.Equals(smSemanticId))) && (!withSMIdentifier || (sm.Identifier != null && sm.Identifier.Equals(smIdentifier)))) : db.SMSets;
                 smeTable = restrictSME ? db.SMESets.Where(sme => (!withSemanticId || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) && (!withDiff || sme.TimeStamp.CompareTo(diff) > 0)) : db.SMESets;
                 sValueTable = restrictValue ? (restrictSValue ? db.SValueSets.Where(v => restrictSValue && v.Value != null && (!withContains || v.Value.Contains(contains)) && (!withEqualString || v.Value.Equals(equal))) : null) : db.SValueSets;
-                iValueTable = restrictValue ? (restrictNumValue ? db.IValueSets.Where(v => restrictNumValue && v.Value != null && (!withEqualNum || v.Value == equalNum) && (!withCompare || (v.Value >= lowerNum && v.Value <= upperNum))) : null) : db.IValueSets;
-                dValueTable = restrictValue ? (restrictNumValue ? db.DValueSets.Where(v => restrictNumValue && v.Value != null && (!withEqualNum || v.Value == equalNum) && (!withCompare || (v.Value >= lowerNum && v.Value <= upperNum))) : null) : db.DValueSets;
+                iValueTable = restrictValue ? (restrictNValue ? db.IValueSets.Where(v => restrictNValue && v.Value != null && (!withEqualNum || v.Value == equalNum) && (!withCompare || (v.Value >= lowerNum && v.Value <= upperNum))) : null) : db.IValueSets;
+                dValueTable = restrictValue ? (restrictNValue ? db.DValueSets.Where(v => restrictNValue && v.Value != null && (!withEqualNum || v.Value == equalNum) && (!withCompare || (v.Value >= lowerNum && v.Value <= upperNum))) : null) : db.DValueSets;
             }
 
-            // set select
-            var smSelect = smTable.Select(sm => new {
-                sm.Id,
-                SemanticId = needSmSemanticId ? sm.SemanticId : null,
-                IdShort = needSmIdShort ? sm.IdShort : null,
-                DisplayName = needSmDisplayName ? sm.DisplayName : null,
-                Description = needSmDescription ? sm.Description : null,
-                sm.Identifier
-            });
-            var smeSelect = smeTable.Select(sme => new {
-                sme.SMId,
-                sme.Id,
-                SemanticId = needSmeSemanticId ? sme.SemanticId : null,
-                IdShort = needSmeIdShort ? sme.IdShort : null,
-                DisplayName = needSmeDisplayName ? sme.DisplayName : null,
-                Description = needSmeDescription ? sme.Description : null,
-                sme.TimeStamp,
-                sme.TValue
-            });
-            var sValueSelect = sValueTable?.Select(sV => new { sV.SMEId, sV.Value });
-            var iValueSelect = iValueTable?.Select(iV => new { iV.SMEId, iV.Value });
-            var dValueSelect = dValueTable?.Select(dV => new { dV.SMEId, dV.Value });
-
-            // to query string
-            var smQueryString = smSelect.ToQueryString();
-            var smeQueryString = smeSelect.ToQueryString();
-            var sValueQueryString = sValueSelect?.ToQueryString();
-            var iValueQueryString = iValueSelect?.ToQueryString();
-            var dValueQueryString = dValueSelect?.ToQueryString();
-
-            // set parameters
-            smQueryString = SetParameter(smQueryString);
-            smeQueryString = SetParameter(smeQueryString);
-            sValueQueryString = sValueQueryString != null ? SetParameter(sValueQueryString) : null;
-            iValueQueryString = iValueQueryString != null ? SetParameter(iValueQueryString) : null;
-            dValueQueryString = dValueQueryString != null ? SetParameter(dValueQueryString) : null;
-
-            // change INSTR to LIKE
-            smQueryString = ChangeINSTRToLIKE(smQueryString);
-            smeQueryString = ChangeINSTRToLIKE(smeQueryString);
-            sValueQueryString = sValueQueryString != null ? ChangeINSTRToLIKE(sValueQueryString) : null;
-            iValueQueryString = iValueQueryString != null ? ChangeINSTRToLIKE(iValueQueryString) : null;
-            dValueQueryString = dValueQueryString != null ? ChangeINSTRToLIKE(dValueQueryString) : null;
-
-            // with querys for each table
-            var rawSQL = $"WITH\n" +
-                $"FilteredSM AS (\n{smQueryString}\n),\n" +
-                $"FilteredSME AS (\n{smeQueryString}\n),\n" +
-                (sValueQueryString != null ? $"FilteredSValue AS (\n{sValueQueryString}\n),\n" : string.Empty) +
-                (iValueQueryString != null ? $"FilteredIValue AS (\n{iValueQueryString}\n),\n" : string.Empty) +
-                (dValueQueryString != null ? $"FilteredDValue AS (\n{dValueQueryString}\n),\n" : string.Empty);
-
-            // join direction
-            if (direction == 0) // top-down
-            {
-                // add SM_ and SME_ to front 
-                combiCondition = AddSMToFront(combiCondition);
-                combiCondition = AddSMEToFront(combiCondition);
-
-                // SM => SME
-                rawSQL +=
-                    $"FilteredSMAndSME AS ( \n" +
-                        $"SELECT " +
-                            $"{(needSmSemanticId ? "sm.SemanticId AS SM_SemanticId, " : string.Empty)}" +
-                            $"{(needSmIdShort ? "sm.IdShort AS SM_IdShort, " : string.Empty)}" +
-                            $"{(needSmDisplayName ? "sm.DisplayName AS SM_DisplayName, " : string.Empty)}" +
-                            $"{(needSmDescription ? "sm.Description AS SM_Description, " : string.Empty)}" +
-                            $"sm.Identifier, " +
-
-                            $"{(needSmeSemanticId ? "sme.SemanticId AS SME_SemanticId, " : string.Empty)}" +
-                            $"{(needSmeIdShort ? "sme.IdShort AS SME_IdShort, " : string.Empty)}" +
-                            $"{(needSmeDisplayName ? "sme.DisplayName AS SME_DisplayName, " : string.Empty)}" +
-                            $"{(needSmeDescription ? "sme.Description AS SME_Description, " : string.Empty)}" +
-                            $"sme.Id, " +
-                            $"sme.TimeStamp, " +
-                            $"sme.TValue \n" +
-                        $"FROM FilteredSM AS sm \n" +
-                        $"INNER JOIN FilteredSME AS sme ON sm.Id = sme.SMId \n" +
-                    $"), \n";
-
-                // SM-SME => VALUE
-                var selectStart =
-                    $"SELECT " +
-                        $"{(needSmSemanticId ? "sm_sme.SM_SemanticId, " : string.Empty)}" +
-                        $"{(needSmIdShort ? "sm_sme.SM_IdShort, " : string.Empty)}" +
-                        $"{(needSmDisplayName ? "sm_sme.SM_DisplayName, " : string.Empty)}" +
-                        $"{(needSmDescription ? "sm_sme.SM_Description, " : string.Empty)}" +
-                        $"sm_sme.Identifier, " +
-
-                        $"{(needSmeSemanticId ? "sm_sme.SME_SemanticId, " : string.Empty)}" +
-                        $"{(needSmeIdShort ? "sm_sme.SME_IdShort, " : string.Empty)}" +
-                        $"{(needSmeDisplayName ? "sm_sme.SME_DisplayName, " : string.Empty)}" +
-                        $"{(needSmeDescription ? "sm_sme.SME_Description, " : string.Empty)}" +
-                        $"sm_sme.Id, " +
-                        $"sm_sme.TimeStamp, " +
-                        $"v.Value \n" +
-                    $"FROM FilteredSMAndSME AS sm_sme \n" +
-                    $"INNER JOIN ";
-                var selectEnd = $" AS v ON sm_sme.Id = v.SMEId \n" +
-                    $"{combiCondition.Replace("sme.", "sm_sme.").Replace("sm.", "sm_sme.")}\n ";
-                rawSQL +=
-                    $"FilteredSMAndSMEAndValue AS ( \n" +
-                        (!sValueQueryString.IsNullOrEmpty() ? $"{selectStart}FilteredSValue{selectEnd}" : string.Empty) +
-                        ((!sValueQueryString.IsNullOrEmpty() && !iValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
-                        (!iValueQueryString.IsNullOrEmpty() ? $"{selectStart}FilteredIValue{selectEnd}" : string.Empty) +
-                        ((!iValueQueryString.IsNullOrEmpty() && !dValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
-                        (!dValueQueryString.IsNullOrEmpty() ? $"{selectStart}FilteredDValue{selectEnd}" : string.Empty) +
-                        ((withParameters && !withContains && !withEqualString && !withEqualNum && !withCompare) ?
-                            $"UNION ALL \n" +
-                            $"SELECT " +
-                                $"{(needSmSemanticId ? "sm_sme.SM_SemanticId, " : string.Empty)}" +
-                                $"{(needSmIdShort ? "sm_sme.SM_IdShort, " : string.Empty)}" +
-                                $"{(needSmDisplayName ? "sm_sme.SM_DisplayName, " : string.Empty)}" +
-                                $"{(needSmDescription ? "sm_sme.SM_Description, " : string.Empty)}" +
-                                $"sm_sme.Identifier, " +
-
-                                $"{(needSmeSemanticId ? "sm_sme.SME_SemanticId, " : string.Empty)}" +
-                                $"{(needSmeIdShort ? "sm_sme.SME_IdShort, " : string.Empty)}" +
-                                $"{(needSmeDisplayName ? "sm_sme.SME_DisplayName, " : string.Empty)}" +
-                                $"{(needSmeDescription ? "sm_sme.SME_Description, " : string.Empty)}" +
-                                $"sm_sme.Id, " +
-                                $"sm_sme.TimeStamp, " +
-                                $"NULL \n" +
-                            $"FROM FilteredSMAndSME AS sm_sme \n" +
-                            $"WHERE sm_sme.TValue IS NULL OR sm_sme.TValue = '' {(withExpression ? $"AND ({combiCondition})" : string.Empty)} \n" : string.Empty) +
-                    $")";
-            }
-            else if (direction == 1) // middle-out
-            {
-                // add SM_ and SME_ to front 
-                combiCondition = AddSMToFront(combiCondition);
-                combiCondition = AddSMEToFront(combiCondition);
-
-                // SME => SM
-                rawSQL +=
-                    $"FilteredSMAndSME AS ( \n" +
-                        $"SELECT " +
-                            $"{(needSmSemanticId ? "sm.SemanticId AS SM_SemanticId, " : string.Empty)}" +
-                            $"{(needSmIdShort ? "sm.IdShort AS SM_IdShort, " : string.Empty)}" +
-                            $"{(needSmDisplayName ? "sm.DisplayName AS SM_DisplayName, " : string.Empty)}" +
-                            $"{(needSmDescription ? "sm.Description AS SM_Description, " : string.Empty)}" +
-                            $"sm.Identifier, " +
-
-                            $"{(needSmeSemanticId ? "sme.SemanticId AS SME_SemanticId, " : string.Empty)}" +
-                            $"{(needSmeIdShort ? "sme.IdShort AS SME_IdShort, " : string.Empty)}" +
-                            $"{(needSmeDisplayName ? "sme.DisplayName AS SME_DisplayName, " : string.Empty)}" +
-                            $"{(needSmeDescription ? "sme.Description AS SME_Description, " : string.Empty)}" +
-                            $"sme.Id, " +
-                            $"sme.TimeStamp, " +
-                            $"sme.TValue \n" +
-                        $"FROM FilteredSME AS sme \n" +
-                        $"INNER JOIN FilteredSM AS sm ON sm.Id = sme.SMId \n" +
-                    $"), \n";
-
-                // SME-SM => VALUE
-                var selectStart =
-                    $"SELECT " +
-                        $"{(needSmSemanticId ? "sm_sme.SM_SemanticId, " : string.Empty)}" +
-                        $"{(needSmIdShort ? "sm_sme.SM_IdShort, " : string.Empty)}" +
-                        $"{(needSmDisplayName ? "sm_sme.SM_DisplayName, " : string.Empty)}" +
-                        $"{(needSmDescription ? "sm_sme.SM_Description, " : string.Empty)}" +
-                        $"sm_sme.Identifier, " +
-
-                        $"{(needSmeSemanticId ? "sm_sme.SME_SemanticId, " : string.Empty)}" +
-                        $"{(needSmeIdShort ? "sm_sme.SME_IdShort, " : string.Empty)}" +
-                        $"{(needSmeDisplayName ? "sm_sme.SME_DisplayName, " : string.Empty)}" +
-                        $"{(needSmeDescription ? "sm_sme.SME_Description, " : string.Empty)}" +
-                        $"sm_sme.Id, " +
-                        $"sm_sme.TimeStamp, " +
-                        $"v.Value \n" +
-                    $"FROM FilteredSMAndSME AS sm_sme \n" +
-                    $"INNER JOIN ";
-                var selectEnd = $" AS v ON sm_sme.Id = v.SMEId\n" +
-                    $"{combiCondition.Replace("sme.", "sm_sme.").Replace("sm.", "sm_sme.")}\n ";
-                rawSQL +=
-                    $"FilteredSMAndSMEAndValue AS ( \n" +
-                        (!sValueQueryString.IsNullOrEmpty() ? $"{selectStart}FilteredSValue{selectEnd}" : string.Empty) +
-                        ((!sValueQueryString.IsNullOrEmpty() && !iValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
-                        (!iValueQueryString.IsNullOrEmpty() ? $"{selectStart}FilteredIValue{selectEnd}" : string.Empty) +
-                        ((!iValueQueryString.IsNullOrEmpty() && !dValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
-                        (!dValueQueryString.IsNullOrEmpty() ? $"{selectStart}FilteredDValue{selectEnd}" : string.Empty) +
-                        ((withParameters && !withContains && !withEqualString && !withEqualNum && !withCompare) ?
-                            $"UNION ALL \n" +
-                            $"SELECT " +
-                                $"{(needSmSemanticId ? "sm_sme.SM_SemanticId, " : string.Empty)}" +
-                                $"{(needSmIdShort ? "sm_sme.SM_IdShort, " : string.Empty)}" +
-                                $"{(needSmDisplayName ? "sm_sme.SM_DisplayName, " : string.Empty)}" +
-                                $"{(needSmDescription ? "sm_sme.SM_Description, " : string.Empty)}" +
-                                $"sm_sme.Identifier, " +
-
-                                $"{(needSmeSemanticId ? "sm_sme.SME_SemanticId, " : string.Empty)}" +
-                                $"{(needSmeIdShort ? "sm_sme.SME_IdShort, " : string.Empty)}" +
-                                $"{(needSmeDisplayName ? "sm_sme.SME_DisplayName, " : string.Empty)}" +
-                                $"{(needSmeDescription ? "sm_sme.SME_Description, " : string.Empty)}" +
-                                $"sm_sme.Id, " +
-                                $"sm_sme.TimeStamp, " +
-                                $"NULL \n" +
-                            $"FROM FilteredSMAndSME AS sm_sme \n" +
-                            $"WHERE sm_sme.TValue IS NULL OR sm_sme.TValue = ''\n" : string.Empty) +
-                    $")";
-            }
-            else if (direction == 2) // bottom-up
-            {
-                // add SME_ to front 
-                combiCondition = AddSMEToFront(combiCondition);
-
-                // VALUE => SME
-                var selectWithStart =
-                    $"SELECT " +
-                        $"sme.SMId, " +
-
-                        $"{(needSmeSemanticId ? "sme.SemanticId AS SME_SemanticId, " : string.Empty)}" +
-                        $"{(needSmeIdShort ? "sme.IdShort AS SME_IdShort, " : string.Empty)}" +
-                        $"{(needSmeDisplayName ? "sme.DisplayName AS SME_DisplayName, " : string.Empty)}" +
-                        $"{(needSmeDescription ? "sme.Description AS SME_Description, " : string.Empty)}" +
-                        $"sme.Id, " +
-                        $"sme.TimeStamp, " +
-                        $"v.Value \n " +
-                    $"FROM ";
-                var selectWithEnd = $" AS v \n" +
-                    $"INNER JOIN FilteredSME AS sme ON sme.Id = v.SMEId \n ";
-                rawSQL +=
-                    $"FilteredSMEAndValue AS (\n" +
-                        (!sValueQueryString.IsNullOrEmpty() ? $"{selectWithStart}FilteredSValue{selectWithEnd}" : string.Empty) +
-                        ((!sValueQueryString.IsNullOrEmpty() && !iValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
-                        (!iValueQueryString.IsNullOrEmpty() ? $"{selectWithStart}FilteredIValue{selectWithEnd}" : string.Empty) +
-                        ((!iValueQueryString.IsNullOrEmpty() && !dValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
-                        (!dValueQueryString.IsNullOrEmpty() ? $"{selectWithStart}FilteredDValue{selectWithEnd}" : string.Empty) +
-                        ((withParameters && !withContains && !withEqualString && !withEqualNum && !withCompare) ?
-                            $"UNION ALL \n" +
-                            $"SELECT " +
-                                $"sme.SMId, " +
-
-                                $"{(needSmeSemanticId ? "sme.SemanticId AS SME_SemanticId, " : string.Empty)}" +
-                                $"{(needSmeIdShort ? "sme.IdShort AS SME_IdShort, " : string.Empty)}" +
-                                $"{(needSmeDisplayName ? "sme.DisplayName AS SME_DisplayName, " : string.Empty)}" +
-                                $"{(needSmeDescription ? "sme.Description AS SME_Description, " : string.Empty)}" +
-                                $"sme.Id, " +
-                                $"sme.TimeStamp, " +
-                                $"NULL \n" +
-                            $"FROM FilteredSME AS sme \n" +
-                            $"WHERE sme.TValue IS NULL OR sme.TValue = ''\n" : string.Empty) +
-                    $"), \n";
-
-                // VALUE-SME => SM
-                rawSQL +=
-                    $"FilteredSMAndSMEAndValue AS ( \n" +
-                        $"SELECT " +
-                            $"{(needSmSemanticId ? "sm.SemanticId AS SM_SemanticId, " : string.Empty)}" +
-                            $"{(needSmIdShort ? "sm.IdShort AS SM_IdShort, " : string.Empty)}" +
-                            $"{(needSmDisplayName ? "sm.DisplayName AS SM_DisplayName, " : string.Empty)}" +
-                            $"{(needSmDescription ? "sm.Description AS SM_Description, " : string.Empty)}" +
-                            $"sm.Identifier, " +
-
-                            $"{(needSmeSemanticId ? "sme_v.SME_SemanticId, " : string.Empty)}" +
-                            $"{(needSmeIdShort ? "sme_v.SME_IdShort, " : string.Empty)}" +
-                            $"{(needSmeDisplayName ? "sme_v.SME_DisplayName, " : string.Empty)}" +
-                            $"{(needSmeDescription ? "sme_v.SME_Description, " : string.Empty)}" +
-                            $"sme_v.Id, " +
-                            $"sme_v.TimeStamp, " +
-                            $"sme_v.Value \n" +
-                        $"FROM FilteredSMEAndValue AS sme_v \n" +
-                        $"INNER JOIN FilteredSM AS sm ON sme_v.SMId = sm.Id \n" +
-                        $"{combiCondition.Replace("v.", "sme_v.").Replace("sme.", "sme_v.")}\n" +
-                    $")";
-            }
-
-            if (withCount)
-            {
-                // select
-                rawSQL += $"\nSELECT sme.Id \nFROM FilteredSMAndSMEAndValue AS sme";
-
-                // create queryable
-                var resultCount = db.Database.SqlQueryRaw<int>(rawSQL);
-                return resultCount;
-            }
-
-
-            /* old
-
-            // get path
-            rawSQL += $", \n" +
-                $"RecursiveSME AS( \n" +
-                    $"WITH RECURSIVE SME_CTE AS ( \n" +
-                        $"SELECT Id, IdShort, ParentSMEId, IdShort AS IdShortPath, Id AS StartId \n" +
-                        $"FROM SMESets \n" +
-                        $"WHERE Id IN (SELECT Id FROM FilteredSMAndSMEAndValue) \n" +
-                        $"UNION ALL \n" +
-                        $"SELECT x.Id, x.IdShort, x.ParentSMEId, x.IdShort || '.' || c.IdShortPath, c.StartId \n" +
-                        $"FROM SMESets x \n" +
-                        $"INNER JOIN SME_CTE c ON x.Id = c.ParentSMEId \n" +
-                    $") \n" +
-                    $"SELECT StartId AS Id, IdShortPath \n" +
-                    $"FROM SME_CTE \n" +
-                    $"WHERE ParentSMEId IS NULL \n" +
-                $") \n";
-
-            // select
-            rawSQL += $"SELECT sme.Identifier, r.IdShortPath, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', sme.TimeStamp) AS TimeStamp, sme.Value \n" +
-                "FROM FilteredSMAndSMEAndValue AS sme \n" +
-                "INNER JOIN RecursiveSME AS r ON sme.Id = r.Id";
+            // combine tables to a raw sql 
+            var rawSQLEx = CombineTablesToRawSQL(direction, smTable, smeTable, sValueTable, iValueTable, dValueTable, withParaWithoutValue);
 
             // create queryable
-            var result = db.Database.SqlQueryRaw<CombinedSMEResult>(rawSQL);
+            var combineTableQuery = db.Database.SqlQueryRaw<CombinedSMSMEV>(rawSQLEx);
+            if (withExpression && conditionsExpression.ContainsKey("all"))
+            {
+                var combi = conditionsExpression["all"].Replace("svalue", "V_Value").Replace("mvalue", "V_D_Value").Replace("sm.idShort", "SM_IdShort").Replace("sme.idShort", "SME_IdShort");
+                combineTableQuery = combineTableQuery.Where(combi);
 
-            return result;
-            */
+                // modifiy raw sql
+                var combineTableQueryString = combineTableQuery.ToQueryString();
+                combineTableQueryString = ModifiyRawSQL(combineTableQueryString);
+                combineTableQuery = db.Database.SqlQueryRaw<CombinedSMSMEV>(combineTableQueryString);
+            }
+
+            // select for count
+            if (withCount)
+            {
+                var qCount = combineTableQuery.Select(sme => sme.SME_Id);
+                return qCount;
+            }
+
+            // select for not count
+            var combineTableQueryS = combineTableQuery.Select(sme => new { sme.SME_Id, sme.SM_Identifier, sme.V_Value, sme.SME_TimeStamp });
+            var combineTableRawSQL = combineTableQueryS.ToQueryString();
 
             if (requested.Contains("idShortPath") || requested.Contains("url"))
             {
                 // Append the "get path" section
-                rawSQL += $"\n ," +
-                    $"RecursiveSME AS( \n" +
+                combineTableRawSQL =
+                    $"WITH FilteredSMAndSMEAndValue AS (\n" +
+                        $"{combineTableRawSQL}" +
+                    $"\n), \n" +
+                    "RecursiveSME AS( \n" +
                         $"WITH RECURSIVE SME_CTE AS ( \n" +
                             $"SELECT Id, IdShort, ParentSMEId, IdShort AS IdShortPath, Id AS StartId \n" +
                             $"FROM SMESets \n" +
-                            $"WHERE Id IN (SELECT Id FROM FilteredSMAndSMEAndValue) \n" +
+                            $"WHERE Id IN (SELECT SME_Id FROM FilteredSMAndSMEAndValue) \n" +
                             $"UNION ALL \n" +
                             $"SELECT x.Id, x.IdShort, x.ParentSMEId, x.IdShort || '.' || c.IdShortPath, c.StartId \n" +
                             $"FROM SMESets x \n" +
@@ -1029,79 +441,43 @@ namespace AasxServerDB
                         $"SELECT StartId AS Id, IdShortPath \n" +
                         $"FROM SME_CTE \n" +
                         $"WHERE ParentSMEId IS NULL \n" +
-                    $") \n";
-            }
-
-            if (requested.Contains("idShortPath") || requested.Contains("url"))
-            {
-                // Join with RecursiveSME if path is included
-                rawSQL += $"SELECT sme.Identifier, r.IdShortPath, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', sme.TimeStamp) AS TimeStamp, sme.Value \n" +
-                    "FROM FilteredSMAndSMEAndValue AS sme \n" +
-                    "INNER JOIN RecursiveSME AS r ON sme.Id = r.Id \n";
+                    $")\n" +
+                    $"\n" +
+                    $"SELECT sme.SM_Identifier, r.IdShortPath, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', sme.SME_TimeStamp) AS SME_TimeStamp, sme.V_Value \n" +
+                        "FROM FilteredSMAndSMEAndValue AS sme \n" +
+                        "INNER JOIN RecursiveSME AS r ON sme.SME_Id = r.Id";
             }
             else
             {
                 // Complete the select statement
-                rawSQL += $"SELECT sme.Identifier, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', sme.TimeStamp) AS TimeStamp, sme.Value \n" +
-                          "FROM FilteredSMAndSMEAndValue AS sme \n";
+                var index = combineTableRawSQL.IndexOf("FROM");
+                if (index == -1)
+                    return null;
+                combineTableRawSQL = combineTableRawSQL.Substring(index);
+                combineTableRawSQL = $"SELECT sme.Identifier, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', sme.TimeStamp) AS TimeStamp, sme.Value \n {combineTableRawSQL}";
             }
 
             // Create queryable
-            var result = db.Database.SqlQueryRaw<CombinedSMEResult>(rawSQL);
-
-            return result;
-        }
-
-        public static string AddSMToFront(string prediction)
-        {
-            var sqlString = prediction
-                .Replace("sm.semanticId", "sm.SM_SemanticId")
-                .Replace("sm.idShort", "sm.SM_IdShort")
-                .Replace("sm.displayName", "sm.SM_DisplayName")
-                .Replace("sm.description", "sm.SM_Description");
-
-            return sqlString;
-        }
-
-        public static string AddSMEToFront(string prediction)
-        {
-            var sqlString = prediction
-                .Replace("sme.semanticId", "sme.SME_SemanticId")
-                .Replace("sme.idShort", "sme.SME_IdShort")
-                .Replace("sme.displayName", "sme.SME_DisplayName")
-                .Replace("sme.description", "sme.SME_Description");
-
-            return sqlString;
-        }
-
-        public static string ConvertToSqlString(string prediction)
-        {
-            prediction = Regex.Replace(prediction, @"\.Contains\(""([^""]+)""\)", " LIKE '%$1%'");
-            var sqlString = prediction
-                .Replace("&&", " AND ")
-                .Replace("||", " OR ")
-                .Replace("mvalue", "v.Value")
-                .Replace("svalue", "v.Value");
-
-            return sqlString;
+            var qSearch = db.Database.SqlQueryRaw<CombinedSMEResult>(combineTableRawSQL);
+            return qSearch;
         }
 
         private static List<SMEResult> GetSMEResult(string requested, IQueryable<CombinedSMEResult> query)
         {
-            bool withSmId = requested.Contains("smId");
-            bool withTimeStamp = requested.Contains("timeStamp");
-            bool withValue = requested.Contains("value");
-            bool withIdShortPath = requested.Contains("idShortPath");
-            bool withUrl = requested.Contains("url");
+            var withSmId = requested.Contains("smId");
+            var withTimeStamp = requested.Contains("timeStamp");
+            var withValue = requested.Contains("value");
+            var withIdShortPath = requested.Contains("idShortPath");
+            var withUrl = requested.Contains("url");
 
             var q = query.Select(sm_sme_v => new SMEResult
             {
-                smId = withSmId ? sm_sme_v.Identifier : null,
-                timeStamp = withTimeStamp ? sm_sme_v.TimeStamp : null,
-                value = withValue ? sm_sme_v.Value : null,
+                smId = withSmId ? sm_sme_v.SM_Identifier : null,
+                timeStamp = withTimeStamp ? sm_sme_v.SME_TimeStamp : null,
+                value = withValue ? sm_sme_v.V_Value : null,
                 idShortPath = withIdShortPath ? sm_sme_v.IdShortPath : null,
-                url = withUrl && sm_sme_v.Identifier != null && sm_sme_v.IdShortPath != null
-                    ? $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sm_sme_v.Identifier)}/submodel-elements/{sm_sme_v.IdShortPath}"
+                url = withUrl && sm_sme_v.SM_Identifier != null && sm_sme_v.IdShortPath != null
+                    ? $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sm_sme_v.SM_Identifier)}/submodel-elements/{sm_sme_v.IdShortPath}"
                     : null
             });
 
@@ -1156,20 +532,494 @@ namespace AasxServerDB
             return result;
         }
 
-        private static string FormatDateTimeInSQL(string rawSQL)
+        private static string CombineTablesToRawSQL(int direction, IQueryable<SMSet> smTable, IQueryable<SMESet> smeTable, IQueryable<SValueSet>? sValueTable, IQueryable<IValueSet>? iValueTable, IQueryable<DValueSet>? dValueTable, bool withParaWithoutValue)
         {
-            var replaced = false;
-            var result = Regex.Replace(rawSQL, @", ""([a-zA-Z])?""\.\""TimeStampTree\""", match =>
+            // set select
+            var smSelect = smTable.Select(sm => new {
+                SM_Id = sm.Id,
+                SM_SemanticId = sm.SemanticId,
+                SM_IdShort = sm.IdShort,
+                SM_DisplayName = sm.DisplayName,
+                SM_Description = sm.Description,
+                SM_Identifier = sm.Identifier,
+                SM_TimeStampTree = sm.TimeStampTree
+            });
+            var smeSelect = smeTable.Select(sme => new {
+                SME_SMId = sme.SMId,
+                SME_Id = sme.Id,
+                SME_SemanticId = sme.SemanticId,
+                SME_IdShort = sme.IdShort,
+                SME_DisplayName = sme.DisplayName,
+                SME_Description = sme.Description,
+                SME_TimeStamp = sme.TimeStamp,
+                SME_TValue = sme.TValue
+            });
+            var sValueSelect = sValueTable?.Select(sV => new {
+                V_SMEId = sV.SMEId,
+                V_Value = sV.Value,
+                V_D_Value = sV.Value
+            });
+            var iValueSelect = iValueTable?.Select(iV => new {
+                V_SMEId = iV.SMEId,
+                V_Value = iV.Value,
+                V_D_Value = iV.Value
+            });
+            var dValueSelect = dValueTable?.Select(dV => new {
+                V_SMEId = dV.SMEId,
+                V_Value = dV.Value,
+                V_D_Value = dV.Value
+            });
+
+            // to query string
+            var smQueryString = smSelect.ToQueryString();
+            var smeQueryString = smeSelect.ToQueryString();
+            var sValueQueryString = sValueSelect?.ToQueryString();
+            var iValueQueryString = iValueSelect?.ToQueryString();
+            var dValueQueryString = dValueSelect?.ToQueryString();
+
+            // modify the raw sql (example set parameters, INSTR)
+            smQueryString = ModifiyRawSQL(smQueryString);
+            smeQueryString = ModifiyRawSQL(smeQueryString);
+            sValueQueryString = ModifiyRawSQL(sValueQueryString);
+            iValueQueryString = ModifiyRawSQL(iValueQueryString);
+            dValueQueryString = ModifiyRawSQL(dValueQueryString);
+
+            // with querys for each table
+            var rawSQL = $"WITH\n" +
+                $"FilteredSM AS (\n{smQueryString}\n),\n" +
+                $"FilteredSME AS (\n{smeQueryString}\n),\n" +
+                (sValueQueryString != null ? $"FilteredSValue AS (\n{sValueQueryString}\n),\n" : string.Empty) +
+                (iValueQueryString != null ? $"FilteredIValue AS (\n{iValueQueryString}\n),\n" : string.Empty) +
+                (dValueQueryString != null ? $"FilteredDValue AS (\n{dValueQueryString}\n),\n" : string.Empty);
+
+            if (direction == 0) // top-down
             {
-                if (!replaced)
+                // SM => SME
+                rawSQL +=
+                    $"FilteredSMAndSME AS ( \n" +
+                        $"SELECT " +
+                            $"sm.SM_SemanticId, " +
+                            $"sm.SM_IdShort, " +
+                            $"sm.SM_DisplayName, " +
+                            $"sm.SM_Description, " +
+                            $"sm.SM_Identifier, " +
+                            $"sm.SM_TimeStampTree, " +
+                            $"sme.SME_SemanticId, " +
+                            $"sme.SME_IdShort, " +
+                            $"sme.SME_DisplayName, " +
+                            $"sme.SME_Description, " +
+                            $"sme.SME_Id, " +
+                            $"sme.SME_TimeStamp, " +
+                            $"sme.SME_TValue \n" +
+                        $"FROM FilteredSM AS sm \n" +
+                        $"INNER JOIN FilteredSME AS sme ON sm.SM_Id = sme.SME_SMId \n" +
+                    $") \n";
+
+                // SM-SME => VALUE
+                var selectStart =
+                    $"SELECT " +
+                        $"sm_sme.SM_SemanticId, " +
+                        $"sm_sme.SM_IdShort, " +
+                        $"sm_sme.SM_DisplayName, " +
+                        $"sm_sme.SM_Description, " +
+                        $"sm_sme.SM_Identifier, " +
+                        $"sm_sme.SM_TimeStampTree, " +
+                        $"sm_sme.SME_SemanticId, " +
+                        $"sm_sme.SME_IdShort, " +
+                        $"sm_sme.SME_DisplayName, " +
+                        $"sm_sme.SME_Description, " +
+                        $"sm_sme.SME_Id, " +
+                        $"sm_sme.SME_TimeStamp, " +
+                        $"v.V_Value, ";
+                var selectDValueFROM = $" AS V_D_Value \n FROM FilteredSMAndSME AS sm_sme \n" +
+                    $"INNER JOIN ";
+                var selectEnd = $" AS v ON sm_sme.SME_Id = v.V_SMEId \n";
+                rawSQL +=
+                        (!sValueQueryString.IsNullOrEmpty() ? $"{selectStart}NULL{selectDValueFROM}FilteredSValue{selectEnd}" : string.Empty) +
+                        ((!sValueQueryString.IsNullOrEmpty() && !iValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
+                        (!iValueQueryString.IsNullOrEmpty() ? $"{selectStart}v.V_Value{selectDValueFROM}FilteredIValue{selectEnd}" : string.Empty) +
+                        ((!iValueQueryString.IsNullOrEmpty() && !dValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
+                        (!dValueQueryString.IsNullOrEmpty() ? $"{selectStart}v.V_Value{selectDValueFROM}FilteredDValue{selectEnd}" : string.Empty) +
+                        (withParaWithoutValue ?
+                            $"UNION ALL \n" +
+                            $"SELECT " +
+                                $"sm_sme.SM_SemanticId, " +
+                                $"sm_sme.SM_IdShort, " +
+                                $"sm_sme.SM_DisplayName, " +
+                                $"sm_sme.SM_Description, " +
+                                $"sm_sme.SM_Identifier, " +
+                                $"sm_sme.SM_TimeStampTree, " +
+                                $"sm_sme.SME_SemanticId, " +
+                                $"sm_sme.SME_IdShort, " +
+                                $"sm_sme.SME_DisplayName, " +
+                                $"sm_sme.SME_Description, " +
+                                $"sm_sme.SME_Id, " +
+                                $"sm_sme.SME_TimeStamp, " +
+                                $"NULL, NULL \n" +
+                            $"FROM FilteredSMAndSME AS sm_sme \n" +
+                            $"WHERE sm_sme.SME_TValue IS NULL OR sm_sme.SME_TValue = ''" : string.Empty);
+            }
+            else if (direction == 1) // middle-out
+            {
+                // SME => SM
+                rawSQL +=
+                    $"FilteredSMAndSME AS ( \n" +
+                        $"SELECT " +
+                            $"sm.SM_SemanticId, " +
+                            $"sm.SM_IdShort, " +
+                            $"sm.SM_DisplayName, " +
+                            $"sm.SM_Description, " +
+                            $"sm.SM_Identifier, " +
+                            $"sm.SM_TimeStampTree, " +
+                            $"sme.SME_SemanticId, " +
+                            $"sme.SME_IdShort, " +
+                            $"sme.SME_DisplayName, " +
+                            $"sme.SME_Description, " +
+                            $"sme.SME_Id, " +
+                            $"sme.SME_TimeStamp, " +
+                            $"sme.SME_TValue \n" +
+                        $"FROM FilteredSME AS sme \n" +
+                        $"INNER JOIN FilteredSM AS sm ON sm.SM_Id = sme.SME_SMId \n" +
+                    $") \n";
+
+                // SME-SM => VALUE
+                var selectStart =
+                    $"SELECT " +
+                        $"sm_sme.SM_SemanticId, " +
+                        $"sm_sme.SM_IdShort, " +
+                        $"sm_sme.SM_DisplayName, " +
+                        $"sm_sme.SM_Description, " +
+                        $"sm_sme.SM_Identifier, " +
+                        $"sm_sme.SM_TimeStampTree, " +
+                        $"sm_sme.SME_SemanticId, " +
+                        $"sm_sme.SME_IdShort, " +
+                        $"sm_sme.SME_DisplayName, " +
+                        $"sm_sme.SME_Description, " +
+                        $"sm_sme.SME_Id, " +
+                        $"sm_sme.SME_TimeStamp, " +
+                        $"v.V_Value, ";
+                var selectDValueFROM = $" AS V_D_Value \n FROM FilteredSMAndSME AS sm_sme \n" +
+                    $"INNER JOIN ";
+                var selectEnd = $" AS v ON sm_sme.SME_Id = v.V_SMEId\n ";
+                rawSQL +=
+                        (!sValueQueryString.IsNullOrEmpty() ? $"{selectStart}NULL{selectDValueFROM}FilteredSValue{selectEnd}" : string.Empty) +
+                        ((!sValueQueryString.IsNullOrEmpty() && !iValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
+                        (!iValueQueryString.IsNullOrEmpty() ? $"{selectStart}v.V_Value{selectDValueFROM}FilteredIValue{selectEnd}" : string.Empty) +
+                        ((!iValueQueryString.IsNullOrEmpty() && !dValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
+                        (!dValueQueryString.IsNullOrEmpty() ? $"{selectStart}v.V_Value{selectDValueFROM}FilteredDValue{selectEnd}" : string.Empty) +
+                        (withParaWithoutValue ?
+                            $"UNION ALL \n" +
+                            $"SELECT " +
+                                $"sm_sme.SM_SemanticId, " +
+                                $"sm_sme.SM_IdShort, " +
+                                $"sm_sme.SM_DisplayName, " +
+                                $"sm_sme.SM_Description, " +
+                                $"sm_sme.SM_Identifier, " +
+                                $"sm_sme.SM_TimeStampTree, " +
+                                $"sm_sme.SME_SemanticId, " +
+                                $"sm_sme.SME_IdShort, " +
+                                $"sm_sme.SME_DisplayName, " +
+                                $"sm_sme.SME_Description, " +
+                                $"sm_sme.SME_Id, " +
+                                $"sm_sme.SME_TimeStamp, " +
+                                $"NULL, NULL \n" +
+                            $"FROM FilteredSMAndSME AS sm_sme \n" +
+                            $"WHERE sm_sme.SME_TValue IS NULL OR sm_sme.SME_TValue = ''\n" : string.Empty);
+            }
+            else if (direction == 2) // bottom-up
+            {
+                // VALUE => SME
+                var selectWithStart =
+                    $"SELECT " +
+                        $"sme.SME_SMId, " +
+                        $"sme.SME_SemanticId, " +
+                        $"sme.SME_IdShort, " +
+                        $"sme.SME_DisplayName, " +
+                        $"sme.SME_Description, " +
+                        $"sme.SME_Id, " +
+                        $"sme.SME_TimeStamp, " +
+                        $"v.V_Value, ";
+                var selectDValueFROM = $" AS V_D_Value \n FROM ";
+                var selectWithEnd = $" AS v \n" +
+                    $"INNER JOIN FilteredSME AS sme ON sme.SME_Id = v.V_SMEId \n ";
+                rawSQL +=
+                    $"FilteredSMEAndValue AS (\n" +
+                        (!sValueQueryString.IsNullOrEmpty() ? $"{selectWithStart}NULL{selectDValueFROM}FilteredSValue{selectWithEnd}" : string.Empty) +
+                        ((!sValueQueryString.IsNullOrEmpty() && !iValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
+                        (!iValueQueryString.IsNullOrEmpty() ? $"{selectWithStart}v.V_Value{selectDValueFROM}FilteredIValue{selectWithEnd}" : string.Empty) +
+                        ((!iValueQueryString.IsNullOrEmpty() && !dValueQueryString.IsNullOrEmpty()) ? "UNION ALL \n" : string.Empty) +
+                        (!dValueQueryString.IsNullOrEmpty() ? $"{selectWithStart}v.V_Value{selectDValueFROM}FilteredDValue{selectWithEnd}" : string.Empty) +
+                        (withParaWithoutValue ?
+                            $"UNION ALL \n" +
+                            $"SELECT " +
+                                $"sme.SME_SMId, " +
+                                $"sme.SME_SemanticId, " +
+                                $"sme.SME_IdShort, " +
+                                $"sme.SME_DisplayName, " +
+                                $"sme.SME_Description, " +
+                                $"sme.SME_Id, " +
+                                $"sme.SME_TimeStamp, " +
+                                $"NULL, NULL \n" +
+                            $"FROM FilteredSME AS sme \n" +
+                            $"WHERE sme.SME_TValue IS NULL OR sme.SME_TValue = ''\n" : string.Empty) +
+                    $")";
+
+                // VALUE-SME => SM
+                rawSQL +=
+                    $"SELECT " +
+                        $"sm.SM_SemanticId, " +
+                        $"sm.SM_IdShort, " +
+                        $"sm.SM_DisplayName, " +
+                        $"sm.SM_Description, " +
+                        $"sm.SM_Identifier, " +
+                        $"sm.SM_TimeStampTree, " +
+                        $"sme_v.SME_SemanticId, " +
+                        $"sme_v.SME_IdShort, " +
+                        $"sme_v.SME_DisplayName, " +
+                        $"sme_v.SME_Description, " +
+                        $"sme_v.SME_Id, " +
+                        $"sme_v.SME_TimeStamp, " +
+                        $"sme_v.V_Value, " +
+                        $"sme_v.V_D_Value \n" +
+                    $"FROM FilteredSMEAndValue AS sme_v \n" +
+                    $"INNER JOIN FilteredSM AS sm ON sme_v.SME_SMId = sm.SM_Id \n";
+            }
+
+            return rawSQL;
+        }
+
+        private Dictionary<string, string> ConditionFromExpression(List<string> messages, string expression)
+        {
+            var text = string.Empty;
+            var condition = new Dictionary<string, string>();
+
+            // no expression
+            if (expression.IsNullOrEmpty())
+                return condition;
+
+            // log
+            var log = false;
+            if (expression.StartsWith("$LOG"))
+            {
+                log = true;
+                expression = expression.Replace("$LOG", string.Empty);
+                Console.WriteLine("$LOG");
+                messages.Add("$LOG");
+            }
+
+            // query
+            var withQueryLanguage = 0;
+            if (expression.StartsWith("$QL"))
+            {
+                withQueryLanguage = 1;
+                expression = expression.Replace("$QL", string.Empty);
+                Console.WriteLine("$QL");
+                messages.Add("$QL");
+            }
+            if (expression.StartsWith("$JSON"))
+            {
+                withQueryLanguage = 2;
+                expression = expression.Replace("$JSON", string.Empty);
+                Console.WriteLine("$JSON");
+                messages.Add("$JSON");
+            }
+
+            // query language
+            if (withQueryLanguage == 0)
+            {
+                messages.Add("");
+
+                expression = Regex.Replace(expression, @"\s+", string.Empty);
+
+                // init parser
+                var countTypePrefix = 0;
+                var parser = new ParserWithAST(new Lexer(expression));
+                var ast = parser.Parse();
+
+                // combined condition
+                condition["all"] = parser.GenerateSql(ast, "", ref countTypePrefix, "filter");
+                text = "combinedCondition: " + condition["all"];
+                Console.WriteLine(text);
+                messages.Add(text);
+
+                // sm condition
+                condition["sm"] = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_submodel");
+                if (condition["sm"].IsNullOrEmpty())
+                    condition["sm"] = parser.GenerateSql(ast, "sm.", ref countTypePrefix, "filter");
+                condition["sm"] = condition["sm"].Replace("sm.", "");
+                text = "conditionSM: " + condition["sm"];
+                Console.WriteLine(text);
+                messages.Add(text);
+
+                // sme condition
+                condition["sme"] = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_submodel_elements");
+                if (condition["sme"].IsNullOrEmpty())
+                    condition["sme"] = parser.GenerateSql(ast, "sme.", ref countTypePrefix, "filter");
+                condition["sme"] = condition["sme"].Replace("sme.", "");
+                text = "conditionSME: " + condition["sme"];
+                Console.WriteLine(text);
+                messages.Add(text);
+
+                // string condition
+                condition["svalue"] = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_str");
+                if (condition["svalue"].IsNullOrEmpty())
+                    condition["svalue"] = parser.GenerateSql(ast, "sValue", ref countTypePrefix, "filter");
+                if (condition["svalue"].Equals("true"))
+                    condition["svalue"] = "sValue != null";
+                condition["svalue"] = condition["svalue"].Replace("sValue", "Value");
+                text = "conditionSValue: " + condition["svalue"];
+                Console.WriteLine(text);
+                messages.Add(text);
+
+                // num condition
+                condition["nvalue"] = parser.GenerateSql(ast, "", ref countTypePrefix, "filter_num");
+                if (condition["nvalue"].IsNullOrEmpty())
+                    condition["nvalue"] = parser.GenerateSql(ast, "mValue", ref countTypePrefix, "filter");
+                if (condition["nvalue"].Equals("true"))
+                    condition["nvalue"] = "mValue != null";
+                condition["nvalue"] = condition["nvalue"].Replace("mValue", "Value");
+                text = "conditionNValue: " + condition["nvalue"];
+                Console.WriteLine(text);
+                messages.Add(text);
+
+                messages.Add("");
+            }
+            else if (withQueryLanguage == 1)
+            {
+                // with newest query language from QueryParser.cs
+                // var grammar = new QueryGrammar();
+                var parser = new Parser(grammar);
+                parser.Context.TracingEnabled = true;
+                var parseTree = parser.Parse(expression);
+
+                if (parseTree.HasErrors())
                 {
-                    replaced = true;
-                    return $", strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', \"{match.Groups[1].Value}\".\"TimeStampTree\") AS \"TimeStampTree\"";
+                    var pos = parser.Context.CurrentToken.Location.Position;
+                    var text2 = expression.Substring(0, pos) + "$$$" + expression.Substring(pos);
+                    text2 = string.Join("\n", parseTree.ParserMessages) + "\nSee $$$: " + text2;
+                    Console.WriteLine(text2);
+                    while (text2 != text2.Replace("\n  ", "\n "))
+                    {
+                        text2 = text2.Replace("\n  ", "\n ");
+                    };
+                    text2 = text2.Replace("\n", "\n");
+                    text2 = text2.Replace("\n", " ");
+                    throw new Exception(text2);
                 }
-                return match.Value;
-            }, RegexOptions.None, TimeSpan.FromMilliseconds(500));
-            //var result = Regex.Replace(rawSQL, @", ""([a-zA-Z])?""\.\""TimeStampTree\""", @", strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', ""$1"".""TimeStampTree"") AS ""TimeStampTree""", RegexOptions.None, TimeSpan.FromMilliseconds(500));
-            return result;
+                else
+                {
+                    messages.Add("");
+
+                    // Security
+                    if (parseTree.Root.Term.Name == "AllRules")
+                    {
+                        grammar.ParseAccessRules(parseTree.Root);
+                        throw new Exception("Access Rules parsed!");
+                    }
+
+                    int countTypePrefix = 0;
+                    condition["all"] = grammar.ParseTreeToExpression(parseTree.Root, "", ref countTypePrefix);
+                    text = "combinedCondition: " + condition["all"];
+                    Console.WriteLine(text);
+                    messages.Add(text);
+
+                    countTypePrefix = 0;
+                    condition["sm"] = grammar.ParseTreeToExpression(parseTree.Root, "sm.", ref countTypePrefix);
+                    if (condition["sm"] == "$SKIP")
+                    {
+                        condition["sm"] = "";
+                    }
+                    text = "conditionSM: " + condition["sm"];
+                    Console.WriteLine(text);
+                    messages.Add(text);
+
+                    countTypePrefix = 0;
+                    condition["sme"] = grammar.ParseTreeToExpression(parseTree.Root, "sme.", ref countTypePrefix);
+                    if (condition["sme"] == "$SKIP")
+                    {
+                        condition["sme"] = "";
+                    }
+                    text = "conditionSME: " + condition["sme"];
+                    Console.WriteLine(text);
+                    messages.Add(text);
+
+                    countTypePrefix = 0;
+                    condition["svalue"] = grammar.ParseTreeToExpression(parseTree.Root, "str()", ref countTypePrefix);
+                    if (condition["svalue"] == "$SKIP")
+                    {
+                        condition["svalue"] = "";
+                    }
+                    text = "conditionSValue: " + condition["svalue"];
+                    Console.WriteLine(text);
+                    messages.Add(text);
+
+                    countTypePrefix = 0;
+                    condition["nvalue"] = grammar.ParseTreeToExpression(parseTree.Root, "num()", ref countTypePrefix);
+                    if (condition["nvalue"] == "$SKIP")
+                    {
+                        condition["nvalue"] = "";
+                    }
+                    text = "conditionNValue: " + condition["nvalue"];
+                    Console.WriteLine(text);
+                    messages.Add(text);
+                }
+
+                messages.Add("");
+            }
+            else
+            {
+                // JSON Query Language from JsonParser.cs
+                var jParser = new JsonParser();
+                messages.Add("");
+
+                var countTypePrefix = 0;
+                condition["all"] = jParser.ParseTreeToExpression(expression, "", ref countTypePrefix);
+                messages.Add("combinedCondition: " + condition["all"]);
+
+                countTypePrefix = 0;
+                condition["sm"] = jParser.ParseTreeToExpression(expression, "sm.", ref countTypePrefix);
+                if (condition["sm"] == "$SKIP")
+                {
+                    condition["sm"] = "";
+                }
+                messages.Add("conditionSM: " + condition["sm"]);
+
+                countTypePrefix = 0;
+                condition["sme"] = jParser.ParseTreeToExpression(expression, "sme.", ref countTypePrefix);
+                if (condition["sme"] == "$SKIP")
+                {
+                    condition["sme"] = "";
+                }
+                messages.Add("conditionSME: " + condition["sme"]);
+
+                countTypePrefix = 0;
+                condition["svalue"] = jParser.ParseTreeToExpression(expression, "str()", ref countTypePrefix);
+                if (condition["svalue"] == "$SKIP")
+                {
+                    condition["svalue"] = "";
+                }
+                messages.Add("conditionStr: " + condition["svalue"]);
+
+                countTypePrefix = 0;
+                condition["nvalue"] = jParser.ParseTreeToExpression(expression, "num()", ref countTypePrefix);
+                if (condition["nvalue"] == "$SKIP")
+                {
+                    condition["nvalue"] = "";
+                }
+                messages.Add("conditionNum: " + condition["nvalue"]);
+
+                messages.Add("");
+            }
+            return condition;
+        }
+
+        private static string ModifiyRawSQL(string? rawSQL)
+        {
+            if (rawSQL.IsNullOrEmpty())
+                return rawSQL;
+            rawSQL = SetParameter(rawSQL);
+            rawSQL = ChangeINSTRToLIKE(rawSQL);
+            return rawSQL;
         }
     }
 }
