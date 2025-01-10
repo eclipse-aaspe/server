@@ -18,12 +18,33 @@
         <DebugType>portable</DebugType>
         <DebugSymbols>true</DebugSymbols>
     </PropertyGroup>
+
     <ItemGroup>
-        <Using Include="AasCore.Aas3_0"/>
+      <Compile Remove="AasEntityBuilder.cs" />
+      <Compile Remove="AasEntityDescriptions.cs" />
+      <Compile Remove="AasNodeManager.cs" />
+      <Compile Remove="AasUaEntities.cs" />
+      <Compile Remove="AasUaEntityFileType.cs" />
+      <Compile Remove="AasUaNodeHelper.cs" />
+      <Compile Remove="AasUaUtils.cs" />
+      <Compile Remove="AasxUaServerOptions.cs" />
+      <Compile Remove="NodeStateCollection.cs" />
+      <Compile Remove="SampleServer.cs" />
+      <Compile Remove="SampleServer.SampleModel.cs" />
+      <Compile Remove="SampleServer.UserAuthentication.cs" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Grapevine" Version="4.1.2"/>
+      <None Remove="AasUaEntities.cs.bak" />
+      <None Remove="Opc.Ua.SampleClient.Config.xml" />
+      <None Remove="Opc.Ua.SampleServer.Config.xml" />
+    </ItemGroup>
+    <ItemGroup>
+        <Using Include="AasCore.Aas3_0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Grapevine" Version="4.1.2" />
         <PackageReference Include="IdentityModel" Version="7.0.0" />
         <PackageReference Include="jose-jwt" Version="5.0.0" />
         <PackageReference Include="MailKit" Version="4.6.0" />
@@ -34,15 +55,15 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.6.2" />
-        <PackageReference Include="MQTTnet.NETStandard" Version="3.0.8"/>
+        <PackageReference Include="MQTTnet.NETStandard" Version="3.0.8" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
-        <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua" Version="1.4.371.60"/>
-        <PackageReference Include="QRCoder" Version="1.4.1"/>
+        <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua" Version="1.4.371.60" />
+        <PackageReference Include="QRCoder" Version="1.4.1" />
         <PackageReference Include="ScottPlot" Version="4.1.74" />
-        <PackageReference Include="SpookilySharp" Version="1.2.0"/>
-        <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.20371.2"/>
-        <PackageReference Include="System.Dynamic.Runtime" Version="4.3.0"/>
-        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.6.2"/>
+        <PackageReference Include="SpookilySharp" Version="1.2.0" />
+        <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.20371.2" />
+        <PackageReference Include="System.Dynamic.Runtime" Version="4.3.0" />
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.6.2" />
         <PackageReference Include="System.Security.Permissions" Version="8.0.0" />
         <PackageReference Include="System.ServiceModel.Primitives" Version="8.0.0" />
     </ItemGroup>
@@ -52,16 +73,10 @@
           <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
           <CopyToPublishDirectory>Never</CopyToPublishDirectory>
         </None>
-        <ProjectReference Include="..\AasxCsharpLibrary\AasxCsharpLibrary.csproj"/>
+        <ProjectReference Include="..\AasxCsharpLibrary\AasxCsharpLibrary.csproj" />
         <ProjectReference Include="..\AasxServerDB\AasxServerDB.csproj" />
-        <ProjectReference Include="..\jsoncanonicalizer\jsoncanonicalizer.csproj"/>
+        <ProjectReference Include="..\jsoncanonicalizer\jsoncanonicalizer.csproj" />
         <None Update="Andreas_Orzelski_Chain.pfx">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Opc.Ua.SampleClient.Config.xml">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Opc.Ua.SampleServer.Config.xml">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>

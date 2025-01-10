@@ -1,4 +1,3 @@
-using AasOpcUaServer;
 using AasxMqttServer;
 using AasxServerDB;
 using AasxRestServerLibrary;
@@ -988,12 +987,14 @@ namespace AasxServer
                 Console.WriteLine("MQTT Publisher started.");
             }
 
+            /*
             MySampleServer server = null;
             if (a.Opc)
             {
                 server = new MySampleServer(_autoAccept: true, _stopTimeout: 0, _aasxEnv: env);
                 Console.WriteLine("OPC UA Server started..");
             }
+            */
 
             if (a.OpcClientRate != null) // read data by OPC UA
             {
@@ -1054,11 +1055,13 @@ namespace AasxServer
 
             Program.signalNewData(3);
 
+            /*
             if (a.Opc && server != null)
             {
                 server.Run(); // wait for CTRL-C
             }
             else
+            */
             {
                 // no OPC UA: wait only for CTRL-C
                 Console.WriteLine("Servers successfully started. Press Ctrl-C to exit...");
@@ -2241,6 +2244,9 @@ namespace AasxServer
             /// Writes to (i.e. updates values of) Nodes in the AAS OPC Server
             /// </summary>
         {
+            return true;
+
+            /*
             if (!runOPC)
             {
                 return true;
@@ -2274,6 +2280,7 @@ namespace AasxServer
             }
 
             return true;
+            */
         }
 
         static Boolean ReadOPCClient(bool initial)
@@ -2884,6 +2891,7 @@ namespace AasxServer
         ErrorInvalidCommandLine = 0x100
     };
 
+    /*
     public class MySampleServer
     {
         SampleServer server;
@@ -3056,4 +3064,5 @@ namespace AasxServer
             }
         }
     }
+    */
 }
