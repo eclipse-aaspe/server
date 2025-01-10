@@ -642,7 +642,7 @@
 
         public void ResetTimeOfDates()
         {
-// Reset to 0 AM
+            // Reset to 0 AM
             fromDate = new DateTime(fromDate.Year, fromDate.Month, fromDate.Day, 0, 0, 0);
             toDate = new DateTime(toDate.Year, toDate.Month, toDate.Day, 0, 0, 0);
         }
@@ -725,7 +725,7 @@
 
     protected override void OnInitialized()
     {
-// OnInitialized() always called twice
+        // OnInitialized() always called twice
         SubmodelService.NewDataAvailable += NewData;
         Program.signalNewData(1);
     }
@@ -799,7 +799,7 @@
 
                 newDataMode = 0;
                 break;
-// 3 == build new tree, all nodes closed
+            // 3 == build new tree, all nodes closed
             case 3:
                 SubmodelService.BuildTree();
                 Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
@@ -841,39 +841,39 @@
         switch (path)
         {
             case {Count: > 0}:
-            {
-                var k = 0;
-                while (k < Items.Count)
                 {
-                    var i = Items[k];
-                    if (i.Text != path[0])
+                    var k = 0;
+                    while (k < Items.Count)
                     {
-                        k++;
-                        continue;
-                    }
-
-                    var j = 0;
-                    var found = i;
-                    while (++j < path.Count)
-                    {
-                        if (i.Children != null)
+                        var i = Items[k];
+                        if (i.Text != path[0])
                         {
-                            found = i.Children.FirstOrDefault(c => c.Text == path[j]);
+                            k++;
+                            continue;
                         }
 
-                        if (found == null)
+                        var j = 0;
+                        var found = i;
+                        while (++j < path.Count)
                         {
-                            return null;
+                            if (i.Children != null)
+                            {
+                                found = i.Children.FirstOrDefault(c => c.Text == path[j]);
+                            }
+
+                            if (found == null)
+                            {
+                                return null;
+                            }
+
+                            i = found;
                         }
 
-                        i = found;
+                        return found;
                     }
 
-                    return found;
+                    break;
                 }
-
-                break;
-            }
         }
 
         return null;
@@ -904,7 +904,7 @@
             done = true;
         }
 
-// check if child name exists in data children idshorts, if not delete
+        // check if child name exists in data children idshorts, if not delete
         if (done)
         {
             var toDelete = new List<Item>();
@@ -929,7 +929,7 @@
             }
         }
 
-// check if data children idshorts exist in child names, if not insert
+        // check if data children idshorts exist in child names, if not insert
         if (clist == null)
         {
             return;
@@ -956,78 +956,78 @@
         switch (itemTag)
         {
             case AssetAdministrationShell tag:
-            {
-                var aas = tag;
-                lock (Program.changeAasxFile)
                 {
-                    try
+                    var aas = tag;
+                    lock (Program.changeAasxFile)
                     {
+                        try
                         {
-                            if (Program.env[item.envIndex] == null)
-                                return string.Empty;
-
-                            using var s = Program.env[item.envIndex].GetLocalThumbnailStream();
-                            if (s != null)
                             {
-                                using var m = new System.IO.MemoryStream();
-                                s.CopyTo(m);
-                                return Convert.ToBase64String(m.ToArray());
+                                if (Program.env[item.envIndex] == null)
+                                    return string.Empty;
+
+                                using var s = Program.env[item.envIndex].GetLocalThumbnailStream();
+                                if (s != null)
+                                {
+                                    using var m = new System.IO.MemoryStream();
+                                    s.CopyTo(m);
+                                    return Convert.ToBase64String(m.ToArray());
+                                }
                             }
                         }
-                    }
-                    catch
-                    {
-                    }
-                }
-
-                break;
-            }
-            case AasCore.Aas3_0.File f:
-            {
-// Test for /aasx/
-                if (!string.IsNullOrEmpty(f.Value))
-                {
-                    var split = f.Value.Split(new[] {'/'});
-                    if (split.Length == 2 || split.Length > 1 && split[1].ToLower() == "aasx")
-                    {
-                        split = f.Value.Split(new[] {'.'});
-                        switch (split.Last().ToLower())
+                        catch
                         {
-                            case "jpg":
-                            case "bmp":
-                            case "png":
-                            case "svg":
-                                try
-                                {
-                                    using var s = Program.env[item.envIndex].GetLocalStreamFromPackage(f.Value);
-                                    if (s != null)
-                                    {
-                                        using var m = new System.IO.MemoryStream();
-                                        if (split.Last().ToLower().Equals("svg"))
-                                        {
-                                            svg = true;
-                                        }
-
-                                        s.CopyTo(m);
-                                        return Convert.ToBase64String(m.ToArray());
-                                    }
-                                }
-                                catch
-                                {
-                                }
-
-                                break;
                         }
                     }
-                    else
-                    {
-                        url = true;
-                        return f.Value;
-                    }
-                }
 
-                break;
-            }
+                    break;
+                }
+            case AasCore.Aas3_0.File f:
+                {
+                    // Test for /aasx/
+                    if (!string.IsNullOrEmpty(f.Value))
+                    {
+                        var split = f.Value.Split(new[] {'/'});
+                        if (split.Length == 2 || split.Length > 1 && split[1].ToLower() == "aasx")
+                        {
+                            split = f.Value.Split(new[] {'.'});
+                            switch (split.Last().ToLower())
+                            {
+                                case "jpg":
+                                case "bmp":
+                                case "png":
+                                case "svg":
+                                    try
+                                    {
+                                        using var s = Program.env[item.envIndex].GetLocalStreamFromPackage(f.Value);
+                                        if (s != null)
+                                        {
+                                            using var m = new System.IO.MemoryStream();
+                                            if (split.Last().ToLower().Equals("svg"))
+                                            {
+                                                svg = true;
+                                            }
+
+                                            s.CopyTo(m);
+                                            return Convert.ToBase64String(m.ToArray());
+                                        }
+                                    }
+                                    catch
+                                    {
+                                    }
+
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            url = true;
+                            return f.Value;
+                        }
+                    }
+
+                    break;
+                }
         }
 
         return string.Empty;
@@ -1130,67 +1130,67 @@
                 return $"{Program.externalBlazor}/packages/{Base64UrlEncoder.Encode(Convert.ToString(SelectedNode.envIndex))}";
             case File:
             case Property:
-            {
-                var value = itemTag switch
                 {
-                    AasCore.Aas3_0.File file => file.Value,
-                    Property property => property.Value,
-                    _ => string.Empty
-                };
-
-                if (string.IsNullOrEmpty(value))
-                    return string.Empty;
-
-                var split = value.Split(new[] {':'});
-                if (split[0].ToLower() == "http" || split[0].ToLower() == "https")
-                {
-                    external = true;
-                    return value;
-                }
-
-// Test for /aasx/
-                split = value.Split(new[] {'/'});
-                if (split.Length > 1)
-                {
-                    if (split.Length == 2 || split[1].ToLower() == "aasx")
+                    var value = itemTag switch
                     {
-                        var sme = item.Tag as ISubmodelElement;
-                        var path = sme.IdShort;
-                        var parent = sme.Parent as IReferable;
-                        while (parent is not Submodel)
+                        AasCore.Aas3_0.File file => file.Value,
+                        Property property => property.Value,
+                        _ => string.Empty
+                    };
+
+                    if (string.IsNullOrEmpty(value))
+                        return string.Empty;
+
+                    var split = value.Split(new[] {':'});
+                    if (split[0].ToLower() == "http" || split[0].ToLower() == "https")
+                    {
+                        external = true;
+                        return value;
+                    }
+
+                    // Test for /aasx/
+                    split = value.Split(new[] {'/'});
+                    if (split.Length > 1)
+                    {
+                        if (split.Length == 2 || split[1].ToLower() == "aasx")
                         {
-                            if (parent is ISubmodelElementList parentList)
+                            var sme = item.Tag as ISubmodelElement;
+                            var path = sme.IdShort;
+                            var parent = sme.Parent as IReferable;
+                            while (parent is not Submodel)
                             {
-                                if (path.Equals(sme.IdShort))
+                                if (parent is ISubmodelElementList parentList)
                                 {
-                                    var index = parentList.Value?.IndexOf(sme);
-                                    path = $"[{index}]";
+                                    if (path.Equals(sme.IdShort))
+                                    {
+                                        var index = parentList.Value?.IndexOf(sme);
+                                        path = $"[{index}]";
+                                    }
+
+                                    path = parentList.IdShort + path;
+                                }
+                                else if (parent.Parent is ISubmodelElementList prevParentList)
+                                {
+                                    var index = prevParentList.Value?.IndexOf(parent as ISubmodelElement);
+                                    path = $"[{index}].{path}";
+                                }
+                                else
+                                {
+                                    path = $"{parent.IdShort}.{path}";
                                 }
 
-                                path = parentList.IdShort + path;
-                            }
-                            else if (parent.Parent is ISubmodelElementList prevParentList)
-                            {
-                                var index = prevParentList.Value?.IndexOf(parent as ISubmodelElement);
-                                path = $"[{index}].{path}";
-                            }
-                            else
-                            {
-                                path = $"{parent.IdShort}.{path}";
+                                parent = (IReferable) parent.Parent;
                             }
 
-                            parent = (IReferable) parent.Parent;
+
+                            var currentUrl = $"{Program.externalBlazor}/";
+
+                            return $"{currentUrl}submodels/{Base64UrlEncoder.Encode((parent as Submodel).Id)}/submodel-elements/{path}/attachment";
                         }
-
-
-                        var currentUrl = $"{Program.externalBlazor}/";
-
-                        return $"{currentUrl}submodels/{Base64UrlEncoder.Encode((parent as Submodel).Id)}/submodel-elements/{path}/attachment";
                     }
-                }
 
-                break;
-            }
+                    break;
+                }
         }
 
         return string.Empty;
@@ -1292,22 +1292,22 @@
                 ret += "Sub";
                 break;
             case ISubmodelElement:
-            {
-                switch (itemTag)
                 {
-                    case SubmodelElementList:
-                        ret += "SML";
-                        break;
-                    case SubmodelElementCollection:
-                        ret += "Coll";
-                        break;
-                    case Property:
-                        ret += "Prop";
-                        break;
-                }
+                    switch (itemTag)
+                    {
+                        case SubmodelElementList:
+                            ret += "SML";
+                            break;
+                        case SubmodelElementCollection:
+                            ret += "Coll";
+                            break;
+                        case Property:
+                            ret += "Prop";
+                            break;
+                    }
 
-                break;
-            }
+                    break;
+                }
         }
 
         switch (itemTag)
@@ -1387,24 +1387,40 @@
                 ret = " ";
                 break;
             case AssetAdministrationShell tag:
-            {
-                ret = tag.IdShort;
-                break;
-            }
+                {
+                    ret = tag.IdShort;
+                    if (tag.Administration != null && !tag.Administration.Version.IsNullOrEmpty())
+                    {
+                        ret += "V" + tag.Administration.Version;
+                        if (!tag.Administration.Revision.IsNullOrEmpty())
+                        {
+                            ret += "." + tag.Administration.Revision;
+                        }
+                    }
+                    break;
+                }
             case Submodel tag:
-            {
-                ret = string.Empty;
-                if (tag.Kind is ModellingKind.Template)
-                    ret += "<T> ";
-                ret += tag.IdShort;
-                break;
-            }
+                {
+                    ret = string.Empty;
+                    if (tag.Kind is ModellingKind.Template)
+                        ret += "<T> ";
+                    ret += tag.IdShort;
+                    if (tag.Administration != null && !tag.Administration.Version.IsNullOrEmpty())
+                    {
+                        ret += "V" + tag.Administration.Version;
+                        if (!tag.Administration.Revision.IsNullOrEmpty())
+                        {
+                            ret += "." + tag.Administration.Revision;
+                        }
+                    }
+                    break;
+                }
             case ISubmodelElement tag:
-            {
-                ret = string.Empty;
-                ret += tag.IdShort;
-                break;
-            }
+                {
+                    ret = string.Empty;
+                    ret += tag.IdShort;
+                    break;
+                }
         }
 
         switch (itemTag)
