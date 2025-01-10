@@ -1391,7 +1391,7 @@
                     ret = tag.IdShort;
                     if (tag.Administration != null && !tag.Administration.Version.IsNullOrEmpty())
                     {
-                        ret += "V" + tag.Administration.Version;
+                        ret += " V" + tag.Administration.Version;
                         if (!tag.Administration.Revision.IsNullOrEmpty())
                         {
                             ret += "." + tag.Administration.Revision;
@@ -1407,7 +1407,7 @@
                     ret += tag.IdShort;
                     if (tag.Administration != null && !tag.Administration.Version.IsNullOrEmpty())
                     {
-                        ret += "V" + tag.Administration.Version;
+                        ret += " V" + tag.Administration.Version;
                         if (!tag.Administration.Revision.IsNullOrEmpty())
                         {
                             ret += "." + tag.Administration.Revision;
