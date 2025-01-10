@@ -1,4 +1,3 @@
-using AasxMqttServer;
 using AasxServerDB;
 using AasxRestServerLibrary;
 using AdminShellNS;
@@ -335,7 +334,7 @@ namespace AasxServer
         static Dictionary<string, SampleClient.UASampleClient> OPCClients = new Dictionary<string, SampleClient.UASampleClient>();
         static readonly object opcclientAddLock = new object(); // object for lock around connecting to an external opc server
 
-        static MqttServer AASMqttServer = new MqttServer();
+        // static MqttServer AASMqttServer = new MqttServer();
 
         static bool runOPC = false;
 
@@ -981,11 +980,13 @@ namespace AasxServer
 
             isLoading = false;
 
+            /*
             if (a.Mqtt)
             {
                 AASMqttServer.MqttSeverStartAsync().Wait();
                 Console.WriteLine("MQTT Publisher started.");
             }
+            */
 
             /*
             MySampleServer server = null;
@@ -1121,10 +1122,12 @@ namespace AasxServer
                 }
             }
 
+            /*
             if (a.Mqtt)
             {
                 AASMqttServer.MqttSeverStopAsync().Wait();
             }
+            */
 
             AasxRestServer.Stop();
 
@@ -2221,6 +2224,7 @@ namespace AasxServer
 
             _resTalreadyRunning = false;
 
+            /*
             // start MQTT Client as a worker (will start in the background)
             var worker = new BackgroundWorker();
             worker.DoWork += async (s1, e1) =>
@@ -2237,6 +2241,7 @@ namespace AasxServer
                                          {
                                          };
             worker.RunWorkerAsync();
+            */
         }
 
         private static Boolean OPCWrite(string nodeId, object value)
