@@ -1146,6 +1146,7 @@ namespace AasxServer
                                 }
                             }
 
+                            /*
                             if (opName == "getdiff")
                             {
                                 // lastDiff.Value = "" + timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
@@ -1241,6 +1242,7 @@ namespace AasxServer
                                     }
                                 }
                             }
+                            */
                         }
                         catch
 
@@ -2140,8 +2142,10 @@ namespace AasxServer
                     {
                         IReferable r  = collection.Value[i];
                         var        sm = r.GetParentSubmodel();
+                        /*
                         AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
                                                                                            r, "Remove", sm, (ulong)timeStamp.Ticks);
+                        */
                         collection.Value.RemoveAt(i);
                         preCount--;
                     }

@@ -27,7 +27,7 @@
         }
         else
         {
-            AasxRestServerLibrary.AasxRestServer.TestResource.initListOfRepositories();
+            // AasxRestServerLibrary.AasxRestServer.TestResource.initListOfRepositories();
         }
         <Tree @bind-ExpandedNodes="ExpandedNodes" @bind-SelectedNode="SelectedNode" ChildSelector="@(item => item.Children)"
               HasChildNodes="@(item => item.Children?.Any() == true)" HtmlId="@(item => GetHtmlId(item))" Nodes="Items">

@@ -1143,7 +1143,7 @@ namespace AasxTimeSeries
                                         actualSamples           -= maxSamplesInCollection;
                                         tsb.actualSamples.Value =  "" + actualSamples;
                                         tsb.actualSamples.SetTimeStamp(timeStamp);
-                                        AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(first, "Remove", tsb.submodel, (ulong)timeStamp.Ticks);
+                                        // AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(first, "Remove", tsb.submodel, (ulong)timeStamp.Ticks);
                                         tsb.data.Value.Remove(first);
                                         tsb.data.SetTimeStampDelete(timeStamp);
                                         // tsb.lowDataIndex++;
@@ -1342,8 +1342,8 @@ namespace AasxTimeSeries
                                     Sign(nextCollection, timeStamp);
                                     tsb.data.Add(nextCollection);
                                     tsb.data.SetTimeStamp(timeStamp);
-                                    AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
-                                                                                                       nextCollection, "Add", tsb.submodel, (ulong)timeStamp.Ticks);
+                                    // AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
+                                    //                                                                   nextCollection, "Add", tsb.submodel, (ulong)timeStamp.Ticks);
                                     tsb.samplesValuesCount              = 0;
                                     actualSamplesInCollection           = 0;
                                     tsb.actualSamplesInCollection.Value = "" + actualSamplesInCollection;
@@ -1352,7 +1352,7 @@ namespace AasxTimeSeries
                                     var options = new JsonSerializerOptions {WriteIndented = true, IgnoreNullValues = true};
 
                                     var json = JsonSerializer.Serialize(nextCollection, options);
-                                    Program.connectPublish(tsb.block.IdShort + "." + nextCollection.IdShort, json);
+                                    // Program.connectPublish(tsb.block.IdShort + "." + nextCollection.IdShort, json);
                                 }
                             }
 
@@ -1463,8 +1463,8 @@ namespace AasxTimeSeries
                             Sign(nextCollection, timeStamp);
                             tsb.data.Add(nextCollection);
                             tsb.data.SetTimeStamp(timeStamp);
-                            AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
-                                                                                               nextCollection, "Add", tsb.submodel, (ulong)timeStamp.Ticks);
+                            // AasxRestServerLibrary.AasxRestServer.TestResource.eventMessage.add(
+                            //                                                                   nextCollection, "Add", tsb.submodel, (ulong)timeStamp.Ticks);
                             tsb.samplesValuesCount              = 0;
                             actualSamplesInCollection           = 0;
                             tsb.actualSamplesInCollection.Value = "" + actualSamplesInCollection;
@@ -1490,6 +1490,7 @@ namespace AasxTimeSeries
         static bool parseJSON(string url, string username, string password, SubmodelElementCollection c,
                               List<string> filter, Property minDiffAbsolute, Property minDiffPercent)
         {
+            /*
             if (url == "posttimeseries")
             {
                 string payload = AasxRestServerLibrary.AasxRestServer.TestResource.posttimeseriesPayload;
@@ -1512,6 +1513,7 @@ namespace AasxTimeSeries
 
                 return false;
             }
+            */
 
             var handler = new HttpClientHandler();
             handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
