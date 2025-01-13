@@ -44,7 +44,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Grapevine" Version="4.1.2" />
         <PackageReference Include="IdentityModel" Version="7.0.0" />
         <PackageReference Include="jose-jwt" Version="5.0.0" />
         <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.0.6" />
