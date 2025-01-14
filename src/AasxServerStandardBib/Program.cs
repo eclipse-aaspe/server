@@ -66,6 +66,7 @@ namespace AasxServer
     {
         public static IConfiguration con { get; set; }
 
+        /*
         public static string getBetween(AdminShellPackageEnv env, string strStart, string strEnd)
         {
             string strSource = env.getEnvXml();
@@ -79,6 +80,7 @@ namespace AasxServer
 
             return "";
         }
+        */
 
         public static void saveEnv(int envIndex)
         {
@@ -339,10 +341,12 @@ namespace AasxServer
         static bool runOPC = false;
 
         public static string connectServer = "";
+        /*
         public static string connectNodeName = "";
         static int connectUpdateRate = 1000;
         static Thread connectThread;
         static bool connectLoop = false;
+        */
 
         public static WebProxy proxy = null;
         public static HttpClientHandler clientHandler = null;
@@ -480,6 +484,7 @@ namespace AasxServer
 
             envVariables.TryGetValue("AASREPOSITORY", out externalRepository);
 
+            /*
             if (a.Connect != null)
             {
                 if (a.Connect.Length == 0)
@@ -545,6 +550,7 @@ namespace AasxServer
                                   $"NodeName {connectNodeName}, " +
                                   $"UpdateRate {connectUpdateRate}");
             }
+            */
 
             /*
              * Set the global variables at this point inferred from the command-line arguments
@@ -716,6 +722,7 @@ namespace AasxServer
 
             string fn = null;
 
+            /*
             if (a.Opc)
             {
                 Boolean       is_BaseAddresses = false;
@@ -745,6 +752,7 @@ namespace AasxServer
                     }
                 }
             }
+            */
 
             bool createFilesOnly = false;
             if (System.IO.File.Exists(AasxHttpContextHelper.DataPath + "/FILES.ONLY"))
@@ -972,7 +980,7 @@ namespace AasxServer
 
             AasxTask.taskInit();
 
-            RunScript(true);
+            // RunScript(true);
             //// Initialize            NewDataAvailable?.Invoke(null, EventArgs.Empty);
 
             // Disable, because of Linux Segementation Fault
@@ -1010,8 +1018,9 @@ namespace AasxServer
                 SetOPCClientTimer((double)a.OpcClientRate); // read again everytime timer expires
             }
 
-            SetScriptTimer(1000); // also updates balzor view
+            // SetScriptTimer(1000); // also updates balzor view
 
+            /*
             if (connectServer != "")
             {
                 HttpClient httpClient;
@@ -1053,6 +1062,7 @@ namespace AasxServer
                     Console.WriteLine("********** Can not connect to: " + connectServer);
                 }
             }
+            */
 
             Program.signalNewData(3);
 
@@ -1087,9 +1097,10 @@ namespace AasxServer
 
             // wait for RETURN
 
+            /*
             if (connectServer != "")
             {
-                /*
+                **
                 HttpClient httpClient;
                 if (clientHandler != null)
                 {
@@ -1114,13 +1125,14 @@ namespace AasxServer
                 {
 
                 }
-                */
+                **
 
                 if (connectLoop)
                 {
                     connectLoop = false;
                 }
             }
+            */
 
             /*
             if (a.Mqtt)
@@ -1277,14 +1289,17 @@ namespace AasxServer
 
         /* AAS Detail Part 2 Descriptor Definitions BEGIN*/
         /* End Point Definition */
+        /*
         public class AASxEndpoint
         {
             [XmlElement(ElementName = "address")] public string address = "";
 
             [XmlElement(ElementName = "type")] public string type = "";
         }
+        */
 
         /* Submodel Descriptor Definition */
+        /*
         public class SubmodelDescriptors
         {
             [XmlElement(ElementName = "administration")] [JsonIgnore]
@@ -1307,8 +1322,10 @@ namespace AasxServer
             [XmlElement(ElementName = "endpoints")]
             public List<AASxEndpoint> endpoints = new List<AASxEndpoint>();
         }
+        */
 
         /* AAS Descriptor Definiton */
+        /*
         public class aasDescriptor
         {
             [XmlElement(ElementName = "administration")] [JsonIgnore]
@@ -1330,11 +1347,13 @@ namespace AasxServer
             [XmlElement(ElementName = "submodelDescriptors")]
             public List<SubmodelDescriptors> submodelDescriptors = new List<SubmodelDescriptors>();
         }
+        */
 
         /* AAS Detail Part 2 Descriptor Definitions END*/
 
         /* Creation of AAS Descriptor */
         // TODO (jtikekar, 2023-09-04): Remove for now
+        /*
         public static aasDescriptor creatAASDescriptor(AdminShellPackageEnv adminShell)
         {
             aasDescriptor aasD            = new aasDescriptor();
@@ -1376,8 +1395,10 @@ namespace AasxServer
             //}
             return aasD;
         }
+        */
 
         /*Publishing the AAS Descriptor*/
+        /*
         public static void publishDescriptorData(string descriptorData)
         {
             HttpClient httpClient;
@@ -1400,7 +1421,9 @@ namespace AasxServer
                 Console.WriteLine(e.ToString());
             }
         }
+        */
 
+        /*
         public class TransmitData
         {
             public string source;
@@ -1438,8 +1461,9 @@ namespace AasxServer
         static int getaasxFile_fileLenBinary = 0;
         static int getaasxFile_fileTransmitted = 0;
         static int blockSize = 1500000;
+        */
 
-        static List<TransmitData> tdPending = new List<TransmitData> { };
+        // static List<TransmitData> tdPending = new List<TransmitData> { };
 
         static bool timerSet = false;
 
@@ -1495,13 +1519,7 @@ namespace AasxServer
             NewDataAvailable?.Invoke(null, EventArgs.Empty);
         }
 
-        private static void OnOPCClientNextTimedEvent(Object source, ElapsedEventArgs e)
-        {
-            ReadOPCClient(false);
-            // RunScript(false);
-            NewDataAvailable?.Invoke(null, EventArgs.Empty);
-        }
-
+        /*
         private static System.Timers.Timer scriptTimer;
 
         private static void SetScriptTimer(double value)
@@ -1519,8 +1537,9 @@ namespace AasxServer
             RunScript(false);
             // NewDataAvailable?.Invoke(null, EventArgs.Empty);
         }
+        */
 
-       private static Boolean OPCWrite(string nodeId, object value)
+        private static Boolean OPCWrite(string nodeId, object value)
             /// <summary>
             /// Writes to (i.e. updates values of) Nodes in the AAS OPC Server
             /// </summary>
@@ -1736,6 +1755,7 @@ namespace AasxServer
             return true;
         }
 
+        /*
         static void RunScript(bool init)
         {
             if (env == null)
@@ -1787,7 +1807,7 @@ namespace AasxServer
 
                                             if (qq.Type == "GetValue")
                                             {
-                                                /*
+                                                **
                                                 if (!(sme1 is ReferenceElement))
                                                 {
                                                     continue;
@@ -1830,7 +1850,7 @@ namespace AasxServer
                                                     p1.Value = response;
                                                 }
                                                 continue;
-                                                */
+                                                **
                                             }
 
                                             if (qq.Type == "GetJSON")
@@ -1961,6 +1981,7 @@ namespace AasxServer
 
             return;
         }
+        */
 
         public static bool ParseJson(SubmodelElementCollection c, object o, List<string> filter,
                                      Property minDiffAbsolute = null, Property minDiffPercent = null,

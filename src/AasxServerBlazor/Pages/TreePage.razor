@@ -213,6 +213,7 @@
 
                 var externalLink = false;
                 var link = GetLink(SelectedNode, out externalLink);
+                
                 if (SelectedNode != null && !string.IsNullOrEmpty(link))
                 {
                     <a href="@link" target="_blank">@link</a>
