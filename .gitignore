@@ -325,3 +325,4 @@ Grapevine/*
 # Custom ignores
 /src/AasxServerStandardBib/AdminShell.cs.old
 /src/AasxServerBlazor/temp.aasx
+/plantuml

@@ -1,33 +1,15 @@
-using AasxServerDB;
-using AasxRestServerLibrary;
-using AdminShellNS;
-using Extensions;
-using Jose;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Opc.Ua;
-using Opc.Ua.Configuration;
-using Opc.Ua.Server;
-using System;
-using System.Collections.Generic;
-using System.CommandLine;
-using System.CommandLine.Help;
-using System.CommandLine.IO;
-using System.ComponentModel;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Timers;
-using System.Xml;
-using System.Xml.Serialization;
-using AasxServerDB.Context;
+/********************************************************************************
+* Copyright (c) {2018 - 2025} Contributors to the Eclipse Foundation
+*
+* See the NOTICE file(s) distributed with this work for additional
+* information regarding copyright ownership.
+*
+* This program and the accompanying materials are made available under the
+* terms of the Apache License Version 2.0 which is available at
+* https://www.apache.org/licenses/LICENSE-2.0
+*
+* SPDX-License-Identifier: Apache-2.0
+********************************************************************************/
 
 /*
 Copyright (c) 2019-2020 PHOENIX CONTACT GmbH & Co. KG <opensource@phoenixcontact.com>, author: Andreas Orzelski
@@ -36,10 +18,28 @@ Copyright (c) 2018-2020 Festo SE & Co. KG <https://www.festo.com/net/de_de/Forms
 
 namespace AasxServer
 {
+    using AasxServerDB;
+    using AasxRestServerLibrary;
+    using AdminShellNS;
+    using Extensions;
+    using Microsoft.Extensions.Configuration;
+    using Opc.Ua;
+    using Opc.Ua.Configuration;
+    using System;
+    using System.Collections.Generic;
+    using System.CommandLine;
+    using System.CommandLine.Help;
+    using System.CommandLine.IO;
+    using System.IO;
+    using System.Linq;
+    using System.Net;
+    using System.Net.Http;
+    using System.Runtime.InteropServices;
+    using System.Security.Cryptography;
+    using System.Security.Cryptography.X509Certificates;
+    using System.Threading;
+    using System.Threading.Tasks;
     using System.Text.Json;
-    using System.Text.Json.Serialization;
-    using AasxServerDB.Entities;
-    using AasxTimeSeries;
     using Microsoft.IdentityModel.Tokens;
 
     /// <summary>
