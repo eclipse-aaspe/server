@@ -29,12 +29,19 @@ namespace AasxServerDB
 
     public partial class Query
     {
+        /*
         public Query(QueryGrammar queryGrammar)
         {
             grammar = queryGrammar;
         }
         private readonly QueryGrammar grammar;
+        */
 
+        public Query(QueryGrammarJSON queryGrammar)
+        {
+            grammar = queryGrammar;
+        }
+        private readonly QueryGrammarJSON grammar;
         public static string? ExternalBlazor { get; set; }
 
         // --------------- API ---------------
@@ -843,6 +850,13 @@ namespace AasxServerDB
                 Console.WriteLine("$QL");
                 messages.Add("$QL");
             }
+            if (expression.StartsWith("$JSONGRAMMAR"))
+            {
+                withQueryLanguage = 3;
+                expression = expression.Replace("$JSONGRAMMAR", string.Empty);
+                Console.WriteLine("$JSONGRAMMAR");
+                messages.Add("$JSONGRAMMAR");
+            }
             if (expression.StartsWith("$JSON"))
             {
                 withQueryLanguage = 2;
@@ -913,8 +927,6 @@ namespace AasxServerDB
             }
             else if (withQueryLanguage == 1)
             {
-                // with newest query language from QueryParser.cs
-                // var grammar = new QueryGrammar();
                 var parser = new Parser(grammar);
                 parser.Context.TracingEnabled = true;
                 var parseTree = parser.Parse(expression);
@@ -993,7 +1005,7 @@ namespace AasxServerDB
 
                 messages.Add("");
             }
-            else
+            else if (withQueryLanguage == 2)
             {
                 // JSON Query Language from JsonParser.cs
                 var jParser = new JsonParser();
@@ -1034,6 +1046,87 @@ namespace AasxServerDB
                     condition["nvalue"] = "";
                 }
                 messages.Add("conditionNum: " + condition["nvalue"]);
+
+                messages.Add("");
+            }
+            else if (withQueryLanguage == 3)
+            {
+                // with newest query language from QueryParserJSON.cs
+                var parser = new Parser(grammar);
+                parser.Context.TracingEnabled = true;
+                var parseTree = parser.Parse(expression);
+
+                if (parseTree.HasErrors())
+                {
+                    var pos = parser.Context.CurrentToken.Location.Position;
+                    var text2 = expression.Substring(0, pos) + "$$$" + expression.Substring(pos);
+                    text2 = string.Join("\n", parseTree.ParserMessages) + "\nSee $$$: " + text2;
+                    Console.WriteLine(text2);
+                    while (text2 != text2.Replace("\n  ", "\n "))
+                    {
+                        text2 = text2.Replace("\n  ", "\n ");
+                    };
+                    text2 = text2.Replace("\n", "\n");
+                    text2 = text2.Replace("\n", " ");
+                    throw new Exception(text2);
+                }
+                else
+                {
+                    messages.Add("");
+
+                    // Security
+                    if (parseTree.Root.Term.Name == "all_access_permission_rules")
+                    {
+                        grammar.ParseAccessRules(parseTree.Root);
+                        throw new Exception("Access Rules parsed!");
+                    }
+
+                    int countTypePrefix = 0;
+                    condition["all"] = grammar.ParseTreeToExpression(parseTree.Root, "", ref countTypePrefix);
+                    text = "combinedCondition: " + condition["all"];
+                    Console.WriteLine(text);
+                    messages.Add(text);
+
+                    countTypePrefix = 0;
+                    condition["sm"] = grammar.ParseTreeToExpression(parseTree.Root, "sm.", ref countTypePrefix);
+                    if (condition["sm"] == "$SKIP")
+                    {
+                        condition["sm"] = "";
+                    }
+                    text = "conditionSM: " + condition["sm"];
+                    Console.WriteLine(text);
+                    messages.Add(text);
+
+                    countTypePrefix = 0;
+                    condition["sme"] = grammar.ParseTreeToExpression(parseTree.Root, "sme.", ref countTypePrefix);
+                    if (condition["sme"] == "$SKIP")
+                    {
+                        condition["sme"] = "";
+                    }
+                    text = "conditionSME: " + condition["sme"];
+                    Console.WriteLine(text);
+                    messages.Add(text);
+
+                    countTypePrefix = 0;
+                    condition["svalue"] = grammar.ParseTreeToExpression(parseTree.Root, "str()", ref countTypePrefix);
+                    if (condition["svalue"] == "$SKIP")
+                    {
+                        condition["svalue"] = "";
+                    }
+                    text = "conditionSValue: " + condition["svalue"];
+                    Console.WriteLine(text);
+                    messages.Add(text);
+
+                    countTypePrefix = 0;
+                    condition["nvalue"] = grammar.ParseTreeToExpression(parseTree.Root, "num()", ref countTypePrefix);
+                    if (condition["nvalue"] == "$SKIP")
+                    {
+                        condition["nvalue"] = "";
+                    }
+                    text = "conditionNValue: " + condition["nvalue"];
+                    Console.WriteLine(text);
+                    messages.Add(text);
+                }
 
                 messages.Add("");
             }

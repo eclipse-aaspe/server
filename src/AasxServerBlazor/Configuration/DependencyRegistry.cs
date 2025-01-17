@@ -71,6 +71,7 @@ public static class DependencyRegistry
         services.AddTransient<IValidateSerializationModifierService, ValidateSerializationModifierService>();
 
         services.AddTransient<IContractSecurityRules, SecurityService>();
-        services.AddTransient<QueryGrammar>();
+        // services.AddTransient<QueryGrammar>();
+        services.AddTransient<QueryGrammarJSON>();
     }
 }
