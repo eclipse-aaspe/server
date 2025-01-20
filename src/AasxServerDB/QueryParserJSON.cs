@@ -268,11 +268,33 @@ public class QueryGrammarJSON : Grammar
         public string Value = "";
         public string Type = "";
         public List<treeNode> Children = null;
+        public treeNode Parent = null;
     }
 
     static List<string> skip = new List<string>() { "?", "\"Query\":", "\"$condition\":" };
     static List<string> startsWith = new List<string>() { "Unnamed", "__", "query" };
+    static List<string> keep1 = new List<string>() { "\"$and\":", "\"$or\":" };
 
+    private void setParent(treeNode parent, List<treeNode> Children)
+    {
+        foreach (var c in Children)
+        {
+            c.Parent = parent;
+        }
+    }
+    private bool starts(string name)
+    {
+        var starts = false;
+        foreach (var s in startsWith)
+        {
+            if (name.StartsWith(s))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
     public treeNode simplifyTree(ParseTreeNode node)
     {
         var tn = new treeNode();
@@ -291,19 +313,33 @@ public class QueryGrammarJSON : Grammar
             var tc = simplifyTree(c);
             if (tc != null)
             {
+                tc.Parent = tn;
                 tn.Children.Add(tc);
             }
         }
 
-        if (tn.Children.Count == 1)
+        if (tn.Children.Count == 2 && starts(tn.Name))
         {
-            var starts = false;
-            foreach (var s in startsWith)
+            // Unnamed expression
+            if (tn.Children[1].Name == "logical_expression_array")
             {
-                starts |= tn.Children[0].Name.StartsWith(s);
+                tn.Name = tn.Children[0].Name;
+                tn.Type = tn.Children[1].Type;
+                tn.Children = tn.Children[1].Children;
+                setParent(tn, tn.Children);
             }
+            if (tn.Name.StartsWith("Unnamed") && tn.Children[1].Name.StartsWith("\"$"))
+            {
+                // nested expression with 2 operators
+                tn.Name = tn.Children[0].Name;
+                tn.Type = tn.Children[1].Type;
+                tn.Children.RemoveAt(0);
+            }
+        }
 
-            if (!starts)
+        if (tn.Children.Count == 1 && !keep1.Contains(tn.Name))
+        {
+            if (!starts(tn.Children[0].Name))
             {
                 tn.Name = tn.Children[0].Name;
                 tn.Value = tn.Children[0].Value;
@@ -311,26 +347,8 @@ public class QueryGrammarJSON : Grammar
 
             tn.Type = tn.Children[0].Type;
             tn.Children = tn.Children[0].Children;
+            setParent(tn, tn.Children);
         }
-
-        // Unnamed with not
-        /*
-        if (tn.Children.Count == 2 && tn.Children[0].Name == "\"$not\":")
-        {
-            var starts = false;
-            foreach (var s in startsWith)
-            {
-                starts |= tn.Name.StartsWith(s);
-            }
-
-            if (starts)
-            {
-                tn.Name = tn.Children[0].Name;
-                tn.Value = tn.Children[0].Value;
-                tn.Children.RemoveAt(0);
-            }
-        }
-        */
 
         switch (tn.Name)
         {
@@ -340,6 +358,7 @@ public class QueryGrammarJSON : Grammar
                 {
                     var cc = tn.Children[1].Children;
                     tn.Children.RemoveAt(1);
+                    setParent(tn, cc);
                     tn.Children.AddRange(cc);
                 }
                 break;
@@ -362,6 +381,7 @@ public class QueryGrammarJSON : Grammar
                     // Add Children of logical_expression_array
                     tn.Type = tn.Children[1].Type;
                     tn.Children = tn.Children[1].Children;
+                    setParent(tn, tn.Children);
                 }
                 break;
             case "value":
