@@ -379,6 +379,51 @@ namespace AasxServerDB
 
             // get condition out of expression
             var conditionsExpression = ConditionFromExpression(messages, expression);
+            var idShortPath = conditionsExpression["idShortPath"];
+            var withPath = (idShortPath != "");
+
+            // Drop the debug tables
+            var context = db;
+            context.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS TempIdShorts");
+            context.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS TempIdShortPath");
+            context.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS DebugTempIdShorts");
+            context.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS DebugRecursiveCTE");
+            context.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS DebugFinalResult");
+
+            // Test for path
+            if (withPath)
+            {
+                // Provided idShortPath and its depth
+                string providedIdShortPath = idShortPath;
+                int providedDepth = providedIdShortPath.Split('.').Length;
+
+                // Recursive CTE to build the idShortPath and count the depth
+                var sql = @"
+                WITH RECURSIVE RecursiveCTE AS (
+                    -- Base case: Select top-level entries
+                    SELECT s.*, s.IdShort AS BuiltIdShortPath, 1 AS Depth
+                    FROM SMESets s
+                    WHERE s.ParentSMEId IS NULL
+                    AND (({0} != Depth AND {1} LIKE BuiltIdShortPath || '%') OR ({0} = Depth AND {1} = BuiltIdShortPath))
+
+                    UNION ALL
+
+                    -- Recursive case: Select child entries and build the idShortPath
+                    SELECT child.*, parent.BuiltIdShortPath || '.' || child.IdShort AS BuiltIdShortPath, parent.Depth + 1 AS Depth
+                    FROM SMESets child
+                    INNER JOIN RecursiveCTE parent ON child.ParentSMEId = parent.Id
+                    AND (({0} != Depth AND {1} LIKE BuiltIdShortPath || '%') OR ({0} = Depth AND {1} = BuiltIdShortPath))
+                )
+                -- Final selection
+                SELECT s.*
+                FROM RecursiveCTE r
+                JOIN SMESets s ON r.Id = s.Id
+                WHERE r.Depth = {0}
+                AND r.BuiltIdShortPath = {1};";
+
+                // Execute the query with parameters
+                var result = context.SMESets.FromSqlRaw(sql, new object[] { providedDepth, providedIdShortPath }).ToList();
+            }
 
             // restrictions in which tables 
             var restrictSM = false;
@@ -1104,6 +1149,10 @@ namespace AasxServerDB
                         condition["sme"] = "";
                     }
                     text = "conditionSME: " + condition["sme"];
+                    Console.WriteLine(text);
+                    messages.Add(text);
+                    text = "$sme#path: " + grammar.idShortPath;
+                    condition["idShortPath"] = grammar.idShortPath;
                     Console.WriteLine(text);
                     messages.Add(text);
 

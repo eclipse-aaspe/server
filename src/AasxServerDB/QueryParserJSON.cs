@@ -215,6 +215,8 @@ public class QueryGrammarJSON : Grammar
 
     private IContractSecurityRules mySecurityRules;
 
+    public string idShortPath = "";
+
     static void PrintParseTree(ParseTreeNode node, int indent, StringWriter sw)
     {
         if (node == null)
@@ -382,6 +384,14 @@ public class QueryGrammarJSON : Grammar
                     tn.Type = tn.Children[1].Type;
                     tn.Children = tn.Children[1].Children;
                     setParent(tn, tn.Children);
+                }
+                if (tn.Name == "\"$eq\":" && tn.Children.Count == 2 && tn.Children[0].Type == "field")
+                {
+                    if (tn.Children[0].Value == "$sme#path")
+                    {
+                        idShortPath = tn.Children[1].Value;
+                        return null; // skip expression
+                    }
                 }
                 break;
             case "value":
