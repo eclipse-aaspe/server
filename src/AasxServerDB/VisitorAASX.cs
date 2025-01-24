@@ -207,15 +207,10 @@ namespace AasxServerDB
                 Creator                     = AasContext.SerializeElement(that.Administration?.Creator),
                 TemplateId                  = that.Administration?.TemplateId,
                 AEmbeddedDataSpecifications = AasContext.SerializeList(that.Administration?.EmbeddedDataSpecifications),
-                /*
-                TimeStampCreate             = that.TimeStampCreate == default ? currentDataTime : that.TimeStampCreate,
-                TimeStamp                   = that.TimeStamp       == default ? currentDataTime : that.TimeStamp,
-                TimeStampTree               = that.TimeStampTree   == default ? currentDataTime : that.TimeStampTree,
-                TimeStampDelete             = that.TimeStampDelete == default ? currentDataTime : that.TimeStampDelete
-                */
-                TimeStampCreate = that.TimeStampCreate,
-                TimeStamp = that.TimeStamp,
-                TimeStampTree = that.TimeStampTree,
+
+                TimeStampCreate = that.TimeStampCreate == default ? currentDataTime : that.TimeStampCreate,
+                TimeStamp = that.TimeStamp == default ? currentDataTime : that.TimeStamp,
+                TimeStampTree = that.TimeStampTree == default ? currentDataTime : that.TimeStampTree,
                 TimeStampDelete = that.TimeStampDelete
             };
             _envDB?.EnvCDSets.Add(new EnvCDSet() { EnvSet = _envDB, CDSet = cdDB });
@@ -247,15 +242,10 @@ namespace AasxServerDB
                 AssetType                   = that.AssetInformation?.AssetType,
                 DefaultThumbnailPath        = that.AssetInformation?.DefaultThumbnail?.Path,
                 DefaultThumbnailContentType = that.AssetInformation?.DefaultThumbnail?.ContentType,
-                /*
-                TimeStampCreate             = that.TimeStampCreate == default ? currentDataTime : that.TimeStampCreate,
-                TimeStamp                   = that.TimeStamp       == default ? currentDataTime : that.TimeStamp,
-                TimeStampTree               = that.TimeStampTree   == default ? currentDataTime : that.TimeStampTree,
-                TimeStampDelete             = that.TimeStampDelete == default ? currentDataTime : that.TimeStampDelete
-                */
-                TimeStampCreate = that.TimeStampCreate,
-                TimeStamp = that.TimeStamp,
-                TimeStampTree = that.TimeStampTree,
+
+                TimeStampCreate = that.TimeStampCreate == default ? currentDataTime : that.TimeStampCreate,
+                TimeStamp = that.TimeStamp == default ? currentDataTime : that.TimeStamp,
+                TimeStampTree = that.TimeStampTree == default ? currentDataTime : that.TimeStampTree,
                 TimeStampDelete = that.TimeStampDelete
             };
             _envDB?.AASSets.Add(aasDB);
@@ -284,15 +274,10 @@ namespace AasxServerDB
                 Creator                     = AasContext.SerializeElement(that.Administration?.Creator),
                 TemplateId                  = that.Administration?.TemplateId,
                 AEmbeddedDataSpecifications = AasContext.SerializeList(that.Administration?.EmbeddedDataSpecifications),
-                /*
-                TimeStampCreate             = that.TimeStampCreate == default ? currentDataTime : that.TimeStampCreate,
-                TimeStamp                   = that.TimeStamp       == default ? currentDataTime : that.TimeStamp,
-                TimeStampTree               = that.TimeStampTree   == default ? currentDataTime : that.TimeStampTree,
-                TimeStampDelete             = that.TimeStampDelete == default ? currentDataTime : that.TimeStampDelete
-                */
-                TimeStampCreate = that.TimeStampCreate,
-                TimeStamp = that.TimeStamp,
-                TimeStampTree = that.TimeStampTree,
+
+                TimeStampCreate = that.TimeStampCreate == default ? currentDataTime : that.TimeStampCreate,
+                TimeStamp = that.TimeStamp == default ? currentDataTime : that.TimeStamp,
+                TimeStampTree = that.TimeStampTree == default ? currentDataTime : that.TimeStampTree,
                 TimeStampDelete = that.TimeStampDelete
             };
             _envDB?.SMSets.Add(_smDB);
@@ -320,15 +305,10 @@ namespace AasxServerDB
                 SupplementalSemanticIds    = AasContext.SerializeList(sme.SupplementalSemanticIds),
                 Qualifiers                 = AasContext.SerializeList(sme.Qualifiers),
                 EmbeddedDataSpecifications = AasContext.SerializeList(sme.EmbeddedDataSpecifications),
-                /*
-                TimeStampCreate            = sme.TimeStampCreate == default ? currentDataTime : sme.TimeStampCreate,
-                TimeStamp                  = sme.TimeStamp       == default ? currentDataTime : sme.TimeStamp,
-                TimeStampTree              = sme.TimeStampTree   == default ? currentDataTime : sme.TimeStampTree,
-                TimeStampDelete            = sme.TimeStampDelete == default ? currentDataTime : sme.TimeStampDelete
-                */
-                TimeStampCreate = sme.TimeStampCreate,
-                TimeStamp = sme.TimeStamp,
-                TimeStampTree = sme.TimeStampTree,
+
+                TimeStampCreate = sme.TimeStampCreate == default ? currentDataTime : sme.TimeStampCreate,
+                TimeStamp = sme.TimeStamp == default ? currentDataTime : sme.TimeStamp,
+                TimeStampTree = sme.TimeStampTree == default ? currentDataTime : sme.TimeStampTree,
                 TimeStampDelete = sme.TimeStampDelete
             };
             SetValues(sme, smeDB);
