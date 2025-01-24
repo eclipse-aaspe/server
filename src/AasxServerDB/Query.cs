@@ -229,6 +229,45 @@ namespace AasxServerDB
             // get condition out of expression
             var conditionsExpression = ConditionFromExpression(messages, expression);
 
+            var idShortPathList = new List<string>();
+            var conditionList = new List<string>();
+            var conditionAll = conditionsExpression["all"];
+            if (conditionAll.Contains("$$path$$"))
+            {
+                var split1 = conditionAll.Split("$$");
+                for (int i = 0; i < split1.Length; i++)
+                {
+                    if (split1[i] == "path")
+                    {
+                        var idShortPath = split1[i + 1];
+                        if (!idShortPathList.Contains(idShortPath))
+                        {
+                            idShortPathList.Add(idShortPath);
+                        }
+                        // conditionAllNew += "$$ANY$$((sme.idShortPath==\"" + idShortPath + "\")&&" + split1[i + 2] + ")";
+                        var c = "((sme.idShortPath==\"" + idShortPath + "\")&&" + split1[i + 2] + ")";
+                        conditionList.Add(c);
+                        i += 2;
+                    }
+                }
+            }
+
+            var smeFilteredByIdShort = getFilteredSMESets(db.SMESets, idShortPathList);
+
+            var withPath = idShortPathList.Count != 0;
+            if (withPath)
+            {
+                messages.Add("PATH SEARCH");
+                conditionsExpression["all"] = "";
+                conditionsExpression["sme"] = "true";
+                conditionsExpression["svalue"] = "true";
+                conditionsExpression["nvalue"] = "true";
+            }
+            else
+            {
+                messages.Add("RECURSIVE SEARCH");
+            }
+
             // restrictions in which tables 
             var restrictSM = false;
             var restrictSME = false;
@@ -256,18 +295,42 @@ namespace AasxServerDB
 
                 // restrict all tables seperate
                 smTable = restrictSM ? db.SMSets.Where(conditionsExpression["sm"]) : db.SMSets;
-                smeTable = restrictSME ? db.SMESets.Where(conditionsExpression["sme"]) : db.SMESets;
+                smeTable = restrictSME ? smeFilteredByIdShort.Where(conditionsExpression["sme"]) : smeFilteredByIdShort;
                 sValueTable = restrictValue ? (restrictSValue ? db.SValueSets.Where(conditionsExpression["svalue"]) : null) : db.SValueSets;
                 iValueTable = restrictValue ? (restrictNValue ? db.IValueSets.Where(conditionsExpression["nvalue"]) : null) : db.IValueSets;
                 dValueTable = restrictValue ? (restrictNValue ? db.DValueSets.Where(conditionsExpression["nvalue"]) : null) : db.DValueSets;
 
                 // combine tables to a raw sql 
                 var rawSQLEx = CombineTablesToRawSQL(direction, smTable, smeTable, sValueTable, iValueTable, dValueTable, false);
+                comTable = db.Database.SqlQueryRaw<CombinedSMSMEV>(rawSQLEx).AsQueryable();
 
-                // create queryable
-                comTable = db.Database.SqlQueryRaw<CombinedSMSMEV>(rawSQLEx);
-                var combi = conditionsExpression["all"].Replace("svalue", "V_Value").Replace("mvalue", "V_D_Value").Replace("sm.idShort", "SM_IdShort").Replace("sme.idShort", "SME_IdShort");
-                comTable = comTable.Where(combi).Distinct();
+                var combi = "";
+                if (!withPath) // recursive search
+                {
+                    combi = conditionsExpression["all"].Replace("svalue", "V_Value").Replace("mvalue", "V_D_Value").Replace("sm.idShort", "SM_IdShort").Replace("sme.idShort", "SME_IdShort").Replace("sme.idShortPath", "SME_IdShortPath");
+                    comTable = comTable.Where(combi);
+                }
+                else // path search
+                {
+                    List<IQueryable<CombinedSMSMEV>> comtableCondition = new List<IQueryable<CombinedSMSMEV>>();
+                    IQueryable<String?> commonIdentifiers = null;
+                    foreach (var condition in conditionList)
+                    {
+                        var c = condition.Replace("svalue", "V_Value").Replace("mvalue", "V_D_Value").Replace("sm.idShort", "SM_IdShort").Replace("sme.idShort", "SME_IdShort").Replace("sme.idShortPath", "SME_IdShortPath");
+                        comtableCondition.Add(comTable.Where(c));
+                        if (commonIdentifiers == null)
+                        {
+                            commonIdentifiers = comTable.Where(c).Select(sm => sm.SM_Identifier).Distinct();
+                        }
+                        else
+                        {
+                            commonIdentifiers.Intersect(comTable.Where(c).Select(sm => sm.SM_Identifier)).Distinct();
+                        }
+                    }
+                    comTable = comTable.Where(sm => commonIdentifiers.Contains(sm.SM_Identifier))
+                        .GroupBy(sm => sm.SM_Identifier)
+                        .Select(sm => sm.FirstOrDefault());
+                }
             }
             else // with parameters
             {
@@ -301,9 +364,22 @@ namespace AasxServerDB
                 return null;
             smRawSQL = smRawSQL.Substring(index);
             if (withExpression)
-                smRawSQL = $"SELECT DISTINCT a.SM_Identifier AS Identifier, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', a.SM_TimeStampTree) AS TimeStampTree \n {smRawSQL}";
+            {
+                var prefix = "";
+                if (!withPath)
+                {
+                    prefix = "a.";
+                }
+                else
+                {
+                    prefix = "t0.";
+                }
+                smRawSQL = $"SELECT DISTINCT {prefix}SM_Identifier AS Identifier, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', {prefix}SM_TimeStampTree) AS TimeStampTree \n {smRawSQL}";
+            }
             else
+            {
                 smRawSQL = $"SELECT DISTINCT s.Identifier, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', s.TimeStampTree) AS TimeStampTree \n {smRawSQL}";
+            }
 
             // create queryable
             var result = db.Database.SqlQueryRaw<CombinedSMResult>(smRawSQL);
@@ -325,6 +401,56 @@ namespace AasxServerDB
         }
 
         // --------------- SME Methods ---------------
+        private IQueryable<SMESet> getFilteredSMESets(DbSet<SMESet> smeSets, List<string> idShortPathList)
+        {
+            if (idShortPathList.Count == 0)
+            {
+                return smeSets;
+            }
+
+            // Provided list of idShortPath and their depths
+            List<int> depthList = idShortPathList.Select(path => path.Split('.').Length).ToList();
+
+            // Prepare the list of valid entries for SQL
+            var prefixEntriesSql = $@"(Depth != {depthList[0]} AND '{idShortPathList[0]}' LIKE BuiltIdShortPath || '%')";
+            for (int i = 1; i < idShortPathList.Count; i++)
+            {
+                prefixEntriesSql += $@" OR (Depth != {depthList[0]} AND '{idShortPathList[0]}' LIKE BuiltIdShortPath || '%')";
+            }
+
+            var finalEntriesSql = $@"(Depth = {depthList[0]} AND '{idShortPathList[0]}' = BuiltIdShortPath)";
+            for (int i = 1; i < idShortPathList.Count; i++)
+            {
+                finalEntriesSql += $@" OR (Depth = {depthList[i]} AND '{idShortPathList[i]}' = BuiltIdShortPath)";
+            }
+
+            // Recursive CTE to build the idShortPath and count the depth
+            var sql = $@"
+                WITH RECURSIVE RecursiveCTE AS (
+                    -- Base case: Select top-level entries
+                    SELECT s.*, s.IdShort AS BuiltIdShortPath, 1 AS Depth
+                    FROM SMESets s
+                    WHERE s.ParentSMEId IS NULL
+                    AND (({prefixEntriesSql}) OR ({finalEntriesSql}))
+
+                    UNION ALL
+
+                    -- Recursive case: Select child entries and build the idShortPath
+                    SELECT child.*, parent.BuiltIdShortPath || '.' || child.IdShort AS BuiltIdShortPath, parent.Depth + 1 AS Depth
+                    FROM SMESets child
+                    INNER JOIN RecursiveCTE parent ON child.ParentSMEId = parent.Id
+                    AND (({prefixEntriesSql}) OR ({finalEntriesSql}))
+                )
+                -- Final selection
+                SELECT r.Id, r.IdShort, r.BuiltIdShortPath AS IdShortPath, r.SMId, r.ParentSMEId, r.SMEType, r.DisplayName, r.Category, r.Description, r.Extensions, r.SemanticId, r.SupplementalSemanticIds, r.Qualifiers, r.EmbeddedDataSpecifications, r.TValue, r.TimeStampCreate, r.TimeStamp, r.TimeStampTree, r.TimeStampDelete
+                FROM RecursiveCTE r
+                JOIN SMESets s ON r.Id = s.Id
+                WHERE ({finalEntriesSql})";
+
+            // Execute the query
+            return smeSets.FromSqlRaw(sql);
+        }
+
         private IQueryable? GetSMEs(List<string> messages, string requested, AasContext db, bool withCount = false,
             string smSemanticId = "", string smIdentifier = "", string semanticId = "",
             string diffString = "", string contains = "", string equal = "", string lower = "", string upper = "", string expression = "")
@@ -379,50 +505,12 @@ namespace AasxServerDB
 
             // get condition out of expression
             var conditionsExpression = ConditionFromExpression(messages, expression);
-            var idShortPath = conditionsExpression["idShortPath"];
-            var withPath = (idShortPath != "");
 
-            // Drop the debug tables
-            var context = db;
-            context.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS TempIdShorts");
-            context.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS TempIdShortPath");
-            context.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS DebugTempIdShorts");
-            context.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS DebugRecursiveCTE");
-            context.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS DebugFinalResult");
-
-            // Test for path
-            if (withPath)
+            var conditionAll = conditionsExpression["all"];
+            if (conditionAll.Contains("$$path$$"))
             {
-                // Provided idShortPath and its depth
-                string providedIdShortPath = idShortPath;
-                int providedDepth = providedIdShortPath.Split('.').Length;
-
-                // Recursive CTE to build the idShortPath and count the depth
-                var sql = @"
-                WITH RECURSIVE RecursiveCTE AS (
-                    -- Base case: Select top-level entries
-                    SELECT s.*, s.IdShort AS BuiltIdShortPath, 1 AS Depth
-                    FROM SMESets s
-                    WHERE s.ParentSMEId IS NULL
-                    AND (({0} != Depth AND {1} LIKE BuiltIdShortPath || '%') OR ({0} = Depth AND {1} = BuiltIdShortPath))
-
-                    UNION ALL
-
-                    -- Recursive case: Select child entries and build the idShortPath
-                    SELECT child.*, parent.BuiltIdShortPath || '.' || child.IdShort AS BuiltIdShortPath, parent.Depth + 1 AS Depth
-                    FROM SMESets child
-                    INNER JOIN RecursiveCTE parent ON child.ParentSMEId = parent.Id
-                    AND (({0} != Depth AND {1} LIKE BuiltIdShortPath || '%') OR ({0} = Depth AND {1} = BuiltIdShortPath))
-                )
-                -- Final selection
-                SELECT s.*
-                FROM RecursiveCTE r
-                JOIN SMESets s ON r.Id = s.Id
-                WHERE r.Depth = {0}
-                AND r.BuiltIdShortPath = {1};";
-
-                // Execute the query with parameters
-                var result = context.SMESets.FromSqlRaw(sql, new object[] { providedDepth, providedIdShortPath }).ToList();
+                messages.Add("ERROR: PATH SEARCH not allowed for SME!");
+                return null;
             }
 
             // restrictions in which tables 
@@ -444,7 +532,7 @@ namespace AasxServerDB
             {
                 // check restrictions
                 restrictSM = !conditionsExpression["sm"].IsNullOrEmpty() && !conditionsExpression["sm"].Equals("true");
-                restrictSME = !conditionsExpression["sme"].IsNullOrEmpty() && !conditionsExpression["sme"].Equals("true");
+                restrictSME =!conditionsExpression["sme"].IsNullOrEmpty() && !conditionsExpression["sme"].Equals("true");
                 restrictSValue = !conditionsExpression["svalue"].IsNullOrEmpty() && !conditionsExpression["svalue"].Equals("true");
                 restrictNValue = !conditionsExpression["nvalue"].IsNullOrEmpty() && !conditionsExpression["nvalue"].Equals("true");
                 restrictValue = restrictSValue || restrictNValue;
@@ -628,6 +716,7 @@ namespace AasxServerDB
                 SME_Id = sme.Id,
                 SME_SemanticId = sme.SemanticId,
                 SME_IdShort = sme.IdShort,
+                SME_IdShortPath = sme.IdShortPath,
                 SME_DisplayName = sme.DisplayName,
                 SME_Description = sme.Description,
                 SME_TimeStamp = sme.TimeStamp,
@@ -685,6 +774,7 @@ namespace AasxServerDB
                             $"sm.SM_TimeStampTree, " +
                             $"sme.SME_SemanticId, " +
                             $"sme.SME_IdShort, " +
+                            $"sme.SME_IdShortPath, " +
                             $"sme.SME_DisplayName, " +
                             $"sme.SME_Description, " +
                             $"sme.SME_Id, " +
@@ -705,6 +795,7 @@ namespace AasxServerDB
                         $"sm_sme.SM_TimeStampTree, " +
                         $"sm_sme.SME_SemanticId, " +
                         $"sm_sme.SME_IdShort, " +
+                        $"sm_sme.SME_IdShortPath, " +
                         $"sm_sme.SME_DisplayName, " +
                         $"sm_sme.SME_Description, " +
                         $"sm_sme.SME_Id, " +
@@ -730,6 +821,7 @@ namespace AasxServerDB
                                 $"sm_sme.SM_TimeStampTree, " +
                                 $"sm_sme.SME_SemanticId, " +
                                 $"sm_sme.SME_IdShort, " +
+                                $"sm_sme.SME_IdShortPath, " +
                                 $"sm_sme.SME_DisplayName, " +
                                 $"sm_sme.SME_Description, " +
                                 $"sm_sme.SME_Id, " +
@@ -752,6 +844,7 @@ namespace AasxServerDB
                             $"sm.SM_TimeStampTree, " +
                             $"sme.SME_SemanticId, " +
                             $"sme.SME_IdShort, " +
+                            $"sme.SME_IdShortPath, " +
                             $"sme.SME_DisplayName, " +
                             $"sme.SME_Description, " +
                             $"sme.SME_Id, " +
@@ -772,6 +865,7 @@ namespace AasxServerDB
                         $"sm_sme.SM_TimeStampTree, " +
                         $"sm_sme.SME_SemanticId, " +
                         $"sm_sme.SME_IdShort, " +
+                        $"sm_sme.SME_IdShortPath, " +
                         $"sm_sme.SME_DisplayName, " +
                         $"sm_sme.SME_Description, " +
                         $"sm_sme.SME_Id, " +
@@ -797,6 +891,7 @@ namespace AasxServerDB
                                 $"sm_sme.SM_TimeStampTree, " +
                                 $"sm_sme.SME_SemanticId, " +
                                 $"sm_sme.SME_IdShort, " +
+                                $"sm_sme.SME_IdShortPath, " +
                                 $"sm_sme.SME_DisplayName, " +
                                 $"sm_sme.SME_Description, " +
                                 $"sm_sme.SME_Id, " +
@@ -813,6 +908,7 @@ namespace AasxServerDB
                         $"sme.SME_SMId, " +
                         $"sme.SME_SemanticId, " +
                         $"sme.SME_IdShort, " +
+                        $"sme.SME_IdShortPath, " +
                         $"sme.SME_DisplayName, " +
                         $"sme.SME_Description, " +
                         $"sme.SME_Id, " +
@@ -834,6 +930,7 @@ namespace AasxServerDB
                                 $"sme.SME_SMId, " +
                                 $"sme.SME_SemanticId, " +
                                 $"sme.SME_IdShort, " +
+                                $"sme.SME_IdShortPath, " +
                                 $"sme.SME_DisplayName, " +
                                 $"sme.SME_Description, " +
                                 $"sme.SME_Id, " +
@@ -854,6 +951,7 @@ namespace AasxServerDB
                         $"sm.SM_TimeStampTree, " +
                         $"sme_v.SME_SemanticId, " +
                         $"sme_v.SME_IdShort, " +
+                        $"sme_v.SME_IdShortPath, " +
                         $"sme_v.SME_DisplayName, " +
                         $"sme_v.SME_Description, " +
                         $"sme_v.SME_Id, " +

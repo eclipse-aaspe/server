@@ -3,6 +3,7 @@ using System;
 using AasxServerDB.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AasxServerDB.Migrations.Sqlite
 {
     [DbContext(typeof(SqliteAasContext))]
-    partial class SqliteAasContextModelSnapshot : ModelSnapshot
+    [Migration("20250123083426_BuiltIdShortPath")]
+    partial class BuiltIdShortPath
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.6");
@@ -303,6 +306,9 @@ namespace AasxServerDB.Migrations.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("BuiltIdShortPath")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Category")
                         .HasMaxLength(128)
                         .HasColumnType("TEXT");
@@ -321,9 +327,6 @@ namespace AasxServerDB.Migrations.Sqlite
 
                     b.Property<string>("IdShort")
                         .HasMaxLength(128)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("IdShortPath")
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("ParentSMEId")

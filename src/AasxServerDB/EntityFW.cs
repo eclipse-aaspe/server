@@ -18,15 +18,15 @@
  * 1. Change the database context
  * 2. Open package management console
  * 3. Optional: if initial migration
- *      Add-Migration InitialCreate -Context SqliteAasContext -OutputDir Migrations\Sqlite
- *      Add-Migration InitialCreate -Context PostgreAasContext -OutputDir Migrations\Postgres
+ *      Add-Migration InitialCreate -Context SqliteAasContext -OutputDir Migrations\Sqlite -Project AasxServerDB
+ *      Add-Migration InitialCreate -Context PostgreAasContext -OutputDir Migrations\Postgres -Project AasxServerDB
  * 4. Add a new migration
- *      Add-Migration <name of new migration> -Context SqliteAasContext
- *      Add-Migration <name of new migration> -Context PostgreAasContext
+ *      Add-Migration <name of new migration> -Context SqliteAasContext -Project AasxServerDB
+ *      Add-Migration <name of new migration> -Context PostgreAasContext -Project AasxServerDB
  * 5. Review the migration for accuracy
  * 6. Optional: Update database to new schema
- *      Update-Database -Context SqliteAasContext
- *      Update-Database -Context PostgreAasContext
+ *      Update-Database -Context SqliteAasContext -Project AasxServerDB
+ *      Update-Database -Context PostgreAasContext -Project AasxServerDB
  */
 
 namespace AasxServerDB

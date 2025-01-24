@@ -112,5 +112,6 @@ namespace AasxServerDB.Entities
         public DateTime TimeStamp       { get; set; }
         public DateTime TimeStampTree   { get; set; }
         public DateTime TimeStampDelete { get; set; }
+        public string? IdShortPath { get; set; }
     }
 }

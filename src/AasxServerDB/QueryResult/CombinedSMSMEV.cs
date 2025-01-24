@@ -26,6 +26,7 @@ namespace AasxServerDB
 
             public string? SME_SemanticId { get; set; }
             public string? SME_IdShort { get; set; }
+            public string? SME_IdShortPath { get; set; }
             public string? SME_DisplayName { get; set; }
             public string? SME_Description { get; set; }
             public string? SME_Id { get; set; }

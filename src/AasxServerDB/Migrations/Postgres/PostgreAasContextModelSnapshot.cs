@@ -210,8 +210,6 @@ namespace AasxServerDB.Migrations.Postgres
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Id");
-
                     b.HasIndex("SMEId");
 
                     b.HasIndex("Value");
@@ -345,6 +343,9 @@ namespace AasxServerDB.Migrations.Postgres
                     b.Property<string>("IdShort")
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
+
+                    b.Property<string>("IdShortPath")
+                        .HasColumnType("text");
 
                     b.Property<int?>("ParentSMEId")
                         .HasColumnType("integer");

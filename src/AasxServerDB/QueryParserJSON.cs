@@ -271,6 +271,7 @@ public class QueryGrammarJSON : Grammar
         public string Type = "";
         public List<treeNode> Children = null;
         public treeNode Parent = null;
+        public string idShortPath = "";
     }
 
     static List<string> skip = new List<string>() { "?", "\"Query\":", "\"$condition\":" };
@@ -370,6 +371,7 @@ public class QueryGrammarJSON : Grammar
                 if (tn.Name == "\"$not\":")
                 {
                     tn.Type = tn.Children[1].Type;
+                    tn.idShortPath = tn.Children[1].idShortPath;
                     tn.Children.RemoveAt(0);
                 }
                 else if (tn.Name == "\"$boolean\":")
@@ -383,8 +385,42 @@ public class QueryGrammarJSON : Grammar
                     // Add Children of logical_expression_array
                     tn.Type = tn.Children[1].Type;
                     tn.Children = tn.Children[1].Children;
+                    foreach (var c in tn.Children)
+                    {
+                        if (c.idShortPath != "")
+                        {
+                            if (tn.idShortPath != "" && tn.idShortPath != c.idShortPath)
+                            {
+                                tn.idShortPath = "$ERROR";
+                            }
+                            tn.idShortPath = c.idShortPath;
+                        }
+                    }
                     setParent(tn, tn.Children);
                 }
+                // Add path expression
+                if (tn.idShortPath != "")
+                {
+                    var tn_path = new treeNode();
+                    tn_path.Children = new List<treeNode>();
+                    tn_path.Name = "\"$path\":";
+                    tn_path.Type = "str";
+                    tn_path.Value = tn.idShortPath;
+                    tn_path.Children.Add(tn);
+                    tn = tn_path;
+
+                    /*
+                    var tn_and = new treeNode();
+                    tn_and.Children = new List<treeNode>();
+                    tn_and.Name = "\"$and\":";
+                    tn_and.Children.Add(tn_path);
+                    tn_and.Children.Add(tn);
+                    setParent(tn_and, tn.Children);
+                    tn = tn_and;
+                    break;
+                    */
+                }
+                /*
                 if (tn.Name == "\"$eq\":" && tn.Children.Count == 2 && tn.Children[0].Type == "field")
                 {
                     if (tn.Children[0].Value == "$sme#path")
@@ -393,6 +429,7 @@ public class QueryGrammarJSON : Grammar
                         return null; // skip expression
                     }
                 }
+                */
                 break;
             case "value":
             case "string_value":
@@ -400,6 +437,20 @@ public class QueryGrammarJSON : Grammar
                 tn.Type = tn.Children[0].Type;
                 tn.Value = tn.Children[1].Value;
                 tn.Children.Clear();
+                if (tn.Name == "\"$field\":")
+                {
+                    var str1 = tn.Value.Split("#");
+                    if (str1[0].Contains('.'))
+                    {
+                        var str2 = str1[0].Split(".");
+                        tn.idShortPath = str2[1];
+                        for (int i = 2; i < str2.Count(); i++)
+                        {
+                            tn.idShortPath += "." + str2[i];
+                        }
+                        tn.Value = str2[0] + "." + str1[1];
+                    }
+                }
                 break;
             case "\"$strVal\":":
             case "StringLiteral":
@@ -546,6 +597,9 @@ public class QueryGrammarJSON : Grammar
                 break;
             case "\"$field\":":
                 pattern = "field";
+                break;
+            case "\"$path\":":
+                pattern = "path";
                 break;
         }
 
@@ -777,7 +831,8 @@ public class QueryGrammarJSON : Grammar
                     {
                         return "$SKIP";
                     }
-                    return value.Replace("sme.", "");
+                    var result = value.Replace("sme.", "");
+                    return result;
                 }
                 // string value table and num value table
                 if (typePrefix == "str()" || typePrefix == "num()")
@@ -799,8 +854,28 @@ public class QueryGrammarJSON : Grammar
                     upperCountTypePrefix++;
                 }
                 return value;
+            case "path":
+                arg1 = ParseTreeToExpression(node.Children[0], typePrefix, ref countTypePrefix1);
+                upperCountTypePrefix += countTypePrefix1;
 
+                if (typePrefix != "")
+                {
+                    return arg1;
+                }
 
+                if (arg1 == "$SKIP")
+                {
+                    return "$SKIP";
+                }
+                if (arg1 == "$TRUE")
+                {
+                    return "$TRUE";
+                }
+                if (arg1 == "true")
+                {
+                    return "true";
+                }
+                return "$$path$$" + value + "$$" + arg1 + "$$";
             case "StringLiteral":
                 if (parentType == "num")
                 {
