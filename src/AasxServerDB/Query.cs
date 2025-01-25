@@ -253,6 +253,10 @@ namespace AasxServerDB
             }
 
             var smeFilteredByIdShort = getFilteredSMESets(db.SMESets, idShortPathList);
+            // var x = smeFilteredByIdShort.Where("@0.Any(sm => sm.IdShortPath == @1)", smeFilteredByIdShort, idShortPathList[0]);
+            // var x = smeFilteredByIdShort.Where("Any(IdShortPath == @0)", idShortPathList[0]);
+            // var x = smeFilteredByIdShort.Where($"Exists(SMESet.Where(IdShortPath == @0))", idShortPathList[0]);
+            // var x = smeFilteredByIdShort.Where("Any(@0.Where(IdShortPath == @1))", db.SMESets, idShortPathList[0]);
 
             var withPath = idShortPathList.Count != 0;
             if (withPath)
@@ -412,10 +416,10 @@ namespace AasxServerDB
             List<int> depthList = idShortPathList.Select(path => path.Split('.').Length).ToList();
 
             // Prepare the list of valid entries for SQL
-            var prefixEntriesSql = $@"(Depth != {depthList[0]} AND '{idShortPathList[0]}' LIKE BuiltIdShortPath || '%')";
+            var prefixEntriesSql = $@"(Depth < {depthList[0]} AND '{idShortPathList[0]}' LIKE BuiltIdShortPath || '%')";
             for (int i = 1; i < idShortPathList.Count; i++)
             {
-                prefixEntriesSql += $@" OR (Depth != {depthList[0]} AND '{idShortPathList[0]}' LIKE BuiltIdShortPath || '%')";
+                prefixEntriesSql += $@" OR (Depth < {depthList[i]} AND '{idShortPathList[i]}' LIKE BuiltIdShortPath || '%')";
             }
 
             var finalEntriesSql = $@"(Depth = {depthList[0]} AND '{idShortPathList[0]}' = BuiltIdShortPath)";
