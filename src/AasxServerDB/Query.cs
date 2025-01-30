@@ -67,7 +67,7 @@ namespace AasxServerDB
             var query = GetSMs(qResult.Messages, qResult.SQL, db, false, semanticId, identifier, diff, expression);
             if (query == null)
             {
-                text = "No query is generated due to incorrect parameter combination.";
+                text = "No query is generated.";
                 Console.WriteLine(text);
                 qResult.Messages.Add(text);
             }
@@ -231,6 +231,12 @@ namespace AasxServerDB
 
             // get condition out of expression
             var conditionsExpression = ConditionFromExpression(messages, expression);
+
+            if (conditionsExpression.ContainsKey("AccessRules"))
+            {
+                messages.Add(conditionsExpression["AccessRules"]);
+                return null;
+            }
 
             var idShortPathList = new List<string>();
             var conditionList = new List<string>();
@@ -1250,14 +1256,20 @@ namespace AasxServerDB
                     messages.Add("");
 
                     // Security
-                    if (parseTree.Root.Term.Name == "all_access_permission_rules")
+                    if (parseTree.Root.ChildNodes[0].Term.Name == "all_access_permission_rules")
                     {
                         grammar.ParseAccessRules(parseTree.Root);
-                        throw new Exception("Access Rules parsed!");
+                        // throw new Exception("Access Rules parsed!");
+                        condition["AccessRules"] = "Access Rules parsed!";
+                        return condition;
+                    }
+                    if (QueryGrammarJSON.accessRuleExpression != "")
+                    {
+                        messages.Add("Access Rules: " + QueryGrammarJSON.accessRuleExpression);
                     }
 
                     int countTypePrefix = 0;
-                    condition["all"] = grammar.ParseTreeToExpression(parseTree.Root, "", ref countTypePrefix);
+                    condition["all"] = grammar.ParseTreeToExpressionWithAccessRules(parseTree.Root, "", ref countTypePrefix);
                     if (condition["all"].Contains("$$path$$"))
                     {
                         messages.Add("PATH SEARCH");
@@ -1273,7 +1285,7 @@ namespace AasxServerDB
                     messages.Add(text);
 
                     countTypePrefix = 0;
-                    condition["sm"] = grammar.ParseTreeToExpression(parseTree.Root, "sm.", ref countTypePrefix);
+                    condition["sm"] = grammar.ParseTreeToExpressionWithAccessRules(parseTree.Root, "sm.", ref countTypePrefix);
                     if (condition["sm"] == "$SKIP")
                     {
                         condition["sm"] = "";
@@ -1286,7 +1298,7 @@ namespace AasxServerDB
                     }
 
                     countTypePrefix = 0;
-                    condition["sme"] = grammar.ParseTreeToExpression(parseTree.Root, "sme.", ref countTypePrefix);
+                    condition["sme"] = grammar.ParseTreeToExpressionWithAccessRules(parseTree.Root, "sme.", ref countTypePrefix);
                     if (condition["sme"] == "$SKIP")
                     {
                         condition["sme"] = "";
@@ -1296,14 +1308,10 @@ namespace AasxServerDB
                         text = "conditionSME: " + condition["sme"];
                         Console.WriteLine(text);
                         messages.Add(text);
-                        text = "$sme#path: " + grammar.idShortPath;
-                        condition["idShortPath"] = grammar.idShortPath;
-                        Console.WriteLine(text);
-                        messages.Add(text);
                     }
 
                     countTypePrefix = 0;
-                    condition["svalue"] = grammar.ParseTreeToExpression(parseTree.Root, "str()", ref countTypePrefix);
+                    condition["svalue"] = grammar.ParseTreeToExpressionWithAccessRules(parseTree.Root, "str()", ref countTypePrefix);
                     if (condition["svalue"] == "$SKIP")
                     {
                         condition["svalue"] = "";
@@ -1316,7 +1324,7 @@ namespace AasxServerDB
                     }
 
                     countTypePrefix = 0;
-                    condition["nvalue"] = grammar.ParseTreeToExpression(parseTree.Root, "num()", ref countTypePrefix);
+                    condition["nvalue"] = grammar.ParseTreeToExpressionWithAccessRules(parseTree.Root, "num()", ref countTypePrefix);
                     if (condition["nvalue"] == "$SKIP")
                     {
                         condition["nvalue"] = "";

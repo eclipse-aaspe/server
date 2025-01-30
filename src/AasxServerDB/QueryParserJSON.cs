@@ -488,12 +488,44 @@ public class QueryGrammarJSON : Grammar
 
         return tn;
     }
+    public string ParseTreeToExpressionWithAccessRules(ParseTreeNode node, string typePrefix, ref int upperCountTypePrefix, string parentType = "")
+    {
+        var result = ParseTreeToExpression(node, typePrefix, ref upperCountTypePrefix, parentType);
+
+        if (accessRuleNode == null && accessRuleExpression != "")
+        {
+            switch (typePrefix)
+            {
+                case "":
+                    result = $"({accessRuleExpression})&&({result})";
+                    break;
+                case "sm.":
+                    result = result.Replace("$SKIP", "true");
+                    var accessSubmodel = accessRuleExpression.Replace("sm.", "");
+                    result = $"({accessSubmodel})&&({result})";
+                    break;
+            }
+        }
+        return result;
+    }
     public string ParseTreeToExpression(ParseTreeNode node, string typePrefix, ref int upperCountTypePrefix, string parentType = "")
     {
         // simplify parse tree
-        var tn = simplifyTree(node);
+        var combinedTree = simplifyTree(node);
 
-        var expression = ParseTreeToExpression(tn, typePrefix, ref upperCountTypePrefix, parentType);
+        // combine with access rules
+        if (accessRuleNode != null)
+        {
+            var tn = new treeNode();
+            tn.Children = new List<treeNode>();
+            tn.Name = "\"$and\":";
+            tn.Children.Add(accessRuleNode);
+            tn.Children.Add(combinedTree);
+            setParent(tn, tn.Children);
+            combinedTree = tn;
+        }
+
+        var expression = ParseTreeToExpression(combinedTree, typePrefix, ref upperCountTypePrefix, parentType);
 
         expression = expression.Replace("$TRUE", "true");
         expression = expression.Replace("$FALSE", "false");
@@ -582,10 +614,12 @@ public class QueryGrammarJSON : Grammar
                 pattern = "string";
                 break;
             case "\"$starts-with\":":
+            case "\"$starts_with\":":
                 op = "StartsWith";
                 pattern = "string";
                 break;
             case "\"ends-with\":":
+            case "\"ends_with\":":
                 op = "EndsWith";
                 pattern = "string";
                 break;
@@ -1034,12 +1068,18 @@ public class QueryGrammarJSON : Grammar
         }
         return " $NOT_IMPLEMENTED ";
     }
+
+    public static string accessRuleExpression = "";
+    // public static string accessRuleExpression = "((sm.idShort==\"Nameplate\")||(sm.idShort==\"TechnicalData\"))";
+    // public static string accessRuleExpression = "(sm.idShort==\"Nameplate\")";
+    public static treeNode accessRuleNode = null;
     public void ParseAccessRules(ParseTreeNode node)
     {
-        mySecurityRules.ClearSecurityRules();
+        // mySecurityRules.ClearSecurityRules();
 
         ParseAccessRule(node);
     }
+
     static List<string> Names = new List<string>();
     static string access = "";
     static string right = "";
@@ -1047,6 +1087,27 @@ public class QueryGrammarJSON : Grammar
     {
         switch (node.Term.Name)
         {
+            case "logical_expression":
+                var tn = simplifyTree(node);
+                accessRuleNode = tn;
+                int count = 0;
+                accessRuleExpression = ParseTreeToExpression(tn, "", ref count);
+                break;
+            default:
+                foreach (var c in node.ChildNodes)
+                {
+                    ParseAccessRule(c);
+                }
+                break;
+        }
+    }
+
+    void ParseAccessRuleOld(ParseTreeNode node)
+    {
+        switch (node.Term.Name)
+        {
+            case "logical_expression":
+                break;
             case "AccessRule":
                 Names = new List<string>();
                 access = "";
