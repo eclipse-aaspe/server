@@ -28,6 +28,7 @@ namespace AasxServerDB
     using HotChocolate.Language;
     using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
     using Microsoft.EntityFrameworkCore.Metadata;
+    using System.Security.AccessControl;
 
     public partial class Query
     {
@@ -134,7 +135,8 @@ namespace AasxServerDB
             {
                 Messages = new List<string>(),
                 SMResults = new List<SMResult>(),
-                SMEResults = new List<SMEResult>()
+                SMEResults = new List<SMEResult>(),
+                SQL = new List<string>()
             };
 
             var text = string.Empty;
@@ -144,7 +146,7 @@ namespace AasxServerDB
             Console.WriteLine("\nSearchSMEs");
 
             watch.Restart();
-            var query = GetSMEs(qResult.Messages, requested, db, false, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
+            var query = GetSMEs(qResult.Messages, qResult.SQL, requested, db, false, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
             if (query == null)
             {
                 text = "No query is generated due to incorrect parameter combination.";
@@ -181,7 +183,7 @@ namespace AasxServerDB
             Console.WriteLine("\nCountSMEs");
 
             watch.Restart();
-            var query = GetSMEs(new List<string>(), "", db, true, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
+            var query = GetSMEs(new List<string>(), new List<string>(), "", db, true, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
             if (query == null)
             {
                 Console.WriteLine("No query is generated due to incorrect parameter combination.");
@@ -223,11 +225,33 @@ namespace AasxServerDB
                 messages.Add("$MIDDLEOUT");
                 direction = 1;
             }
-
             // shorten expression
             expression = expression.Replace("$REVERSE", string.Empty);
             expression = expression.Replace("$BOTTOMUP", string.Empty);
             expression = expression.Replace("$MIDDLEOUT", string.Empty);
+
+            var pageFrom = 0;
+            if (expression.Contains("$PAGEFROM="))
+            {
+                var index1 = expression.IndexOf("$PAGEFROM");
+                var index2 = expression.IndexOf("=", index1);
+                var index3 = expression.IndexOf(";", index1);
+                var s = expression.Substring(index2+1, index3-index2-1);
+                pageFrom = int.Parse(s);
+                expression = expression.Replace("$PAGEFROM=" + s + ";", "");
+            }
+            messages.Add("$PAGEFROM=" + pageFrom);
+            var pageSize = 1000;
+            if (expression.Contains("$PAGESIZE="))
+            {
+                var index1 = expression.IndexOf("$PAGESIZE");
+                var index2 = expression.IndexOf("=", index1);
+                var index3 = expression.IndexOf(";", index1);
+                var s = expression.Substring(index2 + 1, index3 - index2 - 1);
+                pageSize = int.Parse(s);
+                expression = expression.Replace("$PAGESIZE=" + s + ";", "");
+            }
+            messages.Add("$PAGESIZE=" + pageSize);
 
             // get condition out of expression
             var conditionsExpression = ConditionFromExpression(messages, expression);
@@ -414,12 +438,17 @@ namespace AasxServerDB
                 }
             }
 
+            // create queryable with pagenation
+            var result = db.Database.SqlQueryRaw<CombinedSMResult>(smRawSQL);
+            result = result.Skip(pageFrom).Take(pageSize);
+            // smRawSQL = $".param set :pagesize {pageSize}\r\n" + $".param set :pagefrom {pageFrom}\r\n" + smRawSQL + "LIMIT :pagesize OFFSET :pagefrom\r\n";
+            // var result = db.Database.SqlQueryRaw<CombinedSMResult>(smRawSQL);
+
             // return raw SQL
+            smRawSQL = result.ToQueryString();
             var rawSqlSplit = smRawSQL.Replace("\r", "").Split("\n").Select(s => s.TrimStart()).ToList();
             rawSQL.AddRange(rawSqlSplit);
 
-            // create queryable
-            var result = db.Database.SqlQueryRaw<CombinedSMResult>(smRawSQL);
             return result;
         }
 
@@ -489,7 +518,7 @@ namespace AasxServerDB
             return smeSets.FromSqlRaw(sql);
         }
 
-        private IQueryable? GetSMEs(List<string> messages, string requested, AasContext db, bool withCount = false,
+        private IQueryable? GetSMEs(List<string> messages, List<string> rawSQL, string requested, AasContext db, bool withCount = false,
             string smSemanticId = "", string smIdentifier = "", string semanticId = "",
             string diffString = "", string contains = "", string equal = "", string lower = "", string upper = "", string expression = "")
         {
@@ -540,6 +569,29 @@ namespace AasxServerDB
             expression = expression.Replace("$REVERSE", string.Empty);
             expression = expression.Replace("$BOTTOMUP", string.Empty);
             expression = expression.Replace("$MIDDLEOUT", string.Empty);
+
+            var pageFrom = 0;
+            if (expression.Contains("$PAGEFROM="))
+            {
+                var index1 = expression.IndexOf("$PAGEFROM");
+                var index2 = expression.IndexOf("=", index1);
+                var index3 = expression.IndexOf(";", index1);
+                var s = expression.Substring(index2 + 1, index3 - index2 - 1);
+                pageFrom = int.Parse(s);
+                expression = expression.Replace("$PAGEFROM=" + s + ";", "");
+            }
+            messages.Add("$PAGEFROM=" + pageFrom);
+            var pageSize = 1000;
+            if (expression.Contains("$PAGESIZE="))
+            {
+                var index1 = expression.IndexOf("$PAGESIZE");
+                var index2 = expression.IndexOf("=", index1);
+                var index3 = expression.IndexOf(";", index1);
+                var s = expression.Substring(index2 + 1, index3 - index2 - 1);
+                pageSize = int.Parse(s);
+                expression = expression.Replace("$PAGESIZE=" + s + ";", "");
+            }
+            messages.Add("$PAGESIZE=" + pageSize);
 
             // get condition out of expression
             var conditionsExpression = ConditionFromExpression(messages, expression);
@@ -664,6 +716,13 @@ namespace AasxServerDB
 
             // Create queryable
             var qSearch = db.Database.SqlQueryRaw<CombinedSMEResult>(combineTableRawSQL);
+            qSearch = qSearch.Skip(pageFrom).Take(pageSize);
+
+            // return raw SQL
+            var smRawSQL = qSearch.ToQueryString();
+            var rawSqlSplit = smRawSQL.Replace("\r", "").Split("\n").Select(s => s.TrimStart()).ToList();
+            rawSQL.AddRange(rawSqlSplit);
+
             return qSearch;
         }
 
