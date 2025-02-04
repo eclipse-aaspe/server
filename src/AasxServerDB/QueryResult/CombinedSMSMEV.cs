@@ -17,6 +17,7 @@ namespace AasxServerDB
     {
         private class CombinedSMSMEV
         {
+            public string? SM_Id { get; set; }
             public string? SM_SemanticId { get; set; }
             public string? SM_IdShort { get; set; }
             public string? SM_DisplayName { get; set; }

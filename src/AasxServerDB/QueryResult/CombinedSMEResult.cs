@@ -15,7 +15,7 @@ namespace AasxServerDB
 {
     public partial class Query
     {
-        private class CombinedSMEResult
+        public class CombinedSMEResult
         {
             public string? SM_Identifier { get; set; }
             public string? IdShortPath { get; set; }

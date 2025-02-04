@@ -17,6 +17,7 @@ namespace AasxServerDB
     {
         private class CombinedSMResult
         {
+            public int? SM_Id { get; set; }
             public string? Identifier { get; set; }
             public string? TimeStampTree { get; set; }
         }

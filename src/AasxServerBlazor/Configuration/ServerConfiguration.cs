@@ -68,6 +68,7 @@ public static class ServerConfiguration
 
         services.AddGraphQLServer()
             .AddQueryType<Query>()
+            .UseField<ParameterNamesMiddleware>()
             .SetRequestOptions(_ =>
                 new HotChocolate.Execution.Options.RequestExecutorOptions {
                     ExecutionTimeout = TimeSpan.FromMinutes(10),
