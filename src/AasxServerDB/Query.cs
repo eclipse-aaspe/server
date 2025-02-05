@@ -300,8 +300,8 @@ namespace AasxServerDB
             string semanticId = "", string identifier = "", string diffString = "", string expression = "")
         {
             // parameter
-            var messages = qResult.Messages;
-            var rawSQL = qResult.SQL;
+            var messages = qResult.Messages ?? [];
+            var rawSQL = qResult.SQL ?? [];
 
             // analyse parameters
             var withSemanticId = !semanticId.IsNullOrEmpty();
@@ -408,7 +408,7 @@ namespace AasxServerDB
                 conditionsExpression["all"] = conditionNew;
             }
 
-            var smeFilteredByIdShort = getFilteredSMESets(db.SMESets, idShortPathList);
+            var smeFilteredByIdShort = GetFilteredSMESets(db.SMESets, idShortPathList);
 
             var withPathSearch = idShortPathList.Count != 0;
             if (withPathSearch)
@@ -473,8 +473,8 @@ namespace AasxServerDB
 
                     var sqlTemp = "";
                     var indexInSqlTemp = 0;
-                    List<string> sqlConditionList = new List<string>();
-                    for (int i = 0; i < conditionList.Count; i++)
+                    var sqlConditionList = new List<string>();
+                    for (var i = 0; i < conditionList.Count; i++)
                     {
                         var c = conditionList[i];
                         c = c.Replace("svalue", "V_Value").Replace("mvalue", "V_D_Value").Replace("sm.idShort", "SM_IdShort").Replace("sme.idShort", "SME_IdShort").Replace("sme.idShortPath", "SME_IdShortPath");
@@ -495,7 +495,7 @@ namespace AasxServerDB
                     // Overall WHERE has been extracted
                     // Add SQL conditions with EXISTS for tree search
                     // Replace each SQL placeholder by the related SQL condition
-                    for (int i = 0; i < sqlConditionList.Count; i++)
+                    for (var i = 0; i < sqlConditionList.Count; i++)
                     {
                         var replacement = $"\r\nEXISTS(SELECT 1 FROM MergedTables WHERE {sqlConditionList[i]})";
                         sqlTemp = sqlTemp.Replace($"\"SME_IdShortPath\" = COALESCE(\"SME_IdShort\", '') || '{i}'", replacement);
@@ -559,11 +559,11 @@ namespace AasxServerDB
             {
                 var text = "-- Start totalCount at " + watch.ElapsedMilliseconds + " ms";
                 Console.WriteLine(text);
-                qResult.Messages.Add(text);
+                messages.Add(text);
                 qResult.TotalCount = result.Count();
                 text = "-- End totalCount at " + watch.ElapsedMilliseconds + " ms";
                 Console.WriteLine(text);
-                qResult.Messages.Add(text);
+                messages.Add(text);
             }
 
             // create queryable with pagenation
@@ -575,7 +575,7 @@ namespace AasxServerDB
                 result = result.Skip(pageFrom).Take(pageSize);
                 var text = "Using pageFrom and pageSize.";
                 Console.WriteLine(text);
-                qResult.Messages.Add(text);
+                messages.Add(text);
             }
             else
             {
@@ -584,7 +584,7 @@ namespace AasxServerDB
                     result = result.OrderBy(sm => sm.SM_Id).Where(sm => sm.SM_Id > lastID).Take(pageSize);
                     var text = "Using lastID and pageSize.";
                     Console.WriteLine(text);
-                    qResult.Messages.Add(text);
+                    messages.Add(text);
                 }
             }
             // qResult.LastID = result.LastOrDefault().SM_Id;
@@ -641,7 +641,7 @@ namespace AasxServerDB
         }
 
         // --------------- SME Methods ---------------
-        private IQueryable<SMESet> getFilteredSMESets(DbSet<SMESet> smeSets, List<string> idShortPathList)
+        private static IQueryable<SMESet> GetFilteredSMESets(DbSet<SMESet> smeSets, List<string> idShortPathList)
         {
             if (idShortPathList.Count == 0)
             {
@@ -649,17 +649,17 @@ namespace AasxServerDB
             }
 
             // Provided list of idShortPath and their depths
-            List<int> depthList = idShortPathList.Select(path => path.Split('.').Length).ToList();
+            var depthList = idShortPathList.Select(path => path.Split('.').Length).ToList();
 
             // Prepare the list of valid entries for SQL
             var prefixEntriesSql = $@"(Depth < {depthList[0]} AND '{idShortPathList[0]}' LIKE BuiltIdShortPath || '%')";
-            for (int i = 1; i < idShortPathList.Count; i++)
+            for (var i = 1; i < idShortPathList.Count; i++)
             {
                 prefixEntriesSql += $@" OR (Depth < {depthList[i]} AND '{idShortPathList[i]}' LIKE BuiltIdShortPath || '%')";
             }
 
             var finalEntriesSql = $@"(Depth = {depthList[0]} AND '{idShortPathList[0]}' = BuiltIdShortPath)";
-            for (int i = 1; i < idShortPathList.Count; i++)
+            for (var i = 1; i < idShortPathList.Count; i++)
             {
                 finalEntriesSql += $@" OR (Depth = {depthList[i]} AND '{idShortPathList[i]}' = BuiltIdShortPath)";
             }
@@ -774,6 +774,12 @@ namespace AasxServerDB
             // get condition out of expression
             var conditionsExpression = ConditionFromExpression(messages, expression);
 
+            if (conditionsExpression.ContainsKey("AccessRules"))
+            {
+                messages.Add(conditionsExpression["AccessRules"]);
+                return null;
+            }
+
             var conditionAll = conditionsExpression["all"];
             if (conditionAll.Contains("$$path$$"))
             {
@@ -822,22 +828,12 @@ namespace AasxServerDB
                 restrictValue = restrictSValue || restrictNValue;
 
                 // restrict all tables seperate
-                /*
                 smTable = restrictSM ? db.SMSets.Where(sm => (!withSMSemanticId || (sm.SemanticId != null && sm.SemanticId.Equals(smSemanticId))) && (!withSMIdentifier || (sm.Identifier != null && sm.Identifier.Equals(smIdentifier)))) : db.SMSets;
                 smeTable = restrictSME ? db.SMESets.Where(sme => (!withSemanticId || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) && (!withDiff || sme.TimeStamp.CompareTo(diff) > 0)) : db.SMESets;
                 sValueTable = restrictValue ? (restrictSValue ? db.SValueSets.Where(v => restrictSValue && v.Value != null && (!withContains || v.Value.Contains(contains)) && (!withEqualString || v.Value.Equals(equal))) : null) : db.SValueSets;
                 iValueTable = restrictValue ? (restrictNValue ? db.IValueSets.Where(v => restrictNValue && v.Value != null && (!withEqualNum || v.Value == equalNum) && (!withCompare || (v.Value >= lowerNum && v.Value <= upperNum))) : null) : db.IValueSets;
                 dValueTable = restrictValue ? (restrictNValue ? db.DValueSets.Where(v => restrictNValue && v.Value != null && (!withEqualNum || v.Value == equalNum) && (!withCompare || (v.Value >= lowerNum && v.Value <= upperNum))) : null) : db.DValueSets;
-                */
-                smTable = restrictSM ? db.SMSets.Where(sm => (!withSMSemanticId || (sm.SemanticId != null && sm.SemanticId.Equals(smSemanticId))) && (!withSMIdentifier || (sm.Identifier != null && sm.Identifier.Equals(smIdentifier)))) : db.SMSets;
-                smeTable = restrictSME ? db.SMESets.Where(sme => (!withSemanticId || (sme.SemanticId != null && sme.SemanticId.Equals(semanticId))) && (!withDiff || sme.TimeStamp.CompareTo(diff) > 0)) : db.SMESets;
-                sValueTable = restrictValue ? (restrictSValue ? db.SValueSets.Where(v => restrictSValue && v.Value != null && (!withContains || v.Value.Contains(contains)) && (!withEqualString || v.Value.Equals(equal))) : Enumerable.Empty<SValueSet>().AsQueryable()) : db.SValueSets;
-                iValueTable = restrictValue ? (restrictNValue ? db.IValueSets.Where(v => restrictNValue && v.Value != null && (!withEqualNum || v.Value == equalNum) && (!withCompare || (v.Value >= lowerNum && v.Value <= upperNum))) : Enumerable.Empty<IValueSet>().AsQueryable()) : db.IValueSets;
-                dValueTable = restrictValue ? (restrictNValue ? db.DValueSets.Where(v => restrictNValue && v.Value != null && (!withEqualNum || v.Value == equalNum) && (!withCompare || (v.Value >= lowerNum && v.Value <= upperNum))) : Enumerable.Empty<DValueSet>().AsQueryable()) : db.DValueSets;
             }
-
-            int skip = pageFrom;
-            int take = pageSize;
 
             var smSelect = smTable.Select("new { Id, Identifier, IdShort }");
             var smeSelect = smeTable.Select("new { Id, SMId, IdShort, TimeStamp, IdShortPath }");
@@ -1007,12 +1003,12 @@ namespace AasxServerDB
             {
                 text = "-- Start totalCount at " + watch.ElapsedMilliseconds + " ms";
                 Console.WriteLine(text);
-                qResult.Messages.Add(text);
+                messages.Add(text);
                 qResult.TotalCount = qSearch.Count();
                 text = "-- End totalCount at " + watch.ElapsedMilliseconds + " ms";
                 Console.WriteLine(text);
             }
-            qResult.Messages.Add(text);
+            messages.Add(text);
             qResult.PageFrom = pageFrom;
             qResult.PageSize = pageSize;
             qSearch = qSearch.Skip(pageFrom).Take(pageSize);
