@@ -1856,7 +1856,10 @@ namespace AasxServer
                                         d = "init";
                                         eventData.lastUpdate.Value = d;
                                         var dt = DateTime.UtcNow;
-                                        eventData.statusData.SetAllParentsAndTimestamps(eventData.statusData.Parent as IReferable, dt, dt, DateTime.MinValue);
+                                        if (eventData.statusData != null)
+                                        {
+                                            eventData.statusData.SetAllParentsAndTimestamps(eventData.statusData.Parent as IReferable, dt, dt, DateTime.MinValue);
+                                        }
                                         Program.signalNewData(2);
                                     }
                                     else
@@ -1874,48 +1877,58 @@ namespace AasxServer
 
                                         Events.EventPayload eventPayload = System.Text.Json.JsonSerializer.Deserialize<Events.EventPayload>(jsonString);
 
-                                        ISubmodelElement receiveSme = null;
-                                        MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(eventPayload.statusData));
-                                        JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
-                                        receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
-                                        if (receiveSme != null && receiveSme is SubmodelElementCollection smc)
+                                        if (eventPayload.statusData != "")
                                         {
-                                            if (smc.Value != null)
+                                            ISubmodelElement receiveSme = null;
+                                            MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(eventPayload.statusData));
+                                            JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                                            receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
+                                            if (receiveSme != null && receiveSme is SubmodelElementCollection smc)
                                             {
-                                                if (smc.Value.Count != 0 && smc.Value[0] is SubmodelElementCollection smcValue)
+                                                if (smc.Value != null && eventData.statusData != null && eventData.statusData.Value != null)
                                                 {
-                                                    eventData.statusData.Value = smcValue.Value;
-                                                }
-                                                else
-                                                {
-                                                    eventData.statusData.Value.Clear();
-                                                }
+                                                    if (smc.Value.Count != 0 && smc.Value[0] is SubmodelElementCollection smcValue)
+                                                    {
+                                                        eventData.statusData.Value = smcValue.Value;
+                                                    }
+                                                    else
+                                                    {
+                                                        eventData.statusData.Value.Clear();
+                                                    }
 
-                                                var dt = eventData.statusData.TimeStamp;
-                                                d = eventPayload.status.lastUpdate;
-                                                if (d == "")
-                                                {
-                                                    d = "init";
+                                                    var dt = eventData.statusData.TimeStamp;
+                                                    d = eventPayload.status.lastUpdate;
+                                                    if (d == "")
+                                                    {
+                                                        d = "init";
+                                                    }
+                                                    eventData.lastUpdate.Value = d;
+                                                    eventData.statusData.SetAllParentsAndTimestamps(eventData.statusData.Parent as IReferable, dt, dt, DateTime.MinValue);
+                                                    Program.signalNewData(2);
                                                 }
-                                                eventData.lastUpdate.Value = d;
-                                                eventData.statusData.SetAllParentsAndTimestamps(eventData.statusData.Parent as IReferable, dt, dt, DateTime.MinValue);
-                                                Program.signalNewData(2);
                                             }
+                                        }
+                                        else
+                                        {
+                                            d = eventPayload.status.lastUpdate;
                                         }
                                     }
                                     bool withReconnect = false;
-                                    foreach (var r in eventData.statusData.Value)
+                                    if (eventData.statusData != null && eventData.statusData.Value != null)
                                     {
-                                        if (r is Property p2 && p2.IdShort == "__RECONNECT__")
+                                        foreach (var r in eventData.statusData.Value)
                                         {
-                                            p2.Value = "" + (Convert.ToInt32(p2.Value) + 1);
-                                            withReconnect = true;
+                                            if (r is Property p2 && p2.IdShort == "__RECONNECT__")
+                                            {
+                                                p2.Value = "" + (Convert.ToInt32(p2.Value) + 1);
+                                                withReconnect = true;
+                                            }
                                         }
-                                    }
-                                    if (!withReconnect)
-                                    {
-                                        var p = new Property(DataTypeDefXsd.String, idShort: "__RECONNECT__", value: "1");
-                                        eventData.statusData.Value.Add(p);
+                                        if (!withReconnect)
+                                        {
+                                            var p = new Property(DataTypeDefXsd.String, idShort: "__RECONNECT__", value: "1");
+                                            eventData.statusData.Value.Add(p);
+                                        }
                                     }
                                 }
                             }
