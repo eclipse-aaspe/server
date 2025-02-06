@@ -106,7 +106,7 @@ namespace Events
                         timeStamp = sme.TimeStampTree;
                         if (diffTime > sme.TimeStampCreate && sme.TimeStampCreate < sme.TimeStampTree && (sme.TimeStampTree - diffTime).TotalMilliseconds > 1)
                         {
-                            if (children != null || children.Count != 0)
+                            if (children != null && children.Count != 0)
                             {
                                 foreach (ISubmodelElement child in children)
                                 {
@@ -129,7 +129,7 @@ namespace Events
                         {
                             delete = true;
                         }
-                        if (children != null || children.Count != 0)
+                        if (children != null && children.Count != 0)
                         {
                             foreach (ISubmodelElement child in children)
                             {
@@ -307,9 +307,9 @@ namespace Events
                             {
                                 if (!(referable is Submodel))
                                 {
-                                    children = new List<ISubmodelElement>();
-                                    children.Add(referable as ISubmodelElement);
-                                    collectSubmodelElements(children, diffTime, "DELETE", submodel.Id, "", e.eventEntries, diffEntry, noPayload);
+                                    var c = new List<ISubmodelElement>();
+                                    c.Add(referable as ISubmodelElement);
+                                    collectSubmodelElements(c, diffTime, "DELETE", submodel.Id, "", e.eventEntries, diffEntry, noPayload);
                                 }
                                 else
                                 {
