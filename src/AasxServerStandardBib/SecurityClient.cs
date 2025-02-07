@@ -1960,6 +1960,10 @@ namespace AasxServer
                         c = eventData.changes.Value;
                     }
                     var e = Events.EventPayload.CollectPayload(c, 0, eventData.statusData, source, d, diffEntry, np);
+                    foreach (var diff in diffEntry)
+                    {
+                        Console.WriteLine(diff);
+                    }
 
                     Console.WriteLine("PUT Events: " + requestPath + "/" + d);
 
