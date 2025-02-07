@@ -278,12 +278,12 @@ namespace Extensions
                 }
                 else if (sourceSubmodelElement is AdminShellV10.File sourceFile)
                 {
-                    var newFile = new File("");
+                    var newFile = new File();
                     outputSubmodelElement = newFile.ConvertFromV10(sourceFile);
                 }
                 else if (sourceSubmodelElement is AdminShellV10.Blob blob)
                 {
-                    var newBlob = new Blob("");
+                    var newBlob = new Blob();
                     outputSubmodelElement = newBlob.ConvertFromV10(blob);
                 }
                 else if (sourceSubmodelElement is AdminShellV10.ReferenceElement sourceReferenceElement)
@@ -438,12 +438,12 @@ namespace Extensions
                 }
                 else if (sourceSubmodelElement is AdminShellV20.File sourceFile)
                 {
-                    var newFile = new File("");
+                    var newFile = new File();
                     outputSubmodelElement = newFile.ConvertFromV20(sourceFile);
                 }
                 else if (sourceSubmodelElement is AdminShellV20.Blob blob)
                 {
-                    var newBlob = new Blob("");
+                    var newBlob = new Blob();
                     outputSubmodelElement = newBlob.ConvertFromV20(blob);
                 }
                 else if (sourceSubmodelElement is AdminShellV20.ReferenceElement sourceReferenceElement)
@@ -1465,6 +1465,7 @@ namespace Extensions
                                                                                                                   {"BEvt", AasSubmodelElements.BasicEventElement},
                                                                                                                   {"Blob", AasSubmodelElements.Blob},
                                                                                                                   {"Cap", AasSubmodelElements.Capability},
+                                                                                                                  {"CE", AasSubmodelElements.ContainerElement},
                                                                                                                   {"DE", AasSubmodelElements.DataElement},
                                                                                                                   {"Ent", AasSubmodelElements.Entity},
                                                                                                                   {"Evt", AasSubmodelElements.EventElement},

@@ -17,7 +17,7 @@ using DataTransferObjects.CommonDTOs;
 namespace DataTransferObjects.MetadataDTOs
 {
     public record class EntityMetadata(
-            EntityType EntityType,
+            EntityType? EntityType,
             List<ExtensionDTO>? Extensions = null,
             string? Category = null,
             string? IdShort = null,

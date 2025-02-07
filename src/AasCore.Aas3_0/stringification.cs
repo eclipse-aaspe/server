@@ -152,6 +152,7 @@ namespace AasCore.Aas3_0
             {
                 { Aas.AssetKind.Type, "Type" },
                 { Aas.AssetKind.Instance, "Instance" },
+                { Aas.AssetKind.Role, "Role" },
                 { Aas.AssetKind.NotApplicable, "NotApplicable" }
             });
 
@@ -186,6 +187,7 @@ namespace AasCore.Aas3_0
             {
                 { "Type", Aas.AssetKind.Type },
                 { "Instance", Aas.AssetKind.Instance },
+                { "Role", Aas.AssetKind.Role },
                 { "NotApplicable", Aas.AssetKind.NotApplicable }
             });
 
@@ -216,6 +218,7 @@ namespace AasCore.Aas3_0
                 { Aas.AasSubmodelElements.BasicEventElement, "BasicEventElement" },
                 { Aas.AasSubmodelElements.Blob, "Blob" },
                 { Aas.AasSubmodelElements.Capability, "Capability" },
+                { Aas.AasSubmodelElements.ContainerElement, "ContainerElement" },
                 { Aas.AasSubmodelElements.DataElement, "DataElement" },
                 { Aas.AasSubmodelElements.Entity, "Entity" },
                 { Aas.AasSubmodelElements.EventElement, "EventElement" },
@@ -264,6 +267,7 @@ namespace AasCore.Aas3_0
                 { "BasicEventElement", Aas.AasSubmodelElements.BasicEventElement },
                 { "Blob", Aas.AasSubmodelElements.Blob },
                 { "Capability", Aas.AasSubmodelElements.Capability },
+                { "ContainerElement", Aas.AasSubmodelElements.ContainerElement },
                 { "DataElement", Aas.AasSubmodelElements.DataElement },
                 { "Entity", Aas.AasSubmodelElements.Entity },
                 { "EventElement", Aas.AasSubmodelElements.EventElement },
@@ -548,6 +552,7 @@ namespace AasCore.Aas3_0
                 { Aas.KeyTypes.Blob, "Blob" },
                 { Aas.KeyTypes.Capability, "Capability" },
                 { Aas.KeyTypes.ConceptDescription, "ConceptDescription" },
+                { Aas.KeyTypes.ContainerElement, "ContainerElement" },
                 { Aas.KeyTypes.DataElement, "DataElement" },
                 { Aas.KeyTypes.Entity, "Entity" },
                 { Aas.KeyTypes.EventElement, "EventElement" },
@@ -603,6 +608,7 @@ namespace AasCore.Aas3_0
                 { "Blob", Aas.KeyTypes.Blob },
                 { "Capability", Aas.KeyTypes.Capability },
                 { "ConceptDescription", Aas.KeyTypes.ConceptDescription },
+                { "ContainerElement", Aas.KeyTypes.ContainerElement },
                 { "DataElement", Aas.KeyTypes.DataElement },
                 { "Entity", Aas.KeyTypes.Entity },
                 { "EventElement", Aas.KeyTypes.EventElement },

@@ -2053,6 +2053,12 @@ namespace AasCore.Aas3_0
         Instance,
 
         /// <summary>
+        /// Role asset
+        /// </summary>
+        [EnumMember(Value = "Role")]
+        Role,
+
+        /// <summary>
         /// Neither a type asset nor an instance asset
         /// </summary>
         [EnumMember(Value = "NotApplicable")]
@@ -2854,12 +2860,12 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Reference to the first element in the relationship taking the role of the subject.
         /// </summary>
-        public IReference First { get; set; }
+        public IReference? First { get; set; }
 
         /// <summary>
         /// Reference to the second element in the relationship taking the role of the object.
         /// </summary>
-        public IReference Second { get; set; }
+        public IReference? Second { get; set; }
     }
 
     /// <summary>
@@ -2967,12 +2973,12 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Reference to the first element in the relationship taking the role of the subject.
         /// </summary>
-        public IReference First { get; set; }
+        public IReference? First { get; set; }
 
         /// <summary>
         /// Reference to the second element in the relationship taking the role of the object.
         /// </summary>
-        public IReference Second { get; set; }
+        public IReference? Second { get; set; }
 
         #region Parent
         [JsonIgnore]
@@ -3273,8 +3279,8 @@ namespace AasCore.Aas3_0
         }
 
         public RelationshipElement(
-            IReference first,
-            IReference second,
+            IReference first = null,
+            IReference second = null,
             List<IExtension>? extensions = null,
             string? category = null,
             string? idShort = null,
@@ -3316,6 +3322,9 @@ namespace AasCore.Aas3_0
         [EnumMember(Value = "Capability")]
         Capability,
 
+        [EnumMember(Value = "ContainerElement")]
+        ContainerElement,
+
         [EnumMember(Value = "DataElement")]
         DataElement,
 
@@ -3354,6 +3363,78 @@ namespace AasCore.Aas3_0
 
         [EnumMember(Value = "SubmodelElementCollection")]
         SubmodelElementCollection
+    }
+
+    /// <summary>
+    /// Enumeration of conainer submodel element types including abstract container submodel element types
+    /// </summary>
+    public enum AasContainerSubmodelElements
+    {
+        [EnumMember(Value = "AnnotatedRelationshipElement")]
+        AnnotatedRelationshipElement,
+
+        [EnumMember(Value = "Entity")]
+        Entity,
+
+        [EnumMember(Value = "SubmodelElementList")]
+        SubmodelElementList,
+
+        [EnumMember(Value = "SubmodelElementCollection")]
+        SubmodelElementCollection
+    }
+
+    /// <summary>
+    /// Enumeration of non-container submodel element types including abstract submodel element types
+    /// </summary>
+    public enum AasNonContainerSubmodelElements
+    {
+        [EnumMember(Value = "BasicEventElement")]
+        BasicEventElement,
+
+        [EnumMember(Value = "Blob")]
+        Blob,
+
+        [EnumMember(Value = "Capability")]
+        Capability,
+
+        [EnumMember(Value = "DataElement")]
+        DataElement,
+
+        [EnumMember(Value = "EventElement")]
+        EventElement,
+
+        [EnumMember(Value = "File")]
+        File,
+
+        [EnumMember(Value = "MultiLanguageProperty")]
+        MultiLanguageProperty,
+
+        [EnumMember(Value = "Operation")]
+        Operation,
+
+        [EnumMember(Value = "Property")]
+        Property,
+
+        [EnumMember(Value = "Range")]
+        Range,
+
+        [EnumMember(Value = "ReferenceElement")]
+        ReferenceElement,
+
+        [EnumMember(Value = "RelationshipElement")]
+        RelationshipElement,
+
+        [EnumMember(Value = "SubmodelElement")]
+        SubmodelElement,
+    }
+
+    /// <summary>
+    /// 	
+    /// A container element is a submodel element that is composed of other submodel elements.
+    /// </summary>
+    public interface IContainerElement : ISubmodelElement
+    {
+        // Intentionally empty.
     }
 
     /// <summary>
@@ -3400,7 +3481,7 @@ namespace AasCore.Aas3_0
     ///   </li>
     /// </ul>
     /// </remarks>
-    public interface ISubmodelElementList : ISubmodelElement
+    public interface ISubmodelElementList : IContainerElement
     {
         /// <summary>
         /// Defines whether order in list is relevant. If <see cref="Aas.SubmodelElementList.OrderRelevant" /> = <c>False</c>
@@ -3989,7 +4070,7 @@ namespace AasCore.Aas3_0
     /// A submodel element collection is a kind of struct, i.e. a a logical encapsulation
     /// of multiple named values. It has a fixed number of submodel elements.
     /// </summary>
-    public interface ISubmodelElementCollection : ISubmodelElement
+    public interface ISubmodelElementCollection : IContainerElement
     {
         /// <summary>
         /// Submodel element contained in the collection.
@@ -4480,7 +4561,7 @@ namespace AasCore.Aas3_0
     ///   <li>
     ///     Constraint AASd-007:
     ///     If both, the <see cref="Aas.Property.Value" /> and the <see cref="Aas.Property.ValueId" /> are
-    ///     present then the value of <see cref="Aas.Property.Value" /> needs to be identical to
+    ///     present then the value of <see cref="Aas.Property.Value" /> shall be identical to
     ///     the value of the referenced coded value in <see cref="Aas.Property.ValueId" />.
     ///   </li>
     /// </ul>
@@ -6486,7 +6567,7 @@ namespace AasCore.Aas3_0
         /// The allowed values are defined as in RFC2046.
         /// </para>
         /// </remarks>
-        public string ContentType { get; set; }
+        public string? ContentType { get; set; }
     }
 
     /// <summary>
@@ -6615,7 +6696,7 @@ namespace AasCore.Aas3_0
         /// The allowed values are defined as in RFC2046.
         /// </para>
         /// </remarks>
-        public string ContentType { get; set; }
+        public string? ContentType { get; set; }
         #region Parent
         [JsonIgnore]
         public IClass? Parent { get; set; }
@@ -6915,7 +6996,7 @@ namespace AasCore.Aas3_0
         }
 
         public Blob(
-            string contentType,
+            string? contentType = null,
             List<IExtension>? extensions = null,
             string? category = null,
             string? idShort = null,
@@ -6963,7 +7044,7 @@ namespace AasCore.Aas3_0
         /// <remarks>
         /// The content type states which file extensions the file can have.
         /// </remarks>
-        public string ContentType { get; set; }
+        public string? ContentType { get; set; }
     }
 
     /// <summary>
@@ -7084,7 +7165,7 @@ namespace AasCore.Aas3_0
         /// <remarks>
         /// The content type states which file extensions the file can have.
         /// </remarks>
-        public string ContentType { get; set; }
+        public string? ContentType { get; set; }
         #region Parent
         [JsonIgnore]
         public IClass? Parent { get; set; }
@@ -7384,7 +7465,7 @@ namespace AasCore.Aas3_0
         }
 
         public File(
-            string contentType,
+            string contentType = null,
             List<IExtension>? extensions = null,
             string? category = null,
             string? idShort = null,
@@ -7414,7 +7495,7 @@ namespace AasCore.Aas3_0
     /// An annotated relationship element is a relationship element that can be annotated
     /// with additional data elements.
     /// </summary>
-    public interface IAnnotatedRelationshipElement : IRelationshipElement
+    public interface IAnnotatedRelationshipElement : IRelationshipElement, IContainerElement
     {
         /// <summary>
         /// A data element that represents an annotation that holds for the relationship
@@ -7533,12 +7614,12 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Reference to the first element in the relationship taking the role of the subject.
         /// </summary>
-        public IReference First { get; set; }
+        public IReference? First { get; set; }
 
         /// <summary>
         /// Reference to the second element in the relationship taking the role of the object.
         /// </summary>
-        public IReference Second { get; set; }
+        public IReference? Second { get; set; }
 
         /// <summary>
         /// A data element that represents an annotation that holds for the relationship
@@ -7874,8 +7955,8 @@ namespace AasCore.Aas3_0
         }
 
         public AnnotatedRelationshipElement(
-            IReference first,
-            IReference second,
+            IReference first = null,
+            IReference second = null,
             List<IExtension>? extensions = null,
             string? category = null,
             string? idShort = null,
@@ -7914,11 +7995,11 @@ namespace AasCore.Aas3_0
     ///     Constraint AASd-014:
     ///     Either the attribute <see cref="Aas.Entity.GlobalAssetId" /> or <see cref="Aas.Entity.SpecificAssetIds" />
     ///     of an <see cref="Aas.Entity" /> must be set if <see cref="Aas.Entity.EntityType" /> is set to
-    ///     <see cref="Aas.EntityType.SelfManagedEntity" />. They are not existing otherwise.
+    ///     <see cref="Aas.EntityType.SelfManagedEntity" />.
     ///   </li>
     /// </ul>
     /// </remarks>
-    public interface IEntity : ISubmodelElement
+    public interface IEntity : IContainerElement
     {
         /// <summary>
         /// Describes statements applicable to the entity by a set of submodel elements,
@@ -7929,7 +8010,7 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Describes whether the entity is a co-managed entity or a self-managed entity.
         /// </summary>
-        public EntityType EntityType { get; set; }
+        public EntityType? EntityType { get; set; }
 
         /// <summary>
         /// Global identifier of the asset the entity is representing.
@@ -7968,7 +8049,7 @@ namespace AasCore.Aas3_0
     ///     Constraint AASd-014:
     ///     Either the attribute <see cref="Aas.Entity.GlobalAssetId" /> or <see cref="Aas.Entity.SpecificAssetIds" />
     ///     of an <see cref="Aas.Entity" /> must be set if <see cref="Aas.Entity.EntityType" /> is set to
-    ///     <see cref="Aas.EntityType.SelfManagedEntity" />. They are not existing otherwise.
+    ///     <see cref="Aas.EntityType.SelfManagedEntity" />.
     ///   </li>
     /// </ul>
     /// </remarks>
@@ -8079,7 +8160,7 @@ namespace AasCore.Aas3_0
         /// <summary>
         /// Describes whether the entity is a co-managed entity or a self-managed entity.
         /// </summary>
-        public EntityType EntityType { get; set; }
+        public EntityType? EntityType { get; set; }
 
         /// <summary>
         /// Global identifier of the asset the entity is representing.
@@ -8434,7 +8515,7 @@ namespace AasCore.Aas3_0
         }
 
         public Entity(
-            EntityType entityType,
+            EntityType? entityType = null,
             List<IExtension>? extensions = null,
             string? category = null,
             string? idShort = null,
@@ -11518,6 +11599,16 @@ namespace AasCore.Aas3_0
 
         [EnumMember(Value = "ConceptDescription")]
         ConceptDescription,
+
+        /// <summary>
+        /// Container element.
+        /// </summary>
+        /// <remarks>
+        /// Container Element is abstract, <em>i.e.</em> if a key uses <see cref="Aas.KeyTypes.ContainerElement" />
+        /// the reference may be a SubmodelElementList, a SubmodelElementCollection etc.
+        /// </remarks>
+        [EnumMember(Value = "ContainerElement")]
+        ContainerElement,
 
         /// <summary>
         /// Data element.

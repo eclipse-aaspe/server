@@ -25,6 +25,7 @@ namespace AasCore.Aas3_0
     /// </summary>
     public static class Constants
     {
+        //TODO:jtikekar: remove
         public static readonly HashSet<string> ValidCategoriesForDataElement = (
             new HashSet<string>()
             {
@@ -61,6 +62,7 @@ namespace AasCore.Aas3_0
                 KeyTypes.BasicEventElement,
                 KeyTypes.Blob,
                 KeyTypes.Capability,
+                KeyTypes.ContainerElement,
                 KeyTypes.DataElement,
                 KeyTypes.Entity,
                 KeyTypes.EventElement,
@@ -83,6 +85,7 @@ namespace AasCore.Aas3_0
                 KeyTypes.BasicEventElement,
                 KeyTypes.Blob,
                 KeyTypes.Capability,
+                KeyTypes.ContainerElement,
                 KeyTypes.DataElement,
                 KeyTypes.Entity,
                 KeyTypes.EventElement,
@@ -109,6 +112,7 @@ namespace AasCore.Aas3_0
                 KeyTypes.BasicEventElement,
                 KeyTypes.Blob,
                 KeyTypes.Capability,
+                KeyTypes.ContainerElement,
                 KeyTypes.DataElement,
                 KeyTypes.Entity,
                 KeyTypes.EventElement,
@@ -142,6 +146,7 @@ namespace AasCore.Aas3_0
                 KeyTypes.BasicEventElement,
                 KeyTypes.Blob,
                 KeyTypes.Capability,
+                KeyTypes.ContainerElement,
                 KeyTypes.DataElement,
                 KeyTypes.Entity,
                 KeyTypes.EventElement,

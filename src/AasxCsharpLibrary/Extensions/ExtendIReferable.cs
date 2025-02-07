@@ -296,6 +296,12 @@ namespace Extensions
                 return new AasElementSelfDescription("DataElement", "DE",
                     KeyTypes.DataElement, AasSubmodelElements.DataElement);
             }
+            //TODO: jtikekar Update w.r.t. ContainerElement
+            //else if (referable is IDataElement)
+            //{
+            //    return new AasElementSelfDescription("DataElement", "DE",
+            //        KeyTypes.DataElement, AasSubmodelElements.DataElement);
+            //}
             else if (referable is ISubmodelElement)
             {
                 return new AasElementSelfDescription("SubmodelElement", "SME",

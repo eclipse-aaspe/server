@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright (c) 2018-2021 Festo AG & Co. KG <https://www.festo.com/net/de_de/Forms/web/contact_international>
 Author: Michael Hoffmeister
 
@@ -125,11 +125,11 @@ namespace AdminShellNS
                     }
                 case AasSubmodelElements.File:
                     {
-                        return new AasCore.Aas3_0.File("").UpdateFrom(sourceSme);
+                        return new AasCore.Aas3_0.File().UpdateFrom(sourceSme);
                     }
                 case AasSubmodelElements.Blob:
                     {
-                        return new Blob("").UpdateFrom(sourceSme);
+                        return new Blob().UpdateFrom(sourceSme);
                     }
                 case AasSubmodelElements.ReferenceElement:
                     {
@@ -137,11 +137,11 @@ namespace AdminShellNS
                     }
                 case AasSubmodelElements.RelationshipElement:
                     {
-                        return new RelationshipElement(null, null).UpdateFrom(sourceSme);
+                        return new RelationshipElement().UpdateFrom(sourceSme);
                     }
                 case AasSubmodelElements.AnnotatedRelationshipElement:
                     {
-                        return new AnnotatedRelationshipElement(null, null).UpdateFrom(sourceSme);
+                        return new AnnotatedRelationshipElement().UpdateFrom(sourceSme);
                     }
                 case AasSubmodelElements.Capability:
                     {
@@ -165,7 +165,7 @@ namespace AdminShellNS
                     }
                 case AasSubmodelElements.Entity:
                     {
-                        return new Entity(EntityType.SelfManagedEntity);
+                        return new Entity();
                     }
                 default:
                     {

@@ -3927,27 +3927,10 @@ namespace AasCore.Aas3_0
                     }
                 }
 
-                if (theFirst == null)
-                {
-                    error = new Reporting.Error(
-                        "Required property \"first\" is missing");
-                    return null;
-                }
-
-                if (theSecond == null)
-                {
-                    error = new Reporting.Error(
-                        "Required property \"second\" is missing");
-                    return null;
-                }
 
                 return new Aas.RelationshipElement(
-                    theFirst
-                         ?? throw new System.InvalidOperationException(
-                            "Unexpected null, had to be handled before"),
-                    theSecond
-                         ?? throw new System.InvalidOperationException(
-                            "Unexpected null, had to be handled before"),
+                    theFirst,
+                    theSecond,
                     theExtensions,
                     theCategory,
                     theIdShort,
@@ -7807,17 +7790,8 @@ namespace AasCore.Aas3_0
                     }
                 }
 
-                if (theContentType == null)
-                {
-                    error = new Reporting.Error(
-                        "Required property \"contentType\" is missing");
-                    return null;
-                }
-
                 return new Aas.Blob(
-                    theContentType
-                         ?? throw new System.InvalidOperationException(
-                            "Unexpected null, had to be handled before"),
+                    theContentType,
                     theExtensions,
                     theCategory,
                     theIdShort,
@@ -8324,17 +8298,8 @@ namespace AasCore.Aas3_0
                     }
                 }
 
-                if (theContentType == null)
-                {
-                    error = new Reporting.Error(
-                        "Required property \"contentType\" is missing");
-                    return null;
-                }
-
                 return new Aas.File(
-                    theContentType
-                         ?? throw new System.InvalidOperationException(
-                            "Unexpected null, had to be handled before"),
+                    theContentType,
                     theExtensions,
                     theCategory,
                     theIdShort,
@@ -8897,27 +8862,9 @@ namespace AasCore.Aas3_0
                     }
                 }
 
-                if (theFirst == null)
-                {
-                    error = new Reporting.Error(
-                        "Required property \"first\" is missing");
-                    return null;
-                }
-
-                if (theSecond == null)
-                {
-                    error = new Reporting.Error(
-                        "Required property \"second\" is missing");
-                    return null;
-                }
-
                 return new Aas.AnnotatedRelationshipElement(
-                    theFirst
-                         ?? throw new System.InvalidOperationException(
-                            "Unexpected null, had to be handled before"),
-                    theSecond
-                         ?? throw new System.InvalidOperationException(
-                            "Unexpected null, had to be handled before"),
+                    theFirst,
+                    theSecond,
                     theExtensions,
                     theCategory,
                     theIdShort,
@@ -9544,9 +9491,7 @@ namespace AasCore.Aas3_0
                 }
 
                 return new Aas.Entity(
-                    theEntityType
-                         ?? throw new System.InvalidOperationException(
-                            "Unexpected null, had to be handled before"),
+                    theEntityType,
                     theExtensions,
                     theCategory,
                     theIdShort,
@@ -16634,11 +16579,17 @@ namespace AasCore.Aas3_0
                     result["embeddedDataSpecifications"] = arrayEmbeddedDataSpecifications;
                 }
 
-                result["first"] = Transform(
-                    that.First);
+                if (that.First != null)
+                {
+                    result["first"] = Transform(
+                                that.First); 
+                }
 
-                result["second"] = Transform(
-                    that.Second);
+                if (that.Second != null)
+                {
+                    result["second"] = Transform(
+                                that.Second); 
+                }
 
                 result["modelType"] = "RelationshipElement";
 
@@ -17456,8 +17407,11 @@ namespace AasCore.Aas3_0
                             that.Value));
                 }
 
-                result["contentType"] = Nodes.JsonValue.Create(
-                    that.ContentType);
+                if (that.ContentType != null)
+                {
+                    result["contentType"] = Nodes.JsonValue.Create(
+                                that.ContentType); 
+                }
 
                 result["modelType"] = "Blob";
 
@@ -17566,8 +17520,11 @@ namespace AasCore.Aas3_0
                         that.Value);
                 }
 
-                result["contentType"] = Nodes.JsonValue.Create(
-                    that.ContentType);
+                if (that.ContentType != null)
+                {
+                    result["contentType"] = Nodes.JsonValue.Create(
+                                that.ContentType); 
+                }
 
                 result["modelType"] = "File";
 
@@ -17670,11 +17627,17 @@ namespace AasCore.Aas3_0
                     result["embeddedDataSpecifications"] = arrayEmbeddedDataSpecifications;
                 }
 
-                result["first"] = Transform(
-                    that.First);
+                if (that.First != null)
+                {
+                    result["first"] = Transform(
+                               that.First); 
+                }
 
-                result["second"] = Transform(
-                    that.Second);
+                if (that.Second != null)
+                {
+                    result["second"] = Transform(
+                                that.Second); 
+                }
 
                 if (that.Annotations != null)
                 {
@@ -17801,8 +17764,11 @@ namespace AasCore.Aas3_0
                     result["statements"] = arrayStatements;
                 }
 
-                result["entityType"] = Serialize.EntityTypeToJsonValue(
+                if(that.EntityType != null)
+                {
+                    result["entityType"] = Serialize.EntityTypeToJsonValue(
                     that.EntityType);
+                }
 
                 if (that.GlobalAssetId != null)
                 {
@@ -18770,7 +18736,7 @@ namespace AasCore.Aas3_0
             /// <summary>
             /// Serialize a literal of EntityType into a JSON string.
             /// </summary>
-            public static Nodes.JsonValue EntityTypeToJsonValue(Aas.EntityType that)
+            public static Nodes.JsonValue EntityTypeToJsonValue(Aas.EntityType? that)
             {
                 string? text = Stringification.ToString(that);
                 return Nodes.JsonValue.Create(text)

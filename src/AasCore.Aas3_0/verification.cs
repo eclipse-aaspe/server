@@ -49,7 +49,7 @@ namespace AasCore.Aas3_0
         [CodeAnalysis.SuppressMessage("ReSharper", "StringLiteralTypo")]
         private static Regex _constructMatchesIdShort()
         {
-            var pattern = "^[a-zA-Z][a-zA-Z0-9_]*$";
+            var pattern = "^[a-zA-Z][a-zA-Z0-9_-]*[a-zA-Z0-9_]+$";
 
             return new Regex(pattern);
         }
@@ -2172,6 +2172,10 @@ namespace AasCore.Aas3_0
                 case Aas.AasSubmodelElements.Capability:
                     return element is Aas.ICapability;
 
+                //TODO: jtikekar Update Container Elements
+                //case Aas.AasSubmodelElements.ContainerElement:
+                //    return element is Aas.ICapability;
+
                 case Aas.AasSubmodelElements.DataElement:
                     return element is Aas.IDataElement;
 
@@ -2518,6 +2522,7 @@ namespace AasCore.Aas3_0
 
                 (int)Aas.AssetKind.Type,
                 (int)Aas.AssetKind.Instance,
+                (int)Aas.AssetKind.Role,
                 (int)Aas.AssetKind.NotApplicable
             };
 
@@ -2580,6 +2585,7 @@ namespace AasCore.Aas3_0
                 (int)Aas.KeyTypes.Blob,
                 (int)Aas.KeyTypes.Capability,
                 (int)Aas.KeyTypes.ConceptDescription,
+                (int)Aas.KeyTypes.ContainerElement,
                 (int)Aas.KeyTypes.DataElement,
                 (int)Aas.KeyTypes.Entity,
                 (int)Aas.KeyTypes.EventElement,
@@ -3023,7 +3029,7 @@ namespace AasCore.Aas3_0
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-077: The name of an extension within " +
-                        "Has-Extensions needs to be unique.");
+                        "Has-Extensions shall be unique.");
                 }
 
                 if (!(
@@ -3523,7 +3529,7 @@ namespace AasCore.Aas3_0
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-077: The name of an extension within " +
-                        "Has-Extensions needs to be unique.");
+                        "Has-Extensions shall be unique.");
                 }
 
                 if (!(
@@ -3608,7 +3614,7 @@ namespace AasCore.Aas3_0
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-021: Every qualifiable can only have one " +
+                        "Constraint AASd-021: Every qualifiable shall only have one " +
                         "qualifier with the same type.");
                 }
 
@@ -3921,7 +3927,7 @@ namespace AasCore.Aas3_0
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-077: The name of an extension within " +
-                        "Has-Extensions needs to be unique.");
+                        "Has-Extensions shall be unique.");
                 }
 
                 if (!(
@@ -3997,7 +4003,7 @@ namespace AasCore.Aas3_0
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-021: Every qualifiable can only have one " +
+                        "Constraint AASd-021: Every qualifiable shall only have one " +
                         "qualifier with the same type.");
                 }
 
@@ -4167,20 +4173,26 @@ namespace AasCore.Aas3_0
                     }
                 }
 
-                foreach (var error in Verification.Verify(that.First))
+                if (that.First != null)
                 {
-                    error.PrependSegment(
-                        new Reporting.NameSegment(
-                            "first"));
-                    yield return error;
+                    foreach (var error in Verification.Verify(that.First))
+                    {
+                        error.PrependSegment(
+                            new Reporting.NameSegment(
+                                "first"));
+                        yield return error;
+                    } 
                 }
 
-                foreach (var error in Verification.Verify(that.Second))
+                if (that.Second != null)
                 {
-                    error.PrependSegment(
-                        new Reporting.NameSegment(
-                            "second"));
-                    yield return error;
+                    foreach (var error in Verification.Verify(that.Second))
+                    {
+                        error.PrependSegment(
+                            new Reporting.NameSegment(
+                                "second"));
+                        yield return error;
+                    } 
                 }
             }
 
@@ -4205,7 +4217,7 @@ namespace AasCore.Aas3_0
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-077: The name of an extension within " +
-                        "Has-Extensions needs to be unique.");
+                        "Has-Extensions shall be unique.");
                 }
 
                 if (!(
@@ -4281,7 +4293,7 @@ namespace AasCore.Aas3_0
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-021: Every qualifiable can only have one " +
+                        "Constraint AASd-021: Every qualifiable shall only have one " +
                         "qualifier with the same type.");
                 }
 
@@ -4365,20 +4377,6 @@ namespace AasCore.Aas3_0
                         "Property or Range value type list element shall be set and " +
                         "all first level child elements shall have the value type as " +
                         "specified in value type list element.");
-                }
-
-                if (!(
-                    !(that.Value != null)
-                    || (
-                        that.Value.All(
-                            element => element.IdShort == null)
-                    )))
-                {
-                    yield return new Reporting.Error(
-                        "Invariant violated:\n" +
-                        "Constraint AASd-120: ID-short of submodel elements being " +
-                        "a direct child of a  Submodel element list shall not be " +
-                        "specified.");
                 }
 
                 if (that.Extensions != null)
@@ -4604,7 +4602,7 @@ namespace AasCore.Aas3_0
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-077: The name of an extension within " +
-                        "Has-Extensions needs to be unique.");
+                        "Has-Extensions shall be unique.");
                 }
 
                 if (!(
@@ -4680,7 +4678,7 @@ namespace AasCore.Aas3_0
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-021: Every qualifiable can only have one " +
+                        "Constraint AASd-021: Every qualifiable shall only have one " +
                         "qualifier with the same type.");
                 }
 
@@ -4915,7 +4913,7 @@ namespace AasCore.Aas3_0
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-077: The name of an extension within " +
-                        "Has-Extensions needs to be unique.");
+                        "Has-Extensions shall be unique.");
                 }
 
                 if (!(
@@ -4991,7 +4989,7 @@ namespace AasCore.Aas3_0
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-021: Every qualifiable can only have one " +
+                        "Constraint AASd-021: Every qualifiable shall only have one " +
                         "qualifier with the same type.");
                 }
 
@@ -5003,17 +5001,6 @@ namespace AasCore.Aas3_0
                         "Invariant violated:\n" +
                         "Embedded data specifications must be either not set or have " +
                         "at least one item.");
-                }
-
-                if (!(
-                    !(that.Category != null)
-                    || Aas.Constants.ValidCategoriesForDataElement.Contains(that.Category)))
-                {
-                    yield return new Reporting.Error(
-                        "Invariant violated:\n" +
-                        "Constraint AASd-090: For data elements category shall be " +
-                        "one of the following values: CONSTANT, PARAMETER or " +
-                        "VARIABLE.");
                 }
 
                 if (!(
@@ -5224,7 +5211,7 @@ namespace AasCore.Aas3_0
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-077: The name of an extension within " +
-                        "Has-Extensions needs to be unique.");
+                        "Has-Extensions shall be unique.");
                 }
 
                 if (!(
@@ -5300,7 +5287,7 @@ namespace AasCore.Aas3_0
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-021: Every qualifiable can only have one " +
+                        "Constraint AASd-021: Every qualifiable shall only have one " +
                         "qualifier with the same type.");
                 }
 
@@ -5312,17 +5299,6 @@ namespace AasCore.Aas3_0
                         "Invariant violated:\n" +
                         "Embedded data specifications must be either not set or have " +
                         "at least one item.");
-                }
-
-                if (!(
-                    !(that.Category != null)
-                    || Aas.Constants.ValidCategoriesForDataElement.Contains(that.Category)))
-                {
-                    yield return new Reporting.Error(
-                        "Invariant violated:\n" +
-                        "Constraint AASd-090: For data elements category shall be " +
-                        "one of the following values: CONSTANT, PARAMETER or " +
-                        "VARIABLE.");
                 }
 
                 if (!(
@@ -5542,7 +5518,7 @@ namespace AasCore.Aas3_0
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-077: The name of an extension within " +
-                        "Has-Extensions needs to be unique.");
+                        "Has-Extensions shall be unique.");
                 }
 
                 if (!(
@@ -5618,7 +5594,7 @@ namespace AasCore.Aas3_0
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-021: Every qualifiable can only have one " +
+                        "Constraint AASd-021: Every qualifiable shall only have one " +
                         "qualifier with the same type.");
                 }
 
@@ -5630,17 +5606,6 @@ namespace AasCore.Aas3_0
                         "Invariant violated:\n" +
                         "Embedded data specifications must be either not set or have " +
                         "at least one item.");
-                }
-
-                if (!(
-                    !(that.Category != null)
-                    || Aas.Constants.ValidCategoriesForDataElement.Contains(that.Category)))
-                {
-                    yield return new Reporting.Error(
-                        "Invariant violated:\n" +
-                        "Constraint AASd-090: For data elements category shall be " +
-                        "one of the following values: CONSTANT, PARAMETER or " +
-                        "VARIABLE.");
                 }
 
                 if (!(
@@ -5860,7 +5825,7 @@ namespace AasCore.Aas3_0
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-077: The name of an extension within " +
-                        "Has-Extensions needs to be unique.");
+                        "Has-Extensions shall be unique.");
                 }
 
                 if (!(
@@ -5936,7 +5901,7 @@ namespace AasCore.Aas3_0
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-021: Every qualifiable can only have one " +
+                        "Constraint AASd-021: Every qualifiable shall only have one " +
                         "qualifier with the same type.");
                 }
 
@@ -5948,17 +5913,6 @@ namespace AasCore.Aas3_0
                         "Invariant violated:\n" +
                         "Embedded data specifications must be either not set or have " +
                         "at least one item.");
-                }
-
-                if (!(
-                    !(that.Category != null)
-                    || Aas.Constants.ValidCategoriesForDataElement.Contains(that.Category)))
-                {
-                    yield return new Reporting.Error(
-                        "Invariant violated:\n" +
-                        "Constraint AASd-090: For data elements category shall be " +
-                        "one of the following values: CONSTANT, PARAMETER or " +
-                        "VARIABLE.");
                 }
 
                 if (that.Extensions != null)
@@ -6141,7 +6095,7 @@ namespace AasCore.Aas3_0
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-077: The name of an extension within " +
-                        "Has-Extensions needs to be unique.");
+                        "Has-Extensions shall be unique.");
                 }
 
                 if (!(
@@ -6217,7 +6171,7 @@ namespace AasCore.Aas3_0
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-021: Every qualifiable can only have one " +
+                        "Constraint AASd-021: Every qualifiable shall only have one " +
                         "qualifier with the same type.");
                 }
 
@@ -6229,17 +6183,6 @@ namespace AasCore.Aas3_0
                         "Invariant violated:\n" +
                         "Embedded data specifications must be either not set or have " +
                         "at least one item.");
-                }
-
-                if (!(
-                    !(that.Category != null)
-                    || Aas.Constants.ValidCategoriesForDataElement.Contains(that.Category)))
-                {
-                    yield return new Reporting.Error(
-                        "Invariant violated:\n" +
-                        "Constraint AASd-090: For data elements category shall be " +
-                        "one of the following values: CONSTANT, PARAMETER or " +
-                        "VARIABLE.");
                 }
 
                 if (that.Extensions != null)
@@ -6430,7 +6373,7 @@ namespace AasCore.Aas3_0
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-077: The name of an extension within " +
-                        "Has-Extensions needs to be unique.");
+                        "Has-Extensions shall be unique.");
                 }
 
                 if (!(
@@ -6506,7 +6449,7 @@ namespace AasCore.Aas3_0
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-021: Every qualifiable can only have one " +
+                        "Constraint AASd-021: Every qualifiable shall only have one " +
                         "qualifier with the same type.");
                 }
 
@@ -6518,17 +6461,6 @@ namespace AasCore.Aas3_0
                         "Invariant violated:\n" +
                         "Embedded data specifications must be either not set or have " +
                         "at least one item.");
-                }
-
-                if (!(
-                    !(that.Category != null)
-                    || Aas.Constants.ValidCategoriesForDataElement.Contains(that.Category)))
-                {
-                    yield return new Reporting.Error(
-                        "Invariant violated:\n" +
-                        "Constraint AASd-090: For data elements category shall be " +
-                        "one of the following values: CONSTANT, PARAMETER or " +
-                        "VARIABLE.");
                 }
 
                 if (that.Extensions != null)
@@ -6719,7 +6651,7 @@ namespace AasCore.Aas3_0
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-077: The name of an extension within " +
-                        "Has-Extensions needs to be unique.");
+                        "Has-Extensions shall be unique.");
                 }
 
                 if (!(
@@ -6795,7 +6727,7 @@ namespace AasCore.Aas3_0
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-021: Every qualifiable can only have one " +
+                        "Constraint AASd-021: Every qualifiable shall only have one " +
                         "qualifier with the same type.");
                 }
 
@@ -6990,20 +6922,26 @@ namespace AasCore.Aas3_0
                     }
                 }
 
-                foreach (var error in Verification.Verify(that.First))
+                if (that.First != null)
                 {
-                    error.PrependSegment(
-                        new Reporting.NameSegment(
-                            "first"));
-                    yield return error;
+                    foreach (var error in Verification.Verify(that.First))
+                    {
+                        error.PrependSegment(
+                            new Reporting.NameSegment(
+                                "first"));
+                        yield return error;
+                    } 
                 }
 
-                foreach (var error in Verification.Verify(that.Second))
+                if (that.Second != null)
                 {
-                    error.PrependSegment(
-                        new Reporting.NameSegment(
-                            "second"));
-                    yield return error;
+                    foreach (var error in Verification.Verify(that.Second))
+                    {
+                        error.PrependSegment(
+                            new Reporting.NameSegment(
+                                "second"));
+                        yield return error;
+                    } 
                 }
 
                 if (that.Annotations != null)
@@ -7047,7 +6985,7 @@ namespace AasCore.Aas3_0
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-077: The name of an extension within " +
-                        "Has-Extensions needs to be unique.");
+                        "Has-Extensions shall be unique.");
                 }
 
                 if (!(
@@ -7123,7 +7061,7 @@ namespace AasCore.Aas3_0
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-021: Every qualifiable can only have one " +
+                        "Constraint AASd-021: Every qualifiable shall only have one " +
                         "qualifier with the same type.");
                 }
 
@@ -7185,7 +7123,7 @@ namespace AasCore.Aas3_0
                         "Invariant violated:\n" +
                         "Constraint AASd-014: Either the attribute global asset ID " +
                         "or specific asset ID must be set if entity type is set to " +
-                        "self-managed entity. They are not existing otherwise.");
+                        "self-managed entity.");
                 }
 
                 if (!(
@@ -7364,12 +7302,15 @@ namespace AasCore.Aas3_0
                     }
                 }
 
-                foreach (var error in Verification.VerifyEntityType(that.EntityType))
+                if (that.EntityType != null)
                 {
-                    error.PrependSegment(
-                        new Reporting.NameSegment(
-                            "entityType"));
-                    yield return error;
+                    foreach (var error in Verification.VerifyEntityType(that.EntityType))
+                    {
+                        error.PrependSegment(
+                            new Reporting.NameSegment(
+                                "entityType"));
+                        yield return error;
+                    } 
                 }
 
                 if (that.GlobalAssetId != null)
@@ -7527,7 +7468,7 @@ namespace AasCore.Aas3_0
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-077: The name of an extension within " +
-                        "Has-Extensions needs to be unique.");
+                        "Has-Extensions shall be unique.");
                 }
 
                 if (!(
@@ -7603,7 +7544,7 @@ namespace AasCore.Aas3_0
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-021: Every qualifiable can only have one " +
+                        "Constraint AASd-021: Every qualifiable shall only have one " +
                         "qualifier with the same type.");
                 }
 
@@ -7900,7 +7841,7 @@ namespace AasCore.Aas3_0
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-077: The name of an extension within " +
-                        "Has-Extensions needs to be unique.");
+                        "Has-Extensions shall be unique.");
                 }
 
                 if (!(
@@ -7976,7 +7917,7 @@ namespace AasCore.Aas3_0
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-021: Every qualifiable can only have one " +
+                        "Constraint AASd-021: Every qualifiable shall only have one " +
                         "qualifier with the same type.");
                 }
 
@@ -8282,7 +8223,7 @@ namespace AasCore.Aas3_0
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-077: The name of an extension within " +
-                        "Has-Extensions needs to be unique.");
+                        "Has-Extensions shall be unique.");
                 }
 
                 if (!(
@@ -8358,7 +8299,7 @@ namespace AasCore.Aas3_0
                 {
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
-                        "Constraint AASd-021: Every qualifiable can only have one " +
+                        "Constraint AASd-021: Every qualifiable shall only have one " +
                         "qualifier with the same type.");
                 }
 
@@ -8541,7 +8482,7 @@ namespace AasCore.Aas3_0
                     yield return new Reporting.Error(
                         "Invariant violated:\n" +
                         "Constraint AASd-077: The name of an extension within " +
-                        "Has-Extensions needs to be unique.");
+                        "Has-Extensions shall be unique.");
                 }
 
                 if (!(
@@ -9741,11 +9682,11 @@ namespace AasCore.Aas3_0
                     "The value must not be empty.");
             }
 
-            if (!(that.Length <= 2000))
+            if (!(that.Length <= 2048))
             {
                 yield return new Reporting.Error(
                     "Invariant violated:\n" +
-                    "Identifier shall have a maximum length of 2000 characters.");
+                    "Identifier shall have a maximum length of 2048 characters.");
             }
         }
 
@@ -10175,7 +10116,7 @@ namespace AasCore.Aas3_0
         /// Verify that <paramref name="that" /> is a valid enumeration value.
         /// </summary>
         public static IEnumerable<Reporting.Error> VerifyEntityType(
-            Aas.EntityType that)
+            Aas.EntityType? that)
         {
             if (!EnumValueSet.ForEntityType.Contains(
                 (int)that))
