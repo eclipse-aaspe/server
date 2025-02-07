@@ -878,7 +878,18 @@ namespace Events
                         break;
                     case "endpoint":
                         if (p != null)
+                        {
+                            if (p.Value != null && p.Value.StartsWith("$"))
+                            {
+                                var url = System.Environment.GetEnvironmentVariable(p.Value.Substring(1));
+                                if (url != null)
+                                {
+                                    Console.WriteLine($"{p.Value} = {url}");
+                                    p.Value = url;
+                                }
+                            }
                             endPoint = p;
+                        }
                         break;
                     case "nopayload":
                         if (p != null)
