@@ -893,6 +893,7 @@ namespace Events
                                     Console.WriteLine($"Environment variable {envVarName} not found.");
                                 }
                             }
+                            endPoint = p;
                         }
                         break;
                     case "nopayload":
