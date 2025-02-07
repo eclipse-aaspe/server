@@ -90,7 +90,8 @@ namespace Events
                 {
                     case "CREATE":
                         timeStamp = sme.TimeStampCreate;
-                        if (sme.TimeStampCreate >= sme.TimeStampTree && (sme.TimeStampCreate - diffTime).TotalMilliseconds > 1)
+                        if ((sme.TimeStampCreate - sme.TimeStampTree).TotalMilliseconds >= 0
+                            && (sme.TimeStampCreate - diffTime).TotalMilliseconds > 1)
                         {
                             copy = true;
                         }
@@ -104,7 +105,12 @@ namespace Events
                         break;
                     case "UPDATE":
                         timeStamp = sme.TimeStampTree;
-                        if (diffTime > sme.TimeStampCreate && sme.TimeStampCreate < sme.TimeStampTree && (sme.TimeStampTree - diffTime).TotalMilliseconds > 1)
+                        var a = (diffTime - sme.TimeStampCreate).TotalMilliseconds;
+                        var b = (sme.TimeStampTree - sme.TimeStampCreate).TotalMilliseconds;
+                        var c = (sme.TimeStampTree - diffTime).TotalMilliseconds;
+                        if ((diffTime - sme.TimeStampCreate).TotalMilliseconds >= -1
+                            && (sme.TimeStampTree - sme.TimeStampCreate).TotalMilliseconds > 1
+                            && (sme.TimeStampTree - diffTime).TotalMilliseconds > 1)
                         {
                             if (children != null && children.Count != 0)
                             {
@@ -125,7 +131,8 @@ namespace Events
                         break;
                     case "DELETE":
                         timeStamp = sme.TimeStampDelete;
-                        if (diffTime > sme.TimeStampCreate && (sme.TimeStampDelete - diffTime).TotalMilliseconds > 1)
+                        if ((diffTime - sme.TimeStampCreate).TotalMilliseconds >= 0
+                            && (sme.TimeStampDelete - diffTime).TotalMilliseconds > 1)
                         {
                             delete = true;
                         }
