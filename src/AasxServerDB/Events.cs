@@ -881,14 +881,18 @@ namespace Events
                         {
                             if (p.Value != null && p.Value.StartsWith("$"))
                             {
-                                var url = System.Environment.GetEnvironmentVariable(p.Value.Substring(1));
+                                var envVarName = p.Value.Substring(1);
+                                var url = System.Environment.GetEnvironmentVariable(envVarName);
                                 if (url != null)
                                 {
                                     Console.WriteLine($"{p.Value} = {url}");
                                     p.Value = url;
                                 }
+                                else
+                                {
+                                    Console.WriteLine($"Environment variable {envVarName} not found.");
+                                }
                             }
-                            endPoint = p;
                         }
                         break;
                     case "nopayload":
