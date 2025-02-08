@@ -1912,7 +1912,7 @@ namespace AasxServer
                                         }
                                         else
                                         {
-                                            d = eventPayload.status.lastUpdate;
+                                            d = "init";
                                         }
                                     }
                                     bool withReconnect = false;
