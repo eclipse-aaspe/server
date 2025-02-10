@@ -724,7 +724,7 @@ namespace Events
                 }
             }
 
-            if (maxCount != 0 || eventData.dataCollection == parent)
+            if (maxCount != 0 && eventData.dataCollection == parent)
             {
                 SubmodelElementCollection data = eventData.dataCollection;
                 // if (eventData.direction != null && eventData.direction.Value == "IN" && eventData.mode != null && (eventData.mode.Value == "PUSH" || eventData.mode.Value == "PUT"))
