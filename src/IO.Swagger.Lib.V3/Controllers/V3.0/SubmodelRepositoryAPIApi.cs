@@ -560,7 +560,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 Console.WriteLine(_diff.ToString());
                 _diff = DateTime.Parse(diff);
                 Console.WriteLine(_diff.ToString());
-                filtered = filterSubmodelElements(submodelElements, _diff);
+                filtered = _submodelService.FilterSubmodelElements(submodelElements, _diff);
             }
             catch
             {
@@ -576,74 +576,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 	    return new ObjectResult(output);
     }
 
-    List<ISubmodelElement?> filterSubmodelElements(List<ISubmodelElement?> submodelElements, DateTime diff)
-    {
-        var output = new List<ISubmodelElement?>();
-
-        foreach (var sme in submodelElements.Where(sme => sme != null && (sme.TimeStampTree - diff).TotalMilliseconds > 1))
-        {
-            List<ISubmodelElement?> smeDiff;
-            switch (sme)
-            {
-                case SubmodelElementCollection smc:
-                {
-                    smeDiff = filterSubmodelElements(smc.Value ?? [], diff);
-                    if (smeDiff.Count != 0)
-                    {
-                        var smcDiff = new SubmodelElementCollection(
-                                                                    extensions: smc.Extensions,
-                                                                    category: smc.Category,
-                                                                    idShort: smc.IdShort,
-                                                                    displayName: smc.DisplayName,
-                                                                    description: smc.Description,
-                                                                    semanticId: smc.SemanticId,
-                                                                    supplementalSemanticIds: smc.SupplementalSemanticIds,
-                                                                    qualifiers: smc.Qualifiers,
-                                                                    embeddedDataSpecifications: smc.EmbeddedDataSpecifications,
-                                                                    value: smeDiff) {Parent = smc.Parent};
-                        output.Add(smcDiff);
-                    }
-                    else if ((smc.TimeStamp - diff).TotalMilliseconds > 1)
-                    {
-                        output.Add(smc);
-                    }
-
-                    break;
-                }
-                case SubmodelElementList sml:
-                {
-                    smeDiff = filterSubmodelElements(sml.Value ?? [], diff);
-                    if (smeDiff.Count != 0)
-                    {
-                        var smlDiff = new SubmodelElementList(
-                                                              typeValueListElement: sml.TypeValueListElement,
-                                                              extensions: sml.Extensions,
-                                                              category: sml.Category,
-                                                              idShort: sml.IdShort,
-                                                              displayName: sml.DisplayName,
-                                                              description: sml.Description,
-                                                              semanticId: sml.SemanticId,
-                                                              supplementalSemanticIds: sml.SupplementalSemanticIds,
-                                                              qualifiers: sml.Qualifiers,
-                                                              embeddedDataSpecifications: sml.EmbeddedDataSpecifications,
-                                                              value: smeDiff) {Parent = sml.Parent};
-                        output.Add(smlDiff);
-                    }
-                    else if ((sml.TimeStamp - diff).TotalMilliseconds > 1)
-                    {
-                        output.Add(sml);
-                    }
-
-                    break;
-                }
-                default:
-                    output.Add(sme);
-                    break;
-            }
-        }
-
-        return output;
-    }
 
     /// <summary>
     /// Returns the metadata attributes of all submodel elements including their hierarchy
@@ -701,7 +633,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             try
             {
                 var _diff = TimeStamp.StringToDateTime(diff);
-                filtered = filterSubmodelElements(smeList, _diff);
+                filtered = _submodelService.FilterSubmodelElements(smeList, _diff);
             }
             catch
             {
@@ -770,7 +702,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             try
             {
                 var _diff = TimeStamp.StringToDateTime(diff);
-                filtered = filterSubmodelElements(submodelElementList, _diff);
+                filtered = _submodelService.FilterSubmodelElements(submodelElementList, _diff);
             }
             catch
             {
@@ -905,7 +837,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             try
             {
                 var _diff = TimeStamp.StringToDateTime(diff);
-                filtered = filterSubmodelElements(submodelElements, _diff);
+                filtered = _submodelService.FilterSubmodelElements(submodelElements, _diff);
             }
             catch
             {
@@ -1286,7 +1218,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     public virtual IActionResult GetOperationAsyncStatus([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath,
     [FromRoute][Required] string handleId) => throw new NotImplementedException();
 
-    //TODO:jtikekar @Andreas the route is same as GetSubmodelById
     /// <summary>
     /// Returns a specific Submodel
     /// </summary>
@@ -2542,7 +2473,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         return NoContent();
     }
 
-/// <summary>
+    /// <summary>
     /// Uploads file content to an existing submodel element at a specified path within submodel elements hierarchy
     /// </summary>
     /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>

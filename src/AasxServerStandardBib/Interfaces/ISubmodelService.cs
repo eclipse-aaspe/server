@@ -11,6 +11,7 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -36,5 +37,7 @@ namespace AasxServerStandardBib.Interfaces
         void                   ReplaceSubmodelElementByPath(string submodelIdentifier, string idShortPath, ISubmodelElement newSme);
         void                   UpdateSubmodelById(string submodelIdentifier, ISubmodel newSubmodel);
         void                   UpdateSubmodelElementByPath(string submodelIdentifier, string idShortPath, ISubmodelElement newSme);
+
+        List<ISubmodelElement?> FilterSubmodelElements(List<ISubmodelElement?> submodelElements, DateTime diff);
     }
 }

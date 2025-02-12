@@ -653,5 +653,76 @@ namespace AasxServerStandardBib.Services
 
             return output;
         }
+
+        public List<ISubmodelElement?> FilterSubmodelElements(List<ISubmodelElement?> submodelElements, DateTime diff)
+        {
+            var output = new List<ISubmodelElement?>();
+
+            foreach (var sme in submodelElements.Where(sme => sme != null && (sme.TimeStampTree - diff).TotalMilliseconds > 1))
+            {
+                List<ISubmodelElement?> smeDiff;
+                switch (sme)
+                {
+                    case SubmodelElementCollection smc:
+                    {
+                        smeDiff = FilterSubmodelElements(smc.Value ?? [], diff);
+                        if (smeDiff.Count != 0)
+                        {
+                            var smcDiff = new SubmodelElementCollection(
+                                                                        extensions: smc.Extensions,
+                                                                        category: smc.Category,
+                                                                        idShort: smc.IdShort,
+                                                                        displayName: smc.DisplayName,
+                                                                        description: smc.Description,
+                                                                        semanticId: smc.SemanticId,
+                                                                        supplementalSemanticIds: smc.SupplementalSemanticIds,
+                                                                        qualifiers: smc.Qualifiers,
+                                                                        embeddedDataSpecifications: smc.EmbeddedDataSpecifications,
+                                                                        value: smeDiff)
+                            { Parent = smc.Parent };
+                            output.Add(smcDiff);
+                        }
+                        else if ((smc.TimeStamp - diff).TotalMilliseconds > 1)
+                        {
+                            output.Add(smc);
+                        }
+
+                        break;
+                    }
+                    case SubmodelElementList sml:
+                    {
+                        smeDiff = FilterSubmodelElements(sml.Value ?? [], diff);
+                        if (smeDiff.Count != 0)
+                        {
+                            var smlDiff = new SubmodelElementList(
+                                                                  typeValueListElement: sml.TypeValueListElement,
+                                                                  extensions: sml.Extensions,
+                                                                  category: sml.Category,
+                                                                  idShort: sml.IdShort,
+                                                                  displayName: sml.DisplayName,
+                                                                  description: sml.Description,
+                                                                  semanticId: sml.SemanticId,
+                                                                  supplementalSemanticIds: sml.SupplementalSemanticIds,
+                                                                  qualifiers: sml.Qualifiers,
+                                                                  embeddedDataSpecifications: sml.EmbeddedDataSpecifications,
+                                                                  value: smeDiff)
+                            { Parent = sml.Parent };
+                            output.Add(smlDiff);
+                        }
+                        else if ((sml.TimeStamp - diff).TotalMilliseconds > 1)
+                        {
+                            output.Add(sml);
+                        }
+
+                        break;
+                    }
+                    default:
+                        output.Add(sme);
+                        break;
+                }
+            }
+
+            return output;
+        }
     }
 }
