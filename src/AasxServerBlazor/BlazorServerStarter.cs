@@ -13,6 +13,7 @@
 
 using AasSecurity;
 using AasxServer;
+using Contracts;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -36,16 +37,18 @@ public static class BlazorServerStarter
 
         host.RunAsync();
 
-        InitializeProgram(args, config);
+        InitializeProgram(args, config, host.Services);
 
         host.WaitForShutdownAsync();
     }
 
-    private static void InitializeProgram(string[] args, IConfiguration config)
+    private static void InitializeProgram(string[] args, IConfiguration config, IServiceProvider services)
     {
+        IPersistenceService persistenceService = (IPersistenceService)services.GetService(typeof(IPersistenceService));
+        
         Console.WriteLine($"{nameof(InitializeProgram)}");
         Program.con = config;
-        Program.Main(args);
+        Program.Main(args,persistenceService);
         SecurityHelper.SecurityInit();
         // QueryGrammar.storeSecurityRoles(GlobalSecurityVariables.SecurityRoles);
     }

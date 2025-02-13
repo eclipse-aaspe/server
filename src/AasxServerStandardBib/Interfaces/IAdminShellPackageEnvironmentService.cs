@@ -14,6 +14,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using Contracts.Pagination;
 
 namespace AasxServerStandardBib.Interfaces
 {
@@ -29,7 +30,7 @@ namespace AasxServerStandardBib.Interfaces
 
         IAssetAdministrationShell       CreateAssetAdministrationShell(IAssetAdministrationShell body);
         void                            DeleteAssetAdministrationShell(int packageIndex, IAssetAdministrationShell aas);
-        List<IAssetAdministrationShell> GetAllAssetAdministrationShells();
+        List<IAssetAdministrationShell> GetPagedAssetAdministrationShells(IPaginationParameters paginationParameters, List<ISpecificAssetId> assetIds);
         IAssetAdministrationShell       GetAssetAdministrationShellById(string aasIdentifier, out int packageIndex);
         Stream                          GetAssetInformationThumbnail(int packageIndex);
         bool                            IsAssetAdministrationShellPresent(string aasIdentifier);
@@ -43,6 +44,8 @@ namespace AasxServerStandardBib.Interfaces
         #region Submodel
 
         void      DeleteSubmodelById(string submodelIdentifier);
+
+        void      DeleteSubmodelReferenceById(string aasIdentifier, string submodelIdentifier);
         ISubmodel GetSubmodelById(string submodelIdentifier, out int packageIndex);
 
         void   DeleteSupplementaryFileInPackage(string submodelIdentifier, string filePath);
@@ -68,6 +71,7 @@ namespace AasxServerStandardBib.Interfaces
         bool            IsSubmodelPresent(string submodelIdentifier);
         bool            IsSubmodelPresent(string submodelIdentifier, out ISubmodel output, out int packageIndex);
         ISubmodel       CreateSubmodel(ISubmodel newSubmodel, string aasIdentifier = null);
+        IReference CreateSubmodelReferenceInAAS(IReference body, string aasIdentifier);
 
         #endregion
 

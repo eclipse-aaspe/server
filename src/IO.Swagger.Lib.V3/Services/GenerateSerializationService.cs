@@ -15,6 +15,7 @@ using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
 using AdminShellNS.Extensions;
 using IO.Swagger.Lib.V3.Interfaces;
+using IO.Swagger.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -57,7 +58,9 @@ public class GenerateSerializationService : IGenerateSerializationService
         var outputEnv = new Environment(aas, submodels, conceptDescriptions);
 
         //Fetch AASs for the requested aasIds
-        var aasList = _aasService.GetAllAssetAdministrationShells();
+        //ToDo: Remove pseudo-pagimation
+        var pagination = new PaginationParameters("null",100);
+        var aasList = _aasService.GetPagedAssetAdministrationShells(pagination, new List<ISpecificAssetId>(),null);
         //Using is null or empty, as the query parameter in controll currently receives empty list (not null, but count = 0)
         if (!aasIds.IsNullOrEmpty())
         {

@@ -29,43 +29,28 @@ namespace IO.Swagger.Lib.V3.Services
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
-        public PagedResult GetPaginatedList<T>(List<T> sourceList, PaginationParameters paginationParameters)
+
+        public PagedResult GetPaginatedResult<T>(List<T> paginatedList, PaginationParameters paginationParameters)
         {
-            var outputList = new List<T>();
-            var startIndex = paginationParameters.Cursor;
-            var endIndex = startIndex + paginationParameters.Limit - 1;
-
-            //cap the endIndex
-            if (endIndex > sourceList.Count - 1)
-            {
-                endIndex = sourceList.Count - 1;
-            }
-
-            //If there are less elements in the sourceList than "from"
-            if (startIndex > sourceList.Count - 1)
-            {
-                _logger.LogError($"There are less elements in the retrieved list than requested pagination - (from: {startIndex}, size:{endIndex})");
-            }
-
-            for (var i = startIndex; i <= endIndex; i++)
-            {
-                outputList.Add(sourceList[i]);
-            }
-
             //Creating pagination result
             var pagingMetadata = new PagedResultPagingMetadata();
-            if (endIndex < sourceList.Count - 1)
+
+            if (paginatedList.Count < paginationParameters.Limit)
             {
-                pagingMetadata.cursor = Convert.ToString(endIndex + 1);
+                _logger.LogInformation($"There are less elements in the retrieved list than requested for pagination - (cursor: {paginationParameters.Cursor}, size:{paginationParameters.Limit})");
+                pagingMetadata.cursor = String.Empty;
+            }
+            else
+            {
+                pagingMetadata.cursor = Convert.ToString(paginationParameters.Cursor + paginatedList.Count + 1);
             }
 
             var paginationResult = new PagedResult()
             {
-                result          = outputList.ConvertAll(r => r as IClass),
+                result          = paginatedList.ConvertAll(r => r as IClass),
                 paging_metadata = pagingMetadata
             };
 
-            //return paginationResult;
             return paginationResult;
         }
 

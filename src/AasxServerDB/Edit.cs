@@ -32,7 +32,7 @@ namespace AasxServerDB
                 {
                     Path = env.Filename
                 };
-                VisitorAASX.LoadAASInDB(env, envDB);
+                VisitorAASX.ImportAASIntoDB(env, envDB);
                 db.Add(envDB);
                 try
                 {

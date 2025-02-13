@@ -17,6 +17,7 @@ using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
 using AasxServerStandardBib.Transformers;
 using AdminShellNS.Extensions;
+using Contracts.Pagination;
 using Extensions;
 using System;
 using System.Collections.Generic;
@@ -258,7 +259,7 @@ namespace AasxServerStandardBib.Services
             _logger.LogDebug($"Deleted SubmodelElement at {idShortPath} from submodel with Id {submodelIdentifier}");
         }
 
-        public List<ISubmodelElement> GetAllSubmodelElements(string submodelIdentifier)
+        public List<ISubmodelElement> GetPagedSubmodelElements(IPaginationParameters paginationParameters, string submodelIdentifier)
         {
             var submodel = _packageEnvService.GetSubmodelById(submodelIdentifier, out _);
             return submodel.SubmodelElements;

@@ -426,7 +426,7 @@ namespace AasxServer
             // ReSharper enable UnusedAutoPropertyAccessor.Local
         }
 
-        private static async Task<int> Run(CommandLineArguments a)
+        private static async Task<int> Run(CommandLineArguments a, Contracts.IPersistenceService persistenceService)
         {
             // Wait for Debugger
             if (a.DebugWait)
@@ -560,7 +560,6 @@ namespace AasxServer
             {
                 Console.WriteLine($"Serving the AASXs from: {a.DataPath}");
                 AasxHttpContextHelper.DataPath = a.DataPath;
-                AasContext.DataPath           = AasxHttpContextHelper.DataPath;
             }
 
             Program.runOPC     = a.Opc;
@@ -763,7 +762,7 @@ namespace AasxServer
             // Init DB
             if (withDb)
             {
-                AasContext.InitDB(startIndex == 0 && !createFilesOnly, a.DataPath);
+                persistenceService.InitDB(startIndex == 0 && !createFilesOnly, a.DataPath);
             }
 
             string[] fileNames = null;
@@ -845,7 +844,7 @@ namespace AasxServer
                             }
                             else
                             {
-                                VisitorAASX.LoadAASXInDB(fn, createFilesOnly, withDbFiles);
+                                persistenceService.ImportAASXIntoDB(fn, createFilesOnly, withDbFiles);
                                 envFileName[envi] = null;
                                 env[envi]         = null;
                             }
@@ -903,8 +902,7 @@ namespace AasxServer
                 {
                     // preload AASX from DB and keep in memory
                     var packages = new List<AdminShellPackageEnv>();
-                    var paths = new List<String>();
-                    Converter.GetFilteredPackages("--memory", packages, paths);
+                    var paths = persistenceService.GetFilteredPackages("--memory", packages);
 
                     for (var p = 0; p < packages.Count && p < paths.Count; p++)
                     {
@@ -1146,7 +1144,7 @@ namespace AasxServer
             return 0;
         }
 
-        public static void Main(string[] args)
+        public static void Main(string[] args, Contracts.IPersistenceService persistenceService)
         {
             Console.WriteLine("args:");
             foreach (var a in args)
@@ -1248,7 +1246,7 @@ namespace AasxServer
 
             rootCommand.Handler = System.CommandLine.Invocation.CommandHandler.Create((CommandLineArguments a) =>
                                                                                       {
-                                                                                          var task = Run(a);
+                                                                                          var task = Run(a,persistenceService);
                                                                                           task.Wait();
                                                                                           var op = task.Result;
                                                                                           return Task.FromResult(op);

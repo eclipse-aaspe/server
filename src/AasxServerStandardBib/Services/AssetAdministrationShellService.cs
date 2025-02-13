@@ -18,6 +18,7 @@ using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
 using AdminShellNS;
 using AdminShellNS.Extensions;
+using Contracts.Pagination;
 using Extensions;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -33,15 +34,13 @@ namespace AasxServerStandardBib.Services
         private readonly IAdminShellPackageEnvironmentService _packageEnvService;
         private readonly IMetamodelVerificationService _verificationService;
         private readonly ISubmodelService _submodelService;
-        private AdminShellPackageEnv[] _packages;
 
         public AssetAdministrationShellService(IAppLogger<AssetAdministrationShellService> logger, IAdminShellPackageEnvironmentService packageEnvService, IMetamodelVerificationService verificationService, ISubmodelService submodelService)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger)); ;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _packageEnvService = packageEnvService;
             _verificationService = verificationService;
             _submodelService = submodelService;
-            _packages = Program.env;
         }
 
         public IAssetAdministrationShell CreateAssetAdministrationShell(IAssetAdministrationShell body)
@@ -63,49 +62,10 @@ namespace AasxServerStandardBib.Services
 
         public IReference CreateSubmodelReferenceInAAS(IReference body, string aasIdentifier)
         {
-            IReference output = null;
             //Verify request body
             _verificationService.VerifyRequestBody(body);
 
-            // TODO (jtikekar, 2023-09-04): to check if submodel with requested submodelReference exists in the server
-            var aas = _packageEnvService.GetAssetAdministrationShellById(aasIdentifier, out int packageIndex);
-
-            if (aas != null)
-            {
-                if (aas.Submodels.IsNullOrEmpty())
-                {
-                    aas.Submodels = new List<IReference>
-                    {
-                        body
-                    };
-                    output = aas.Submodels.Last();
-                }
-                else
-                {
-                    bool found = false;
-                    //Check if duplicate
-                    foreach (var submodelReference in aas.Submodels)
-                    {
-                        if (submodelReference.Matches(body))
-                        {
-                            found = true;
-                            break;
-                        }
-                    }
-
-                    if (found)
-                    {
-                        _logger.LogDebug($"Cannot create requested Submodel-Reference in the AAS !!");
-                        throw new DuplicateException($"Requested SubmodelReference already exists in the AAS with Id {aasIdentifier}.");
-                    }
-                    else
-                    {
-                        aas.Submodels.Add(body);
-                        output = aas.Submodels.Last();
-                    }
-                }
-                _packages[packageIndex].setWrite(true);
-            }
+            var output = this._packageEnvService.CreateSubmodelReferenceInAAS(body, aasIdentifier);
 
             return output;
         }
@@ -163,42 +123,15 @@ namespace AasxServerStandardBib.Services
 
         }
 
-
-
         public void DeleteSubmodelReferenceById(string aasIdentifier, string submodelIdentifier)
         {
-            var aas = _packageEnvService.GetAssetAdministrationShellById(aasIdentifier, out int packageIndex);
-
-            if (aas != null)
-            {
-                var submodelReference = aas.Submodels.Where(s => s.Matches(submodelIdentifier));
-                if (submodelReference.Any())
-                {
-                    _logger.LogDebug($"Found requested submodel reference in the aas.");
-                    bool deleted = aas.Submodels.Remove(submodelReference.First());
-                    if (deleted)
-                    {
-                        _logger.LogDebug($"Deleted submodel reference with id {submodelIdentifier} from the AAS with id {aasIdentifier}.");
-                        _packages[packageIndex].setWrite(true);
-                        Program.signalNewData(1);
-                    }
-                    else
-                    {
-                        _logger.LogError($"Could not delete submodel reference with id {submodelIdentifier} from the AAS with id {aasIdentifier}.");
-                    }
-                }
-                else
-                {
-                    throw new NotFoundException($"SubmodelReference with id {submodelIdentifier} not found in AAS with id {aasIdentifier}");
-                }
-            }
+            this._packageEnvService.DeleteSubmodelReferenceById(aasIdentifier, submodelIdentifier);
         }
 
 
-
-        public List<IAssetAdministrationShell> GetAllAssetAdministrationShells(List<ISpecificAssetId> assetIds = null, string? idShort = null)
+        public List<IAssetAdministrationShell> GetPagedAssetAdministrationShells(IPaginationParameters paginationParameters, List<ISpecificAssetId> assetIds, string? idShort = null)
         {
-            var output = _packageEnvService.GetAllAssetAdministrationShells();
+            var output = _packageEnvService.GetPagedAssetAdministrationShells(paginationParameters, assetIds);
 
             //Apply filters
 
@@ -254,13 +187,13 @@ namespace AasxServerStandardBib.Services
             return output;
         }
 
-        public List<ISubmodelElement> GetAllSubmodelElements(string aasIdentifier, string submodelIdentifier)
+        public List<ISubmodelElement> GetPagedSubmodelElements(IPaginationParameters paginationParameters, string aasIdentifier, string submodelIdentifier)
         {
             var found = IsSubmodelPresentWithinAAS(aasIdentifier, submodelIdentifier);
             if (found)
             {
                 _logger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
-                return _submodelService.GetAllSubmodelElements(submodelIdentifier);
+                return _submodelService.GetPagedSubmodelElements(paginationParameters, submodelIdentifier);
             }
             else
             {
