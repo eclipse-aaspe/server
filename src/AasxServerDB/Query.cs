@@ -30,6 +30,7 @@ namespace AasxServerDB
     using Microsoft.EntityFrameworkCore.Metadata;
     using System.Security.AccessControl;
     using static System.Net.Mime.MediaTypeNames;
+    using System.Runtime.Intrinsics.X86;
 
     public class CombinedValue
     {
@@ -143,7 +144,7 @@ namespace AasxServerDB
 
                 watch.Restart();
                 int lastId = 0;
-                var result = GetSMResult((IQueryable<CombinedSMResult>)query, parameterNames.Contains("lastID"), out lastId);
+                var result = GetSMResult(qResult, (IQueryable<CombinedSMResult>)query, parameterNames.Contains("lastID"), out lastId);
                 qResult.LastID = lastId;
                 qResult.Count = result.Count;
                 text = "Collect results in " + watch.ElapsedMilliseconds + " ms";
@@ -247,7 +248,9 @@ namespace AasxServerDB
 
                 watch.Restart();
                 // var result = GetSMEResult(requested, (IQueryable<CombinedSMEResult>)query);
-                var result = GetSMEResult(db, requested, query);
+                int lastId = 0;
+                var result = GetSMEResult(qResult, db, requested, query, parameterNames.Contains("lastID"), out lastId);
+                qResult.LastID = lastId;
                 qResult.Count = result.Count;
                 text = "SMEs found ";
                 if (withTotalCount)
@@ -335,15 +338,22 @@ namespace AasxServerDB
             var pageFrom = -1;
             var pageSize = -1;
             var lastID = -1;
+            var orderBy = false;
             if (expression.Contains("$PAGEFROM="))
             {
                 var index1 = expression.IndexOf("$PAGEFROM");
                 var index2 = expression.IndexOf("=", index1);
                 var index3 = expression.IndexOf(";", index1);
-                var s = expression.Substring(index2+1, index3-index2-1);
+                var s = expression.Substring(index2 + 1, index3 - index2 - 1);
+                var s2 = expression.Substring(index1, index3 - index1 + 1);
+                if (s.StartsWith("+"))
+                {
+                    orderBy = true;
+                    s = s.Substring(1);
+                }
                 pageFrom = int.Parse(s);
                 pageSize = 1000;
-                expression = expression.Replace("$PAGEFROM=" + s + ";", "");
+                expression = expression.Replace(s2, "");
                 messages.Add("$PAGEFROM=" + pageFrom);
             }
             if (expression.Contains("$PAGESIZE="))
@@ -362,8 +372,14 @@ namespace AasxServerDB
                 var index2 = expression.IndexOf("=", index1);
                 var index3 = expression.IndexOf(";", index1);
                 var s = expression.Substring(index2 + 1, index3 - index2 - 1);
+                var s2 = expression.Substring(index1, index3 - index1 + 1);
+                if (s.StartsWith("+"))
+                {
+                    orderBy = true;
+                    s = s.Substring(1);
+                }
                 lastID = int.Parse(s);
-                expression = expression.Replace("$LASTID=" + s + ";", "");
+                expression = expression.Replace(s2, "");
                 messages.Add("$LASTID=" + pageSize);
             }
 
@@ -571,8 +587,16 @@ namespace AasxServerDB
             qResult.PageSize = pageSize;
             if (pageFrom != -1)
             {
-                // result = result.OrderBy(sm => sm.SM_Id).Skip(pageFrom).Take(pageSize);
-                result = result.Skip(pageFrom).Take(pageSize);
+                if (orderBy)
+                {
+                    Console.WriteLine("OrderBy");
+                    messages.Add("OrderBy");
+                    result = result.OrderBy(sm => sm.SM_Id).Skip(pageFrom).Take(pageSize);
+                }
+                else
+                {
+                    result = result.Skip(pageFrom).Take(pageSize);
+                }
                 var text = "Using pageFrom and pageSize.";
                 Console.WriteLine(text);
                 messages.Add(text);
@@ -581,7 +605,16 @@ namespace AasxServerDB
             {
                 if (lastID != -1 && pageSize != -1)
                 {
-                    result = result.OrderBy(sm => sm.SM_Id).Where(sm => sm.SM_Id > lastID).Take(pageSize);
+                    if (orderBy)
+                    {
+                        Console.WriteLine("OrderBy");
+                        messages.Add("OrderBy");
+                        result = result.OrderBy(sm => sm.SM_Id).Where(sm => sm.SM_Id > lastID).Take(pageSize);
+                    }
+                    else
+                    {
+                        result = result.Where(sm => sm.SM_Id > lastID).Take(pageSize);
+                    }
                     var text = "Using lastID and pageSize.";
                     Console.WriteLine(text);
                     messages.Add(text);
@@ -599,8 +632,10 @@ namespace AasxServerDB
             return result;
         }
 
-        private static List<SMResult> GetSMResult(IQueryable<CombinedSMResult> query, bool withLastID, out int lastID)
+        private static List<SMResult> GetSMResult(QResult qResult, IQueryable<CombinedSMResult> query, bool withLastID, out int lastID)
         {
+            var messages = qResult.Messages ?? [];
+
             lastID = 0;
             if (withLastID)
             {
@@ -610,12 +645,46 @@ namespace AasxServerDB
                         sm.Identifier,
                         sm.TimeStampTree,
                         lastID = sm.SM_Id
-                    });
+                    })
+                    .ToList();
                 var l = resultWithSMID.LastOrDefault();
                 if (l != null && l.lastID != null)
                 {
                     lastID = (int)l.lastID;
                 }
+
+                var wrong = 0;
+                var min = 0;
+                var max = 0;
+                var last = 0;
+                foreach (var x in resultWithSMID)
+                {
+                    var id = (int)x.lastID;
+                    if (last != 0)
+                    {
+                        if (id <= last)
+                        {
+                            wrong++;
+                        }
+                    }
+                    last = id;
+                    if (min == 0)
+                    {
+                        min = id;
+                    }
+                    if (id < min)
+                    {
+                        min = id;
+                    }
+                    if (id > max)
+                    {
+                        max = id;
+                    }
+                }
+                messages.Add($"Wrong ID sequences: {wrong}");
+                messages.Add($"Min ID: {min}");
+                messages.Add($"Max ID: {max}");
+
                 var result = resultWithSMID
                     .Select(sm => new SMResult()
                     {
@@ -748,15 +817,22 @@ namespace AasxServerDB
             expression = expression.Replace("$BOTTOMUP", string.Empty);
             expression = expression.Replace("$MIDDLEOUT", string.Empty);
 
-            var pageFrom = 0;
+            var orderBy = false;
+            var pageFrom = -1;
             if (expression.Contains("$PAGEFROM="))
             {
                 var index1 = expression.IndexOf("$PAGEFROM");
                 var index2 = expression.IndexOf("=", index1);
                 var index3 = expression.IndexOf(";", index1);
                 var s = expression.Substring(index2 + 1, index3 - index2 - 1);
+                var s2 = expression.Substring(index1, index3 - index1 + 1);
+                if (s.StartsWith("+"))
+                {
+                    orderBy = true;
+                    s = s.Substring(1);
+                }
                 pageFrom = int.Parse(s);
-                expression = expression.Replace("$PAGEFROM=" + s + ";", "");
+                expression = expression.Replace(s2, "");
             }
             messages.Add("$PAGEFROM=" + pageFrom);
             var pageSize = 1000;
@@ -770,6 +846,23 @@ namespace AasxServerDB
                 expression = expression.Replace("$PAGESIZE=" + s + ";", "");
             }
             messages.Add("$PAGESIZE=" + pageSize);
+            var lastID = -1;
+            if (expression.Contains("$LASTID="))
+            {
+                var index1 = expression.IndexOf("$LASTID");
+                var index2 = expression.IndexOf("=", index1);
+                var index3 = expression.IndexOf(";", index1);
+                var s = expression.Substring(index2 + 1, index3 - index2 - 1);
+                var s2 = expression.Substring(index1, index3 - index1 + 1);
+                if (s.StartsWith("+"))
+                {
+                    orderBy = true;
+                    s = s.Substring(1);
+                }
+                lastID = int.Parse(s);
+                expression = expression.Replace(s2, "");
+                messages.Add("$LASTID=" + pageSize);
+            }
 
             // get condition out of expression
             var conditionsExpression = ConditionFromExpression(messages, expression);
@@ -1009,9 +1102,45 @@ namespace AasxServerDB
                 Console.WriteLine(text);
             }
             messages.Add(text);
+
+            // create queryable with pagenation
             qResult.PageFrom = pageFrom;
             qResult.PageSize = pageSize;
-            qSearch = qSearch.Skip(pageFrom).Take(pageSize);
+            if (pageFrom != -1)
+            {
+                if (orderBy)
+                {
+                    Console.WriteLine("OrderBy");
+                    messages.Add("OrderBy");
+                    qSearch = qSearch.OrderBy("SME_Id").Skip(pageFrom).Take(pageSize);
+                }
+                else
+                {
+                    qSearch = qSearch.Skip(pageFrom).Take(pageSize);
+                }
+                text = "Using pageFrom and pageSize.";
+                Console.WriteLine(text);
+                messages.Add(text);
+            }
+            else
+            {
+                if (lastID != -1 && pageSize != -1)
+                {
+                    if (orderBy)
+                    {
+                        Console.WriteLine("OrderBy");
+                        messages.Add("OrderBy");
+                        qSearch = qSearch.OrderBy("SME_Id").Where($"SME_Id > {lastID}").Take(pageSize);
+                    }
+                    else
+                    {
+                        qSearch = qSearch.Where($"SME_Id > {lastID}").Take(pageSize);
+                    }
+                    text = "Using lastID and pageSize.";
+                    Console.WriteLine(text);
+                    messages.Add(text);
+                }
+            }
 
             // if needed create idShortPath
             if (false && (requested.Contains("idShortPath") || requested.Contains("url")))
@@ -1052,9 +1181,10 @@ namespace AasxServerDB
             return qSearch;
         }
 
-        // private static List<SMEResult> GetSMEResult(string requested, IQueryable<CombinedSMEResult> query)
-        private static List<SMEResult> GetSMEResult(AasContext db, string requested, IQueryable query)
+        private static List<SMEResult> GetSMEResult(QResult qResult, AasContext db, string requested, IQueryable query, bool withLastID, out int lastID)
         {
+            var messages = qResult.Messages ?? [];
+
             var withSmId = requested.Contains("smId");
             var withTimeStamp = requested.Contains("timeStamp");
             var withValue = requested.Contains("value");
@@ -1092,22 +1222,84 @@ namespace AasxServerDB
                 };
 
                 var queryJoin = query.Join(smeResult, "SME_Id", "Id", "new (outer as q, inner as s)")
-                    .Select("new { q.SM_Identifier as SM_Identifier, q.SME_TimeStamp as SME_TimeStamp, " +
+                    .Select("new { q.SME_Id as SME_Id, q.SM_Identifier as SM_Identifier, q.SME_TimeStamp as SME_TimeStamp, " +
                     "q.SValue as SValue, q.MValue as MValue, s.IdShortPath as SME_IdShortPath }");
                 query = queryJoin;
             }
 
-            var smeResults = query.ToDynamicList()
-                .Select(sme => new SMEResult
+            List<SMEResult> smeResults = null;
+            lastID = 0;
+            if (withLastID)
+            {
+                var resultWithSMEID = query
+                    .ToDynamicList();
+                var l = resultWithSMEID.LastOrDefault();
+                if (l != null && l.SME_Id != null)
                 {
-                    smId = withSmId ? sme.SM_Identifier : null,
-                    timeStamp = withTimeStamp ? sme.SME_TimeStamp.ToString() : null,
-                    value = withValue ? (sme.SValue ?? sme.MValue.ToString()) : null,
-                    idShortPath = withIdShortPath ? sme.SME_IdShortPath : null,
-                    url = withUrl && sme.SM_Identifier != null && sme.SME_IdShortPath != null
+                    lastID = (int)l.SME_Id;
+                }
+
+                var wrong = 0;
+                var min = 0;
+                var max = 0;
+                var last = 0;
+                foreach (var x in resultWithSMEID)
+                {
+                    var id = x.SME_Id;
+                    if (last != 0)
+                    {
+                        if (id <= last)
+                        {
+                            wrong++;
+                        }
+                    }
+                    last = id;
+                    if (min == 0)
+                    {
+                        min = id;
+                    }
+                    if (id < min)
+                    {
+                        min = id;
+                    }
+                    if (id > max)
+                    {
+                        max = id;
+                    }
+                }
+                messages.Add($"Wrong ID sequences: {wrong}");
+                messages.Add($"Min ID: {min}");
+                messages.Add($"Max ID: {max}");
+
+                var result = resultWithSMEID
+                    .Select(sme => new SMEResult()
+                    {
+                        smId = withSmId ? sme.SM_Identifier : null,
+                        timeStamp = withTimeStamp ? sme.SME_TimeStamp.ToString() : null,
+                        value = withValue ? (sme.SValue ?? sme.MValue.ToString()) : null,
+                        idShortPath = withIdShortPath ? sme.SME_IdShortPath : null,
+                        url = withUrl && sme.SM_Identifier != null && sme.SME_IdShortPath != null
                         ? $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sme.SM_Identifier)}/submodel-elements/{sme.SME_IdShortPath}"
-                        : null
-                }).ToList();
+                        : null,
+                    })
+                    .ToList();
+                return result;
+            }
+            else
+            {
+                smeResults = query.ToDynamicList()
+                    .Select(sme => new SMEResult
+                    {
+                        smId = withSmId ? sme.SM_Identifier : null,
+                        timeStamp = withTimeStamp ? sme.SME_TimeStamp.ToString() : null,
+                        value = withValue ? (sme.SValue ?? sme.MValue.ToString()) : null,
+                        idShortPath = withIdShortPath ? sme.SME_IdShortPath : null,
+                        url = withUrl && sme.SM_Identifier != null && sme.SME_IdShortPath != null
+                            ? $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sme.SM_Identifier)}/submodel-elements/{sme.SME_IdShortPath}"
+                            : null,
+                    }).ToList();
+            }
+
 
             /*
             var q = x.Select(sm_sme_v => new SMEResult
