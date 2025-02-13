@@ -19,11 +19,13 @@
 //app.Run();
 
 using AasSecurity;
+using Contracts;
 
 Console.WriteLine("AASX Server Core starting....");
 var host = CreateHostBuilder(args).Build();
+IPersistenceService persistenceService = (IPersistenceService)host.Services.GetService(typeof(IPersistenceService));
 
-AasxServer.Program.Main(args);
+AasxServer.Program.Main(args, persistenceService);
 SecurityHelper.SecurityInit();
 await host.RunAsync();
 await host.WaitForShutdownAsync();

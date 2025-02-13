@@ -28,6 +28,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AasxServerBlazor.Configuration;
 
+using AasxServerDB;
 using Contracts;
 using IO.Swagger.Models;
 
@@ -69,6 +70,7 @@ public static class DependencyRegistry
         services.AddTransient<ISubmodelService, SubmodelService>();
         services.AddTransient<IValueOnlyJsonDeserializer, ValueOnlyJsonDeserializer>();
         services.AddTransient<IValidateSerializationModifierService, ValidateSerializationModifierService>();
+        services.AddTransient<IPersistenceService, EntityFrameworkPersistenceService>();
 
         services.AddTransient<IContractSecurityRules, SecurityService>();
         // services.AddTransient<QueryGrammar>();

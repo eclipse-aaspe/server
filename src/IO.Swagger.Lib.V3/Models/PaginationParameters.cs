@@ -13,9 +13,10 @@
 
 namespace IO.Swagger.Models;
 
+using Contracts.Pagination;
 using IO.Swagger.Lib.V3.Exceptions;
 
-public class PaginationParameters
+public class PaginationParameters : IPaginationParameters
 {
     private const int MaxResultSize = 500;
 

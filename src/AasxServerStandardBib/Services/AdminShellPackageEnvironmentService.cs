@@ -9,6 +9,8 @@ using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
 using AdminShellNS;
+using Contracts;
+using Contracts.Pagination;
 using Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -25,13 +27,15 @@ namespace AasxServerStandardBib.Services
     {
         private readonly IAppLogger<AdminShellPackageEnvironmentService> _logger;
         private readonly Lazy<IAssetAdministrationShellService> _aasService;
+        private readonly IPersistenceService _persistenceService;   
         private AdminShellPackageEnv[] _packages;
 
-        public AdminShellPackageEnvironmentService(IAppLogger<AdminShellPackageEnvironmentService> logger, Lazy<IAssetAdministrationShellService> aasService)
+        public AdminShellPackageEnvironmentService(IAppLogger<AdminShellPackageEnvironmentService> logger, Lazy<IAssetAdministrationShellService> aasService, IPersistenceService persistenceService)
         {
             _logger     = logger ?? throw new ArgumentNullException(nameof(logger));
             _aasService = aasService;
             _packages   = Program.env;
+            _persistenceService = persistenceService;
         }
 
         #region Others
@@ -105,12 +109,14 @@ namespace AasxServerStandardBib.Services
             }
         }
 
-        public List<IAssetAdministrationShell> GetAllAssetAdministrationShells()
+        public List<IAssetAdministrationShell> GetPagedAssetAdministrationShells(IPaginationParameters paginationParameters, List<ISpecificAssetId> assetIds)
         {
             List<IAssetAdministrationShell> output = new List<IAssetAdministrationShell>();
 
             if (!Program.withDb)
             {
+                var sourceList = new List<IAssetAdministrationShell>();
+
                 foreach (var package in _packages)
                 {
                     if (package != null)
@@ -118,72 +124,34 @@ namespace AasxServerStandardBib.Services
                         var env = package.AasEnv;
                         if (env != null && env.AssetAdministrationShells != null && env.AssetAdministrationShells.Count != 0)
                         {
-                            output.AddRange(env.AssetAdministrationShells);
+                            sourceList.AddRange(env.AssetAdministrationShells);
                         }
                     }
+                }
+
+                var startIndex = paginationParameters.Cursor;
+                var endIndex = startIndex + paginationParameters.Limit - 1;
+
+                //cap the endIndex
+                if (endIndex > sourceList.Count - 1)
+                {
+                    endIndex = sourceList.Count - 1;
+                }
+
+                //If there are less elements in the sourceList than "from"
+                if (startIndex > sourceList.Count - 1)
+                {
+                    _logger.LogError($"There are less elements in the retrieved list than requested pagination - (from: {startIndex}, size:{endIndex})");
+                }
+
+                for (var i = startIndex; i <= endIndex; i++)
+                {
+                    output.Add(sourceList[i]);
                 }
             }
             else
             {
-                /*
-                var db = new AasContext();
-                var timeStamp = DateTime.UtcNow;
-
-                var aasDBList = db.AASSets.ToList();
-                foreach (var aasDB in aasDBList)
-                {
-                    int envId = aasDB.EnvId;
-
-                    var aas = Converter.GetAssetAdministrationShell(aasDB: aasDB);
-                    if (aas.TimeStamp == DateTime.MinValue)
-                    {
-                        aas.TimeStampCreate = timeStamp;
-                        aas.SetTimeStamp(timeStamp);
-                    }
-
-                    // sm
-                    var smAASDBList = db.SMSets.Where(sm => sm.EnvId == envId && sm.AASId == aasDB.Id).ToList();
-                    foreach (var sm in smAASDBList)
-                    {
-                        aas.Submodels?.Add(new Reference(type: ReferenceTypes.ModelReference,
-                            keys: new List<IKey>() { new Key(KeyTypes.Submodel, sm.Identifier) }
-                            ));
-                    }
-
-                    output.Add(aas);
-                }
-                */
-
-                using (var db = new AasContext())
-                {
-                    var timeStamp = DateTime.UtcNow;
-
-                    var aasDBList = db.AASSets
-                        .Include(aas => aas.SMSets) // Include related SMSets
-                        .ToList();
-
-                    foreach (var aasDB in aasDBList)
-                    {
-                        int envId = aasDB.EnvId;
-
-                        var aas = Converter.GetAssetAdministrationShell(aasDB: aasDB);
-                        if (aas.TimeStamp == DateTime.MinValue)
-                        {
-                            aas.TimeStampCreate = timeStamp;
-                            aas.SetTimeStamp(timeStamp);
-                        }
-
-                        // sm
-                        foreach (var sm in aasDB.SMSets.Where(sm => sm.EnvId == envId))
-                        {
-                            aas.Submodels?.Add(new Reference(type: ReferenceTypes.ModelReference,
-                                keys: new List<IKey>() { new Key(KeyTypes.Submodel, sm.Identifier) }
-                            ));
-                        }
-
-                        output.Add(aas);
-                    }
-                }
+                output = _persistenceService.GetPagedAssetAdministrationShells(paginationParameters, assetIds);
             }
 
             return output;
@@ -649,6 +617,82 @@ namespace AasxServerStandardBib.Services
         {
             var submodel = GetSubmodelById(submodelIdentifier, out int packageIndex);
             return _packages[packageIndex].ReplaceSupplementaryFileInPackageAsync(sourceFile, targetFile, contentType, fileContent);
+        }
+
+        public void DeleteSubmodelReferenceById(string aasIdentifier, string submodelIdentifier)
+        {
+            var aas = this.GetAssetAdministrationShellById(aasIdentifier, out int packageIndex);
+
+            if (aas != null)
+            {
+                var submodelReference = aas.Submodels.Where(s => s.Matches(submodelIdentifier));
+                if (submodelReference.Any())
+                {
+                    _logger.LogDebug($"Found requested submodel reference in the aas.");
+                    bool deleted = aas.Submodels.Remove(submodelReference.First());
+                    if (deleted)
+                    {
+                        _logger.LogDebug($"Deleted submodel reference with id {submodelIdentifier} from the AAS with id {aasIdentifier}.");
+                        _packages[packageIndex].setWrite(true);
+                        Program.signalNewData(1);
+                    }
+                    else
+                    {
+                        _logger.LogError($"Could not delete submodel reference with id {submodelIdentifier} from the AAS with id {aasIdentifier}.");
+                    }
+                }
+                else
+                {
+                    throw new NotFoundException($"SubmodelReference with id {submodelIdentifier} not found in AAS with id {aasIdentifier}");
+                }
+            }
+        }
+
+        public IReference CreateSubmodelReferenceInAAS(IReference body, string aasIdentifier)
+        {
+            IReference output = null;
+
+            // TODO (jtikekar, 2023-09-04): to check if submodel with requested submodelReference exists in the server
+            var aas = this.GetAssetAdministrationShellById(aasIdentifier, out int packageIndex);
+
+            if (aas != null)
+            {
+                if (aas.Submodels.IsNullOrEmpty())
+                {
+                    aas.Submodels = new List<IReference>
+                    {
+                        body
+                    };
+                    output = aas.Submodels.Last();
+                }
+                else
+                {
+                    bool found = false;
+                    //Check if duplicate
+                    foreach (var submodelReference in aas.Submodels)
+                    {
+                        if (submodelReference.Matches(body))
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (found)
+                    {
+                        _logger.LogDebug($"Cannot create requested Submodel-Reference in the AAS !!");
+                        throw new DuplicateException($"Requested SubmodelReference already exists in the AAS with Id {aasIdentifier}.");
+                    }
+                    else
+                    {
+                        aas.Submodels.Add(body);
+                        output = aas.Submodels.Last();
+                    }
+                }
+                _packages[packageIndex].setWrite(true);
+            }
+
+            return output;
         }
 
         #endregion

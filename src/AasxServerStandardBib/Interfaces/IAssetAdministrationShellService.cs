@@ -13,6 +13,7 @@
 
 using System.Collections.Generic;
 using System.IO;
+using Contracts.Pagination;
 
 namespace AasxServerStandardBib.Interfaces
 {
@@ -28,8 +29,8 @@ namespace AasxServerStandardBib.Interfaces
         void DeleteSubmodelElementByPath(string aasIdentifier, string submodelIdentifier, string idShortPath);
         void DeleteSubmodelReferenceById(string aasIdentifier, string submodelIdentifier);
         void DeleteThumbnail(string aasIdentifier);
-        List<IAssetAdministrationShell> GetAllAssetAdministrationShells(List<ISpecificAssetId>? assetIds = null, string? idShort = null);
-        List<ISubmodelElement> GetAllSubmodelElements(string aasIdentifier, string submodelIdentifier);
+        List<IAssetAdministrationShell> GetPagedAssetAdministrationShells(IPaginationParameters paginationParameters, List<ISpecificAssetId> assetIds, string? idShort);
+        List<ISubmodelElement> GetPagedSubmodelElements(IPaginationParameters paginationParameters, string aasIdentifier, string submodelIdentifier);
         List<IReference> GetAllSubmodelReferencesFromAas(string aasIdentifier);
         IAssetAdministrationShell GetAssetAdministrationShellById(string aasIdentifier);
         IAssetInformation GetAssetInformation(string aasIdentifier);

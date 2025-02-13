@@ -35,24 +35,20 @@ namespace AasxServerDB
         public const string OPERATION_INOUTPUT = "IO";
         public const string OPERATION_SPLIT = "-";
 
-        public VisitorAASX(EnvSet envDB)
+        private VisitorAASX(EnvSet envDB)
         {
             _envDB = envDB;
         }
 
-
-
-
-
         // Load AASX
-        public static void LoadAASXInDB(string filePath, bool createFilesOnly, bool withDbFiles)
+        public static void ImportAASXIntoDB(string filePath, bool createFilesOnly, bool withDbFiles)
         {
             using (var asp = new AdminShellPackageEnv(filePath, false, true))
             {
                 if (!createFilesOnly)
                 {
                     var envDB = new EnvSet() { Path = filePath };
-                    LoadAASInDB(asp, envDB);
+                    ImportAASIntoDB(asp, envDB);
 
                     var db = new AasContext();
                     db.Add(envDB);
@@ -108,7 +104,7 @@ namespace AasxServerDB
             }
         }
 
-        public static void LoadAASInDB(AdminShellPackageEnv asp, EnvSet envDB)
+        public static void ImportAASIntoDB(AdminShellPackageEnv asp, EnvSet envDB)
         {
             if (envDB == null || asp == null || asp.AasEnv == null)
                 return;
@@ -195,18 +191,18 @@ namespace AasxServerDB
             var cdDB = new CDSet()
             {
                 IdShort                     = that.IdShort,
-                DisplayName                 = AasContext.SerializeList(that.DisplayName),
+                DisplayName                 = Serializer.SerializeList(that.DisplayName),
                 Category                    = that.Category,
-                Description                 = AasContext.SerializeList(that.Description),
-                Extensions                  = AasContext.SerializeList(that.Extensions),
+                Description                 = Serializer.SerializeList(that.Description),
+                Extensions                  = Serializer.SerializeList(that.Extensions),
                 Identifier                  = that.Id,
-                IsCaseOf                    = AasContext.SerializeList(that.IsCaseOf),
-                EmbeddedDataSpecifications  = AasContext.SerializeList(that.EmbeddedDataSpecifications),
+                IsCaseOf                    = Serializer.SerializeList(that.IsCaseOf),
+                EmbeddedDataSpecifications  = Serializer.SerializeList(that.EmbeddedDataSpecifications),
                 Version                     = that.Administration?.Version,
                 Revision                    = that.Administration?.Revision,
-                Creator                     = AasContext.SerializeElement(that.Administration?.Creator),
+                Creator                     = Serializer.SerializeElement(that.Administration?.Creator),
                 TemplateId                  = that.Administration?.TemplateId,
-                AEmbeddedDataSpecifications = AasContext.SerializeList(that.Administration?.EmbeddedDataSpecifications),
+                AEmbeddedDataSpecifications = Serializer.SerializeList(that.Administration?.EmbeddedDataSpecifications),
 
                 TimeStampCreate = that.TimeStampCreate == default ? currentDataTime : that.TimeStampCreate,
                 TimeStamp = that.TimeStamp == default ? currentDataTime : that.TimeStamp,
@@ -224,20 +220,20 @@ namespace AasxServerDB
             var aasDB = new AASSet()
             {
                 IdShort                     = that.IdShort,
-                DisplayName                 = AasContext.SerializeList(that.DisplayName),
+                DisplayName                 = Serializer.SerializeList(that.DisplayName),
                 Category                    = that.Category,
-                Description                 = AasContext.SerializeList(that.Description),
-                Extensions                  = AasContext.SerializeList(that.Extensions),
+                Description                 = Serializer.SerializeList(that.Description),
+                Extensions                  = Serializer.SerializeList(that.Extensions),
                 Identifier                  = that.Id,
-                EmbeddedDataSpecifications  = AasContext.SerializeList(that.EmbeddedDataSpecifications),
-                DerivedFrom                 = AasContext.SerializeElement(that.DerivedFrom),
+                EmbeddedDataSpecifications  = Serializer.SerializeList(that.EmbeddedDataSpecifications),
+                DerivedFrom                 = Serializer.SerializeElement(that.DerivedFrom),
                 Version                     = that.Administration?.Version,
                 Revision                    = that.Administration?.Revision,
-                Creator                     = AasContext.SerializeElement(that.Administration?.Creator),
+                Creator                     = Serializer.SerializeElement(that.Administration?.Creator),
                 TemplateId                  = that.Administration?.TemplateId,
-                AEmbeddedDataSpecifications = AasContext.SerializeList(that.Administration?.EmbeddedDataSpecifications),
-                AssetKind                   = AasContext.SerializeElement(that.AssetInformation?.AssetKind),
-                SpecificAssetIds            = AasContext.SerializeList(that.AssetInformation?.SpecificAssetIds),
+                AEmbeddedDataSpecifications = Serializer.SerializeList(that.Administration?.EmbeddedDataSpecifications),
+                AssetKind                   = Serializer.SerializeElement(that.AssetInformation?.AssetKind),
+                SpecificAssetIds            = Serializer.SerializeList(that.AssetInformation?.SpecificAssetIds),
                 GlobalAssetId               = that.AssetInformation?.GlobalAssetId,
                 AssetType                   = that.AssetInformation?.AssetType,
                 DefaultThumbnailPath        = that.AssetInformation?.DefaultThumbnail?.Path,
@@ -259,21 +255,21 @@ namespace AasxServerDB
             _smDB = new SMSet()
             {
                 IdShort                     = that.IdShort,
-                DisplayName                 = AasContext.SerializeList(that.DisplayName),
+                DisplayName                 = Serializer.SerializeList(that.DisplayName),
                 Category                    = that.Category,
-                Description                 = AasContext.SerializeList(that.Description),
-                Extensions                  = AasContext.SerializeList(that.Extensions),
+                Description                 = Serializer.SerializeList(that.Description),
+                Extensions                  = Serializer.SerializeList(that.Extensions),
                 Identifier                  = that.Id,
-                Kind                        = AasContext.SerializeElement(that.Kind),
+                Kind                        = Serializer.SerializeElement(that.Kind),
                 SemanticId                  = that.SemanticId?.GetAsIdentifier(),
-                SupplementalSemanticIds     = AasContext.SerializeList(that.SupplementalSemanticIds),
-                Qualifiers                  = AasContext.SerializeList(that.Qualifiers),
-                EmbeddedDataSpecifications  = AasContext.SerializeList(that.EmbeddedDataSpecifications),
+                SupplementalSemanticIds     = Serializer.SerializeList(that.SupplementalSemanticIds),
+                Qualifiers                  = Serializer.SerializeList(that.Qualifiers),
+                EmbeddedDataSpecifications  = Serializer.SerializeList(that.EmbeddedDataSpecifications),
                 Version                     = that.Administration?.Version,
                 Revision                    = that.Administration?.Revision,
-                Creator                     = AasContext.SerializeElement(that.Administration?.Creator),
+                Creator                     = Serializer.SerializeElement(that.Administration?.Creator),
                 TemplateId                  = that.Administration?.TemplateId,
-                AEmbeddedDataSpecifications = AasContext.SerializeList(that.Administration?.EmbeddedDataSpecifications),
+                AEmbeddedDataSpecifications = Serializer.SerializeList(that.Administration?.EmbeddedDataSpecifications),
 
                 TimeStampCreate = that.TimeStampCreate == default ? currentDataTime : that.TimeStampCreate,
                 TimeStamp = that.TimeStamp == default ? currentDataTime : that.TimeStamp,
@@ -297,14 +293,14 @@ namespace AasxServerDB
                 ParentSME                  = _parSME,
                 SMEType                    = ShortSMEType(sme),
                 IdShort                    = sme.IdShort,
-                DisplayName                = AasContext.SerializeList(sme.DisplayName),
+                DisplayName                = Serializer.SerializeList(sme.DisplayName),
                 Category                   = sme.Category,
-                Description                = AasContext.SerializeList(sme.Description),
-                Extensions                 = AasContext.SerializeList(sme.Extensions),
+                Description                = Serializer.SerializeList(sme.Description),
+                Extensions                 = Serializer.SerializeList(sme.Extensions),
                 SemanticId                 = sme.SemanticId?.GetAsIdentifier(),
-                SupplementalSemanticIds    = AasContext.SerializeList(sme.SupplementalSemanticIds),
-                Qualifiers                 = AasContext.SerializeList(sme.Qualifiers),
-                EmbeddedDataSpecifications = AasContext.SerializeList(sme.EmbeddedDataSpecifications),
+                SupplementalSemanticIds    = Serializer.SerializeList(sme.SupplementalSemanticIds),
+                Qualifiers                 = Serializer.SerializeList(sme.Qualifiers),
+                EmbeddedDataSpecifications = Serializer.SerializeList(sme.EmbeddedDataSpecifications),
 
                 TimeStampCreate = sme.TimeStampCreate == default ? currentDataTime : sme.TimeStampCreate,
                 TimeStamp = sme.TimeStamp == default ? currentDataTime : sme.TimeStamp,
@@ -413,21 +409,21 @@ namespace AasxServerDB
             if (sme is RelationshipElement rel)
             {
                 if (rel.First != null)
-                    smeDB.OValueSets.Add(new OValueSet { Attribute = "First", Value = AasContext.SerializeElement(rel.First) });
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "First", Value = Serializer.SerializeElement(rel.First) });
                 if (rel.Second != null)
-                    smeDB.OValueSets.Add(new OValueSet { Attribute = "Second", Value = AasContext.SerializeElement(rel.Second) });
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "Second", Value = Serializer.SerializeElement(rel.Second) });
             }
             else if (sme is AnnotatedRelationshipElement relA)
             {
                 if (relA.First != null)
-                    smeDB.OValueSets.Add(new OValueSet { Attribute = "First", Value = AasContext.SerializeElement(relA.First) });
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "First", Value = Serializer.SerializeElement(relA.First) });
                 if (relA.Second != null)
-                    smeDB.OValueSets.Add(new OValueSet { Attribute = "Second", Value = AasContext.SerializeElement(relA.Second) });
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "Second", Value = Serializer.SerializeElement(relA.Second) });
             }
             else if (sme is Property prop)
             {
                 if (prop.ValueId != null)
-                    smeDB.OValueSets.Add(new OValueSet { Attribute = "ValueId", Value = AasContext.SerializeElement(prop.ValueId) });
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "ValueId", Value = Serializer.SerializeElement(prop.ValueId) });
 
                 GetValueAndDataType(prop.Value ?? string.Empty, prop.ValueType, out var tValue, out var sValue, out var iValue, out var dValue);
                 if (!tValue.IsNullOrEmpty())
@@ -436,16 +432,16 @@ namespace AasxServerDB
                     smeDB.TValue = "S";
 
                 if (smeDB.TValue.Equals("S"))
-                    smeDB.SValueSets.Add(new SValueSet { Value = sValue, Annotation = AasContext.SerializeElement(prop.ValueType) });
+                    smeDB.SValueSets.Add(new SValueSet { Value = sValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
                 else if (smeDB.TValue.Equals("I"))
-                    smeDB.IValueSets.Add(new IValueSet { Value = iValue, Annotation = AasContext.SerializeElement(prop.ValueType) });
+                    smeDB.IValueSets.Add(new IValueSet { Value = iValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
                 else if (smeDB.TValue.Equals("D"))
-                    smeDB.DValueSets.Add(new DValueSet { Value = dValue, Annotation = AasContext.SerializeElement(prop.ValueType) });
+                    smeDB.DValueSets.Add(new DValueSet { Value = dValue, Annotation = Serializer.SerializeElement(prop.ValueType) });
             }
             else if (sme is MultiLanguageProperty mlp)
             {
                 if (mlp.ValueId != null)
-                    smeDB.OValueSets.Add(new OValueSet { Attribute = "ValueId", Value = AasContext.SerializeElement(mlp.ValueId) });
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "ValueId", Value = Serializer.SerializeElement(mlp.ValueId) });
 
                 if (mlp.Value == null || mlp.Value.Count == 0)
                     return;
@@ -457,7 +453,7 @@ namespace AasxServerDB
             }
             else if (sme is Range range)
             {
-                smeDB.OValueSets.Add(new OValueSet { Attribute = "ValueType", Value = AasContext.SerializeElement(range.ValueType) });
+                smeDB.OValueSets.Add(new OValueSet { Attribute = "ValueType", Value = Serializer.SerializeElement(range.ValueType) });
 
                 if (range.Min.IsNullOrEmpty() && range.Max.IsNullOrEmpty())
                     return;
@@ -543,42 +539,42 @@ namespace AasxServerDB
             else if (sme is ReferenceElement refEle)
             {
                 if (refEle.Value != null)
-                    smeDB.OValueSets.Add(new OValueSet { Attribute = "Value", Value = AasContext.SerializeElement(refEle.Value) });
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "Value", Value = Serializer.SerializeElement(refEle.Value) });
             }
             else if (sme is SubmodelElementList sml)
             {
                 if (sml.OrderRelevant != null)
-                    smeDB.OValueSets.Add(new OValueSet { Attribute = "OrderRelevant", Value = AasContext.SerializeElement(sml.OrderRelevant) });
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "OrderRelevant", Value = Serializer.SerializeElement(sml.OrderRelevant) });
 
                 if (sml.SemanticIdListElement != null)
-                    smeDB.OValueSets.Add(new OValueSet { Attribute = "SemanticIdListElement", Value = AasContext.SerializeElement(sml.SemanticIdListElement) });
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "SemanticIdListElement", Value = Serializer.SerializeElement(sml.SemanticIdListElement) });
 
-                smeDB.OValueSets.Add(new OValueSet { Attribute = "TypeValueListElement", Value = AasContext.SerializeElement(sml.TypeValueListElement) });
+                smeDB.OValueSets.Add(new OValueSet { Attribute = "TypeValueListElement", Value = Serializer.SerializeElement(sml.TypeValueListElement) });
 
                 if (sml.ValueTypeListElement != null)
-                    smeDB.OValueSets.Add(new OValueSet { Attribute = "ValueTypeListElement", Value = AasContext.SerializeElement(sml.ValueTypeListElement) });
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "ValueTypeListElement", Value = Serializer.SerializeElement(sml.ValueTypeListElement) });
             }
             else if (sme is Entity ent)
             {
                 smeDB.TValue = "S";
-                smeDB.SValueSets.Add(new SValueSet { Value = ent.GlobalAssetId, Annotation = AasContext.SerializeElement(ent.EntityType) });
+                smeDB.SValueSets.Add(new SValueSet { Value = ent.GlobalAssetId, Annotation = Serializer.SerializeElement(ent.EntityType) });
 
                 if (ent.SpecificAssetIds != null)
-                    smeDB.OValueSets.Add(new OValueSet { Attribute = "SpecificAssetIds", Value = AasContext.SerializeList(ent.SpecificAssetIds) });
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "SpecificAssetIds", Value = Serializer.SerializeList(ent.SpecificAssetIds) });
             }
             else if (sme is BasicEventElement evt)
             {
                 if (evt.Observed != null)
-                    smeDB.OValueSets.Add(new OValueSet { Attribute = "Observed", Value = AasContext.SerializeElement(evt.Observed) });
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "Observed", Value = Serializer.SerializeElement(evt.Observed) });
 
-                smeDB.OValueSets.Add(new OValueSet { Attribute = "Direction", Value = AasContext.SerializeElement(evt.Direction) });
-                smeDB.OValueSets.Add(new OValueSet { Attribute = "State", Value = AasContext.SerializeElement(evt.State) });
+                smeDB.OValueSets.Add(new OValueSet { Attribute = "Direction", Value = Serializer.SerializeElement(evt.Direction) });
+                smeDB.OValueSets.Add(new OValueSet { Attribute = "State", Value = Serializer.SerializeElement(evt.State) });
 
                 if (evt.MessageTopic != null)
                     smeDB.OValueSets.Add(new OValueSet { Attribute = "MessageTopic", Value = evt.MessageTopic });
 
                 if (evt.MessageBroker != null)
-                    smeDB.OValueSets.Add(new OValueSet { Attribute = "MessageBroker", Value = AasContext.SerializeElement(evt.MessageBroker) });
+                    smeDB.OValueSets.Add(new OValueSet { Attribute = "MessageBroker", Value = Serializer.SerializeElement(evt.MessageBroker) });
 
                 if (evt.LastUpdate != null)
                     smeDB.OValueSets.Add(new OValueSet { Attribute = "LastUpdate", Value = evt.LastUpdate });
@@ -590,10 +586,6 @@ namespace AasxServerDB
                     smeDB.OValueSets.Add(new OValueSet { Attribute = "MaxInterval", Value = evt.MaxInterval });
             }
         }
-
-
-
-
 
         // 14 SubmodelElemente (+ OperationVariable)
         public override void VisitCapability(ICapability that)
@@ -702,8 +694,6 @@ namespace AasxServerDB
         {
             base.VisitOperationVariable(that);
         }
-
-
 
 
 

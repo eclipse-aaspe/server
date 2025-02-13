@@ -13,6 +13,7 @@
 
 using System.Collections.Generic;
 using System.IO;
+using Contracts.Pagination;
 
 namespace AasxServerStandardBib.Interfaces
 {
@@ -24,7 +25,7 @@ namespace AasxServerStandardBib.Interfaces
         void                   DeleteFileByPath(string submodelIdentifier, string idShortPath);
         void                   DeleteSubmodelById(string submodelIdentifier);
         void                   DeleteSubmodelElementByPath(string submodelIdentifier, string idShortPath);
-        List<ISubmodelElement> GetAllSubmodelElements(string submodelIdentifier);
+        List<ISubmodelElement> GetPagedSubmodelElements(IPaginationParameters paginationParameters, string submodelIdentifier);
         List<ISubmodel>        GetAllSubmodels(IReference reqSemanticId = null, string idShort = null);
         string                 GetFileByPath(string submodelIdentifier, string idShortPath, out byte[] byteArray, out long fileSize);
         ISubmodel              GetSubmodelById(string submodelIdentifier);

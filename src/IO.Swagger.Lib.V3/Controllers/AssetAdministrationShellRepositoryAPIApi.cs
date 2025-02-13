@@ -50,6 +50,7 @@ using System.Xml.Linq;
 using System.IO;
 using AdminShellNS.Extensions;
 using System.Text.Json.Nodes;
+using Contracts.Pagination;
 
 namespace IO.Swagger.Controllers
 {
@@ -418,8 +419,9 @@ namespace IO.Swagger.Controllers
                 } 
             }
 
-            var aasList = _aasService.GetAllAssetAdministrationShells(reqAssetIds, idShort);
-            var output = _paginationService.GetPaginatedList(aasList, new PaginationParameters(cursor, limit));
+            var paginationParameters = new PaginationParameters(cursor, limit);
+            var paginatedAasList = _aasService.GetPagedAssetAdministrationShells(paginationParameters, reqAssetIds, idShort);
+            var output = _paginationService.GetPaginatedResult(paginatedAasList, paginationParameters);
             return new ObjectResult(output);
         }
 
@@ -465,8 +467,9 @@ namespace IO.Swagger.Controllers
                 }
             }
 
-            var aasList = _aasService.GetAllAssetAdministrationShells(reqAssetIds, idShort);
-            var aasPaginatedList = _paginationService.GetPaginatedList(aasList, new PaginationParameters(cursor, limit));
+            var paginationParameters = new PaginationParameters(cursor, limit);
+            var aasList = _aasService.GetPagedAssetAdministrationShells(paginationParameters, reqAssetIds, idShort);
+            var aasPaginatedList = _paginationService.GetPaginatedResult(aasList, paginationParameters);
             var references = _referenceModifierService.GetReferenceResult(aasPaginatedList.result.ConvertAll(a => (IReferable)a));
             var output = new ReferencePagedResult(references, aasPaginatedList.paging_metadata);
             return new ObjectResult(output);
@@ -529,9 +532,10 @@ namespace IO.Swagger.Controllers
                 }
             }
 
-            var submodelElements = _aasService.GetAllSubmodelElements(decodedAasIdentifier, decodedSmIdentifier);
+            var paginationParameters = new PaginationParameters(cursor, limit);
+            var submodelElements = _aasService.GetPagedSubmodelElements(paginationParameters, decodedAasIdentifier, decodedSmIdentifier);
 
-            var smePaginated = _paginationService.GetPaginatedList(submodelElements, new PaginationParameters(cursor, limit));
+            var smePaginated = _paginationService.GetPaginatedResult(submodelElements, paginationParameters);
             var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginated.result ?? [], levelEnum, extentEnum);
             var output = new PagedResult() { result = smeLevelList.ConvertAll(sme => sme), paging_metadata = smePaginated.paging_metadata };
             return new ObjectResult(output);
@@ -589,9 +593,10 @@ namespace IO.Swagger.Controllers
                 }
             }
 
-            var smeList = _aasService.GetAllSubmodelElements(decodedAasIdentifier, decodedSubmodelIdentifier);
+            var paginationParameters = new PaginationParameters(cursor, limit);
+            var smeList = _aasService.GetPagedSubmodelElements(paginationParameters, decodedAasIdentifier, decodedSubmodelIdentifier);
 
-            var smePaginated = _paginationService.GetPaginatedList(smeList, new PaginationParameters(cursor, limit));
+            var smePaginated = _paginationService.GetPaginatedResult(smeList, paginationParameters);
             var smeMetadataList = _mappingService.Map(smePaginated.result, "metadata");
             var output = new MetadataPagedResult { result = smeMetadataList.ConvertAll(sme => (IMetadataDTO)sme), paging_metadata = smePaginated.paging_metadata };
             return new ObjectResult(output);
@@ -655,9 +660,10 @@ namespace IO.Swagger.Controllers
                 }
             }
 
-            var submodelElementsList = _aasService.GetAllSubmodelElements(decodedAasIdentifier, decodedSubmodelIdentifier);
+            var paginationParameters = new PaginationParameters(cursor, limit);
+            var submodelElementsList = _aasService.GetPagedSubmodelElements(paginationParameters, decodedAasIdentifier, decodedSubmodelIdentifier);
 
-            var smePaginated = _paginationService.GetPaginatedList(submodelElementsList, new PaginationParameters(cursor, limit));
+            var smePaginated = _paginationService.GetPaginatedResult(submodelElementsList, new PaginationParameters(cursor, limit));
             var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginated.result ?? [], levelEnum, extentEnum);
             var smePathList = _pathModifierService.ToIdShortPath(smeLevelList.ConvertAll(sme => (ISubmodelElement)sme));
             var output = new PathPagedResult { result = smePathList, paging_metadata = smePaginated.paging_metadata };
@@ -720,10 +726,11 @@ namespace IO.Swagger.Controllers
                 }
             }
 
-            var smeList = _aasService.GetAllSubmodelElements(decodedAasIdentifier, decodedSubmodelIdentifier);
+            var paginationParameters = new PaginationParameters(cursor, limit);
+            var smeList = _aasService.GetPagedSubmodelElements(paginationParameters, decodedAasIdentifier, decodedSubmodelIdentifier);
 
             // TODO (jtikekar, 2023-09-04): check performace imapct due to ConvertAll
-            var smePaginated = _paginationService.GetPaginatedList(smeList, new PaginationParameters(cursor, limit));
+            var smePaginated = _paginationService.GetPaginatedResult(smeList, paginationParameters);
             var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginated.result ?? [], levelEnum);
             var smeReferenceList = _referenceModifierService.GetReferenceResult(smeLevelList.ConvertAll(sme => (IReferable)sme));
             var output = new ReferencePagedResult(smeReferenceList, smePaginated.paging_metadata);
@@ -786,9 +793,10 @@ namespace IO.Swagger.Controllers
                 }
             }
 
-            var submodelElements = _aasService.GetAllSubmodelElements(decodedAasIdentifier, decodedSubmodelIdentifier);
+            var paginationParameters = new PaginationParameters(cursor, limit);
+            var submodelElements = _aasService.GetPagedSubmodelElements(paginationParameters, decodedAasIdentifier, decodedSubmodelIdentifier);
 
-            var smePaginated = _paginationService.GetPaginatedList(submodelElements, new PaginationParameters(cursor, limit));
+            var smePaginated = _paginationService.GetPaginatedResult(submodelElements, paginationParameters);
             var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginated.result, levelEnum);
             var smeValueList = _mappingService.Map(smeLevelList, "value");
             var output = new ValueOnlyPagedResult { result = smeValueList.ConvertAll(sme => (IValueDTO)sme), paging_metadata = smePaginated.paging_metadata };
@@ -831,7 +839,7 @@ namespace IO.Swagger.Controllers
 
             var submodels = _aasService.GetAllSubmodelReferencesFromAas(decodedAasIdentifier);
 
-            var output = _paginationService.GetPaginatedList(submodels, new PaginationParameters(cursor, limit));
+            var output = _paginationService.GetPaginatedResult(submodels, new PaginationParameters(cursor, limit));
             return new ObjectResult(output);
         }
 

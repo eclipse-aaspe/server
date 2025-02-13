@@ -140,7 +140,7 @@ namespace IO.Swagger.Controllers
                 }
             }
 
-            var output = _paginationService.GetPaginatedList(cdList, new PaginationParameters(cursor, limit));
+            var output = _paginationService.GetPaginatedResult(cdList, new PaginationParameters(cursor, limit));
             return new ObjectResult(output);
         }
 
