@@ -13,6 +13,12 @@ using System.Threading.Tasks;
 using TimeStamp;
 using System.Runtime.Intrinsics.X86;
 using System.IO;
+using AasxServerDB;
+using Contracts;
+using System.Linq.Dynamic.Core;
+using AasxServerDB.Entities;
+using Microsoft.IdentityModel.Tokens;
+using Namotion.Reflection;
 
 namespace Events
 {
@@ -90,8 +96,7 @@ namespace Events
                 {
                     case "CREATE":
                         timeStamp = sme.TimeStampCreate;
-                        if ((sme.TimeStampCreate - sme.TimeStampTree).TotalMilliseconds >= 0
-                            && (sme.TimeStampCreate - diffTime).TotalMilliseconds > 1)
+                        if (sme.TimeStampCreate >= sme.TimeStampTree && (sme.TimeStampCreate - diffTime).TotalMilliseconds > 1)
                         {
                             copy = true;
                         }
@@ -105,14 +110,9 @@ namespace Events
                         break;
                     case "UPDATE":
                         timeStamp = sme.TimeStampTree;
-                        var a = (diffTime - sme.TimeStampCreate).TotalMilliseconds;
-                        var b = (sme.TimeStampTree - sme.TimeStampCreate).TotalMilliseconds;
-                        var c = (sme.TimeStampTree - diffTime).TotalMilliseconds;
-                        if ((diffTime - sme.TimeStampCreate).TotalMilliseconds >= -1
-                            && (sme.TimeStampTree - sme.TimeStampCreate).TotalMilliseconds > 1
-                            && (sme.TimeStampTree - diffTime).TotalMilliseconds > 1)
+                        if (diffTime > sme.TimeStampCreate && sme.TimeStampCreate < sme.TimeStampTree && (sme.TimeStampTree - diffTime).TotalMilliseconds > 1)
                         {
-                            if (children != null && children.Count != 0)
+                            if (children != null || children.Count != 0)
                             {
                                 foreach (ISubmodelElement child in children)
                                 {
@@ -131,12 +131,11 @@ namespace Events
                         break;
                     case "DELETE":
                         timeStamp = sme.TimeStampDelete;
-                        if ((diffTime - sme.TimeStampCreate).TotalMilliseconds >= 0
-                            && (sme.TimeStampDelete - diffTime).TotalMilliseconds > 1)
+                        if (diffTime > sme.TimeStampCreate && (sme.TimeStampDelete - diffTime).TotalMilliseconds > 1)
                         {
                             delete = true;
                         }
-                        if (children != null && children.Count != 0)
+                        if (children != null || children.Count != 0)
                         {
                             foreach (ISubmodelElement child in children)
                             {
@@ -197,7 +196,9 @@ namespace Events
             return count;
         }
 
-        public static EventPayload CollectPayload(string changes, int depth, SubmodelElementCollection statusData, IReferable referable, string diff, List<String> diffEntry, bool noPayload)
+        public static EventPayload CollectPayload(string changes, int depth, SubmodelElementCollection statusData,
+            ReferenceElement reference, IReferable referable, AasCore.Aas3_0.Property conditionSM, AasCore.Aas3_0.Property conditionSME,
+            string diff, List<String> diffEntry, bool noPayload)
         {
             var e = new EventPayload();
             e.status.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
@@ -224,110 +225,168 @@ namespace Events
 
             lock (EventLock)
             {
-                if (!isStatus && referable != null)
+                if (!isStatus)
                 {
-                    var entry = new EventPayloadEntry();
-                    var idShortPath = "";
-                    Submodel submodel = null;
-                    List<ISubmodelElement> children = null;
-                    if (referable is Submodel)
+                    if (referable != null)
                     {
-                        submodel = referable as Submodel;
-                        children = submodel.SubmodelElements;
-                        entry.submodelId = submodel.Id;
-                        entry.payloadType = "submodel";
-                    }
-                    else
-                    {
-                        if (referable is SubmodelElementCollection smc)
+                        var entry = new EventPayloadEntry();
+                        var idShortPath = "";
+                        Submodel submodel = null;
+                        List<ISubmodelElement> children = null;
+                        if (referable is Submodel)
                         {
-                            children = smc.Value;
-                        }
-                        if (referable is SubmodelElementList sml)
-                        {
-                            children = sml.Value;
-                        }
-                        var r = referable;
-                        while (r.Parent != null)
-                        {
-                            idShortPath = r.IdShort + "." + idShortPath;
-                            r = r.Parent as IReferable;
-                        }
-                        if (r is Submodel)
-                        {
-                            submodel = r as Submodel;
+                            submodel = referable as Submodel;
+                            children = submodel.SubmodelElements;
                             entry.submodelId = submodel.Id;
-                        }
-                        entry.payloadType = "sme";
-                        idShortPath = referable.IdShort + ".";
-                    }
-
-                    e.status.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(referable.TimeStampTree);
-
-                    // foreach (var c in children)
-                    {
-                        if (isInitial)
-                        {
-                            var json = string.Empty;
-                            var j = Jsonization.Serialize.ToJsonObject(referable);
-                            json = j.ToJsonString();
-
-                            entry.entryType = "CREATE";
-                            e.status.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(referable.TimeStampTree);
-                            if (!noPayload)
-                            {
-                                entry.payload = json;
-                            }
-                            entry.lastUpdate = e.status.lastUpdate;
-                            entry.idShortPath = idShortPath.TrimEnd('.');
-                            e.eventEntries.Add(entry);
-                            diffEntry.Add(entry.entryType + " " + entry.idShortPath);
-                            /*
-                            string json = string.Empty;
-                            if (referable != null)
-                            {
-                                var j = Jsonization.Serialize.ToJsonObject(referable);
-                                json = j.ToJsonString();
-                            }
-
-                            entry.entryType = "CREATE";
-                            e.status.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(referable.TimeStampTree);
-                            if (!noPayload)
-                            {
-                                entry.payload = json;
-                            }
-                            entry.lastUpdate = e.status.lastUpdate;
-                            entry.idShortPath = idShortPath.TrimEnd('.');
-                            e.eventEntries.Add(entry);
-                            diffEntry.Add(entry.entryType + " " + entry.idShortPath);
-                            */
+                            entry.payloadType = "submodel";
                         }
                         else
                         {
-                            // idShortPath = c.IdShort + ".";
-                            var diffTime = DateTime.Parse(diff);
-                            if (changes == null || changes.Contains("CREATE"))
+                            if (referable is SubmodelElementCollection smc)
                             {
-                                collectSubmodelElements(children, diffTime, "CREATE", submodel.Id, idShortPath, e.eventEntries, diffEntry, noPayload);
+                                children = smc.Value;
                             }
-                            if (changes == null || changes.Contains("DELETE"))
+                            if (referable is SubmodelElementList sml)
                             {
-                                if (!(referable is Submodel))
-                                {
-                                    var c = new List<ISubmodelElement>();
-                                    c.Add(referable as ISubmodelElement);
-                                    collectSubmodelElements(c, diffTime, "DELETE", submodel.Id, "", e.eventEntries, diffEntry, noPayload);
-                                }
-                                else
-                                {
-                                    collectSubmodelElements(children, diffTime, "DELETE", submodel.Id, idShortPath, e.eventEntries, diffEntry, noPayload);
-                                }
+                                children = sml.Value;
                             }
-                            if (changes == null || changes.Contains("UPDATE"))
+                            var r = referable;
+                            while (r.Parent != null)
                             {
-                                collectSubmodelElements(children, diffTime, "UPDATE", submodel.Id, idShortPath, e.eventEntries, diffEntry, noPayload);
+                                idShortPath = r.IdShort + "." + idShortPath;
+                                r = r.Parent as IReferable;
+                            }
+                            if (r is Submodel)
+                            {
+                                submodel = r as Submodel;
+                                entry.submodelId = submodel.Id;
+                            }
+                            entry.payloadType = "sme";
+                            idShortPath = referable.IdShort + ".";
+                        }
+
+                        e.status.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(referable.TimeStampTree);
+
+                        // foreach (var c in children)
+                        {
+                            if (isInitial)
+                            {
+                                var json = string.Empty;
+                                var j = Jsonization.Serialize.ToJsonObject(referable);
+                                json = j.ToJsonString();
+
+                                entry.entryType = "CREATE";
+                                e.status.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(referable.TimeStampTree);
+                                if (!noPayload)
+                                {
+                                    entry.payload = json;
+                                }
+                                entry.lastUpdate = e.status.lastUpdate;
+                                entry.idShortPath = idShortPath.TrimEnd('.');
+                                e.eventEntries.Add(entry);
+                                diffEntry.Add(entry.entryType + " " + entry.idShortPath);
+                                /*
+                                string json = string.Empty;
+                                if (referable != null)
+                                {
+                                    var j = Jsonization.Serialize.ToJsonObject(referable);
+                                    json = j.ToJsonString();
+                                }
+
+                                entry.entryType = "CREATE";
+                                e.status.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(referable.TimeStampTree);
+                                if (!noPayload)
+                                {
+                                    entry.payload = json;
+                                }
+                                entry.lastUpdate = e.status.lastUpdate;
+                                entry.idShortPath = idShortPath.TrimEnd('.');
+                                e.eventEntries.Add(entry);
+                                diffEntry.Add(entry.entryType + " " + entry.idShortPath);
+                                */
+                            }
+                            else
+                            {
+                                // idShortPath = c.IdShort + ".";
+                                var diffTime = DateTime.Parse(diff);
+                                if (changes == null || changes.Contains("CREATE"))
+                                {
+                                    collectSubmodelElements(children, diffTime, "CREATE", submodel.Id, idShortPath, e.eventEntries, diffEntry, noPayload);
+                                }
+                                if (changes == null || changes.Contains("DELETE"))
+                                {
+                                    if (!(referable is Submodel))
+                                    {
+                                        children = new List<ISubmodelElement>();
+                                        children.Add(referable as ISubmodelElement);
+                                        collectSubmodelElements(children, diffTime, "DELETE", submodel.Id, "", e.eventEntries, diffEntry, noPayload);
+                                    }
+                                    else
+                                    {
+                                        collectSubmodelElements(children, diffTime, "DELETE", submodel.Id, idShortPath, e.eventEntries, diffEntry, noPayload);
+                                    }
+                                }
+                                if (changes == null || changes.Contains("UPDATE"))
+                                {
+                                    collectSubmodelElements(children, diffTime, "UPDATE", submodel.Id, idShortPath, e.eventEntries, diffEntry, noPayload);
+                                }
                             }
                         }
+                    }
+                    else // DB
+                    {
+                        string searchSM = string.Empty;
+                        string searchSME = string.Empty;
+                        if (conditionSM != null && conditionSM.Value != null)
+                        {
+                            searchSM = conditionSM.Value;
+                        }
+                        if (conditionSME != null && conditionSME.Value != null)
+                        {
+                            searchSME = conditionSME.Value;
+                        }
+
+                        var diffTime = new DateTime();
+                        if (diff != "init")
+                        {
+                            diffTime = DateTime.Parse(diff);
+                        }
+                        diff = TimeStamp.TimeStamp.DateTimeToString(diffTime);
+
+                        List<String> entryTypeList = ["CREATE", "UPDATE"];
+                        List<String> timeStampExpression = [$"TimeStampCreate > \"{diff}\"", $"(TimeStampTree != TimeStampCreate) && (TimeStampTree > \"{diff}\")"];
+
+                        using AasContext db = new();
+                        // var query = new Query();
+                        // var qResult = new QResult();
+                        var timeStampMax = new DateTime();
+
+                        for (var i = 0; i < entryTypeList.Count; i++)
+                        {
+                            IQueryable<SMSet> x = null;
+                            // x = db.SMSets.Where(sm => sm.TimeStampTree > diffTime);
+                            x = db.SMSets.Where(timeStampExpression[i]);
+                            if (!searchSM.IsNullOrEmpty() && searchSM != "*")
+                            {
+                                x = x.Where(searchSM);
+                            }
+                            x = x.Take(1000);
+                            var y = x.ToList();
+                            foreach (var sm in y)
+                            {
+                                if (sm.TimeStampTree > timeStampMax)
+                                {
+                                    timeStampMax = sm.TimeStampTree;
+                                }
+                                var entry = new EventPayloadEntry();
+                                entry.entryType = entryTypeList[i];
+                                entry.payloadType = "sm";
+                                entry.submodelId = sm.Identifier.ToString();
+                                entry.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree);
+                                e.eventEntries.Add(entry);
+                            }
+                        }
+                        e.status.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(timeStampMax);
                     }
                 }
             }
@@ -724,7 +783,7 @@ namespace Events
                 }
             }
 
-            if (maxCount != 0 && eventData.dataCollection == parent)
+            if (maxCount != 0 || eventData.dataCollection == parent)
             {
                 SubmodelElementCollection data = eventData.dataCollection;
                 // if (eventData.direction != null && eventData.direction.Value == "IN" && eventData.mode != null && (eventData.mode.Value == "PUSH" || eventData.mode.Value == "PUT"))
@@ -771,6 +830,14 @@ namespace Events
         public AasCore.Aas3_0.Property dataMaxSize = null;
         public SubmodelElementCollection statusData = null;
         public AasCore.Aas3_0.Property noPayload = null;
+
+        // memory || database
+        public AasCore.Aas3_0.Property persistence = null;
+        // * = all SM, else query condition for SM
+        public AasCore.Aas3_0.Property conditionSM = null;
+        // "" only conditionSM, * = all SME in SM, else query condition for SME
+        public AasCore.Aas3_0.Property conditionSME = null;
+        public AasCore.Aas3_0.ReferenceElement dataReference = null;
 
         public SubmodelElementCollection status = null;
         public AasCore.Aas3_0.Property message = null;
@@ -885,23 +952,7 @@ namespace Events
                         break;
                     case "endpoint":
                         if (p != null)
-                        {
-                            if (p.Value != null && p.Value.StartsWith("$"))
-                            {
-                                var envVarName = p.Value.Substring(1);
-                                var url = System.Environment.GetEnvironmentVariable(envVarName);
-                                if (url != null)
-                                {
-                                    Console.WriteLine($"{p.Value} = {url}");
-                                    p.Value = url;
-                                }
-                                else
-                                {
-                                    Console.WriteLine($"Environment variable {envVarName} not found.");
-                                }
-                            }
                             endPoint = p;
-                        }
                         break;
                     case "nopayload":
                         if (p != null)
@@ -909,6 +960,10 @@ namespace Events
                         break;
                     case "data":
                     case "observed":
+                        if (inputRef is ReferenceElement r)
+                        {
+                            dataReference = r;
+                        }
                         if (sm != null)
                             dataSubmodel = sm;
                         if (smec != null)
@@ -921,6 +976,18 @@ namespace Events
                     case "statusdata":
                         if (smec != null)
                             statusData = smec;
+                        break;
+                    case "persistence":
+                        if (p != null)
+                            persistence = p;
+                        break;
+                    case "conditionsm":
+                        if (p != null)
+                            conditionSM = p;
+                        break;
+                    case "conditionsme":
+                        if (p != null)
+                            conditionSME = p;
                         break;
                 }
             }

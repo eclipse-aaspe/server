@@ -1858,10 +1858,7 @@ namespace AasxServer
                                         d = "init";
                                         eventData.lastUpdate.Value = d;
                                         var dt = DateTime.UtcNow;
-                                        if (eventData.statusData != null)
-                                        {
-                                            eventData.statusData.SetAllParentsAndTimestamps(eventData.statusData.Parent as IReferable, dt, dt, DateTime.MinValue);
-                                        }
+                                        eventData.statusData.SetAllParentsAndTimestamps(eventData.statusData.Parent as IReferable, dt, dt, DateTime.MinValue);
                                         Program.signalNewData(2);
                                     }
                                     else
@@ -1879,58 +1876,48 @@ namespace AasxServer
 
                                         Events.EventPayload eventPayload = System.Text.Json.JsonSerializer.Deserialize<Events.EventPayload>(jsonString);
 
-                                        if (eventPayload.statusData != "")
+                                        ISubmodelElement receiveSme = null;
+                                        MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(eventPayload.statusData));
+                                        JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                                        receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
+                                        if (receiveSme != null && receiveSme is SubmodelElementCollection smc)
                                         {
-                                            ISubmodelElement receiveSme = null;
-                                            MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(eventPayload.statusData));
-                                            JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
-                                            receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
-                                            if (receiveSme != null && receiveSme is SubmodelElementCollection smc)
+                                            if (smc.Value != null)
                                             {
-                                                if (smc.Value != null && eventData.statusData != null && eventData.statusData.Value != null)
+                                                if (smc.Value.Count != 0 && smc.Value[0] is SubmodelElementCollection smcValue)
                                                 {
-                                                    if (smc.Value.Count != 0 && smc.Value[0] is SubmodelElementCollection smcValue)
-                                                    {
-                                                        eventData.statusData.Value = smcValue.Value;
-                                                    }
-                                                    else
-                                                    {
-                                                        eventData.statusData.Value.Clear();
-                                                    }
-
-                                                    var dt = eventData.statusData.TimeStamp;
-                                                    d = eventPayload.status.lastUpdate;
-                                                    if (d == "")
-                                                    {
-                                                        d = "init";
-                                                    }
-                                                    eventData.lastUpdate.Value = d;
-                                                    eventData.statusData.SetAllParentsAndTimestamps(eventData.statusData.Parent as IReferable, dt, dt, DateTime.MinValue);
-                                                    Program.signalNewData(2);
+                                                    eventData.statusData.Value = smcValue.Value;
                                                 }
+                                                else
+                                                {
+                                                    eventData.statusData.Value.Clear();
+                                                }
+
+                                                var dt = eventData.statusData.TimeStamp;
+                                                d = eventPayload.status.lastUpdate;
+                                                if (d == "")
+                                                {
+                                                    d = "init";
+                                                }
+                                                eventData.lastUpdate.Value = d;
+                                                eventData.statusData.SetAllParentsAndTimestamps(eventData.statusData.Parent as IReferable, dt, dt, DateTime.MinValue);
+                                                Program.signalNewData(2);
                                             }
-                                        }
-                                        else
-                                        {
-                                            d = "init";
                                         }
                                     }
                                     bool withReconnect = false;
-                                    if (eventData.statusData != null && eventData.statusData.Value != null)
+                                    foreach (var r in eventData.statusData.Value)
                                     {
-                                        foreach (var r in eventData.statusData.Value)
+                                        if (r is Property p2 && p2.IdShort == "__RECONNECT__")
                                         {
-                                            if (r is Property p2 && p2.IdShort == "__RECONNECT__")
-                                            {
-                                                p2.Value = "" + (Convert.ToInt32(p2.Value) + 1);
-                                                withReconnect = true;
-                                            }
+                                            p2.Value = "" + (Convert.ToInt32(p2.Value) + 1);
+                                            withReconnect = true;
                                         }
-                                        if (!withReconnect)
-                                        {
-                                            var p = new Property(DataTypeDefXsd.String, idShort: "__RECONNECT__", value: "1");
-                                            eventData.statusData.Value.Add(p);
-                                        }
+                                    }
+                                    if (!withReconnect)
+                                    {
+                                        var p = new Property(DataTypeDefXsd.String, idShort: "__RECONNECT__", value: "1");
+                                        eventData.statusData.Value.Add(p);
                                     }
                                 }
                             }
@@ -1959,11 +1946,9 @@ namespace AasxServer
                     {
                         c = eventData.changes.Value;
                     }
-                    var e = Events.EventPayload.CollectPayload(c, 0, eventData.statusData, source, d, diffEntry, np);
-                    foreach (var diff in diffEntry)
-                    {
-                        Console.WriteLine(diff);
-                    }
+                    var e = Events.EventPayload.CollectPayload(c, 0, eventData.statusData,
+                        eventData.dataReference, source, eventData.conditionSM, eventData.conditionSME,
+                        d, diffEntry, np);
 
                     Console.WriteLine("PUT Events: " + requestPath + "/" + d);
 
