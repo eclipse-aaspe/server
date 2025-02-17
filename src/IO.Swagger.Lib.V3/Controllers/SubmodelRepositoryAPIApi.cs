@@ -107,7 +107,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerOperation("GetEventMessages")]
     [SwaggerResponse(statusCode: 200, type: typeof(String), description: "List of Text")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-    public virtual IActionResult GetEventMessages([FromRoute] [Required] string submodelIdentifier, [Required] string eventName, [FromQuery] bool? noPayload, string? diff = "")
+    public virtual IActionResult GetEventMessages([FromRoute] [Required] string submodelIdentifier, [Required] string eventName,
+        [FromQuery] bool? noPayload, [FromQuery] int? limitSm, [FromQuery] int? limitSme, [FromQuery] int? offsetSm, [FromQuery] int? offsetSme, string? diff = "")
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -133,6 +134,26 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             if (noPayload.HasValue && noPayload != null)
             {
                 np = (bool)noPayload;
+            }
+            int limSm = 1000;
+            if (limitSm.HasValue && limitSm != null)
+            {
+                limSm = (int)limitSm;
+            }
+            int offSm = 0;
+            if (offsetSm.HasValue && offsetSm != null)
+            {
+                offSm = (int)offsetSm;
+            }
+            int limSme = 1000;
+            if (limitSme.HasValue && limitSme != null)
+            {
+                limSme = (int)limitSme;
+            }
+            int offSme = 0;
+            if (offsetSme.HasValue && offsetSme != null)
+            {
+                offSme = (int)offsetSme;
             }
 
             string sourceUrl = Program.externalBlazor + $"/{submodelIdentifier}/events/" + eventName;
@@ -193,7 +214,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 string changes = "CREATE UPDATE DELETE";
                 var e = Events.EventPayload.CollectPayload(changes, 0,
                     eventData.statusData, eventData.dataReference, data, eventData.conditionSM, eventData.conditionSME,
-                    diff, diffEntry, np);
+                    diff, diffEntry, np, limSm, offSm, limSme, offSme);
 
                 if (diff == "status")
                 {
@@ -244,7 +265,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 string changes = "CREATE UPDATE DELETE";
                 var e = Events.EventPayload.CollectPayload(changes, 0,
                 eventData.statusData, eventData.dataReference, null, eventData.conditionSM, eventData.conditionSME,
-                    diff, diffEntry, np);
+                    diff, diffEntry, np, limSm, limSme, offSm, offSme);
 
                 Program.signalNewData(2);
                 return new ObjectResult(e);
