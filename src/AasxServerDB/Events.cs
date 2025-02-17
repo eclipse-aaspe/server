@@ -53,6 +53,7 @@ namespace Events
         public string lastUpdate { get; set; } // latest timeStamp for all entries
         public int countSM { get; set; }
         public int countSME { get; set; }
+        public string cursor { get; set; }
         public EventStatus()
         {
             // mode = "";
@@ -60,6 +61,7 @@ namespace Events
             lastUpdate = "";
             countSM = 0;
             countSME = 0;
+            cursor = "";
         }
     }
     public class EventPayload
@@ -230,9 +232,9 @@ namespace Events
 
             lock (EventLock)
             {
-                if (!isStatus)
+                if (referable != null)
                 {
-                    if (referable != null)
+                    if (!isStatus)
                     {
                         var entry = new EventPayloadEntry();
                         var idShortPath = "";
@@ -338,119 +340,134 @@ namespace Events
                             }
                         }
                     }
-                    else // DB
+                }
+                else // DB
+                {
+                    int countSM = 0;
+                    int countSME = 0;
+                    string searchSM = string.Empty;
+                    string searchSME = string.Empty;
+                    if (conditionSM != null && conditionSM.Value != null)
                     {
-                        int countSM = 0;
-                        int countSME = 0;
-                        string searchSM = string.Empty;
-                        string searchSME = string.Empty;
-                        if (conditionSM != null && conditionSM.Value != null)
+                        searchSM = conditionSM.Value;
+                    }
+                    if (conditionSME != null && conditionSME.Value != null)
+                    {
+                        searchSME = conditionSME.Value;
+                    }
+
+                    using AasContext db = new();
+                    var timeStampMax = new DateTime();
+
+                    if (diff == "status")
+                    {
+                        if (searchSM == "*" || searchSM == "")
                         {
-                            searchSM = conditionSM.Value;
+                            timeStampMax = db.SMSets.Select(sm => sm.TimeStampTree).Max();
                         }
-                        if (conditionSME != null && conditionSME.Value != null)
+                        else
                         {
-                            searchSME = conditionSME.Value;
+                            timeStampMax = db.SMSets.Where(searchSM).Select(sm => sm.TimeStampTree).Max();
                         }
+                        e.status.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(timeStampMax);
+                        return e;
+                    }
 
-                        var diffTime = new DateTime();
-                        if (diff != "init")
+                    var diffTime = new DateTime();
+                    if (diff != "init")
+                    {
+                        diffTime = DateTime.Parse(diff);
+                    }
+                    diff = TimeStamp.TimeStamp.DateTimeToString(diffTime);
+                    var diffTime1 = diffTime.AddMilliseconds(1);
+                    var diff1 = TimeStamp.TimeStamp.DateTimeToString(diffTime1);
+
+                    IQueryable<SMSet> smSearchSet = db.SMSets;
+                    if (!searchSM.IsNullOrEmpty() && searchSM != "*")
+                    {
+                        smSearchSet = smSearchSet.Where(searchSM);
+                    }
+                    // smSearchSet = smSearchSet.Where(timeStampExpression[i]);
+                    smSearchSet = smSearchSet.Where(sm => (sm.TimeStampCreate > diffTime1) ||
+                        ((sm.TimeStampTree != sm.TimeStampCreate) && (sm.TimeStampTree > diffTime1) && (sm.TimeStampCreate <= diffTime1)));
+                    smSearchSet = smSearchSet.OrderBy(sm => sm.TimeStampTree).Skip(offsetSm).Take(limitSm);
+                    var smSearchList = smSearchSet.ToList();
+
+                    foreach (var sm in smSearchList)
+                    {
+                        var entryType = "CREATE";
+
+                        bool completeSM = true;
+                        if (sm.TimeStampCreate <= diffTime1)
                         {
-                            diffTime = DateTime.Parse(diff);
-                        }
-                        diff = TimeStamp.TimeStamp.DateTimeToString(diffTime);
-
-                        /*
-                        List<String> entryTypeList = ["CREATE", "UPDATE"];
-                        List<String> timeStampExpression = [
-                            $"TimeStampCreate > \"{diff}\"",
-                            $"(TimeStampTree != TimeStampCreate) && (TimeStampTree > \"{diff}\") && (TimeStampCreate <= \"{diff}\")"
-                            ];
-                        */
-
-                        using AasContext db = new();
-                        // var query = new Query();
-                        // var qResult = new QResult();
-                        var timeStampMax = new DateTime();
-
-                        // for (var i = 0; i < entryTypeList.Count; i++)
-                        {
-                            IQueryable<SMSet> smSearchSet = db.SMSets;
-                            if (!searchSM.IsNullOrEmpty() && searchSM != "*")
+                            entryType = "UPDATE";
+                            var smeSearchSM = db.SMESets.Where(sme => sme.SMId == sm.Id);
+                            var smeSearchTimeStamp = smeSearchSM
+                                .Where(sme => (sme.TimeStampTree != sme.TimeStampCreate) && (sme.TimeStampTree > diffTime1) && (sme.TimeStampCreate <= diffTime1))
+                                .Where(sme => sme.TimeStamp > diffTime1)
+                                .OrderBy(sme => sme.TimeStampTree).Skip(offsetSme).Take(limitSme).ToList();
+                            if (smeSearchTimeStamp.Count != 0)
                             {
-                                smSearchSet = smSearchSet.Where(searchSM);
-                            }
-                            // smSearchSet = smSearchSet.Where(timeStampExpression[i]);
-                            smSearchSet = smSearchSet.Where(sm => (sm.TimeStampCreate > diffTime) ||
-                                ((sm.TimeStampTree != sm.TimeStampCreate) && (sm.TimeStampTree > diffTime) && (sm.TimeStampCreate <= diffTime)));
-                            smSearchSet = smSearchSet.OrderBy(sm => sm.TimeStampTree).Skip(offsetSm).Take(limitSm);
-                            var smSearchList = smSearchSet.ToList();
-
-                            foreach (var sm in smSearchList)
-                            {
-                                var entryType = "CREATE";
-
-                                bool completeSM = true;
-                                if (sm.TimeStampCreate <= diffTime)
+                                completeSM = false;
+                                foreach (var sme in smeSearchTimeStamp)
                                 {
-                                    entryType = "UPDATE";
-                                    var smeSearchSM = db.SMESets.Where(sme => sme.SMId == sm.Id);
-                                    var smeSearchTimeStamp = smeSearchSM
-                                        .Where(sme => (sme.TimeStampTree != sme.TimeStampCreate) && (sme.TimeStampTree > diffTime) && (sme.TimeStampCreate <= diffTime))
-                                        .Where(sme => sme.TimeStamp > diffTime)
-                                        .OrderBy(sme => sme.TimeStampTree).Skip(offsetSme).Take(limitSme).ToList();
-                                    if (smeSearchTimeStamp.Count != 0)
+                                    var parentId = sme.ParentSMEId;
+                                    var idShortPath = sme.IdShort;
+                                    while (parentId != null && parentId != 0)
                                     {
-                                        completeSM = false;
-                                        foreach (var sme in smeSearchTimeStamp)
-                                        {
-                                            var parentId = sme.ParentSMEId;
-                                            var idShortPath = sme.IdShort;
-                                            while (parentId != null && parentId != 0)
-                                            {
-                                                var parentSME = smeSearchSM.Where(sme => sme.Id == parentId).FirstOrDefault();
-                                                idShortPath = parentSME.IdShort + "." + idShortPath;
-                                                parentId = parentSME.ParentSMEId;
-                                            }
-
-                                            if (sme.TimeStampTree > timeStampMax)
-                                            {
-                                                timeStampMax = sme.TimeStampTree;
-                                            }
-
-                                            var entry = new EventPayloadEntry();
-                                            entry.entryType = entryType;
-                                            entry.payloadType = "sme";
-                                            entry.idShortPath = idShortPath;
-                                            entry.submodelId = sm.Identifier;
-                                            entry.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(sme.TimeStampTree);
-                                            e.eventEntries.Add(entry);
-                                            countSME++;
-                                        }
+                                        var parentSME = smeSearchSM.Where(sme => sme.Id == parentId).FirstOrDefault();
+                                        idShortPath = parentSME.IdShort + "." + idShortPath;
+                                        parentId = parentSME.ParentSMEId;
                                     }
-                                }
 
-                                if (completeSM)
-                                {
-                                    if (sm.TimeStampTree > timeStampMax)
+                                    if (sme.TimeStampTree > timeStampMax)
                                     {
-                                        timeStampMax = sm.TimeStampTree;
+                                        timeStampMax = sme.TimeStampTree;
                                     }
 
                                     var entry = new EventPayloadEntry();
                                     entry.entryType = entryType;
-                                    entry.payloadType = "sm";
-                                    entry.idShortPath = sm.IdShort;
+                                    entry.payloadType = "sme";
+                                    entry.idShortPath = idShortPath;
                                     entry.submodelId = sm.Identifier;
-                                    entry.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree);
+                                    entry.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(sme.TimeStampTree);
                                     e.eventEntries.Add(entry);
-                                    countSM++;
+                                    countSME++;
                                 }
                             }
                         }
+
+                        if (completeSM)
+                        {
+                            if (sm.TimeStampTree > timeStampMax)
+                            {
+                                timeStampMax = sm.TimeStampTree;
+                            }
+
+                            var entry = new EventPayloadEntry();
+                            entry.entryType = entryType;
+                            entry.payloadType = "sm";
+                            entry.idShortPath = sm.IdShort;
+                            entry.submodelId = sm.Identifier;
+                            entry.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree);
+                            e.eventEntries.Add(entry);
+                            countSM++;
+                        }
+                    }
+                    if (countSM == 0 && countSME == 0)
+                    {
+                        timeStampMax = db.SMSets.Where(searchSM).Select(sm => sm.TimeStampTree).Max();
+                    }
                         e.status.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(timeStampMax);
-                        e.status.countSM = countSM;
-                        e.status.countSME = countSME;
+                    e.status.countSM = countSM;
+                    e.status.countSME = countSME;
+                    if (countSM == limitSm)
+                    {
+                        e.status.cursor = $"offsetSM={offsetSm + limitSm}";
+                    }
+                    else if (countSM == limitSm)
+                    {
+                        e.status.cursor = $"offsetSME={offsetSme + limitSme}";
                     }
                 }
             }

@@ -159,7 +159,7 @@
                             <span>Env#:</span>
                         </td>
                         <td>
-                            <span>@db.EnvSets.Count()</span>
+                            <span>@db.EnvSets.Select(s => s.Id).Count()</span>
                         </td>
                         <td>
                             <a href="@($"{url}/env")" target="_blank">env</a>
@@ -170,7 +170,7 @@
                             <span>CD#:</span>
                         </td>
                         <td>
-                            <span>@db.CDSets.Count()</span>
+                            <span>@db.CDSets.Select(s => s.Id).Count()</span>
                         </td>
                         <td>
                             <a href="@($"{url}/cd")" target="_blank">cd</a>
@@ -181,7 +181,7 @@
                             <span>AAS#:</span>
                         </td>
                         <td>
-                            <span>@db.AASSets.Count()</span>
+                                    <span>@db.AASSets.Select(s => s.Id).Count()</span>
                         </td>
                         <td>
                             <a href="@($"{url}/aas")" target="_blank">aas</a>
@@ -192,7 +192,7 @@
                             <span>SM#:</span>
                         </td>
                         <td>
-                            <span>@db.SMSets.Count()</span>
+                                    <span>@db.SMSets.Select(s => s.Id).Count()</span>
                         </td>
                         <td>
                             <a href="@($"{url}/sm")" target="_blank">sm</a>
@@ -203,7 +203,7 @@
                             <span>SME#:</span>
                         </td>
                         <td>
-                            <span>@db.SMESets.Count()</span>
+                                    <span>@db.SMESets.Select(s => s.Id).Count()</span>
                         </td>
                         <td>
                             <a href="@($"{url}/sme")" target="_blank">sme</a>
@@ -214,7 +214,7 @@
                             <span>IValue#:</span>
                         </td>
                         <td>
-                            <span>@db.IValueSets.Count()</span>
+                                    <span>@db.IValueSets.Select(s => s.Id).Count()</span>
                         </td>
                         <td>
                             <a href="@($"{url}/ivalue")" target="_blank">ivalue</a>
@@ -225,7 +225,7 @@
                             <span>SValue#:</span>
                         </td>
                         <td>
-                            <span>@db.SValueSets.Count()</span>
+                                    <span>@db.SValueSets.Select(s => s.Id).Count()</span>
                         </td>
                         <td>
                             <a href="@($"{url}/svalue")" target="_blank">svalue</a>
@@ -236,7 +236,7 @@
                             <span>DValue#:</span>
                         </td>
                         <td>
-                            <span>@db.DValueSets.Count()</span>
+                                    <span>@db.DValueSets.Select(s => s.Id).Count()</span>
                         </td>
                         <td>
                             <a href="@($"{url}/dvalue")" target="_blank">dvalue</a>
@@ -247,7 +247,7 @@
                             <span>OValue#:</span>
                         </td>
                         <td>
-                            <span>@db.OValueSets.Count()</span>
+                                    <span>@db.OValueSets.Select(s => s.Id).Count()</span>
                         </td>
                         <td>
                             <a href="@($"{url}/ovalue")" target="_blank">ovalue</a>
@@ -264,7 +264,7 @@
             if (url.EndsWith("/env"))
             {
                 List<EnvSet> data = PageRetriever.GetPageEnvData(size, searchLower, envid, cdid);
-                <span>&nbsp&nbsp@($"Env#: {data.Count}/{db.EnvSets.Count()} size={size} search={search} envid={envid} cdid={cdid}")</span>
+                    <span>&nbsp&nbsp@($"Env#: {data.Count}/{db.EnvSets.Select(s => s.Id).Count()} size={size} search={search} envid={envid} cdid={cdid}")</span>
                 <br/>
                 <br/>
                 @if (size > 1000 && data.Count > 1000)
@@ -342,7 +342,7 @@
             if (url.EndsWith("/cd"))
             {
                 List<CDSet> data = PageRetriever.GetPageCDData(size, TimeStamp.StringToDateTime(searchLower), searchLower, envid, cdid);
-                <span>&nbsp&nbsp@($"CD#: {data.Count}/{db.AASSets.Count()} size={size} search={search} envid={envid} cdid={cdid}")</span>
+                    <span>&nbsp&nbsp@($"CD#: {data.Count}/{db.AASSets.Select(s => s.Id).Count()} size={size} search={search} envid={envid} cdid={cdid}")</span>
                 <br />
                 <br />
                 @if (size > 1000 && data.Count > 1000)
@@ -496,7 +496,7 @@
             if (url.EndsWith("/aas"))
             {
                 List<AASSet> data = PageRetriever.GetPageAASData(size, TimeStamp.StringToDateTime(searchLower), searchLower, envid, aasid);
-                <span>&nbsp&nbsp@($"AAS#: {data.Count}/{db.AASSets.Count()} size={size} search={search} envid={envid} aasid={aasid}")</span>
+                    <span>&nbsp&nbsp@($"AAS#: {data.Count}/{db.AASSets.Select(s => s.Id).Count()} size={size} search={search} envid={envid} aasid={aasid}")</span>
                 <br/>
                 <br/>
                 @if (size > 1000 && data.Count > 1000)
@@ -673,7 +673,7 @@
             {
                 List<SMSet> data = PageRetriever.GetPageSMData(size, TimeStamp.StringToDateTime(searchLower), searchLower, envid, aasid, smid);
                 <span>
-                    &nbsp&nbsp@($"SM#: {data.Count}/{db.SMSets.Count()} size={size} search={search} envid={envid} aasid={aasid} smid={smid}")
+                        &nbsp&nbsp@($"SM#: {data.Count}/{db.SMSets.Select(s => s.Id).Count()} size={size} search={search} envid={envid} aasid={aasid} smid={smid}")
                 </span>
                 <br/>
                 <br/>
@@ -865,7 +865,7 @@
             {
                 List<SMESet> data = PageRetriever.GetPageSMEData(size, TimeStamp.StringToDateTime(searchLower), searchLower, smid, smeid, parid);
                 <span>
-                    &nbsp&nbsp@($"SME#: {data.Count}/{db.SMESets.Count()} size={size} search={search} smid={smid} smeid={smeid} parid={parid}")
+                        &nbsp&nbsp@($"SME#: {data.Count}/{db.SMESets.Select(s => s.Id).Count()} size={size} search={search} smid={smid} smeid={smeid} parid={parid}")
                 </span>
                 <br/>
                 <br/>
@@ -1221,7 +1221,7 @@
             {
                 List<SValueSet> data = PageRetriever.GetPageSValueData(size, searchLower, smeid);
                 <span>
-                    &nbsp&nbsp@($"SValue#: {data.Count}/{db.SValueSets.Count()} size={size} search={search} smeid={smeid}")
+                        &nbsp&nbsp@($"SValue#: {data.Count}/{db.SValueSets.Select(s => s.Id).Count()} size={size} search={search} smeid={smeid}")
                 </span>
                 <br/>
                 <br/>
@@ -1289,7 +1289,7 @@
             {
                 List<IValueSet> data = PageRetriever.GetPageIValueData(size, searchLower, smeid);
                 <span>
-                    &nbsp&nbsp@($"IValue#: {data.Count}/{db.IValueSets.Count()} size={size} search={search} smeid={smeid}")
+                        &nbsp&nbsp@($"IValue#: {data.Count}/{db.IValueSets.Select(s => s.Id).Count()} size={size} search={search} smeid={smeid}")
                 </span>
                 <br/>
                 <br/>
@@ -1357,7 +1357,7 @@
             {
                 List<DValueSet> data = PageRetriever.GetPageDValueData(size, searchLower, smeid);
                 <span>
-                    &nbsp&nbsp@($"DValue#: {data.Count}/{db.DValueSets.Count()} size={size} search={search} smeid={smeid}")
+                        &nbsp&nbsp@($"DValue#: {data.Count}/{db.DValueSets.Select(s => s.Id).Count()} size={size} search={search} smeid={smeid}")
                 </span>
                 <br/>
                 <br/>
@@ -1425,7 +1425,7 @@
             {
                 List<OValueSet> data = PageRetriever.GetPageOValueData(size, searchLower, smeid);
                 <span>
-                    &nbsp&nbsp@($"OValue#: {data.Count}/{db.OValueSets.Count()} size={size} search={search} smeid={smeid}")
+                        &nbsp&nbsp@($"OValue#: {data.Count}/{db.OValueSets.Select(s => s.Id).Count()} size={size} search={search} smeid={smeid}")
                 </span>
                 <br />
                 <br />
