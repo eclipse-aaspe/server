@@ -306,6 +306,11 @@ namespace AasxServerDB
             }
         }
 
+        public static ISubmodelElement? GetSubmodelElement(SMESet smeSet)
+        {
+            return CreateSME(smeSet);
+        }
+
         private static ISubmodelElement? CreateSME(SMESet smeSet)
         {
             ISubmodelElement? sme = null;

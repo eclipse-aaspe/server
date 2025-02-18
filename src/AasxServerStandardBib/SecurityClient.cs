@@ -1948,7 +1948,7 @@ namespace AasxServer
                     }
                     var e = Events.EventPayload.CollectPayload(c, 0, eventData.statusData,
                         eventData.dataReference, source, eventData.conditionSM, eventData.conditionSME,
-                        d, diffEntry, np, 1000, 1000, 0, 0);
+                        d, diffEntry, !np, 1000, 1000, 0, 0);
 
                     Console.WriteLine("PUT Events: " + requestPath + "/" + d);
 

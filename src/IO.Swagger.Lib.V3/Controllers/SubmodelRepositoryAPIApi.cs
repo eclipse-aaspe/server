@@ -108,7 +108,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 200, type: typeof(String), description: "List of Text")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
     public virtual IActionResult GetEventMessages([FromRoute] [Required] string submodelIdentifier, [Required] string eventName,
-        [FromQuery] bool? noPayload, [FromQuery] int? limitSm, [FromQuery] int? limitSme, [FromQuery] int? offsetSm, [FromQuery] int? offsetSme, string? diff = "")
+        [FromQuery] bool? withPayload, [FromQuery] int? limitSm, [FromQuery] int? limitSme, [FromQuery] int? offsetSm, [FromQuery] int? offsetSme, string? diff = "")
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -130,10 +130,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         if (submodel != null)
         {
-            bool np = false;
-            if (noPayload.HasValue && noPayload != null)
+            bool wp = false;
+            if (withPayload.HasValue && withPayload != null)
             {
-                np = (bool)noPayload;
+                wp = (bool)withPayload;
             }
             int limSm = 1000;
             if (limitSm.HasValue && limitSm != null)
@@ -214,7 +214,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 string changes = "CREATE UPDATE DELETE";
                 var e = Events.EventPayload.CollectPayload(changes, 0,
                     eventData.statusData, eventData.dataReference, data, eventData.conditionSM, eventData.conditionSME,
-                    diff, diffEntry, np, limSm, offSm, limSme, offSme);
+                    diff, diffEntry, wp, limSm, offSm, limSme, offSme);
 
                 if (diff == "status")
                 {
@@ -265,7 +265,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 string changes = "CREATE UPDATE DELETE";
                 var e = Events.EventPayload.CollectPayload(changes, 0,
                 eventData.statusData, eventData.dataReference, null, eventData.conditionSM, eventData.conditionSME,
-                    diff, diffEntry, np, limSm, limSme, offSm, offSme);
+                    diff, diffEntry, wp, limSm, limSme, offSm, offSme);
 
                 Program.signalNewData(2);
                 return new ObjectResult(e);

@@ -78,7 +78,7 @@ namespace Events
             eventEntries = new List<EventPayloadEntry>();
         }
         public static int collectSubmodelElements(List<ISubmodelElement> submodelElements, DateTime diffTime, string entryType,
-            string submodelId, string idShortPath, List<EventPayloadEntry> entries, List<String> diffEntry, bool noPayload)
+            string submodelId, string idShortPath, List<EventPayloadEntry> entries, List<String> diffEntry, bool withPayload)
         {
             int count = 0;
             foreach (var sme in submodelElements)
@@ -163,7 +163,7 @@ namespace Events
                     e.entryType = entryType;
                     e.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(timeStamp);
                     e.payloadType = "sme";
-                    if (!noPayload)
+                    if (withPayload)
                     {
                         e.payload = j.ToJsonString();
                     }
@@ -196,7 +196,7 @@ namespace Events
                 {
                     if (tree && children.Count != 0)
                     {
-                        count += collectSubmodelElements(children, diffTime, entryType, submodelId, idShortPath + sme.IdShort + ".", entries, diffEntry, noPayload);
+                        count += collectSubmodelElements(children, diffTime, entryType, submodelId, idShortPath + sme.IdShort + ".", entries, diffEntry, withPayload);
                     }
                 }
             }
@@ -205,7 +205,7 @@ namespace Events
 
         public static EventPayload CollectPayload(string changes, int depth, SubmodelElementCollection statusData,
             ReferenceElement reference, IReferable referable, AasCore.Aas3_0.Property conditionSM, AasCore.Aas3_0.Property conditionSME,
-            string diff, List<String> diffEntry, bool noPayload, int limitSm, int limitSme, int offsetSm, int offsetSme)
+            string diff, List<String> diffEntry, bool withPayload, int limitSm, int limitSme, int offsetSm, int offsetSme)
         {
             var e = new EventPayload();
             e.status.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
@@ -284,7 +284,7 @@ namespace Events
 
                                 entry.entryType = "CREATE";
                                 e.status.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(referable.TimeStampTree);
-                                if (!noPayload)
+                                if (withPayload)
                                 {
                                     entry.payload = json;
                                 }
@@ -318,7 +318,7 @@ namespace Events
                                 var diffTime = DateTime.Parse(diff);
                                 if (changes == null || changes.Contains("CREATE"))
                                 {
-                                    collectSubmodelElements(children, diffTime, "CREATE", submodel.Id, idShortPath, e.eventEntries, diffEntry, noPayload);
+                                    collectSubmodelElements(children, diffTime, "CREATE", submodel.Id, idShortPath, e.eventEntries, diffEntry, withPayload);
                                 }
                                 if (changes == null || changes.Contains("DELETE"))
                                 {
@@ -326,16 +326,16 @@ namespace Events
                                     {
                                         children = new List<ISubmodelElement>();
                                         children.Add(referable as ISubmodelElement);
-                                        collectSubmodelElements(children, diffTime, "DELETE", submodel.Id, "", e.eventEntries, diffEntry, noPayload);
+                                        collectSubmodelElements(children, diffTime, "DELETE", submodel.Id, "", e.eventEntries, diffEntry, withPayload);
                                     }
                                     else
                                     {
-                                        collectSubmodelElements(children, diffTime, "DELETE", submodel.Id, idShortPath, e.eventEntries, diffEntry, noPayload);
+                                        collectSubmodelElements(children, diffTime, "DELETE", submodel.Id, idShortPath, e.eventEntries, diffEntry, withPayload);
                                     }
                                 }
                                 if (changes == null || changes.Contains("UPDATE"))
                                 {
-                                    collectSubmodelElements(children, diffTime, "UPDATE", submodel.Id, idShortPath, e.eventEntries, diffEntry, noPayload);
+                                    collectSubmodelElements(children, diffTime, "UPDATE", submodel.Id, idShortPath, e.eventEntries, diffEntry, withPayload);
                                 }
                             }
                         }
@@ -400,17 +400,30 @@ namespace Events
                         bool completeSM = true;
                         if (sm.TimeStampCreate <= diffTime1)
                         {
-                            entryType = "UPDATE";
                             var smeSearchSM = db.SMESets.Where(sme => sme.SMId == sm.Id);
                             var smeSearchTimeStamp = smeSearchSM
                                 .Where(sme => (sme.TimeStampTree != sme.TimeStampCreate) && (sme.TimeStampTree > diffTime1) && (sme.TimeStampCreate <= diffTime1))
-                                .Where(sme => sme.TimeStamp > diffTime1)
+                                .Where(sme => (sme.TimeStamp > diffTime1) || (sme.TimeStampDelete > diffTime1))
                                 .OrderBy(sme => sme.TimeStampTree).Skip(offsetSme).Take(limitSme).ToList();
                             if (smeSearchTimeStamp.Count != 0)
                             {
                                 completeSM = false;
                                 foreach (var sme in smeSearchTimeStamp)
                                 {
+                                    var notDeletedIdShortList = new List<string>();
+                                    if (sme.TimeStampDelete > diffTime1)
+                                    {
+                                        entryType = "DELETE";
+                                        var children = smeSearchSM.Where(c => sme.Id == c.ParentSMEId).ToList();
+                                        foreach (var c in children)
+                                        {
+                                            notDeletedIdShortList.Add(c.IdShort);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        entryType = "UPDATE";
+                                    }
                                     var parentId = sme.ParentSMEId;
                                     var idShortPath = sme.IdShort;
                                     while (parentId != null && parentId != 0)
@@ -431,6 +444,22 @@ namespace Events
                                     entry.idShortPath = idShortPath;
                                     entry.submodelId = sm.Identifier;
                                     entry.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(sme.TimeStampTree);
+                                    entry.notDeletedIdShortList = notDeletedIdShortList;
+
+                                    if (withPayload)
+                                    {
+                                        var s = Converter.GetSubmodelElement(sme);
+                                        if (s != null)
+                                        {
+                                            var j = Jsonization.Serialize.ToJsonObject(s);
+                                            if (j != null)
+                                            {
+                                                var json = j.ToJsonString();
+                                                entry.payload = json;
+                                            }
+                                        }
+                                    }
+
                                     e.eventEntries.Add(entry);
                                     countSME++;
                                 }
@@ -450,6 +479,21 @@ namespace Events
                             entry.idShortPath = sm.IdShort;
                             entry.submodelId = sm.Identifier;
                             entry.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree);
+
+                            if (withPayload)
+                            {
+                                var s = Converter.GetSubmodel(sm);
+                                if (s != null)
+                                {
+                                    var j = Jsonization.Serialize.ToJsonObject(s);
+                                    if (j != null)
+                                    {
+                                        var json = j.ToJsonString();
+                                        entry.payload = json;
+                                    }
+                                }
+                            }
+
                             e.eventEntries.Add(entry);
                             countSM++;
                         }
