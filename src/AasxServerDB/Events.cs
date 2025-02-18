@@ -446,7 +446,7 @@ namespace Events
                                     entry.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(sme.TimeStampTree);
                                     entry.notDeletedIdShortList = notDeletedIdShortList;
 
-                                    if (withPayload)
+                                    if (entryType != "DELETE" && withPayload)
                                     {
                                         var s = Converter.GetSubmodelElement(sme);
                                         if (s != null)
