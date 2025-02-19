@@ -50,6 +50,7 @@ using System.Xml.Linq;
 using System.IO;
 using AdminShellNS.Extensions;
 using System.Text.Json.Nodes;
+using Asp.Versioning;
 
 namespace IO.Swagger.Controllers
 {
@@ -58,6 +59,9 @@ namespace IO.Swagger.Controllers
     /// </summary>
     [Authorize(AuthenticationSchemes = "AasSecurityAuth")]
     [ApiController]
+    [Route("api/v{version:apiVersion}/[controller]")]
+    [Route("api/[controller]")]
+    [ApiVersion("3.0")]
     public class AssetAdministrationShellRepositoryAPIApiController : ControllerBase
     {
         private readonly IAppLogger<AssetAdministrationShellRepositoryAPIApiController> _logger;
@@ -390,6 +394,7 @@ namespace IO.Swagger.Controllers
         /// <response code="403">Forbidden</response>
         /// <response code="500">Internal Server Error</response>
         /// <response code="0">Default error handling for unmentioned status codes</response>
+        [MapToApiVersion("3.0")]
         [HttpGet]
         [Route("shells")]
         [ValidateModelState]

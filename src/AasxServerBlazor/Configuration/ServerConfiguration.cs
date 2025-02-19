@@ -38,6 +38,10 @@ namespace AasxServerBlazor.Configuration;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AdminShellNS;
+using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
+using IO.Swagger.Lib.V3.Config;
+using Swashbuckle.AspNetCore.SwaggerUI;
 
 public static class ServerConfiguration
 {
@@ -83,6 +87,8 @@ public static class ServerConfiguration
     {
         services.AddLogging(loggingBuilder => { loggingBuilder.AddConsole(); });
 
+        AddApiVersioning(services);
+
         AddMvc(services);
         AddSwaggerGen(services);
 
@@ -90,6 +96,22 @@ public static class ServerConfiguration
                 .AddScheme<AasSecurityAuthenticationOptions, AasSecurityAuthenticationHandler>(AuthenticationScheme, null);
 
         AddAuthorization(services);
+    }
+
+    private static void AddApiVersioning(IServiceCollection services)
+    {
+        services.AddApiVersioning(opt =>
+            {
+                opt.DefaultApiVersion = new Asp.Versioning.ApiVersion(3, 0);
+                opt.AssumeDefaultVersionWhenUnspecified = true;
+                opt.ReportApiVersions = true;
+                opt.ApiVersionReader = new UrlSegmentApiVersionReader();
+            })
+            .AddApiExplorer(opt =>
+            {
+                opt.GroupNameFormat = "'v'VVV";
+                opt.SubstituteApiVersionInUrl = true;
+            });
     }
 
     /// <summary>
@@ -100,18 +122,35 @@ public static class ServerConfiguration
     public static void ConfigureSwagger(IApplicationBuilder app, IConfiguration configuration)
     {
         app.UseSwagger();
-        app.UseSwaggerUI(swaggerUiOptions =>
-                         {
-                             //TODO: Either use the SwaggerGen generated Swagger contract (generated from C# classes) or
-                             //alternatively use the original Swagger contract that's included in the static files
-                             swaggerUiOptions.SwaggerEndpoint(SwaggerJsonEndpoint,
-                                                              HttpRestAssetAdministrationShellRepository);
-                             swaggerUiOptions.RoutePrefix                                            = SwaggerRoutePrefix;
-                             swaggerUiOptions.ConfigObject.AdditionalItems[SyntaxHighLightLowercase] = new Dictionary<string, object> {[ActivatedKey] = false};
+        //app.UseSwaggerUI(swaggerUiOptions =>
+        //                 {
+        //                     //TODO: Either use the SwaggerGen generated Swagger contract (generated from C# classes) or
+        //                     //alternatively use the original Swagger contract that's included in the static files
+        //                     swaggerUiOptions.SwaggerEndpoint(SwaggerJsonEndpoint,
+        //                                                      HttpRestAssetAdministrationShellRepository);
+        //                     swaggerUiOptions.RoutePrefix = SwaggerRoutePrefix;
+        //                     swaggerUiOptions.ConfigObject.AdditionalItems[SyntaxHighLightLowercase] = new Dictionary<string, object> { [ActivatedKey] = false };
 
-                             var syntaxHighlight = configuration[SyntaxHighlightUppercase];
-                             swaggerUiOptions.ConfigObject.AdditionalItems[SyntaxHighLightLowercase] = new Dictionary<string, object> {[ActivatedKey] = syntaxHighlight};
-                         });
+        //                     var syntaxHighlight = configuration[SyntaxHighlightUppercase];
+        //                     swaggerUiOptions.ConfigObject.AdditionalItems[SyntaxHighLightLowercase] = new Dictionary<string, object> { [ActivatedKey] = syntaxHighlight };
+        //                 });
+
+        var apiVersionDescriptionProvider = app.ApplicationServices.GetRequiredService<IApiVersionDescriptionProvider>();
+        app.UseSwaggerUI(options =>
+        {
+            foreach (var description in apiVersionDescriptionProvider.ApiVersionDescriptions)
+            {
+                options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json",
+                    description.GroupName.ToUpperInvariant());
+                //options.RoutePrefix = SwaggerRoutePrefix;
+                options.ConfigObject.AdditionalItems[SyntaxHighLightLowercase] = new Dictionary<string, object>
+                { [ActivatedKey] = false };
+
+                var syntaxHighlight = configuration[SyntaxHighlightUppercase];
+                options.ConfigObject.AdditionalItems[SyntaxHighLightLowercase] = new Dictionary<string, object>
+                { [ActivatedKey] = syntaxHighlight };
+            }
+        });
     }
 
     /// <summary>
@@ -133,7 +172,7 @@ public static class ServerConfiguration
         app.UseMiddleware<ExceptionMiddleware>();
 
         app.UseStaticFiles();
-        app.UsePathBase("/api/v3.0");
+        //app.UsePathBase("/api/v3.0");
         app.UseRouting();
         app.UseAuthorization();
         app.UseCors(CorsPolicyName);
@@ -238,21 +277,45 @@ public static class ServerConfiguration
     private static void AddSwaggerGen(IServiceCollection services) =>
         services.AddSwaggerGen(swaggerGenOptions =>
                                {
-                                   swaggerGenOptions.SwaggerDoc("Final-Draft", new OpenApiInfo
-                                                                               {
-                                                                                   Version = "Final-Draft",
-                                                                                   Title   = HttpRestAssetAdministrationShellRepository,
-                                                                                   Description =
-                                                                                       "DotAAS Part 2 | HTTP/REST | Asset Administration Shell Repository (ASP.NET Core 3.1)",
-                                                                                   Contact = new OpenApiContact()
-                                                                                             {
-                                                                                                 Name
-                                                                                                     = "Michael Hoffmeister, Torben Miny, Andreas Orzelski, Manuel Sauer, Constantin Ziesche",
-                                                                                                 Url   = new Uri("https://github.com/swagger-api/swagger-codegen"),
-                                                                                                 Email = ""
-                                                                                             },
-                                                                                   TermsOfService = new Uri("https://github.com/admin-shell-io/aas-specs")
-                                                                               });
+                                   swaggerGenOptions.SwaggerDoc("v3.0", new OpenApiInfo
+                                   {
+                                       Version = "v3.0",
+                                       Title = HttpRestAssetAdministrationShellRepository,
+                                       Description = "DotAAS Part 2 | HTTP/REST | Asset Administration Shell Repository",
+                                       Contact = new OpenApiContact()
+                                       {
+                                           Name = "IDTA e.V.",
+                                           Url = new Uri("https://github.com/swagger-api/swagger-codegen"),
+                                           Email = ""
+                                       },
+                                       TermsOfService = new Uri("https://github.com/admin-shell-io/aas-specs")
+                                   });
+
+                                   swaggerGenOptions.EnableAnnotations();
+                                   //Based on issue https://github.com/swagger-api/swagger-ui/issues/7911
+                                   swaggerGenOptions.CustomSchemaIds(type => type.FullName?.Replace("+", "."));
+
+                                   var swaggerCommentedAssembly =
+                                       typeof(AssetAdministrationShellRepositoryAPIApiController).Assembly.GetName().Name;
+                                   swaggerGenOptions.IncludeXmlComments(
+                                                                        $"{AppContext.BaseDirectory}{Path.DirectorySeparatorChar}{swaggerCommentedAssembly}.xml");
+                                   swaggerGenOptions.OperationFilter<IO.Swagger.Filters.GeneratePathParamsValidationFilter>();
+                               })
+        .AddSwaggerGen(swaggerGenOptions =>
+                               {
+                                   swaggerGenOptions.SwaggerDoc("v3.1", new OpenApiInfo
+                                   {
+                                       Version = "v3.1",
+                                       Title = HttpRestAssetAdministrationShellRepository,
+                                       Description = "DotAAS Part 2 | HTTP/REST | Asset Administration Shell Repository",
+                                       Contact = new OpenApiContact()
+                                       {
+                                           Name = "IDTA e.V.",
+                                           Url = new Uri("https://github.com/swagger-api/swagger-codegen"),
+                                           Email = ""
+                                       },
+                                       TermsOfService = new Uri("https://github.com/admin-shell-io/aas-specs")
+                                   });
 
                                    swaggerGenOptions.EnableAnnotations();
                                    //Based on issue https://github.com/swagger-api/swagger-ui/issues/7911
