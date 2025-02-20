@@ -99,7 +99,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     public List<IAssetAdministrationShell> ReadPagedAssetAdministrationShells(IPaginationParameters paginationParameters, List<ISpecificAssetId> assetIds, string? idShort)
     {
-        var output = Converter.GetPagedAssetAdministrationShells(paginationParameters);
+        var output = Converter.GetPagedAssetAdministrationShells(paginationParameters, assetIds, idShort);
 
         //Apply filters
         //ToDo: Should this be done during DB access?

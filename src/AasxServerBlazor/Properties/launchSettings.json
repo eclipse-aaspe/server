@@ -10,13 +10,13 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--no-security --save-temp 30 --secret-string-api 1234 --aasx-in-memory 1000 --data-path \"C:\\Development\\Olaf-Event-2\" --edit --external-blazor http://localhost:5002",
+      "commandLineArgs": "--with-db --start-index 1000 --no-security --save-temp 30 --secret-string-api 1234 --aasx-in-memory 1000 --data-path \"C:\\Development\\aasxs-repository\" --edit --external-blazor http://localhost:5001",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "AASREGISTRY": "",
         "IFRAMEPATH": "https://dpp40-2-v2.industrialdigitaltwin.org/dashboard/submodelViewV3.html",
-        "Kestrel__Endpoints__Http__Url": "http://localhost:5002",
+        "Kestrel__Endpoints__Http__Url": "http://localhost:5001",
         "EVENT2": "http://localhost:5002/submodels/aHR0cHM6Ly9pNGQuZGUvVC8zMjA5NTEwL3N1Ym1vZGVsL05hbWVwbGF0ZS9yZWNlaXZlcg/events/EventElement1"
       },
       "applicationUrl": "http://localhost:5001",

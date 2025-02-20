@@ -105,7 +105,7 @@ namespace AasxServerDB
             return env;
         }
 
-        public static List<IAssetAdministrationShell> GetPagedAssetAdministrationShells(IPaginationParameters paginationParameters)
+        public static List<IAssetAdministrationShell> GetPagedAssetAdministrationShells(IPaginationParameters paginationParameters, List<ISpecificAssetId> assetIds, string? idShort)
         {
             List<IAssetAdministrationShell> output = new List<IAssetAdministrationShell>();
 
@@ -114,15 +114,17 @@ namespace AasxServerDB
                 var timeStamp = DateTime.UtcNow;
 
                 var aasDBList = db.AASSets
+                    .Where(aas => idShort == null || aas.IdShort == idShort)
+                    .OrderBy(aas => aas.Id)
                     .Skip(paginationParameters.Cursor)
                     .Take(paginationParameters.Limit)
-                    .Include(aas => aas.SMSets) // Include related SMSets
                     .ToList();
+
+                var aasIDs = aasDBList.Select(aas => aas.Id).ToList();
+                var smDBList = db.SMSets.Where(sm => sm.AASId != null && aasIDs.Contains((int)sm.AASId)).ToList();
 
                 foreach (var aasDB in aasDBList)
                 {
-                    int envId = aasDB.EnvId;
-
                     var aas = GetAssetAdministrationShell(aasDB: aasDB);
                     if (aas.TimeStamp == DateTime.MinValue)
                     {
@@ -131,7 +133,7 @@ namespace AasxServerDB
                     }
 
                     // sm
-                    foreach (var sm in aasDB.SMSets.Where(sm => sm.EnvId == envId))
+                    foreach (var sm in smDBList.Where(sm => sm.AASId == aasDB.Id))
                     {
                         aas.Submodels?.Add(new Reference(type: ReferenceTypes.ModelReference,
                             keys: new List<IKey>() { new Key(KeyTypes.Submodel, sm.Identifier) }
