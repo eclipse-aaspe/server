@@ -14,6 +14,7 @@
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
 using AdminShellNS.Extensions;
+using Contracts;
 using IO.Swagger.Lib.V3.Interfaces;
 using IO.Swagger.Models;
 using System;
@@ -28,7 +29,7 @@ using Environment = AasCore.Aas3_0.Environment;
 public class GenerateSerializationService : IGenerateSerializationService
 {
     private readonly IAppLogger<GenerateSerializationService> _logger;
-    private readonly IAssetAdministrationShellService _aasService;
+    private readonly IPersistenceService _persistenceService;
     private readonly ISubmodelService _submodelService;
     private readonly IConceptDescriptionService _cdService;
 
@@ -41,10 +42,10 @@ public class GenerateSerializationService : IGenerateSerializationService
     /// <exception cref="ArgumentNullException">
     /// Thrown when any of the required services (logger, aasService, submodelService) are null.
     /// </exception>
-    public GenerateSerializationService(IAppLogger<GenerateSerializationService> logger, IAssetAdministrationShellService aasService, ISubmodelService submodelService, IConceptDescriptionService cdService)
+    public GenerateSerializationService(IAppLogger<GenerateSerializationService> logger, IPersistenceService persistenceService, ISubmodelService submodelService, IConceptDescriptionService cdService)
     {
         _logger          = logger ?? throw new ArgumentNullException(nameof(logger));
-        _aasService      = aasService ?? throw new ArgumentNullException(nameof(aasService));
+        _persistenceService      = persistenceService ?? throw new ArgumentNullException(nameof(persistenceService));
         _submodelService = submodelService ?? throw new ArgumentNullException(nameof(submodelService));
         _cdService = cdService ?? throw new ArgumentNullException(nameof(cdService));
     }
@@ -60,7 +61,7 @@ public class GenerateSerializationService : IGenerateSerializationService
         //Fetch AASs for the requested aasIds
         //ToDo: Remove pseudo-pagimation
         var pagination = new PaginationParameters("null",100);
-        var aasList = _aasService.GetPagedAssetAdministrationShells(pagination, new List<ISpecificAssetId>(),null);
+        var aasList = _persistenceService.ReadPagedAssetAdministrationShells(pagination, new List<ISpecificAssetId>(),null);
         //Using is null or empty, as the query parameter in controll currently receives empty list (not null, but count = 0)
         if (!aasIds.IsNullOrEmpty())
         {

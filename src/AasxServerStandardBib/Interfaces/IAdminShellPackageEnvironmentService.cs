@@ -30,7 +30,7 @@ namespace AasxServerStandardBib.Interfaces
 
         IAssetAdministrationShell       CreateAssetAdministrationShell(IAssetAdministrationShell body);
         void                            DeleteAssetAdministrationShell(int packageIndex, IAssetAdministrationShell aas);
-        List<IAssetAdministrationShell> GetPagedAssetAdministrationShells(IPaginationParameters paginationParameters, List<ISpecificAssetId> assetIds);
+        List<IAssetAdministrationShell> GetPagedAssetAdministrationShells(IPaginationParameters paginationParameters, List<ISpecificAssetId> assetIds, string? idShort);
         IAssetAdministrationShell       GetAssetAdministrationShellById(string aasIdentifier, out int packageIndex);
         Stream                          GetAssetInformationThumbnail(int packageIndex);
         bool                            IsAssetAdministrationShellPresent(string aasIdentifier);

@@ -26,14 +26,12 @@ namespace AasxServerStandardBib.Services
     public class AdminShellPackageEnvironmentService : IAdminShellPackageEnvironmentService
     {
         private readonly IAppLogger<AdminShellPackageEnvironmentService> _logger;
-        private readonly Lazy<IAssetAdministrationShellService> _aasService;
         private readonly IPersistenceService _persistenceService;   
         private AdminShellPackageEnv[] _packages;
 
-        public AdminShellPackageEnvironmentService(IAppLogger<AdminShellPackageEnvironmentService> logger, Lazy<IAssetAdministrationShellService> aasService, IPersistenceService persistenceService)
+        public AdminShellPackageEnvironmentService(IAppLogger<AdminShellPackageEnvironmentService> logger, IPersistenceService persistenceService)
         {
             _logger     = logger ?? throw new ArgumentNullException(nameof(logger));
-            _aasService = aasService;
             _packages   = Program.env;
             _persistenceService = persistenceService;
         }
@@ -109,7 +107,7 @@ namespace AasxServerStandardBib.Services
             }
         }
 
-        public List<IAssetAdministrationShell> GetPagedAssetAdministrationShells(IPaginationParameters paginationParameters, List<ISpecificAssetId> assetIds)
+        public List<IAssetAdministrationShell> GetPagedAssetAdministrationShells(IPaginationParameters paginationParameters, List<ISpecificAssetId> assetIds, string? idShort)
         {
             List<IAssetAdministrationShell> output = new List<IAssetAdministrationShell>();
 
@@ -151,7 +149,7 @@ namespace AasxServerStandardBib.Services
             }
             else
             {
-                output = _persistenceService.GetPagedAssetAdministrationShells(paginationParameters, assetIds);
+                output = _persistenceService.ReadPagedAssetAdministrationShells(paginationParameters, assetIds, idShort);
             }
 
             return output;
@@ -255,7 +253,7 @@ namespace AasxServerStandardBib.Services
             {
                 foreach (var aas in _packages[packageIndex].AasEnv.AssetAdministrationShells)
                 {
-                    _aasService.Value.DeleteSubmodelReferenceById(aas.Id, submodelIdentifier);
+                    //_aasService.Value.DeleteSubmodelReferenceById(aas.Id, submodelIdentifier);
                 }
 
                 _packages[packageIndex].AasEnv.Submodels.Remove(submodel);

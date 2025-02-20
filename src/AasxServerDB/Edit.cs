@@ -49,5 +49,15 @@ namespace AasxServerDB
             env.setWrite(false);
             Console.WriteLine("SAVE AASX TO DB: " + env.Filename);
         }
+
+        public static void DeleteAAS(string aasIdentifier)
+        {
+            using (AasContext db = new AasContext())
+            {
+                // Deletes automatically from DB
+                db.AASSets.Where(aas => aas.Identifier == aasIdentifier).ExecuteDelete();
+
+            }
+        }
     }
 }

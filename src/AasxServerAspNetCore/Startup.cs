@@ -93,7 +93,6 @@ internal class Startup
         services.AddTransient<IAasRepositoryApiHelperService, AasRepositoryApiHelperService>();
         services.AddTransient<IAasxFileServerInterfaceService, AasxFileServerInterfaceService>();
         services.AddTransient<IAdminShellPackageEnvironmentService, AdminShellPackageEnvironmentService>();
-        services.AddTransient<IAssetAdministrationShellService, AssetAdministrationShellService>();
         services.AddTransient<IBase64UrlDecoderService, Base64UrlDecoderService>();
         services.AddTransient<IConceptDescriptionService, ConceptDescriptionService>();
         services.AddTransient<IGenerateSerializationService, GenerateSerializationService>();

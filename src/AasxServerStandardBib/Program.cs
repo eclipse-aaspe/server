@@ -902,7 +902,7 @@ namespace AasxServer
                 {
                     // preload AASX from DB and keep in memory
                     var packages = new List<AdminShellPackageEnv>();
-                    var paths = persistenceService.GetFilteredPackages("--memory", packages);
+                    var paths = persistenceService.ReadFilteredPackages("--memory", packages);
 
                     for (var p = 0; p < packages.Count && p < paths.Count; p++)
                     {

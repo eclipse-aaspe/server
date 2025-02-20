@@ -105,38 +105,9 @@ namespace AasxServerDB
             return env;
         }
 
-        public static List<IAssetAdministrationShell> GetPagedAssetAdministrationShells(IPaginationParameters paginationParameters, List<ISpecificAssetId> assetIds)
+        public static List<IAssetAdministrationShell> GetPagedAssetAdministrationShells(IPaginationParameters paginationParameters)
         {
             List<IAssetAdministrationShell> output = new List<IAssetAdministrationShell>();
-
-            /*
-            var db = new AasContext();
-            var timeStamp = DateTime.UtcNow;
-
-            var aasDBList = db.AASSets.ToList();
-            foreach (var aasDB in aasDBList)
-            {
-                int envId = aasDB.EnvId;
-
-                var aas = GetAssetAdministrationShell(aasDB: aasDB);
-                if (aas.TimeStamp == DateTime.MinValue)
-                {
-                    aas.TimeStampCreate = timeStamp;
-                    aas.SetTimeStamp(timeStamp);
-                }
-
-                // sm
-                var smAASDBList = db.SMSets.Where(sm => sm.EnvId == envId && sm.AASId == aasDB.Id).ToList();
-                foreach (var sm in smAASDBList)
-                {
-                    aas.Submodels?.Add(new Reference(type: ReferenceTypes.ModelReference,
-                        keys: new List<IKey>() { new Key(KeyTypes.Submodel, sm.Identifier) }
-                        ));
-                }
-
-                output.Add(aas);
-            }
-            */
 
             using (var db = new AasContext())
             {
@@ -215,7 +186,7 @@ namespace AasxServerDB
             return cd;
         }
 
-        private static AssetAdministrationShell? GetAssetAdministrationShell(AASSet? aasDB = null, string aasIdentifier = "")
+        public static AssetAdministrationShell? GetAssetAdministrationShell(AASSet? aasDB = null, string aasIdentifier = "")
         {
             var db = new AasContext();
             if (!aasIdentifier.IsNullOrEmpty())
@@ -267,13 +238,13 @@ namespace AasxServerDB
             return aas;
         }
 
-        public static Submodel? GetSubmodel(SMSet? smDB = null, string smIdentifier = "")
+        public static Submodel? GetSubmodel(SMSet? smDB = null, string submodelIdentifier = "")
         {
             using (var db = new AasContext())
             {
-                if (!smIdentifier.IsNullOrEmpty())
+                if (!submodelIdentifier.IsNullOrEmpty())
                 {
-                    var smList = db.SMSets.Where(sm => sm.Identifier == smIdentifier).ToList();
+                    var smList = db.SMSets.Where(sm => sm.Identifier == submodelIdentifier).ToList();
                     if (smList.Count == 0)
                         return null;
                     smDB = smList.First();
