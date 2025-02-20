@@ -13,6 +13,7 @@
 
 namespace AasxServerDB
 {
+    using System.Security.AccessControl;
     using System.Text;
     using AasCore.Aas3_0;
     using AasxServerDB.Entities;
@@ -246,9 +247,14 @@ namespace AasxServerDB
             }
         }
 
-        private static void LoadSME(Submodel submodel, ISubmodelElement? sme, SMESet? smeSet, List<SMESet> SMEList)
+        private static void LoadSME(Submodel submodel, ISubmodelElement? sme, SMESet? smeSet, List<SMESet> SMEList, List<SmeMerged> tree = null)
         {
-            var smeSets = SMEList.Where(s => s.ParentSMEId == (smeSet != null ? smeSet.Id : null)).OrderBy(s => s.IdShort).ToList();
+            var smeSets = SMEList;
+            if (tree != null)
+            {
+                smeSets = tree.Select(t => t.smeSet).Distinct().ToList();
+            }
+            smeSets = smeSets.Where(s => s.ParentSMEId == (smeSet != null ? smeSet.Id : null)).OrderBy(s => s.IdShort).ToList();
 
             foreach (var smel in smeSets)
             {
@@ -258,7 +264,7 @@ namespace AasxServerDB
                 smel.SMEType  = split.Length == 2 ? split[ 1 ] : split[ 0 ];
 
                 // create SME from database
-                var nextSME = CreateSME(smel);
+                var nextSME = CreateSME(smel, tree);
 
                 // add sme to sm or sme 
                 if (sme == null)
@@ -300,22 +306,199 @@ namespace AasxServerDB
                     case "SMC":
                     case "Ent":
                     case "Opr":
-                        LoadSME(submodel, nextSME, smel, SMEList);
+                        LoadSME(submodel, nextSME, smel, SMEList, tree);
                         break;
                 }
             }
         }
 
-        public static ISubmodelElement? GetSubmodelElement(SMESet smeSet)
+        public static List<SMESet>? GetTree(AasContext db, SMSet smSet, List<SMESet> rootSet)
         {
-            return CreateSME(smeSet);
+            var result = new List<SMESet>();
+            if (rootSet == null)
+            {
+                result = db.SMESets.Where(sme => sme.SMId == smSet.Id).ToList();
+                return result;
+            }
+            else
+            {
+                result.AddRange(rootSet);
+                // Add all children SME to result
+                List<int> parentIDs = rootSet.Select(sme => sme.Id).ToList();
+                while (parentIDs.Count > 0)
+                {
+                    var smeSearch = db.SMESets.Where(sme => sme.SMId == smSet.Id && sme.ParentSMEId != null && parentIDs.Contains((int)sme.ParentSMEId)).ToList();
+                    result.AddRange(smeSearch);
+                    parentIDs = smeSearch.Select(sme => sme.Id).ToList();
+                }
+                return result;
+            }
+            return null;
+        }
+        public class SmeMerged
+        {
+            public SMESet smeSet;
+            public SValueSet sValueSet;
+            public IValueSet iValueSet;
+            public DValueSet dValueSet;
+            public OValueSet oValueSet;
         }
 
-        private static ISubmodelElement? CreateSME(SMESet smeSet)
+        public static List<SmeMerged> GetSmeMerged1(AasContext db, List<SMESet>? listSME)
+        {
+            if (listSME == null)
+                return null;
+
+            var joinSValue = listSME.Join(
+                db.SValueSets,
+                sme => sme.Id,
+                sv => sv.SMEId,
+                (sme, sv) => new SmeMerged { smeSet = sme, sValueSet = sv });
+            var result = joinSValue.ToList();
+
+            var joinIValue = listSME.Join(
+                db.IValueSets,
+                sme => sme.Id,
+                iv => iv.SMEId,
+                (sme, iv) => new SmeMerged { smeSet = sme, iValueSet = iv });
+            result.AddRange(joinIValue.ToList());
+
+            var joinDValue = listSME.Join(
+                db.DValueSets,
+                sme => sme.Id,
+                dv => dv.SMEId,
+                (sme, dv) => new SmeMerged { smeSet = sme, dValueSet = dv });
+            result.AddRange(joinDValue.ToList());
+
+            var joinOValue = listSME.Join(
+                db.OValueSets,
+                sme => sme.Id,
+                ov => ov.SMEId,
+                (sme, ov) => new SmeMerged { smeSet = sme, oValueSet = ov });
+            result.AddRange(joinOValue.ToList());
+
+            return result;
+        }
+
+        public static List<SmeMerged> GetSmeMerged(AasContext db, List<SMESet>? listSME)
+        {
+            if (listSME == null)
+                return null;
+
+            var joinSValue = listSME.GroupJoin(
+                db.SValueSets,
+                sme => sme.Id,
+                sv => sv.SMEId,
+                (sme, sv) => new { sme, sv })
+                .SelectMany(
+                    x => x.sv.DefaultIfEmpty(),
+                    (x, sv) => new SmeMerged { smeSet = x.sme, sValueSet = sv });
+
+            var joinIValue = listSME.GroupJoin(
+                db.IValueSets,
+                sme => sme.Id,
+                iv => iv.SMEId,
+                (sme, iv) => new { sme, iv })
+                .SelectMany(
+                    x => x.iv.DefaultIfEmpty(),
+                    (x, iv) => new SmeMerged { smeSet = x.sme, iValueSet = iv });
+
+            var joinDValue = listSME.GroupJoin(
+                db.DValueSets,
+                sme => sme.Id,
+                dv => dv.SMEId,
+                (sme, dv) => new { sme, dv })
+                .SelectMany(
+                    x => x.dv.DefaultIfEmpty(),
+                    (x, dv) => new SmeMerged { smeSet = x.sme, dValueSet = dv });
+
+            var joinOValue = listSME.GroupJoin(
+                db.OValueSets,
+                sme => sme.Id,
+                ov => ov.SMEId,
+                (sme, ov) => new { sme, ov })
+                .SelectMany(
+                    x => x.ov.DefaultIfEmpty(),
+                    (x, ov) => new SmeMerged { smeSet = x.sme, oValueSet = ov });
+
+            var result = joinSValue
+                .Union(joinIValue)
+                .Union(joinDValue)
+                .Union(joinOValue)
+                .ToList();
+
+            return result;
+        }
+        public static ISubmodelElement? GetSubmodelElement(SMESet smeSet)
+        {
+            return CreateSME(smeSet, null);
+        }
+
+        public static ISubmodelElement? GetSubmodelElement(SMESet smeSet, List<SmeMerged> tree)
+        {
+            var sme = CreateSME(smeSet, tree);
+            LoadSME(null, sme, smeSet, null, tree);
+            return sme;
+        }
+
+        public static List<string[]>? GetValue(SMESet smeSet, List<SmeMerged> tree)
+        {
+            var TValue = smeSet.TValue;
+            var SMEType = smeSet.SMEType;
+            var Id = smeSet.Id;
+
+            if (TValue == null)
+                return [[string.Empty, string.Empty]];
+
+            var list = new List<string[]>();
+            switch (TValue)
+            {
+                case "S":
+                    list = tree.Where(s => s.sValueSet?.SMEId == Id).ToList()
+                        .ConvertAll<string[]>(s => [s.sValueSet.Value ?? string.Empty, s.sValueSet.Annotation ?? string.Empty]);
+                    break;
+                case "I":
+                    list = tree.Where(s => s.iValueSet?.SMEId == Id).ToList()
+                        .ConvertAll<string[]>(s => [s.iValueSet.Value == null ? string.Empty : s.iValueSet.Value.ToString(), s.iValueSet.Annotation ?? string.Empty]);
+                    break;
+                case "D":
+                    list = tree.Where(s => s.dValueSet?.SMEId == Id).ToList()
+                        .ConvertAll<string[]>(s => [s.dValueSet.Value == null ? string.Empty : s.dValueSet.Value.ToString(), s.dValueSet.Annotation ?? string.Empty]);
+                    break;
+            }
+            if (list.Count > 0 || (!SMEType.IsNullOrEmpty() && SMEType.Equals("MLP")))
+                return list;
+
+            return [[string.Empty, string.Empty]];
+        }
+
+        public static Dictionary<string, string> GetOValue(SMESet smeSet, List<SmeMerged> tree)
+        {
+            var Id = smeSet.Id;
+
+            var dic = tree.Where(s => s.oValueSet?.SMEId == Id).ToList().ToDictionary(s => s.oValueSet.Attribute, s => s.oValueSet.Value);
+            if (dic != null)
+            {
+                return dic;
+            }
+            return new Dictionary<string, string>();
+        }
+        private static ISubmodelElement? CreateSME(SMESet smeSet, List<SmeMerged> tree = null)
         {
             ISubmodelElement? sme = null;
-            var value = smeSet.GetValue();
-            var oValue = smeSet.GetOValue();
+
+            var value = new List<string[]>();
+            var oValue = new Dictionary<string, string>();
+            if (tree == null)
+            {
+                value = smeSet.GetValue();
+                oValue = smeSet.GetOValue();
+            }
+            else
+            {
+                value = GetValue(smeSet, tree);
+                oValue = GetOValue(smeSet, tree);
+            }
 
             switch (smeSet.SMEType)
             {

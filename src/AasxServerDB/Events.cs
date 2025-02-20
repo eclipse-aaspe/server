@@ -407,9 +407,16 @@ namespace Events
                                 .OrderBy(sme => sme.TimeStampTree).Skip(offsetSme).Take(limitSme).ToList();
                             if (smeSearchTimeStamp.Count != 0)
                             {
+                                // smeSearchTimeStamp = smeSearchSM.Where(sme => sme.ParentSMEId == null).ToList();
+                                var tree = Converter.GetTree(db, sm, smeSearchTimeStamp);
+                                var treeMerged = Converter.GetSmeMerged(db, tree);
+                                // var lookupChildren = treeMerged?.ToLookup(m => m.smeSet.ParentSMEId);
+
                                 completeSM = false;
                                 foreach (var sme in smeSearchTimeStamp)
+                                // foreach (var tm in treeMerged)
                                 {
+                                    // var sme = tm.smeSet;
                                     var notDeletedIdShortList = new List<string>();
                                     if (sme.TimeStampDelete > diffTime1)
                                     {
@@ -448,7 +455,8 @@ namespace Events
 
                                     if (entryType != "DELETE" && withPayload)
                                     {
-                                        var s = Converter.GetSubmodelElement(sme);
+                                        // var s = Converter.GetSubmodelElement(sme);
+                                        var s = Converter.GetSubmodelElement(sme, treeMerged);
                                         if (s != null)
                                         {
                                             var j = Jsonization.Serialize.ToJsonObject(s);
