@@ -352,6 +352,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     public ISubmodelElement ReadSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath)
     {
+        /*
         var found = IsSubmodelPresentWithinAAS(aasIdentifier, submodelIdentifier, out ISubmodel output);
         if (found)
         {
@@ -365,6 +366,13 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         {
             throw new Exception($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
         }
+        */
+        var output = Converter.GetSubmodelElementByPath(aasIdentifier, submodelIdentifier, idShortPath);
+        if (output == null)
+        {
+            throw new Exception($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+        }
+        return output;
     }
 
     public string ReadThumbnail(string aasIdentifier, out byte[] byteArray, out long fileSize)

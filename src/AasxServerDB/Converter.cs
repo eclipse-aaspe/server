@@ -154,8 +154,6 @@ namespace AasxServerDB
 
             using (var db = new AasContext())
             {
-                var timeStamp = DateTime.UtcNow;
-
                 var aasDB = db.AASSets
                     .Where(aas => aas.Identifier == aasIdentifier).ToList();
                 if (aasDB == null || aasDB.Count != 1)
@@ -191,6 +189,64 @@ namespace AasxServerDB
             return null;
         }
 
+        public static ISubmodelElement? GetSubmodelElementByPath(string aasIdentifier, string submodelIdentifier, string idShortPath)
+        {
+            bool result = false;
+
+            using (var db = new AasContext())
+            {
+                var aasDB = db.AASSets
+                    .Where(aas => aas.Identifier == aasIdentifier).ToList();
+                if (aasDB == null || aasDB.Count != 1)
+                {
+                    return null;
+                }
+                var aasDBId = aasDB[0].Id;
+
+                var smDB = db.SMSets
+                    .Where(sm => sm.AASId == aasDBId && sm.Identifier == submodelIdentifier).ToList();
+                if (smDB == null || smDB.Count != 1)
+                {
+                    return null;
+                }
+                var smDBId = smDB[0].Id;
+
+                if (idShortPath == "")
+                {
+                    return null;
+                }
+                var splitPath = idShortPath.Split(".");
+                var idShort = splitPath[0];
+                var smeParent = db.SMESets.Where(sme => sme.SMId == smDBId && sme.ParentSMEId == null && sme.IdShort == idShort).ToList();
+                if (smeParent == null || smeParent.Count != 1)
+                {
+                    return null;
+                }
+                var parentId = smeParent[0].Id;
+                var smeFound = smeParent;
+
+                for (int i = 1; i < splitPath.Length; i++)
+                {
+                    idShort = splitPath[i];
+                    var smeFoundDB = db.SMESets.Where(sme => sme.SMId == smDBId && sme.ParentSMEId == parentId && sme.IdShort == idShort);
+                    smeFound = smeFoundDB.ToList();
+                    if (smeFound == null || smeFound.Count != 1)
+                    {
+                        return null;
+                    }
+                    parentId = smeFound[0].Id;
+                }
+
+                var smeFoundTree = Converter.GetTree(db, smDB[0], smeFound);
+                var smeFoundMerged = Converter.GetSmeMerged(db, smeFoundTree);
+
+                var sme = Converter.GetSubmodelElement(smeFound[0], smeFoundMerged);
+
+                return sme;
+            }
+
+            return null;
+        }
         private static ConceptDescription? GetConceptDescription(CDSet? cdDB = null, string cdIdentifier = "")
         {
             var db = new AasContext();
