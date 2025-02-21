@@ -259,6 +259,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
     }
     public List<ISubmodelElement> ReadPagedSubmodelElements(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
     {
+        /*
         bool found = IsSubmodelPresentWithinAAS(aasIdentifier, submodelIdentifier, out ISubmodel output);
         if (found)
         {
@@ -269,10 +270,14 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     .Skip(paginationParameters.Cursor)
                     .Take(paginationParameters.Limit).ToList();
         }
-        else
+        */
+
+        var output = Converter.GetPagedSubmodelElements(paginationParameters, aasIdentifier, submodelIdentifier);
+        if (output == null)
         {
             throw new Exception($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
         }
+        return output;
     }
 
 
