@@ -382,7 +382,9 @@ namespace AasxServerDB
                     submodelElements:           new List<ISubmodelElement>()
                 );
 
-                LoadSME(submodel, null, null, SMEList);
+                // LoadSME(submodel, null, null, SMEList);
+                var smeMerged = Converter.GetSmeMerged(db, SMEList);
+                LoadSME(submodel, null, null, SMEList, smeMerged);
 
                 submodel.TimeStampCreate = smDB.TimeStampCreate;
                 submodel.TimeStamp       = smDB.TimeStamp;
