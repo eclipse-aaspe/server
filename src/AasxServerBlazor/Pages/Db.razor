@@ -39,6 +39,9 @@
             var list  = query.Get("size");
             if (!list.IsNullOrEmpty())
                 size = Convert.ToInt32(list);
+            list  = query.Get("offset");
+            if (!list.IsNullOrEmpty())
+                offset = Convert.ToInt32(list);
             list = query.Get("search");
             if (!list.IsNullOrEmpty())
                 search = list;
@@ -84,6 +87,11 @@
                             size = 1000;
                             if (!splitCur[ 1 ].IsNullOrEmpty())
                                 size = Convert.ToInt32(splitCur[ 1 ]);
+                            break;
+                        case "offset":
+                            offset = 0;
+                            if (!splitCur[ 1 ].IsNullOrEmpty())
+                                offset = Convert.ToInt32(splitCur[ 1 ]);
                             break;
                         case "search":
                             search = splitCur[ 1 ];
@@ -148,7 +156,7 @@
                 <table class="table table-bordered table-sm" style="word-wrap:break-word;word-break:break-all;">
                     <thead>
                     <tr>
-                        <th style="word-break:keep-all">Tabel</th>
+                        <th style="word-break:keep-all">Table</th>
                         <th style="word-break:keep-all">Count</th>
                         <th style="word-break:keep-all">Links</th>
                     </tr>
@@ -159,7 +167,7 @@
                             <span>Env#:</span>
                         </td>
                         <td>
-                            <span>@db.EnvSets.Count()</span>
+                            <span>@db.EnvSets.Select(x => x.Id).Count()</span>
                         </td>
                         <td>
                             <a href="@($"{url}/env")" target="_blank">env</a>
@@ -170,7 +178,7 @@
                             <span>CD#:</span>
                         </td>
                         <td>
-                            <span>@db.CDSets.Count()</span>
+                            <span>@db.CDSets.Select(x => x.Id).Count()</span>
                         </td>
                         <td>
                             <a href="@($"{url}/cd")" target="_blank">cd</a>
@@ -181,7 +189,7 @@
                             <span>AAS#:</span>
                         </td>
                         <td>
-                            <span>@db.AASSets.Count()</span>
+                            <span>@db.AASSets.Select(x => x.Id).Count()</span>
                         </td>
                         <td>
                             <a href="@($"{url}/aas")" target="_blank">aas</a>
@@ -192,7 +200,7 @@
                             <span>SM#:</span>
                         </td>
                         <td>
-                            <span>@db.SMSets.Count()</span>
+                            <span>@db.SMSets.Select(x => x.Id).Count()</span>
                         </td>
                         <td>
                             <a href="@($"{url}/sm")" target="_blank">sm</a>
@@ -203,7 +211,7 @@
                             <span>SME#:</span>
                         </td>
                         <td>
-                            <span>@db.SMESets.Count()</span>
+                            <span>@db.SMESets.Select(x => x.Id).Count()</span>
                         </td>
                         <td>
                             <a href="@($"{url}/sme")" target="_blank">sme</a>
@@ -214,7 +222,7 @@
                             <span>IValue#:</span>
                         </td>
                         <td>
-                            <span>@db.IValueSets.Count()</span>
+                            <span>@db.IValueSets.Select(x => x.Id).Count()</span>
                         </td>
                         <td>
                             <a href="@($"{url}/ivalue")" target="_blank">ivalue</a>
@@ -225,7 +233,7 @@
                             <span>SValue#:</span>
                         </td>
                         <td>
-                            <span>@db.SValueSets.Count()</span>
+                            <span>@db.SValueSets.Select(x => x.Id).Count()</span>
                         </td>
                         <td>
                             <a href="@($"{url}/svalue")" target="_blank">svalue</a>
@@ -236,7 +244,7 @@
                             <span>DValue#:</span>
                         </td>
                         <td>
-                            <span>@db.DValueSets.Count()</span>
+                            <span>@db.DValueSets.Select(x => x.Id).Count()</span>
                         </td>
                         <td>
                             <a href="@($"{url}/dvalue")" target="_blank">dvalue</a>
@@ -247,7 +255,7 @@
                             <span>OValue#:</span>
                         </td>
                         <td>
-                            <span>@db.OValueSets.Count()</span>
+                            <span>@db.OValueSets.Select(x => x.Id).Count()</span>
                         </td>
                         <td>
                             <a href="@($"{url}/ovalue")" target="_blank">ovalue</a>
@@ -263,8 +271,8 @@
 
             if (url.EndsWith("/env"))
             {
-                List<EnvSet> data = PageRetriever.GetPageEnvData(size, searchLower, envid, cdid);
-                <span>&nbsp&nbsp@($"Env#: {data.Count}/{db.EnvSets.Count()} size={size} search={search} envid={envid} cdid={cdid}")</span>
+                List<EnvSet> data = PageRetriever.GetPageEnvData(size, offset, searchLower, envid, cdid);
+                <span>&nbsp&nbsp@($"Env#: {data.Count}/{db.EnvSets.Select(x => x.Id).Count()} size={size} offset={offset} offset={offset} offset={offset} search={search} envid={envid} cdid={cdid}")</span>
                 <br/>
                 <br/>
                 @if (size > 1000 && data.Count > 1000)
@@ -341,8 +349,8 @@
 
             if (url.EndsWith("/cd"))
             {
-                List<CDSet> data = PageRetriever.GetPageCDData(size, TimeStamp.StringToDateTime(searchLower), searchLower, envid, cdid);
-                <span>&nbsp&nbsp@($"CD#: {data.Count}/{db.AASSets.Count()} size={size} search={search} envid={envid} cdid={cdid}")</span>
+                List<CDSet> data = PageRetriever.GetPageCDData(size, offset, TimeStamp.StringToDateTime(searchLower), searchLower, envid, cdid);
+                <span>&nbsp&nbsp@($"CD#: {data.Count}/{db.AASSets.Select(x => x.Id).Count()} size={size} offset={offset} search={search} envid={envid} cdid={cdid}")</span>
                 <br />
                 <br />
                 @if (size > 1000 && data.Count > 1000)
@@ -495,8 +503,8 @@
 
             if (url.EndsWith("/aas"))
             {
-                List<AASSet> data = PageRetriever.GetPageAASData(size, TimeStamp.StringToDateTime(searchLower), searchLower, envid, aasid);
-                <span>&nbsp&nbsp@($"AAS#: {data.Count}/{db.AASSets.Count()} size={size} search={search} envid={envid} aasid={aasid}")</span>
+                    List<AASSet> data = PageRetriever.GetPageAASData(size, offset, TimeStamp.StringToDateTime(searchLower), searchLower, envid, aasid);
+                    <span>&nbsp&nbsp@($"AAS#: {data.Count}/{db.AASSets.Select(x => x.Id).Count()} size={size} offset={offset} search={search} envid={envid} aasid={aasid}")</span>
                 <br/>
                 <br/>
                 @if (size > 1000 && data.Count > 1000)
@@ -671,9 +679,9 @@
 
             if (url.EndsWith("/sm"))
             {
-                List<SMSet> data = PageRetriever.GetPageSMData(size, TimeStamp.StringToDateTime(searchLower), searchLower, envid, aasid, smid);
+                    List<SMSet> data = PageRetriever.GetPageSMData(size, offset, TimeStamp.StringToDateTime(searchLower), searchLower, envid, aasid, smid);
                 <span>
-                    &nbsp&nbsp@($"SM#: {data.Count}/{db.SMSets.Count()} size={size} search={search} envid={envid} aasid={aasid} smid={smid}")
+                        &nbsp&nbsp@($"SM#: {data.Count}/{db.SMSets.Select(x => x.Id).Count()} size={size} offset={offset} search={search} envid={envid} aasid={aasid} smid={smid}")
                 </span>
                 <br/>
                 <br/>
@@ -718,7 +726,7 @@
                         var smDB       = data[ i ];
                         var submodel64 = Base64UrlEncoder.Encode(smDB.Identifier);
                         var link       = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}";
-                        var smeCount   = db.SMESets.Where(sme => sme.SMId == smDB.Id).Count();
+                        var smeCount = db.SMESets.Where(sme => sme.SMId == smDB.Id).Select(x => x.Id).Count();
 
                         <tr>
                             <td style="word-break:keep-all">@smDB.EnvId</td>
@@ -774,7 +782,7 @@
                         var smDB       = data[ i ];
                         var submodel64 = Base64UrlEncoder.Encode(smDB.Identifier);
                         var link       = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}";
-                        var smeCount   = db.SMESets.Where(sme => sme.SMId == smDB.Id).Count();
+                        var smeCount = db.SMESets.Where(sme => sme.SMId == smDB.Id).Select(x => x.Id).Count();
 
                         <span style="background-color:blue;">&nbsp</span>
                         <span>@smDB.EnvId</span>
@@ -863,9 +871,12 @@
 
             if (url.EndsWith("/sme"))
             {
-                List<SMESet> data = PageRetriever.GetPageSMEData(size, TimeStamp.StringToDateTime(searchLower), searchLower, smid, smeid, parid);
+                    List<SMESet> data = PageRetriever.GetPageSMEData(size, offset, TimeStamp.StringToDateTime(searchLower), searchLower, smid, smeid, parid);
+                    var merged = Converter.GetSmeMerged(db, data);
+                Converter.CreateIdShortPath(db, data);
+
                 <span>
-                    &nbsp&nbsp@($"SME#: {data.Count}/{db.SMESets.Count()} size={size} search={search} smid={smid} smeid={smeid} parid={parid}")
+                &nbsp&nbsp@($"SME#: {data.Count}/{db.SMESets.Select(x => x.Id).Count()} size={size} offset={offset} search={search} smid={smid} smeid={smeid} parid={parid}")
                 </span>
                 <br/>
                 <br/>
@@ -905,6 +916,9 @@
                     @for (int i = 0; i < data.Count && i < 1000; i++)
                     {
                         var smeDB = data[i];
+                        var path = smeDB.IdShortPath;
+                        var pathSuccess = !path.IsNullOrEmpty();
+                        /*
                         var pathSuccess = !smeDB.IdShort.IsNullOrEmpty();
                         string path = smeDB.IdShort;
                         int? pId = smeDB.ParentSMEId;
@@ -919,6 +933,7 @@
                             path = $"{smeDBP.IdShort}.{path}";
                             pId = smeDBP.ParentSMEId;
                         }
+                        */
 
                         var split = !smeDB.SMEType.IsNullOrEmpty() ? smeDB.SMEType.Split(VisitorAASX.OPERATION_SPLIT) : [string.Empty];
                         var smeTypeWithoutOperation = split.Length == 2 ? split[1] : split[0];
@@ -926,7 +941,8 @@
                         var smDB = db.SMSets.Where(s => s.Id == smeDB.SMId).First();
                         string submodel64 = Base64UrlEncoder.Encode(smDB.Identifier);
                         string link = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}/submodel-elements/{path}";
-                        var value = smeDB.GetValue();
+                        // var value = smeDB.GetValue();
+                        var value = Converter.GetValue(smeDB, merged);
 
                         <tr>
                             <td style="word-break:keep-all">@smeDB.SMId</td>
@@ -961,7 +977,8 @@
                                 {
                                     <ul>
                                         @{
-                                            var valueType = db.OValueSets.Where(ovalue => ovalue.SMEId == smeDB.Id && ovalue.Attribute.Equals("ValueType")).Select(ovalue => ovalue.Value).FirstOrDefault();
+                                            // var valueType = db.OValueSets.Where(ovalue => ovalue.SMEId == smeDB.Id && ovalue.Attribute.Equals("ValueType")).Select(ovalue => ovalue.Value).FirstOrDefault();
+                                            var valueType = merged.Where(ovalue => ovalue.oValueSet != null && ovalue.oValueSet.SMEId == smeDB.Id && ovalue.oValueSet.Attribute.Equals("ValueType")).Select(ovalue => ovalue.oValueSet.Value).FirstOrDefault();
                                             if (!valueType.IsNullOrEmpty())
                                             {
                                                 <li>
@@ -992,9 +1009,10 @@
                                 }
                             </td>
                             <td style="font-size:small">
-                                @if (db.OValueSets.Where(value => value.SMEId == smeDB.Id).Any())
+                                @if (merged.Where(value => value.oValueSet != null && value.oValueSet.SMEId == smeDB.Id).Any())
                                 {
-                                    var dic = smeDB.GetOValue();
+                                    // var dic = smeDB.GetOValue();
+                                    var dic = Converter.GetOValue(smeDB, merged);
                                     <ul>
                                         @foreach(KeyValuePair<string, string> dicValue in dic)
                                         {
@@ -1017,7 +1035,7 @@
                                 {
                                     <a href="@($"{shorturl}/sme?smid={smeDB.SMId}&smeid={smeDB.ParentSMEId}")" target="_blank">par </a>
                                 }
-                                @if (db.SMESets.Where(smeV => smeV.ParentSMEId == smeDB.Id).Any())
+                                @if (db.SMESets.Where(smeV => false && smeV.ParentSMEId == smeDB.Id).Any())
                                 {
                                     <a href="@($"{shorturl}/sme?parid={smeDB.Id}")" target="_blank">children </a>
                                 }
@@ -1036,7 +1054,7 @@
                                         <a href="@($"{shorturl}/dvalue?smeid={smeDB.Id}")" target="_blank">dvalue </a>
                                     }
                                 }
-                                @if (db.OValueSets.Where(value => value.SMEId == smeDB.Id).Any())
+                                @if (merged.Where(value => value.oValueSet != null && value.oValueSet.SMEId == smeDB.Id).Any())
                                 {
                                     <a href="@($"{shorturl}/ovalue?smeid={smeDB.Id}")" target="_blank">ovalue </a>
                                 }
@@ -1061,6 +1079,9 @@
                     {
 
                         var smeDB = data[i];
+                        var path = smeDB.IdShortPath;
+                        var pathSuccess = !path.IsNullOrEmpty();
+                        /*
                         var pathSuccess = !smeDB.IdShort.IsNullOrEmpty();
                         string path = smeDB.IdShort;
                         int? pId = smeDB.ParentSMEId;
@@ -1075,6 +1096,7 @@
                             path = $"{smeDBP.IdShort}.{path}";
                             pId = smeDBP.ParentSMEId;
                         }
+                        */
 
                         var split = !smeDB.SMEType.IsNullOrEmpty() ? smeDB.SMEType.Split(VisitorAASX.OPERATION_SPLIT) : [string.Empty];
                         var smeTypeWithoutOperation = split.Length == 2 ? split[1] : split[0];
@@ -1126,7 +1148,7 @@
                             }
                             else if (smeTypeWithoutOperation != null && smeTypeWithoutOperation.Equals("Range"))
                             {
-                                var valueType = db.OValueSets.Where(ovalue => ovalue.SMEId == smeDB.Id && ovalue.Attribute.Equals("ValueType")).Select(ovalue => ovalue.Value).FirstOrDefault();
+                                var valueType = merged.Where(ovalue => ovalue.oValueSet != null && ovalue.oValueSet.SMEId == smeDB.Id && ovalue.oValueSet.Attribute.Equals("ValueType")).Select(ovalue => ovalue.oValueSet.Value).FirstOrDefault();
                                 if (!valueType.IsNullOrEmpty())
                                 {
                                     <span>
@@ -1154,7 +1176,7 @@
                         </span>
                         <span style="background-color:blue;">&nbsp</span>
                         <span>
-                            @if (db.OValueSets.Where(value => value.SMEId == smeDB.Id).Any())
+                            @if (merged.Where(value => value.oValueSet != null && value.oValueSet.SMEId == smeDB.Id).Any())
                             {
                                 var dic = smeDB.GetOValue();
                                 <span>
@@ -1178,7 +1200,7 @@
                         {
                             <a href="@($"{shorturl}/sme?smid={smeDB.SMId}&smeid={smeDB.ParentSMEId}")" target="_blank">par </a>
                         }
-                        @if (db.SMESets.Where(smeV => smeV.ParentSMEId == smeDB.Id).Any())
+                        @if (db.SMESets.Where(smeV => false && smeV.ParentSMEId == smeDB.Id).Any())
                         {
                             <a href="@($"{shorturl}/sme?parid={smeDB.Id}")" target="_blank">children </a>
                         }
@@ -1197,7 +1219,7 @@
                                 <a href="@($"{shorturl}/dvalue?smeid={smeDB.Id}")" target="_blank">dvalue </a>
                             }
                         }
-                        @if (db.OValueSets.Where(value => value.SMEId == smeDB.Id).Any())
+                        @if (merged.Where(value => value.oValueSet != null && value.oValueSet.SMEId == smeDB.Id).Any())
                         {
                             <a href="@($"{shorturl}/ovalue?smeid={smeDB.Id}")" target="_blank">ovalue </a>
                         }
@@ -1219,9 +1241,9 @@
 
             if (url.EndsWith("/svalue"))
             {
-                List<SValueSet> data = PageRetriever.GetPageSValueData(size, searchLower, smeid);
+                    List<SValueSet> data = PageRetriever.GetPageSValueData(size, offset, searchLower, smeid);
                 <span>
-                    &nbsp&nbsp@($"SValue#: {data.Count}/{db.SValueSets.Count()} size={size} search={search} smeid={smeid}")
+                    &nbsp&nbsp@($"SValue#: {data.Count}/{db.SValueSets.Select(x => x.Id).Count()} size={size} offset={offset} search={search} smeid={smeid}")
                 </span>
                 <br/>
                 <br/>
@@ -1287,9 +1309,9 @@
 
             if (url.EndsWith("/ivalue"))
             {
-                List<IValueSet> data = PageRetriever.GetPageIValueData(size, searchLower, smeid);
+                    List<IValueSet> data = PageRetriever.GetPageIValueData(size, offset, searchLower, smeid);
                 <span>
-                    &nbsp&nbsp@($"IValue#: {data.Count}/{db.IValueSets.Count()} size={size} search={search} smeid={smeid}")
+                &nbsp&nbsp@($"IValue#: {data.Count}/{db.IValueSets.Select(x => x.Id).Count()} size={size} offset={offset} search={search} smeid={smeid}")
                 </span>
                 <br/>
                 <br/>
@@ -1355,9 +1377,9 @@
 
             if (url.EndsWith("/dvalue"))
             {
-                List<DValueSet> data = PageRetriever.GetPageDValueData(size, searchLower, smeid);
+                    List<DValueSet> data = PageRetriever.GetPageDValueData(size, offset, searchLower, smeid);
                 <span>
-                    &nbsp&nbsp@($"DValue#: {data.Count}/{db.DValueSets.Count()} size={size} search={search} smeid={smeid}")
+                &nbsp&nbsp@($"DValue#: {data.Count}/{db.DValueSets.Select(x => x.Id).Count()} size={size} offset={offset} search={search} smeid={smeid}")
                 </span>
                 <br/>
                 <br/>
@@ -1423,9 +1445,9 @@
 
             if (url.EndsWith("/ovalue"))
             {
-                List<OValueSet> data = PageRetriever.GetPageOValueData(size, searchLower, smeid);
+                    List<OValueSet> data = PageRetriever.GetPageOValueData(size, offset, searchLower, smeid);
                 <span>
-                    &nbsp&nbsp@($"OValue#: {data.Count}/{db.OValueSets.Count()} size={size} search={search} smeid={smeid}")
+                &nbsp&nbsp@($"OValue#: {data.Count}/{db.OValueSets.Select(x => x.Id).Count()} size={size} offset={offset} search={search} smeid={smeid}")
                 </span>
                 <br />
                 <br />
@@ -1501,6 +1523,7 @@
 
 @code {
     int size = 1000;
+    int offset = 0;
     string search = string.Empty;
     long envid = 0;
     long aasid = 0;

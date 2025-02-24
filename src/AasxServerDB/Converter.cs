@@ -24,6 +24,7 @@ namespace AasxServerDB
     using Microsoft.EntityFrameworkCore;
     using Microsoft.IdentityModel.Tokens;
     using TimeStamp;
+    using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 
     public class Converter
@@ -484,6 +485,47 @@ namespace AasxServerDB
             }
             return null;
         }
+
+        public static void CreateIdShortPath(AasContext db, List<SMESet> smeList)
+        {
+            // created idShortPath for result only
+            var smeSearch = smeList.Select(sme => new { sme.Id, IdShortPath = sme.IdShort, sme.ParentSMEId });
+            var smeResult = smeSearch.Where(sme => sme.ParentSMEId == null);
+            while (smeSearch != null && smeSearch.Any(sme => sme.ParentSMEId != null))
+            {
+                smeSearch = smeSearch.Where(sme => sme.ParentSMEId != null);
+                var joinedResult = smeSearch
+                    .Join(db.SMESets,
+                          sme => sme.ParentSMEId,
+                          parentSme => parentSme.Id,
+                          (sme, parentSme) => new
+                          {
+                              sme.Id,
+                              IdShortPath = parentSme.IdShort + "." + sme.IdShortPath,
+                              parentSme.ParentSMEId
+                          });
+                if (joinedResult != null)
+                {
+                    smeResult = smeResult.Concat(joinedResult.Where(sme => sme.ParentSMEId == null));
+                    smeSearch = joinedResult.Where(sme => sme.ParentSMEId != null);
+                }
+                else
+                {
+                    smeSearch = null;
+                }
+            };
+
+            var smeResultDict = smeResult.ToDictionary(sme => sme.Id, sme => sme.IdShortPath);
+
+            foreach (var sme in smeList)
+            {
+                if (smeResultDict.TryGetValue(sme.Id, out var idShortPath))
+                {
+                    sme.IdShortPath = idShortPath;
+                }
+            }
+        }
+
         public class SmeMerged
         {
             public SMESet smeSet;
@@ -491,42 +533,6 @@ namespace AasxServerDB
             public IValueSet iValueSet;
             public DValueSet dValueSet;
             public OValueSet oValueSet;
-        }
-
-        public static List<SmeMerged> GetSmeMerged1(AasContext db, List<SMESet>? listSME)
-        {
-            if (listSME == null)
-                return null;
-
-            var joinSValue = listSME.Join(
-                db.SValueSets,
-                sme => sme.Id,
-                sv => sv.SMEId,
-                (sme, sv) => new SmeMerged { smeSet = sme, sValueSet = sv });
-            var result = joinSValue.ToList();
-
-            var joinIValue = listSME.Join(
-                db.IValueSets,
-                sme => sme.Id,
-                iv => iv.SMEId,
-                (sme, iv) => new SmeMerged { smeSet = sme, iValueSet = iv });
-            result.AddRange(joinIValue.ToList());
-
-            var joinDValue = listSME.Join(
-                db.DValueSets,
-                sme => sme.Id,
-                dv => dv.SMEId,
-                (sme, dv) => new SmeMerged { smeSet = sme, dValueSet = dv });
-            result.AddRange(joinDValue.ToList());
-
-            var joinOValue = listSME.Join(
-                db.OValueSets,
-                sme => sme.Id,
-                ov => ov.SMEId,
-                (sme, ov) => new SmeMerged { smeSet = sme, oValueSet = ov });
-            result.AddRange(joinOValue.ToList());
-
-            return result;
         }
 
         public static List<SmeMerged> GetSmeMerged(AasContext db, List<SMESet>? listSME)
