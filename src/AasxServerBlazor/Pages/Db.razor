@@ -865,14 +865,14 @@
                     }
 
                     <span>@json</span>
-                    <br/>
+                        <br/>
+                    }
                 }
-            }
 
             if (url.EndsWith("/sme"))
             {
-                    List<SMESet> data = PageRetriever.GetPageSMEData(size, offset, TimeStamp.StringToDateTime(searchLower), searchLower, smid, smeid, parid);
-                    var merged = Converter.GetSmeMerged(db, data);
+                List<SMESet> data = PageRetriever.GetPageSMEData(size, offset, TimeStamp.StringToDateTime(searchLower), searchLower, smid, smeid, parid);
+                var merged = Converter.GetSmeMerged(db, data);
                 Converter.CreateIdShortPath(db, data);
 
                 <span>

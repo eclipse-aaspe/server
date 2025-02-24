@@ -15,9 +15,11 @@ namespace AasxServerDB
 {
     using System.Collections.Generic;
     using System.IO.Packaging;
+    using System.Linq;
     using System.Text;
     using AasCore.Aas3_0;
     using AasxServerDB.Entities;
+    using AasxServerDB.Result;
     using AdminShellNS;
     using Contracts.Pagination;
     using Extensions;
@@ -356,10 +358,9 @@ namespace AasxServerDB
                 if (smDB == null)
                     return null;
 
-                var SMEList = db.SMESets
+                var SMEQuery = db.SMESets
                     .OrderBy(sme => sme.Id)
-                    .Where(sme => sme.SMId == smDB.Id)
-                    .ToList();
+                    .Where(sme => sme.SMId == smDB.Id);
 
                 var submodel = new Submodel(
                     idShort:                    smDB.IdShort,
@@ -384,7 +385,8 @@ namespace AasxServerDB
                 );
 
                 // LoadSME(submodel, null, null, SMEList);
-                var smeMerged = Converter.GetSmeMerged(db, SMEList);
+                var smeMerged = Converter.GetSmeMerged(db, SMEQuery);
+                var SMEList = SMEQuery.ToList();
                 LoadSME(submodel, null, null, SMEList, smeMerged);
 
                 submodel.TimeStampCreate = smDB.TimeStampCreate;
@@ -529,16 +531,204 @@ namespace AasxServerDB
         public class SmeMerged
         {
             public SMESet smeSet;
-            public SValueSet sValueSet;
-            public IValueSet iValueSet;
-            public DValueSet dValueSet;
-            public OValueSet oValueSet;
+            public SValueSet? sValueSet;
+            public IValueSet? iValueSet;
+            public DValueSet? dValueSet;
+            public OValueSet? oValueSet;
         }
 
         public static List<SmeMerged> GetSmeMerged(AasContext db, List<SMESet>? listSME)
         {
             if (listSME == null)
+            {
                 return null;
+            }
+
+            var smeIdList = listSME.Select(sme => sme.Id).ToList();
+            var querySME = db.SMESets.Where(sme => smeIdList.Contains(sme.Id));
+
+            return GetSmeMerged(db, querySME);
+        }
+        public static List<SmeMerged> GetSmeMerged(AasContext db, IQueryable<SMESet>? querySME)
+        {
+            if (querySME == null)
+                return null;
+
+            var joinSValue = querySME.Join(
+                db.SValueSets,
+                sme => sme.Id,
+                sv => sv.SMEId,
+                (sme, sv) => new SmeMerged { smeSet = sme, sValueSet = sv, iValueSet = null, dValueSet = null, oValueSet = null })
+                .ToList();
+
+            var joinIValue = querySME.Join(
+                db.IValueSets,
+                sme => sme.Id,
+                sv => sv.SMEId,
+                (sme, sv) => new SmeMerged { smeSet = sme, sValueSet = null, iValueSet = sv, dValueSet = null, oValueSet = null })
+                .ToList();
+
+            var joinDValue = querySME.Join(
+                db.DValueSets,
+                sme => sme.Id,
+                sv => sv.SMEId,
+                (sme, sv) => new SmeMerged { smeSet = sme, sValueSet = null, iValueSet = null, dValueSet = sv, oValueSet = null })
+                .ToList();
+
+            var joinOValue = querySME.Join(
+                db.OValueSets,
+                sme => sme.Id,
+                sv => sv.SMEId,
+                (sme, sv) => new SmeMerged { smeSet = sme, sValueSet = null, iValueSet = null, dValueSet = null, oValueSet = sv })
+                .ToList();
+
+            var result = joinSValue;
+            result.AddRange(joinIValue);
+            result.AddRange(joinDValue);
+            result.AddRange(joinOValue);
+
+            var smeIdList = result.Select(sme => sme.smeSet.Id).ToList();
+            var noValue = querySME.Where(sme => !smeIdList.Contains(sme.Id))
+                .Select(sme => new SmeMerged { smeSet = sme, sValueSet = null, iValueSet = null, dValueSet = null, oValueSet = null })
+                .ToList();
+            result.AddRange(noValue);
+
+            return result;
+
+
+            /*
+            var joinSValue = querySME.GroupJoin(
+                db.SValueSets,
+                sme => sme.Id,
+                sv => sv.SMEId,
+                (sme, sv) => new { sme, sv })
+                .SelectMany(
+                    x => x.sv.DefaultIfEmpty(),
+                    (x, sv) => new SmeMerged { smeSet = x.sme, sValueSet = sv, iValueSet = null, dValueSet = null, oValueSet = null });
+            var l1 = joinSValue.ToList();
+
+            var joinIValue = querySME.GroupJoin(
+                db.IValueSets,
+                sme => sme.Id,
+                iv => iv.SMEId,
+                (sme, iv) => new { sme, iv })
+                .SelectMany(
+                    x => x.iv.DefaultIfEmpty(),
+                    (x, iv) => new SmeMerged { smeSet = x.sme, sValueSet = null, iValueSet = iv, dValueSet = null, oValueSet = null });
+            var l2 = joinIValue.ToList();
+
+            var joinDValue = querySME.GroupJoin(
+                db.DValueSets,
+                sme => sme.Id,
+                dv => dv.SMEId,
+                (sme, dv) => new { sme, dv })
+                .SelectMany(
+                    x => x.dv.DefaultIfEmpty(),
+                    (x, dv) => new SmeMerged { smeSet = x.sme, dValueSet = dv, sValueSet = null, iValueSet = null, oValueSet = null });
+            var l3 = joinDValue.ToList();
+
+            var joinOValue = querySME.GroupJoin(
+                db.OValueSets,
+                sme => sme.Id,
+                ov => ov.SMEId,
+                (sme, ov) => new { sme, ov })
+                .SelectMany(
+                    x => x.ov.DefaultIfEmpty(),
+                    (x, ov) => new SmeMerged { smeSet = x.sme, oValueSet = ov, sValueSet = null, iValueSet = null, dValueSet = null });
+            var l4 = joinOValue.ToList();
+
+            var result = joinSValue
+                .Union(joinIValue)
+                .Union(joinDValue)
+                .Union(joinOValue)
+                .ToList();
+
+            var joinSValue = querySME.GroupJoin(
+                db.SValueSets,
+                sme => sme.Id,
+                sv => sv.SMEId,
+                (sme, sv) => new { sme, sv })
+                .SelectMany(
+                    x => x.sv.DefaultIfEmpty(),
+                    (x, sv) => new { x.sme, sValueSet = sv });
+
+            var joinIValue = querySME.GroupJoin(
+                db.IValueSets,
+                sme => sme.Id,
+                iv => iv.SMEId,
+                (sme, iv) => new { sme, iv })
+                .SelectMany(
+                    x => x.iv.DefaultIfEmpty(),
+                    (x, iv) => new { x.sme, iValueSet = iv });
+
+            var joinDValue = querySME.GroupJoin(
+                db.DValueSets,
+                sme => sme.Id,
+                dv => dv.SMEId,
+                (sme, dv) => new { sme, dv })
+                .SelectMany(
+                    x => x.dv.DefaultIfEmpty(),
+                    (x, dv) => new { x.sme, dValueSet = dv });
+
+            var joinOValue = querySME.GroupJoin(
+                db.OValueSets,
+                sme => sme.Id,
+                ov => ov.SMEId,
+                (sme, ov) => new { sme, ov })
+                .SelectMany(
+                    x => x.ov.DefaultIfEmpty(),
+                    (x, ov) => new { x.sme, oValueSet = ov });
+
+            var result = joinSValue.Select(x => new { x.sme, x.sValueSet, iValueSet = (IValueSet)null, dValueSet = (DValueSet)null, oValueSet = (OValueSet)null })
+                .Union(joinIValue.Select(x => new { x.sme, sValueSet = (SValueSet)null, x.iValueSet, dValueSet = (DValueSet)null, oValueSet = (OValueSet)null }))
+                .Union(joinDValue.Select(x => new { x.sme, sValueSet = (SValueSet)null, iValueSet = (IValueSet)null, x.dValueSet, oValueSet = (OValueSet)null }))
+                .Union(joinOValue.Select(x => new { x.sme, sValueSet = (SValueSet)null, iValueSet = (IValueSet)null, dValueSet = (DValueSet)null, x.oValueSet }))
+                .Select(x => new SmeMerged
+                {
+                    smeSet = x.sme,
+                    sValueSet = x.sValueSet,
+                    iValueSet = x.iValueSet,
+                    dValueSet = x.dValueSet,
+                    oValueSet = x.oValueSet
+                })
+                .ToList();
+            */
+        }
+        public static List<SmeMerged> GetSmeMerged0(AasContext db, List<SMESet>? listSME)
+        {
+            if (listSME == null)
+                return null;
+
+            var join1 = listSME.Join(
+                db.SValueSets,
+                sme => sme.Id,
+                sv => sv.SMEId,
+                (sme, sv) => new { sme, sv })
+                .ToList();
+
+            var join2 = listSME.Join(
+                db.IValueSets,
+                sme => sme.Id,
+                sv => sv.SMEId,
+                (sme, sv) => new { sme, sv })
+                .ToList();
+
+            var join3 = listSME.Join(
+                db.DValueSets,
+                sme => sme.Id,
+                sv => sv.SMEId,
+                (sme, sv) => new { sme, sv })
+                .ToList();
+
+            var join4 = listSME.Join(
+                db.OValueSets,
+                sme => sme.Id,
+                sv => sv.SMEId,
+                (sme, sv) => new { sme, sv })
+                .ToList();
+
+
+
 
             var joinSValue = listSME.GroupJoin(
                 db.SValueSets,
@@ -548,6 +738,7 @@ namespace AasxServerDB
                 .SelectMany(
                     x => x.sv.DefaultIfEmpty(),
                     (x, sv) => new SmeMerged { smeSet = x.sme, sValueSet = sv });
+            var l1 = joinSValue.ToList();
 
             var joinIValue = listSME.GroupJoin(
                 db.IValueSets,
@@ -557,6 +748,7 @@ namespace AasxServerDB
                 .SelectMany(
                     x => x.iv.DefaultIfEmpty(),
                     (x, iv) => new SmeMerged { smeSet = x.sme, iValueSet = iv });
+            var l2 = joinIValue.ToList();
 
             var joinDValue = listSME.GroupJoin(
                 db.DValueSets,
@@ -566,6 +758,7 @@ namespace AasxServerDB
                 .SelectMany(
                     x => x.dv.DefaultIfEmpty(),
                     (x, dv) => new SmeMerged { smeSet = x.sme, dValueSet = dv });
+            var l3 = joinDValue.ToList();
 
             var joinOValue = listSME.GroupJoin(
                 db.OValueSets,
@@ -575,6 +768,7 @@ namespace AasxServerDB
                 .SelectMany(
                     x => x.ov.DefaultIfEmpty(),
                     (x, ov) => new SmeMerged { smeSet = x.sme, oValueSet = ov });
+            var l4 = joinOValue.ToList();
 
             var result = joinSValue
                 .Union(joinIValue)
