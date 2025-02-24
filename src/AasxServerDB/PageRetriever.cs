@@ -41,7 +41,7 @@ namespace AasxServerDB
                     env.Path != null && env.Path.ToLower().Contains(searchLower));
 
             // Return the results
-            var result = query.Skip(offset).Take(size).ToList();
+            var result = query.OrderBy(q => q.Id).Skip(offset).Take(size).ToList();
             return result;
         }
 
@@ -82,7 +82,7 @@ namespace AasxServerDB
                     (cd.AEmbeddedDataSpecifications != null && cd.AEmbeddedDataSpecifications.ToLower().Contains(searchLower)));
 
             // Return the results
-            var result = query.Skip(offset).Take(size).ToList();
+            var result = query.OrderBy(q => q.Id).Skip(offset).Take(size).ToList();
             return result;
         }
 
@@ -123,7 +123,7 @@ namespace AasxServerDB
                     (aas.DefaultThumbnailContentType != null && aas.DefaultThumbnailContentType.ToLower().Contains(searchLower)));
 
             // Return the results
-            var result = query.Skip(offset).Take(size).ToList();
+            var result = query.OrderBy(q => q.Id).Skip(offset).Take(size).ToList();
             return result;
         }
 
@@ -162,7 +162,7 @@ namespace AasxServerDB
                     (sm.AEmbeddedDataSpecifications != null && sm.AEmbeddedDataSpecifications.ToLower().Contains(searchLower)));
 
             // Return the results
-            var result = query.Skip(offset).Take(size).ToList();
+            var result = query.OrderBy(q => q.Id).Skip(offset).Take(size).ToList();
             return result;
         }
 
@@ -202,7 +202,7 @@ namespace AasxServerDB
                     )));
 
             // Return the results
-            var result = query.Skip(offset).Take(size).ToList();
+            var result = query.OrderBy(q => q.Id).Skip(offset).Take(size).ToList();
             return result;
         }
 
@@ -213,6 +213,7 @@ namespace AasxServerDB
                     (searchLower.IsNullOrEmpty() ||
                         (v.Attribute != null && v.Attribute.ToLower().Contains(searchLower)) ||
                         (v.Value != null     && v.Value.ToLower().Contains(searchLower))))
+                .OrderBy(q => q.Id)
                 .Skip(offset)
                 .Take(size)
                 .ToList();
@@ -224,6 +225,7 @@ namespace AasxServerDB
                     (searchLower.IsNullOrEmpty() ||
                         (v.Annotation != null && v.Annotation.ToLower().Contains(searchLower)) ||
                         (v.Value != null      && v.Value.ToLower().Contains(searchLower))))
+                .OrderBy(q => q.Id)
                 .Skip(offset)
                 .Take(size)
                 .ToList();
@@ -238,6 +240,7 @@ namespace AasxServerDB
                     (searchLower.IsNullOrEmpty() ||
                         (v.Annotation != null && v.Annotation.ToLower().Contains(searchLower)) ||
                         (withNum              && v.Value == iEqual)))
+                .OrderBy(q => q.Id)
                 .Skip(offset)
                 .Take(size)
                 .ToList();
@@ -253,6 +256,7 @@ namespace AasxServerDB
                     (searchLower.IsNullOrEmpty() ||
                         (v.Annotation != null && v.Annotation.ToLower().Contains(searchLower)) ||
                         (withNum              && v.Value == dEqual)))
+                .OrderBy(q => q.Id)
                 .Skip (offset)
                 .Take(size)
                 .ToList();

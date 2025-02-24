@@ -488,27 +488,75 @@ namespace AasxServerDB
             return null;
         }
 
+        public class smeREsult
+        {
+            public int Id { get; set; }
+            public string? IdShortPath { get; set; }
+            public int? ParentSMEId { get; set; }
+        }
+
+        public static void CreateIdShortPath1(AasContext db, List<SMESet> smeList)
+        {
+            /*
+            // created idShortPath for result only
+            var smeSearch = smeList.Select(sme => new smeREsult { Id = sme.Id, IdShortPath = sme.IdShort, ParentSMEId = sme.ParentSMEId }).ToList();
+            var smeResult = smeSearch.Where(sme => sme.ParentSMEId == null).ToList();
+            smeSearch = smeSearch.Where(sme => sme.ParentSMEId != null).ToList();
+            while (smeSearch != null && smeSearch.Count != 0)
+            {
+                var parentIds = smeSearch.Where(sme => sme.ParentSMEId != null).Select(sme => sme.ParentSMEId).ToList();
+                var smeWithIdShortPath = db.SMESets.Where(sme => parentIds.Contains(sme.Id))
+                    .Select(sme => new smeREsult { Id = sme.Id, IdShortPath = sme.IdShort, ParentSMEId = sme.ParentSMEId }).ToList();
+                if (smeParents != null && smeParents.Count != 0)
+                {
+                    smeResult.AddRange(smeParents.Where(sme => sme.ParentSMEId == null).ToList());
+                    smeSearch = smeParents.Where(sme => sme.ParentSMEId != null).ToList();
+                }
+                else
+                {
+                    smeSearch = null;
+                }
+            };
+
+            var smeResultDict = smeResult.ToDictionary(sme => sme.Id, sme => sme.IdShortPath);
+
+            foreach (var sme in smeList)
+            {
+                if (smeResultDict.TryGetValue(sme.Id, out var idShortPath))
+                {
+                    sme.IdShortPath = idShortPath;
+                }
+            }
+            */
+        }
+
         public static void CreateIdShortPath(AasContext db, List<SMESet> smeList)
         {
-            // created idShortPath for result only
-            var smeSearch = smeList.Select(sme => new { sme.Id, IdShortPath = sme.IdShort, sme.ParentSMEId });
-            var smeResult = smeSearch.Where(sme => sme.ParentSMEId == null);
-            while (smeSearch != null && smeSearch.Any(sme => sme.ParentSMEId != null))
+            if (smeList == null)
             {
-                smeSearch = smeSearch.Where(sme => sme.ParentSMEId != null);
+                return;
+            }
+
+            var smeIdList = smeList.Select(sme => sme.Id).ToList();
+            var smeSearch = db.SMESets.Where(sme => smeIdList.Contains(sme.Id))
+                .Select(sme => new smeREsult { Id = sme.Id, IdShortPath = sme.IdShort, ParentSMEId = sme.ParentSMEId });
+            var smeResult = smeSearch.Where(sme => sme.ParentSMEId == null).ToList();
+            smeSearch = smeSearch.Where(sme => sme.ParentSMEId != null);
+            while (smeSearch != null && smeSearch.Any())
+            {
                 var joinedResult = smeSearch
                     .Join(db.SMESets,
                           sme => sme.ParentSMEId,
                           parentSme => parentSme.Id,
-                          (sme, parentSme) => new
+                          (sme, parentSme) => new smeREsult
                           {
-                              sme.Id,
+                              Id = sme.Id,
                               IdShortPath = parentSme.IdShort + "." + sme.IdShortPath,
-                              parentSme.ParentSMEId
+                              ParentSMEId = parentSme.ParentSMEId
                           });
-                if (joinedResult != null)
+                if (joinedResult != null && joinedResult.Any())
                 {
-                    smeResult = smeResult.Concat(joinedResult.Where(sme => sme.ParentSMEId == null));
+                    smeResult.AddRange(joinedResult.Where(sme => sme.ParentSMEId == null).ToList());
                     smeSearch = joinedResult.Where(sme => sme.ParentSMEId != null);
                 }
                 else
