@@ -20,11 +20,6 @@ using System.Xml.Serialization;
 
 public class EntityFrameworkPersistenceService : IPersistenceService
 {
-    public EntityFrameworkPersistenceService ()
-    {
-    }
-
-
     public void InitDB(bool reloadDB, string dataPath)
     {
         AasContext.DataPath = dataPath;
@@ -105,16 +100,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         //ToDo: Should this be done during DB access?
         if (output.Count != 0)
         {
-            if (!string.IsNullOrEmpty(idShort))
-            {
-                //_logger.LogDebug($"Filtering AASs with idShort {idShort}.");
-                output = output.Where(a => a.IdShort.Equals(idShort)).ToList();
-                //if (output.IsNullOrEmpty())
-                //{
-                //    _logger.LogInformation($"No AAS with idShhort {idShort} found.");
-                //}
-            }
-
             if (!assetIds.IsNullOrEmpty())
             {
                 //_logger.LogDebug($"Filtering AASs with requested assetIds.");
@@ -350,24 +335,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    public ISubmodelElement ReadSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath)
+    public ISubmodelElement ReadSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, List<object> idShortPathElements)
     {
-        /*
-        var found = IsSubmodelPresentWithinAAS(aasIdentifier, submodelIdentifier, out ISubmodel output);
-        if (found)
-        {
-
-            //_logger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
-
-            //ToDo get from DB
-            return default(ISubmodelElement);
-        }
-        else
-        {
-            throw new Exception($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
-        }
-        */
-        var output = Converter.GetSubmodelElementByPath(aasIdentifier, submodelIdentifier, idShortPath);
+        var output = Converter.GetSubmodelElementByPath(aasIdentifier, submodelIdentifier, idShortPathElements);
         if (output == null)
         {
             throw new Exception($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");

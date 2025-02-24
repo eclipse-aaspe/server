@@ -52,6 +52,7 @@ using AdminShellNS.Extensions;
 using System.Text.Json.Nodes;
 using Contracts.Pagination;
 using Contracts;
+using AasxServerStandardBib.Services;
 
 namespace IO.Swagger.Controllers
 {
@@ -72,6 +73,7 @@ namespace IO.Swagger.Controllers
         private readonly IAuthorizationService _authorizationService;
         private readonly IValidateSerializationModifierService _validateModifierService;
         private readonly IPersistenceService _persistenceService;
+        private readonly IIdShortPathParserService _idShortPathParserService;
 
         /// <summary>
         /// 
@@ -92,7 +94,7 @@ namespace IO.Swagger.Controllers
                                                                   IReferenceModifierService referenceModifierService,
                                                                   IMappingService mappingService, IPathModifierService pathModifierService,
                                                                   ILevelExtentModifierService levelExtentModifierService, IPaginationService paginationService,
-                                                                  IAuthorizationService authorizationService, IValidateSerializationModifierService validateModifierService)
+                                                                  IAuthorizationService authorizationService, IValidateSerializationModifierService validateModifierService, IdShortPathParserService idShortPathParserService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _persistenceService = persistenceService ?? throw new ArgumentNullException(nameof(persistenceService));
@@ -104,6 +106,7 @@ namespace IO.Swagger.Controllers
             _paginationService = paginationService ?? throw new ArgumentNullException(nameof(paginationService));
             _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
             _validateModifierService = validateModifierService ?? throw new ArgumentNullException(nameof(authorizationService));
+            _idShortPathParserService = idShortPathParserService ?? throw new ArgumentNullException(nameof(idShortPathParserService));
         }
 
 
@@ -1493,7 +1496,10 @@ namespace IO.Swagger.Controllers
             _logger.LogInformation($"Received request to get the submodel element at {idShortPath} from the submodel with id {submodelIdentifier} and the AAS with id {aasIdentifier}.");
 
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
-            var submodelElement = _persistenceService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath);
+
+            var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
+
+            var submodelElement = _persistenceService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPathElements);
 
             if (!Program.noSecurity && submodelElement != null)
             {
@@ -1503,8 +1509,6 @@ namespace IO.Swagger.Controllers
                     throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
                 }
             }
-
-
 
             var smeLevel = _levelExtentModifierService.ApplyLevelExtent(submodelElement, levelEnum, extentEnum);
             return new ObjectResult(smeLevel);
@@ -1554,8 +1558,9 @@ namespace IO.Swagger.Controllers
 
 
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
 
-            var submodelElement = _persistenceService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath);
+            var submodelElement = _persistenceService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPathElements);
             if (!Program.noSecurity && submodelElement != null)
             {
                 var authResult = _authorizationService.AuthorizeAsync(securityConfig.Principal, submodelElement.Parent, "SecurityPolicy").Result;
@@ -1615,8 +1620,9 @@ namespace IO.Swagger.Controllers
 
             _logger.LogInformation($"Received a request to get a path of a submodel element at {idShortPath} from a submodel with id {decodedSubmodelIdentifier} and aas with id {decodedAasIdentifier}");
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
 
-            var submodelElement = _persistenceService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath);
+            var submodelElement = _persistenceService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPathElements);
             if (!Program.noSecurity && submodelElement != null)
             {
                 var authResult = _authorizationService.AuthorizeAsync(securityConfig.Principal, submodelElement.Parent, "SecurityPolicy").Result;
@@ -1664,8 +1670,9 @@ namespace IO.Swagger.Controllers
             _logger.LogInformation($"Received request to get the submodel element at {idShortPath} from the submodel with id {submodelIdentifier} and the AAS with id {aasIdentifier}.");
 
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
 
-            var submodelElement = _persistenceService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath);
+            var submodelElement = _persistenceService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPathElements);
             if (!Program.noSecurity)
             {
                 var authResult = _authorizationService.AuthorizeAsync(securityConfig.Principal, submodelElement, "SecurityPolicy").Result;
@@ -1731,8 +1738,9 @@ namespace IO.Swagger.Controllers
 
 
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
 
-            var submodelElement = _persistenceService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath);
+            var submodelElement = _persistenceService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPathElements);
             if (!Program.noSecurity)
             {
                 var authResult = _authorizationService.AuthorizeAsync(securityConfig.Principal, submodelElement, "SecurityPolicy").Result;

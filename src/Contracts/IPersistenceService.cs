@@ -46,7 +46,7 @@ public interface IPersistenceService
     IAssetAdministrationShell ReadAssetAdministrationShellById(string aasIdentifier);
     IAssetInformation ReadAssetInformation(string aasIdentifier);
     string ReadFileByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, out byte[] content, out long fileSize);
-    ISubmodelElement ReadSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath);
+    ISubmodelElement ReadSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, List<object> idShortPathELements);
     string ReadThumbnail(string aasIdentifier, out byte[] byteArray, out long fileSize);
     void UpdateSubmodelById(string? aasIdentifier, string? submodelIdentifier, ISubmodel body);
     void UpdateSubmodelElementByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, ISubmodelElement body);
