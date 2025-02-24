@@ -13,8 +13,5 @@ public interface ISecurityConfig
 
     public ClaimsPrincipal Principal { get; set; }
 
-    public string HttpRoute { get; set; }
-
-
-    public void SetIdShortPathClaim(string requestedIdShortPath, string idShortPathFromDB);
+    //public void SetIdShortPathClaim(string requestedIdShortPath, string idShortPathFromDB);
 }

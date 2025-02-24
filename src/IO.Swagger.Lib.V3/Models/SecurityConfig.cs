@@ -13,9 +13,6 @@ public class SecurityConfig : ISecurityConfig
     public SecurityConfig(bool noSecurity, ControllerBase controllerBase)
     {
         this.NoSecurity = noSecurity;
-        var httpRequest = controllerBase.HttpContext.Request;
-        var httpRoute = httpRequest.Path.Value!;
-
         this.Principal = controllerBase.User;
     }
 
@@ -23,14 +20,12 @@ public class SecurityConfig : ISecurityConfig
 
     public ClaimsPrincipal Principal { get; set ; }
 
-    public string HttpRoute { get; set; }
-
-    public void SetIdShortPathClaim(string requestedIdShortPath, string submodelIdShortPathFromDB)
-    {
-        this.Principal.Claims.ToList().Add(new Claim("idShortPath", $"{submodelIdShortPathFromDB}.{requestedIdShortPath}"));
-        var claimsList = new List<Claim>(Principal.Claims) { new Claim("IdShortPath", $"{submodelIdShortPathFromDB} . {requestedIdShortPath}") };
-        var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
-        var principal = new System.Security.Principal.GenericPrincipal(identity, null);
-        this.Principal = principal;
-    }
+    //public void SetIdShortPathClaim(string requestedIdShortPath, string submodelIdShortPathFromDB)
+    //{
+    //    this.Principal.Claims.ToList().Add(new Claim("idShortPath", $"{submodelIdShortPathFromDB}.{requestedIdShortPath}"));
+    //    var claimsList = new List<Claim>(Principal.Claims) { new Claim("IdShortPath", $"{submodelIdShortPathFromDB} . {requestedIdShortPath}") };
+    //    var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
+    //    var principal = new System.Security.Principal.GenericPrincipal(identity, null);
+    //    this.Principal = principal;
+    //}
 }
