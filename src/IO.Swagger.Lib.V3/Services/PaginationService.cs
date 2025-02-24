@@ -42,7 +42,7 @@ namespace IO.Swagger.Lib.V3.Services
             }
             else
             {
-                pagingMetadata.cursor = Convert.ToString(paginationParameters.Cursor + paginatedList.Count + 1);
+                pagingMetadata.cursor = Convert.ToString(paginationParameters.Cursor + paginatedList.Count);
             }
 
             var paginationResult = new PagedResult()
