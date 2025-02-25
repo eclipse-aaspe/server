@@ -104,7 +104,8 @@ namespace AasSecurity
                          {
                              new Claim(ClaimTypes.Role, aasSecurityContext.AccessRole),
                              new Claim("NeededRights", aasSecurityContext.NeededRights.ToString()),
-                             new Claim("Policy", policy)
+                             new Claim("Policy", policy),
+                             new Claim("Route", aasSecurityContext.Route)
                          };
 
             var identity  = new ClaimsIdentity(claims, authenticationSchemeName);

@@ -45,6 +45,9 @@ public interface IPersistenceService
     void UpdateThumbnail(string aasIdentifier, string fileName, string contentType, Stream stream);
     void UpdateSubmodelById(string decodedSubmodelIdentifier, ISubmodel submodel);
     void UpdateSubmodelElementByPath(string decodedSubmodelIdentifier, string idShortPath, ISubmodelElement submodelElement);
+    void ReplaceSubmodelById(string decodedSubmodelIdentifier, Submodel body);
+    void ReplaceSubmodelElementByPath(string decodedSubmodelIdentifier, string idShortPath, ISubmodelElement body);
+    void ReplaceFileByPath(string decodedSubmodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream);
 
     void DeleteAssetAdministrationShellById(string aasIdentifier);
     void DeleteFileByPath(string aasIdentifier, string submodelIdentifier, string idShortPath);
@@ -55,8 +58,5 @@ public interface IPersistenceService
     void DeleteFileByPath(ISecurityConfig securityConfig, string decodedSubmodelIdentifier, string idShortPath);
     void DeleteSubmodelById(string decodedSubmodelIdentifier);
     void DeleteSubmodelElementByPath(ISecurityConfig securityConfig, string decodedSubmodelIdentifier, string idShortPath);
-    void ReplaceSubmodelById(string decodedSubmodelIdentifier, Submodel body);
-    void ReplaceSubmodelElementByPath(string decodedSubmodelIdentifier, string idShortPath, ISubmodelElement body);
-    void ReplaceFileByPath(string decodedSubmodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream);
 }
 

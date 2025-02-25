@@ -20,6 +20,13 @@ using System.Xml.Serialization;
 
 public class EntityFrameworkPersistenceService : IPersistenceService
 {
+    private IContractSecurityRules _contractSecurityRules;
+
+    public EntityFrameworkPersistenceService(IContractSecurityRules contractSecurityRules)
+    {
+        this._contractSecurityRules = contractSecurityRules;
+    }
+
     public void InitDB(bool reloadDB, string dataPath)
     {
         AasContext.DataPath = dataPath;
