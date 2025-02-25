@@ -58,6 +58,7 @@ using Newtonsoft.Json;
 using TimeStamp;
 using static AasxServerStandardBib.TimeSeriesPlotting.PlotArguments;
 using static QRCoder.PayloadGenerator;
+using Contracts;
 
 /// <summary>
 /// 
@@ -68,7 +69,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 {
     private readonly IAppLogger<SubmodelRepositoryAPIApiController> _logger;
     private readonly IBase64UrlDecoderService _decoderService;
-    private readonly ISubmodelService _submodelService;
+    private readonly IPersistenceService _persistenceService;
     private readonly IReferenceModifierService _referenceModifierService;
     private readonly IJsonQueryDeserializer _jsonQueryDeserializer;
     private readonly IMappingService _mappingService;
@@ -76,18 +77,17 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     private readonly ILevelExtentModifierService _levelExtentModifierService;
     private readonly IPaginationService _paginationService;
     private readonly IAuthorizationService _authorizationService;
-    private readonly IAdminShellPackageEnvironmentService _adminShellPackageEnvironmentService;
     private readonly IValidateSerializationModifierService _validateModifierService;
 
-    public SubmodelRepositoryAPIApiController(IAppLogger<SubmodelRepositoryAPIApiController> logger, IBase64UrlDecoderService decoderService, ISubmodelService submodelService,
+    public SubmodelRepositoryAPIApiController(IAppLogger<SubmodelRepositoryAPIApiController> logger, IBase64UrlDecoderService decoderService, IPersistenceService persistenceService,
                                               IReferenceModifierService referenceModifierService, IJsonQueryDeserializer jsonQueryDeserializer, IMappingService mappingService,
                                               IPathModifierService pathModifierService, ILevelExtentModifierService levelExtentModifierService,
                                               IPaginationService paginationService, IAuthorizationService authorizationService,
-                                              IAdminShellPackageEnvironmentService adminShellPackageEnvironmentService, IValidateSerializationModifierService validateModifierService)
+                                              IValidateSerializationModifierService validateModifierService)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _decoderService = decoderService ?? throw new ArgumentNullException(nameof(decoderService));
-        _submodelService = submodelService ?? throw new ArgumentNullException(nameof(submodelService));
+        _persistenceService = persistenceService ?? throw new ArgumentNullException(nameof(persistenceService));
         _referenceModifierService = referenceModifierService ?? throw new ArgumentNullException(nameof(referenceModifierService));
         _jsonQueryDeserializer = jsonQueryDeserializer ?? throw new ArgumentNullException(nameof(jsonQueryDeserializer));
         _mappingService = mappingService ?? throw new ArgumentNullException(nameof(mappingService));
@@ -95,7 +95,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         _levelExtentModifierService = levelExtentModifierService ?? throw new ArgumentNullException(nameof(levelExtentModifierService));
         _paginationService = paginationService ?? throw new ArgumentNullException(nameof(paginationService));
         _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
-        _adminShellPackageEnvironmentService = adminShellPackageEnvironmentService ?? throw new ArgumentNullException(nameof(adminShellPackageEnvironmentService));
         _validateModifierService = validateModifierService ?? throw new ArgumentNullException(nameof(authorizationService));
     }
 
@@ -116,8 +115,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
         }
 
-        int packageIndex;
-        var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier, out packageIndex);
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+        var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedSubmodelIdentifier);
         if (!Program.noSecurity)
         {
             var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
@@ -146,7 +145,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
             var eventData = new Events.EventData();
             var op = Events.EventData.FindEvent(submodel, eventName);
-            eventData.ParseData(op, Program.env[packageIndex]);
+
+            //ToDo use persistanceService?
+            //eventData.ParseData(op, Program.env[packageIndex]);
 
             IReferable data = null;
             if (eventData.dataSubmodel != null)
@@ -268,7 +269,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
         }
 
-        var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier, out packageIndex);
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+        var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedSubmodelIdentifier);
         using (var reader = new StreamReader(HttpContext.Request.Body))
         {
             var body = reader.ReadToEndAsync().Result;
@@ -287,7 +289,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
             var eventData = new Events.EventData();
             var op = Events.EventData.FindEvent(submodel, eventName);
-            eventData.ParseData(op, Program.env[packageIndex]);
+
+            //ToDo: Move to persistenceService
+            //eventData.ParseData(op, Program.env[packageIndex]);
 
             IReferable data = null;
             if (eventData.dataSubmodel != null)
@@ -308,7 +312,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             string statusValue = "";
             List<String> diffEntry = new List<string>();
             int count = 0;
-            count = Events.EventPayload.changeData(body, eventData, Program.env, data, out transmitted, out lastDiffValue, out statusValue, diffEntry, packageIndex);
+            //ToDo: Move to persistenceService?
+            //count = Events.EventPayload.changeData(body, eventData, Program.env, data, out transmitted, out lastDiffValue, out statusValue, diffEntry, packageIndex);
 
             if (eventData.transmitted != null)
             {
@@ -389,10 +394,12 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
         }
 
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
         _logger.LogInformation($"Received a request to delete a file at {idShortPath} from the submodel {decodedSubmodelIdentifier}");
         if (!Program.noSecurity)
         {
-            var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+            var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedSubmodelIdentifier);
             User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
             var claimsList = new List<Claim>(User.Claims) {new("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
@@ -404,7 +411,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
         }
 
-        _submodelService.DeleteFileByPath(decodedSubmodelIdentifier, idShortPath);
+        _persistenceService.DeleteFileByPath(securityConfig, decodedSubmodelIdentifier, idShortPath);
 
         return NoContent();
     }
@@ -440,7 +447,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         _logger.LogInformation($"Received a request to delete a submodel with id {decodedSubmodelIdentifier}");
-        _submodelService.DeleteSubmodelById(decodedSubmodelIdentifier);
+        _persistenceService.DeleteSubmodelById(decodedSubmodelIdentifier);
 
         return NoContent();
     }
@@ -476,9 +483,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
         }
 
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
         if (!Program.noSecurity)
         {
-            var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+            var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedSubmodelIdentifier);
             User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
             var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
             var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
@@ -493,7 +502,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         _logger.LogInformation($"Received a request to delete a submodel element at {idShortPath} from submodel with id {decodedSubmodelIdentifier}");
         // return StatusCode(500, default(Result));
 
-        _submodelService.DeleteSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath);
+        _persistenceService.DeleteSubmodelElementByPath(securityConfig, decodedSubmodelIdentifier, idShortPath);
 
         return NoContent();
     }
@@ -539,9 +548,12 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 	    }
 
 	    _logger.LogInformation($"Received a request to get all the submodel elements from submodel with id {decodedSubmodelIdentifier}");
-	    if (!Program.noSecurity)
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+        if (!Program.noSecurity)
 	    {
-	        var submodel   = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+	        var submodel   = _persistenceService.ReadSubmodelById(securityConfig, decodedSubmodelIdentifier);
 	        var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
 	        if (!authResult.Succeeded)
 	        {
@@ -550,7 +562,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 	    }
 
         var paginationParameters = new PaginationParameters(cursor, limit);
-        var submodelElements = _submodelService.GetPagedSubmodelElements(paginationParameters, decodedSubmodelIdentifier);
+        var submodelElements = _persistenceService.ReadPagedSubmodelElements(paginationParameters, securityConfig, decodedSubmodelIdentifier);
 
         var filtered = new List<ISubmodelElement>();
         if (!diff.IsNullOrEmpty())
@@ -684,9 +696,12 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         _logger.LogInformation($"Received request to get the metadata of all the submodel elements from the submodel with id {decodedSubmodelIdentifier}");
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
         if (!Program.noSecurity)
         {
-            var submodel   = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+            var submodel   = _persistenceService.ReadSubmodelById(securityConfig, decodedSubmodelIdentifier);
             var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
@@ -695,7 +710,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         var paginationParameters = new PaginationParameters(cursor, limit);
-        var smeList = _submodelService.GetPagedSubmodelElements(paginationParameters, decodedSubmodelIdentifier);
+        var smeList = _persistenceService.ReadPagedSubmodelElements(paginationParameters, securityConfig, decodedSubmodelIdentifier);
 
         var filtered = new List<ISubmodelElement>();
         if (!diff.IsNullOrEmpty())
@@ -754,9 +769,12 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var decodedSubmodelIdentifier = _decoderService.Decode($"submodelIdentifier", submodelIdentifier);
 
 	    _logger.LogDebug($"Received request to get all the submodel elements from the submodel with id {decodedSubmodelIdentifier}");
-	    if (!Program.noSecurity)
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+        if (!Program.noSecurity)
 	    {
-	        var submodel   = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+	        var submodel   = _persistenceService.ReadSubmodelById(securityConfig, decodedSubmodelIdentifier);
 	        var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
 	        if (!authResult.Succeeded)
 	        {
@@ -766,7 +784,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
 
         var paginationParameters = new PaginationParameters(cursor, limit);
-        var submodelElementList = _submodelService.GetPagedSubmodelElements(paginationParameters, decodedSubmodelIdentifier);
+        var submodelElementList = _persistenceService.ReadPagedSubmodelElements(paginationParameters, securityConfig, decodedSubmodelIdentifier);
 
         var filtered = new List<ISubmodelElement?>();
         if (!diff.IsNullOrEmpty())
@@ -829,10 +847,12 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
         }
 
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
         _logger.LogInformation($"Received a request to get all the submodel elements from submodel with id {decodedSubmodelIdentifier}");
         if (!Program.noSecurity)
         {
-            var submodel   = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+            var submodel   = _persistenceService.ReadSubmodelById(securityConfig, decodedSubmodelIdentifier);
             var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
@@ -840,7 +860,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
         }
         var paginationParameters = new PaginationParameters(cursor, limit);
-        var smeList = _submodelService.GetPagedSubmodelElements(paginationParameters, decodedSubmodelIdentifier);
+        var smeList = _persistenceService.ReadPagedSubmodelElements(paginationParameters, securityConfig, decodedSubmodelIdentifier);
 
         var smePagedList  = _paginationService.GetPaginatedResult(smeList, paginationParameters);
         var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePagedList.result ?? [], levelEnum);
@@ -891,9 +911,12 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 	    }
 
 	    _logger.LogInformation($"Received request to get value of all the submodel elements from the submodel with id {decodedSubmodelIdentifier}");
-	    if (!Program.noSecurity)
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+        if (!Program.noSecurity)
 	    {
-	        var submodel   = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+	        var submodel   = _persistenceService.ReadSubmodelById(securityConfig, decodedSubmodelIdentifier);
 	        var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
 	        if (!authResult.Succeeded)
 	        {
@@ -902,7 +925,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 	    }
 
         var paginationParameters = new PaginationParameters(cursor, limit);
-        var submodelElements = _submodelService.GetPagedSubmodelElements(paginationParameters, decodedSubmodelIdentifier);
+        var submodelElements = _persistenceService.ReadPagedSubmodelElements(paginationParameters, securityConfig, decodedSubmodelIdentifier);
 
         var filtered = new List<ISubmodelElement>();
         if (!diff.IsNullOrEmpty())
@@ -961,7 +984,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
 
-        var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
+        var submodelList = _persistenceService.ReadAllSubmodels(reqSemanticId, idShort);
 
         var submodelsPagedList = _paginationService.GetPaginatedResult(submodelList, new PaginationParameters(cursor, limit));
         var smLevelList        = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result, levelEnum, extentEnum);
@@ -999,7 +1022,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
 
-        var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
+        var submodelList = _persistenceService.ReadAllSubmodels(reqSemanticId, idShort);
 
         var submodelPagedList = _paginationService.GetPaginatedResult(submodelList, new PaginationParameters(cursor, limit));
         var smMetadataList    = _mappingService.Map(submodelPagedList.result, "metadata");
@@ -1039,7 +1062,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
 
-        var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
+        var submodelList = _persistenceService.ReadAllSubmodels(reqSemanticId, idShort);
 
         var submodelPagedList = _paginationService.GetPaginatedResult(submodelList, new PaginationParameters(cursor, limit));
         var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelPagedList.result, levelEnum);
@@ -1081,7 +1104,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
 
-        var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
+        var submodelList = _persistenceService.ReadAllSubmodels(reqSemanticId, idShort);
 
         var submodelsPagedList = _paginationService.GetPaginatedResult(submodelList, new PaginationParameters(cursor, limit));
         var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result, levelEnum);
@@ -1126,7 +1149,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var reqSemanticId = _jsonQueryDeserializer.DeserializeReference("semanticId", semanticId);
 
-        var submodelList = _submodelService.GetAllSubmodels(reqSemanticId, idShort);
+        var submodelList = _persistenceService.ReadAllSubmodels(reqSemanticId, idShort);
 
         var submodelsPagedList = _paginationService.GetPaginatedResult(submodelList, new PaginationParameters(cursor, limit));
         var submodelLevelList  = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result, levelEnum, extentEnum);
@@ -1170,9 +1193,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
         }
 
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
         if (!Program.noSecurity)
         {
-            var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+            var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedSubmodelIdentifier);
             User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
             var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
@@ -1184,7 +1209,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
         }
 
-        var fileName = _submodelService.GetFileByPath(decodedSubmodelIdentifier, idShortPath, out var content, out var fileSize);
+        var fileName = _persistenceService.ReadFileByPath(decodedSubmodelIdentifier, idShortPath, out var content, out var fileSize);
 
         //content-disposition so that the aasx file can be downloaded from the web browser.
         ContentDisposition contentDisposition = new()
@@ -1323,8 +1348,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         {
             throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
         }
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-        var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+        var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedSubmodelIdentifier);
 
         var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
 
@@ -1375,7 +1401,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
         }
 
-        var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+        var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedSubmodelIdentifier);
         var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
         if (!authResult.Succeeded)
         {
@@ -1426,7 +1454,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
         }
 
-        var submodel   = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+        var submodel   = _persistenceService.ReadSubmodelById(securityConfig, decodedSubmodelIdentifier);
         var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
         if (!authResult.Succeeded)
         {
@@ -1476,7 +1506,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
         }
 
-        var submodel   = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+        var submodel   = _persistenceService.ReadSubmodelById(securityConfig, decodedSubmodelIdentifier);
         var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
         if (!authResult.Succeeded)
         {
@@ -1524,7 +1556,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
         }
 
-        var submodel   = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+        var submodel   = _persistenceService.ReadSubmodelById(securityConfig, decodedSubmodelIdentifier);
         var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
         if (!authResult.Succeeded)
         {
@@ -1576,7 +1610,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
         }
 
-        var submodel   = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+        var submodel   = _persistenceService.ReadSubmodelById(securityConfig, decodedSubmodelIdentifier);
         var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
         if (!authResult.Succeeded)
         {
@@ -1624,10 +1660,12 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
         }
 
-        var submodelElement = _submodelService.GetSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath);
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+        var submodelElement = _persistenceService.ReadSubmodelElementByPath(securityConfig, decodedSubmodelIdentifier, idShortPath);
         if (!Program.noSecurity)
         {
-            var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+            var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedSubmodelIdentifier);
             User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
             var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
             var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
@@ -1680,10 +1718,12 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
         }
 
-        var submodelElement = _submodelService.GetSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath);
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+        var submodelElement = _persistenceService.ReadSubmodelElementByPath(securityConfig, decodedSubmodelIdentifier, idShortPath);
         if (!Program.noSecurity)
         {
-            var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+            var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedSubmodelIdentifier);
             User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
             var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
             var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
@@ -1735,9 +1775,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
         }
 
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
         if (!Program.noSecurity)
         {
-            var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+            var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedSubmodelIdentifier);
             User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
             var claimsList = new List<Claim>(User.Claims) {new("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
@@ -1749,7 +1791,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
         }
 
-        var submodelElement = _submodelService.GetSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath);
+        var submodelElement = _persistenceService.ReadSubmodelElementByPath(securityConfig, decodedSubmodelIdentifier, idShortPath);
 
         var output = _referenceModifierService.GetReferenceResult(submodelElement);
         return new ObjectResult(output);
@@ -1796,9 +1838,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
         }
 
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
         if (!Program.noSecurity)
         {
-            var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+            var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedSubmodelIdentifier);
             User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
             var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
@@ -1810,7 +1854,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
         }
 
-        var submodelElement = _submodelService.GetSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath);
+        var submodelElement = _persistenceService.ReadSubmodelElementByPath(securityConfig, decodedSubmodelIdentifier, idShortPath);
 
         var output = _levelExtentModifierService.ApplyLevelExtent(submodelElement, levelEnum, extentEnum);
         return new ObjectResult(output);
@@ -1855,9 +1899,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
         }
 
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
         if (!Program.noSecurity)
         {
-            var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+            var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedSubmodelIdentifier);
             User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
             var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
@@ -1869,7 +1915,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
         }
 
-        var submodelElement = _submodelService.GetSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath);
+        var submodelElement = _persistenceService.ReadSubmodelElementByPath(securityConfig, decodedSubmodelIdentifier, idShortPath);
 
         var submodelElementLevel = _levelExtentModifierService.ApplyLevelExtent(submodelElement, levelEnum, extentEnum);
         var output = _mappingService.Map(submodelElementLevel, "value");
@@ -2029,7 +2075,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
         }
 
-        _submodelService.UpdateSubmodelById(decodedSubmodelIdentifier, body);
+        _persistenceService.UpdateSubmodelById(decodedSubmodelIdentifier, body);
 
         return NoContent();
     }
@@ -2077,7 +2123,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         //Update
-        _submodelService.UpdateSubmodelById(decodedSubmodelIdentifier, submodel);
+        _persistenceService.UpdateSubmodelById(decodedSubmodelIdentifier, submodel);
 
         return NoContent();
     }
@@ -2127,7 +2173,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(submodel)} is null");
         }
 
-        _submodelService.UpdateSubmodelById(decodedSubmodelIdentifier, submodel);
+        _persistenceService.UpdateSubmodelById(decodedSubmodelIdentifier, submodel);
 
         return NoContent();
     }
@@ -2178,7 +2224,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         //Update
-        _submodelService.UpdateSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath, submodelElement);
+        _persistenceService.UpdateSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath, submodelElement);
 
         return NoContent();
     }
@@ -2222,7 +2268,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         _logger.LogInformation($"Received request to update the submodel element at {idShortPath} from submodel with id {decodedSubmodelIdentifier}.");
-        _submodelService.UpdateSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath, body);
+        _persistenceService.UpdateSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath, body);
 
         return NoContent();
     }
@@ -2273,7 +2319,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         //Update
-        _submodelService.UpdateSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath, submodelElement);
+        _persistenceService.UpdateSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath, submodelElement);
 
         return NoContent();
     }
@@ -2316,7 +2362,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(decodedAasIdentifier)} is null");
         }
 
-        var output = _submodelService.CreateSubmodel(body, decodedAasIdentifier);
+        var output = _persistenceService.CreateSubmodel(body, decodedAasIdentifier);
 
         return CreatedAtAction("PostSubmodel", output);
     }
@@ -2363,10 +2409,12 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
         }
 
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
         _logger.LogInformation($"Received request to create a new submodel element at {idShortPath} in the submodel with id {decodedSubmodelIdentifier}");
         if (!Program.noSecurity)
         {
-            var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+            var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedSubmodelIdentifier);
             User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
             var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
@@ -2378,7 +2426,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
         }
 
-        var output = _submodelService.CreateSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath, first, body);
+        var output = _persistenceService.CreateSubmodelElementByPath(securityConfig, decodedSubmodelIdentifier, idShortPath, first, body);
 
         return CreatedAtAction("PostSubmodelElementByPathSubmodelRepo", output);
     }
@@ -2427,9 +2475,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
         }
 
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
         if (!Program.noSecurity)
         {
-            var submodel = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+            var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedSubmodelIdentifier);
             var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{body.IdShort}") };
             var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal = new System.Security.Principal.GenericPrincipal(identity, null);
@@ -2440,7 +2490,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
         }
 
-        var output = _submodelService.CreateSubmodelElement(decodedSubmodelIdentifier, body, first);
+        var output = _persistenceService.CreateSubmodelElement(securityConfig, decodedSubmodelIdentifier, body, first);
 
         return CreatedAtAction("PostSubmodelElementSubmodelRepo", output);
     }
@@ -2483,7 +2533,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
         }
 
-        _submodelService.ReplaceSubmodelById(decodedSubmodelIdentifier, body);
+        _persistenceService.ReplaceSubmodelById(decodedSubmodelIdentifier, body);
 
         return NoContent();
     }
@@ -2529,9 +2579,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
         }
 
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
         if (!Program.noSecurity)
         {
-            var submodel   = _submodelService.GetSubmodelById(decodedSubmodelIdentifier);
+            var submodel   = _persistenceService.ReadSubmodelById(securityConfig, decodedSubmodelIdentifier);
             var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{body.IdShort}") };
             var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
@@ -2542,7 +2594,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
         }
 
-        _submodelService.ReplaceSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath, body);
+        _persistenceService.ReplaceSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath, body);
 
         return NoContent();
     }
@@ -2592,7 +2644,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(contentType)} is null");
         }
 
-        _submodelService.ReplaceFileByPath(decodedSubmodelIdentifier, idShortPath, fileName, contentType, stream);
+        _persistenceService.ReplaceFileByPath(decodedSubmodelIdentifier, idShortPath, fileName, contentType, stream);
 
         return NoContent();
     }

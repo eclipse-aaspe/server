@@ -615,4 +615,21 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         return false;
     }
+
+    public ISubmodel ReadSubmodelById(ISecurityConfig securityConfig, string submodelIdentifier) => throw new NotImplementedException();
+    public List<ISubmodelElement> ReadPagedSubmodelElements(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string submodelIdentifier) => throw new NotImplementedException();
+    public List<ISubmodel> ReadAllSubmodels(Reference? reqSemanticId, string? idShort) => throw new NotImplementedException();
+    public string ReadFileByPath(string decodedSubmodelIdentifier, string idShortPath, out byte[]? content, out long? fileSize) => throw new NotImplementedException();
+    public ISubmodelElement ReadSubmodelElementByPath(ISecurityConfig securityConfig, string decodedSubmodelIdentifier, string idShortPath) => throw new NotImplementedException();
+    public ISubmodel CreateSubmodel(Submodel body, string decodedAasIdentifier) => throw new NotImplementedException();
+    public ISubmodelElement CreateSubmodelElementByPath(ISecurityConfig securityConfig, string decodedSubmodelIdentifier, string idShortPath, bool first, ISubmodelElement body) => throw new NotImplementedException();
+    public ISubmodelElement CreateSubmodelElement(ISecurityConfig securityConfig, string decodedSubmodelIdentifier, ISubmodelElement body, bool first) => throw new NotImplementedException();
+    public void UpdateSubmodelById(string decodedSubmodelIdentifier, ISubmodel submodel) => throw new NotImplementedException();
+    public void UpdateSubmodelElementByPath(string decodedSubmodelIdentifier, string idShortPath, ISubmodelElement submodelElement) => throw new NotImplementedException();
+    public void DeleteFileByPath(ISecurityConfig securityConfig, string decodedSubmodelIdentifier, string idShortPath) => throw new NotImplementedException();
+    public void DeleteSubmodelById(string decodedSubmodelIdentifier) => throw new NotImplementedException();
+    public void DeleteSubmodelElementByPath(ISecurityConfig securityConfig, string decodedSubmodelIdentifier, string idShortPath) => throw new NotImplementedException();
+    public void ReplaceSubmodelById(string decodedSubmodelIdentifier, Submodel body) => throw new NotImplementedException();
+    public void ReplaceSubmodelElementByPath(string decodedSubmodelIdentifier, string idShortPath, ISubmodelElement body) => throw new NotImplementedException();
+    public void ReplaceFileByPath(string decodedSubmodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream) => throw new NotImplementedException();
 }
