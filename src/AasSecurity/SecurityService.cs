@@ -833,18 +833,39 @@ namespace AasSecurity
             if (apiOperation == operation)
                 return true;
 
-            var  apiOpSplit = apiOperation.Split('/');
-            var  opSplit    = operation.Split('/');
-            bool match      = false;
+            var apiOpSplit = apiOperation.Split('/');
+            var opSplit = operation.Split('/');
+
+            var i = 0;
+            while (i < apiOpSplit.Length)
+            {
+                if (apiOpSplit[i] == "*")
+                {
+                    return true;
+                }
+                if (apiOpSplit[i] != opSplit[i])
+                {
+                    return false;
+                }
+                i++;
+            }
+            if (opSplit.Length > i)
+            {
+                return false;
+            }
+            return true;
+
+            /*
+            bool match = false;
             if (apiOpSplit.Length == opSplit.Length)
             {
-                for (int i = 0; i < apiOpSplit.Length; i++)
+                for (var i = 0; i < apiOpSplit.Length; i++)
                 {
-                    if (apiOpSplit[ i ].Equals(opSplit[ i ]))
+                    if (apiOpSplit[i].Equals(opSplit[i]))
                     {
                         match = true;
                     }
-                    else if (apiOpSplit[ i ].StartsWith("{"))
+                    else if (apiOpSplit[i].StartsWith("{"))
                     {
                         continue;
                     }
@@ -856,6 +877,7 @@ namespace AasSecurity
 
                 return match;
             }
+            */
 
             return false;
         }

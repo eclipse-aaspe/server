@@ -532,6 +532,7 @@ namespace IO.Swagger.Controllers
             var paginationParameters = new PaginationParameters(cursor, limit);
             var submodelElements = _persistenceService.ReadPagedSubmodelElements(paginationParameters, securityConfig, decodedAasIdentifier, decodedSmIdentifier);
 
+            /*
             if (!Program.noSecurity && submodelElements.Count > 0)
             {
                 var authResult = _authorizationService.AuthorizeAsync(securityConfig.Principal, submodelElements.First().Parent, "SecurityPolicy").Result;
@@ -540,6 +541,7 @@ namespace IO.Swagger.Controllers
                     throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
                 }
             }
+            */
 
             var smePaginated = _paginationService.GetPaginatedResult(submodelElements, paginationParameters);
             var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginated.result ?? [], levelEnum, extentEnum);
