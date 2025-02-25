@@ -344,6 +344,65 @@ namespace AasxServerDB
             public OValueSet oValueSet;
         }
 
+        public static List<SmeMerged> GetSmeMerged(AasContext db, List<SMESet>? listSME)
+        {
+            if (listSME == null)
+            {
+                return null;
+            }
+
+            var smeIdList = listSME.Select(sme => sme.Id).ToList();
+            var querySME = db.SMESets.Where(sme => smeIdList.Contains(sme.Id));
+
+            return GetSmeMerged(db, querySME);
+        }
+        public static List<SmeMerged> GetSmeMerged(AasContext db, IQueryable<SMESet>? querySME)
+        {
+            if (querySME == null)
+                return null;
+
+            var joinSValue = querySME.Join(
+                db.SValueSets,
+                sme => sme.Id,
+                sv => sv.SMEId,
+                (sme, sv) => new SmeMerged { smeSet = sme, sValueSet = sv, iValueSet = null, dValueSet = null, oValueSet = null })
+                .ToList();
+
+            var joinIValue = querySME.Join(
+                db.IValueSets,
+                sme => sme.Id,
+                sv => sv.SMEId,
+                (sme, sv) => new SmeMerged { smeSet = sme, sValueSet = null, iValueSet = sv, dValueSet = null, oValueSet = null })
+                .ToList();
+
+            var joinDValue = querySME.Join(
+                db.DValueSets,
+                sme => sme.Id,
+                sv => sv.SMEId,
+                (sme, sv) => new SmeMerged { smeSet = sme, sValueSet = null, iValueSet = null, dValueSet = sv, oValueSet = null })
+                .ToList();
+
+            var joinOValue = querySME.Join(
+                db.OValueSets,
+                sme => sme.Id,
+                sv => sv.SMEId,
+                (sme, sv) => new SmeMerged { smeSet = sme, sValueSet = null, iValueSet = null, dValueSet = null, oValueSet = sv })
+                .ToList();
+
+            var result = joinSValue;
+            result.AddRange(joinIValue);
+            result.AddRange(joinDValue);
+            result.AddRange(joinOValue);
+
+            var smeIdList = result.Select(sme => sme.smeSet.Id).ToList();
+            var noValue = querySME.Where(sme => !smeIdList.Contains(sme.Id))
+                .Select(sme => new SmeMerged { smeSet = sme, sValueSet = null, iValueSet = null, dValueSet = null, oValueSet = null })
+                .ToList();
+            result.AddRange(noValue);
+
+            return result;
+        }
+
         public static List<SmeMerged> GetSmeMerged1(AasContext db, List<SMESet>? listSME)
         {
             if (listSME == null)
@@ -380,7 +439,7 @@ namespace AasxServerDB
             return result;
         }
 
-        public static List<SmeMerged> GetSmeMerged(AasContext db, List<SMESet>? listSME)
+        public static List<SmeMerged> GetSmeMerged2(AasContext db, List<SMESet>? listSME)
         {
             if (listSME == null)
                 return null;
