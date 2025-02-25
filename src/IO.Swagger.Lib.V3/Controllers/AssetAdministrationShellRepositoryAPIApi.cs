@@ -94,7 +94,7 @@ namespace IO.Swagger.Controllers
                                                                   IReferenceModifierService referenceModifierService,
                                                                   IMappingService mappingService, IPathModifierService pathModifierService,
                                                                   ILevelExtentModifierService levelExtentModifierService, IPaginationService paginationService,
-                                                                  IAuthorizationService authorizationService, IValidateSerializationModifierService validateModifierService, IdShortPathParserService idShortPathParserService)
+                                                                  IAuthorizationService authorizationService, IValidateSerializationModifierService validateModifierService, IIdShortPathParserService idShortPathParserService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _persistenceService = persistenceService ?? throw new ArgumentNullException(nameof(persistenceService));
