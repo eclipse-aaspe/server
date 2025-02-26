@@ -488,6 +488,11 @@ namespace Events
                 }
                 if (referable is SubmodelElementList sml)
                 {
+                    if (sml.Value == null)
+                    {
+                        sml.Value = new List<ISubmodelElement>();
+                    }
+                    data = sml.Value;
                     children = sml.Value;
                 }
                 var r = referable;
@@ -726,11 +731,15 @@ namespace Events
 
             if (maxCount != 0 && eventData.dataCollection == parent)
             {
-                SubmodelElementCollection data = eventData.dataCollection;
-                // if (eventData.direction != null && eventData.direction.Value == "IN" && eventData.mode != null && (eventData.mode.Value == "PUSH" || eventData.mode.Value == "PUT"))
-                if (eventData.direction != null && eventData.direction.Value == "IN" && eventData.mode != null)
+                SubmodelElementCollection data = null;
+                if (eventData.dataCollection is SubmodelElementCollection dataSmc)
                 {
-                    if (eventData.dataCollection.Value != null && eventData.dataCollection.Value.Count == 1 && eventData.dataCollection.Value[0] is SubmodelElementCollection smc)
+                    data = dataSmc;
+                }
+                // if (eventData.direction != null && eventData.direction.Value == "IN" && eventData.mode != null && (eventData.mode.Value == "PUSH" || eventData.mode.Value == "PUT"))
+                if (data != null && eventData.direction != null && eventData.direction.Value == "IN" && eventData.mode != null)
+                {
+                    if (data.Value != null && data.Value.Count == 1 && data.Value[0] is SubmodelElementCollection smc)
                     {
                         data = smc;
 
@@ -767,7 +776,7 @@ namespace Events
         public AasCore.Aas3_0.Property changes = null;
         public AasCore.Aas3_0.Property endPoint = null;
         public Submodel dataSubmodel = null;
-        public SubmodelElementCollection dataCollection = null;
+        public ISubmodelElement dataCollection = null;
         public AasCore.Aas3_0.Property dataMaxSize = null;
         public SubmodelElementCollection statusData = null;
         public AasCore.Aas3_0.Property noPayload = null;
@@ -829,12 +838,14 @@ namespace Events
         public void ParseData(Operation op, AdminShellPackageEnv env)
         {
             SubmodelElementCollection smec = null;
+            SubmodelElementList smel = null;
             Submodel sm = null;
             AasCore.Aas3_0.Property p = null;
 
             foreach (var input in op.InputVariables)
             {
                 smec = null;
+                smel = null;
                 sm = null;
                 p = null;
                 var inputRef = input.Value;
@@ -851,6 +862,10 @@ namespace Events
                 {
                     smec = (inputRef as SubmodelElementCollection);
                 }
+                if (inputRef is SubmodelElementList)
+                {
+                    smel = (inputRef as SubmodelElementList);
+                }
 
                 if (inputRef is ReferenceElement)
                 {
@@ -858,6 +873,10 @@ namespace Events
                     if (refElement is SubmodelElementCollection)
                     {
                         smec = refElement as SubmodelElementCollection;
+                    }
+                    if (refElement is SubmodelElementList)
+                    {
+                        smel = refElement as SubmodelElementList;
                     }
                     if (refElement is Submodel)
                     {
@@ -913,6 +932,8 @@ namespace Events
                             dataSubmodel = sm;
                         if (smec != null)
                             dataCollection = smec;
+                        if (smel != null)
+                            dataCollection = smel;
                         break;
                     case "datamaxsize":
                         if (p != null)
