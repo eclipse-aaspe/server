@@ -25,5 +25,6 @@ namespace AasSecurity
         internal static List<SecurityRight> SecurityRights = new();
         internal static Dictionary<string, string> SecurityUsernamePassword = new();
         internal static Property ConditionSM = null;
+        internal static Property ConditionSME = null;
     }
 }

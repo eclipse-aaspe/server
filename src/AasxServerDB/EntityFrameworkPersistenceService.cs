@@ -266,9 +266,11 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
         */
         var securityConditionSM = "";
+        var securityConditionSME = "";
         if (!securityConfig.NoSecurity)
         {
             securityConditionSM = _contractSecurityRules.GetConditionSM();
+            securityConditionSME = _contractSecurityRules.GetConditionSME();
             // Get claims
             var authResult = false;
             var accessRole = securityConfig.Principal.FindAll(ClaimTypes.Role).Select(c => c.Value).FirstOrDefault();
@@ -284,7 +286,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             }
         }
 
-        var output = Converter.GetPagedSubmodelElements(paginationParameters, securityConditionSM, aasIdentifier, submodelIdentifier);
+        var output = Converter.GetPagedSubmodelElements(paginationParameters, securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier);
         if (output == null)
         {
             throw new Exception($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");

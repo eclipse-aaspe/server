@@ -44,6 +44,14 @@ namespace AasSecurity
             }
             return "";
         }
+        public string GetConditionSME()
+        {
+            if (GlobalSecurityVariables.ConditionSME != null)
+            {
+                return GlobalSecurityVariables.ConditionSME.Value;
+            }
+            return "";
+        }
         public void ClearSecurityRules()
         {
             GlobalSecurityVariables.SecurityRoles.Clear();

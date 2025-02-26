@@ -92,12 +92,18 @@ namespace AasSecurity
                                             output.LocalAccessControl.AccessPermissionRules.Add(ParseAccessPermissionRule(env, rule));
                                         }
                                     }
-                                if (localAccessControl.Value.Count >= 2)
+                                foreach (var sme in localAccessControl.Value)
                                 {
-                                    var conditionSM = localAccessControl.Value[1] as Property;
-                                    if (conditionSM.IdShort == "conditionSM" && conditionSM.Value != null)
+                                    if (sme is Property p)
                                     {
-                                        GlobalSecurityVariables.ConditionSM = conditionSM;
+                                        if (p.IdShort == "conditionSM" && p.Value != null)
+                                        {
+                                            GlobalSecurityVariables.ConditionSM = p;
+                                        }
+                                        if (p.IdShort == "conditionSME" && p.Value != null)
+                                        {
+                                            GlobalSecurityVariables.ConditionSME = p;
+                                        }
                                     }
                                 }
                             }

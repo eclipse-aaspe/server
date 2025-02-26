@@ -151,7 +151,7 @@ namespace AasxServerDB
             return output;
         }
 
-        public static List<ISubmodelElement>? GetPagedSubmodelElements(IPaginationParameters paginationParameters, string securityConditionSM, string aasIdentifier, string submodelIdentifier)
+        public static List<ISubmodelElement>? GetPagedSubmodelElements(IPaginationParameters paginationParameters, string securityConditionSM, string securityConditionSME, string aasIdentifier, string submodelIdentifier)
         {
             bool result = false;
             var output = new List<ISubmodelElement>();
@@ -179,7 +179,12 @@ namespace AasxServerDB
                 }
                 var smDBId = smDB[0].Id;
 
-                var smeSmTop = db.SMESets.Where(sme => sme.SMId == smDBId && sme.ParentSMEId == null)
+                var smeSmTopQuery = db.SMESets.Where(sme => sme.SMId == smDBId && sme.ParentSMEId == null);
+                if (securityConditionSME != "")
+                {
+                    smeSmTopQuery = smeSmTopQuery.Where(securityConditionSME);
+                }
+                var smeSmTop = smeSmTopQuery
                     .OrderBy(sme => sme.Id).Skip(paginationParameters.Cursor).Take(paginationParameters.Limit).ToList();
                 var smeSmTopTree = Converter.GetTree(db, smDB[0], smeSmTop);
                 var smeSmTopMerged = Converter.GetSmeMerged(db, smeSmTopTree);
