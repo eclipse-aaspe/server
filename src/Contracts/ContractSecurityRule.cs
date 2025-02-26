@@ -5,6 +5,7 @@ namespace Contracts
 
     public interface IContractSecurityRules
     {
+        public string GetConditionSM();
         bool AuthorizeRequest(string accessRole,
                       string httpRoute,
                       AccessRights neededRights,

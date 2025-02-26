@@ -36,6 +36,14 @@ namespace AasSecurity
 {
     public class SecurityService : ISecurityService, IContractSecurityRules
     {
+        public string GetConditionSM()
+        {
+            if (GlobalSecurityVariables.ConditionSM != null)
+            {
+                return GlobalSecurityVariables.ConditionSM.Value;
+            }
+            return "";
+        }
         public void ClearSecurityRules()
         {
             GlobalSecurityVariables.SecurityRoles.Clear();

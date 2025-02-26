@@ -16,6 +16,7 @@ namespace AasxServerDB
     using System.Collections.Generic;
     using System.IO.Packaging;
     using System.Linq;
+    using System.Linq.Dynamic.Core;
     using System.Text;
     using AasCore.Aas3_0;
     using AasxServerDB.Entities;
@@ -150,7 +151,7 @@ namespace AasxServerDB
             return output;
         }
 
-        public static List<ISubmodelElement>? GetPagedSubmodelElements(IPaginationParameters paginationParameters, string aasIdentifier, string submodelIdentifier)
+        public static List<ISubmodelElement>? GetPagedSubmodelElements(IPaginationParameters paginationParameters, string securityConditionSM, string aasIdentifier, string submodelIdentifier)
         {
             bool result = false;
             var output = new List<ISubmodelElement>();
@@ -165,8 +166,13 @@ namespace AasxServerDB
                 }
                 var aasDBId = aasDB[0].Id;
 
-                var smDB = db.SMSets
-                    .Where(sm => sm.AASId == aasDBId && sm.Identifier == submodelIdentifier).ToList();
+                var smDBQuery = db.SMSets
+                    .Where(sm => sm.AASId == aasDBId && sm.Identifier == submodelIdentifier);
+                if (securityConditionSM != "")
+                {
+                    smDBQuery = smDBQuery.Where(securityConditionSM);
+                }
+                var smDB = smDBQuery.ToList();
                 if (smDB == null || smDB.Count != 1)
                 {
                     return null;
