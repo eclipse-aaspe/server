@@ -813,6 +813,7 @@ public class RegistryInitializerService : IRegistryInitializerService
                     if (sm.SemanticId != null)
                     {
                         var sid = sm.SemanticId.GetAsExactlyOneKey();
+                        if (sid != null)
                         {
                             var semanticId = new Reference(ReferenceTypes.ExternalReference, new List<IKey> {new Key(KeyTypes.GlobalReference, sid.Value)});
                             sd.SemanticId = semanticId;
