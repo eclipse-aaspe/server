@@ -94,7 +94,8 @@ namespace IO.Swagger.Controllers
                                                                   IReferenceModifierService referenceModifierService,
                                                                   IMappingService mappingService, IPathModifierService pathModifierService,
                                                                   ILevelExtentModifierService levelExtentModifierService, IPaginationService paginationService,
-                                                                  IAuthorizationService authorizationService, IValidateSerializationModifierService validateModifierService, IIdShortPathParserService idShortPathParserService)
+                                                                  IAuthorizationService authorizationService, IValidateSerializationModifierService validateModifierService,
+                                                                  IIdShortPathParserService idShortPathParserService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _persistenceService = persistenceService ?? throw new ArgumentNullException(nameof(persistenceService));
@@ -182,7 +183,9 @@ namespace IO.Swagger.Controllers
 
             if (!Program.noSecurity)
             {
-                var submodel = _persistenceService.ReadSubmodelById(decodedAasIdentifier, decodedSmIdentifier);
+                var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+                var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedAasIdentifier, decodedSmIdentifier);
                 User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
                 var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
                 var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
@@ -285,7 +288,9 @@ namespace IO.Swagger.Controllers
 
             if (!Program.noSecurity)
             {
-                var submodel = _persistenceService.ReadSubmodelById(decodedAasIdentifier, decodedSmIdentifier);
+                var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+                var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedAasIdentifier, decodedSmIdentifier);
                 User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
                 var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
                 var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
@@ -424,7 +429,9 @@ namespace IO.Swagger.Controllers
             }
 
             var paginationParameters = new PaginationParameters(cursor, limit);
-            var paginatedAasList = _persistenceService.ReadPagedAssetAdministrationShells(paginationParameters, reqAssetIds, idShort);
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+            var paginatedAasList = _persistenceService.ReadPagedAssetAdministrationShells(paginationParameters, securityConfig, reqAssetIds, idShort);
             var output = _paginationService.GetPaginatedResult(paginatedAasList, paginationParameters);
             return new ObjectResult(output);
         }
@@ -470,9 +477,10 @@ namespace IO.Swagger.Controllers
                     reqAssetIds.Add(reqAssetId);
                 }
             }
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
             var paginationParameters = new PaginationParameters(cursor, limit);
-            var aasList = _persistenceService.ReadPagedAssetAdministrationShells(paginationParameters, reqAssetIds, idShort);
+            var aasList = _persistenceService.ReadPagedAssetAdministrationShells(paginationParameters, securityConfig, reqAssetIds, idShort);
             var aasPaginatedList = _paginationService.GetPaginatedResult(aasList, paginationParameters);
             var references = _referenceModifierService.GetReferenceResult(aasPaginatedList.result.ConvertAll(a => (IReferable)a));
             var output = new ReferencePagedResult(references, aasPaginatedList.paging_metadata);
@@ -839,7 +847,8 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetAllSubmodelReferencesAasRepository([FromRoute][Required]string aasIdentifier, [FromQuery]int? limit, [FromQuery]string? cursor)
-        { 
+        {
+            //ToDo: Taken from SubmodelService, verify whether correct
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             if (decodedAasIdentifier == null)
             {
@@ -847,10 +856,14 @@ namespace IO.Swagger.Controllers
             }
 
             _logger.LogInformation($"Received request to get all the submodel references from the AAS with id {aasIdentifier}.");
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            var paginationParameters = new PaginationParameters(cursor, limit);
 
-            var submodels = _persistenceService.ReadAllSubmodelReferencesFromAas(decodedAasIdentifier);
+            var submodelList = _persistenceService.ReadAllSubmodels(paginationParameters, securityConfig, null, null);
 
-            var output = _paginationService.GetPaginatedResult(submodels, new PaginationParameters(cursor, limit));
+            var submodelsPagedList = _paginationService.GetPaginatedResult(submodelList, paginationParameters);
+            var smReferences = _referenceModifierService.GetReferenceResult(submodelsPagedList.result.ConvertAll(sm => (IReferable)sm));
+            var output = new ReferencePagedResult(smReferences, submodelsPagedList.paging_metadata);
             return new ObjectResult(output);
         }
 
@@ -887,7 +900,8 @@ namespace IO.Swagger.Controllers
 
             _logger.LogInformation($"Received request to get the AAS with id {aasIdentifier}.");
 
-            var aas = _persistenceService.ReadAssetAdministrationShellById(decodedAasIdentifier);
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            var aas = _persistenceService.ReadAssetAdministrationShellById(securityConfig, decodedAasIdentifier);
 
             /* Turn off AAS security to have existing demos run
             var authResult = _authorizationService.AuthorizeAsync(User, aas, "SecurityPolicy").Result;
@@ -935,8 +949,9 @@ namespace IO.Swagger.Controllers
             }
 
             _logger.LogInformation($"Received request to get the reference of AAS with id {aasIdentifier}.");
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-            var aas = _persistenceService.ReadAssetAdministrationShellById(decodedAasIdentifier);
+            var aas = _persistenceService.ReadAssetAdministrationShellById(securityConfig, decodedAasIdentifier);
 
             var output = _referenceModifierService.GetReferenceResult(aas);
 
@@ -1025,7 +1040,9 @@ namespace IO.Swagger.Controllers
 
             if (!Program.noSecurity)
             {
-                var submodel = _persistenceService.ReadSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier);
+                var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+                var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier);
                 User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
                 var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
                 var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
@@ -1198,8 +1215,9 @@ namespace IO.Swagger.Controllers
             }
 
             _logger.LogInformation($"Received request to get the submodel with id {submodelIdentifier} from the AAS with id {aasIdentifier}.");
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-            var submodel = _persistenceService.ReadSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier);
+            var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier);
             var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
@@ -1255,7 +1273,9 @@ namespace IO.Swagger.Controllers
 
             _logger.LogInformation($"Received request to get metadat of the submodel with id {decodedSubmodelIdentifier} from the AAS with id {decodedAasIdentifier}");
 
-            var submodel = _persistenceService.ReadSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier);
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+            var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier);
             var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
@@ -1314,8 +1334,9 @@ namespace IO.Swagger.Controllers
             }
 
             _logger.LogInformation($"Received request to get path of a submodel with is {decodedSubmodelIdentifier} and AAS with id {decodedAasIdentifier}");
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-            var submodel = _persistenceService.ReadSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier);
+            var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier);
             var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
@@ -1370,8 +1391,9 @@ namespace IO.Swagger.Controllers
             }
 
             _logger.LogInformation($"Received request to get the submodel with id {submodelIdentifier} from the AAS with id {aasIdentifier}.");
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-            var submodel = _persistenceService.ReadSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier);
+            var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier);
             var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
@@ -1432,8 +1454,9 @@ namespace IO.Swagger.Controllers
             }
 
             _logger.LogInformation($"Received request to get the value of submodel with id {decodedSubmodelIdentifier} from the aas with id {decodedAasIdentifier}");
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-            var submodel = _persistenceService.ReadSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier);
+            var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier);
             var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
@@ -2325,7 +2348,9 @@ namespace IO.Swagger.Controllers
             _logger.LogInformation($"Received request to create a new submodel element in the submodel {decodedSubmodelIdentifier} and AAS {decodedAasIdentifier}");
             if (!Program.noSecurity)
             {
-                var submodel = _persistenceService.ReadSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier);
+                var securityConfig = new SecurityConfig(Program.noSecurity,this);
+
+                var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier);
                 User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{body?.IdShort}"));
                 var claimsList = new List<Claim>(User.Claims) { new Claim("IdShortPath", $"{submodel.IdShort}.{body?.IdShort}") };
                 var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
@@ -2390,9 +2415,12 @@ namespace IO.Swagger.Controllers
             }
 
             _logger.LogInformation($"Received request to create a new submodel element in the submodel {decodedSubmodelIdentifier} and AAS {decodedAasIdentifier}");
+
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
             if (!Program.noSecurity)
             {
-                var submodel = _persistenceService.ReadSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier);
+                var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier);
                 User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
                 var claimsList = new List<Claim>(User.Claims) { new Claim("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
                 var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");

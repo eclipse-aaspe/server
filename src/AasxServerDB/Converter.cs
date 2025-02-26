@@ -109,7 +109,7 @@ namespace AasxServerDB
             return env;
         }
 
-        public static List<IAssetAdministrationShell> GetPagedAssetAdministrationShells(IPaginationParameters paginationParameters, List<ISpecificAssetId> assetIds, string? idShort)
+        public static List<IAssetAdministrationShell> GetPagedAssetAdministrationShells(IPaginationParameters paginationParameters, List<ISpecificAssetId> assetIds, string idShort)
         {
             List<IAssetAdministrationShell> output = new List<IAssetAdministrationShell>();
 
@@ -158,17 +158,21 @@ namespace AasxServerDB
 
             using (var db = new AasContext())
             {
-                var aasDB = db.AASSets
-                    .Where(aas => aas.Identifier == aasIdentifier).ToList();
-                if (aasDB == null || aasDB.Count != 1)
-                {
-                    return null;
-                }
-                var aasDBId = aasDB[0].Id;
+                var smDBQuery = db.SMSets.Where(sm => sm.Identifier == submodelIdentifier);
 
-                var smDBQuery = db.SMSets
-                    .Where(sm => sm.AASId == aasDBId && sm.Identifier == submodelIdentifier);
-                if (securityConditionSM != "")
+                if (!aasIdentifier.IsNullOrEmpty())
+                {
+                    var aasDB = db.AASSets
+                        .Where(aas => aas.Identifier == aasIdentifier).ToList();
+                    if (aasDB == null || aasDB.Count != 1)
+                    {
+                        return null;
+                    }
+                    var aasDBId = aasDB[0].Id;
+                    smDBQuery = smDBQuery.Where(sm => sm.AASId == aasDBId);
+                }
+
+                if (!securityConditionSM.IsNullOrEmpty())
                 {
                     smDBQuery = smDBQuery.Where(securityConditionSM);
                 }
@@ -201,27 +205,37 @@ namespace AasxServerDB
             }
         }
 
-        public static ISubmodelElement? GetSubmodelElementByPath(string aasIdentifier, string submodelIdentifier, List<object> idShortPathElements)
+        public static ISubmodelElement? GetSubmodelElementByPath(string securityConditionSM, string securityConditionSME, string aasIdentifier, string submodelIdentifier, List<object> idShortPathElements)
         {
             bool result = false;
 
             using (var db = new AasContext())
             {
-                var aasDB = db.AASSets
-                    .Where(aas => aas.Identifier == aasIdentifier).ToList();
-                if (aasDB == null || aasDB.Count != 1)
-                {
-                    return null;
-                }
-                var aasDBId = aasDB[0].Id;
+                var smDBQuery = db.SMSets.Where(sm => sm.Identifier == submodelIdentifier);
 
-                var smDB = db.SMSets
-                    .Where(sm => sm.AASId == aasDBId && sm.Identifier == submodelIdentifier).ToList();
+                if (!aasIdentifier.IsNullOrEmpty())
+                {
+                    var aasDB = db.AASSets
+                        .Where(aas => aas.Identifier == aasIdentifier).ToList();
+                    if (aasDB == null || aasDB.Count != 1)
+                    {
+                        return null;
+                    }
+                    var aasDBId = aasDB[0].Id;
+                    smDBQuery = smDBQuery.Where(sm => sm.AASId == aasDBId);
+                }
+
+                if (!securityConditionSM.IsNullOrEmpty())
+                {
+                    smDBQuery = smDBQuery.Where(securityConditionSM);
+                }
+                var smDB = smDBQuery.ToList();
                 if (smDB == null || smDB.Count != 1)
                 {
                     return null;
                 }
                 var smDBId = smDB[0].Id;
+
 
                 if (idShortPathElements.Count == 0)
                 {
@@ -259,6 +273,38 @@ namespace AasxServerDB
 
             return null;
         }
+
+
+        public static List<ISubmodel> GetSubmodels(IPaginationParameters paginationParameters, string securityConditionSM, string securityConditionSME, Reference? reqSemanticId, string idShort)
+        {
+            List<ISubmodel> output = new List<ISubmodel>();
+
+            using (var db = new AasContext())
+            {
+                var timeStamp = DateTime.UtcNow;
+
+                var smDBList = db.SMSets
+                    .Where(sm => idShort == null || sm.IdShort == idShort)
+                    .OrderBy(aas => aas.Id)
+                    .Skip(paginationParameters.Cursor)
+                    .Take(paginationParameters.Limit)
+                    .ToList();
+
+                //ToDo: Verify whether this is correct
+                foreach (var sm in smDBList.Select(selector: submodelDB => GetSubmodel(smDB: submodelDB)))
+                {
+                    if (sm.TimeStamp == DateTime.MinValue)
+                    {
+                        sm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp, DateTime.MinValue);
+                        sm.SetTimeStamp(timeStamp);
+                    }
+                    output.Add(sm);
+                }
+            }
+
+            return output;
+        }
+
         private static ConceptDescription? GetConceptDescription(CDSet? cdDB = null, string cdIdentifier = "")
         {
             var db = new AasContext();
@@ -352,16 +398,24 @@ namespace AasxServerDB
             return aas;
         }
 
-        public static Submodel? GetSubmodel(SMSet? smDB = null, string submodelIdentifier = "")
+        public static Submodel? GetSubmodel(SMSet? smDB = null, string submodelIdentifier = "", string securityConditionSM = "", string securityConditionSME = "")
         {
             using (var db = new AasContext())
             {
                 if (!submodelIdentifier.IsNullOrEmpty())
                 {
-                    var smList = db.SMSets.Where(sm => sm.Identifier == submodelIdentifier).ToList();
-                    if (smList.Count == 0)
-                        return null;
-                    smDB = smList.First();
+                    var smDBQuery = db.SMSets
+                            .Where(sm => sm.Identifier == submodelIdentifier);
+                    if (securityConditionSM != "")
+                    {
+                        smDBQuery = smDBQuery.Where(securityConditionSM);
+                    }
+
+                    var smDBList = smDBQuery.ToList();
+                    if (smDBList != null && smDBList.Count > 0)
+                    {
+                        smDB = smDBList.First();
+                    }
                 }
 
                 if (smDB == null)

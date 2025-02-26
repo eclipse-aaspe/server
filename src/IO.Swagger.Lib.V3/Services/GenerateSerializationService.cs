@@ -61,7 +61,9 @@ public class GenerateSerializationService : IGenerateSerializationService
         //Fetch AASs for the requested aasIds
         //ToDo: Remove pseudo-pagimation
         var pagination = new PaginationParameters("null",100);
-        var aasList = _persistenceService.ReadPagedAssetAdministrationShells(pagination, new List<ISpecificAssetId>(),null);
+
+        //ToDo: Fix no security
+        var aasList = _persistenceService.ReadPagedAssetAdministrationShells(pagination, null, new List<ISpecificAssetId>(),null);
         //Using is null or empty, as the query parameter in controll currently receives empty list (not null, but count = 0)
         if (!aasIds.IsNullOrEmpty())
         {

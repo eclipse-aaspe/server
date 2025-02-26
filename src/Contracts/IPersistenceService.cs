@@ -13,20 +13,16 @@ public interface IPersistenceService
     List<string> ReadFilteredPackages(string filterPath, List<AdminShellPackageEnv> list);
     AdminShellPackageEnv ReadPackageEnv(int envId);
     string ReadAASXPath(int? envId = null, string cdId = "", string aasId = "", string smId = "");
-    List<IAssetAdministrationShell> ReadPagedAssetAdministrationShells(IPaginationParameters paginationParameters, List<ISpecificAssetId> assetIds, string? idShort);
-    ISubmodel ReadSubmodelById(string aasIdentifier, string submodelIdentifier);
-    ISubmodel ReadSubmodelById(ISecurityConfig securityConfig, string submodelIdentifier);
+
+    List<IAssetAdministrationShell> ReadPagedAssetAdministrationShells(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, List<ISpecificAssetId> assetIds, string idShort);
+    ISubmodel ReadSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier);
     List<ISubmodelElement> ReadPagedSubmodelElements(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier);
-    List<ISubmodelElement> ReadPagedSubmodelElements(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string submodelIdentifier);
-    List<IReference> ReadAllSubmodelReferencesFromAas(string aasIdentifier);
-    IAssetAdministrationShell ReadAssetAdministrationShellById(string aasIdentifier);
-    IAssetInformation ReadAssetInformation(string aasIdentifier);
-    string ReadFileByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, out byte[] content, out long fileSize);
     ISubmodelElement ReadSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, List<object> idShortPathELements);
+    List<ISubmodel> ReadAllSubmodels(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, Reference? reqSemanticId, string? idShort);
+    IAssetAdministrationShell ReadAssetAdministrationShellById(ISecurityConfig securityConfig, string aasIdentifier);
+    string ReadFileByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, out byte[] content, out long fileSize);
+    IAssetInformation ReadAssetInformation(string aasIdentifier);
     string ReadThumbnail(string aasIdentifier, out byte[] byteArray, out long fileSize);
-    List<ISubmodel> ReadAllSubmodels(Reference? reqSemanticId, string? idShort);
-    string ReadFileByPath(string decodedSubmodelIdentifier, string idShortPath, out byte[]? content, out long? fileSize);
-    ISubmodelElement ReadSubmodelElementByPath(ISecurityConfig securityConfig, string decodedSubmodelIdentifier, string idShortPath);
 
     ISubmodel CreateSubmodel(Submodel body, string decodedAasIdentifier);
     IAssetAdministrationShell CreateAssetAdministrationShell(IAssetAdministrationShell body);

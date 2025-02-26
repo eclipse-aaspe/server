@@ -107,53 +107,6 @@ namespace AasxServerStandardBib.Services
             }
         }
 
-        public List<IAssetAdministrationShell> GetPagedAssetAdministrationShells(IPaginationParameters paginationParameters, List<ISpecificAssetId> assetIds, string? idShort)
-        {
-            List<IAssetAdministrationShell> output = new List<IAssetAdministrationShell>();
-
-            if (!Program.withDb)
-            {
-                var sourceList = new List<IAssetAdministrationShell>();
-
-                foreach (var package in _packages)
-                {
-                    if (package != null)
-                    {
-                        var env = package.AasEnv;
-                        if (env != null && env.AssetAdministrationShells != null && env.AssetAdministrationShells.Count != 0)
-                        {
-                            sourceList.AddRange(env.AssetAdministrationShells);
-                        }
-                    }
-                }
-
-                var startIndex = paginationParameters.Cursor;
-                var endIndex = startIndex + paginationParameters.Limit - 1;
-
-                //cap the endIndex
-                if (endIndex > sourceList.Count - 1)
-                {
-                    endIndex = sourceList.Count - 1;
-                }
-
-                //If there are less elements in the sourceList than "from"
-                if (startIndex > sourceList.Count - 1)
-                {
-                    _logger.LogError($"There are less elements in the retrieved list than requested pagination - (from: {startIndex}, size:{endIndex})");
-                }
-
-                for (var i = startIndex; i <= endIndex; i++)
-                {
-                    output.Add(sourceList[i]);
-                }
-            }
-            else
-            {
-                output = _persistenceService.ReadPagedAssetAdministrationShells(paginationParameters, assetIds, idShort);
-            }
-
-            return output;
-        }
 
         public IAssetAdministrationShell GetAssetAdministrationShellById(string aasIdentifier, out int packageIndex)
         {
