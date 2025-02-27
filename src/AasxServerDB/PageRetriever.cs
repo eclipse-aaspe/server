@@ -24,7 +24,7 @@ namespace AasxServerDB
         {
             // Create a query to filter by ids
             var db = new AasContext();
-            IEnumerable<EnvSet> query;
+            IQueryable<EnvSet> query;
             if (cdid != 0)
                 query = db.EnvCDSets
                     .Where(envcd =>
@@ -52,7 +52,7 @@ namespace AasxServerDB
 
             // Create a query to filter by ids
             var db = new AasContext();
-            IEnumerable<CDSet> query;
+            IQueryable<CDSet> query;
             if (envid != 0)
                 query = db.EnvCDSets
                     .Where(envcd =>
