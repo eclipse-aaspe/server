@@ -367,7 +367,14 @@
                     if (parent != null)
                     {
                         var idEncoded = Base64UrlEncoder.Encode((parent as Submodel).Id);
-                        path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodel-elements/" + path;
+                        if (!(sme is Operation) || !sme.IdShort.ToLower().StartsWith("eventelement"))
+                        {
+                            path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodel-elements/" + path;
+                        }
+                        else
+                        {
+                            path = Program.externalBlazor + "/submodels/" + idEncoded + "/events/" + path + "/status";
+                        }
                         <span style="color:white;background-color:blue;">URL:</span>
                         <a href="@path" target="_blank">@path</a>
                         <br>

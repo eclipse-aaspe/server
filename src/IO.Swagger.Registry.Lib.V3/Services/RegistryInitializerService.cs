@@ -826,6 +826,7 @@ public class RegistryInitializerService : IRegistryInitializerService
                         continue;
                     }
 
+                    /*
                     // Add special entry for verifiable credentials
                     sd                      = new SubmodelDescriptor();
                     sd.IdShort              = "NameplateVC";
@@ -846,6 +847,7 @@ public class RegistryInitializerService : IRegistryInitializerService
                     }
 
                     ad.SubmodelDescriptors.Add(sd);
+                    */
                 }
             }
         }

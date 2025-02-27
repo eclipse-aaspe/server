@@ -119,6 +119,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
         }
 
+        /*
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
         var submodel = _persistenceService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
         if (!Program.noSecurity)
@@ -129,9 +130,33 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
+        */
+
+        Submodel submodel = null;
+        int packageIndex = 0;
+        while (packageIndex < Program.env.Length)
+        {
+            var env = Program.env[packageIndex];
+            var s = env?.AasEnv?.Submodels?.Where(sm => sm.Id == decodedSubmodelIdentifier).FirstOrDefault();
+            if (s != null)
+            {
+                submodel = (Submodel)s;
+                break;
+            }
+            packageIndex++;
+        }
 
         if (submodel != null)
         {
+            if (!Program.noSecurity)
+            {
+                var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
+                if (!authResult.Succeeded)
+                {
+                    throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
+                }
+            }
+
             bool wp = false;
             if (withPayload.HasValue && withPayload != null)
             {
@@ -169,7 +194,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
             var eventData = new Events.EventData();
             var op = Events.EventData.FindEvent(submodel, eventName);
-            // *** eventData.ParseData(op, Program.env[packageIndex]);
+            eventData.ParseData(op, Program.env[packageIndex]);
 
             if (eventData.persistence == null || eventData.persistence.Value == "" || eventData.persistence.Value == "memory")
             {
