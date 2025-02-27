@@ -224,17 +224,20 @@ namespace Events
 
             if (statusData != null && statusData.Value != null)
             {
+                var j = Jsonization.Serialize.ToJsonObject(statusData);
+                e.statusData = j.ToJsonString();
+                /*
                 if (depth == 0)
                 {
                     var j = Jsonization.Serialize.ToJsonObject(statusData);
                     e.statusData = j.ToJsonString();
-
                 }
                 if (depth == 1 && statusData.Value.Count == 1 && statusData.Value[0] is SubmodelElementCollection smc)
                 {
                     var j = Jsonization.Serialize.ToJsonObject(smc);
                     e.statusData = j.ToJsonString();
                 }
+                */
             }
 
             lock (EventLock)
@@ -267,7 +270,7 @@ namespace Events
                             var r = referable;
                             while (r.Parent != null)
                             {
-                                idShortPath = r.IdShort + "." + idShortPath;
+                                // idShortPath = r.IdShort + "." + idShortPath;
                                 r = r.Parent as IReferable;
                             }
                             if (r is Submodel)
@@ -276,7 +279,10 @@ namespace Events
                                 entry.submodelId = submodel.Id;
                             }
                             entry.payloadType = "sme";
-                            idShortPath = referable.IdShort + ".";
+                            if (depth == 0)
+                            {
+                                idShortPath = referable.IdShort + ".";
+                            }
                         }
 
                         e.status.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(referable.TimeStampTree);

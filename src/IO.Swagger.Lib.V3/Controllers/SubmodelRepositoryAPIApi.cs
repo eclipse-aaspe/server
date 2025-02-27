@@ -208,6 +208,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                     data = eventData.dataCollection;
                     // OUT: data
                     // IN: data.sme[0], copy
+                    /*
                     if (eventData.direction != null && eventData.direction.Value == "IN")
                     {
                         data = null;
@@ -216,6 +217,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                             data = smc;
                         }
                     }
+                    */
                     /*
                     if (eventData.direction != null && eventData.direction.Value == "IN" && eventData.mode != null && (eventData.mode.Value == "PUSH" || eventData.mode.Value == "PUT"))
                     {
@@ -226,7 +228,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                     }
                     */
                 }
-                if (data == null)
+                // if (data == null)
+                if (data == null || (data is SubmodelElementCollection smc && (smc.Value == null || smc.Value.Count == 0)))
                 {
                     return NoContent();
                 }
@@ -239,7 +242,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
                 List<String> diffEntry = new List<String>();
                 string changes = "CREATE UPDATE DELETE";
-                var e = Events.EventPayload.CollectPayload(changes, 0,
+                var e = Events.EventPayload.CollectPayload(changes, depth,
                     eventData.statusData, eventData.dataReference, data, eventData.conditionSM, eventData.conditionSME,
                     diff, diffEntry, wp, limSm, offSm, limSme, offSme);
 

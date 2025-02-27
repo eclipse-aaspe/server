@@ -34,6 +34,7 @@ namespace AasxServerDB
         public const string OPERATION_OUTPUT = "Out";
         public const string OPERATION_INOUTPUT = "IO";
         public const string OPERATION_SPLIT = "-";
+        public DateTime currentDataTime = DateTime.UtcNow;
 
         private VisitorAASX(EnvSet envDB)
         {
@@ -187,7 +188,6 @@ namespace AasxServerDB
         // ConceptDescription
         public override void VisitConceptDescription(IConceptDescription that)
         {
-            var currentDataTime = DateTime.UtcNow;
             var cdDB = new CDSet()
             {
                 IdShort                     = that.IdShort,
@@ -216,7 +216,6 @@ namespace AasxServerDB
         // AssetAdministrationShell
         public override void VisitAssetAdministrationShell(IAssetAdministrationShell that)
         {
-            var currentDataTime = DateTime.UtcNow;
             var aasDB = new AASSet()
             {
                 IdShort                     = that.IdShort,
@@ -251,7 +250,6 @@ namespace AasxServerDB
         // Submodel
         public override void VisitSubmodel(ISubmodel that)
         {
-            var currentDataTime = DateTime.UtcNow;
             _smDB = new SMSet()
             {
                 IdShort                     = that.IdShort,
@@ -287,7 +285,6 @@ namespace AasxServerDB
         // SubmodelElement
         private SMESet CreateSMESet(ISubmodelElement sme)
         {
-            var currentDataTime = DateTime.UtcNow;
             var smeDB = new SMESet()
             {
                 ParentSME                  = _parSME,
