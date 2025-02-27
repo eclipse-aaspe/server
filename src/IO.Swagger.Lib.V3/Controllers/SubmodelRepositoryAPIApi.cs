@@ -277,6 +277,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                                 p.Value = d;
                                 p.SetTimeStamp(dt);
                                 eventData.diff.Value.Add(p);
+                                p.SetAllParentsAndTimestamps(eventData.diff, dt, dt, DateTime.MinValue);
                                 i++;
                             }
                             eventData.diff.SetTimeStamp(dt);
@@ -322,7 +323,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             isRunning = true;
         }
 
-        int packageIndex;
+        // int packageIndex;
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
         if (decodedSubmodelIdentifier == null)
@@ -332,7 +333,22 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
-        var submodel = _persistenceService.ReadSubmodelById(securityConfig,null, decodedSubmodelIdentifier);
+        // var submodel = _persistenceService.ReadSubmodelById(securityConfig,null, decodedSubmodelIdentifier);
+
+        Submodel submodel = null;
+        int packageIndex = 0;
+        while (packageIndex < Program.env.Length)
+        {
+            var env = Program.env[packageIndex];
+            var s = env?.AasEnv?.Submodels?.Where(sm => sm.Id == decodedSubmodelIdentifier).FirstOrDefault();
+            if (s != null)
+            {
+                submodel = (Submodel)s;
+                break;
+            }
+            packageIndex++;
+        }
+
         using (var reader = new StreamReader(HttpContext.Request.Body))
         {
             var body = reader.ReadToEndAsync().Result;
@@ -351,9 +367,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
             var eventData = new Events.EventData();
             var op = Events.EventData.FindEvent(submodel, eventName);
-
-            //ToDo: Move to persistenceService
-            //eventData.ParseData(op, Program.env[packageIndex]);
+            eventData.ParseData(op, Program.env[packageIndex]);
 
             IReferable data = null;
             if (eventData.dataSubmodel != null)
@@ -374,8 +388,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             string statusValue = "";
             List<String> diffEntry = new List<string>();
             int count = 0;
-            //ToDo: Move to persistenceService?
-            //count = Events.EventPayload.changeData(body, eventData, Program.env, data, out transmitted, out lastDiffValue, out statusValue, diffEntry, packageIndex);
+
+            count = Events.EventPayload.changeData(body, eventData, Program.env, data, out transmitted, out lastDiffValue, out statusValue, diffEntry, packageIndex);
 
             if (eventData.transmitted != null)
             {
@@ -406,6 +420,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                         p.Value = d;
                         p.SetTimeStamp(dt);
                         eventData.diff.Value.Add(p);
+                        p.SetAllParentsAndTimestamps(eventData.diff, dt, dt, DateTime.MinValue);
                         i++;
                     }
                     eventData.diff.SetTimeStamp(dt);

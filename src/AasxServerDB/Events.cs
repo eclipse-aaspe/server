@@ -726,6 +726,7 @@ namespace Events
                         {
                             dataCollection.Value = receiveSubmodel.SubmodelElements;
                             dataCollection.SetTimeStamp(dt);
+                            env[packageIndex].setWrite(true);
                             return 1;
 
                             if (index != -1) // submodel exisiting
