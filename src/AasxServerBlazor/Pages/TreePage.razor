@@ -338,7 +338,7 @@
                 {
                     var path = sme.IdShort;
                     var parent = sme.Parent as IReferable;
-                    while (parent is not Submodel)
+                    while (parent != null && parent is not Submodel)
                     {
                         if (parent is ISubmodelElementList parentList)
                         {
@@ -364,11 +364,14 @@
                         parent = (IReferable) parent.Parent;
                     }
 
-                    var idEncoded = Base64UrlEncoder.Encode((parent as Submodel).Id);
-                    path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodel-elements/" + path;
-                    <span style="color:white;background-color:blue;">URL:</span>
-                    <a href="@path" target="_blank">@path</a>
-                    <br>
+                    if (parent != null)
+                    {
+                        var idEncoded = Base64UrlEncoder.Encode((parent as Submodel).Id);
+                        path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodel-elements/" + path;
+                        <span style="color:white;background-color:blue;">URL:</span>
+                        <a href="@path" target="_blank">@path</a>
+                        <br>
+                    }
                 }
 
                 if (SelectedNode != null && SelectedNode.Tag is SubmodelElementCollection smc)

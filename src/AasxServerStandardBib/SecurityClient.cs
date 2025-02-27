@@ -1741,6 +1741,7 @@ namespace AasxServer
                                         p.Value = d;
                                         p.SetTimeStamp(dt);
                                         eventData.diff.Value.Add(p);
+                                        p.SetAllParentsAndTimestamps(eventData.diff, dt, dt, DateTime.MinValue);
                                         i++;
                                     }
                                     eventData.diff.SetTimeStamp(dt);
@@ -2055,6 +2056,7 @@ namespace AasxServer
                                             p.Value = d;
                                             p.SetTimeStamp(dt);
                                             eventData.diff.Value.Add(p);
+                                            p.SetAllParentsAndTimestamps(eventData.diff, dt, dt, DateTime.MinValue);
                                             i++;
                                         }
                                         eventData.diff.SetTimeStamp(dt);

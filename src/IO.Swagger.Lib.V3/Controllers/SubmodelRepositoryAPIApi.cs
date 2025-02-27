@@ -186,7 +186,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                     if (eventData.direction != null && eventData.direction.Value == "IN")
                     {
                         data = null;
-                        if (eventData.dataCollection.Value != null && eventData.dataCollection.Value.Count == 1 && eventData.dataCollection.Value[0] is SubmodelElementCollection smc)
+                        if (eventData.dataCollection is SubmodelElementCollection sme && sme.Value != null && sme.Value.Count == 1 && sme.Value[0] is SubmodelElementCollection smc)
                         {
                             data = smc;
                         }
