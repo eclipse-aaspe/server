@@ -109,7 +109,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerOperation("GetEventMessages")]
     [SwaggerResponse(statusCode: 200, type: typeof(String), description: "List of Text")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-    public virtual IActionResult GetEventMessages([FromRoute] [Required] string submodelIdentifier, [Required] string eventName, [FromQuery] bool? noPayload, string? diff = "")
+    public virtual IActionResult GetEventMessages([FromRoute][Required] string submodelIdentifier, [Required] string eventName,
+        [FromQuery] bool? withPayload, [FromQuery] int? limitSm, [FromQuery] int? limitSme, [FromQuery] int? offsetSm, [FromQuery] int? offsetSme, string? diff = "")
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -131,10 +132,30 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         if (submodel != null)
         {
-            bool np = false;
-            if (noPayload.HasValue && noPayload != null)
+            bool wp = false;
+            if (withPayload.HasValue && withPayload != null)
             {
-                np = (bool)noPayload;
+                wp = (bool)withPayload;
+            }
+            int limSm = 1000;
+            if (limitSm.HasValue && limitSm != null)
+            {
+                limSm = (int)limitSm;
+            }
+            int offSm = 0;
+            if (offsetSm.HasValue && offsetSm != null)
+            {
+                offSm = (int)offsetSm;
+            }
+            int limSme = 1000;
+            if (limitSme.HasValue && limitSme != null)
+            {
+                limSme = (int)limitSme;
+            }
+            int offSme = 0;
+            if (offsetSme.HasValue && offsetSme != null)
+            {
+                offSme = (int)offsetSme;
             }
 
             string sourceUrl = Program.externalBlazor + $"/{submodelIdentifier}/events/" + eventName;
@@ -148,96 +169,109 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
             var eventData = new Events.EventData();
             var op = Events.EventData.FindEvent(submodel, eventName);
+            // *** eventData.ParseData(op, Program.env[packageIndex]);
 
-            //ToDo use persistanceService?
-            //eventData.ParseData(op, Program.env[packageIndex]);
-
-            IReferable data = null;
-            if (eventData.dataSubmodel != null)
+            if (eventData.persistence == null || eventData.persistence.Value == "" || eventData.persistence.Value == "memory")
             {
-                data = eventData.dataSubmodel;
-            }
-            if (eventData.dataCollection != null)
-            {
-                data = eventData.dataCollection;
-                // OUT: data
-                // IN: data.sme[0], copy
-                if (eventData.direction != null && eventData.direction.Value == "IN")
+                IReferable data = null;
+                if (eventData.dataSubmodel != null)
                 {
-                    data = null;
-                    if (eventData.dataCollection.Value != null && eventData.dataCollection.Value.Count == 1 && eventData.dataCollection.Value[0] is SubmodelElementCollection smc)
-                    {
-                        data = smc;
-                    }
+                    data = eventData.dataSubmodel;
                 }
-                /*
+                if (eventData.dataCollection != null)
+                {
+                    data = eventData.dataCollection;
+                    // OUT: data
+                    // IN: data.sme[0], copy
+                    if (eventData.direction != null && eventData.direction.Value == "IN")
+                    {
+                        data = null;
+                        if (eventData.dataCollection.Value != null && eventData.dataCollection.Value.Count == 1 && eventData.dataCollection.Value[0] is SubmodelElementCollection smc)
+                        {
+                            data = smc;
+                        }
+                    }
+                    /*
+                    if (eventData.direction != null && eventData.direction.Value == "IN" && eventData.mode != null && (eventData.mode.Value == "PUSH" || eventData.mode.Value == "PUT"))
+                    {
+                        if (eventData.dataCollection.Value != null && eventData.dataCollection.Value.Count == 1 && eventData.dataCollection.Value[0] is SubmodelElementCollection)
+                        {
+                            data = eventData.dataCollection.Value[0];
+                        }
+                    }
+                    */
+                }
+                if (data == null)
+                {
+                    return NoContent();
+                }
+
+                int depth = 0;
                 if (eventData.direction != null && eventData.direction.Value == "IN" && eventData.mode != null && (eventData.mode.Value == "PUSH" || eventData.mode.Value == "PUT"))
                 {
-                    if (eventData.dataCollection.Value != null && eventData.dataCollection.Value.Count == 1 && eventData.dataCollection.Value[0] is SubmodelElementCollection)
+                    depth = 1;
+                }
+
+                List<String> diffEntry = new List<String>();
+                string changes = "CREATE UPDATE DELETE";
+                var e = Events.EventPayload.CollectPayload(changes, 0,
+                    eventData.statusData, eventData.dataReference, data, eventData.conditionSM, eventData.conditionSME,
+                    diff, diffEntry, wp, limSm, offSm, limSme, offSme);
+
+                if (diff == "status")
+                {
+                    if (eventData.lastUpdate != null)
                     {
-                        data = eventData.dataCollection.Value[0];
+                        e.status.lastUpdate = eventData.lastUpdate.Value;
                     }
                 }
-                */
-            }
-            if (data == null)
-            {
-                return NoContent();
-            }
-
-            int depth = 0;
-            if (eventData.direction != null && eventData.direction.Value == "IN" && eventData.mode != null && (eventData.mode.Value == "PUSH" || eventData.mode.Value == "PUT"))
-            {
-                depth = 1;
-            }
-
-            List<String> diffEntry = new List<String>();
-            string changes = "CREATE UPDATE DELETE";
-            var e = Events.EventPayload.CollectPayload(changes, 0, eventData.statusData, data, diff, diffEntry, np);
-
-            if (diff == "status")
-            {
-                if (eventData.lastUpdate != null)
+                else
                 {
-                    e.status.lastUpdate = eventData.lastUpdate.Value;
-                }
-            }
-            else
-            {
-                var timeStamp = DateTime.UtcNow;
-                if (eventData.transmitted != null)
-                {
-                    eventData.transmitted.Value = e.status.transmitted;
-                    eventData.transmitted.SetTimeStamp(DateTime.UtcNow);
-                }
-                var dt = DateTime.Parse(e.status.lastUpdate);
-                if (eventData.lastUpdate != null)
-                {
-                    eventData.lastUpdate.Value = e.status.lastUpdate;
-                    eventData.lastUpdate.SetTimeStamp(dt);
-                }
-                if (eventData.diff != null)
-                {
-                    if (diffEntry.Count > 0)
+                    var timeStamp = DateTime.UtcNow;
+                    if (eventData.transmitted != null)
                     {
-                        eventData.diff.Value = new List<ISubmodelElement>();
-                        int i = 0;
-                        foreach (var d in diffEntry)
+                        eventData.transmitted.Value = e.status.transmitted;
+                        eventData.transmitted.SetTimeStamp(DateTime.UtcNow);
+                    }
+                    var dt = DateTime.Parse(e.status.lastUpdate);
+                    if (eventData.lastUpdate != null)
+                    {
+                        eventData.lastUpdate.Value = e.status.lastUpdate;
+                        eventData.lastUpdate.SetTimeStamp(dt);
+                    }
+                    if (eventData.diff != null)
+                    {
+                        if (diffEntry.Count > 0)
                         {
-                            var p = new Property(DataTypeDefXsd.String);
-                            p.IdShort = "diff" + i;
-                            p.Value = d;
-                            p.SetTimeStamp(dt);
-                            eventData.diff.Value.Add(p);
-                            i++;
+                            eventData.diff.Value = new List<ISubmodelElement>();
+                            int i = 0;
+                            foreach (var d in diffEntry)
+                            {
+                                var p = new Property(DataTypeDefXsd.String);
+                                p.IdShort = "diff" + i;
+                                p.Value = d;
+                                p.SetTimeStamp(dt);
+                                eventData.diff.Value.Add(p);
+                                i++;
+                            }
+                            eventData.diff.SetTimeStamp(dt);
                         }
-                        eventData.diff.SetTimeStamp(dt);
                     }
                 }
+                Program.signalNewData(2);
+                return new ObjectResult(e);
             }
+            else // database
+            {
+                List<String> diffEntry = new List<String>();
+                string changes = "CREATE UPDATE DELETE";
+                var e = Events.EventPayload.CollectPayload(changes, 0,
+                eventData.statusData, eventData.dataReference, null, eventData.conditionSM, eventData.conditionSME,
+                    diff, diffEntry, wp, limSm, limSme, offSm, offSme);
 
-            Program.signalNewData(2);
-            return new ObjectResult(e);
+                Program.signalNewData(2);
+                return new ObjectResult(e);
+            }
         }
 
         return NoContent();
