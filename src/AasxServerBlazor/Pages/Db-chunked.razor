@@ -1,0 +1,404 @@
+@page "/db-chunked";
+@page "/db-chunked/env";
+@page "/db-chunked/cd";
+@page "/db-chunked/aas";
+@page "/db-chunked/sm";
+@page "/db-chunked/smjson";
+@page "/db-chunked/sme";
+@page "/db-chunked/svalue";
+@page "/db-chunked/ivalue";
+@page "/db-chunked/dvalue";
+@page "/db-chunked/ovalue";
+@using AasxServer
+@using AasxServerDB
+@using Microsoft.AspNetCore.Html;
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Microsoft.EntityFrameworkCore
+@using System.Linq.Dynamic.Core;
+@using AasxRestServerLibrary;
+@using Microsoft.IdentityModel.Tokens;
+@using AasxServerDB.Entities;
+@using TimeStamp;
+@using Nodes = System.Text.Json.Nodes;
+@inject NavigationManager NavMan
+
+<div>
+    @{
+        if (!Program.withDb)
+        {
+            <span>This is a in memory server!</span>
+        }
+        else
+        {
+            // get parameters
+            var url      = NavMan.Uri;
+            var    splitUrl = url.Split("?");
+            url = splitUrl[ 0 ].ToLower();
+            var    sUrl     = url.Split("/");
+            var shorturl = url.Substring(0, url.Length - ($"/{sUrl[ sUrl.Length - 1 ]}").Length);
+            if (splitUrl.Length == 2)
+            {
+                var query = System.Web.HttpUtility.ParseQueryString(splitUrl[ 1 ]);
+                var list  = query.Get("size");
+                if (!list.IsNullOrEmpty())
+                    size = Convert.ToInt32(list);
+                list  = query.Get("offset");
+                if (!list.IsNullOrEmpty())
+                    offset = Convert.ToInt32(list);
+                list = query.Get("search");
+                if (!list.IsNullOrEmpty())
+                    search = list;
+                list = query.Get("envid");
+                if (!list.IsNullOrEmpty())
+                    envid = Convert.ToInt32(list);
+                list = query.Get("cdid");
+                if (!list.IsNullOrEmpty())
+                    cdid = Convert.ToInt32(list);
+                list = query.Get("aasid");
+                if (!list.IsNullOrEmpty())
+                    aasid = Convert.ToInt32(list);
+                list = query.Get("smid");
+                if (!list.IsNullOrEmpty())
+                    smid = Convert.ToInt32(list);
+                list = query.Get("smeid");
+                if (!list.IsNullOrEmpty())
+                    smeid = Convert.ToInt32(list);
+                list = query.Get("parid");
+                if (!list.IsNullOrEmpty())
+                    parid = Convert.ToInt32(list);
+                list = query.Get("smidentifier");
+                if (!list.IsNullOrEmpty())
+                    smidentifier = list;
+            }
+
+            // change parameters to input window
+            if (url.EndsWith("/env") || url.EndsWith("/cd") || url.EndsWith("/aas") || url.EndsWith("/sm")
+                || url.EndsWith("/sme") || url.EndsWith("/svalue") || url.EndsWith("/ivalue") || url.EndsWith("/dvalue") || url.EndsWith("/ovalue"))
+            {
+                <input @bind="CurrentValue" style="width:200px; border-width: 1px; border-color: black;"/>
+                @code {
+            private string CurrentValue { get; set; }
+                }
+                if (!CurrentValue.IsNullOrEmpty())
+                {
+                    var splitCur = CurrentValue.Split("=");
+                    if (splitCur.Count() == 2)
+                    {
+                        switch (splitCur[ 0 ])
+                        {
+                            case "size":
+                                size = 1000;
+                                if (!splitCur[ 1 ].IsNullOrEmpty())
+                                    size = Convert.ToInt32(splitCur[ 1 ]);
+                                break;
+                            case "offset":
+                                offset = 0;
+                                if (!splitCur[ 1 ].IsNullOrEmpty())
+                                    offset = Convert.ToInt32(splitCur[ 1 ]);
+                                break;
+                            case "search":
+                                search = splitCur[ 1 ];
+                                break;
+                            case "envid":
+                                envid = 0;
+                                if (!splitCur[ 1 ].IsNullOrEmpty())
+                                    envid = Convert.ToInt32(splitCur[1]);
+                                break;
+                            case "cdid":
+                                cdid = 0;
+                                if (!splitCur[ 1 ].IsNullOrEmpty())
+                                    cdid = Convert.ToInt32(splitCur[1]);
+                                break;
+                            case "aasid":
+                                aasid = 0;
+                                if (!splitCur[ 1 ].IsNullOrEmpty())
+                                    aasid = Convert.ToInt32(splitCur[ 1 ]);
+                                break;
+                            case "smid":
+                                smid = 0;
+                                if (!splitCur[ 1 ].IsNullOrEmpty())
+                                    smid = Convert.ToInt32(splitCur[ 1 ]);
+                                break;
+                            case "smeid":
+                                smeid = 0;
+                                if (!splitCur[ 1 ].IsNullOrEmpty())
+                                    smeid = Convert.ToInt32(splitCur[ 1 ]);
+                                break;
+                            case "parid":
+                                parid = 0;
+                                if (!splitCur[ 1 ].IsNullOrEmpty())
+                                    parid = Convert.ToInt32(splitCur[ 1 ]);
+                                break;
+                        }
+                    }
+
+                    CurrentValue = string.Empty;
+                    // Task.Run(async() => await LoadSMESetItems(new ItemsProviderRequest(0, 20, new System.Threading.CancellationToken())));
+                    this.StateHasChanged();
+                }
+            }
+
+            string searchLower = search.ToLower();
+
+            using (AasContext db = new AasContext())
+            {
+                if (!(url.EndsWith("/env") || url.EndsWith("/cd") || url.EndsWith("/aas") || url.EndsWith("/sm") || url.EndsWith("/smjson")
+                    || url.EndsWith("/sme") || url.EndsWith("/svalue") || url.EndsWith("/ivalue") || url.EndsWith("/dvalue") || url.EndsWith("/ovalue")))
+                {
+                    if (AasContext.IsPostgres)
+                    {
+                        <span>PostgreSQL database</span>
+                        <br/>
+                    }
+                    else
+                    {
+                        <span>SQLite database</span>
+                        <br/>
+                    }
+
+                    <br/>
+                    <table class="table table-bordered table-sm" style="word-wrap:break-word;word-break:break-all;">
+                        <thead>
+                            <tr>
+                                <th style="word-break:keep-all">Table</th>
+                                <th style="word-break:keep-all">Count</th>
+                                <th style="word-break:keep-all">Links</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <span>Env#:</span>
+                                </td>
+                                <td>
+                                    <span>@db.EnvSets.Select(x => x.Id).Count()</span>
+                                </td>
+                                <td>
+                                    <a href="@($"{url}/env")" target="_blank">env</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span>CD#:</span>
+                                </td>
+                                <td>
+                                    <span>@db.CDSets.Select(x => x.Id).Count()</span>
+                                </td>
+                                <td>
+                                    <a href="@($"{url}/cd")" target="_blank">cd</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span>AAS#:</span>
+                                </td>
+                                <td>
+                                    <span>@db.AASSets.Select(x => x.Id).Count()</span>
+                                </td>
+                                <td>
+                                    <a href="@($"{url}/aas")" target="_blank">aas</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span>SM#:</span>
+                                </td>
+                                <td>
+                                    <span>@db.SMSets.Select(x => x.Id).Count()</span>
+                                </td>
+                                <td>
+                                    <a href="@($"{url}/sm")" target="_blank">sm</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span>SME#:</span>
+                                </td>
+                                <td>
+                                    <span>@db.SMESets.Select(x => x.Id).Count()</span>
+                                </td>
+                                <td>
+                                    <a href="@($"{url}/sme")" target="_blank">sme</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span>IValue#:</span>
+                                </td>
+                                <td>
+                                    <span>@db.IValueSets.Select(x => x.Id).Count()</span>
+                                </td>
+                                <td>
+                                    <a href="@($"{url}/ivalue")" target="_blank">ivalue</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span>SValue#:</span>
+                                </td>
+                                <td>
+                                    <span>@db.SValueSets.Select(x => x.Id).Count()</span>
+                                </td>
+                                <td>
+                                    <a href="@($"{url}/svalue")" target="_blank">svalue</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span>DValue#:</span>
+                                </td>
+                                <td>
+                                    <span>@db.DValueSets.Select(x => x.Id).Count()</span>
+                                </td>
+                                <td>
+                                    <a href="@($"{url}/dvalue")" target="_blank">dvalue</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span>OValue#:</span>
+                                </td>
+                                <td>
+                                    <span>@db.OValueSets.Select(x => x.Id).Count()</span>
+                                </td>
+                                <td>
+                                    <a href="@($"{url}/ovalue")" target="_blank">ovalue</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <br/>
+                    <b>Database structure:</b>
+                    <br/>
+                    <img src="db-schema.jpg"/>
+                }
+
+                if (url.EndsWith("/sme"))
+                {
+                    <span>
+                        &nbsp&nbsp@($"SME#: {db.SMESets.Select(x => x.Id).Count()} size={size} offset={offset} search={search} smid={smid} smeid={smeid} parid={parid}")
+                    </span>
+                    <br/>
+
+                    <div style="width: 100%; height: 70vh; overflow-y: auto; overflow-y: auto; overflow-x: hidden; padding: 10px;">
+                        <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
+                            @* <thead style="width: 100%; position: sticky; z-index: 1; top: 0;"> *@
+                            <thead>
+                                <tr>
+                                    <th style="word-break:keep-all">SM#</th>
+                                    <th style="word-break:keep-all">Par#</th>
+                                    <th style="word-break:keep-all">SME#</th>
+                                    <th style="word-break:keep-all">SME Type</th>
+                                    <th style="word-break:keep-all">Id Short</th>
+                                    <th style="word-break:keep-all">Display Name</th>
+                                    <th style="word-break:keep-all">Category</th>
+                                    <th style="word-break:keep-all">Description</th>
+                                    <th style="word-break:keep-all">Extensions</th>
+                                    <th style="word-break:keep-all">Semantic Id</th>
+                                    <th style="word-break:keep-all">Supplemental Semantic Ids</th>
+                                    <th style="word-break:keep-all">Qualifiers</th>
+                                    <th style="word-break:keep-all">Embedded Data Specifications</th>
+                                    <th style="word-break:keep-all">TValue</th>
+                                    <th style="word-break:keep-all">Value</th>
+                                    <th style="word-break:keep-all">Additional Attributes</th>
+                                    <th style="word-break:keep-all">Time Stamp</th>
+                                    <th style="word-break:keep-all">Links</th>
+                                    <th style="word-break:keep-all">API</th>
+                                </tr>
+                            </thead>
+                            @* <tbody style="width: 100%; max-height: calc(70vh - 40px); overflow-y: auto;"> *@
+                            <tbody>
+                                <Virtualize Context="SMESet" ItemsProvider="LoadSMESetItems" >
+                                    <tr>
+                                        <td style="word-break:keep-all">@SMESet.SMId</td>
+                                        <td style="word-break:keep-all">@SMESet.ParentSMEId</td>
+                                        <td style="word-break:keep-all">@SMESet.Id</td>
+                                        <td style="word-break:keep-all">@SMESet.SMEType</td>
+                                        <td style="word-break:keep-all">@SMESet.IdShort</td>
+                                        <td style="word-break:keep-all">@SMESet.DisplayName</td>
+                                        <td style="word-break:keep-all">@SMESet.Category</td>
+                                        <td style="word-break:keep-all">@SMESet.Description</td>
+                                        <td style="word-break:keep-all">@SMESet.Extensions</td>
+                                        <td style="word-break:keep-all">@SMESet.SemanticId</td>
+                                        <td style="word-break:keep-all">Supplemental Semantic Ids</td>
+                                        <td style="word-break:keep-all">Qualifiers</td>
+                                        <td style="word-break:keep-all">Embedded Data Specifications</td>
+                                        <td style="word-break:keep-all">@SMESet.TValue</td>
+                                        <td style="word-break:keep-all">Value</td>
+                                        <td style="word-break:keep-all">Additional Attributes</td>
+                                        <td style="word-break:keep-all">@SMESet.TimeStamp</td>
+                                        <td style="word-break:keep-all">Links</td>
+                                        <td style="word-break:keep-all">API</td>
+                                    </tr>
+                                </Virtualize>
+                            </tbody>
+                        </table>
+                    </div>
+                }
+
+                <span>@($"Elapsed ms for DB access: {elapsedTime}")</span>
+            }
+
+            <br/>
+            <br/>
+        }
+    }
+</div>
+
+@code {
+    int size = 1000;
+    int offset = 0;
+    string search = string.Empty;
+    long envid = 0;
+    long aasid = 0;
+    long smid = 0;
+    long smeid = 0;
+    long parid = 0;
+    long cdid = 0;
+    string smidentifier = string.Empty;
+    private long elapsedTime = 0;
+
+    private async ValueTask<ItemsProviderResult<SMESet>> LoadSMESetItems(ItemsProviderRequest request)
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        watch.Start();
+
+        var result = await LoadItems<SMESet>(request);
+
+        watch.Stop();
+        elapsedTime = watch.ElapsedMilliseconds;
+        StateHasChanged();
+
+        return result;
+    }
+
+    private async ValueTask<ItemsProviderResult<T>> LoadItems<T>(ItemsProviderRequest request) where T : class
+    {
+        using (AasContext db = new AasContext())
+        {
+            // Use reflection to get the DbSet for the specified entity type
+            var dbSet = db.Set<T>();
+
+            // Use a consistent order (e.g., by Id) so paging works correctly.
+            var query = dbSet.OrderBy(e => EF.Property<int>(e, "Id"));
+
+            // Get the total number of items.
+            /*
+            int totalCount = await query.CountAsync();
+            if (size < totalCount)
+            {
+                totalCount = size;
+            }
+            */
+            int totalCount = size;
+
+            // Fetch only the subset requested by the Virtualize component.
+            List<T> items = await query
+                .Skip(offset + request.StartIndex)
+                .Take(request.Count)
+                .ToListAsync();
+
+            return new ItemsProviderResult<T>(items, totalCount);
+        }
+    }
+}
