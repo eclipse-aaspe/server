@@ -24,10 +24,10 @@
 
 <style>
     .cell-content {
-        max-height: 60px; /* Maximale Höhe */
-        overflow: hidden;  /* Überlaufenden Inhalt ausblenden */
-        word-break:keep-all;
-        word-wrap: break-word; /* Lange Wörter umbrechen */
+    max-height: 60px; /* Maximale Höhe */
+    overflow: hidden;  /* Überlaufenden Inhalt ausblenden */
+    word-break:keep-all;
+    word-wrap: break-word; /* Lange Wörter umbrechen */
     }
 </style>
 
@@ -301,42 +301,40 @@
                     </span>
                     <br/>
 
-                    <div style="width: 100%; height: 70vh; overflow-y: auto; overflow-y: auto; overflow-x: hidden; padding: 10px;">
-                        <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
-                            @* <thead style="width: 100%; position: sticky; z-index: 1; top: 0;"> *@
+                    <div style="width: 100%; height: 70vh; overflow-y: auto; overflow-y: auto; overflow-x: hidden;">
+                        <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all">
                             <thead>
                                 <tr>
-                                    <th style="word-break:keep-all">Env#</th>
+                                    <th style="word-break:keep-all;">Env#</th>
                                     <th style="word-break:keep-all">AAS#</th>
-                                    <th style="word-break:keep-all">Id Short</th>
-                                    <th style="word-break:keep-all">Display Name</th>
+                                    <th style="word-break:keep-all">IdShort</th>
+                                    <th style="word-break:keep-all">Display<br />Name</th>
                                     <th style="word-break:keep-all">Category</th>
                                     <th style="word-break:keep-all">Description</th>
                                     <th style="word-break:keep-all">Extensions</th>
                                     <th style="word-break:keep-all">Identifier</th>
-                                    <th style="word-break:keep-all">Embedded Data Specifications</th>
-                                    <th style="word-break:keep-all">Derived From</th>
+                                    <th style="word-break:keep-all">Embedded<br />Data<br />Specifications</th>
+                                    <th style="word-break:keep-all">Derived<br />From</th>
                                     <th style="word-break:keep-all">Version</th>
                                     <th style="word-break:keep-all">Revision</th>
                                     <th style="word-break:keep-all">Creator</th>
-                                    <th style="word-break:keep-all">Template Id</th>
-                                    <th style="word-break:keep-all">A Embedded Data Specifications</th>
-                                    <th style="word-break:keep-all">Asset Kind</th>
-                                    <th style="word-break:keep-all">Global Asset Id</th>
-                                    <th style="word-break:keep-all">Asset Type</th>
-                                    <th style="word-break:keep-all">Specific Asset Ids</th>
-                                    <th style="word-break:keep-all">Default Thumbnail Path</th>
-                                    <th style="word-break:keep-all">Default Thumbnail Content Type</th>
-                                    <th style="word-break:keep-all">Time Stamp</th>
+                                    <th style="word-break:keep-all">TemplateId</th>
+                                    <th style="word-break:keep-all">Embedded<br />Data<br />Specifications</th>
+                                    <th style="word-break:keep-all">Asset<br />Kind</th>
+                                    <th style="word-break:keep-all">Global<br />AssetId</th>
+                                    <th style="word-break:keep-all">Asset<br />Type</th>
+                                    <th style="word-break:keep-all">Specific<br />AssetIds</th>
+                                    <th style="word-break:keep-all">Thumbnail<br />Path</th>
+                                    <th style="word-break:keep-all">Thumbnail<br />Type</th>
+                                    <th style="word-break:keep-all">TimeStampa</th>
                                     <th style="word-break:keep-all">Links</th>
                                     <th style="word-break:keep-all">API</th>
                                 </tr>
                             </thead>
-                            @* <tbody style="width: 100%; max-height: calc(70vh - 40px); overflow-y: auto;"> *@
                             <tbody>
                                 <Virtualize Context="AASSet" @ref="AASSetContainer" ItemsProvider="LoadAASSetItems" >
                                     @{
-                                        var aas64 = Base64UrlEncoder.Encode(AASSet.Identifier);
+                                        var aas64 = Base64UrlEncoder.Encode(AASSet?.Identifier);
                                         var link  = $"{AasxServer.Program.externalBlazor}/shells/{aas64}";
                                     }
                                     <tr style="height: auto">
@@ -408,107 +406,107 @@
                     <br />
 
                     <div style="width: 100%; height: 70vh; overflow-x: hidden; padding: 10px;">
-                    <table class="table table-bordered table-sm" style="width:100%;max-width:100%">
-                        <thead>
-                        <tr style="height: 60px;overflow: hidden;">
-                            <th style="word-break:keep-all">SM#</th>
-                            <th style="word-break:keep-all">Par#</th>
-                            <th style="word-break:keep-all">SME#</th>
-                            <th style="word-break:keep-all">SME Type</th>
-                            <th style="word-break:keep-all">Id Short</th>
-                            <th style="word-break:keep-all">Display Name</th>
-                            <th style="word-break:keep-all">Category</th>
-                            <th style="word-break:keep-all">Description</th>
-                            <th style="word-break:keep-all">Extensions</th>
-                            <th style="word-break:keep-all">Semantic Id</th>
-                            <th style="word-break:keep-all">Supplemental Semantic Ids</th>
-                            <th style="word-break:keep-all">Qualifiers</th>
-                            <th style="word-break:keep-all">Embedded Data Specifications</th>
-                            <th style="word-break:keep-all">TValue</th>
-                            <th style="word-break:keep-all">Value</th>
-                            <th style="word-break:keep-all">Additional Attributes</th>
-                            <th style="word-break:keep-all">Time Stamp</th>
-                            <th style="word-break:keep-all">Links</th>
-                            <th style="word-break:keep-all">API</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                            <Virtualize Context="SMESet" @ref="SMESetContainer" ItemsProvider="LoadSMESetItems" >
-                            <tr style="height: 60px;">
-                                <td style="word-break:keep-all;">@SMESet?.SMId</td>
-                                <td style="word-break:keep-all;">@SMESet?.ParentSMEId</td>
-                                <td style="word-break:keep-all;">
-                                    <b>@SMESet?.Id</b>
-                                </td>
-                                <td style="word-break:keep-all;">@SMESet?.SMEType</td>
-                                <td>
-                                    <div class="cell-content">
-                                        @SMESet?.IdShort
-                                    </div>
-                                </td>
-                                <td style="font-size:small;">
-                                    <div class="cell-content">
-                                        @SMESet?.DisplayName
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="cell-content">
-                                        @SMESet?.Category
-                                    </div>
-                                </td>
-                                <td style="font-size:small">
-                                    <div class="cell-content">
-                                        @SMESet?.Description
-                                    </div>
-                                </td>
-                                <td style="font-size:small">
-                                    <div class="cell-content">
-                                        @SMESet?.Extensions
-                                    </div>
-                                </td>
-                                <td style="font-size:small">
-                                    <div class="cell-content">
-                                        @SMESet?.SemanticId
-                                    </div>
-                                </td>
-                                <td style="font-size:small">
-                                    <div class="cell-content">
-                                        @SMESet?.SupplementalSemanticIds
-                                    </div>
-                                </td>
-                                <td style="font-size:small">
-                                    <div class="cell-content">
-                                        @SMESet?.Qualifiers
-                                    </div>
-                                </td>
-                                <td style="font-size:small">
-                                    <div class="cell-content">
-                                        @SMESet?.EmbeddedDataSpecifications
-                                    </div>
-                                </td>
-                                <td style="font-size:small">
-                                    <div class="cell-content">
-                                        @SMESet?.TValue
-                                    </div>
-                                </td>
-                                <td>
-                                </td>
-                                <td style="font-size:small;">
-                                </td>
-                                <td style="width:175px;min-width:175px;color:lightgray;font-size:x-small;word-break:keep-all;">
-                                    @($"CREATE {TimeStamp.DateTimeToString(SMESet.TimeStampCreate)}")<br/>
-                                    @($"UPDATE {TimeStamp.DateTimeToString(SMESet.TimeStamp)}")<br/>
-                                    @($"TREE {TimeStamp.DateTimeToString(SMESet.TimeStampTree)}")<br />
-                                    @($"DELETE {TimeStamp.DateTimeToString(SMESet.TimeStampDelete)}")
-                                </td>
-                                <td>
-                                </td>
-                                <td>
-                                </td>
-                            </tr>
-                            </Virtualize>
-                        </tbody>
-                    </table>
+                        <table class="table table-bordered table-sm" style="width:100%;max-width:100%">
+                            <thead>
+                                <tr style="height: 60px;overflow: hidden;">
+                                    <th style="word-break:keep-all">SM#</th>
+                                    <th style="word-break:keep-all">Par#</th>
+                                    <th style="word-break:keep-all">SME#</th>
+                                    <th style="word-break:keep-all">SMEType</th>
+                                    <th style="word-break:keep-all">IdShort</th>
+                                    <th style="word-break:keep-all">DisplayName</th>
+                                    <th style="word-break:keep-all">Category</th>
+                                    <th style="word-break:keep-all">Description</th>
+                                    <th style="word-break:keep-all">Extensions</th>
+                                    <th style="word-break:keep-all">SemanticId</th>
+                                    <th style="word-break:keep-all">Supplemental<br />SemanticIds</th>
+                                    <th style="word-break:keep-all">Qualifiers</th>
+                                    <th style="word-break:keep-all">Embedded<br />Data<br />Specifications</th>
+                                    <th style="word-break:keep-all">TValue</th>
+                                    <th style="word-break:keep-all">Value</th>
+                                    <th style="word-break:keep-all">Additional<br />Attributes</th>
+                                    <th style="word-break:keep-all">TimeStamps</th>
+                                    <th style="word-break:keep-all">Links</th>
+                                    <th style="word-break:keep-all">API</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <Virtualize Context="SMESet" @ref="SMESetContainer" ItemsProvider="LoadSMESetItems" >
+                                    <tr style="height: 60px;">
+                                        <td style="word-break:keep-all;">@SMESet?.SMId</td>
+                                        <td style="word-break:keep-all;">@SMESet?.ParentSMEId</td>
+                                        <td style="word-break:keep-all;">
+                                            <b>@SMESet?.Id</b>
+                                        </td>
+                                        <td style="word-break:keep-all;">@SMESet?.SMEType</td>
+                                        <td>
+                                            <div class="cell-content">
+                                                @SMESet?.IdShort
+                                            </div>
+                                        </td>
+                                        <td style="font-size:small;">
+                                            <div class="cell-content">
+                                                @SMESet?.DisplayName
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="cell-content">
+                                                @SMESet?.Category
+                                            </div>
+                                        </td>
+                                        <td style="font-size:small">
+                                            <div class="cell-content">
+                                                @SMESet?.Description
+                                            </div>
+                                        </td>
+                                        <td style="font-size:small">
+                                            <div class="cell-content">
+                                                @SMESet?.Extensions
+                                            </div>
+                                        </td>
+                                        <td style="font-size:small">
+                                            <div class="cell-content">
+                                                @SMESet?.SemanticId
+                                            </div>
+                                        </td>
+                                        <td style="font-size:small">
+                                            <div class="cell-content">
+                                                @SMESet?.SupplementalSemanticIds
+                                            </div>
+                                        </td>
+                                        <td style="font-size:small">
+                                            <div class="cell-content">
+                                                @SMESet?.Qualifiers
+                                            </div>
+                                        </td>
+                                        <td style="font-size:small">
+                                            <div class="cell-content">
+                                                @SMESet?.EmbeddedDataSpecifications
+                                            </div>
+                                        </td>
+                                        <td style="font-size:small">
+                                            <div class="cell-content">
+                                                @SMESet?.TValue
+                                            </div>
+                                        </td>
+                                        <td>
+                                        </td>
+                                        <td style="font-size:small;">
+                                        </td>
+                                        <td style="width:175px;min-width:175px;color:lightgray;font-size:x-small;word-break:keep-all;">
+                                            @($"CREATE {TimeStamp.DateTimeToString(SMESet.TimeStampCreate)}")<br/>
+                                            @($"UPDATE {TimeStamp.DateTimeToString(SMESet.TimeStamp)}")<br/>
+                                            @($"TREE {TimeStamp.DateTimeToString(SMESet.TimeStampTree)}")<br />
+                                            @($"DELETE {TimeStamp.DateTimeToString(SMESet.TimeStampDelete)}")
+                                        </td>
+                                        <td>
+                                        </td>
+                                        <td>
+                                        </td>
+                                    </tr>
+                                </Virtualize>
+                            </tbody>
+                        </table>
                     </div>
                 }
 
@@ -645,14 +643,34 @@
     {
         using (AasContext db = new AasContext())
         {
-            var dbSet = db.Set<T>();
+            IQueryable<T> query = db.Set<T>();
 
-            if (loadedItems == null)
+            if (loadedItems == null || !(loadedItems is List<T>))
             {
-                var query = dbSet
-                    .OrderBy("Id");
+                if (search != "")
+                {
+                    switch(query)
+                    {
+                        case IQueryable<AASSet>:
+                            var qAAS = (query as IQueryable<AASSet>).Where(aas =>
+                                aas.IdShort.Contains(search) ||
+                                aas.Identifier.Contains(search) ||
+                                aas.GlobalAssetId.Contains(search)
+                            );
+                            query = (qAAS as IQueryable<T>);
+                            break;
+                        case IQueryable<SMESet>:
+                            var qSME = (query as IQueryable<SMESet>).Where(sme =>
+                                sme.IdShort.Contains(search) ||
+                                sme.SemanticId.Contains(search)
+                            );
+                            query = (qSME as IQueryable<T>);
+                            break;
+                    }
+                }
 
                 loadedItems = await query
+                    .OrderBy("Id")
                     .Skip(offset)
                     .Take(size)
                     .ToListAsync();
