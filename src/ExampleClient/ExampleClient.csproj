@@ -8,12 +8,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.6.2"/>
+        <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.6.2" />
+        <PackageReference Include="System.IO.Packaging" Version="9.0.2" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\AasCore.Aas3_0\AasCore.Aas3_0.csproj"/>
-        <ProjectReference Include="..\AasxCsharpLibrary\AasxCsharpLibrary.csproj"/>
+        <ProjectReference Include="..\AasCore.Aas3_0\AasCore.Aas3_0.csproj" />
+        <ProjectReference Include="..\AasxCsharpLibrary\AasxCsharpLibrary.csproj" />
     </ItemGroup>
 
 </Project>

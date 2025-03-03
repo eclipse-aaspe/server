@@ -638,6 +638,8 @@ namespace Opc.Ua.Sample
 
         public bool IsResendData => throw new NotImplementedException();
 
+        public IUserIdentity EffectiveIdentity => throw new NotImplementedException();
+
         /// <summary>
         /// Increments the sample time to the next interval.
         /// </summary>
