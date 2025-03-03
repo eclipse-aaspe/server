@@ -22,6 +22,15 @@
 @using Nodes = System.Text.Json.Nodes;
 @inject NavigationManager NavMan
 
+<style>
+    .cell-content {
+        max-height: 60px; /* Maximale Höhe */
+        overflow: hidden;  /* Überlaufenden Inhalt ausblenden */
+        word-break:keep-all;
+        word-wrap: break-word; /* Lange Wörter umbrechen */
+    }
+</style>
+
 <div>
     @{
         if (!Program.withDb)
@@ -78,7 +87,7 @@
                 <input @bind="CurrentValue" style="width:200px; border-width: 1px; border-color: black;"/>
                 @code {
             private string CurrentValue { get; set; }
-                }
+}
                 if (!CurrentValue.IsNullOrEmpty())
                 {
                     var splitCur = CurrentValue.Split("=");
@@ -133,8 +142,7 @@
                     }
 
                     CurrentValue = string.Empty;
-                    // Task.Run(async() => await LoadSMESetItems(new ItemsProviderRequest(0, 20, new System.Threading.CancellationToken())));
-                    this.StateHasChanged();
+                    update = true;
                 }
             }
 
@@ -273,10 +281,23 @@
                     <img src="db-schema.jpg"/>
                 }
 
-                if (url.EndsWith("/sme"))
+                if (url.EndsWith("/aas"))
                 {
+                    totalCount = db.AASSets.Select(x => x.Id).Count();
+                    CheckTotalCountAndUpdate();
+                    if (update)
+                    {
+                        update = false;
+                        loadedItems = null;
+                        if (AASSetContainer != null)
+                        {
+                            AASSetContainer.RefreshDataAsync();
+                            this.StateHasChanged();
+                        }
+                    }
+
                     <span>
-                        &nbsp&nbsp@($"SME#: {db.SMESets.Select(x => x.Id).Count()} size={size} offset={offset} search={search} smid={smid} smeid={smeid} parid={parid}")
+                        &nbsp&nbsp@($"AAS#: {totalCount} size={size} offset={offset} search={search}")
                     </span>
                     <br/>
 
@@ -285,22 +306,27 @@
                             @* <thead style="width: 100%; position: sticky; z-index: 1; top: 0;"> *@
                             <thead>
                                 <tr>
-                                    <th style="word-break:keep-all">SM#</th>
-                                    <th style="word-break:keep-all">Par#</th>
-                                    <th style="word-break:keep-all">SME#</th>
-                                    <th style="word-break:keep-all">SME Type</th>
+                                    <th style="word-break:keep-all">Env#</th>
+                                    <th style="word-break:keep-all">AAS#</th>
                                     <th style="word-break:keep-all">Id Short</th>
                                     <th style="word-break:keep-all">Display Name</th>
                                     <th style="word-break:keep-all">Category</th>
                                     <th style="word-break:keep-all">Description</th>
                                     <th style="word-break:keep-all">Extensions</th>
-                                    <th style="word-break:keep-all">Semantic Id</th>
-                                    <th style="word-break:keep-all">Supplemental Semantic Ids</th>
-                                    <th style="word-break:keep-all">Qualifiers</th>
+                                    <th style="word-break:keep-all">Identifier</th>
                                     <th style="word-break:keep-all">Embedded Data Specifications</th>
-                                    <th style="word-break:keep-all">TValue</th>
-                                    <th style="word-break:keep-all">Value</th>
-                                    <th style="word-break:keep-all">Additional Attributes</th>
+                                    <th style="word-break:keep-all">Derived From</th>
+                                    <th style="word-break:keep-all">Version</th>
+                                    <th style="word-break:keep-all">Revision</th>
+                                    <th style="word-break:keep-all">Creator</th>
+                                    <th style="word-break:keep-all">Template Id</th>
+                                    <th style="word-break:keep-all">A Embedded Data Specifications</th>
+                                    <th style="word-break:keep-all">Asset Kind</th>
+                                    <th style="word-break:keep-all">Global Asset Id</th>
+                                    <th style="word-break:keep-all">Asset Type</th>
+                                    <th style="word-break:keep-all">Specific Asset Ids</th>
+                                    <th style="word-break:keep-all">Default Thumbnail Path</th>
+                                    <th style="word-break:keep-all">Default Thumbnail Content Type</th>
                                     <th style="word-break:keep-all">Time Stamp</th>
                                     <th style="word-break:keep-all">Links</th>
                                     <th style="word-break:keep-all">API</th>
@@ -308,27 +334,51 @@
                             </thead>
                             @* <tbody style="width: 100%; max-height: calc(70vh - 40px); overflow-y: auto;"> *@
                             <tbody>
-                                <Virtualize Context="SMESet" ItemsProvider="LoadSMESetItems" >
-                                    <tr>
-                                        <td style="word-break:keep-all">@SMESet.SMId</td>
-                                        <td style="word-break:keep-all">@SMESet.ParentSMEId</td>
-                                        <td style="word-break:keep-all">@SMESet.Id</td>
-                                        <td style="word-break:keep-all">@SMESet.SMEType</td>
-                                        <td style="word-break:keep-all">@SMESet.IdShort</td>
-                                        <td style="word-break:keep-all">@SMESet.DisplayName</td>
-                                        <td style="word-break:keep-all">@SMESet.Category</td>
-                                        <td style="word-break:keep-all">@SMESet.Description</td>
-                                        <td style="word-break:keep-all">@SMESet.Extensions</td>
-                                        <td style="word-break:keep-all">@SMESet.SemanticId</td>
-                                        <td style="word-break:keep-all">Supplemental Semantic Ids</td>
-                                        <td style="word-break:keep-all">Qualifiers</td>
-                                        <td style="word-break:keep-all">Embedded Data Specifications</td>
-                                        <td style="word-break:keep-all">@SMESet.TValue</td>
-                                        <td style="word-break:keep-all">Value</td>
-                                        <td style="word-break:keep-all">Additional Attributes</td>
-                                        <td style="word-break:keep-all">@SMESet.TimeStamp</td>
-                                        <td style="word-break:keep-all">Links</td>
-                                        <td style="word-break:keep-all">API</td>
+                                <Virtualize Context="AASSet" @ref="AASSetContainer" ItemsProvider="LoadAASSetItems" >
+                                    @{
+                                        var aas64 = Base64UrlEncoder.Encode(AASSet.Identifier);
+                                        var link  = $"{AasxServer.Program.externalBlazor}/shells/{aas64}";
+                                    }
+                                    <tr style="height: auto">
+                                        <td style="word-break:keep-all">@AASSet?.EnvId</td>
+                                        <td style="word-break:keep-all">
+                                            <b>@AASSet?.Id</b>
+                                        </td>
+                                        <td style="word-break:keep-all;max-width:200px">@AASSet?.IdShort</td>
+                                        <td style="font-size:small">@AASSet?.DisplayName</td>
+                                        <td style="word-break:keep-all">@AASSet?.Category</td>
+                                        <td style="font-size:small">@AASSet?.Description</td>
+                                        <td style="font-size:small">@AASSet?.Extensions</td>
+                                        <td>@AASSet?.Identifier</td>
+                                        <td style="font-size:small">@AASSet?.EmbeddedDataSpecifications</td>
+                                        <td style="font-size:small">@AASSet?.DerivedFrom</td>
+                                        <td>@AASSet?.Version</td>
+                                        <td>@AASSet?.Revision</td>
+                                        <td style="font-size:small">@AASSet?.Creator</td>
+                                        <td>@AASSet?.TemplateId</td>
+                                        <td style="font-size:small">@AASSet?.AEmbeddedDataSpecifications</td>
+                                        <td>@AASSet?.AssetKind</td>
+                                        <td>@AASSet?.GlobalAssetId</td>
+                                        <td>@AASSet?.AssetType</td>
+                                        <td style="font-size:small">@AASSet?.SpecificAssetIds</td>
+                                        <td>@AASSet?.DefaultThumbnailPath</td>
+                                        <td>@AASSet?.DefaultThumbnailContentType</td>
+                                        <td style="width:175px;color:lightgray;font-size:x-small">
+                                            @($"CREATE {TimeStamp.DateTimeToString(AASSet.TimeStampCreate)}")<br />
+                                            @($"UPDATE {TimeStamp.DateTimeToString(AASSet.TimeStamp)}")<br />
+                                            @($"TREE {TimeStamp.DateTimeToString(AASSet.TimeStampTree)}")<br />
+                                            @($"DELETE {TimeStamp.DateTimeToString(AASSet.TimeStampDelete)}")
+                                        </td>
+                                        <td style="word-break:keep-all">
+                                            <a href="@($"{shorturl}/env?envid={AASSet?.EnvId}")" target="_blank">env </a>
+                                            <a href="@($"{shorturl}/sm?aasid={AASSet?.Id}")" target="_blank">sm</a>
+                                        </td>
+                                        <td style="word-break:keep-all">
+                                            @if (!AASSet.Identifier.IsNullOrEmpty())
+                                            {
+                                                <a href="@link" target="_blank">api</a>
+                                            }
+                                        </td>
                                     </tr>
                                 </Virtualize>
                             </tbody>
@@ -336,6 +386,133 @@
                     </div>
                 }
 
+                if (url.EndsWith("/sme"))
+                {
+                    totalCount = db.SMESets.Select(x => x.Id).Count();
+                    CheckTotalCountAndUpdate();
+                    if (update)
+                    {
+                        update = false;
+                        loadedItems = null;
+                        if (SMESetContainer != null)
+                        {
+                            SMESetContainer.RefreshDataAsync();
+                            this.StateHasChanged();
+                        }
+                    }
+
+                    <span>
+                        &nbsp&nbsp@($"SME#: {totalCount} size={size} offset={offset} search={search} smid={smid} smeid={smeid} parid={parid}")
+                    </span>
+                    <br/>
+                    <br />
+
+                    <div style="width: 100%; height: 70vh; overflow-x: hidden; padding: 10px;">
+                    <table class="table table-bordered table-sm" style="width:100%;max-width:100%">
+                        <thead>
+                        <tr style="height: 60px;overflow: hidden;">
+                            <th style="word-break:keep-all">SM#</th>
+                            <th style="word-break:keep-all">Par#</th>
+                            <th style="word-break:keep-all">SME#</th>
+                            <th style="word-break:keep-all">SME Type</th>
+                            <th style="word-break:keep-all">Id Short</th>
+                            <th style="word-break:keep-all">Display Name</th>
+                            <th style="word-break:keep-all">Category</th>
+                            <th style="word-break:keep-all">Description</th>
+                            <th style="word-break:keep-all">Extensions</th>
+                            <th style="word-break:keep-all">Semantic Id</th>
+                            <th style="word-break:keep-all">Supplemental Semantic Ids</th>
+                            <th style="word-break:keep-all">Qualifiers</th>
+                            <th style="word-break:keep-all">Embedded Data Specifications</th>
+                            <th style="word-break:keep-all">TValue</th>
+                            <th style="word-break:keep-all">Value</th>
+                            <th style="word-break:keep-all">Additional Attributes</th>
+                            <th style="word-break:keep-all">Time Stamp</th>
+                            <th style="word-break:keep-all">Links</th>
+                            <th style="word-break:keep-all">API</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            <Virtualize Context="SMESet" @ref="SMESetContainer" ItemsProvider="LoadSMESetItems" >
+                            <tr style="height: 60px;">
+                                <td style="word-break:keep-all;">@SMESet?.SMId</td>
+                                <td style="word-break:keep-all;">@SMESet?.ParentSMEId</td>
+                                <td style="word-break:keep-all;">
+                                    <b>@SMESet?.Id</b>
+                                </td>
+                                <td style="word-break:keep-all;">@SMESet?.SMEType</td>
+                                <td>
+                                    <div class="cell-content">
+                                        @SMESet?.IdShort
+                                    </div>
+                                </td>
+                                <td style="font-size:small;">
+                                    <div class="cell-content">
+                                        @SMESet?.DisplayName
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="cell-content">
+                                        @SMESet?.Category
+                                    </div>
+                                </td>
+                                <td style="font-size:small">
+                                    <div class="cell-content">
+                                        @SMESet?.Description
+                                    </div>
+                                </td>
+                                <td style="font-size:small">
+                                    <div class="cell-content">
+                                        @SMESet?.Extensions
+                                    </div>
+                                </td>
+                                <td style="font-size:small">
+                                    <div class="cell-content">
+                                        @SMESet?.SemanticId
+                                    </div>
+                                </td>
+                                <td style="font-size:small">
+                                    <div class="cell-content">
+                                        @SMESet?.SupplementalSemanticIds
+                                    </div>
+                                </td>
+                                <td style="font-size:small">
+                                    <div class="cell-content">
+                                        @SMESet?.Qualifiers
+                                    </div>
+                                </td>
+                                <td style="font-size:small">
+                                    <div class="cell-content">
+                                        @SMESet?.EmbeddedDataSpecifications
+                                    </div>
+                                </td>
+                                <td style="font-size:small">
+                                    <div class="cell-content">
+                                        @SMESet?.TValue
+                                    </div>
+                                </td>
+                                <td>
+                                </td>
+                                <td style="font-size:small;">
+                                </td>
+                                <td style="width:175px;min-width:175px;color:lightgray;font-size:x-small;word-break:keep-all;">
+                                    @($"CREATE {TimeStamp.DateTimeToString(SMESet.TimeStampCreate)}")<br/>
+                                    @($"UPDATE {TimeStamp.DateTimeToString(SMESet.TimeStamp)}")<br/>
+                                    @($"TREE {TimeStamp.DateTimeToString(SMESet.TimeStampTree)}")<br />
+                                    @($"DELETE {TimeStamp.DateTimeToString(SMESet.TimeStampDelete)}")
+                                </td>
+                                <td>
+                                </td>
+                                <td>
+                                </td>
+                            </tr>
+                            </Virtualize>
+                        </tbody>
+                    </table>
+                    </div>
+                }
+
+                <br />
                 <span>@($"Elapsed ms for DB access: {elapsedTime}")</span>
             }
 
@@ -346,6 +523,8 @@
 </div>
 
 @code {
+    bool update = false;
+    int totalCount = 0;
     int size = 1000;
     int offset = 0;
     string search = string.Empty;
@@ -357,6 +536,94 @@
     long cdid = 0;
     string smidentifier = string.Empty;
     private long elapsedTime = 0;
+    object loadedItems = null;
+
+    private void CheckTotalCountAndUpdate()
+    {
+        if (size > 100000)
+        {
+            size = 100000;
+        }
+        if (offset > totalCount)
+        {
+            offset = totalCount - 1;
+            update = true;
+        }
+        if (offset < 0)
+        {
+            offset = 0;
+            update = true;
+        }
+        if (offset + size > totalCount)
+        {
+            size = totalCount - offset;
+            update = true;
+        }
+    }
+
+    private async ValueTask<ItemsProviderResult<EnvSet>> LoadEnvSetItems(ItemsProviderRequest request)
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        watch.Start();
+
+        var result = await LoadItems<EnvSet>(request);
+
+        watch.Stop();
+        elapsedTime = watch.ElapsedMilliseconds;
+        StateHasChanged();
+
+        return result;
+    }
+
+    private Virtualize<EnvSet> EnvSetContainer { get; set; }
+
+    private async ValueTask<ItemsProviderResult<CDSet>> LoadCDSetItems(ItemsProviderRequest request)
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        watch.Start();
+
+        var result = await LoadItems<CDSet>(request);
+
+        watch.Stop();
+        elapsedTime = watch.ElapsedMilliseconds;
+        StateHasChanged();
+
+        return result;
+    }
+
+    private Virtualize<EnvSet> CDSetContainer { get; set; }
+
+    private async ValueTask<ItemsProviderResult<AASSet>> LoadAASSetItems(ItemsProviderRequest request)
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        watch.Start();
+
+        var result = await LoadItems<AASSet>(request);
+
+        watch.Stop();
+        elapsedTime = watch.ElapsedMilliseconds;
+        StateHasChanged();
+
+        return result;
+    }
+
+    private Virtualize<AASSet> AASSetContainer { get; set; }
+
+    private async ValueTask<ItemsProviderResult<SMSet>> LoadSMSetItems(ItemsProviderRequest request)
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        watch.Start();
+
+        var result = await LoadItems<SMSet>(request);
+
+        watch.Stop();
+        elapsedTime = watch.ElapsedMilliseconds;
+        StateHasChanged();
+
+        return result;
+    }
+
+    private Virtualize<EnvSet> SMSetContainer { get; set; }
 
     private async ValueTask<ItemsProviderResult<SMESet>> LoadSMESetItems(ItemsProviderRequest request)
     {
@@ -372,33 +639,33 @@
         return result;
     }
 
+    private Virtualize<SMESet> SMESetContainer { get; set; }
+
     private async ValueTask<ItemsProviderResult<T>> LoadItems<T>(ItemsProviderRequest request) where T : class
     {
         using (AasContext db = new AasContext())
         {
-            // Use reflection to get the DbSet for the specified entity type
             var dbSet = db.Set<T>();
 
-            // Use a consistent order (e.g., by Id) so paging works correctly.
-            var query = dbSet.OrderBy(e => EF.Property<int>(e, "Id"));
-
-            // Get the total number of items.
-            /*
-            int totalCount = await query.CountAsync();
-            if (size < totalCount)
+            if (loadedItems == null)
             {
-                totalCount = size;
+                var query = dbSet
+                    .OrderBy("Id");
+
+                loadedItems = await query
+                    .Skip(offset)
+                    .Take(size)
+                    .ToListAsync();
             }
-            */
-            int totalCount = size;
 
-            // Fetch only the subset requested by the Virtualize component.
-            List<T> items = await query
-                .Skip(offset + request.StartIndex)
+            var items = (loadedItems as List<T>)
+                .Skip(request.StartIndex)
                 .Take(request.Count)
-                .ToListAsync();
+                .ToList();
 
-            return new ItemsProviderResult<T>(items, totalCount);
+            Console.WriteLine($"LoadItems: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
+
+            return new ItemsProviderResult<T>(items, size);
         }
     }
 }
