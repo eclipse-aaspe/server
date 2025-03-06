@@ -1959,6 +1959,13 @@ namespace AasxServer
                         c = eventData.changes.Value;
                     }
                     var e = Events.EventPayload.CollectPayload(c, 0, eventData.statusData, source, d, diffEntry, np);
+                    // for debug without handshake
+                    /*
+                    if (e.eventEntries.Count == 0)
+                    {
+                        return;
+                    }
+                    */
                     foreach (var diff in diffEntry)
                     {
                         Console.WriteLine(diff);
