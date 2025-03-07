@@ -28,6 +28,7 @@ namespace AasxServerDB
         private EnvSet _envDB;
         private SMSet? _smDB;
         private SMESet? _parSME;
+        private SMESet? _resultSME;
         private static Dictionary<string, int> _cdDBId = new Dictionary<string, int>();
         private string _oprPrefix = string.Empty;
         public const string OPERATION_INPUT = "In";
@@ -39,6 +40,11 @@ namespace AasxServerDB
         private VisitorAASX(EnvSet envDB)
         {
             _envDB = envDB;
+        }
+
+        public VisitorAASX(SMSet smDB)
+        {
+            _smDB = smDB;
         }
 
         // Load AASX
@@ -283,7 +289,13 @@ namespace AasxServerDB
 
 
         // SubmodelElement
-        private SMESet CreateSMESet(ISubmodelElement sme)
+        public SMESet? VisitSMESet(ISubmodelElement sme)
+        {
+            _resultSME = null;
+            base.Visit(sme);
+            return _resultSME;
+        }
+        public SMESet CreateSMESet(ISubmodelElement sme)
         {
             var smeDB = new SMESet()
             {
@@ -306,6 +318,10 @@ namespace AasxServerDB
             };
             SetValues(sme, smeDB);
             _smDB?.SMESets.Add(smeDB);
+            if (_resultSME == null)
+            {
+                _resultSME = smeDB;
+            }
             return smeDB;
         }
         private string ShortSMEType(ISubmodelElement sme) => _oprPrefix + sme switch

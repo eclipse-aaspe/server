@@ -61,6 +61,7 @@ using static QRCoder.PayloadGenerator;
 using Contracts;
 using AasxServerStandardBib.Services;
 using Contracts.Pagination;
+using static HotChocolate.ErrorCodes;
 
 /// <summary>
 /// 
@@ -372,27 +373,34 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             var op = Events.EventData.FindEvent(submodel, eventName);
             eventData.ParseData(op, Program.env[packageIndex]);
 
-            IReferable data = null;
-            if (eventData.dataSubmodel != null)
-            {
-                data = eventData.dataSubmodel;
-            }
-            if (eventData.dataCollection != null)
-            {
-                data = eventData.dataCollection;
-            }
-            if (data == null)
-            {
-                return NoContent();
-            }
-
             string transmitted = "";
             string lastDiffValue = "";
             string statusValue = "";
             List<String> diffEntry = new List<string>();
             int count = 0;
 
-            count = Events.EventPayload.changeData(body, eventData, Program.env, data, out transmitted, out lastDiffValue, out statusValue, diffEntry, packageIndex);
+            if (eventData.persistence == null || eventData.persistence.Value == "" || eventData.persistence.Value == "memory")
+            {
+                IReferable data = null;
+                if (eventData.dataSubmodel != null)
+                {
+                    data = eventData.dataSubmodel;
+                }
+                if (eventData.dataCollection != null)
+                {
+                    data = eventData.dataCollection;
+                }
+                if (data == null)
+                {
+                    return NoContent();
+                }
+
+                count = Events.EventPayload.changeData(body, eventData, Program.env, data, out transmitted, out lastDiffValue, out statusValue, diffEntry, packageIndex);
+            }
+            else // DB
+            {
+                count = Events.EventPayload.changeData(body, eventData, Program.env, null, out transmitted, out lastDiffValue, out statusValue, diffEntry, packageIndex);
+            }
 
             if (eventData.transmitted != null)
             {
