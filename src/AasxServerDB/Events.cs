@@ -783,15 +783,19 @@ namespace Events
                                                 if (change)
                                                 {
                                                     db.SaveChanges();
-                                                    var smeDB = smeSmMerged.Where(sme => sme.smeSet.IdShortPath == e.idShortPath).ToList();
-                                                    if (smeDB != null && smeDB.Count() == 1)
+                                                    var smeDB = smeSmMerged.Where(
+                                                        sme => sme.smeSet.IdShortPath == e.idShortPath ||
+                                                        sme.smeSet.IdShortPath.StartsWith(e.idShortPath + "."))
+                                                        .ToList();
+                                                    var smeDBList = smeDB.Select(sme => sme.smeSet.Id).ToList();
+                                                    if (smeDBList.Count > 0)
                                                     {
                                                         if (receiveSme != null)
                                                         {
-                                                            db.SMESets.Where(sme => sme.Id == smeDB[0].smeSet.Id).ExecuteDeleteAsync();
+                                                            db.SMESets.Where(sme => smeDBList.Contains(sme.Id)).ExecuteDeleteAsync().Wait();
+                                                            db.SaveChanges();
                                                         }
                                                     }
-                                                    db.SaveChanges();
                                                     count++;
                                                 }
                                                 break;
