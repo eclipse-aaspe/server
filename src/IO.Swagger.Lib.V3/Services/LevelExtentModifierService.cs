@@ -12,6 +12,7 @@
 ********************************************************************************/
 
 using AasxServerStandardBib.Logging;
+using Contracts;
 using IO.Swagger.Lib.V3.Interfaces;
 using IO.Swagger.Lib.V3.SerializationModifiers.LevelExtent;
 using IO.Swagger.Models;

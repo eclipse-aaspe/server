@@ -18,6 +18,7 @@ using IO.Swagger.Registry.Lib.V3.Services;
 
 namespace IO.Swagger.Registry.Lib.V3.Tests.Services;
 
+using Contracts;
 using Microsoft.OpenApi.Any;
 
 public class AasDescriptorPaginationServiceTests

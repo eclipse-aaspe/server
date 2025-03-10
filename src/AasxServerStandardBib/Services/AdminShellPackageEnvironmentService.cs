@@ -26,14 +26,12 @@ namespace AasxServerStandardBib.Services
     public class AdminShellPackageEnvironmentService : IAdminShellPackageEnvironmentService
     {
         private readonly IAppLogger<AdminShellPackageEnvironmentService> _logger;
-        private readonly IPersistenceService _persistenceService;   
         private AdminShellPackageEnv[] _packages;
 
-        public AdminShellPackageEnvironmentService(IAppLogger<AdminShellPackageEnvironmentService> logger, IPersistenceService persistenceService)
+        public AdminShellPackageEnvironmentService(IAppLogger<AdminShellPackageEnvironmentService> logger)
         {
             _logger     = logger ?? throw new ArgumentNullException(nameof(logger));
             _packages   = Program.env;
-            _persistenceService = persistenceService;
         }
 
         #region Others

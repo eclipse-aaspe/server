@@ -15,6 +15,7 @@
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
 using AdminShellNS.Exceptions;
+using Contracts;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Linq;

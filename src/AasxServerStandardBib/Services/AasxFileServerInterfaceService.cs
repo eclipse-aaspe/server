@@ -18,6 +18,7 @@ using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
 using AdminShellNS;
 using AdminShellNS.Models;
+using Contracts;
 using Extensions;
 using System;
 using System.Collections.Generic;

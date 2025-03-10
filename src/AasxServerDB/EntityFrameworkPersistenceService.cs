@@ -14,14 +14,19 @@ using Extensions;
 using Microsoft.EntityFrameworkCore;
 using Contracts.Pagination;
 using System.Security.Claims;
+using Microsoft.Extensions.DependencyInjection;
+using AasxServerStandardBib.Logging;
 
 public class EntityFrameworkPersistenceService : IPersistenceService
 {
-    private IContractSecurityRules _contractSecurityRules;
+    private readonly IContractSecurityRules _contractSecurityRules;
+    private readonly IServiceProvider _serviceProvider;
 
-    public EntityFrameworkPersistenceService(IContractSecurityRules contractSecurityRules)
+    public EntityFrameworkPersistenceService(IServiceProvider serviceProvider, IContractSecurityRules contractSecurityRules)
     {
-        this._contractSecurityRules = contractSecurityRules;
+        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        _contractSecurityRules = contractSecurityRules ?? throw new ArgumentNullException(nameof(contractSecurityRules));
+        ;
     }
 
     public void InitDB(bool reloadDB, string dataPath)
@@ -109,7 +114,13 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         {
             if (!assetIds.IsNullOrEmpty())
             {
-                //_logger.LogDebug($"Filtering AASs with requested assetIds.");
+
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                    scopedLogger.LogDebug($"Filtering AASs with requested assetIds.");
+                }
+
                 var aasList = new List<IAssetAdministrationShell>();
                 foreach (var assetId in assetIds)
                 {
@@ -136,10 +147,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     }
                 }
 
-                if (aasList.Count == 0)
-                {
-                    //_logger.LogInformation($"No AAS with requested assetId found.");
-                }
                 output = aasList;
             }
         }
