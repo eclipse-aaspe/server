@@ -20,11 +20,12 @@ using AasxServerDB.Entities;
 using Microsoft.IdentityModel.Tokens;
 using Namotion.Reflection;
 using System.Reflection.Metadata;
+using Contracts.Pagination;
 // using static AasxCompatibilityModels.AdminShellV20;
 
 namespace Events
 {
-    public class EventPayloadEntry
+    public class EventPayloadEntry : IComparable<EventPayloadEntry>
     {
         public string entryType { get; set; } // CREATE, UPDATE, DELETE
         public string lastUpdate { get; set; } // timeStamp for this entry
@@ -43,6 +44,18 @@ namespace Events
             submodelId = "";
             idShortPath = "";
             notDeletedIdShortList = new List<string>();
+        }
+
+        public int CompareTo(EventPayloadEntry other)
+        {
+            var result = string.Compare(this.submodelId, other.submodelId);
+
+            if (result == 0)
+            {
+                result = string.Compare(this.idShortPath, other.idShortPath);
+            }
+
+            return result;
         }
     }
 
@@ -571,18 +584,6 @@ namespace Events
                     receiveSme.SetAllParentsAndTimestamps(statusData, dt, receiveSme.TimeStampCreate, receiveSme.TimeStampDelete);
                     receiveSme.SetTimeStamp(dt);
                 }
-
-                /*
-                var entryStatusData = new EventPayloadEntry();
-                entryStatusData.entryType = "CREATE";
-                entryStatusData.lastUpdate = eventPayload.status.lastUpdate;
-                entryStatusData.payloadType = "sme";
-                entryStatusData.payload = eventPayload.statusData;
-                entryStatusData.submodelId = eventPayload.eventEntries[0].submodelId;
-                entryStatusData.idShortPath = receiveSme.IdShort;
-                entryStatusData.notDeletedIdShortList = new List<string>();
-                eventPayload.eventEntries.Insert(0, entryStatusData);
-                */
             }
 
             AasCore.Aas3_0.Environment aasEnv = null;
@@ -595,176 +596,244 @@ namespace Events
             AasCore.Aas3_0.Property lastUpdate = null;
             SubmodelElementCollection diff = null;
 
-            /*
-            if (submodel == null)
+            if (referable != null) // memory
             {
-                for (int i = 0; i < env.Length; i++)
+                List<ISubmodelElement> children = null;
+                Submodel submodel = null;
+                if (referable is Submodel)
                 {
-                    var package = env[i];
-                    if (package != null)
+                    submodel = referable as Submodel;
+                    children = submodel.SubmodelElements;
+                }
+                else
+                {
+                    if (referable is SubmodelElementCollection smc)
                     {
-                        aasEnv = package.AasEnv;
-                        if (aasEnv != null)
+                        dataCollection = smc;
+                        if (smc.Value == null)
                         {
-                            var submodels = aasEnv.Submodels.Where(a => a.Id.Equals(submodelId));
-                            if (submodels.Any())
+                            smc.Value = new List<ISubmodelElement>();
+                        }
+                        data = smc.Value;
+                        children = smc.Value;
+                    }
+                    if (referable is SubmodelElementList sml)
+                    {
+                        if (sml.Value == null)
+                        {
+                            sml.Value = new List<ISubmodelElement>();
+                        }
+                        data = sml.Value;
+                        children = sml.Value;
+                    }
+                    var r = referable;
+                    while (r.Parent != null)
+                    {
+                        r = r.Parent as IReferable;
+                    }
+                    if (r is Submodel)
+                    {
+                        submodel = r as Submodel;
+                    }
+                }
+
+                lock (EventLock)
+                {
+                    foreach (var entry in eventPayload.eventEntries)
+                    {
+                        var submodelId = entry.submodelId;
+                        ISubmodel receiveSubmodel = null;
+                        IAssetAdministrationShell aas = null;
+
+                        if (entry.payloadType == "submodel" && entry.payload != "")
+                        {
+                            MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(entry.payload));
+                            JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                            receiveSubmodel = Jsonization.Deserialize.SubmodelFrom(node);
+                            receiveSubmodel.TimeStampCreate = dt;
+                            receiveSubmodel.SetTimeStamp(dt);
+                            receiveSubmodel.SetAllParents(dt);
+
+                            if (receiveSubmodel != null)
                             {
-                                submodel = submodels.First();
-                                // index = aasEnv.Submodels.IndexOf(submodel);
-                                data = submodel.SubmodelElements;
-                                index = i;
-                                packageIndex = i;
-                                break;
+                                dataCollection.Value = receiveSubmodel.SubmodelElements;
+                                dataCollection.SetTimeStamp(dt);
+                                env[packageIndex].setWrite(true);
+                                return 1;
+
+                                if (index != -1) // submodel exisiting
+                                {
+                                    aasEnv.Submodels.Remove(submodel);
+                                    aas = aasEnv.FindAasWithSubmodelId(submodel.Id);
+
+                                    // aasEnv.Submodels.Insert(index, receiveSubmodel);
+                                    aasEnv.Submodels.Add(receiveSubmodel);
+                                    env[index].setWrite(true);
+                                    count++;
+                                    Console.WriteLine("Event Submodel: " + receiveSubmodel.Id);
+                                }
+                                else
+                                {
+                                    return 0;
+
+                                    index = 0;
+                                    aasEnv = env[index].AasEnv;
+                                    aas = aasEnv.AssetAdministrationShells[0];
+                                    aas.Submodels.Add(receiveSubmodel.GetReference());
+                                }
+                            }
+                        }
+
+                        if (entry.payloadType == "sme" && referable != null && (entry.payload != "" || entry.notDeletedIdShortList.Count != 0))
+                        {
+                            count += changeSubmodelElement(eventData, entry, referable as ISubmodelElement, children, "", diffEntry);
+                            if (count > 0)
+                            {
+                                env[packageIndex].setWrite(true);
                             }
                         }
                     }
                 }
             }
-            else // parse EventElement in submodel
+            else // DB
             {
-                foreach (var sme in submodel.SubmodelElements)
-                {
-                    if (sme is Operation op && sme.IdShort.ToLower().StartsWith("eventelement"))
-                    {
-                        foreach (var input in op.InputVariables)
-                        {
-                            if (input.Value is ReferenceElement r && input.Value.IdShort == "data")
-                            {
-                                var refElement = env[packageIndex].AasEnv.FindReferableByReference(r.Value);
-                                if (refElement is SubmodelElementCollection smc)
-                                {
-                                    dataCollection = smc;
-                                    data = smc.Value;
-                                }
-                            }
-                            if (input.Value is ReferenceElement r2 && input.Value.IdShort == "statusData")
-                            {
-                                var refElement = env[packageIndex].AasEnv.FindReferableByReference(r2.Value);
-                                if (refElement is SubmodelElementCollection smc)
-                                {
-                                    if (statusDataCollection != null)
-                                    {
-                                        smc.Value = new List<ISubmodelElement>();
-                                        smc.Value.Add(statusDataCollection);
-                                    }
-                                    smc.SetAllParentsAndTimestamps(smc.Parent as IReferable, dt, dt, dt);
-                                    smc.SetTimeStamp(dt);
-                                }
-                            }
-                        }
-
-                        foreach (var output in op.OutputVariables)
-                        {
-                            var outputRef = output.Value;
-                            if (outputRef is ReferenceElement r && output.Value.IdShort == "status")
-                            {
-                                var refElement = env[packageIndex].AasEnv.FindReferableByReference(r.Value);
-                                if (refElement is SubmodelElementCollection smc)
-                                {
-                                    status = smc;
-                                    status.SetAllParentsAndTimestamps(status.Parent as IReferable, dt, dt, dt);
-                                    status.SetTimeStamp(dt);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            */
-
-            List<ISubmodelElement> children = null;
-            Submodel submodel = null;
-            if (referable is Submodel)
-            {
-                submodel = referable as Submodel;
-                children = submodel.SubmodelElements;
-            }
-            else
-            {
-                if (referable is SubmodelElementCollection smc)
-                {
-                    dataCollection = smc;
-                    if (smc.Value == null)
-                    {
-                        smc.Value = new List<ISubmodelElement>();
-                    }
-                    data = smc.Value;
-                    children = smc.Value;
-                }
-                if (referable is SubmodelElementList sml)
-                {
-                    if (sml.Value == null)
-                    {
-                        sml.Value = new List<ISubmodelElement>();
-                    }
-                    data = sml.Value;
-                    children = sml.Value;
-                }
-                var r = referable;
-                while (r.Parent != null)
-                {
-                    r = r.Parent as IReferable;
-                }
-                if (r is Submodel)
-                {
-                    submodel = r as Submodel;
-                }
-            }
-
-            lock (EventLock)
-            {
+                // sort by submodelID + idShortPath
+                eventPayload.eventEntries.Sort();
+                var entriesSubmodel = new List<EventPayloadEntry>();
                 foreach (var entry in eventPayload.eventEntries)
                 {
-                    var submodelId = entry.submodelId;
-                    ISubmodel receiveSubmodel = null;
-                    IAssetAdministrationShell aas = null;
-
-                    if (entry.payloadType == "submodel" && entry.payload != "")
+                    bool changeSubmodel = false;
+                    bool addEntry = false;
+                    if (entriesSubmodel.Count == 0)
                     {
-                        MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(entry.payload));
-                        JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
-                        receiveSubmodel = Jsonization.Deserialize.SubmodelFrom(node);
-                        receiveSubmodel.TimeStampCreate = dt;
-                        receiveSubmodel.SetTimeStamp(dt);
-                        receiveSubmodel.SetAllParents(dt);
-
-                        if (receiveSubmodel != null)
+                        addEntry = true;
+                    }
+                    else
+                    {
+                        if (entry.submodelId != entriesSubmodel.Last().submodelId)
                         {
-                            dataCollection.Value = receiveSubmodel.SubmodelElements;
-                            dataCollection.SetTimeStamp(dt);
-                            env[packageIndex].setWrite(true);
-                            return 1;
-
-                            if (index != -1) // submodel exisiting
-                            {
-                                aasEnv.Submodels.Remove(submodel);
-                                aas = aasEnv.FindAasWithSubmodelId(submodel.Id);
-
-                                // aasEnv.Submodels.Insert(index, receiveSubmodel);
-                                aasEnv.Submodels.Add(receiveSubmodel);
-                                env[index].setWrite(true);
-                                count++;
-                                Console.WriteLine("Event Submodel: " + receiveSubmodel.Id);
-                            }
-                            else
-                            {
-                                return 0;
-
-                                index = 0;
-                                aasEnv = env[index].AasEnv;
-                                aas = aasEnv.AssetAdministrationShells[0];
-                                aas.Submodels.Add(receiveSubmodel.GetReference());
-                            }
+                            changeSubmodel = true;
                         }
                     }
-
-                    if (entry.payloadType == "sme" && referable != null && (entry.payload != "" || entry.notDeletedIdShortList.Count != 0))
+                    if (entry == eventPayload.eventEntries.Last())
                     {
-                        count += changeSubmodelElement(eventData, entry, referable as ISubmodelElement, children, "", diffEntry);
-                        if (count > 0)
+                        addEntry = true;
+                        changeSubmodel = true;
+                    }
+                    if (addEntry)
+                    {
+                        entriesSubmodel.Add(entry);
+                    }
+                    if (changeSubmodel)
+                    {
+                        var submodelIdentifier = entriesSubmodel.Last().submodelId;
+                        using (var db = new AasContext())
                         {
-                            env[packageIndex].setWrite(true);
+                            var smDBQuery = db.SMSets.Where(sm => sm.Identifier == submodelIdentifier);
+                            var smDB = smDBQuery.ToList();
+                            if (smDB != null && smDB.Count == 1)
+                            {
+                                var visitor = new VisitorAASX(smDB[0]);
+                                var smDBId = smDB[0].Id;
+                                var smeSmList = db.SMESets.Where(sme => sme.SMId == smDBId).ToList();
+                                Converter.CreateIdShortPath(db, smeSmList);
+                                var smeSmMerged = Converter.GetSmeMerged(db, smeSmList);
+
+                                foreach (var e in entriesSubmodel)
+                                {
+                                    bool change = false;
+                                    ISubmodelElement receiveSme = null;
+                                    if (entry.payload != "")
+                                    {
+                                        MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(entry.payload));
+                                        JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
+                                        receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
+                                    }
+                                    if (receiveSme != null)
+                                    {
+                                        var receiveSmeDB = visitor.VisitSMESet(receiveSme);
+                                        receiveSmeDB.SMId = smDBId;
+                                        var parentPath = "";
+                                        if (e.idShortPath.Contains("."))
+                                        {
+                                            int lastDotIndex = e.idShortPath.LastIndexOf('.');
+                                            if (lastDotIndex != -1)
+                                            {
+                                                parentPath = e.idShortPath.Substring(0, lastDotIndex);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            change = true;
+                                        }
+                                        switch (e.entryType)
+                                        {
+                                            case "CREATE":
+                                            case "UPDATE":
+                                                if (parentPath != "")
+                                                {
+                                                    var parentDB = smeSmMerged.Where(sme => sme.smeSet.IdShortPath == parentPath).ToList();
+                                                    if (parentDB.Count == 1)
+                                                    {
+                                                        receiveSmeDB.ParentSMEId = parentDB[0].smeSet.Id;
+                                                        receiveSmeDB.IdShortPath = e.idShortPath;
+                                                        change = true;
+                                                    }
+                                                }
+                                                if (change)
+                                                {
+                                                    db.SaveChanges();
+                                                    var smeDB = smeSmMerged.Where(
+                                                        sme => sme.smeSet.IdShortPath == e.idShortPath ||
+                                                        sme.smeSet.IdShortPath.StartsWith(e.idShortPath + "."))
+                                                        .ToList();
+                                                    var smeDBList = smeDB.Select(sme => sme.smeSet.Id).ToList();
+                                                    if (smeDBList.Count > 0)
+                                                    {
+                                                        if (receiveSme != null)
+                                                        {
+                                                            db.SMESets.Where(sme => smeDBList.Contains(sme.Id)).ExecuteDeleteAsync().Wait();
+                                                            db.SaveChanges();
+                                                        }
+                                                    }
+                                                    count++;
+                                                }
+                                                break;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (e.entryType == "DELETE")
+                                        {
+                                            var notDeleted = e.notDeletedIdShortList;
+                                            var parentPath = e.idShortPath;
+                                            db.SaveChanges();
+                                            var deletePathList = smeSmMerged.Where(
+                                                sme => sme.smeSet.IdShort != null
+                                                && sme.smeSet.IdShortPath == parentPath + "." + sme.smeSet.IdShort
+                                                && !notDeleted.Contains(sme.smeSet.IdShort))
+                                                .Select(sme => sme.smeSet.IdShortPath).ToList();
+                                            var smeDBList = new List<int>();
+                                            foreach (var deletePath in deletePathList)
+                                            {
+                                                smeDBList.AddRange(
+                                                    smeSmMerged.Where(
+                                                    sme => sme.smeSet.IdShortPath == deletePath ||
+                                                    sme.smeSet.IdShortPath.StartsWith(deletePath + "."))
+                                                    .Select(sme => sme.smeSet.Id).ToList());
+                                            }
+                                            if (smeDBList.Count > 0)
+                                            {
+                                                db.SMESets.Where(sme => smeDBList.Contains(sme.Id)).ExecuteDeleteAsync().Wait();
+                                                db.SaveChanges();
+                                            }
+                                            count++;
+                                        }
+                                    }
+                                }
+                            }
                         }
+                        entriesSubmodel.Clear();
                     }
                 }
             }
