@@ -38,6 +38,7 @@ using System.Linq;
 namespace IO.Swagger.Controllers;
 
 using AasSecurity.Exceptions;
+using Contracts;
 
 /// <summary>
 /// 

@@ -41,6 +41,7 @@ using System.Net.Mime;
 namespace IO.Swagger.Controllers;
 
 using System.Threading.Tasks;
+using Contracts;
 
 /// <summary>
 /// 

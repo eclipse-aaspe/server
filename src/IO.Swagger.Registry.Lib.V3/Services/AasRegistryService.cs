@@ -25,6 +25,7 @@ using static AasxServer.Program;
 using AasxServerDB;
 using AasxServerDB.Entities;
 using System;
+using Contracts;
 
 namespace IO.Swagger.Registry.Lib.V3.Services
 { 

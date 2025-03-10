@@ -20,6 +20,7 @@ using System.Collections.Generic;
 namespace IO.Swagger.Lib.V3.Services
 {
     using System.Linq;
+    using Contracts;
 
     public class ReferenceModifierService : IReferenceModifierService
     {

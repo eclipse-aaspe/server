@@ -13,6 +13,7 @@
 
 
 using AasxServerStandardBib.Logging;
+using Contracts;
 using IO.Swagger.Lib.V3.Exceptions;
 using IO.Swagger.Lib.V3.Interfaces;
 using System;

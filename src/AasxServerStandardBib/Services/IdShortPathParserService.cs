@@ -14,6 +14,7 @@
 using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
+using Contracts;
 using System;
 using System.Collections.Generic;
 

@@ -15,6 +15,7 @@
 using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
+using Contracts;
 using Extensions;
 using Microsoft.IdentityModel.Tokens;
 using System;
