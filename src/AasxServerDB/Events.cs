@@ -805,7 +805,29 @@ namespace Events
                                     {
                                         if (e.entryType == "DELETE")
                                         {
-
+                                            var notDeleted = e.notDeletedIdShortList;
+                                            var parentPath = e.idShortPath;
+                                            db.SaveChanges();
+                                            var deletePathList = smeSmMerged.Where(
+                                                sme => sme.smeSet.IdShort != null
+                                                && sme.smeSet.IdShortPath == parentPath + "." + sme.smeSet.IdShort
+                                                && !notDeleted.Contains(sme.smeSet.IdShort))
+                                                .Select(sme => sme.smeSet.IdShortPath).ToList();
+                                            var smeDBList = new List<int>();
+                                            foreach (var deletePath in deletePathList)
+                                            {
+                                                smeDBList.AddRange(
+                                                    smeSmMerged.Where(
+                                                    sme => sme.smeSet.IdShortPath == deletePath ||
+                                                    sme.smeSet.IdShortPath.StartsWith(deletePath + "."))
+                                                    .Select(sme => sme.smeSet.Id).ToList());
+                                            }
+                                            if (smeDBList.Count > 0)
+                                            {
+                                                db.SMESets.Where(sme => smeDBList.Contains(sme.Id)).ExecuteDeleteAsync().Wait();
+                                                db.SaveChanges();
+                                            }
+                                            count++;
                                         }
                                     }
                                 }
