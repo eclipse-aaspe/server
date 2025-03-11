@@ -702,6 +702,7 @@ namespace Events
                 var entriesSubmodel = new List<EventPayloadEntry>();
                 foreach (var entry in eventPayload.eventEntries)
                 {
+                    Console.WriteLine($"Event {entry.entryType} SME: {entry.idShortPath}");
                     bool changeSubmodel = false;
                     bool addEntry = false;
                     if (entriesSubmodel.Count == 0)
@@ -743,7 +744,7 @@ namespace Events
                                 {
                                     bool change = false;
                                     ISubmodelElement receiveSme = null;
-                                    if (entry.payload != "")
+                                    if (e.payload != "")
                                     {
                                         MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(entry.payload));
                                         JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;

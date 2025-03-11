@@ -1794,20 +1794,27 @@ namespace AasxServer
                 }
                 */
 
-                string d = "";
-                if (firstCycle)
+                var d = "";
+                if (eventData.lastUpdate != null && eventData.lastUpdate.Value != null && eventData.lastUpdate.Value == "init")
                 {
-                    d = "reconnect";
+                    d = "init";
                 }
                 else
                 {
-                    if (eventData.lastUpdate.Value == null)
+                    if (firstCycle)
                     {
-                        d = "init";
+                        d = "reconnect";
                     }
                     else
                     {
-                        d = eventData.lastUpdate.Value;
+                        if (eventData.lastUpdate == null && eventData.lastUpdate.Value == null)
+                        {
+                            d = "init";
+                        }
+                        else
+                        {
+                            d = eventData.lastUpdate.Value;
+                        }
                     }
                 }
 

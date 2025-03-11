@@ -290,7 +290,7 @@ namespace AasxTimeSeries
                                                         if (sme2 is Property)
                                                         {
                                                             tsb.sampleStatus = sme2 as Property;
-                                                            tsb.sampleStatus.Value = "reconnect";
+                                                            // tsb.sampleStatus.Value = "reconnect";
                                                         }
 
                                                         break;
