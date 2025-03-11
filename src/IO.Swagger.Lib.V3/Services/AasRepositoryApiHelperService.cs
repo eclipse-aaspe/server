@@ -13,6 +13,7 @@
 
 
 using AasxServerStandardBib.Logging;
+using Contracts;
 using Extensions;
 using IO.Swagger.Lib.V3.Interfaces;
 using Microsoft.IdentityModel.Tokens;

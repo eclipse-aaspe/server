@@ -13,9 +13,11 @@
 
 using AasSecurity;
 using AasxServer;
+using AasxServerStandardBib.Interfaces;
 using Contracts;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.IO;
@@ -44,7 +46,7 @@ public static class BlazorServerStarter
 
     private static void InitializeProgram(string[] args, IConfiguration config, IServiceProvider services)
     {
-        IPersistenceService persistenceService = (IPersistenceService)services.GetService(typeof(IPersistenceService));
+        var persistenceService = services.GetService<IPersistenceService>();
         
         Console.WriteLine($"{nameof(InitializeProgram)}");
         Program.con = config;
