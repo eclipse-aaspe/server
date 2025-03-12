@@ -389,6 +389,7 @@
                                         <td style="word-break:keep-all">
                                             <a href="@($"{shorturl}/env?envid={AASSet?.EnvId}")" target="_blank">env </a>
                                             <a href="@($"{shorturl}/sm?aasid={AASSet?.Id}")" target="_blank">sm</a>
+                                            <a href="@($"{Program.externalBlazor}/db-tree?aas={AASSet?.Id}")" target="_blank">tree </a>
                                         </td>
                                         <td style="word-break:keep-all">
                                             @if (!AASSet.Identifier.IsNullOrEmpty())

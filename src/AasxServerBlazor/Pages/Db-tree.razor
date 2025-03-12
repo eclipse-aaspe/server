@@ -1,0 +1,92 @@
+@page "/db-tree";
+@using AasxServer
+@using AasxServerDB
+@using Microsoft.AspNetCore.Html;
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Microsoft.EntityFrameworkCore
+@using System.Linq.Dynamic.Core;
+@using AasxRestServerLibrary;
+@using Microsoft.IdentityModel.Tokens;
+@using AasxServerDB.Entities;
+@using TimeStamp;
+@using Nodes = System.Text.Json.Nodes;
+@inject NavigationManager NavMan
+
+<style>
+    .cell-content {
+        height: 80px;
+        max-height: 80px;
+        overflow: hidden;
+        word-break:break-all;
+    }
+
+    thead th {
+	    position: sticky;
+	    top: 0;
+	    background-color: #fff;
+	    z-index: 100;
+        box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4);
+        top: -10px;
+	}
+
+	table {
+        border-collapse: separate;
+        border-spacing: 0;
+	}
+
+</style>
+
+<div>
+    @{
+        if (!Program.withDb)
+        {
+            <span>This is a in memory server!</span>
+        }
+        else
+        {
+            // get parameters
+            var url      = NavMan.Uri;
+            var    splitUrl = url.Split("?");
+            url = splitUrl[ 0 ].ToLower();
+            var    sUrl     = url.Split("/");
+            var shorturl = url.Substring(0, url.Length - ($"/{sUrl[ sUrl.Length - 1 ]}").Length);
+            if (splitUrl.Length == 2)
+            {
+                using (AasContext db = new AasContext())
+                {
+                    var query = System.Web.HttpUtility.ParseQueryString(splitUrl[1]);
+                    var list = query.Get("aas");
+                    if (!list.IsNullOrEmpty())
+                    {
+                        var aasId = Convert.ToInt32(list);
+                        var aasDB = db.AASSets.Where(aasDB => aasDB.Id == aasId).First();
+                        assetAdministrationShell = Converter.GetAssetAdministrationShell(aasDB);
+                    }
+                    list = query.Get("sm");
+                    if (!list.IsNullOrEmpty())
+                    {
+                        var smId = Convert.ToInt32(list);
+                        var smDB = db.SMSets.Where(smDB => smDB.Id == smId).First();
+                        submodel = Converter.GetSubmodel(smDB);
+                    }
+                }
+            }
+
+            if (assetAdministrationShell != null)
+            {
+                @assetAdministrationShell.Id <br />
+                @assetAdministrationShell.IdShort <br />
+                @assetAdministrationShell.AssetInformation?.GlobalAssetId <br />
+            }
+
+            <br/>
+            <br/>
+        }
+    }
+</div>
+
+@code {
+    AssetAdministrationShell assetAdministrationShell = null;
+    Submodel submodel = null;
+    ISubmodelElement submodelElement = null;
+}
