@@ -407,7 +407,7 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Property<string>("EmbeddedDataSpecifications")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("EnvId")
+                    b.Property<int?>("EnvId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Extensions")
@@ -590,9 +590,7 @@ namespace AasxServerDB.Migrations.Sqlite
 
                     b.HasOne("AasxServerDB.Entities.EnvSet", "EnvSet")
                         .WithMany("SMSets")
-                        .HasForeignKey("EnvId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("EnvId");
 
                     b.Navigation("AASSet");
 

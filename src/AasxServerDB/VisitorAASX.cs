@@ -25,8 +25,8 @@ namespace AasxServerDB
 
     public class VisitorAASX : VisitorThrough
     {
-        private EnvSet _envDB;
-        private SMSet? _smDB;
+        private EnvSet? _envDB;
+        public SMSet? _smDB;
         private SMESet? _parSME;
         private SMESet? _resultSME;
         private static Dictionary<string, int> _cdDBId = new Dictionary<string, int>();
@@ -37,6 +37,9 @@ namespace AasxServerDB
         public const string OPERATION_SPLIT = "-";
         public DateTime currentDataTime = DateTime.UtcNow;
 
+        public VisitorAASX()
+        {
+        }
         private VisitorAASX(EnvSet envDB)
         {
             _envDB = envDB;
