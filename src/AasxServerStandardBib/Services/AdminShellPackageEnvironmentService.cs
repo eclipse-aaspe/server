@@ -10,6 +10,7 @@ using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
 using AdminShellNS;
 using Contracts;
+using Contracts.Exceptions;
 using Contracts.Pagination;
 using Extensions;
 using Microsoft.EntityFrameworkCore;

@@ -53,6 +53,7 @@ using System.Text.Json.Nodes;
 using Contracts.Pagination;
 using Contracts;
 using AasxServerStandardBib.Services;
+using System.Threading.Tasks;
 
 namespace IO.Swagger.Controllers
 {
@@ -74,6 +75,7 @@ namespace IO.Swagger.Controllers
         private readonly IValidateSerializationModifierService _validateModifierService;
         private readonly IPersistenceService _persistenceService;
         private readonly IIdShortPathParserService _idShortPathParserService;
+        private readonly IDbRequestHandlerService _dbRequestHandlerService;
 
         /// <summary>
         /// 
@@ -88,6 +90,8 @@ namespace IO.Swagger.Controllers
         /// <param name="paginationService"></param>
         /// <param name="authorizationService"></param>
         /// <param name="validateModifierService"></param>
+        /// <param name="idShortPathParserService"></param>
+        /// <param name="dbRequestHandlerService"></param>
         /// <exception cref="ArgumentNullException"></exception>
         public AssetAdministrationShellRepositoryAPIApiController(IAppLogger<AssetAdministrationShellRepositoryAPIApiController> logger,
                                                                   IPersistenceService persistenceService, IBase64UrlDecoderService decoderService,
@@ -95,7 +99,7 @@ namespace IO.Swagger.Controllers
                                                                   IMappingService mappingService, IPathModifierService pathModifierService,
                                                                   ILevelExtentModifierService levelExtentModifierService, IPaginationService paginationService,
                                                                   IAuthorizationService authorizationService, IValidateSerializationModifierService validateModifierService,
-                                                                  IIdShortPathParserService idShortPathParserService)
+                                                                  IIdShortPathParserService idShortPathParserService, IDbRequestHandlerService dbRequestHandlerService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _persistenceService = persistenceService ?? throw new ArgumentNullException(nameof(persistenceService));
@@ -108,6 +112,7 @@ namespace IO.Swagger.Controllers
             _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
             _validateModifierService = validateModifierService ?? throw new ArgumentNullException(nameof(authorizationService));
             _idShortPathParserService = idShortPathParserService ?? throw new ArgumentNullException(nameof(idShortPathParserService));
+            _dbRequestHandlerService = dbRequestHandlerService ?? throw new ArgumentNullException(nameof(dbRequestHandlerService));
         }
 
 
@@ -410,7 +415,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllAssetAdministrationShells([FromQuery]List<string> assetIds, [FromQuery]string? idShort, [FromQuery]int? limit, [FromQuery]string? cursor)
+        public virtual async Task<IActionResult> GetAllAssetAdministrationShells([FromQuery]List<string> assetIds, [FromQuery]string? idShort, [FromQuery]int? limit, [FromQuery]string? cursor)
         { 
 			_logger.LogInformation($"Received the request to get all Asset Administration Shells.");
 
@@ -431,7 +436,8 @@ namespace IO.Swagger.Controllers
             var paginationParameters = new PaginationParameters(cursor, limit);
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-            var paginatedAasList = _persistenceService.ReadPagedAssetAdministrationShells(paginationParameters, securityConfig, reqAssetIds, idShort);
+            var result = await _dbRequestHandlerService.ReadPagedAssetAdministrationShells(paginationParameters, securityConfig, reqAssetIds, idShort);
+            var paginatedAasList = result.AssetAdministrationShells;
             var output = _paginationService.GetPaginatedResult(paginatedAasList, paginationParameters);
             return new ObjectResult(output);
         }

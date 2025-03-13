@@ -18,6 +18,7 @@ using AasxServerStandardBib.Logging;
 using AasxServerStandardBib.Transformers;
 using AdminShellNS.Extensions;
 using Contracts;
+using Contracts.Exceptions;
 using Contracts.Pagination;
 using Extensions;
 using System;

@@ -19,6 +19,7 @@ using AasxServerStandardBib.Logging;
 using AdminShellNS;
 using AdminShellNS.Models;
 using Contracts;
+using Contracts.Exceptions;
 using Extensions;
 using System;
 using System.Collections.Generic;

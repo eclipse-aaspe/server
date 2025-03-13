@@ -82,12 +82,13 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     private readonly IAuthorizationService _authorizationService;
     private readonly IValidateSerializationModifierService _validateModifierService;
     private readonly IIdShortPathParserService _idShortPathParserService;
+    private readonly IDbRequestHandlerService _dbRequestHandlerService;
 
     public SubmodelRepositoryAPIApiController(IAppLogger<SubmodelRepositoryAPIApiController> logger, IBase64UrlDecoderService decoderService, IPersistenceService persistenceService,
                                               IReferenceModifierService referenceModifierService, IJsonQueryDeserializer jsonQueryDeserializer, IMappingService mappingService,
                                               IPathModifierService pathModifierService, ILevelExtentModifierService levelExtentModifierService,
                                               IPaginationService paginationService, IAuthorizationService authorizationService,
-                                              IValidateSerializationModifierService validateModifierService, IIdShortPathParserService idShortPathParserService)
+                                              IValidateSerializationModifierService validateModifierService, IIdShortPathParserService idShortPathParserService, IDbRequestHandlerService dbRequestHandlerService)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _decoderService = decoderService ?? throw new ArgumentNullException(nameof(decoderService));
@@ -101,6 +102,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
         _validateModifierService = validateModifierService ?? throw new ArgumentNullException(nameof(authorizationService));
         _idShortPathParserService = idShortPathParserService ?? throw new ArgumentNullException(nameof(idShortPathParserService));
+        _dbRequestHandlerService = dbRequestHandlerService ?? throw new ArgumentNullException(nameof(dbRequestHandlerService));
     }
 
     // Events
@@ -1485,7 +1487,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult GetSubmodelById([FromRoute][Required] string submodelIdentifier, [FromQuery] string? level, [FromQuery] string? extent)
+    public async virtual Task<IActionResult> GetSubmodelById([FromRoute][Required] string submodelIdentifier, [FromQuery] string? level, [FromQuery] string? extent)
     {
         //Validate level and extent
         var levelEnum = _validateModifierService.ValidateLevel(level);
@@ -1501,7 +1503,14 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-        var submodel = _persistenceService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+        var dbRequestResult = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+
+        if (dbRequestResult.Exception != null)
+        {
+            throw dbRequestResult.Exception;
+        }
+
+        var submodel = dbRequestResult.Submodel;
         var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
         if (!authResult.Succeeded)
         {

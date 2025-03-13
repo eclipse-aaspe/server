@@ -16,6 +16,7 @@ using Contracts.Pagination;
 using System.Security.Claims;
 using Microsoft.Extensions.DependencyInjection;
 using AasxServerStandardBib.Logging;
+using Contracts.Exceptions;
 
 public class EntityFrameworkPersistenceService : IPersistenceService
 {
@@ -114,7 +115,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         {
             if (!assetIds.IsNullOrEmpty())
             {
-
                 using (var scope = _serviceProvider.CreateScope())
                 {
                     var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
@@ -166,12 +166,16 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         bool found = IsSubmodelPresentWithinAAS(securityConfig, aasIdentifier, submodelIdentifier, out ISubmodel output);
         if (found)
         {
-            //_logger.LogDebug($"Asset Administration Shell with id {aasIdentifier} found.");
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                scopedLogger.LogDebug($"Asset Administration Shell with id {aasIdentifier} found.");
+            }
             return output;
         }
         else
         {
-            throw new Exception($"Submodel wit id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} not found.");
+          throw new NotFoundException($"Submodel wit id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} not found.");
         }
     }
 
@@ -187,7 +191,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         var output = Converter.GetPagedSubmodelElements(paginationParameters, securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier);
         if (output == null)
         {
-            throw new Exception($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
         }
         return output;
     }
@@ -204,7 +208,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         var output = Converter.GetSubmodelElementByPath(securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier, idShortPathElements);
         if (output == null)
         {
-            throw new Exception($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
         }
         return output;
     }
@@ -216,18 +220,21 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         var output = Converter.GetSubmodels(paginationParameters, securityConditionSM, securityConditionSME, reqSemanticId, idShort);
 
-        //ToDo: Implement
+        if (reqSemanticId != null)
+        {
 
-
-            if (reqSemanticId != null)
+            using (var scope = _serviceProvider.CreateScope())
             {
-                //_logger.LogDebug($"Filtering Submodels with requested Semnatic Id.");
+                var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                scopedLogger.LogDebug($"Filtering Submodels with requested Semnatic Id.");
                 output = output.Where(s => s.SemanticId != null && s.SemanticId.Matches(reqSemanticId)).ToList();
                 if (output.IsNullOrEmpty())
                 {
-                    //_logger.LogInformation($"No Submodels with requested semanticId found.");
+                    scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                    scopedLogger.LogInformation($"No Submodels with requested semanticId found.");
                 }
             }
+        }
 
         return output;
     }
@@ -242,7 +249,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
         else
         {
-            throw new Exception($"Asset Administration Shell with id {aasIdentifier} not found.");
+            throw new NotFoundException($"Asset Administration Shell with id {aasIdentifier} not found.");
         }
     }
 
@@ -259,7 +266,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
         else
         {
-            throw new Exception($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
         }
     }
 
@@ -292,11 +299,13 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 }
                 else
                 {
+                    //ToDo: NotFoundException?
                     throw new Exception($"No default thumbnail embedded in the AssetInformation of the requested AAS.");
                 }
             }
             else
             {
+                //ToDo: NotFoundException?
                 throw new Exception($"AssetInformation is NULL in requested AAS with id {aasIdentifier}");
             }
         }
@@ -325,7 +334,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
         else
         {
-            throw new Exception($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
         }
     }
 
@@ -341,7 +350,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
         else
         {
-            throw new Exception($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
         }
     }
 
@@ -384,7 +393,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             }
             else
             {
-                throw new Exception($"SubmodelReference with id {submodelIdentifier} not found in AAS with id {aasIdentifier}");
+                throw new NotFoundException($"SubmodelReference with id {submodelIdentifier} not found in AAS with id {aasIdentifier}");
             }
         }
     }
@@ -403,6 +412,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 }
                 else
                 {
+                    //ToDo: NotFoundException?
                     throw new Exception($"No default thumbnail embedded in the AssetInformation of the requested AAS.");
                 }
             }
@@ -440,7 +450,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
         else
         {
-            throw new Exception($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
         }
     }
 
@@ -455,7 +465,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
         else
         {
-            throw new Exception($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
         }
     }
 
@@ -502,7 +512,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
         else
         {
-            throw new Exception($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
         }
     }
 
@@ -518,7 +528,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             }
             else
             {
-                throw new Exception($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+                throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
             }
         }
     }
@@ -647,7 +657,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         else
         {
             output = Converter.GetSubmodel(null, submodelIdentifier);
-            return output == null;
+            bool isSubmodelPresent = output != null;
+            return isSubmodelPresent;
         }
 
         return false;

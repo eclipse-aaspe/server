@@ -29,6 +29,7 @@ namespace IO.Swagger.Lib.V3.Middleware
     using System.Globalization;
     using System.Linq;
     using Contracts;
+    using Contracts.Exceptions;
 
     public class ExceptionMiddleware
     {

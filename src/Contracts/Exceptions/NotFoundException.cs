@@ -13,7 +13,7 @@
 
 using System;
 
-namespace AasxServerStandardBib.Exceptions
+namespace Contracts.Exceptions
 {
     public class NotFoundException : Exception
     {
