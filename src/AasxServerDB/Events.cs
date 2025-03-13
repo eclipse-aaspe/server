@@ -522,6 +522,7 @@ namespace Events
                                     }
 
                                     e.eventEntries.Add(entry);
+                                    Console.WriteLine($"Event {entry.entryType} Type: {entry.payloadType} idShortPath: {entry.idShortPath}");
                                     countSME++;
                                 }
                             }
@@ -555,6 +556,7 @@ namespace Events
                                 }
                             }
 
+                            Console.WriteLine($"Event {entry.entryType} Type: {entry.payloadType} idShortPath: {entry.idShortPath}");
                             e.eventEntries.Add(entry);
                             countSM++;
                         }
@@ -760,6 +762,7 @@ namespace Events
                                 visitor._smDB.EnvId = envDB;
                                 db.Add(visitor._smDB);
                                 db.SaveChanges();
+                                count++;
                             }
                         }
                     }
@@ -903,7 +906,10 @@ namespace Events
             }
 
             statusValue = "Updated: " + count;
-
+            if (count > 0)
+            {
+                env[packageIndex].setWrite(true);
+            }
 
             return count;
         }

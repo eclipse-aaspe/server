@@ -24,8 +24,14 @@ namespace AasxServerDB
         {
             using (AasContext db = new AasContext())
             {
-                // Deletes automatically from DB
-                db.EnvSets.Where(a => a.Path == env.Filename).ExecuteDelete();
+                // Deletes manually from DB
+                var deleteEnvList = db.EnvSets.Where(e => e.Path == env.Filename);
+                var deleteEnv = deleteEnvList.FirstOrDefault();
+                var deleteAasList = db.AASSets.Where(a => a.EnvId == deleteEnv.Id);
+                var deletSmList = db.SMSets.Where(s => s.EnvId == deleteEnv.Id);
+                deletSmList.ExecuteDeleteAsync().Wait();
+                deleteAasList.ExecuteDeleteAsync().Wait();
+                deleteEnvList.ExecuteDeleteAsync().Wait();
 
                 // Load Everything back in
                 var envDB = new EnvSet
