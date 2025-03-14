@@ -323,14 +323,22 @@
                     }
                 }
 
-                if (SelectedNode is {Tag: Submodel sm})
+                if (SelectedNode is { Tag: AssetAdministrationShell aas })
+                {
+                    var idEncoded = Base64UrlEncoder.Encode(aas.Id);
+                    var path = Program.externalBlazor + "/shells/" + idEncoded;
+                    <span style="color:white;background-color:blue;">URL:</span>
+                    <a href="@path" target="_blank">@path</a>
+                    <br>
+                }
+
+                if (SelectedNode is { Tag: Submodel sm })
                 {
                     var idEncoded = Base64UrlEncoder.Encode(sm.Id);
                     var path = Program.externalBlazor + "/submodels/" + idEncoded;
                     <span style="color:white;background-color:blue;">URL:</span>
                     <a href="@path" target="_blank">@path</a>
                     <br>
-
                 }
 
                 if (SelectedNode != null && SelectedNode.Tag is ISubmodelElement sme)
