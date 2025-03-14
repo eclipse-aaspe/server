@@ -1489,7 +1489,154 @@ namespace AdminShellNS
             return result;
         }
 
+        private class FindRelTuple
+        {
+            public bool Deprecated { get; set; }
+            public PackageRelationship Rel { get; set; }
+        }
+        private static IEnumerable<FindRelTuple> FindAllRelationships(
+            Package package, string[] relTypes,
+            bool? filterForDeprecatedEquals = null)
+        {
+            for (int i = 0; i < relTypes.Length; i++)
+                foreach (var x in package.GetRelationshipsByType(relTypes[i]))
+                {
+                    var res = new FindRelTuple() { Deprecated = (i > 0), Rel = x };
+                    if (filterForDeprecatedEquals.HasValue &&
+                        filterForDeprecatedEquals.Value != res.Deprecated)
+                        continue;
+                    yield return res;
+                }
+        }
+
+        private static IEnumerable<FindRelTuple> FindAllRelationships(
+            PackagePart part, string[] relTypes,
+            bool? filterForDeprecatedEquals = null)
+        {
+            for (int i = 0; i < relTypes.Length; i++)
+                foreach (var x in part.GetRelationshipsByType(relTypes[i]))
+                {
+                    var res = new FindRelTuple() { Deprecated = (i > 0), Rel = x };
+                    if (filterForDeprecatedEquals.HasValue &&
+                     filterForDeprecatedEquals.Value != res.Deprecated)
+                        continue;
+                    yield return res;
+                }
+        }
+
+        protected static string[] relTypesOrigin = new[] {
+            "http://admin-shell.io/aasx/relationships/aasx-origin",
+            "http://www.admin-shell.io/aasx/relationships/aasx-origin"
+        };
+
+        protected static string[] relTypesSpec = new[] {
+            "http://admin-shell.io/aasx/relationships/aas-spec",
+            "http://www.admin-shell.io/aasx/relationships/aas-spec"
+        };
+
+        protected static string[] relTypesSuppl = new[] {
+            "http://admin-shell.io/aasx/relationships/aas-suppl",
+            "http://www.admin-shell.io/aasx/relationships/aas-suppl"
+        };
+
+        protected static string[] relTypesThumb = new[] {
+            "http://schemas.openxmlformats.org/package/2006/relationships/metadata/thumbnail"
+        };
+
         public ListOfAasSupplementaryFile GetListOfSupplementaryFiles()
+        {
+            // new result
+            var result = new ListOfAasSupplementaryFile();
+
+            // access
+            if (_openPackage != null)
+            {
+                // get the thumbnail(s) from the package
+                foreach (var x in FindAllRelationships(_openPackage, relTypesThumb))
+                    if (x.Rel.SourceUri.ToString() == "/")
+                    {
+                        result.Add(new AdminShellPackageSupplementaryFile(
+                            x.Rel.TargetUri,
+                            location: AdminShellPackageSupplementaryFile.LocationType.InPackage,
+                            specialHandling: AdminShellPackageSupplementaryFile.SpecialHandlingType.EmbedAsThumbnail));
+                    }
+
+                // get the origin from the package
+                PackagePart originPart = null;
+                foreach (var x in FindAllRelationships(_openPackage, relTypesOrigin))
+                    if (x.Rel.SourceUri.ToString() == "/")
+                    {
+                        //originPart = _openPackage.GetPart(x.TargetUri);
+                        var absoluteURI = PackUriHelper.ResolvePartUri(x.Rel.SourceUri, x.Rel.TargetUri);
+                        if (_openPackage.PartExists(absoluteURI))
+                        {
+                            originPart = _openPackage.GetPart(absoluteURI);
+                        }
+                        break;
+                    }
+
+                if (originPart != null)
+                {
+                    // get the specs from the origin
+                    PackagePart specPart = null;
+                    foreach (var x in FindAllRelationships(originPart, relTypesSpec))
+                    {
+                        //specPart = _openPackage.GetPart(x.TargetUri);
+                        var absoluteURI = PackUriHelper.ResolvePartUri(x.Rel.SourceUri, x.Rel.TargetUri);
+                        if (_openPackage.PartExists(absoluteURI))
+                        {
+                            specPart = _openPackage.GetPart(absoluteURI);
+                        }
+                        break;
+                    }
+
+                    if (specPart != null)
+                    {
+                        // get the supplementaries from the package, derived from spec
+                        foreach (var x in FindAllRelationships(specPart, relTypesSuppl))
+                        {
+                            result.Add(
+                                new AdminShellPackageSupplementaryFile(
+                                    x.Rel.TargetUri,
+                                    location: AdminShellPackageSupplementaryFile.LocationType.InPackage));
+                        }
+                    }
+                }
+            }
+
+            // add or modify the files to delete
+            foreach (var psfDel in _pendingFilesToDelete)
+            {
+                // already in
+                var found = result.Find(x => { return x.Uri == psfDel.Uri; });
+                if (found != null)
+                    found.Location = AdminShellPackageSupplementaryFile.LocationType.DeletePending;
+                else
+                {
+                    psfDel.Location = AdminShellPackageSupplementaryFile.LocationType.DeletePending;
+                    result.Add(psfDel);
+                }
+            }
+
+            // add the files to store as well
+            foreach (var psfAdd in _pendingFilesToAdd)
+            {
+                // already in (should not happen ?!)
+                var found = result.Find(x => { return x.Uri == psfAdd.Uri; });
+                if (found != null)
+                    found.Location = AdminShellPackageSupplementaryFile.LocationType.AddPending;
+                else
+                {
+                    psfAdd.Location = AdminShellPackageSupplementaryFile.LocationType.AddPending;
+                    result.Add(psfAdd);
+                }
+            }
+
+            // done
+            return result;
+        }
+
+        public ListOfAasSupplementaryFile GetListOfSupplementaryFiles0()
         {
             // new result
             var result = new ListOfAasSupplementaryFile();
