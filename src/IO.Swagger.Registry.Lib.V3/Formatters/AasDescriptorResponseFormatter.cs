@@ -47,12 +47,20 @@ namespace IO.Swagger.Registry.Lib.V3.Formatters
             {
                 return base.CanWriteResult(context);
             }
+            else if (typeof(SubmodelDescriptor).IsAssignableFrom(context.ObjectType))
+            {
+                return base.CanWriteResult(context);
+            }
             else if (IsGenericListOfAasDesc(context.Object))
             {
                 //return base.CanWriteResult(context);
                 return true;
             }
             else if (typeof(AasDescriptorPagedResult).IsAssignableFrom(context.ObjectType))
+            {
+                return base.CanWriteResult(context);
+            }
+            else if (typeof(SubmodelDescriptorPagedResult).IsAssignableFrom(context.ObjectType))
             {
                 return base.CanWriteResult(context);
             }
@@ -65,6 +73,13 @@ namespace IO.Swagger.Registry.Lib.V3.Formatters
             var response = context.HttpContext.Response;
 
             if (typeof(AssetAdministrationShellDescriptor).IsAssignableFrom(context.ObjectType))
+            {
+                JsonObject? json = DescriptorSerializer.ToJsonObject(context.Object);
+                var writer = new Utf8JsonWriter(response.Body);
+                json.WriteTo(writer);
+                writer.FlushAsync().GetAwaiter().GetResult();
+            }
+            if (typeof(SubmodelDescriptor).IsAssignableFrom(context.ObjectType))
             {
                 JsonObject? json = DescriptorSerializer.ToJsonObject(context.Object);
                 var writer = new Utf8JsonWriter(response.Body);
@@ -94,6 +109,33 @@ namespace IO.Swagger.Registry.Lib.V3.Formatters
                 }
 
                 jsonNode[ "paging_metadata" ] = pagingMetadata;
+                var writer = new Utf8JsonWriter(response.Body);
+                jsonNode.WriteTo(writer);
+                writer.FlushAsync().GetAwaiter().GetResult();
+            }
+            else if (typeof(SubmodelDescriptorPagedResult).IsAssignableFrom(context.ObjectType))
+            {
+                var jsonArray = new JsonArray();
+                string cursor = null;
+                if (context.Object is SubmodelDescriptorPagedResult pagedResult)
+                {
+                    cursor = pagedResult.paging_metadata.cursor;
+                    foreach (var item in pagedResult.result)
+                    {
+                        var json = DescriptorSerializer.ToJsonObject(item);
+                        jsonArray.Add(json);
+                    }
+                }
+
+                JsonObject jsonNode = new JsonObject();
+                jsonNode["result"] = jsonArray;
+                var pagingMetadata = new JsonObject();
+                if (cursor != null)
+                {
+                    pagingMetadata["cursor"] = cursor;
+                }
+
+                jsonNode["paging_metadata"] = pagingMetadata;
                 var writer = new Utf8JsonWriter(response.Body);
                 jsonNode.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();

@@ -10,7 +10,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--with-db --start-index 0 --no-security --save-temp 30 --secret-string-api 1234 --aasx-in-memory 1000 --data-path \"C:\\Development\\plugfest\\Example AASX Files\" --edit --external-blazor http://localhost:5001",
+      "commandLineArgs": "--with-db --start-index 1000 --no-security --save-temp 30 --secret-string-api 1234 --aasx-in-memory 1000 --data-path \"C:\\Development\\plugfest\\Example AASX Files\" --edit --external-blazor http://localhost:5001",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",

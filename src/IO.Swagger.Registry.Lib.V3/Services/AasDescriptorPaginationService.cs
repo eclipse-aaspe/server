@@ -52,6 +52,28 @@ namespace IO.Swagger.Registry.Lib.V3.Services
             return paginationResult;
         }
 
+        public SubmodelDescriptorPagedResult GetPaginatedList(List<SubmodelDescriptor> sourceList, PaginationParameters paginationParameters)
+        {
+            var startIndex = paginationParameters.Cursor;
+            var endIndex = startIndex + paginationParameters.Limit - 1;
+            var outputList = GetPaginationList(sourceList, startIndex, endIndex);
+
+            //Creating pagination result
+            var pagingMetadata = new PagedResultPagingMetadata();
+            if (endIndex < sourceList.Count - 1)
+            {
+                pagingMetadata.cursor = Convert.ToString(endIndex + 1);
+            }
+
+            var paginationResult = new SubmodelDescriptorPagedResult()
+            {
+                result = outputList,
+                paging_metadata = pagingMetadata
+            };
+
+            return paginationResult;
+        }
+
         private List<T> GetPaginationList<T>(List<T> sourceList, int startIndex, int endIndex)
         {
             var outputList = new List<T>();
