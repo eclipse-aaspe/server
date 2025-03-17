@@ -316,7 +316,9 @@
                     </span>
                     <br/>
 
-                    <div style="width: 100%; height: 70vh; overflow-y: auto; overflow-y: auto; overflow-x: hidden;">
+                    <div style="width: 100%; height: 70vh; overflow-x: hidden; padding: 10px;">
+                        @* <table class="table table-bordered table-sm" style="min-width:100%;max-width:100%">
+                        <div style="width: 100%; height: 70vh; overflow-y: auto; overflow-y: auto; overflow-x: hidden;"> *@
                         <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;border-color:blue;">
                             <thead>
                                 <tr style="border-color:blue;">
@@ -429,99 +431,99 @@
                         <table class="table table-bordered table-sm" style="min-width:100%;max-width:100%">
                             <thead>
                                 <tr>
-                                    <th style="width:3%;font-size:x-small;word-break: break-all;">SM#</th>
-                                    <th style="width:3%;font-size:x-small;word-break: break-all;">Par#</th>
-                                    <th style="width:3%;font-size:x-small;word-break: break-all;">SME#</th>
-                                    <th style="width:3%;font-size:x-small;word-break: break-all;">SME<br />Type</th>
-                                    <th style="width:10%;font-size:x-small;word-break: break-all;">IdShort</th>
-                                    <th style="width:4%;font-size:x-small;word-break: break-all;">DisplayName</th>
-                                    <th style="width:4%;font-size:x-small;word-break: break-all;">Category</th>
-                                    <th style="width:4%;font-size:x-small;word-break: break-all;">Description</th>
-                                    <th style="width:4%;font-size:x-small;word-break: break-all;">Extensions</th>
-                                    <th style="width:10%;font-size:x-small;word-break: break-all;">SemanticId</th>
-                                    <th style="width:4%;font-size:x-small;word-break: break-all;">Supplemental<br />SemanticIds</th>
-                                    <th style="width:4%;font-size:x-small;word-break: break-all;">Qualifiers</th>
-                                    <th style="width:4%;font-size:x-small;word-break: break-all;">Embedded<br />Data<br />Specifications</th>
-                                    <th style="width:8%;font-size:x-small;word-break: break-all;">TValue</th>
-                                    <th style="width:8%;font-size:x-small;word-break: break-all;">Value</th>
-                                    <th style="width:4%;font-size:x-small;word-break: break-all;">Additional<br />Attributes</th>
-                                    <th style="width:8%;font-size:x-small;word-break: break-all;">TimeStamps</th>
-                                    <th style="width:4%;font-size:x-small;word-break: break-all;">Links</th>
-                                    <th style="width:4%;font-size:x-small;word-break: break-all;">API</th>
+                                    <th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">SM#</th>
+                                    <th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Par#</th>
+                                    <th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">SME#</th>
+                                    <th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">SME<br />Type</th>
+                                    <th style="width:10%;font-size:x-small;word-break: break-all;border-color:blue;">IdShort</th>
+                                    <th style="width:4%;font-size:x-small;word-break: break-all;border-color:blue;">DisplayName</th>
+                                    <th style="width:4%;font-size:x-small;word-break: break-all;border-color:blue;">Category</th>
+                                    <th style="width:4%;font-size:x-small;word-break: break-all;border-color:blue;">Description</th>
+                                    <th style="width:4%;font-size:x-small;word-break: break-all;border-color:blue;">Extensions</th>
+                                    <th style="width:10%;font-size:x-small;word-break: break-all;border-color:blue;">SemanticId</th>
+                                    <th style="width:4%;font-size:x-small;word-break: break-all;border-color:blue;">Supplemental<br />SemanticIds</th>
+                                    <th style="width:4%;font-size:x-small;word-break: break-all;border-color:blue;">Qualifiers</th>
+                                    <th style="width:4%;font-size:x-small;word-break: break-all;border-color:blue;">Embedded<br />Data<br />Specifications</th>
+                                    <th style="width:8%;font-size:x-small;word-break: break-all;border-color:blue;">TValue</th>
+                                    <th style="width:8%;font-size:x-small;word-break: break-all;border-color:blue;">Value</th>
+                                    <th style="width:4%;font-size:x-small;word-break: break-all;border-color:blue;">Additional<br />Attributes</th>
+                                    <th style="width:8%;font-size:x-small;word-break: break-all;border-color:blue;">TimeStamps</th>
+                                    <th style="width:4%;font-size:x-small;word-break: break-all;border-color:blue;">Links</th>
+                                    <th style="width:4%;font-size:x-small;word-break: break-all;border-color:blue;">API</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <Virtualize Context="SMESet" @ref="SMESetContainer" ItemsProvider="LoadSMESetItems" >
                                     <tr style="height: 80px;">
-                                        <td style="width:3%;font-size:small;word-break: break-all;">@SMESet?.SMId</td>
-                                        <td style="width:3%;font-size:small;word-break: break-all;">@SMESet?.ParentSMEId</td>
-                                        <td style="width:3%;font-size:small;word-break: break-all;">
+                                        <td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@SMESet?.SMId</td>
+                                        <td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@SMESet?.ParentSMEId</td>
+                                        <td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">
                                             <b>@SMESet?.Id</b>
                                         </td>
-                                        <td style="width:3%;font-size:small;word-break: break-all;">@SMESet?.SMEType</td>
-                                        <td style="width:10%;word-break: break-all;">
+                                        <td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@SMESet?.SMEType</td>
+                                        <td style="width:10%;word-break: break-all;border-color:blue;">
                                             <div class="cell-content">
                                                 @SMESet?.IdShort
                                             </div>
                                         </td>
-                                        <td style="width:4%;font-size:small;">
+                                        <td style="width:4%;font-size:small;border-color:blue;">
                                             <div class="cell-content">
                                                 @SMESet?.DisplayName
                                             </div>
                                         </td>
-                                        <td style="width:4%;font-size:small">
+                                        <td style="width:4%;font-size:small;border-color:blue;">
                                             <div class="cell-content">
                                                 @SMESet?.Category
                                             </div>
                                         </td>
-                                        <td style="width:4%;font-size:small">
+                                        <td style="width:4%;font-size:small;border-color:blue;">
                                             <div class="cell-content">
                                                 @SMESet?.Description?.Substring(0, 30)
                                             </div>
                                         </td>
-                                        <td style="width:4%;font-size:small">
+                                        <td style="width:4%;font-size:small;border-color:blue;">
                                             <div class="cell-content">
                                                 @SMESet?.Extensions
                                             </div>
                                         </td>
-                                        <td style="width:10%;word-break: break-all;font-size:small">
+                                        <td style="width:10%;word-break: break-all;font-size:small;border-color:blue;">
                                             <div class="cell-content">
                                                 @SMESet?.SemanticId
                                             </div>
                                         </td>
-                                        <td style="width:4%;font-size:small">
+                                        <td style="width:4%;font-size:small;border-color:blue;">
                                             <div class="cell-content">
                                                 @SMESet?.SupplementalSemanticIds
                                             </div>
                                         </td>
-                                        <td style="width:4%;font-size:small">
+                                        <td style="width:4%;font-size:small;border-color:blue;">
                                             <div class="cell-content">
                                                 @SMESet?.Qualifiers
                                             </div>
                                         </td>
-                                        <td style="width:4%;font-size:small">
+                                        <td style="width:4%;font-size:small;border-color:blue;">
                                             <div class="cell-content">
                                                 @SMESet?.EmbeddedDataSpecifications
                                             </div>
                                         </td>
-                                        <td style="width:8%;font-size:small">
+                                        <td style="width:8%;font-size:small;border-color:blue;">
                                             <div class="cell-content">
                                                 @SMESet?.TValue
                                             </div>
-                                        </td width:4%;>
-                                        <td>
                                         </td>
-                                        <td style="width:4%;font-size:small;">
+                                        <td style="width:4%;border-color:blue;">
                                         </td>
-                                        <td style="width:8%;word-break: break-all;color:lightgray;font-size:x-small">
+                                        <td style="width:4%;font-size:small;border-color:blue;">
+                                        </td>
+                                        <td style="width:8%;word-break: break-all;color:lightgray;font-size:x-small;border-color:blue;">
                                             @($"CREATE {TimeStamp.DateTimeToString(SMESet.TimeStampCreate)}")<br/>
                                             @($"UPDATE {TimeStamp.DateTimeToString(SMESet.TimeStamp)}")<br/>
                                             @($"TREE {TimeStamp.DateTimeToString(SMESet.TimeStampTree)}")<br />
                                             @($"DELETE {TimeStamp.DateTimeToString(SMESet.TimeStampDelete)}")
                                         </td>
-                                        <td width:4%;>
+                                        <td style="width:4%;border-color:blue;">
                                         </td>
-                                        <td width:4%;>
+                                        <td style="width:4%;border-color:blue;">
                                         </td>
                                     </tr>
                                 </Virtualize>
