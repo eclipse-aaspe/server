@@ -52,6 +52,8 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         var taskCompletionSource = new TaskCompletionSource<IDbRequestResult>();
 
         var dbRequest = new DbRequest(nameof(ReadPagedAssetAdministrationShells), dbRequestContext, taskCompletionSource);
+
+        //ToDo: Protect queueOperation with lock
         _queueOperations.Enqueue(dbRequest,DbRequestPriority.Query);
         _signal.Release();
 
@@ -77,6 +79,8 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         var taskCompletionSource = new TaskCompletionSource<IDbRequestResult>();
 
         var dbRequest = new DbRequest(nameof(ReadSubmodelById), dbRequestContext, taskCompletionSource);
+
+        //ToDo: Protect queueOperation with lock
         _queueOperations.Enqueue(dbRequest, DbRequestPriority.Command);
         _signal.Release();
 
@@ -87,7 +91,6 @@ public class DbRequestHandlerService : IDbRequestHandlerService
     {
         while (true)
         {
-            // Warte, bis eine Operation vorliegt
             await _signal.WaitAsync();
 
 
