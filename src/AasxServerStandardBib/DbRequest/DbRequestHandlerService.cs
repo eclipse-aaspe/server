@@ -1,5 +1,6 @@
 namespace AasxServerStandardBib.DbRequest;
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -19,26 +20,24 @@ using Microsoft.Extensions.DependencyInjection;
 
 public class DbRequestHandlerService : IDbRequestHandlerService
 {
-    private readonly BlockingCollection<IDbRequest> _queryOperations = new BlockingCollection<IDbRequest>();
-    private readonly BlockingCollection<IDbRequest> _commandOperations = new BlockingCollection<IDbRequest>();
+    private readonly PriorityQueue<IDbRequest,DbRequestPriority> _queueOperations = new PriorityQueue<IDbRequest, DbRequestPriority>();
 
     //private ManualResetEvent _empty = new ManualResetEvent(false);
 
     private IPersistenceService _persistenceService;
     private readonly IServiceProvider _serviceProvider;
 
-    private bool _isRequestingCommand = false;
     private readonly SemaphoreSlim _signal = new(0);
+    private readonly SemaphoreSlim _lock = new(0);
 
     public DbRequestHandlerService(IServiceProvider serviceProvider, IPersistenceService persistenceService)
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _persistenceService = persistenceService ?? throw new ArgumentNullException(nameof(persistenceService));
 
+        _lock.Release();
         Task.Run(ProcessQueryOperations);
         Task.Run(ProcessQueryOperations);
-        Task.Run(ProcessCommandOperations);
-
     }
 
     public Task<IDbRequestResult> ReadPagedAssetAdministrationShells(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, List<ISpecificAssetId> assetIds, string idShort)
@@ -53,7 +52,8 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         var taskCompletionSource = new TaskCompletionSource<IDbRequestResult>();
 
         var dbRequest = new DbRequest(nameof(ReadPagedAssetAdministrationShells), dbRequestContext, taskCompletionSource);
-        _queryOperations.Add(dbRequest);
+        _queueOperations.Enqueue(dbRequest,DbRequestPriority.Query);
+        _signal.Release();
 
         //if (aasList.Count == 0)
         //{
@@ -77,88 +77,75 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         var taskCompletionSource = new TaskCompletionSource<IDbRequestResult>();
 
         var dbRequest = new DbRequest(nameof(ReadSubmodelById), dbRequestContext, taskCompletionSource);
-        _commandOperations.Add(dbRequest);
+        _queueOperations.Enqueue(dbRequest, DbRequestPriority.Command);
+        _signal.Release();
 
         return taskCompletionSource.Task;
     }
 
     private async Task ProcessQueryOperations()
     {
-        foreach (var operation in _queryOperations.GetConsumingEnumerable())
+        while (true)
         {
-            if (_isRequestingCommand)
-            {
-                _signal.Wait();
-            }
+            // Warte, bis eine Operation vorliegt
+            await _signal.WaitAsync();
 
-            if (operation != null)
+
+            if (_queueOperations.TryDequeue(out var operation, out var _))
             {
-                if (operation.MethodName == nameof(ReadPagedAssetAdministrationShells))
+                if (operation != null)
                 {
-                    try
+                    _lock.Wait();
+
+                    if (operation.MethodName == nameof(ReadPagedAssetAdministrationShells))
                     {
-                        var aasList =
-                            _persistenceService.ReadPagedAssetAdministrationShells(operation.Context.PaginationParameters, operation.Context.SecurityConfig, operation.Context.AssetIds, operation.Context.IdShort);
-                        var result = new DbRequestResult()
+                        try
                         {
-                            AssetAdministrationShells = aasList
-                        };
-                        operation.TaskCompletionSource.SetResult(result);
-                    }
-                    catch (Exception ex)
-                    {
-                        var result = new DbRequestResult()
+                            var aasList =
+                                _persistenceService.ReadPagedAssetAdministrationShells(operation.Context.PaginationParameters, operation.Context.SecurityConfig, operation.Context.AssetIds, operation.Context.IdShort);
+                            var result = new DbRequestResult()
+                            {
+                                AssetAdministrationShells = aasList
+                            };
+                            operation.TaskCompletionSource.SetResult(result);
+                        }
+                        catch (Exception ex)
                         {
-                            Exception = ex
-                        };
-                        operation.TaskCompletionSource.SetResult(result);
+                            operation.TaskCompletionSource.SetException(ex);
+                        }
+                        finally
+                        {
+                            _lock.Release();
+                            _signal.Release();
+                        }
                     }
-                    finally
+                    else if (operation.MethodName == nameof(ReadSubmodelById))
                     {
-                        _signal.Release();
+                        try
+                        {
+                            var submodel =
+                                _persistenceService.ReadSubmodelById(operation.Context.SecurityConfig, operation.Context.AssetAdministrationShellIdentifier, operation.Context.SubmodelIdentifier);
+                            var result = new DbRequestResult()
+                            {
+                                Submodel = submodel
+                            };
+                            operation.TaskCompletionSource.SetResult(result);
+                        }
+                        catch (Exception ex)
+                       {
+                            operation.TaskCompletionSource.SetException(ex);
+                        }
+                        finally
+                        {
+                            _lock.Release();
+                            _signal.Release();
+                        }
                     }
                 }
             }
         }
     }
 
-    private async Task ProcessCommandOperations()
-    {
-        foreach (var operation in _commandOperations.GetConsumingEnumerable())
-        {
-            if (operation != null)
-            {
-                _isRequestingCommand = true;
-
-                if (operation.MethodName == nameof(ReadSubmodelById))
-                {
-                    try
-                    {
-                        var submodel =
-                            _persistenceService.ReadSubmodelById(operation.Context.SecurityConfig, operation.Context.AssetAdministrationShellIdentifier, operation.Context.SubmodelIdentifier);
-                        var result = new DbRequestResult()
-                        {
-                            Submodel = submodel
-                        };
-                        operation.TaskCompletionSource.SetResult(result);
-                    }
-                    catch (Exception ex)
-                    {
-                        var result = new DbRequestResult()
-                        {
-                            Exception = ex
-                        };
-                        operation.TaskCompletionSource.SetResult(result);
-                    }
-                    finally
-                    {
-                        _isRequestingCommand = false;
-                        _signal.Release();
-                    }
-                }
-            }
-        }
-    }
 
     public Task<List<ISubmodelElement>> ReadPagedSubmodelElements(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier) => throw new NotImplementedException();
 }

@@ -1505,10 +1505,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var dbRequestResult = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
 
-        if (dbRequestResult.Exception != null)
-        {
-            throw dbRequestResult.Exception;
-        }
 
         var submodel = dbRequestResult.Submodel;
         var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
