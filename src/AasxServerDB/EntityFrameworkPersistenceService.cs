@@ -163,7 +163,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             throw new Exception($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
         }
 
-        bool found = IsSubmodelPresentWithinAAS(securityConfig, aasIdentifier, submodelIdentifier, out ISubmodel output);
+        // bool found = IsSubmodelPresentWithinAAS(securityConfig, aasIdentifier, submodelIdentifier, out ISubmodel output);
+        var output = Converter.GetSubmodel(null, submodelIdentifier);
+        var found = output != null;
         if (found)
         {
             //_logger.LogDebug($"Asset Administration Shell with id {aasIdentifier} found.");

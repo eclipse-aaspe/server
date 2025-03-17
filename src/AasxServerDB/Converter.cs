@@ -52,6 +52,22 @@ namespace AasxServerDB
             return paths;
         }
 
+        public static AdminShellPackageEnv? GetPackageEnv(string aasID, out string envFileName)
+        {
+            var db = new AasContext();
+            envFileName = ";";
+
+            var aasDBList = db.AASSets.Where(aas => aas.Identifier == aasID).ToList();
+
+            if (aasDBList.Count != 1)
+            {
+                return null;
+            }
+
+            envFileName = GetAASXPath(aasDBList[0].EnvId);
+
+            return GetPackageEnv(aasDBList[0].EnvId);
+        }
         public static AdminShellPackageEnv? GetPackageEnv(int envId)
         {
             var timeStamp = DateTime.UtcNow;

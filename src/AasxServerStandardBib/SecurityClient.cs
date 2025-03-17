@@ -3120,7 +3120,7 @@ namespace AasxServer
                         t.nextCycle.SetTimeStamp(timeStamp);
                     }
 
-                    Program.signalNewData(0);
+                    // Program.signalNewData(0);
 
                     runOperations(t.def, t.envIndex, timeStamp);
                     taskRun = true;

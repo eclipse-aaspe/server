@@ -1,34 +1,35 @@
 @page "/"
 @inject AASService SubmodelService
-@inject NavigationManager NavigationManager
 @inject ISecurityService SecService
+@using MW.Blazor
 @using AasCore.Aas3_0
 @using AasSecurity;
 @using AasSecurity.Models;
 @using Extensions
 @using Microsoft.IdentityModel.Tokens;
+@using Microsoft.AspNetCore.Http;
 @using System.Net;
 @using QRCoder;
 @using AasxServerBlazor.Data
 @using TimeStamp
 @using static AasxServerStandardBib.TimeSeriesPlotting;
 @using Range = AasCore.Aas3_0.Range
-
+@inject NavigationManager NavMan
 @implements IDisposable
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
 
 <div class="col-12 row">
     <br/>
     <div class="col-5" style="border-width:3px; border-style: solid; border-color: blue; border-radius: 8px; background-color:aliceblue;
             word-wrap: break-word; word-break: break-all; position: sticky">
-        @updateVisibleTree(Items, SelectedNode)
-        @if (Program.isLoading)
-        {
-            <span style="color:white;background-color:blue;">Loading...</span>
+        @{
+            updateVisibleTree();
+            if (Program.isLoading)
+            {
+                <span style="color:white;background-color:blue;">Loading...</span>
+            }
         }
-        else
-        {
-            // AasxRestServerLibrary.AasxRestServer.TestResource.initListOfRepositories();
-        }
+        <span></span>
         <Tree @bind-ExpandedNodes="ExpandedNodes" @bind-SelectedNode="SelectedNode" ChildSelector="@(item => item.Children)"
               HasChildNodes="@(item => item.Children?.Any() == true)" HtmlId="@(item => GetHtmlId(item))" Nodes="Items">
             <TitleTemplate>
@@ -722,6 +723,8 @@
 
     private Item SelectedNode { get; set; }
 
+    private string aasID = "";
+
     static ulong dataVersion = 0;
 
     public static void checkDataVersion()
@@ -734,11 +737,43 @@
 
     System.Threading.Timer refresh = null;
 
+        /*
+        void StateHasChanged()
+        {
+        // Set a breakpoint on the following line
+        base.StateHasChanged();
+    }
+    */
+
+    [CascadingParameter] private HttpContext HttpContext { get; set; }
+
     protected override void OnInitialized()
     {
         // OnInitialized() always called twice
-        SubmodelService.NewDataAvailable += NewData;
-        Program.signalNewData(1);
+        if (HttpContext == null)
+        {
+            // Pre-rendering logic
+            SubmodelService.NewDataAvailable += NewData;
+
+            var uri = NavMan.Uri;
+            var splitUrl = uri.Split("?");
+            if (splitUrl.Length == 2)
+            {
+                var query = System.Web.HttpUtility.ParseQueryString(splitUrl[1]);
+                var list = query.Get("aas");
+                if (!list.IsNullOrEmpty())
+                {
+                    aasID = list;
+                }
+            }
+
+            newDataMode = 1;
+            // Program.signalNewData(1);
+        }
+        else
+        {
+            // Actual rendering logic
+        }
     }
 
     public void Dispose()
@@ -764,13 +799,14 @@
 
     bool update = true;
 
-    string updateVisibleTree(List<Item> viewItems, Item selectedNode)
+    void updateVisibleTree()
     {
         if (!update)
         {
-            return string.Empty;
+            return;
         }
 
+        var selectedNode = SelectedNode;
         switch (newDataMode)
         {
             case 0:
@@ -789,8 +825,7 @@
                     }
                 }
 
-                SubmodelService.BuildTree();
-                Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
+                Items = SubmodelService.BuildTree(aasID);
                 ExpandedNodes.Clear();
                 selectedNode = null;
                 if (isSelected)
@@ -812,8 +847,7 @@
                 break;
             // 3 == build new tree, all nodes closed
             case 3:
-                SubmodelService.BuildTree();
-                Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
+                Items = SubmodelService.BuildTree(aasID);
                 ExpandedNodes.Clear();
                 selectedNode = null;
                 newDataMode = 0;
@@ -821,8 +855,6 @@
         }
 
         SelectedNode = selectedNode;
-
-        return string.Empty;
     }
 
     List<string> GetPath(Item i)

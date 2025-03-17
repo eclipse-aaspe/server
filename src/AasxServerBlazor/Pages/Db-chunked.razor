@@ -320,30 +320,30 @@
                         <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all">
                             <thead>
                                 <tr>
-                                    <th style="word-break:break-all;">Env#</th>
-                                    <th style="word-break:break-all">AAS#</th>
-                                    <th style="word-break:break-all">IdShort</th>
-                                    <th style="word-break:break-all">DisplayName</th>
-                                    <th style="word-break:break-all">Category</th>
-                                    <th style="word-break:break-all">Description</th>
-                                    <th style="word-break:break-all">Extensions</th>
-                                    <th style="word-break:break-all">Identifier</th>
-                                    <th style="word-break:break-all">EmbeddedDataSpecifications</th>
-                                    <th style="word-break:break-all">DerivedFrom</th>
-                                    <th style="word-break:break-all">Version</th>
-                                    <th style="word-break:break-all">Revision</th>
-                                    <th style="word-break:break-all">Creator</th>
-                                    <th style="word-break:break-all">TemplateId</th>
-                                    <th style="word-break:break-all">EmbeddedDataSpecifications</th>
-                                    <th style="word-break:break-all">AssetKind</th>
-                                    <th style="word-break:break-all">GlobalAssetId</th>
-                                    <th style="word-break:break-all">AssetType</th>
-                                    <th style="word-break:break-all">SpecificAssetIds</th>
-                                    <th style="word-break:break-all">ThumbnailPath</th>
-                                    <th style="word-break:break-all">ThumbnailType</th>
-                                    <th style="word-break:break-all">TimeStamps</th>
-                                    <th style="word-break:break-all">Links</th>
-                                    <th style="word-break:break-all">API</th>
+                                    <th style="word-break:break-all;font-size:x-small;">Env#</th>
+                                    <th style="word-break:break-all;font-size:x-small;">AAS#</th>
+                                    <th style="word-break:break-all;font-size:x-small;;width:10%">IdShort</th>
+                                    <th style="word-break:break-all;font-size:x-small;">DisplayName</th>
+                                    <th style="word-break:break-all;font-size:x-small;">Category</th>
+                                    <th style="word-break:break-all;font-size:x-small;">Description</th>
+                                    <th style="word-break:break-all;font-size:x-small;">Extensions</th>
+                                    <th style="word-break:break-all;font-size:x-small;">Identifier</th>
+                                    <th style="word-break:break-all;font-size:x-small;">EmbeddedDataSpecifications</th>
+                                    <th style="word-break:break-all;font-size:x-small;">DerivedFrom</th>
+                                    <th style="word-break:break-all;font-size:x-small;">Version</th>
+                                    <th style="word-break:break-all;font-size:x-small;">Revision</th>
+                                    <th style="word-break:break-all;font-size:x-small;">Creator</th>
+                                    <th style="word-break:break-all;font-size:x-small;">TemplateId</th>
+                                    <th style="word-break:break-all;font-size:x-small;">EmbeddedDataSpecifications</th>
+                                    <th style="word-break:break-all;font-size:x-small;">AssetKind</th>
+                                    <th style="word-break:break-all;font-size:x-small;">GlobalAssetId</th>
+                                    <th style="word-break:break-all;font-size:x-small;">AssetType</th>
+                                    <th style="word-break:break-all;font-size:x-small;">SpecificAssetIds</th>
+                                    <th style="word-break:break-all;font-size:x-small;">ThumbnailPath</th>
+                                    <th style="word-break:break-all;font-size:x-small;">ThumbnailType</th>
+                                    <th style="word-break:break-all;font-size:x-small;">TimeStamps</th>
+                                    <th style="word-break:break-all;font-size:x-small;">Links</th>
+                                    <th style="word-break:break-all;font-size:x-small;">API</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -389,7 +389,7 @@
                                         <td style="word-break:keep-all">
                                             <a href="@($"{shorturl}/env?envid={AASSet?.EnvId}")" target="_blank">env </a>
                                             <a href="@($"{shorturl}/sm?aasid={AASSet?.Id}")" target="_blank">sm</a>
-                                            <a href="@($"{Program.externalBlazor}/db-tree?aas={AASSet?.Id}")" target="_blank">tree </a>
+                                            <a href="@($"{Program.externalBlazor}?aas={AASSet?.Identifier}")" target="_blank">tree </a>
                                         </td>
                                         <td style="word-break:keep-all">
                                             @if (!AASSet.Identifier.IsNullOrEmpty())
@@ -557,10 +557,12 @@
 
     private void CheckTotalCountAndUpdate()
     {
+        /*
         if (size > 100000)
         {
             size = 100000;
         }
+        */
         if (offset > totalCount)
         {
             offset = totalCount - 1;
