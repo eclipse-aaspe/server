@@ -101,8 +101,8 @@
             {
                 <input @bind="CurrentValue" style="width:200px; border-width: 1px; border-color: black;"/>
                 @code {
-            private string CurrentValue { get; set; }
-}
+                    private string CurrentValue { get; set; }
+                }
                 if (!CurrentValue.IsNullOrEmpty())
                 {
                     var splitCur = CurrentValue.Split("=");
@@ -317,33 +317,33 @@
                     <br/>
 
                     <div style="width: 100%; height: 70vh; overflow-y: auto; overflow-y: auto; overflow-x: hidden;">
-                        <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all">
+                        <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;border-color:blue;">
                             <thead>
-                                <tr>
-                                    <th style="word-break:break-all;font-size:x-small;">Env#</th>
-                                    <th style="word-break:break-all;font-size:x-small;">AAS#</th>
-                                    <th style="word-break:break-all;font-size:x-small;;width:10%">IdShort</th>
-                                    <th style="word-break:break-all;font-size:x-small;">DisplayName</th>
-                                    <th style="word-break:break-all;font-size:x-small;">Category</th>
-                                    <th style="word-break:break-all;font-size:x-small;">Description</th>
-                                    <th style="word-break:break-all;font-size:x-small;">Extensions</th>
-                                    <th style="word-break:break-all;font-size:x-small;">Identifier</th>
-                                    <th style="word-break:break-all;font-size:x-small;">EmbeddedDataSpecifications</th>
-                                    <th style="word-break:break-all;font-size:x-small;">DerivedFrom</th>
-                                    <th style="word-break:break-all;font-size:x-small;">Version</th>
-                                    <th style="word-break:break-all;font-size:x-small;">Revision</th>
-                                    <th style="word-break:break-all;font-size:x-small;">Creator</th>
-                                    <th style="word-break:break-all;font-size:x-small;">TemplateId</th>
-                                    <th style="word-break:break-all;font-size:x-small;">EmbeddedDataSpecifications</th>
-                                    <th style="word-break:break-all;font-size:x-small;">AssetKind</th>
-                                    <th style="word-break:break-all;font-size:x-small;">GlobalAssetId</th>
-                                    <th style="word-break:break-all;font-size:x-small;">AssetType</th>
-                                    <th style="word-break:break-all;font-size:x-small;">SpecificAssetIds</th>
-                                    <th style="word-break:break-all;font-size:x-small;">ThumbnailPath</th>
-                                    <th style="word-break:break-all;font-size:x-small;">ThumbnailType</th>
-                                    <th style="word-break:break-all;font-size:x-small;">TimeStamps</th>
-                                    <th style="word-break:break-all;font-size:x-small;">Links</th>
-                                    <th style="word-break:break-all;font-size:x-small;">API</th>
+                                <tr style="border-color:blue;">
+                                    <th style="word-break:break-all;font-size:x-small;border-color:blue;">Env#</th>
+                                    <th style="word-break:break-all;font-size:x-small;border-color:blue;">AAS#</th>
+                                    <th style="word-break:break-all;font-size:x-small;border-color:blue;width:10%">IdShort</th>
+                                    <th style="word-break:break-all;font-size:x-small;border-color:blue;">DisplayName</th>
+                                    <th style="word-break:break-all;font-size:x-small;border-color:blue;">Category</th>
+                                    <th style="word-break:break-all;font-size:x-small;border-color:blue;">Description</th>
+                                    <th style="word-break:break-all;font-size:x-small;border-color:blue;">Extensions</th>
+                                    <th style="word-break:break-all;font-size:x-small;border-color:blue;">Identifier</th>
+                                    <th style="word-break:break-all;font-size:x-small;border-color:blue;">EmbeddedDataSpecifications</th>
+                                    <th style="word-break:break-all;font-size:x-small;border-color:blue;">DerivedFrom</th>
+                                    <th style="word-break:break-all;font-size:x-small;border-color:blue;">Version</th>
+                                    <th style="word-break:break-all;font-size:x-small;border-color:blue;">Revision</th>
+                                    <th style="word-break:break-all;font-size:x-small;border-color:blue;">Creator</th>
+                                    <th style="word-break:break-all;font-size:x-small;border-color:blue;">TemplateId</th>
+                                    <th style="word-break:break-all;font-size:x-small;border-color:blue;">EmbeddedDataSpecifications</th>
+                                    <th style="word-break:break-all;font-size:x-small;border-color:blue;">AssetKind</th>
+                                    <th style="word-break:break-all;font-size:x-small;border-color:blue;">GlobalAssetId</th>
+                                    <th style="word-break:break-all;font-size:x-small;border-color:blue;">AssetType</th>
+                                    <th style="word-break:break-all;font-size:x-small;border-color:blue;">SpecificAssetIds</th>
+                                    <th style="word-break:break-all;font-size:x-small;border-color:blue;">ThumbnailPath</th>
+                                    <th style="word-break:break-all;font-size:x-small;border-color:blue;">ThumbnailType</th>
+                                    <th style="word-break:break-all;font-size:x-small;border-color:blue;">TimeStamps</th>
+                                    <th style="word-break:break-all;font-size:x-small;border-color:blue;">Links</th>
+                                    <th style="word-break:break-all;font-size:x-small;border-color:blue;">API</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -352,46 +352,46 @@
                                         var aas64 = Base64UrlEncoder.Encode(AASSet?.Identifier);
                                         var link  = $"{AasxServer.Program.externalBlazor}/shells/{aas64}";
                                     }
-                                    <tr style="height: auto">
-                                        <td style="word-break:keep-all">@AASSet?.EnvId</td>
-                                        <td style="word-break:keep-all">
+                                    <tr style="height:auto;border-color:blue;">
+                                        <td style="word-break:keep-all;border-color:blue;">@AASSet?.EnvId</td>
+                                        <td style="word-break:keep-all;border-color:blue;">
                                             <b>@AASSet?.Id</b>
                                         </td>
-                                        <td style="word-break:keep-all;max-width:200px">
+                                        <td style="word-break:keep-all;max-width:200px;border-color:blue;">
                                             <div class="cell-content">
                                             @AASSet?.IdShort
                                             </div>
                                         </td>
-                                        <td style="font-size:small">@AASSet?.DisplayName</td>
-                                        <td style="word-break:keep-all">@AASSet?.Category</td>
-                                        <td style="font-size:small">@AASSet?.Description</td>
-                                        <td style="font-size:small">@AASSet?.Extensions</td>
-                                        <td>@AASSet?.Identifier</td>
-                                        <td style="font-size:small">@AASSet?.EmbeddedDataSpecifications</td>
-                                        <td style="font-size:small">@AASSet?.DerivedFrom</td>
-                                        <td>@AASSet?.Version</td>
-                                        <td>@AASSet?.Revision</td>
-                                        <td style="font-size:small">@AASSet?.Creator</td>
-                                        <td>@AASSet?.TemplateId</td>
-                                        <td style="font-size:small">@AASSet?.AEmbeddedDataSpecifications</td>
-                                        <td>@AASSet?.AssetKind</td>
-                                        <td>@AASSet?.GlobalAssetId</td>
-                                        <td>@AASSet?.AssetType</td>
-                                        <td style="font-size:small">@AASSet?.SpecificAssetIds</td>
-                                        <td>@AASSet?.DefaultThumbnailPath</td>
-                                        <td>@AASSet?.DefaultThumbnailContentType</td>
-                                        <td style="width:175px;color:lightgray;font-size:x-small">
+                                        <td style="font-size:small;border-color:blue;">@AASSet?.DisplayName</td>
+                                        <td style="word-break:keep-all;border-color:blue;">@AASSet?.Category</td>
+                                        <td style="font-size:small;border-color:blue;">@AASSet?.Description</td>
+                                        <td style="font-size:small;border-color:blue;">@AASSet?.Extensions</td>
+                                        <td style=";border-color:blue;">@AASSet?.Identifier</td>
+                                        <td style="font-size:small;border-color:blue;">@AASSet?.EmbeddedDataSpecifications</td>
+                                        <td style="font-size:small;border-color:blue;">@AASSet?.DerivedFrom</td>
+                                        <td style=";border-color:blue;">@AASSet?.Version</td>
+                                        <td style=";border-color:blue;">@AASSet?.Revision</td>
+                                        <td style="font-size:small;border-color:blue;">@AASSet?.Creator</td>
+                                        <td style=";border-color:blue;">@AASSet?.TemplateId</td>
+                                        <td style="font-size:small;border-color:blue;">@AASSet?.AEmbeddedDataSpecifications</td>
+                                        <td style=";border-color:blue;">@AASSet?.AssetKind</td>
+                                        <td style=";border-color:blue;">@AASSet?.GlobalAssetId</td>
+                                        <td style=";border-color:blue;">@AASSet?.AssetType</td>
+                                        <td style="font-size:small;border-color:blue;">@AASSet?.SpecificAssetIds</td>
+                                        <td style=";border-color:blue;">@AASSet?.DefaultThumbnailPath</td>
+                                        <td style=";border-color:blue;">@AASSet?.DefaultThumbnailContentType</td>
+                                        <td style="width:175px;color:lightgray;font-size:x-small;border-color:blue;">
                                             @($"CREATE {TimeStamp.DateTimeToString(AASSet.TimeStampCreate)}")<br />
                                             @($"UPDATE {TimeStamp.DateTimeToString(AASSet.TimeStamp)}")<br />
                                             @($"TREE {TimeStamp.DateTimeToString(AASSet.TimeStampTree)}")<br />
                                             @($"DELETE {TimeStamp.DateTimeToString(AASSet.TimeStampDelete)}")
                                         </td>
-                                        <td style="word-break:keep-all">
+                                        <td style="word-break:keep-all;border-color:blue;">
                                             <a href="@($"{shorturl}/env?envid={AASSet?.EnvId}")" target="_blank">env </a>
                                             <a href="@($"{shorturl}/sm?aasid={AASSet?.Id}")" target="_blank">sm</a>
                                             <a href="@($"{Program.externalBlazor}?aas={AASSet?.Identifier}")" target="_blank">tree </a>
                                         </td>
-                                        <td style="word-break:keep-all">
+                                        <td style="word-break:keep-all;border-color:blue;">
                                             @if (!AASSet.Identifier.IsNullOrEmpty())
                                             {
                                                 <a href="@link" target="_blank">api</a>
@@ -558,8 +558,8 @@
     private void CheckTotalCountAndUpdate()
     {
         /*
-        if (size > 100000)
-        {
+            if (size > 100000)
+            {
             size = 100000;
         }
         */
@@ -679,6 +679,8 @@
                                 aas.GlobalAssetId.Contains(search)
                             );
                             query = (qAAS as IQueryable<T>);
+                            totalCount = query.Count();
+                            CheckTotalCountAndUpdate();
                             break;
                         case IQueryable<SMESet>:
                             var qSME = (query as IQueryable<SMESet>).Where(sme =>
@@ -686,6 +688,8 @@
                                 sme.SemanticId.Contains(search)
                             );
                             query = (qSME as IQueryable<T>);
+                            totalCount = query.Count();
+                            CheckTotalCountAndUpdate();
                             break;
                     }
                 }

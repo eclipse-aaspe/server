@@ -31,7 +31,7 @@
         }
         <span></span>
         <Tree @bind-ExpandedNodes="ExpandedNodes" @bind-SelectedNode="SelectedNode" ChildSelector="@(item => item.Children)"
-              HasChildNodes="@(item => item.Children?.Any() == true)" HtmlId="@(item => GetHtmlId(item))" Nodes="Items">
+              HasChildNodes="@(item => item.Children?.Any() == true)" HtmlId="@(item => GetHtmlId(item))" Nodes="Items" TreePage="this">
             <TitleTemplate>
                 @{
                     var getPolicy = string.Empty;
@@ -201,15 +201,21 @@
                     <br />
                     <span style="color:lightgray;">DELETE @TimeStamp.DateTimeToString(r.TimeStampDelete)</span>
                     <br />
-            @code {
+                    @code {
 
-                private void SetTimeStamp()
-                {
-                    (SelectedNode.Tag as IReferable).SetTimeStamp(DateTime.UtcNow);
-                    Program.env[SelectedNode.envIndex].setWrite(true);
+                    private void SetTimeStamp()
+                    {
+                        (SelectedNode.Tag as IReferable).SetTimeStamp(DateTime.UtcNow);
+                        if (aasID == "")
+                        {
+                            Program.env[SelectedNode.envIndex].setWrite(true);
+                        }
+                        else
+                        {
+                            AasxServer.AasxTask.getEnv(aasID).setWrite(true);
+                        }
+                    }
                 }
-
-            }
             }
 
                 var externalLink = false;
@@ -285,7 +291,14 @@
                                 CurrentValue = string.Empty;
                             (SelectedNode.Tag as Property).Value = CurrentValue;
                             (SelectedNode.Tag as Property).SetTimeStamp(DateTime.UtcNow);
-                            Program.env[SelectedNode.envIndex].setWrite(true);
+                            if (aasID == "")
+                            {
+                                Program.env[SelectedNode.envIndex].setWrite(true);
+                            }
+                            else
+                            {
+                                AasxServer.AasxTask.getEnv(aasID).setWrite(true);
+                            }
                             Program.signalNewData(0);
                         }
 
@@ -576,7 +589,15 @@
                     <span>@($" {observedSingleKey}")</span>
                     <br/>
                     // var refsme = Program.env[0].AasEnv.FindReferableByReference(be.Observed);
-                    var refsme = Program.env[SelectedNode.envIndex].AasEnv.FindReferableByReference(be.Observed);
+                    IReferable refsme = null;
+                    if (aasID == "")
+                    {
+                        refsme = Program.env[SelectedNode.envIndex].AasEnv.FindReferableByReference(be.Observed);
+                    }
+                    else
+                    {
+                        refsme = AasxServer.AasxTask.getEnv(aasID).AasEnv.FindReferableByReference(be.Observed);
+                    }
                     if (refsme != null)
                     {
                         <span style="color:lightgray;">UPDATE @TimeStamp.DateTimeToString(refsme.TimeStamp)</span>
@@ -683,7 +704,14 @@
                     byte[] data;
                     using (var ms = new System.IO.MemoryStream())
                     {
-                        await Program.env[SelectedNode.envIndex].GetLocalStreamFromPackage(f.Value).CopyToAsync(ms);
+                        if (aasID == "")
+                        {
+                            await Program.env[SelectedNode.envIndex].GetLocalStreamFromPackage(f.Value).CopyToAsync(ms);
+                        }
+                        else
+                        {
+                            await AasxServer.AasxTask.getEnv(aasID).GetLocalStreamFromPackage(f.Value).CopyToAsync(ms);
+                        }
                         data = ms.ToArray();
                     }
 
@@ -737,11 +765,11 @@
 
     System.Threading.Timer refresh = null;
 
-        /*
-        void StateHasChanged()
-        {
-        // Set a breakpoint on the following line
-        base.StateHasChanged();
+    /*
+    void StateHasChanged()
+    {
+    // Set a breakpoint on the following line
+    base.StateHasChanged();
     }
     */
 
@@ -778,6 +806,7 @@
 
     public void Dispose()
     {
+        AasxServer.AasxTask.saveAASXtoTemp(aasID);
         SubmodelService.NewDataAvailable -= NewData;
     }
 
@@ -984,8 +1013,18 @@
         }
     }
 
-    public static string CreateDetailsImage(Item item, out bool url, out bool svg)
+    public string CreateDetailsImage(Item item, out bool url, out bool svg)
     {
+        AdminShellNS.AdminShellPackageEnv[] env = null;
+        if (aasID.IsNullOrEmpty())
+        {
+            env = Program.env;
+        }
+        else
+        {
+            env = new AdminShellNS.AdminShellPackageEnv[] { AasxServer.AasxTask.getEnv(aasID) };
+        }
+
         svg = false;
         url = false;
 
@@ -1006,10 +1045,10 @@
                         try
                         {
                             {
-                                if (Program.env[item.envIndex] == null)
+                                if (env[item.envIndex] == null)
                                     return string.Empty;
 
-                                using var s = Program.env[item.envIndex].GetLocalThumbnailStream();
+                                using var s = env[item.envIndex].GetLocalThumbnailStream();
                                 if (s != null)
                                 {
                                     using var m = new System.IO.MemoryStream();
@@ -1042,7 +1081,7 @@
                                 case "svg":
                                     try
                                     {
-                                        using var s = Program.env[item.envIndex].GetLocalStreamFromPackage(f.Value);
+                                        using var s = env[item.envIndex].GetLocalStreamFromPackage(f.Value);
                                         if (s != null)
                                         {
                                             using var m = new System.IO.MemoryStream();
@@ -1167,8 +1206,8 @@
 
         switch (itemTag)
         {
-            case null when Program.envSymbols[item.envIndex] == "L":
-                return $"{Program.externalRest}/server/getaasx/{Convert.ToString(SelectedNode.envIndex)}";
+            // case null when Program.envSymbols[item.envIndex] == "L":
+            //    return $"{Program.externalRest}/server/getaasx/{Convert.ToString(SelectedNode.envIndex)}";
             case AssetAdministrationShell:
                 return $"{Program.externalBlazor}/packages/{Base64UrlEncoder.Encode(Convert.ToString(SelectedNode.envIndex))}";
             case File:
@@ -1241,6 +1280,8 @@
 
     string GetSymbols(Item item)
     {
+        return string.Empty;
+
         if (item == null)
         {
             return string.Empty;
@@ -1325,9 +1366,9 @@
             case string when item.Text.Contains("/readme"):
                 ret += item.Text;
                 break;
-            case null when Program.envSymbols[item.envIndex] == "L":
-                ret += "AASX2";
-                break;
+            // case null when Program.envSymbols[item.envIndex] == "L":
+            //    ret += "AASX2";
+            //    break;
             case AssetAdministrationShell:
                 ret += "AAS";
                 break;
@@ -1423,9 +1464,9 @@
 
         switch (itemTag)
         {
-            case null when Program.envSymbols[item.envIndex] == "L":
-                ret = item.Text;
-                break;
+            // case null when Program.envSymbols[item.envIndex] == "L":
+            //    ret = item.Text;
+            //    break;
             case string when item.Text.Contains("/readme"):
                 ret = " ";
                 break;

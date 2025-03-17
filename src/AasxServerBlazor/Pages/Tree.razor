@@ -32,7 +32,7 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
                                 border = "border:dotted;border-color:blue;";
                             }
 
-                            var detailsImage = CreateDetailsImage(it, out var url, out var svg);
+                            var detailsImage = TreePage.CreateDetailsImage(it, out var url, out var svg);
                             if (!string.IsNullOrEmpty(detailsImage) && !url)
                             {
                                 if (!svg)
@@ -89,7 +89,8 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
                               SelectedNodeChanged="SelectedNodeChanged"
                               Visible="nodeExpanded"
                               HasChildNodes="HasChildNodes"
-                              HtmlId="HtmlId"/>
+                              HtmlId="HtmlId"
+                              TreePage="TreePage" />
                     }
                 }
             </div>
@@ -119,6 +120,8 @@ https://github.com/mwinkler/Blazor.Components/blob/master/LICENSE
     [ Parameter ] public Func<TNode, bool> HasChildNodes { get; set; } = _ => true;
 
     [ Parameter ] public Func<Item, string> HtmlId { get; set; } = _ => string.Empty;
+
+    [ Parameter ] public TreePage TreePage { get; set; }
 
     private void OnToggleNode(TNode node, bool expand)
     {

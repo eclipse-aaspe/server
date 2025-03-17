@@ -3014,15 +3014,42 @@ namespace AasxServer
             }
         }
 
-        static void saveAASXtoTemp()
+        public static AdminShellPackageEnv getEnv(string aasID)
+        {
+            if (aasID.IsNullOrEmpty())
+            {
+                return null;
+            }
+
+            var envFileName = "";
+            return AasxServerDB.Converter.GetPackageEnv(aasID, out envFileName);
+        }
+        public static void saveAASXtoTemp(string aasID)
+        {
+            if (aasID.IsNullOrEmpty())
+            {
+                return;
+            }
+
+            var env = getEnv(aasID);
+
+            if (env == null)
+            {
+                return;
+            }
+
+            saveAASXtoTemp([env]);
+
+        }
+        static void saveAASXtoTemp(AdminShellPackageEnv[] env)
         {
             bool newData = false;
             int envi = 0;
-            while (envi < Program.env.Length)
+            while (envi < env.Length)
             {
                 if (!Program.withDb)
                 {
-                    string fn = Program.envFileName[envi];
+                    string fn = env[envi].Filename;
 
                     if (fn != null && fn != "")
                     {
@@ -3032,9 +3059,9 @@ namespace AasxServer
                             lock (Program.changeAasxFile)
                             {
                                 Console.WriteLine("SAVE TEMP: " + fn);
-                                Program.env[envi].SaveAs("./temp/" + fn, true);
+                                env[envi].SaveAs("./temp/" + fn, true);
                                 DateTime timeStamp = DateTime.Now;
-                                foreach (var submodel in Program.env[envi].AasEnv.Submodels)
+                                foreach (var submodel in env[envi].AasEnv.Submodels)
                                 {
                                     submodel.TimeStampCreate = timeStamp;
                                     submodel.SetTimeStamp(timeStamp);
@@ -3048,11 +3075,11 @@ namespace AasxServer
                 }
                 else
                 {
-                    if (Program.env[envi] != null && Program.env[envi].getWrite())
+                    if (env[envi] != null && env[envi].getWrite())
                     {
                         lock (Program.changeAasxFile)
                         {
-                            Edit.Update(Program.env[envi]);
+                            Edit.Update(env[envi]);
                             newData = true;
                         }
                     }
@@ -3090,7 +3117,7 @@ namespace AasxServer
                 if (Program.saveTempDt.AddSeconds(Program.saveTemp) < timeStamp)
                 {
                     Program.saveTempDt = timeStamp;
-                    saveAASXtoTemp();
+                    saveAASXtoTemp(Program.env);
                 }
             }
 
