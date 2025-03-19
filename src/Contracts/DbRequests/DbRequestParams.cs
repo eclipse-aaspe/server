@@ -1,16 +1,14 @@
-namespace AasxServerStandardBib.DbRequest;
+namespace Contracts.DbRequests;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Contracts;
+using AasCore.Aas3_0;
 using Contracts.Pagination;
 
-public class DbRequestContext
+public class DbRequestParams
 {
-    public ISecurityConfig SecurityConfig { get; set; }
-
     public IPaginationParameters PaginationParameters { get; set; }
 
     public List<ISpecificAssetId> AssetIds { get; set; }
@@ -22,4 +20,5 @@ public class DbRequestContext
     public string AssetAdministrationShellIdentifier { get; set; }
 
     public string SubmodelIdentifier { get; set; }
+
 }

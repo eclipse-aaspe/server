@@ -54,6 +54,7 @@ using Contracts.Pagination;
 using Contracts;
 using AasxServerStandardBib.Services;
 using System.Threading.Tasks;
+using Contracts.DbRequests;
 
 namespace IO.Swagger.Controllers
 {
@@ -437,7 +438,7 @@ namespace IO.Swagger.Controllers
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
             var result = await _dbRequestHandlerService.ReadPagedAssetAdministrationShells(paginationParameters, securityConfig, reqAssetIds, idShort);
-            var paginatedAasList = result.AssetAdministrationShells;
+            var paginatedAasList = result;
             var output = _paginationService.GetPaginatedResult(paginatedAasList, paginationParameters);
             return new ObjectResult(output);
         }

@@ -3,6 +3,7 @@ namespace Contracts;
 using System.Collections.Generic;
 using AasCore.Aas3_0;
 using AdminShellNS;
+using Contracts.DbRequests;
 using Contracts.Pagination;
 
 public interface IPersistenceService
@@ -13,6 +14,9 @@ public interface IPersistenceService
     List<string> ReadFilteredPackages(string filterPath, List<AdminShellPackageEnv> list);
     AdminShellPackageEnv ReadPackageEnv(int envId);
     string ReadAASXPath(int? envId = null, string cdId = "", string aasId = "", string smId = "");
+
+    Task<DbRequestResult> DoDbOperation(DbRequest dbRequest);
+    //Task<List<ISubmodel>> DoDbOperation(DbRequest<ISubmodel> dbRequest);
 
     List<IAssetAdministrationShell> ReadPagedAssetAdministrationShells(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, List<ISpecificAssetId> assetIds, string idShort);
     ISubmodel ReadSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier);

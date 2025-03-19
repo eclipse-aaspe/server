@@ -47,21 +47,14 @@ using System.IO;
 using System.Linq;
 using System.Net.Mime;
 using System.Security.Claims;
-using System.Reflection.Emit;
 using System.Threading.Tasks;
-using System.Xml.Linq;
-using AasxServerDB;
 using AdminShellNS.Exceptions;
 using Microsoft.IdentityModel.Tokens;
 using Namotion.Reflection;
 using Newtonsoft.Json;
 using TimeStamp;
-using static AasxServerStandardBib.TimeSeriesPlotting.PlotArguments;
-using static QRCoder.PayloadGenerator;
 using Contracts;
-using AasxServerStandardBib.Services;
-using Contracts.Pagination;
-using static HotChocolate.ErrorCodes;
+using Contracts.DbRequests;
 
 /// <summary>
 /// 
@@ -1503,10 +1496,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-        var dbRequestResult = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+        var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
 
-
-        var submodel = dbRequestResult.Submodel;
         var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
         if (!authResult.Succeeded)
         {

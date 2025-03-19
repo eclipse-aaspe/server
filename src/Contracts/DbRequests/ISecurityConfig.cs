@@ -1,4 +1,4 @@
-namespace Contracts;
+namespace Contracts.DbRequests;
 using System;
 using System.Collections.Generic;
 using System.Linq;

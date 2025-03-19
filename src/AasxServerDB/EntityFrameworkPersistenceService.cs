@@ -17,6 +17,8 @@ using System.Security.Claims;
 using Microsoft.Extensions.DependencyInjection;
 using AasxServerStandardBib.Logging;
 using Contracts.Exceptions;
+using Contracts.DbRequests;
+using System.Threading.Tasks;
 
 public class EntityFrameworkPersistenceService : IPersistenceService
 {
@@ -700,4 +702,51 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         return true;
     }
 
+    public async Task<DbRequestResult> DoDbOperation(DbRequest dbRequest)
+    {
+        var result = new DbRequestResult();
+
+        switch (dbRequest.CrudType)
+        {
+            case DbRequestCrudType.Create:
+                break;
+            case DbRequestCrudType.Read:
+                if (dbRequest.RequestedTypeName == typeof(IAssetAdministrationShell).Name)
+                {
+                    if (dbRequest.IsRequestingMany)
+                    {
+                        var assetAdministrationShells = ReadPagedAssetAdministrationShells(dbRequest.Context.Params.PaginationParameters,
+                                dbRequest.Context.SecurityConfig,
+                                dbRequest.Context.Params.AssetIds,
+                                dbRequest.Context.Params.IdShort);
+                        result.AssetAdministrationShells = assetAdministrationShells;
+                    }
+                }
+                else if (dbRequest.RequestedTypeName == typeof(ISubmodel).Name)
+                {
+                    if (!dbRequest.IsRequestingMany)
+                    {
+                        var submodel = ReadSubmodelById(
+                                dbRequest.Context.SecurityConfig,
+                                dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                                dbRequest.Context.Params.SubmodelIdentifier);
+                        var submodelList = new List<ISubmodel>
+                        {
+                            submodel
+                        };
+                        result.Submodels = submodelList;
+                    }
+                }
+                break;
+            case DbRequestCrudType.Update:
+                break;
+            case DbRequestCrudType.Delete:
+                break;
+            default:
+                break;
+        }
+
+        dbRequest.TaskCompletionSource.SetResult(result);
+        return result;
+    }
 }

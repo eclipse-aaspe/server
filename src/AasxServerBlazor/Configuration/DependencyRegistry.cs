@@ -31,6 +31,7 @@ namespace AasxServerBlazor.Configuration;
 using AasxServerDB;
 using AasxServerStandardBib.DbRequest;
 using Contracts;
+using Contracts.DbRequests;
 using IO.Swagger.Models;
 
 public static class DependencyRegistry
