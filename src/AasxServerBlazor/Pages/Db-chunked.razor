@@ -752,12 +752,9 @@
                         break;
                     case IQueryable<SMEVirtualize>:
                         var qSME = db.SMESets.Where("true");
-                        if (search != "")
+                        if (smid != 0)
                         {
-                            qSME = qSME.Where(sme =>
-                                sme.IdShort.Contains(search) ||
-                                sme.SemanticId.Contains(search)
-                            );
+                            qSME = qSME.Where(sme => sme.SMId == smid);
                         }
                         if (smeid != 0)
                         {
@@ -766,6 +763,13 @@
                         if (parid != 0)
                         {
                             qSME = qSME.Where(sme => sme.ParentSMEId == parid);
+                        }
+                        if (search != "")
+                        {
+                            qSME = qSME.Where(sme =>
+                                sme.IdShort.Contains(search) ||
+                                sme.SemanticId.Contains(search)
+                            );
                         }
                         totalCount = qSME.Count();
                         qSME = qSME
@@ -793,17 +797,20 @@
                         .Take(request.Count)
                         .ToList();
                     Converter.CreateIdShortPath(db, smeList);
+                    var merged = Converter.GetSmeMerged(db, smeList);
+                    var smIdList = smeList.Select(sme => sme.SMId).Distinct();
+                    var smList = db.SMSets.Where(sm => smIdList.Contains(sm.Id)).ToList();
                     var smeListVirt = new List<SMEVirtualize>();
                     foreach (var sme in smeList)
                     {
                         smeListVirt.Add(new SMEVirtualize
                             {
-                                smSet = db.SMSets.Where(sm => sm.Id == sme.SMId).ToList().FirstOrDefault(),
+                                smSet = smList.Where(sm => sm.Id == sme.SMId).ToList().FirstOrDefault(),
                                 smeSet = sme,
-                                sValueList = db.SValueSets.Where(v => v.SMEId == sme.Id).ToList(),
-                                iValueList = db.IValueSets.Where(v => v.SMEId == sme.Id).ToList(),
-                                dValueList = db.DValueSets.Where(v => v.SMEId == sme.Id).ToList(),
-                                oValueList = db.OValueSets.Where(v => v.SMEId == sme.Id).ToList()
+                                sValueList = merged.Where(v => v.sValueSet != null).Select(v => v.sValueSet).Where(v => v.SMEId == sme.Id)?.ToList(),
+                                iValueList = merged.Where(v => v.iValueSet != null).Select(v => v.iValueSet).Where(v => v.SMEId == sme.Id)?.ToList(),
+                                dValueList = merged.Where(v => v.dValueSet != null).Select(v => v.dValueSet).Where(v => v.SMEId == sme.Id)?.ToList(),
+                                oValueList = merged.Where(v => v.oValueSet != null).Select(v => v.oValueSet).Where(v => v.SMEId == sme.Id)?.ToList(),
                             });
                     }
                     items = smeListVirt as List<T>;
