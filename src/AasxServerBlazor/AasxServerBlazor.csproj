@@ -90,12 +90,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Content Update="Pages\Db-tree.razor">
-        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      </Content>
-    </ItemGroup>
-
-    <ItemGroup>
         <None Update="LICENSE.TXT">
           <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
           <CopyToPublishDirectory>Never</CopyToPublishDirectory>

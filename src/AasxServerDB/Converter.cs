@@ -917,6 +917,36 @@ namespace AasxServerDB
             return sme;
         }
 
+        public static List<string[]>? GetValue(SMESet smeSet, List<SValueSet> sValueList, List<IValueSet> iValueList, List<DValueSet> dValueList)
+        {
+            var TValue = smeSet.TValue;
+            var SMEType = smeSet.SMEType;
+            var Id = smeSet.Id;
+
+            if (TValue == null)
+                return [[string.Empty, string.Empty]];
+
+            var list = new List<string[]>();
+            switch (TValue)
+            {
+                case "S":
+                    list = sValueList
+                        .ConvertAll<string[]>(s => [s.Value ?? string.Empty, s.Annotation ?? string.Empty]);
+                    break;
+                case "I":
+                    list = iValueList
+                        .ConvertAll<string[]>(s => [s.Value == null ? string.Empty : s.Value.ToString(), s.Annotation ?? string.Empty]);
+                    break;
+                case "D":
+                    list = dValueList
+                        .ConvertAll<string[]>(s => [s.Value == null ? string.Empty : s.Value.ToString(), s.Annotation ?? string.Empty]);
+                    break;
+            }
+            if (list.Count > 0 || (!SMEType.IsNullOrEmpty() && SMEType.Equals("MLP")))
+                return list;
+
+            return [[string.Empty, string.Empty]];
+        }
         public static List<string[]>? GetValue(SMESet smeSet, List<SmeMerged> tree)
         {
             var TValue = smeSet.TValue;
