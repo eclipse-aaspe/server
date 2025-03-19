@@ -807,10 +807,10 @@
                             {
                                 smSet = smList.Where(sm => sm.Id == sme.SMId).ToList().FirstOrDefault(),
                                 smeSet = sme,
-                                sValueList = merged.Where(v => v.sValueSet != null).Select(v => v.sValueSet).Where(v => v.SMEId == sme.Id)?.ToList(),
-                                iValueList = merged.Where(v => v.iValueSet != null).Select(v => v.iValueSet).Where(v => v.SMEId == sme.Id)?.ToList(),
-                                dValueList = merged.Where(v => v.dValueSet != null).Select(v => v.dValueSet).Where(v => v.SMEId == sme.Id)?.ToList(),
-                                oValueList = merged.Where(v => v.oValueSet != null).Select(v => v.oValueSet).Where(v => v.SMEId == sme.Id)?.ToList(),
+                                sValueList = merged.Where(v => v.sValueSet != null && v.sValueSet.SMEId == sme.Id).Select(v => v.sValueSet).ToList(),
+                                iValueList = merged.Where(v => v.iValueSet != null && v.iValueSet.SMEId == sme.Id).Select(v => v.iValueSet).ToList(),
+                                dValueList = merged.Where(v => v.dValueSet != null && v.dValueSet.SMEId == sme.Id).Select(v => v.dValueSet).ToList(),
+                                oValueList = merged.Where(v => v.oValueSet != null && v.oValueSet.SMEId == sme.Id).Select(v => v.oValueSet).ToList(),
                             });
                     }
                     items = smeListVirt as List<T>;
