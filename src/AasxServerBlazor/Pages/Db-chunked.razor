@@ -30,8 +30,12 @@
         word-break:break-all;
     }
 
+    .cell-details {
+        word-break: break-all;
+    }
+
     thead th {
-	    position: sticky;
+        position: sticky;
 	    top: 0;
 	    background-color: #fff;
 	    z-index: 100;
@@ -93,6 +97,9 @@
                 list = query.Get("smidentifier");
                 if (!list.IsNullOrEmpty())
                     smidentifier = list;
+                list = query.Get("details");
+                if (!list.IsNullOrEmpty())
+                    details = list.ToLower();
             }
 
             // change parameters to input window
@@ -122,6 +129,9 @@
                                 break;
                             case "search":
                                 search = splitCur[ 1 ];
+                                break;
+                            case "details":
+                                details = splitCur[1].ToLower();
                                 break;
                             case "envid":
                                 envid = 0;
@@ -316,7 +326,7 @@
                     </span>
                     <br/>
 
-                    <div style="width: 100%; height: 70vh; overflow-x: hidden; padding: 10px;">
+                    <div style="width: 100%; height: 80vh; overflow-x: hidden; padding: 10px;">
                         @* <table class="table table-bordered table-sm" style="min-width:100%;max-width:100%">
                         <div style="width: 100%; height: 70vh; overflow-y: auto; overflow-y: auto; overflow-x: hidden;"> *@
                         <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;border-color:blue;">
@@ -406,6 +416,131 @@
                     </div>
                 }
 
+                if (url.EndsWith("/sm"))
+                {
+                    totalCount = db.SMSets.Select(x => x.Id).Count();
+                    CheckTotalCountAndUpdate();
+                    if (update)
+                    {
+                        update = false;
+                        loadedItems = null;
+                        if (SMSetContainer != null)
+                        {
+                            SMSetContainer.RefreshDataAsync();
+                            this.StateHasChanged();
+                        }
+                    }
+
+                    <span>
+                        &nbsp&nbsp@($"SM#: {totalCount} size={size} offset={offset} search={search} details={details}")
+                    </span>
+                    <br />
+
+                    <div style="width: 100%; height: 80vh; overflow-x: hidden; padding: 10px;">
+                        <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;border-color:blue;">
+                            <thead>
+                                <tr style="border-color:blue;">
+                                    <th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">Env#</th>
+                                    <th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">AAS#</th>
+                                    <th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">SM#</th>
+                                    <th style="width:10%;font-size:x-small;word-break: break-all;border-color:blue;">Id Short</th>
+                                    <th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">Display Name</th>
+                                    <th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">Category</th>
+                                    <th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">Description</th>
+                                    <th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">Extensions</th>
+                                    <th style="width:10%;word-break:break-all;font-size:x-small;border-color:blue;">Identifier</th>
+                                    <th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">Kind</th>
+                                    <th style="width:10%;font-size:x-small;word-break: break-all;border-color:blue;">Semantic Id</th>
+                                    <th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">Supplemental Semantic Ids</th>
+                                    <th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">Qualifiers</th>
+                                    <th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">Embedded Data Specifications</th>
+                                    <th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">Version</th>
+                                    <th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">Revision</th>
+                                    <th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">Creator</th>
+                                    <th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">Template Id</th>
+                                    <th style="width:3%;word-break:break-all;font-size:x-small;border-color:blue;">A EmbeddedData Specifications</th>
+                                    <th style="width:8%;word-break:break-all;font-size:x-small;border-color:blue;">TimeStamps</th>
+                                    <th style="width:4%;word-break:break-all;font-size:x-small;border-color:blue;">Links</th>
+                                    <th style="width:4%;word-break:break-all;font-size:x-small;border-color:blue;">API</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    var cell = "cell-content";
+                                    var withDetails = details == "true";
+                                    if (withDetails)
+                                    {
+                                        cell = "cell-details";
+                                    }
+                                }
+                                <Virtualize Context="SMVirtualize" @ref="SMSetContainer" ItemsProvider="LoadSMSetItems">
+                                    @{
+                                        var submodel64 = Base64UrlEncoder.Encode(SMVirtualize?.smSet.Identifier);
+                                        var link = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}";
+                                        // var smeCount = db.SMESets.Where(sme => sme.SMId == SMSet.Id).Select(x => x.Id).Count();
+                                    }
+                                    <tr style="height:auto;border-color:blue;">
+                                        <td style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">@SMVirtualize?.smSet?.EnvId</td>
+                                        <td style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">@SMVirtualize?.smSet?.AASId</td>
+                                        <td style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">
+                                            <b>@SMVirtualize?.smSet?.Id</b>
+                                        </td>
+                                        <td style="width:10%;word-break: break-all;border-color:blue;">@SMVirtualize?.smSet?.IdShort</td>
+                                        <td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.DisplayName</td>
+                                        <td style="width:3%;font-size:small;word-break:keep-all;border-color:blue;">@SMVirtualize?.smSet?.Category</td>
+                                        <td style="width:3%;font-size:small;border-color:blue;">
+                                            <div class="@cell">
+                                                @if (withDetails)
+                                                {
+                                                    <span>@SMVirtualize?.smSet?.Description</span>
+                                                }
+                                                else
+                                                {
+                                                    var text = SMVirtualize?.smSet?.Description;
+                                                    if (text?.Length > 27)
+                                                    {
+                                                        text = text.Substring(0, 27) + " ..";
+                                                    }
+                                                    <span>@text</span>
+                                                }
+                                            </div>
+                                        </td>
+                                        <td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.Extensions</td>
+                                        <td style="width:10%;border-color:blue;">@SMVirtualize?.smSet?.Identifier</td>
+                                        <td style="width:3%;font-size:small;word-break:keep-all;border-color:blue;">@SMVirtualize?.smSet?.Kind</td>
+                                        <td style="width:10%;word-break: break-all;border-color:blue;">@SMVirtualize?.smSet?.SemanticId</td>
+                                        <td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.SupplementalSemanticIds</td>
+                                        <td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.Qualifiers</td>
+                                        <td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.EmbeddedDataSpecifications</td>
+                                        <td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.Version</td>
+                                        <td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.Revision</td>
+                                        <td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.Creator</td>
+                                        <td style="width:3%;border-color:blue;">@SMVirtualize?.smSet?.TemplateId</td>
+                                        <td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.AEmbeddedDataSpecifications</td>
+                                        <td style="width:8%;word-break: break-all;color:lightgray;font-size:x-small;border-color:blue;">
+                                            @($"CREATE {TimeStamp.DateTimeToString(SMVirtualize.smSet.TimeStampCreate)}")<br />
+                                            @($"UPDATE {TimeStamp.DateTimeToString(SMVirtualize.smSet.TimeStamp)}")<br />
+                                            @($"TREE {TimeStamp.DateTimeToString(SMVirtualize.smSet.TimeStampTree)}")<br />
+                                            @($"DELETE {TimeStamp.DateTimeToString(SMVirtualize.smSet.TimeStampDelete)}")
+                                        </td>
+                                        <td style="width:4%;font-size:small;word-break:keep-all;border-color:blue;">
+                                            <a href="@($"{shorturl}/env?envid={SMVirtualize?.smSet?.EnvId}")" target="_blank;border-color:blue;">env </a>
+                                            <a href="@($"{shorturl}/aas?aasid={SMVirtualize?.smSet?.AASId}")" target="_blank;border-color:blue;">aas </a>
+                                            <a href="@($"{shorturl}/sme?smid={SMVirtualize?.smSet?.Id}")" target="_blank;border-color:blue;">sme:@SMVirtualize.smeCount</a>
+                                        </td>
+                                        <td style="width:4%;font-size:small;word-break:keep-all;border-color:blue;">
+                                            @if (!SMVirtualize.smSet.Identifier.IsNullOrEmpty())
+                                            {
+                                                <a href="@link" target="_blank">api</a>
+                                            }
+                                        </td>
+                                    </tr>
+                                </Virtualize>
+                            </tbody>
+                        </table>
+                    </div>
+                }
+
                 if (url.EndsWith("/sme"))
                 {
                     totalCount = db.SMESets.Select(x => x.Id).Count();
@@ -422,12 +557,12 @@
                     }
 
                     <span>
-                        &nbsp&nbsp@($"SME#: {totalCount} size={size} offset={offset} search={search} smid={smid} smeid={smeid} parid={parid}")
+                        &nbsp&nbsp@($"SME#: {totalCount} size={size} offset={offset} search={search} smid={smid} smeid={smeid} parid={parid} details={details}")
                     </span>
                     <br/>
                     <br />
 
-                    <div style="width: 100%; height: 70vh; overflow-x: hidden; padding: 10px;">
+                    <div style="width: 100%; height: 80vh; overflow-x: hidden; padding: 10px;">
                         <table class="table table-bordered table-sm" style="min-width:100%;max-width:100%">
                             <thead>
                                 <tr>
@@ -453,6 +588,14 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                @{
+                                    var cell = "cell-content";
+                                    var withDetails = details == "true";
+                                    if (withDetails)
+                                    {
+                                        cell = "cell-details";
+                                    }
+                                }
                                 <Virtualize Context="SMEVirtualize" @ref="SMESetContainer" ItemsProvider="LoadSMESetItems" >
                                     @{
                                         var split = !SMEVirtualize.smeSet.SMEType.IsNullOrEmpty() ? SMEVirtualize.smeSet.SMEType.Split(VisitorAASX.OPERATION_SPLIT) : [string.Empty];
@@ -470,64 +613,71 @@
                                         </td>
                                         <td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@SMEVirtualize?.smeSet.SMEType</td>
                                         <td style="width:10%;word-break: break-all;border-color:blue;">
-                                            <div class="cell-content">
+                                            <div class="@cell">
                                                 @SMEVirtualize?.smeSet.IdShort
                                             </div>
                                         </td>
                                         <td style="width:4%;font-size:small;border-color:blue;">
-                                            <div class="cell-content">
+                                            <div class="@cell">
                                                 @SMEVirtualize?.smeSet.DisplayName
                                             </div>
                                         </td>
                                         <td style="width:4%;font-size:small;border-color:blue;">
-                                            <div class="cell-content">
+                                            <div class="@cell">
                                                 @SMEVirtualize?.smeSet.Category
                                             </div>
                                         </td>
                                         <td style="width:4%;font-size:small;border-color:blue;">
-                                            <div class="cell-content">
-                                                @SMEVirtualize?.smeSet.Description?.Substring(0, 30)
+                                            <div class="@cell">
+                                                @if (withDetails)
+                                                {
+                                                    <span>@SMEVirtualize?.smeSet.Description?</span>
+                                                }
+                                                else
+                                                {
+                                                    <span>@SMEVirtualize?.smeSet.Description?.Substring(0, 30)</span>
+                                                }
                                             </div>
                                         </td>
                                         <td style="width:4%;font-size:small;border-color:blue;">
-                                            <div class="cell-content">
+                                            <div class="@cell">
                                                 @SMEVirtualize?.smeSet.Extensions
                                             </div>
                                         </td>
                                         <td style="width:10%;word-break: break-all;font-size:small;border-color:blue;">
-                                            <div class="cell-content">
+                                            <div class="@cell">
                                                 @SMEVirtualize?.smeSet.SemanticId
                                             </div>
                                         </td>
                                         <td style="width:4%;font-size:small;border-color:blue;">
-                                            <div class="cell-content">
+                                            <div class="@cell">
                                                 @SMEVirtualize?.smeSet.SupplementalSemanticIds
                                             </div>
                                         </td>
                                         <td style="width:4%;font-size:small;border-color:blue;">
-                                            <div class="cell-content">
+                                            <div class="@cell">
                                                 @SMEVirtualize?.smeSet.Qualifiers
                                             </div>
                                         </td>
                                         <td style="width:4%;font-size:small;border-color:blue;">
-                                            <div class="cell-content">
+                                            <div class="@cell">
                                                 @SMEVirtualize?.smeSet.EmbeddedDataSpecifications
                                             </div>
                                         </td>
                                         <td style="width:8%;font-size:small;border-color:blue;">
-                                            <div class="cell-content">
+                                            <div class="@cell">
                                                 @SMEVirtualize?.smeSet.TValue
                                             </div>
                                         </td>
                                         <td style="width:4%;border-color:blue;">
-                                            <div class="cell-content">
+                                            <div class="@cell">
                                                 @{
                                                     @if (value.Count == 1)
                                                     {
                                                         var text = value[0][0];
                                                         if (text != "")
                                                         {
-                                                            if (text.Length > 50)
+                                                            if (text.Length > 50 && !withDetails)
                                                             {
                                                                 text = text.Substring(0, 50) + " ..";
                                                             }
@@ -570,6 +720,7 @@
                                                     <a href="@($"{shorturl}/ovalue?smeid={SMEVirtualize.smeSet.Id}")" target="_blank">ovalue </a>
                                                 }
                                             }
+                                            <a href="@($"{shorturl}/sme?smeid={SMEVirtualize.smeSet.Id}&details=true")" target="_blank">details </a>
                                         </td>
                                         <td style="width:4%;border-color:blue;font-size:x-small;">
                                             <a href="@link" target="_blank">api</a>
@@ -603,6 +754,7 @@
     long parid = 0;
     long cdid = 0;
     string smidentifier = string.Empty;
+    string details = string.Empty;
     private long elapsedTime = 0;
     object loadedItems = null;
 
@@ -668,45 +820,248 @@
         var watch = System.Diagnostics.Stopwatch.StartNew();
         watch.Start();
 
-        var result = await LoadItems<AASSet>(request);
+        List<AASSet> result = [];
+
+        using (AasContext db = new AasContext())
+        {
+            if (loadedItems == null || !(loadedItems is List<AASSet>))
+            {
+                IQueryable<AASSet> qAAS = db.AASSets;
+                if (aasid != 0)
+                {
+                    qAAS = qAAS.Where(aas => aas.Id == aasid);
+                }
+                if (search != "")
+                {
+                    qAAS = qAAS.Where(aas =>
+                    aas.IdShort.Contains(search) ||
+                        aas.Identifier.Contains(search) ||
+                        aas.GlobalAssetId.Contains(search)
+                    );
+                }
+                totalCount = qAAS.Count();
+                CheckTotalCountAndUpdate();
+                loadedItems = await qAAS
+                    .OrderBy("Id")
+                    .Skip(offset)
+                    .Take(size)
+                    .ToListAsync();
+            }
+        }
+
+        result = (loadedItems as List<AASSet>)
+            .Skip(request.StartIndex)
+            .Take(request.Count)
+            .ToList();
 
         watch.Stop();
         elapsedTime = watch.ElapsedMilliseconds;
         StateHasChanged();
 
-        return result;
+        Console.WriteLine($"LoadItems: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
+
+        return new ItemsProviderResult<AASSet>(result, size);
     }
 
     private Virtualize<AASSet> AASSetContainer { get; set; }
 
-    private async ValueTask<ItemsProviderResult<SMSet>> LoadSMSetItems(ItemsProviderRequest request)
+    private class SMVirtualize
+    {
+        public int smeCount = 0;
+        public SMSet smSet;
+    }
+
+    private async ValueTask<ItemsProviderResult<SMVirtualize>> LoadSMSetItems(ItemsProviderRequest request)
     {
         var watch = System.Diagnostics.Stopwatch.StartNew();
         watch.Start();
 
-        var result = await LoadItems<SMSet>(request);
+        List<SMVirtualize> result = [];
+
+        using (AasContext db = new AasContext())
+        {
+            if (loadedItems == null || !(loadedItems is List<SMVirtualize>))
+            {
+                IQueryable<SMSet> qSM = db.SMSets;
+                if (aasid != 0)
+                {
+                    qSM = qSM.Where(sm => sm.AASId == aasid);
+                }
+                if (smid != 0)
+                {
+                    qSM = qSM.Where(sm => sm.Id == smid);
+                }
+                if (search != "")
+                {
+                    qSM = qSM.Where(sm =>
+                        sm.IdShort.Contains(search) ||
+                        sm.Identifier.Contains(search) ||
+                        sm.SemanticId.Contains(search)
+                    );
+                }
+                totalCount = qSM.Count();
+                CheckTotalCountAndUpdate();
+                loadedItems = await qSM
+                    .OrderBy("Id")
+                    .Skip(offset)
+                    .Take(size)
+                    .Select(sm => new SMVirtualize
+                    {
+                        smSet = sm,
+                        smeCount = db.SMESets.Where(sme => sme.SMId == sm.Id).Count()
+                    }
+                    )
+                    .ToListAsync();
+            }
+        }
+
+        result = (loadedItems as List<SMVirtualize>)
+            .Skip(request.StartIndex)
+            .Take(request.Count)
+            .ToList();
 
         watch.Stop();
         elapsedTime = watch.ElapsedMilliseconds;
         StateHasChanged();
 
-        return result;
+        Console.WriteLine($"LoadItems: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
+
+        return new ItemsProviderResult<SMVirtualize>(result, size);
     }
 
-    private Virtualize<EnvSet> SMSetContainer { get; set; }
+    private Virtualize<SMVirtualize> SMSetContainer { get; set; }
+
+    public async Task MaintainDatabaseAsync()
+    {
+        using (AasContext db = new AasContext())
+        {
+            // Update statistics
+            await db.Database.ExecuteSqlRawAsync("ANALYZE SMESets");
+
+            // Reorganize indexes (using VACUUM)
+            await db.Database.ExecuteSqlRawAsync("VACUUM");
+
+            // Rebuild indexes (drop and recreate)
+            await db.Database.ExecuteSqlRawAsync("DROP INDEX IF EXISTS IndexName");
+            await db.Database.ExecuteSqlRawAsync("CREATE INDEX IndexName ON SMESets(Id)");
+        }
+    }
+
+    public void CreateIdShortPath(AasContext db, List<SMESet> smeList)
+    {
+        foreach (var sme in smeList)
+        {
+            sme.IdShortPath = GeneratePath(db, sme);
+        }
+    }
+
+    private string GeneratePath(AasContext db, SMESet sme)
+    {
+        if (sme.ParentSMEId == null)
+        {
+            return sme.IdShort ?? string.Empty;
+        }
+
+        var parentSME = db.SMESets.Find(sme.ParentSMEId);
+        if (parentSME == null)
+        {
+            return sme.IdShort ?? string.Empty;
+        }
+
+        var parentPath = GeneratePath(db, parentSME);
+        return string.IsNullOrEmpty(parentPath) ? sme.IdShort ?? string.Empty : $"{parentPath}.{sme.IdShort}";
+    }
 
     private async ValueTask<ItemsProviderResult<SMEVirtualize>> LoadSMESetItems(ItemsProviderRequest request)
     {
         var watch = System.Diagnostics.Stopwatch.StartNew();
         watch.Start();
 
-        var result = await LoadItems<SMEVirtualize>(request);
+        List<SMEVirtualize> result = [];
+
+        Console.WriteLine($"LoadItems SME: 1");
+
+        using (AasContext db = new AasContext())
+        {
+            if (loadedItems == null || !(loadedItems is List<SMESet>))
+            {
+                IQueryable<SMESet> qSME = db.SMESets;
+                if (smid != 0)
+                {
+                    qSME = qSME.Where(sme => sme.SMId == smid);
+                }
+                if (smeid != 0)
+                {
+                    qSME = qSME.Where(sme => sme.Id == smeid);
+                }
+                if (parid != 0)
+                {
+                    qSME = qSME.Where(sme => sme.ParentSMEId == parid);
+                }
+                if (search != "")
+                {
+                    qSME = qSME.Where(sme =>
+                        sme.IdShort.Contains(search) ||
+                        sme.SemanticId.Contains(search)
+                    );
+                }
+                totalCount = qSME.Count();
+                CheckTotalCountAndUpdate();
+                if (size != 1 || offset != 0)
+                {
+                    qSME = qSME
+                        .OrderBy("Id")
+                        .Skip(offset)
+                        .Take(size);
+                    loadedItems = await qSME
+                        .ToListAsync();
+                }
+                else
+                {
+                    // await MaintainDatabaseAsync();
+                    var sme = await db.SMESets
+                        .AsNoTracking()
+                        .Where(sme => sme.Id == smeid)
+                        .FirstOrDefaultAsync();
+                    loadedItems = new List<SMESet> { sme };
+                }
+                Console.WriteLine($"LoadItems SME: 2");
+            }
+
+            var smeList = (loadedItems as List<SMESet>)
+                .Skip(request.StartIndex)
+                .Take(request.Count)
+                .ToList();
+            Console.WriteLine($"LoadItems SME: 3");
+            // Converter.CreateIdShortPath(db, smeList);
+            CreateIdShortPath(db, smeList);
+            Console.WriteLine($"LoadItems SME: 4");
+            var merged = Converter.GetSmeMerged(db, smeList);
+            var smIdList = smeList.Select(sme => sme.SMId).Distinct();
+            Console.WriteLine($"LoadItems SME: 5");
+            var smList = db.SMSets.Where(sm => smIdList.Contains(sm.Id)).ToList();
+            Console.WriteLine($"LoadItems SME: 6");
+            foreach (var sme in smeList)
+            {
+                result.Add(new SMEVirtualize
+                    {
+                        smSet = smList.Where(sm => sm.Id == sme.SMId).ToList().FirstOrDefault(),
+                        smeSet = sme,
+                        sValueList = merged.Where(v => v.sValueSet != null && v.sValueSet.SMEId == sme.Id).Select(v => v.sValueSet).ToList(),
+                        iValueList = merged.Where(v => v.iValueSet != null && v.iValueSet.SMEId == sme.Id).Select(v => v.iValueSet).ToList(),
+                        dValueList = merged.Where(v => v.dValueSet != null && v.dValueSet.SMEId == sme.Id).Select(v => v.dValueSet).ToList(),
+                        oValueList = merged.Where(v => v.oValueSet != null && v.oValueSet.SMEId == sme.Id).Select(v => v.oValueSet).ToList(),
+                    });
+            }
+        }
 
         watch.Stop();
         elapsedTime = watch.ElapsedMilliseconds;
         StateHasChanged();
 
-        return result;
+        Console.WriteLine($"LoadItems SME: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
+
+        return new ItemsProviderResult<SMEVirtualize>(result, size);
     }
 
     private class SMEVirtualize
@@ -730,6 +1085,7 @@
 
             if (loadedItems == null || !(loadedItems is List<T>))
             {
+                /*
                 switch (query)
                 {
                     case IQueryable<AASSet>:
@@ -781,9 +1137,11 @@
                             .ToListAsync();
                         break;
                 }
+                    */
             }
 
-            switch (query)
+            /*
+        switch (query)
             {
                 case IQueryable<AASSet>:
                     items = (loadedItems as List<T>)
@@ -791,31 +1149,32 @@
                         .Take(request.Count)
                         .ToList();
                     break;
-                case IQueryable<SMEVirtualize>:
-                    var smeList = (loadedItems as List<SMESet>)
-                        .Skip(request.StartIndex)
-                        .Take(request.Count)
-                        .ToList();
-                    Converter.CreateIdShortPath(db, smeList);
-                    var merged = Converter.GetSmeMerged(db, smeList);
-                    var smIdList = smeList.Select(sme => sme.SMId).Distinct();
-                    var smList = db.SMSets.Where(sm => smIdList.Contains(sm.Id)).ToList();
-                    var smeListVirt = new List<SMEVirtualize>();
-                    foreach (var sme in smeList)
-                    {
-                        smeListVirt.Add(new SMEVirtualize
-                            {
-                                smSet = smList.Where(sm => sm.Id == sme.SMId).ToList().FirstOrDefault(),
-                                smeSet = sme,
-                                sValueList = merged.Where(v => v.sValueSet != null && v.sValueSet.SMEId == sme.Id).Select(v => v.sValueSet).ToList(),
-                                iValueList = merged.Where(v => v.iValueSet != null && v.iValueSet.SMEId == sme.Id).Select(v => v.iValueSet).ToList(),
-                                dValueList = merged.Where(v => v.dValueSet != null && v.dValueSet.SMEId == sme.Id).Select(v => v.dValueSet).ToList(),
-                                oValueList = merged.Where(v => v.oValueSet != null && v.oValueSet.SMEId == sme.Id).Select(v => v.oValueSet).ToList(),
-                            });
-                    }
-                    items = smeListVirt as List<T>;
-                    break;
+                    case IQueryable<SMEVirtualize>:
+                        var smeList = (loadedItems as List<SMESet>)
+                            .Skip(request.StartIndex)
+                            .Take(request.Count)
+                            .ToList();
+                        Converter.CreateIdShortPath(db, smeList);
+                        var merged = Converter.GetSmeMerged(db, smeList);
+                        var smIdList = smeList.Select(sme => sme.SMId).Distinct();
+                        var smList = db.SMSets.Where(sm => smIdList.Contains(sm.Id)).ToList();
+                        var smeListVirt = new List<SMEVirtualize>();
+                        foreach (var sme in smeList)
+                        {
+                            smeListVirt.Add(new SMEVirtualize
+                                {
+                                    smSet = smList.Where(sm => sm.Id == sme.SMId).ToList().FirstOrDefault(),
+                                    smeSet = sme,
+                                    sValueList = merged.Where(v => v.sValueSet != null && v.sValueSet.SMEId == sme.Id).Select(v => v.sValueSet).ToList(),
+                                    iValueList = merged.Where(v => v.iValueSet != null && v.iValueSet.SMEId == sme.Id).Select(v => v.iValueSet).ToList(),
+                                    dValueList = merged.Where(v => v.dValueSet != null && v.dValueSet.SMEId == sme.Id).Select(v => v.dValueSet).ToList(),
+                                    oValueList = merged.Where(v => v.oValueSet != null && v.oValueSet.SMEId == sme.Id).Select(v => v.oValueSet).ToList(),
+                                });
+                        }
+                        items = smeListVirt as List<T>;
+                        break;
             }
+                */
 
             Console.WriteLine($"LoadItems: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
 
