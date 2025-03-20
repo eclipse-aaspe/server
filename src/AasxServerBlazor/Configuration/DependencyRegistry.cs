@@ -29,7 +29,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace AasxServerBlazor.Configuration;
 
 using AasxServerDB;
-using AasxServerStandardBib.DbRequest;
+using AasxServerStandardBib;
 using Contracts;
 using Contracts.DbRequests;
 using IO.Swagger.Models;

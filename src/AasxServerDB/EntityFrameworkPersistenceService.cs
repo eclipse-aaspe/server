@@ -29,7 +29,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _contractSecurityRules = contractSecurityRules ?? throw new ArgumentNullException(nameof(contractSecurityRules));
-        ;
     }
 
     public void InitDB(bool reloadDB, string dataPath)
@@ -325,8 +324,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-
-    public void DeleteFileByPath(string aasIdentifier, string submodelIdentifier, string idShortPath)
+    public void DeleteFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath)
     {
         if (IsSubmodelPresentWithinAAS(null, aasIdentifier, submodelIdentifier, out ISubmodel output))
         {
@@ -356,7 +354,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    public void DeleteSubmodelElementByPath(string aasIdentifier, string submodelIdentifier, string idShortPath)
+    public void DeleteSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath)
     {
         if (IsSubmodelPresentWithinAAS(null, aasIdentifier, submodelIdentifier, out ISubmodel output))
         {
@@ -501,7 +499,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         return output;
     }
 
-    public ISubmodelElement CreateSubmodelElement(string aasIdentifier, string submodelIdentifier, bool first, ISubmodelElement newSubmodelElement)
+    public ISubmodelElement CreateSubmodelElement(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodelElement body, bool first)
     {
         var smFound = IsSubmodelPresentWithinAAS(null, aasIdentifier, submodelIdentifier, out ISubmodel output);
         if (smFound)
@@ -518,7 +516,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    public ISubmodelElement CreateSubmodelElementByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, bool first, ISubmodelElement body)
+    public ISubmodelElement CreateSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath, bool first, ISubmodelElement body)
     {
         {
             var smFound = IsSubmodelPresentWithinAAS(null, aasIdentifier, submodelIdentifier, out ISubmodel output);
@@ -666,18 +664,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         return false;
     }
 
-    public ISubmodel CreateSubmodel(Submodel body, string decodedAasIdentifier) => throw new NotImplementedException();
-    public ISubmodelElement CreateSubmodelElementByPath(ISecurityConfig securityConfig, string decodedSubmodelIdentifier, string idShortPath, bool first, ISubmodelElement body) => throw new NotImplementedException();
-    public ISubmodelElement CreateSubmodelElement(ISecurityConfig securityConfig, string decodedSubmodelIdentifier, ISubmodelElement body, bool first) => throw new NotImplementedException();
-    public void UpdateSubmodelById(string decodedSubmodelIdentifier, ISubmodel submodel) => throw new NotImplementedException();
-    public void UpdateSubmodelElementByPath(string decodedSubmodelIdentifier, string idShortPath, ISubmodelElement submodelElement) => throw new NotImplementedException();
-    public void DeleteFileByPath(ISecurityConfig securityConfig, string decodedSubmodelIdentifier, string idShortPath) => throw new NotImplementedException();
-    public void DeleteSubmodelById(string decodedSubmodelIdentifier) => throw new NotImplementedException();
-    public void DeleteSubmodelElementByPath(ISecurityConfig securityConfig, string decodedSubmodelIdentifier, string idShortPath) => throw new NotImplementedException();
-    public void ReplaceSubmodelById(string decodedSubmodelIdentifier, Submodel body) => throw new NotImplementedException();
-    public void ReplaceSubmodelElementByPath(string decodedSubmodelIdentifier, string idShortPath, ISubmodelElement body) => throw new NotImplementedException();
-    public void ReplaceFileByPath(string decodedSubmodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream) => throw new NotImplementedException();
-
     private bool InitSecurity(ISecurityConfig securityConfig, out string securityConditionSM, out string securityConditionSME)
     {
         securityConditionSM = "";
@@ -749,4 +735,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         dbRequest.TaskCompletionSource.SetResult(result);
         return result;
     }
+
+    public ISubmodel CreateSubmodel(Submodel body, string decodedAasIdentifier) => throw new NotImplementedException();
+    public void ReplaceSubmodelById(string decodedSubmodelIdentifier, Submodel body) => throw new NotImplementedException();
+    public void ReplaceSubmodelElementByPath(string decodedSubmodelIdentifier, string idShortPath, ISubmodelElement body) => throw new NotImplementedException();
+    public void ReplaceFileByPath(string decodedSubmodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream) => throw new NotImplementedException();
 }

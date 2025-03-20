@@ -186,11 +186,10 @@ namespace IO.Swagger.Controllers
             {
                 throw new NotAllowed($"Cannot proceed as {nameof(decodedSmIdentifier)} is null");
             }
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
             if (!Program.noSecurity)
             {
-                var securityConfig = new SecurityConfig(Program.noSecurity, this);
-
                 var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedAasIdentifier, decodedSmIdentifier);
                 User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
                 var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
@@ -203,7 +202,8 @@ namespace IO.Swagger.Controllers
                 }
             }
 
-            _persistenceService.DeleteFileByPath(decodedAasIdentifier, decodedSmIdentifier, idShortPath);
+            //ToDo: Probably we will need only one db request here
+            _persistenceService.DeleteFileByPath(securityConfig, decodedAasIdentifier, decodedSmIdentifier, idShortPath);
 
             return NoContent();
         }
@@ -292,10 +292,10 @@ namespace IO.Swagger.Controllers
                 throw new NotAllowed($"Cannot proceed as {nameof(decodedSmIdentifier)} is null");
             }
 
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
             if (!Program.noSecurity)
             {
-                var securityConfig = new SecurityConfig(Program.noSecurity, this);
-
                 var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedAasIdentifier, decodedSmIdentifier);
                 User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
                 var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
@@ -308,7 +308,8 @@ namespace IO.Swagger.Controllers
                 }
             }
 
-            _persistenceService.DeleteSubmodelElementByPath(decodedAasIdentifier, decodedSmIdentifier, idShortPath);
+
+            _persistenceService.DeleteSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSmIdentifier, idShortPath);
 
             return NoContent();
         }
@@ -2353,10 +2354,11 @@ namespace IO.Swagger.Controllers
             }
 
             _logger.LogInformation($"Received request to create a new submodel element in the submodel {decodedSubmodelIdentifier} and AAS {decodedAasIdentifier}");
+
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
             if (!Program.noSecurity)
             {
-                var securityConfig = new SecurityConfig(Program.noSecurity,this);
-
                 var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier);
                 User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{body?.IdShort}"));
                 var claimsList = new List<Claim>(User.Claims) { new Claim("IdShortPath", $"{submodel.IdShort}.{body?.IdShort}") };
@@ -2374,7 +2376,7 @@ namespace IO.Swagger.Controllers
                 return BadRequest($"Could not proceed, as {nameof(body)} is null.");
             }
 
-            var output = _persistenceService.CreateSubmodelElement(decodedAasIdentifier, decodedSubmodelIdentifier, first, body);
+            var output = _persistenceService.CreateSubmodelElement(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, body, first);
 
             return CreatedAtAction("PostSubmodelElementAasRepository", output);
         }
@@ -2444,7 +2446,7 @@ namespace IO.Swagger.Controllers
                 return BadRequest($"Could not proceed, as {nameof(body)} is null.");
             }
 
-            var output = _persistenceService.CreateSubmodelElementByPath(decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath, first, body);
+            var output = _persistenceService.CreateSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath, first, body);
 
             return CreatedAtAction("PostSubmodelElementByPathAasRepository", output);
         }

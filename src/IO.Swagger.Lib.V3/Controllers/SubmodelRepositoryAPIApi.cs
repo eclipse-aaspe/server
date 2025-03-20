@@ -494,7 +494,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
         }
 
-        _persistenceService.DeleteFileByPath(securityConfig, decodedSubmodelIdentifier, idShortPath);
+        _persistenceService.DeleteFileByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
 
         return NoContent();
     }
@@ -530,7 +530,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         _logger.LogInformation($"Received a request to delete a submodel with id {decodedSubmodelIdentifier}");
-        _persistenceService.DeleteSubmodelById(decodedSubmodelIdentifier);
+        _persistenceService.DeleteSubmodelById(null, decodedSubmodelIdentifier);
 
         return NoContent();
     }
@@ -585,7 +585,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         _logger.LogInformation($"Received a request to delete a submodel element at {idShortPath} from submodel with id {decodedSubmodelIdentifier}");
         // return StatusCode(500, default(Result));
 
-        _persistenceService.DeleteSubmodelElementByPath(securityConfig, decodedSubmodelIdentifier, idShortPath);
+        _persistenceService.DeleteSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
 
         return NoContent();
     }
@@ -2176,7 +2176,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
         }
 
-        _persistenceService.UpdateSubmodelById(decodedSubmodelIdentifier, body);
+        _persistenceService.UpdateSubmodelById(null, decodedSubmodelIdentifier, body);
 
         return NoContent();
     }
@@ -2224,7 +2224,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         //Update
-        _persistenceService.UpdateSubmodelById(decodedSubmodelIdentifier, submodel);
+        _persistenceService.UpdateSubmodelById(null, decodedSubmodelIdentifier, submodel);
 
         return NoContent();
     }
@@ -2274,7 +2274,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(submodel)} is null");
         }
 
-        _persistenceService.UpdateSubmodelById(decodedSubmodelIdentifier, submodel);
+        _persistenceService.UpdateSubmodelById(null, decodedSubmodelIdentifier, submodel);
 
         return NoContent();
     }
@@ -2325,7 +2325,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         //Update
-        _persistenceService.UpdateSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath, submodelElement);
+        _persistenceService.UpdateSubmodelElementByPath(null, decodedSubmodelIdentifier, idShortPath, submodelElement);
 
         return NoContent();
     }
@@ -2369,7 +2369,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         _logger.LogInformation($"Received request to update the submodel element at {idShortPath} from submodel with id {decodedSubmodelIdentifier}.");
-        _persistenceService.UpdateSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath, body);
+        _persistenceService.UpdateSubmodelElementByPath(null, decodedSubmodelIdentifier, idShortPath, body);
 
         return NoContent();
     }
@@ -2420,7 +2420,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         //Update
-        _persistenceService.UpdateSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath, submodelElement);
+        _persistenceService.UpdateSubmodelElementByPath(null, decodedSubmodelIdentifier, idShortPath, submodelElement);
 
         return NoContent();
     }
@@ -2527,7 +2527,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
         }
 
-        var output = _persistenceService.CreateSubmodelElementByPath(securityConfig, decodedSubmodelIdentifier, idShortPath, first, body);
+        var output = _persistenceService.CreateSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath, first, body);
 
         return CreatedAtAction("PostSubmodelElementByPathSubmodelRepo", output);
     }
@@ -2591,7 +2591,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
         }
 
-        var output = _persistenceService.CreateSubmodelElement(securityConfig, decodedSubmodelIdentifier, body, first);
+        var output = _persistenceService.CreateSubmodelElement(securityConfig, null, decodedSubmodelIdentifier, body, first);
 
         return CreatedAtAction("PostSubmodelElementSubmodelRepo", output);
     }
