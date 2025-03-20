@@ -2296,7 +2296,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 409, type: typeof(Result), description: "Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult PostSubmodel([FromBody]Submodel body, [FromQuery] string aasIdentifier)
+    public virtual IActionResult PostSubmodel([FromBody]Submodel body)
     {
         if (body == null)
         {
@@ -2305,13 +2305,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         _logger.LogInformation($"Received request to create a submodel.");
 
-        var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
-        if (decodedAasIdentifier == null)
-        {
-            throw new NotAllowed($"Cannot proceed as {nameof(decodedAasIdentifier)} is null");
-        }
-
-        var output = _submodelService.CreateSubmodel(body, decodedAasIdentifier);
+        var output = _submodelService.CreateSubmodel(body);
 
         return CreatedAtAction("PostSubmodel", output);
     }
