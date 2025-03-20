@@ -12,6 +12,7 @@ using AdminShellNS;
 using Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Org.BouncyCastle.Asn1.Smime;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -599,49 +600,97 @@ namespace AasxServerStandardBib.Services
 
             return output;
         }
-
-        public ISubmodel CreateSubmodel(ISubmodel newSubmodel, string aasIdentifier = null)
+        
+        //TODO (jtikekar, 2025-03-20): Refactor, when List<Environment> is removed from the server
+        //Following method has complexities due to the current structure of List<Environment>
+        public ISubmodel CreateSubmodel(ISubmodel newSubmodel)
         {
-            //Check if Submodel exists
-            var found = IsSubmodelPresent(newSubmodel.Id, out _, out _);
-            if (found)
-            {
-                throw new DuplicateException($"Submodel with id {newSubmodel.Id} already exists.");
-            }
+            bool found = true;
 
-            //Check if corresponding AAS exist. If yes, then add to the same environment
-            if (!string.IsNullOrEmpty(aasIdentifier))
+            //check if submodel is already referenced in any of the shells
+            var foundPackages = new Dictionary<int, List<IAssetAdministrationShell>>();
+            for(int i = 0;  i< _packages.Length; i++)
             {
-                var aasFound = IsAssetAdministrationShellPresent(aasIdentifier, out IAssetAdministrationShell aas, out int packageIndex);
-                if (aasFound)
+                var package = _packages[i];
+                if (package != null)
                 {
-                    newSubmodel.SetAllParents(DateTime.UtcNow);
-                    aas.Submodels ??= new List<IReference>();
-                    aas.Submodels.Add(newSubmodel.GetReference());
-                    _packages[packageIndex].AasEnv.Submodels.Add(newSubmodel);
-                    var timeStamp = DateTime.UtcNow;
-                    aas.SetTimeStamp(timeStamp);
-                    newSubmodel.TimeStampCreate = timeStamp;
-                    newSubmodel.SetTimeStamp(timeStamp);
-                    _packages[packageIndex].setWrite(true);
-                    Program.signalNewData(2);
-                    return newSubmodel; // TODO: jtikekar find proper solution
+                    var env = package.AasEnv;
+                    // Check if the Submodel is already present in the package
+                    // If yes, then skip the iteration, it will be handled by Blazor
+                    var isSmAlreadyPresent = env.Submodels!.Exists(s => s.Id.Equals(newSubmodel.Id));
+                    if (isSmAlreadyPresent)
+                    {
+                        found = true;
+                    }
+                    if (env != null && !env.AssetAdministrationShells.IsNullOrEmpty() && !isSmAlreadyPresent)
+                    {
+                        var foundAAS = new List<IAssetAdministrationShell>();
+                        foreach (var aas in env.AssetAdministrationShells!)
+                        {
+                            if (aas != null && !aas.Submodels.IsNullOrEmpty())
+                            {
+                                var smFound = aas.Submodels.Exists(s => s.GetAsIdentifier().Equals(newSubmodel.Id));
+                                if(smFound)
+                                {
+                                    foundAAS.Add(aas);
+                                }
+                            }
+                        }
+                        if(foundAAS.Any())
+                        {
+                            foundPackages.Add(i, foundAAS);
+                        }
+                    }
                 }
             }
 
-            if (EmptyPackageAvailable(out int emptyPackageIndex))
+            if(foundPackages.Count > 0)
             {
-                _packages[emptyPackageIndex].AasEnv.Submodels.Add(newSubmodel);
-                var timeStamp = DateTime.UtcNow;
-                newSubmodel.TimeStampCreate = timeStamp;
-                newSubmodel.SetTimeStamp(timeStamp);
-                _packages[emptyPackageIndex].setWrite(true);
+                foreach (var package in foundPackages)
+                {
+                    var packageIndex = package.Key;
+                    _packages[packageIndex].AasEnv!.Submodels ??= new List<ISubmodel>();
+                    _packages[packageIndex].AasEnv!.Submodels!.Add(newSubmodel);
+
+                    var timeStamp = DateTime.UtcNow;
+                    newSubmodel.SetAllParents(timeStamp);
+                    newSubmodel.TimeStampCreate = timeStamp;
+                    newSubmodel.SetTimeStamp(timeStamp);
+
+                    foreach(var aas in package.Value)
+                    {
+                        aas.SetTimeStamp(timeStamp);
+                    }
+                    _packages[packageIndex].setWrite(true);
+                }
                 Program.signalNewData(2);
-                return _packages[emptyPackageIndex].AasEnv.Submodels[0]; //Considering it is the first AAS being added to empty package.
+                return newSubmodel;
             }
+
+            //No linked AAS found and No package found where submodel is present
+            //add the submodel to empty AAS
+            if (foundPackages.IsNullOrEmpty() && !found)
+            {
+                if (EmptyPackageAvailable(out int emptyPackageIndex))
+                {
+                    _packages[emptyPackageIndex].AasEnv.Submodels.Add(newSubmodel);
+                    var timeStamp = DateTime.UtcNow;
+                    newSubmodel.TimeStampCreate = timeStamp;
+                    newSubmodel.SetTimeStamp(timeStamp);
+                    _packages[emptyPackageIndex].setWrite(true);
+                    Program.signalNewData(2);
+                    return _packages[emptyPackageIndex].AasEnv.Submodels[0]; //Considering it is the first AAS being added to empty package.
+                }
+                else
+                {
+                    throw new Exception("No empty environment package available in the server.");
+                }
+            }
+            //Submodel is already present in one or more packages and is also linked to shells
+            //Thus, no need to add to any empty package as well.
             else
             {
-                throw new Exception("No empty environment package available in the server.");
+                throw new DuplicateException($"Submodel with id {newSubmodel.Id} already exists.");
             }
         }
 

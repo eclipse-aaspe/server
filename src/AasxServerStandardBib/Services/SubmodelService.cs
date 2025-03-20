@@ -528,18 +528,12 @@ namespace AasxServerStandardBib.Services
             return output;
         }
 
-        public ISubmodel CreateSubmodel(ISubmodel newSubmodel, string aasIdentifier)
+        public ISubmodel CreateSubmodel(ISubmodel newSubmodel)
         {
             //Verify the body first
             _verificationService.VerifyRequestBody(newSubmodel);
 
-            if (_packageEnvService.IsSubmodelPresent(newSubmodel.Id))
-            {
-                _logger.LogDebug($"Cannot create requested Submodel !!");
-                throw new DuplicateException($"Submodel with id {newSubmodel.Id} already exists.");
-            }
-
-            var output = _packageEnvService.CreateSubmodel(newSubmodel, aasIdentifier);
+            var output = _packageEnvService.CreateSubmodel(newSubmodel);
 
             return output;
         }

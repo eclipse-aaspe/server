@@ -67,7 +67,7 @@ namespace AasxServerStandardBib.Interfaces
         
         bool            IsSubmodelPresent(string submodelIdentifier);
         bool            IsSubmodelPresent(string submodelIdentifier, out ISubmodel output, out int packageIndex);
-        ISubmodel       CreateSubmodel(ISubmodel newSubmodel, string aasIdentifier = null);
+        ISubmodel       CreateSubmodel(ISubmodel newSubmodel);
 
         #endregion
 
