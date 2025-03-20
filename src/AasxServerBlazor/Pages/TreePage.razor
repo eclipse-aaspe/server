@@ -109,7 +109,44 @@
     </div>
     <div class="col-7" style="border-width: 3px; border-style: solid; border-color: blue; border-radius: 8px; position: sticky; background-color:aliceblue;">
         <div class="sticky-top" style="word-wrap:break-word;word-break:break-all;">
+            @code
+            {
+                string idShortPath = "";
+                Submodel parentSubmodel = null;
+            }
             @{
+                if (SelectedNode != null && SelectedNode.Tag is ISubmodelElement sme)
+                {
+                    idShortPath = sme.IdShort;
+                    var parent = sme.Parent as IReferable;
+                    while (parent != null && parent is not Submodel)
+                    {
+                        if (parent is ISubmodelElementList parentList)
+                        {
+                            //Considering child elements of SML can have null idShorts
+                            if (idShortPath == null || idShortPath.Equals(sme.IdShort))
+                            {
+                                var index = parentList.Value?.IndexOf(sme);
+                                idShortPath = $"[{index}]";
+                            }
+
+                            idShortPath = parentList.IdShort + idShortPath;
+                        }
+                        else if (parent.Parent is ISubmodelElementList prevParentList)
+                        {
+                            var index = prevParentList.Value?.IndexOf(parent as ISubmodelElement);
+                            idShortPath = $"[{index}].{idShortPath}";
+                        }
+                        else
+                        {
+                            idShortPath = $"{parent.IdShort}.{idShortPath}";
+                        }
+
+                        parent = (IReferable)parent.Parent;
+                    }
+                    parentSubmodel = parent as Submodel;
+                }
+
                 if (SelectedNode != null)
                 {
                     if (SelectedNode.Tag is not string)
@@ -203,20 +240,21 @@
                     <br />
                     @code {
 
-                    private void SetTimeStamp()
-                    {
-                        (SelectedNode.Tag as IReferable).SetTimeStamp(DateTime.UtcNow);
-                        if (aasID == "")
+                        private void SetTimeStamp()
                         {
-                            Program.env[SelectedNode.envIndex].setWrite(true);
-                        }
-                        else
-                        {
-                            AasxServer.AasxTask.getEnv(aasID).setWrite(true);
+                            (SelectedNode.Tag as IReferable).SetTimeStamp(DateTime.UtcNow);
+                            if (aasID == "")
+                            {
+                                Program.env[SelectedNode.envIndex].setWrite(true);
+                            }
+                            else
+                            {
+                                // AasxServer.AasxTask.getEnv(aasID).setWrite(true);
+                                AasxServer.AasxTask.setTimeStampValue(parentSubmodel, idShortPath, DateTime.UtcNow);
+                            }
                         }
                     }
                 }
-            }
 
                 var externalLink = false;
                 var link = GetLink(SelectedNode, out externalLink);
@@ -297,7 +335,8 @@
                             }
                             else
                             {
-                                AasxServer.AasxTask.getEnv(aasID).setWrite(true);
+                                // AasxServer.AasxTask.getEnv(aasID).setWrite(true);
+                                AasxServer.AasxTask.setTimeStampValue(parentSubmodel, idShortPath, DateTime.UtcNow, CurrentValue);
                             }
                             Program.signalNewData(0);
                         }
@@ -341,47 +380,20 @@
                 if (SelectedNode is {Tag: Submodel sm})
                 {
                     var idEncoded = Base64UrlEncoder.Encode(sm.Id);
-                    var path = Program.externalBlazor + "/submodels/" + idEncoded;
+                    var path2 = Program.externalBlazor + "/submodels/" + idEncoded;
                     <span style="color:white;background-color:blue;">URL:</span>
-                    <a href="@path" target="_blank">@path</a>
+                    <a href="@path2" target="_blank">@path2</a>
                     <br>
 
                 }
 
-                if (SelectedNode != null && SelectedNode.Tag is ISubmodelElement sme)
+                if (SelectedNode != null && SelectedNode.Tag is ISubmodelElement sme2)
                 {
-                    var path = sme.IdShort;
-                    var parent = sme.Parent as IReferable;
-                    while (parent != null && parent is not Submodel)
+                    if (parentSubmodel != null)
                     {
-                        if (parent is ISubmodelElementList parentList)
-                        {
-                            //Considering child elements of SML can have null idShorts
-                            if (path == null || path.Equals(sme.IdShort))
-                            {
-                                var index = parentList.Value?.IndexOf(sme);
-                                path = $"[{index}]";
-                            }
-
-                            path = parentList.IdShort + path;
-                        }
-                        else if (parent.Parent is ISubmodelElementList prevParentList)
-                        {
-                            var index = prevParentList.Value?.IndexOf(parent as ISubmodelElement);
-                            path = $"[{index}].{path}";
-                        }
-                        else
-                        {
-                            path = $"{parent.IdShort}.{path}";
-                        }
-
-                        parent = (IReferable) parent.Parent;
-                    }
-
-                    if (parent != null)
-                    {
-                        var idEncoded = Base64UrlEncoder.Encode((parent as Submodel).Id);
-                        if (!(sme is Operation) || !sme.IdShort.ToLower().StartsWith("eventelement"))
+                        var idEncoded = Base64UrlEncoder.Encode((parentSubmodel as Submodel).Id);
+                        var path = idShortPath;
+                        if (!(sme2 is Operation) || !sme2.IdShort.ToLower().StartsWith("eventelement"))
                         {
                             path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodel-elements/" + path;
                         }
@@ -806,7 +818,7 @@
 
     public void Dispose()
     {
-        AasxServer.AasxTask.saveAASXtoTemp(aasID);
+        // AasxServer.AasxTask.saveAASXtoTemp(aasID);
         SubmodelService.NewDataAvailable -= NewData;
     }
 

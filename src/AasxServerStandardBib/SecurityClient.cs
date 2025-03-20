@@ -3014,6 +3014,10 @@ namespace AasxServer
             }
         }
 
+        public static void setTimeStampValue(Submodel submodel, string path, DateTime timeStamp, string value = "")
+        {
+            Converter.setTimeStampValue(submodel, path, timeStamp, value);
+        }
         public static AdminShellPackageEnv getEnv(string aasID)
         {
             if (aasID.IsNullOrEmpty())
@@ -3039,7 +3043,6 @@ namespace AasxServer
             }
 
             saveAASXtoTemp([env]);
-
         }
         static void saveAASXtoTemp(AdminShellPackageEnv[] env)
         {
