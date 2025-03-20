@@ -308,7 +308,10 @@
 
                 if (url.EndsWith("/aas"))
                 {
-                    totalCount = db.AASSets.Select(x => x.Id).Count();
+                    if (totalCount == 0)
+                    {
+                        totalCount = db.AASSets.Select(x => x.Id).Count();
+                    }
                     CheckTotalCountAndUpdate();
                     if (update)
                     {
@@ -418,7 +421,10 @@
 
                 if (url.EndsWith("/sm"))
                 {
-                    totalCount = db.SMSets.Select(x => x.Id).Count();
+                    if (totalCount == 0)
+                    {
+                        totalCount = db.SMSets.Select(x => x.Id).Count();
+                    }
                     CheckTotalCountAndUpdate();
                     if (update)
                     {
@@ -543,7 +549,10 @@
 
                 if (url.EndsWith("/sme"))
                 {
-                    totalCount = db.SMESets.Select(x => x.Id).Count();
+                    if (totalCount == 0)
+                    {
+                        totalCount = db.SMESets.Select(x => x.Id).Count();
+                    }
                     CheckTotalCountAndUpdate();
                     if (update)
                     {
