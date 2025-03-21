@@ -692,6 +692,31 @@
                                                             }
                                                         }
                                                         <span>@text</span>
+
+                                                        @if (SMEVirtualize.smeSet.SMEType == "Prop" && Program.edit)
+                                                        {
+                                                            <input @bind-value="SMEVirtualize.propertyValue" @bind-value:event="oninput" @onchange="() => OnPropertyValueChanged(SMEVirtualize)"
+                                                                   style="width: 100%; border-width: 1px; border-color: blue;font-size:x-small;" />
+                                                            <br>
+                                                        }
+
+                                                        @code {
+                                                            private void OnPropertyValueChanged(SMEVirtualize sme)
+                                                            {
+                                                                if (!string.IsNullOrEmpty(sme.propertyValue))
+                                                                {
+                                                                    if (sme.propertyValue == " ")
+                                                                        sme.propertyValue = string.Empty;
+
+                                                                    Converter.setTimeStampValue(sme.smSet.Id, sme.smeSet.Id, DateTime.UtcNow, sme.propertyValue);
+                                                                    reload();
+                                                                    SMESetContainer.RefreshDataAsync();
+                                                                    StateHasChanged();
+                                                                    sme.propertyValue = string.Empty;
+                                                                }
+                                                            }
+                                                        }
+
                                                     }
                                                 }
                                             </div>
@@ -702,7 +727,23 @@
                                             @($"CREATE {TimeStamp.DateTimeToString(SMEVirtualize.smeSet.TimeStampCreate)}")<br />
                                             @($"UPDATE {TimeStamp.DateTimeToString(SMEVirtualize.smeSet.TimeStamp)}")<br />
                                             @($"TREE {TimeStamp.DateTimeToString(SMEVirtualize.smeSet.TimeStampTree)}")<br />
-                                            @($"DELETE {TimeStamp.DateTimeToString(SMEVirtualize.smeSet.TimeStampDelete)}")
+                                            @($"DELETE {TimeStamp.DateTimeToString(SMEVirtualize.smeSet.TimeStampDelete)}")<br />
+                                            @if(Program.edit)
+                                            {
+                                                <button style="border-width: 1px; border-color: black; background-color: lightgray; color:black"
+                                                        @onclick="() => SetTimeStamp(SMEVirtualize.smSet.Id, SMEVirtualize.smeSet.Id)">
+                                                    TIMESTAMP
+                                                </button>
+                                            }
+                                            @code {
+                                                private async Task SetTimeStamp(int smSetId, int smeSetId)
+                                                {
+                                                    Converter.setTimeStampValue(smSetId, smeSetId, DateTime.UtcNow);
+                                                    reload();
+                                                    await SMESetContainer.RefreshDataAsync();
+                                                    StateHasChanged();
+                                                }
+                                            }
                                         </td>
                                         <td style="width:4%;border-color:blue;font-size:x-small;">
                                             <a href="@($"{shorturl}/sm?smid={SMEVirtualize.smeSet.SMId}")" target="_blank">sm </a>
@@ -792,6 +833,11 @@
         }
     }
 
+    private void reload()
+    {
+        loadedItems = null;
+    }
+
     private async ValueTask<ItemsProviderResult<EnvSet>> LoadEnvSetItems(ItemsProviderRequest request)
     {
         var watch = System.Diagnostics.Stopwatch.StartNew();
@@ -833,35 +879,28 @@
 
         using (AasContext db = new AasContext())
         {
-            if (loadedItems == null || !(loadedItems is List<AASSet>))
+            IQueryable<AASSet> qAAS = db.AASSets;
+            if (aasid != 0)
             {
-                IQueryable<AASSet> qAAS = db.AASSets;
-                if (aasid != 0)
-                {
-                    qAAS = qAAS.Where(aas => aas.Id == aasid);
-                }
-                if (search != "")
-                {
-                    qAAS = qAAS.Where(aas =>
-                    aas.IdShort.Contains(search) ||
-                        aas.Identifier.Contains(search) ||
-                        aas.GlobalAssetId.Contains(search)
-                    );
-                }
-                totalCount = qAAS.Count();
-                CheckTotalCountAndUpdate();
-                loadedItems = await qAAS
-                    .OrderBy("Id")
-                    .Skip(offset)
-                    .Take(size)
-                    .ToListAsync();
+                qAAS = qAAS.Where(aas => aas.Id == aasid);
             }
-        }
+            if (search != "")
+            {
+                qAAS = qAAS.Where(aas =>
+                aas.IdShort.Contains(search) ||
+                    aas.Identifier.Contains(search) ||
+                    aas.GlobalAssetId.Contains(search)
+                );
+            }
+            totalCount = qAAS.Count();
+            CheckTotalCountAndUpdate();
 
-        result = (loadedItems as List<AASSet>)
-            .Skip(request.StartIndex)
-            .Take(request.Count)
-            .ToList();
+            result = qAAS
+                .OrderBy(aas => aas.Id)
+                .Skip(offset + request.StartIndex)
+                .Take(request.Count)
+                .ToList();
+        }
 
         watch.Stop();
         elapsedTime = watch.ElapsedMilliseconds;
@@ -889,45 +928,38 @@
 
         using (AasContext db = new AasContext())
         {
-            if (loadedItems == null || !(loadedItems is List<SMVirtualize>))
+            IQueryable<SMSet> qSM = db.SMSets;
+            if (aasid != 0)
             {
-                IQueryable<SMSet> qSM = db.SMSets;
-                if (aasid != 0)
-                {
-                    qSM = qSM.Where(sm => sm.AASId == aasid);
-                }
-                if (smid != 0)
-                {
-                    qSM = qSM.Where(sm => sm.Id == smid);
-                }
-                if (search != "")
-                {
-                    qSM = qSM.Where(sm =>
-                        sm.IdShort.Contains(search) ||
-                        sm.Identifier.Contains(search) ||
-                        sm.SemanticId.Contains(search)
-                    );
-                }
-                totalCount = qSM.Count();
-                CheckTotalCountAndUpdate();
-                loadedItems = await qSM
-                    .OrderBy("Id")
-                    .Skip(offset)
-                    .Take(size)
-                    .Select(sm => new SMVirtualize
+                qSM = qSM.Where(sm => sm.AASId == aasid);
+            }
+            if (smid != 0)
+            {
+                qSM = qSM.Where(sm => sm.Id == smid);
+            }
+            if (search != "")
+            {
+                qSM = qSM.Where(sm =>
+                    sm.IdShort.Contains(search) ||
+                    sm.Identifier.Contains(search) ||
+                    sm.SemanticId.Contains(search)
+                );
+            }
+            totalCount = qSM.Count();
+            CheckTotalCountAndUpdate();
+
+            result = qSM
+                .OrderBy(sm => sm.Id)
+                .Skip(offset + request.StartIndex)
+                .Take(request.Count)
+                .Select(sm => new SMVirtualize
                     {
                         smSet = sm,
                         smeCount = db.SMESets.Where(sme => sme.SMId == sm.Id).Count()
                     }
-                    )
-                    .ToListAsync();
-            }
+                )
+                .ToList();
         }
-
-        result = (loadedItems as List<SMVirtualize>)
-            .Skip(request.StartIndex)
-            .Take(request.Count)
-            .ToList();
 
         watch.Stop();
         elapsedTime = watch.ElapsedMilliseconds;
@@ -992,55 +1024,37 @@
 
         using (AasContext db = new AasContext())
         {
-            if (loadedItems == null || !(loadedItems is List<SMESet>))
+            IQueryable<SMESet> qSME = db.SMESets;
+            if (smeid != 0)
             {
-                IQueryable<SMESet> qSME = db.SMESets;
-                if (smid != 0)
-                {
-                    qSME = qSME.Where(sme => sme.SMId == smid);
-                }
-                if (smeid != 0)
-                {
-                    qSME = qSME.Where(sme => sme.Id == smeid);
-                }
-                if (parid != 0)
-                {
-                    qSME = qSME.Where(sme => sme.ParentSMEId == parid);
-                }
-                if (search != "")
-                {
-                    qSME = qSME.Where(sme =>
-                        sme.IdShort.Contains(search) ||
-                        sme.SemanticId.Contains(search)
-                    );
-                }
-                totalCount = qSME.Count();
-                CheckTotalCountAndUpdate();
-                if (size != 1 || offset != 0)
-                {
-                    qSME = qSME
-                        .OrderBy("Id")
-                        .Skip(offset)
-                        .Take(size);
-                    loadedItems = await qSME
-                        .ToListAsync();
-                }
-                else
-                {
-                    // await MaintainDatabaseAsync();
-                    var sme = await db.SMESets
-                        .AsNoTracking()
-                        .Where(sme => sme.Id == smeid)
-                        .FirstOrDefaultAsync();
-                    loadedItems = new List<SMESet> { sme };
-                }
-                Console.WriteLine($"LoadItems SME: 2");
+                qSME = qSME.Where(sme => sme.Id == smeid);
             }
+            if (smid != 0)
+            {
+                qSME = qSME.Where(sme => sme.SMId == smid);
+            }
+            if (parid != 0)
+            {
+                qSME = qSME.Where(sme => sme.ParentSMEId == parid);
+            }
+            if (search != "")
+            {
+                qSME = qSME.Where(sme =>
+                    sme.IdShort.Contains(search) ||
+                    sme.SemanticId.Contains(search)
+                );
+            }
+            totalCount = qSME.Count();
+            CheckTotalCountAndUpdate();
 
-            var smeList = (loadedItems as List<SMESet>)
-                .Skip(request.StartIndex)
+            Console.WriteLine($"LoadItems SME: 2");
+
+            var smeList = qSME
+                .OrderBy(sme => sme.Id)
+                .Skip(offset + request.StartIndex)
                 .Take(request.Count)
                 .ToList();
+
             Console.WriteLine($"LoadItems SME: 3");
             // Converter.CreateIdShortPath(db, smeList);
             CreateIdShortPath(db, smeList);
@@ -1081,6 +1095,7 @@
         public List<IValueSet?>? iValueList;
         public List<DValueSet?>? dValueList;
         public List<OValueSet?>? oValueList;
+        public string propertyValue;
     }
 
     private Virtualize<SMEVirtualize> SMESetContainer { get; set; }
@@ -1094,96 +1109,7 @@
 
             if (loadedItems == null || !(loadedItems is List<T>))
             {
-                /*
-                switch (query)
-                {
-                    case IQueryable<AASSet>:
-                        var qAAS = (query as IQueryable<AASSet>);
-                        if (search != "")
-                        {
-                            qAAS = qAAS.Where(aas =>
-                            aas.IdShort.Contains(search) ||
-                                aas.Identifier.Contains(search) ||
-                                aas.GlobalAssetId.Contains(search)
-                            );
-                        }
-                        totalCount = qAAS.Count();
-                        CheckTotalCountAndUpdate();
-                        loadedItems = await qAAS
-                            .OrderBy("Id")
-                            .Skip(offset)
-                            .Take(size)
-                            .ToListAsync();
-                        break;
-                    case IQueryable<SMEVirtualize>:
-                        var qSME = db.SMESets.Where("true");
-                        if (smid != 0)
-                        {
-                            qSME = qSME.Where(sme => sme.SMId == smid);
-                        }
-                        if (smeid != 0)
-                        {
-                            qSME = qSME.Where(sme => sme.Id == smeid);
-                        }
-                        if (parid != 0)
-                        {
-                            qSME = qSME.Where(sme => sme.ParentSMEId == parid);
-                        }
-                        if (search != "")
-                        {
-                            qSME = qSME.Where(sme =>
-                                sme.IdShort.Contains(search) ||
-                                sme.SemanticId.Contains(search)
-                            );
-                        }
-                        totalCount = qSME.Count();
-                        qSME = qSME
-                            .OrderBy("Id")
-                            .Skip(offset)
-                            .Take(size);
-                        CheckTotalCountAndUpdate();
-                        loadedItems = await qSME
-                            .ToListAsync();
-                        break;
-                }
-                    */
             }
-
-            /*
-        switch (query)
-            {
-                case IQueryable<AASSet>:
-                    items = (loadedItems as List<T>)
-                        .Skip(request.StartIndex)
-                        .Take(request.Count)
-                        .ToList();
-                    break;
-                    case IQueryable<SMEVirtualize>:
-                        var smeList = (loadedItems as List<SMESet>)
-                            .Skip(request.StartIndex)
-                            .Take(request.Count)
-                            .ToList();
-                        Converter.CreateIdShortPath(db, smeList);
-                        var merged = Converter.GetSmeMerged(db, smeList);
-                        var smIdList = smeList.Select(sme => sme.SMId).Distinct();
-                        var smList = db.SMSets.Where(sm => smIdList.Contains(sm.Id)).ToList();
-                        var smeListVirt = new List<SMEVirtualize>();
-                        foreach (var sme in smeList)
-                        {
-                            smeListVirt.Add(new SMEVirtualize
-                                {
-                                    smSet = smList.Where(sm => sm.Id == sme.SMId).ToList().FirstOrDefault(),
-                                    smeSet = sme,
-                                    sValueList = merged.Where(v => v.sValueSet != null && v.sValueSet.SMEId == sme.Id).Select(v => v.sValueSet).ToList(),
-                                    iValueList = merged.Where(v => v.iValueSet != null && v.iValueSet.SMEId == sme.Id).Select(v => v.iValueSet).ToList(),
-                                    dValueList = merged.Where(v => v.dValueSet != null && v.dValueSet.SMEId == sme.Id).Select(v => v.dValueSet).ToList(),
-                                    oValueList = merged.Where(v => v.oValueSet != null && v.oValueSet.SMEId == sme.Id).Select(v => v.oValueSet).ToList(),
-                                });
-                        }
-                        items = smeListVirt as List<T>;
-                        break;
-            }
-                */
 
             Console.WriteLine($"LoadItems: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
 

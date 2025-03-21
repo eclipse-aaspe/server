@@ -3014,9 +3014,9 @@ namespace AasxServer
             }
         }
 
-        public static void setTimeStampValue(Submodel submodel, string path, DateTime timeStamp, string value = "")
+        public static void setTimeStampValue(string submodelId, string path, DateTime timeStamp, string value = null)
         {
-            Converter.setTimeStampValue(submodel, path, timeStamp, value);
+            Converter.setTimeStampValue(submodelId, path, timeStamp, value);
         }
         public static AdminShellPackageEnv getEnv(string aasID)
         {

@@ -112,7 +112,7 @@
             @code
             {
                 string idShortPath = "";
-                Submodel parentSubmodel = null;
+                string parentSubmodelId = "";
             }
             @{
                 if (SelectedNode != null && SelectedNode.Tag is ISubmodelElement sme)
@@ -144,7 +144,7 @@
 
                         parent = (IReferable)parent.Parent;
                     }
-                    parentSubmodel = parent as Submodel;
+                    parentSubmodelId = (parent as Submodel).Id;
                 }
 
                 if (SelectedNode != null)
@@ -230,8 +230,11 @@
                 {
                     <span style="color:lightgray;">UPDATE @TimeStamp.DateTimeToString(r.TimeStamp)</span>
                     <br/>
-                    <button style="border-width: 1px; border-color: black; background-color: lightgray" @onclick="SetTimeStamp">TIMESTAMP</button>
-                    <br/>
+                    @if (Program.edit)
+                    {
+                        <button style="border-width: 1px; border-color: black; background-color: lightgray" @onclick="SetTimeStamp">TIMESTAMP</button>
+                        <br />
+                    }
                     <span style="color:lightgray;">CREATE @TimeStamp.DateTimeToString(r.TimeStampCreate)</span>
                     <br/>
                     <span style="color:lightgray;">TREE @TimeStamp.DateTimeToString(r.TimeStampTree)</span>
@@ -250,7 +253,7 @@
                             else
                             {
                                 // AasxServer.AasxTask.getEnv(aasID).setWrite(true);
-                                AasxServer.AasxTask.setTimeStampValue(parentSubmodel, idShortPath, DateTime.UtcNow);
+                                AasxServer.AasxTask.setTimeStampValue(parentSubmodelId, idShortPath, DateTime.UtcNow);
                             }
                         }
                     }
@@ -320,8 +323,8 @@
                     <input @bind="CurrentValue" style="width:500px; border-width: 1px; border-color: black;"/>
                     <span style="border-width: 1px; border-color: black; background-color: blue;">@CurrentValue</span>
                     <br>
-            @code { private string CurrentValue { get; set; } }
-            if (!string.IsNullOrEmpty(CurrentValue))
+                    @code { private string CurrentValue { get; set; } }
+                    if (!string.IsNullOrEmpty(CurrentValue))
                     {
                         if (SelectedNode.Tag is Property)
                         {
@@ -336,7 +339,7 @@
                             else
                             {
                                 // AasxServer.AasxTask.getEnv(aasID).setWrite(true);
-                                AasxServer.AasxTask.setTimeStampValue(parentSubmodel, idShortPath, DateTime.UtcNow, CurrentValue);
+                                AasxServer.AasxTask.setTimeStampValue(parentSubmodelId, idShortPath, DateTime.UtcNow, CurrentValue);
                             }
                             Program.signalNewData(0);
                         }
@@ -389,9 +392,9 @@
 
                 if (SelectedNode != null && SelectedNode.Tag is ISubmodelElement sme2)
                 {
-                    if (parentSubmodel != null)
+                    if (parentSubmodelId != "")
                     {
-                        var idEncoded = Base64UrlEncoder.Encode((parentSubmodel as Submodel).Id);
+                        var idEncoded = Base64UrlEncoder.Encode(parentSubmodelId);
                         var path = idShortPath;
                         if (!(sme2 is Operation) || !sme2.IdShort.ToLower().StartsWith("eventelement"))
                         {
