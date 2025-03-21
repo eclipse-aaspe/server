@@ -197,6 +197,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             var op = Events.EventData.FindEvent(submodel, eventName);
             eventData.ParseData(op, Program.env[packageIndex]);
 
+            var e = new Events.EventPayload();
+            List<String> diffEntry = new List<String>();
+            string changes = "CREATE UPDATE DELETE";
+
             if (eventData.persistence == null || eventData.persistence.Value == "" || eventData.persistence.Value == "memory")
             {
                 IReferable data = null;
@@ -241,67 +245,61 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                     depth = 1;
                 }
 
-                List<String> diffEntry = new List<String>();
-                string changes = "CREATE UPDATE DELETE";
-                var e = Events.EventPayload.CollectPayload(changes, depth,
+                e = Events.EventPayload.CollectPayload(changes, depth,
                     eventData.statusData, eventData.dataReference, data, eventData.conditionSM, eventData.conditionSME,
                     diff, diffEntry, wp, limSm, offSm, limSme, offSme);
-
-                if (diff == "status")
-                {
-                    if (eventData.lastUpdate != null)
-                    {
-                        e.status.lastUpdate = eventData.lastUpdate.Value;
-                    }
-                }
-                else
-                {
-                    var timeStamp = DateTime.UtcNow;
-                    if (eventData.transmitted != null)
-                    {
-                        eventData.transmitted.Value = e.status.transmitted;
-                        eventData.transmitted.SetTimeStamp(DateTime.UtcNow);
-                    }
-                    var dt = DateTime.Parse(e.status.lastUpdate);
-                    if (eventData.lastUpdate != null)
-                    {
-                        eventData.lastUpdate.Value = e.status.lastUpdate;
-                        eventData.lastUpdate.SetTimeStamp(dt);
-                    }
-                    if (eventData.diff != null)
-                    {
-                        if (diffEntry.Count > 0)
-                        {
-                            eventData.diff.Value = new List<ISubmodelElement>();
-                            int i = 0;
-                            foreach (var d in diffEntry)
-                            {
-                                var p = new Property(DataTypeDefXsd.String);
-                                p.IdShort = "diff" + i;
-                                p.Value = d;
-                                p.SetTimeStamp(dt);
-                                eventData.diff.Value.Add(p);
-                                p.SetAllParentsAndTimestamps(eventData.diff, dt, dt, DateTime.MinValue);
-                                i++;
-                            }
-                            eventData.diff.SetTimeStamp(dt);
-                        }
-                    }
-                }
-                Program.signalNewData(2);
-                return new ObjectResult(e);
             }
             else // database
             {
-                List<String> diffEntry = new List<String>();
-                string changes = "CREATE UPDATE DELETE";
-                var e = Events.EventPayload.CollectPayload(changes, 0,
+                e = Events.EventPayload.CollectPayload(changes, 0,
                 eventData.statusData, eventData.dataReference, null, eventData.conditionSM, eventData.conditionSME,
                     diff, diffEntry, wp, limSm, limSme, offSm, offSme);
-
-                Program.signalNewData(2);
-                return new ObjectResult(e);
             }
+
+            if (diff == "status")
+            {
+                if (eventData.lastUpdate != null)
+                {
+                    e.status.lastUpdate = eventData.lastUpdate.Value;
+                }
+            }
+            else
+            {
+                var timeStamp = DateTime.UtcNow;
+                if (eventData.transmitted != null)
+                {
+                    eventData.transmitted.Value = e.status.transmitted;
+                    eventData.transmitted.SetTimeStamp(DateTime.UtcNow);
+                }
+                var dt = DateTime.Parse(e.status.lastUpdate);
+                if (eventData.lastUpdate != null)
+                {
+                    eventData.lastUpdate.Value = e.status.lastUpdate;
+                    eventData.lastUpdate.SetTimeStamp(dt);
+                }
+                if (eventData.diff != null)
+                {
+                    if (diffEntry.Count > 0)
+                    {
+                        eventData.diff.Value = new List<ISubmodelElement>();
+                        int i = 0;
+                        foreach (var d in diffEntry)
+                        {
+                            var p = new Property(DataTypeDefXsd.String);
+                            p.IdShort = "diff" + i;
+                            p.Value = d;
+                            p.SetTimeStamp(dt);
+                            eventData.diff.Value.Add(p);
+                            p.SetAllParentsAndTimestamps(eventData.diff, dt, dt, DateTime.MinValue);
+                            i++;
+                        }
+                        eventData.diff.SetTimeStamp(dt);
+                    }
+                }
+            }
+
+            Program.signalNewData(2);
+            return new ObjectResult(e);
         }
 
         return NoContent();

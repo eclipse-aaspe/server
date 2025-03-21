@@ -406,7 +406,7 @@ namespace Events
 
                     if (diff == "status")
                     {
-                        if (searchSM == "*" || searchSM == "")
+                        if (searchSM is "(*)" or "*" or "")
                         {
                             var s = db.SMSets.Select(sm => sm.TimeStampTree);
                             if (s.Any())
@@ -482,6 +482,15 @@ namespace Events
                                     }
                                     else
                                     {
+                                        // skip if at least 1 SME below with other TimeStampTree
+                                        // skip if at least 1 SME below with TimeStampCreate == TimeStampTree
+                                        // means: skip sme, if a child is in the list
+                                        if (smeSearchTimeStamp.Any(s => s.ParentSMEId == sme.Id))
+                                        {
+                                            // Console.WriteLine($"SKIP: {sme.IdShort}");
+                                            continue;
+                                        }
+
                                         entryType = "UPDATE";
                                     }
                                     var parentId = sme.ParentSMEId;
@@ -522,6 +531,7 @@ namespace Events
                                     }
 
                                     e.eventEntries.Add(entry);
+                                    diffEntry.Add(entry.entryType + " " + entry.idShortPath);
                                     Console.WriteLine($"Event {entry.entryType} Type: {entry.payloadType} idShortPath: {entry.idShortPath}");
                                     countSME++;
                                 }
@@ -556,6 +566,7 @@ namespace Events
                                 }
                             }
 
+                            diffEntry.Add(entry.entryType + " " + entry.idShortPath);
                             Console.WriteLine($"Event {entry.entryType} Type: {entry.payloadType} idShortPath: {entry.idShortPath}");
                             e.eventEntries.Add(entry);
                             countSM++;
