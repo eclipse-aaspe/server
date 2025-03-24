@@ -21,4 +21,19 @@ public class DbRequestParams
 
     public string SubmodelIdentifier { get; set; }
 
+    public Reference SemanticId { get; set; }
+
+    public DbFileRequestResult FileRequest { get; set; }
+
+    //ToDo: Decide whether differentiate between params of the different CRUD?
+    public IAssetAdministrationShell AasBody { get; set; }
+
+    public ISubmodel SubmodelBody { get; set; }
+
+    public ISubmodelElement SubmodelElementBody { get; set; }
+
+    public IReference ReferenceBody { get; set; }
+
+
+    public bool First { get; set; }
 }

@@ -11,4 +11,12 @@ public class DbRequestResult
     public List<IAssetAdministrationShell> AssetAdministrationShells { get; set; }
 
     public List<ISubmodel> Submodels { get; set; }
+
+    public List<ISubmodelElement> SubmodelElements { get; set; }
+
+    public List<IReference> References { get; set; }
+
+    public DbFileRequestResult FileRequestResult { get; set; }
+
+    public IAssetInformation AssetInformation { get; set; }
 }

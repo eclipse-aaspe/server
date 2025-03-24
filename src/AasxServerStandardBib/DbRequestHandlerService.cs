@@ -53,7 +53,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         };
         var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
 
-        var dbRequest = new DbRequest(typeof(IAssetAdministrationShell).Name, dbRequestContext, DbRequestCrudType.Read, true, taskCompletionSource);
+        var dbRequest = new DbRequest(DbRequestOp.ReadAllAssetAdministrationShells, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
 
         _queryOperations.Add(dbRequest);
 
@@ -88,7 +88,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         };
         var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
 
-        var dbRequest = new DbRequest(typeof(ISubmodel).Name, dbRequestContext, DbRequestCrudType.Read, false, taskCompletionSource);
+        var dbRequest = new DbRequest(DbRequestOp.ReadSubmodelById, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
 
         _queryOperations.Add(dbRequest);
 
@@ -102,6 +102,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         {
             if (operation != null)
             {
+                _lock.Wait();
                 if (operation.CrudType != DbRequestCrudType.Read)
                 {
                     while (_activeReadOperations > 0)
@@ -109,7 +110,6 @@ public class DbRequestHandlerService : IDbRequestHandlerService
                         Thread.Sleep(100);
                     }
                 }
-                _lock.Wait();
 
                 try
                 {

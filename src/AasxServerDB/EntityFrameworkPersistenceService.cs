@@ -694,43 +694,187 @@ public class EntityFrameworkPersistenceService : IPersistenceService
     {
         var result = new DbRequestResult();
 
-        switch (dbRequest.CrudType)
+        switch (dbRequest.Operation)
         {
-            case DbRequestCrudType.Create:
+            case DbRequestOp.ReadAllAssetAdministrationShells:
+                var assetAdministrationShells = ReadPagedAssetAdministrationShells(dbRequest.Context.Params.PaginationParameters,
+                        dbRequest.Context.SecurityConfig,
+                        dbRequest.Context.Params.AssetIds,
+                        dbRequest.Context.Params.IdShort);
+                result.AssetAdministrationShells = assetAdministrationShells;
                 break;
-            case DbRequestCrudType.Read:
-                if (dbRequest.RequestedTypeName == typeof(IAssetAdministrationShell).Name)
+            case DbRequestOp.ReadSubmodelById:
+                var submodel = ReadSubmodelById(
+                    dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                    dbRequest.Context.Params.SubmodelIdentifier);
+
+                result.Submodels = new List<ISubmodel>
                 {
-                    if (dbRequest.IsRequestingMany)
-                    {
-                        var assetAdministrationShells = ReadPagedAssetAdministrationShells(dbRequest.Context.Params.PaginationParameters,
-                                dbRequest.Context.SecurityConfig,
-                                dbRequest.Context.Params.AssetIds,
-                                dbRequest.Context.Params.IdShort);
-                        result.AssetAdministrationShells = assetAdministrationShells;
-                    }
-                }
-                else if (dbRequest.RequestedTypeName == typeof(ISubmodel).Name)
+                    submodel
+                };
+                break;
+            case DbRequestOp.ReadPagedSubmodelElements:
+                var submodelElements = ReadPagedSubmodelElements(
+                    dbRequest.Context.Params.PaginationParameters,
+                    dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                    dbRequest.Context.Params.SubmodelIdentifier);
+
+                result.SubmodelElements = submodelElements;
+                break;
+            case DbRequestOp.ReadSubmodelElementByPath:
+                var submodelElement = ReadSubmodelElementByPath(
+                    dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                    dbRequest.Context.Params.SubmodelIdentifier,
+                    dbRequest.Context.Params.IdShortElements);
+
+                result.SubmodelElements = new List<ISubmodelElement>
                 {
-                    if (!dbRequest.IsRequestingMany)
-                    {
-                        var submodel = ReadSubmodelById(
-                                dbRequest.Context.SecurityConfig,
-                                dbRequest.Context.Params.AssetAdministrationShellIdentifier,
-                                dbRequest.Context.Params.SubmodelIdentifier);
-                        var submodelList = new List<ISubmodel>
-                        {
-                            submodel
-                        };
-                        result.Submodels = submodelList;
-                    }
-                }
+                    submodelElement
+                };
                 break;
-            case DbRequestCrudType.Update:
+            case DbRequestOp.ReadAllSubmodels:
+                var submodels = ReadAllSubmodels(
+                    dbRequest.Context.Params.PaginationParameters,
+                    dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.SemanticId,
+                    dbRequest.Context.Params.IdShort);
+                result.Submodels = submodels;
                 break;
-            case DbRequestCrudType.Delete:
+            case DbRequestOp.ReadAssetAdministrationShellById:
+                var aas = ReadAssetAdministrationShellById(
+                    dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.AssetAdministrationShellIdentifier);
+                result.AssetAdministrationShells = new List<IAssetAdministrationShell>
+                {
+                    aas
+                };
+                break;
+            case DbRequestOp.ReadFileByPath:
+                byte[] content;
+                long fileSize;
+                var file = ReadFileByPath(dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                    dbRequest.Context.Params.SubmodelIdentifier,
+                    dbRequest.Context.Params.IdShort, out content, out fileSize);
+                result.FileRequestResult = new DbFileRequestResult()
+                {
+                    Content = content,
+                    File = file,
+                    FileSize = fileSize
+                };
+                break;
+            case DbRequestOp.ReadAssetInformation:
+                var assetInformation = ReadAssetInformation(dbRequest.Context.Params.AssetAdministrationShellIdentifier);
+                result.AssetInformation = assetInformation;
+                break;
+            case DbRequestOp.ReadThumbnail:
+                var thumbnail = ReadThumbnail(dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                    out content, out fileSize);
+                result.FileRequestResult = new DbFileRequestResult()
+                {
+                    Content = content,
+                    File = thumbnail,
+                    FileSize = fileSize
+                };
+                break;
+
+            case DbRequestOp.CreateSubmodel:
+                var createdSubmodel = CreateSubmodel(dbRequest.Context.Params.SubmodelBody,
+                    dbRequest.Context.Params.AssetAdministrationShellIdentifier);
+
+                result.Submodels = new List<ISubmodel>
+                {
+                    createdSubmodel
+                };
+                break;
+            case DbRequestOp.CreateAssetAdministrationShell:
+                var createdAas = CreateAssetAdministrationShell(
+                    dbRequest.Context.Params.AasBody
+                    );
+                result.AssetAdministrationShells = new List<IAssetAdministrationShell>
+                {
+                    createdAas
+                };
+                break;
+            case DbRequestOp.CreateSubmodelElement:
+                var createdsubmodelElement = CreateSubmodelElement(
+                    dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                    dbRequest.Context.Params.SubmodelIdentifier,
+                    dbRequest.Context.Params.SubmodelElementBody,
+                    dbRequest.Context.Params.First
+                    );
+                result.SubmodelElements = new List<ISubmodelElement>
+                {
+                    createdsubmodelElement
+                };
+                break;
+            case DbRequestOp.CreateSubmodelElementByPath:
+                var createdsubmodelElementbyPath = CreateSubmodelElementByPath(
+                    dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                    dbRequest.Context.Params.SubmodelIdentifier,
+                    dbRequest.Context.Params.IdShort,
+                    dbRequest.Context.Params.First,
+                    dbRequest.Context.Params.SubmodelElementBody
+                 );
+                result.SubmodelElements = new List<ISubmodelElement>
+                {
+                    createdsubmodelElementbyPath
+                };
+                break;
+            case DbRequestOp.CreateSubmodelReference:
+                var createdSubmodelReference = CreateSubmodelReferenceInAAS(dbRequest.Context.Params.ReferenceBody,
+                    dbRequest.Context.Params.AssetAdministrationShellIdentifier);
+
+                result.References = new List<IReference>
+                {
+                    createdSubmodelReference
+                };
+                break;
+            case DbRequestOp.UpdateSubmodelById:
+                UpdateSubmodelById(dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                    dbRequest.Context.Params.SubmodelIdentifier,
+                    dbRequest.Context.Params.SubmodelBody);
+                break;
+            case DbRequestOp.UpdateSubmodelElementByPath:
+                UpdateSubmodelElementByPath(dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                    dbRequest.Context.Params.SubmodelIdentifier,
+                    dbRequest.Context.Params.IdShort,
+                    dbRequest.Context.Params.SubmodelElementBody);
+                break;
+            case DbRequestOp.UpdateAssetInformation:
+                //UpdateAssetInformation(dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                //    dbRequest.Context.Params.in);
+                break;
+            case DbRequestOp.UpdateFileByPath:
+                break;
+            case DbRequestOp.UpdateThumbnail:
+                break;
+            case DbRequestOp.UpdateAssetAdministrationShellById:
+                break;
+            case DbRequestOp.ReplaceSubmodelById:
+                break;
+            case DbRequestOp.ReplaceSubmodelElementByPath:
+                break;
+            case DbRequestOp.ReplaceFileByPath:
+                break;
+            case DbRequestOp.DeleteAssetAdministrationShellById:
+                break;
+            case DbRequestOp.DeleteFileByPath:
+                break;
+            case DbRequestOp.DeleteSubmodelById:
+                break;
+            case DbRequestOp.DeleteSubmodelElementByPath:
+                break;
+            case DbRequestOp.DeleteSubmodelReferenceById:
+                break;
+            case DbRequestOp.DeleteThumbnail:
                 break;
             default:
+
                 break;
         }
 
@@ -738,8 +882,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         return result;
     }
 
-    public ISubmodel CreateSubmodel(Submodel body, string decodedAasIdentifier) => throw new NotImplementedException();
-    public void ReplaceSubmodelById(string decodedSubmodelIdentifier, Submodel body) => throw new NotImplementedException();
-    public void ReplaceSubmodelElementByPath(string decodedSubmodelIdentifier, string idShortPath, ISubmodelElement body) => throw new NotImplementedException();
-    public void ReplaceFileByPath(string decodedSubmodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream) => throw new NotImplementedException();
+    private ISubmodelElement CreateSubmodelElement(ISecurityConfig securityConfig, string assetAdministrationShellIdentifier, string submodelIdentifier, ISubmodelElement submodelElementBody, object first) => throw new NotImplementedException();
+    public ISubmodel CreateSubmodel(ISubmodel body, string aasIdentifier) => throw new NotImplementedException();
+    public void ReplaceSubmodelById(string submodelIdentifier, ISubmodel body) => throw new NotImplementedException();
+    public void ReplaceSubmodelElementByPath(string submodelIdentifier, string idShortPath, ISubmodelElement body) => throw new NotImplementedException();
+    public void ReplaceFileByPath(string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream) => throw new NotImplementedException();
 }

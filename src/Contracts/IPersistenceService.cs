@@ -27,7 +27,7 @@ public interface IPersistenceService
     IAssetInformation ReadAssetInformation(string aasIdentifier);
     string ReadThumbnail(string aasIdentifier, out byte[] byteArray, out long fileSize);
 
-    ISubmodel CreateSubmodel(Submodel body, string decodedAasIdentifier);
+    ISubmodel CreateSubmodel(ISubmodel body, string decodedAasIdentifier);
     IAssetAdministrationShell CreateAssetAdministrationShell(IAssetAdministrationShell body);
     IReference CreateSubmodelReferenceInAAS(IReference body, string aasIdentifier);
     ISubmodelElement CreateSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath, bool first, ISubmodelElement body);
@@ -40,9 +40,9 @@ public interface IPersistenceService
     //void UpdateSubmodelElementByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, ISubmodelElement body);
     void UpdateFileByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream);
     void UpdateThumbnail(string aasIdentifier, string fileName, string contentType, Stream stream);
-    void ReplaceSubmodelById(string decodedSubmodelIdentifier, Submodel body);
-    void ReplaceSubmodelElementByPath(string decodedSubmodelIdentifier, string idShortPath, ISubmodelElement body);
-    void ReplaceFileByPath(string decodedSubmodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream);
+    void ReplaceSubmodelById(string submodelIdentifier, ISubmodel body);
+    void ReplaceSubmodelElementByPath(string submodelIdentifier, string idShortPath, ISubmodelElement body);
+    void ReplaceFileByPath(string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream);
 
     void DeleteAssetAdministrationShellById(string aasIdentifier);
     void DeleteSubmodelById(string aasIdentifier, string submodelIdentifier);

@@ -8,24 +8,17 @@ using AasCore.Aas3_0;
 
 public class DbRequest
 {
-    public DbRequest(string requestedTypeName, DbRequestContext dbRequestContext, DbRequestCrudType crudType, bool isRequestingMany, TaskCompletionSource<DbRequestResult> completionSource)
+    public DbRequest(DbRequestOp dbRequestOp, DbRequestCrudType crudType, DbRequestContext dbRequestContext, TaskCompletionSource<DbRequestResult> completionSource)
     {
-        RequestedTypeName = requestedTypeName;
+        Operation = dbRequestOp;
         Context = dbRequestContext;
         TaskCompletionSource = completionSource;
         CrudType = crudType;
-        IsRequestingMany = isRequestingMany;
     }
-
-    public string RequestedTypeName { get; set; }
-
-    public bool IsRequestingMany { get; set; }
 
     public DbRequestCrudType CrudType { get; set; }
 
-    //public DbRequestOp Operation { get; set; }
-
-    //public string OperationName { get; set; }
+    public DbRequestOp Operation { get; set; }
 
     public DbRequestContext Context { get; set; }
 
