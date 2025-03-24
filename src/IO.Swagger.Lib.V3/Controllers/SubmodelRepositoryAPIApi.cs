@@ -253,7 +253,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
             if (diff == "status")
             {
-                if (eventData.lastUpdate != null)
+                if (eventData.lastUpdate != null && eventData.lastUpdate.Value != null && eventData.lastUpdate.Value != "")
                 {
                     e.status.lastUpdate = eventData.lastUpdate.Value;
                 }
