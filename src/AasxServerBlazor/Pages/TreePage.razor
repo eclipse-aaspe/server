@@ -1,36 +1,37 @@
 @page "/"
 @inject AASService SubmodelService
-@inject NavigationManager NavigationManager
 @inject ISecurityService SecService
+@using MW.Blazor
 @using AasCore.Aas3_0
 @using AasSecurity;
 @using AasSecurity.Models;
 @using Extensions
 @using Microsoft.IdentityModel.Tokens;
+@using Microsoft.AspNetCore.Http;
 @using System.Net;
 @using QRCoder;
 @using AasxServerBlazor.Data
 @using TimeStamp
 @using static AasxServerStandardBib.TimeSeriesPlotting;
 @using Range = AasCore.Aas3_0.Range
-
+@inject NavigationManager NavMan
 @implements IDisposable
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
 
 <div class="col-12 row">
     <br/>
     <div class="col-5" style="border-width:3px; border-style: solid; border-color: blue; border-radius: 8px; background-color:aliceblue;
             word-wrap: break-word; word-break: break-all; position: sticky">
-        @updateVisibleTree(Items, SelectedNode)
-        @if (Program.isLoading)
-        {
-            <span style="color:white;background-color:blue;">Loading...</span>
+        @{
+            updateVisibleTree();
+            if (Program.isLoading)
+            {
+                <span style="color:white;background-color:blue;">Loading...</span>
+            }
         }
-        else
-        {
-            // AasxRestServerLibrary.AasxRestServer.TestResource.initListOfRepositories();
-        }
+        <span></span>
         <Tree @bind-ExpandedNodes="ExpandedNodes" @bind-SelectedNode="SelectedNode" ChildSelector="@(item => item.Children)"
-              HasChildNodes="@(item => item.Children?.Any() == true)" HtmlId="@(item => GetHtmlId(item))" Nodes="Items">
+              HasChildNodes="@(item => item.Children?.Any() == true)" HtmlId="@(item => GetHtmlId(item))" Nodes="Items" TreePage="this">
             <TitleTemplate>
                 @{
                     var getPolicy = string.Empty;
@@ -108,7 +109,44 @@
     </div>
     <div class="col-7" style="border-width: 3px; border-style: solid; border-color: blue; border-radius: 8px; position: sticky; background-color:aliceblue;">
         <div class="sticky-top" style="word-wrap:break-word;word-break:break-all;">
+            @code
+            {
+                string idShortPath = "";
+                string parentSubmodelId = "";
+            }
             @{
+                if (SelectedNode != null && SelectedNode.Tag is ISubmodelElement sme)
+                {
+                    idShortPath = sme.IdShort;
+                    var parent = sme.Parent as IReferable;
+                    while (parent != null && parent is not Submodel)
+                    {
+                        if (parent is ISubmodelElementList parentList)
+                        {
+                            //Considering child elements of SML can have null idShorts
+                            if (idShortPath == null || idShortPath.Equals(sme.IdShort))
+                            {
+                                var index = parentList.Value?.IndexOf(sme);
+                                idShortPath = $"[{index}]";
+                            }
+
+                            idShortPath = parentList.IdShort + idShortPath;
+                        }
+                        else if (parent.Parent is ISubmodelElementList prevParentList)
+                        {
+                            var index = prevParentList.Value?.IndexOf(parent as ISubmodelElement);
+                            idShortPath = $"[{index}].{idShortPath}";
+                        }
+                        else
+                        {
+                            idShortPath = $"{parent.IdShort}.{idShortPath}";
+                        }
+
+                        parent = (IReferable)parent.Parent;
+                    }
+                    parentSubmodelId = (parent as Submodel).Id;
+                }
+
                 if (SelectedNode != null)
                 {
                     if (SelectedNode.Tag is not string)
@@ -192,24 +230,34 @@
                 {
                     <span style="color:lightgray;">UPDATE @TimeStamp.DateTimeToString(r.TimeStamp)</span>
                     <br/>
-                    <button style="border-width: 1px; border-color: black; background-color: lightgray" @onclick="SetTimeStamp">TIMESTAMP</button>
-                    <br/>
+                    @if (Program.edit)
+                    {
+                        <button style="border-width: 1px; border-color: black; background-color: lightgray" @onclick="SetTimeStamp">TIMESTAMP</button>
+                        <br />
+                    }
                     <span style="color:lightgray;">CREATE @TimeStamp.DateTimeToString(r.TimeStampCreate)</span>
                     <br/>
                     <span style="color:lightgray;">TREE @TimeStamp.DateTimeToString(r.TimeStampTree)</span>
                     <br />
                     <span style="color:lightgray;">DELETE @TimeStamp.DateTimeToString(r.TimeStampDelete)</span>
                     <br />
-            @code {
+                    @code {
 
-                private void SetTimeStamp()
-                {
-                    (SelectedNode.Tag as IReferable).SetTimeStamp(DateTime.UtcNow);
-                    Program.env[SelectedNode.envIndex].setWrite(true);
+                        private void SetTimeStamp()
+                        {
+                            (SelectedNode.Tag as IReferable).SetTimeStamp(DateTime.UtcNow);
+                            if (aasID == "")
+                            {
+                                Program.env[SelectedNode.envIndex].setWrite(true);
+                            }
+                            else
+                            {
+                                // AasxServer.AasxTask.getEnv(aasID).setWrite(true);
+                                AasxServer.AasxTask.setTimeStampValue(parentSubmodelId, idShortPath, DateTime.UtcNow);
+                            }
+                        }
+                    }
                 }
-
-            }
-            }
 
                 var externalLink = false;
                 var link = GetLink(SelectedNode, out externalLink);
@@ -275,8 +323,8 @@
                     <input @bind="CurrentValue" style="width:500px; border-width: 1px; border-color: black;"/>
                     <span style="border-width: 1px; border-color: black; background-color: blue;">@CurrentValue</span>
                     <br>
-            @code { private string CurrentValue { get; set; } }
-            if (!string.IsNullOrEmpty(CurrentValue))
+                    @code { private string CurrentValue { get; set; } }
+                    if (!string.IsNullOrEmpty(CurrentValue))
                     {
                         if (SelectedNode.Tag is Property)
                         {
@@ -284,7 +332,15 @@
                                 CurrentValue = string.Empty;
                             (SelectedNode.Tag as Property).Value = CurrentValue;
                             (SelectedNode.Tag as Property).SetTimeStamp(DateTime.UtcNow);
-                            Program.env[SelectedNode.envIndex].setWrite(true);
+                            if (aasID == "")
+                            {
+                                Program.env[SelectedNode.envIndex].setWrite(true);
+                            }
+                            else
+                            {
+                                // AasxServer.AasxTask.getEnv(aasID).setWrite(true);
+                                AasxServer.AasxTask.setTimeStampValue(parentSubmodelId, idShortPath, DateTime.UtcNow, CurrentValue);
+                            }
                             Program.signalNewData(0);
                         }
 
@@ -327,47 +383,20 @@
                 if (SelectedNode is {Tag: Submodel sm})
                 {
                     var idEncoded = Base64UrlEncoder.Encode(sm.Id);
-                    var path = Program.externalBlazor + "/submodels/" + idEncoded;
+                    var path2 = Program.externalBlazor + "/submodels/" + idEncoded;
                     <span style="color:white;background-color:blue;">URL:</span>
-                    <a href="@path" target="_blank">@path</a>
+                    <a href="@path2" target="_blank">@path2</a>
                     <br>
 
                 }
 
-                if (SelectedNode != null && SelectedNode.Tag is ISubmodelElement sme)
+                if (SelectedNode != null && SelectedNode.Tag is ISubmodelElement sme2)
                 {
-                    var path = sme.IdShort;
-                    var parent = sme.Parent as IReferable;
-                    while (parent != null && parent is not Submodel)
+                    if (parentSubmodelId != "")
                     {
-                        if (parent is ISubmodelElementList parentList)
-                        {
-                            //Considering child elements of SML can have null idShorts
-                            if (path == null || path.Equals(sme.IdShort))
-                            {
-                                var index = parentList.Value?.IndexOf(sme);
-                                path = $"[{index}]";
-                            }
-
-                            path = parentList.IdShort + path;
-                        }
-                        else if (parent.Parent is ISubmodelElementList prevParentList)
-                        {
-                            var index = prevParentList.Value?.IndexOf(parent as ISubmodelElement);
-                            path = $"[{index}].{path}";
-                        }
-                        else
-                        {
-                            path = $"{parent.IdShort}.{path}";
-                        }
-
-                        parent = (IReferable) parent.Parent;
-                    }
-
-                    if (parent != null)
-                    {
-                        var idEncoded = Base64UrlEncoder.Encode((parent as Submodel).Id);
-                        if (!(sme is Operation) || !sme.IdShort.ToLower().StartsWith("eventelement"))
+                        var idEncoded = Base64UrlEncoder.Encode(parentSubmodelId);
+                        var path = idShortPath;
+                        if (!(sme2 is Operation) || !sme2.IdShort.ToLower().StartsWith("eventelement"))
                         {
                             path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodel-elements/" + path;
                         }
@@ -575,7 +604,15 @@
                     <span>@($" {observedSingleKey}")</span>
                     <br/>
                     // var refsme = Program.env[0].AasEnv.FindReferableByReference(be.Observed);
-                    var refsme = Program.env[SelectedNode.envIndex].AasEnv.FindReferableByReference(be.Observed);
+                    IReferable refsme = null;
+                    if (aasID == "")
+                    {
+                        refsme = Program.env[SelectedNode.envIndex].AasEnv.FindReferableByReference(be.Observed);
+                    }
+                    else
+                    {
+                        refsme = AasxServer.AasxTask.getEnv(aasID).AasEnv.FindReferableByReference(be.Observed);
+                    }
                     if (refsme != null)
                     {
                         <span style="color:lightgray;">UPDATE @TimeStamp.DateTimeToString(refsme.TimeStamp)</span>
@@ -682,7 +719,14 @@
                     byte[] data;
                     using (var ms = new System.IO.MemoryStream())
                     {
-                        await Program.env[SelectedNode.envIndex].GetLocalStreamFromPackage(f.Value).CopyToAsync(ms);
+                        if (aasID == "")
+                        {
+                            await Program.env[SelectedNode.envIndex].GetLocalStreamFromPackage(f.Value).CopyToAsync(ms);
+                        }
+                        else
+                        {
+                            await AasxServer.AasxTask.getEnv(aasID).GetLocalStreamFromPackage(f.Value).CopyToAsync(ms);
+                        }
                         data = ms.ToArray();
                     }
 
@@ -722,6 +766,8 @@
 
     private Item SelectedNode { get; set; }
 
+    private string aasID = "";
+
     static ulong dataVersion = 0;
 
     public static void checkDataVersion()
@@ -734,15 +780,48 @@
 
     System.Threading.Timer refresh = null;
 
+    /*
+    void StateHasChanged()
+    {
+    // Set a breakpoint on the following line
+    base.StateHasChanged();
+    }
+    */
+
+    [CascadingParameter] private HttpContext HttpContext { get; set; }
+
     protected override void OnInitialized()
     {
         // OnInitialized() always called twice
-        SubmodelService.NewDataAvailable += NewData;
-        Program.signalNewData(1);
+        if (HttpContext == null)
+        {
+            // Pre-rendering logic
+            SubmodelService.NewDataAvailable += NewData;
+
+            var uri = NavMan.Uri;
+            var splitUrl = uri.Split("?");
+            if (splitUrl.Length == 2)
+            {
+                var query = System.Web.HttpUtility.ParseQueryString(splitUrl[1]);
+                var list = query.Get("aas");
+                if (!list.IsNullOrEmpty())
+                {
+                    aasID = list;
+                }
+            }
+
+            newDataMode = 1;
+            // Program.signalNewData(1);
+        }
+        else
+        {
+            // Actual rendering logic
+        }
     }
 
     public void Dispose()
     {
+        // AasxServer.AasxTask.saveAASXtoTemp(aasID);
         SubmodelService.NewDataAvailable -= NewData;
     }
 
@@ -764,13 +843,14 @@
 
     bool update = true;
 
-    string updateVisibleTree(List<Item> viewItems, Item selectedNode)
+    void updateVisibleTree()
     {
         if (!update)
         {
-            return string.Empty;
+            return;
         }
 
+        var selectedNode = SelectedNode;
         switch (newDataMode)
         {
             case 0:
@@ -789,8 +869,7 @@
                     }
                 }
 
-                SubmodelService.BuildTree();
-                Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
+                Items = SubmodelService.BuildTree(aasID);
                 ExpandedNodes.Clear();
                 selectedNode = null;
                 if (isSelected)
@@ -812,8 +891,7 @@
                 break;
             // 3 == build new tree, all nodes closed
             case 3:
-                SubmodelService.BuildTree();
-                Items = SubmodelService.GetTree(selectedNode, ExpandedNodes);
+                Items = SubmodelService.BuildTree(aasID);
                 ExpandedNodes.Clear();
                 selectedNode = null;
                 newDataMode = 0;
@@ -821,8 +899,6 @@
         }
 
         SelectedNode = selectedNode;
-
-        return string.Empty;
     }
 
     List<string> GetPath(Item i)
@@ -952,8 +1028,18 @@
         }
     }
 
-    public static string CreateDetailsImage(Item item, out bool url, out bool svg)
+    public string CreateDetailsImage(Item item, out bool url, out bool svg)
     {
+        AdminShellNS.AdminShellPackageEnv[] env = null;
+        if (aasID.IsNullOrEmpty())
+        {
+            env = Program.env;
+        }
+        else
+        {
+            env = new AdminShellNS.AdminShellPackageEnv[] { AasxServer.AasxTask.getEnv(aasID) };
+        }
+
         svg = false;
         url = false;
 
@@ -974,10 +1060,10 @@
                         try
                         {
                             {
-                                if (Program.env[item.envIndex] == null)
+                                if (env[item.envIndex] == null)
                                     return string.Empty;
 
-                                using var s = Program.env[item.envIndex].GetLocalThumbnailStream();
+                                using var s = env[item.envIndex].GetLocalThumbnailStream();
                                 if (s != null)
                                 {
                                     using var m = new System.IO.MemoryStream();
@@ -1010,7 +1096,7 @@
                                 case "svg":
                                     try
                                     {
-                                        using var s = Program.env[item.envIndex].GetLocalStreamFromPackage(f.Value);
+                                        using var s = env[item.envIndex].GetLocalStreamFromPackage(f.Value);
                                         if (s != null)
                                         {
                                             using var m = new System.IO.MemoryStream();
@@ -1135,8 +1221,8 @@
 
         switch (itemTag)
         {
-            case null when Program.envSymbols[item.envIndex] == "L":
-                return $"{Program.externalRest}/server/getaasx/{Convert.ToString(SelectedNode.envIndex)}";
+            // case null when Program.envSymbols[item.envIndex] == "L":
+            //    return $"{Program.externalRest}/server/getaasx/{Convert.ToString(SelectedNode.envIndex)}";
             case AssetAdministrationShell:
                 return $"{Program.externalBlazor}/packages/{Base64UrlEncoder.Encode(Convert.ToString(SelectedNode.envIndex))}";
             case File:
@@ -1209,6 +1295,8 @@
 
     string GetSymbols(Item item)
     {
+        return string.Empty;
+
         if (item == null)
         {
             return string.Empty;
@@ -1293,9 +1381,9 @@
             case string when item.Text.Contains("/readme"):
                 ret += item.Text;
                 break;
-            case null when Program.envSymbols[item.envIndex] == "L":
-                ret += "AASX2";
-                break;
+            // case null when Program.envSymbols[item.envIndex] == "L":
+            //    ret += "AASX2";
+            //    break;
             case AssetAdministrationShell:
                 ret += "AAS";
                 break;
@@ -1391,9 +1479,9 @@
 
         switch (itemTag)
         {
-            case null when Program.envSymbols[item.envIndex] == "L":
-                ret = item.Text;
-                break;
+            // case null when Program.envSymbols[item.envIndex] == "L":
+            //    ret = item.Text;
+            //    break;
             case string when item.Text.Contains("/readme"):
                 ret = " ";
                 break;

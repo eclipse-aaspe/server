@@ -52,6 +52,22 @@ namespace AasxServerDB
             return paths;
         }
 
+        public static AdminShellPackageEnv? GetPackageEnv(string aasID, out string envFileName)
+        {
+            var db = new AasContext();
+            envFileName = ";";
+
+            var aasDBList = db.AASSets.Where(aas => aas.Identifier == aasID).ToList();
+
+            if (aasDBList.Count != 1)
+            {
+                return null;
+            }
+
+            envFileName = GetAASXPath(aasDBList[0].EnvId);
+
+            return GetPackageEnv(aasDBList[0].EnvId);
+        }
         public static AdminShellPackageEnv? GetPackageEnv(int envId)
         {
             var timeStamp = DateTime.UtcNow;
@@ -320,26 +336,26 @@ namespace AasxServerDB
                 return null;
 
             var cd = new ConceptDescription(
-                idShort:                    cdDB.IdShort,
-                displayName:                Serializer.DeserializeList<ILangStringNameType>(cdDB.DisplayName),
-                category:                   cdDB.Category,
-                description:                Serializer.DeserializeList<ILangStringTextType>(cdDB.Description),
-                extensions:                 Serializer.DeserializeList<IExtension>(cdDB.Extensions),
-                id:                         cdDB.Identifier,
-                isCaseOf:                   Serializer.DeserializeList<IReference>(cdDB.IsCaseOf),
+                idShort: cdDB.IdShort,
+                displayName: Serializer.DeserializeList<ILangStringNameType>(cdDB.DisplayName),
+                category: cdDB.Category,
+                description: Serializer.DeserializeList<ILangStringTextType>(cdDB.Description),
+                extensions: Serializer.DeserializeList<IExtension>(cdDB.Extensions),
+                id: cdDB.Identifier,
+                isCaseOf: Serializer.DeserializeList<IReference>(cdDB.IsCaseOf),
                 embeddedDataSpecifications: Serializer.DeserializeList<IEmbeddedDataSpecification>(cdDB.EmbeddedDataSpecifications),
-                administration:             new AdministrativeInformation(
-                    version:                    cdDB.Version,
-                    revision:                   cdDB.Revision,
-                    creator:                    Serializer.DeserializeElement<IReference>(cdDB.Creator),
-                    templateId:                 cdDB.TemplateId,
+                administration: new AdministrativeInformation(
+                    version: cdDB.Version,
+                    revision: cdDB.Revision,
+                    creator: Serializer.DeserializeElement<IReference>(cdDB.Creator),
+                    templateId: cdDB.TemplateId,
                     embeddedDataSpecifications: Serializer.DeserializeList<IEmbeddedDataSpecification>(cdDB.AEmbeddedDataSpecifications)
                 )
             )
             {
                 TimeStampCreate = cdDB.TimeStampCreate,
-                TimeStamp       = cdDB.TimeStamp,
-                TimeStampTree   = cdDB.TimeStampTree,
+                TimeStamp = cdDB.TimeStamp,
+                TimeStampTree = cdDB.TimeStampTree,
                 TimeStampDelete = cdDB.TimeStampDelete
             };
 
@@ -361,14 +377,14 @@ namespace AasxServerDB
                 return null;
 
             var aas = new AssetAdministrationShell(
-                idShort:                    aasDB.IdShort,
-                displayName:                Serializer.DeserializeList<ILangStringNameType>(aasDB.DisplayName),
-                category:                   aasDB.Category,
-                description:                Serializer.DeserializeList<ILangStringTextType>(aasDB.Description),
-                extensions:                 Serializer.DeserializeList<IExtension>(aasDB.Extensions),
-                id:                         aasDB.Identifier,
+                idShort: aasDB.IdShort,
+                displayName: Serializer.DeserializeList<ILangStringNameType>(aasDB.DisplayName),
+                category: aasDB.Category,
+                description: Serializer.DeserializeList<ILangStringTextType>(aasDB.Description),
+                extensions: Serializer.DeserializeList<IExtension>(aasDB.Extensions),
+                id: aasDB.Identifier,
                 embeddedDataSpecifications: Serializer.DeserializeList<IEmbeddedDataSpecification>(aasDB.EmbeddedDataSpecifications),
-                derivedFrom:                Serializer.DeserializeElement<IReference>(aasDB.DerivedFrom),
+                derivedFrom: Serializer.DeserializeElement<IReference>(aasDB.DerivedFrom),
                 submodels: new List<IReference>(),
                 administration: new AdministrativeInformation(
                     version: aasDB.Version,
@@ -378,10 +394,10 @@ namespace AasxServerDB
                     embeddedDataSpecifications: Serializer.DeserializeList<IEmbeddedDataSpecification>(aasDB.AEmbeddedDataSpecifications)
                 ),
                 assetInformation: new AssetInformation(
-                    assetKind:        Serializer.DeserializeElement<AssetKind>(aasDB.AssetKind),
+                    assetKind: Serializer.DeserializeElement<AssetKind>(aasDB.AssetKind),
                     specificAssetIds: Serializer.DeserializeList<ISpecificAssetId>(aasDB.SpecificAssetIds),
-                    globalAssetId:    aasDB.GlobalAssetId,
-                    assetType:        aasDB.AssetType,
+                    globalAssetId: aasDB.GlobalAssetId,
+                    assetType: aasDB.AssetType,
                     defaultThumbnail: new Resource(
                         path: aasDB.DefaultThumbnailPath,
                         contentType: aasDB.DefaultThumbnailContentType
@@ -390,8 +406,8 @@ namespace AasxServerDB
             )
             {
                 TimeStampCreate = aasDB.TimeStampCreate,
-                TimeStamp       = aasDB.TimeStamp,
-                TimeStampTree   = aasDB.TimeStampTree,
+                TimeStamp = aasDB.TimeStamp,
+                TimeStampTree = aasDB.TimeStampTree,
                 TimeStampDelete = aasDB.TimeStampDelete
             };
 
@@ -426,16 +442,16 @@ namespace AasxServerDB
                     .Where(sme => sme.SMId == smDB.Id);
 
                 var submodel = new Submodel(
-                    idShort:                    smDB.IdShort,
-                    displayName:                Serializer.DeserializeList<ILangStringNameType>(smDB.DisplayName),
-                    category:                   smDB.Category,
-                    description:                Serializer.DeserializeList<ILangStringTextType>(smDB.Description),
-                    extensions:                 Serializer.DeserializeList<IExtension>(smDB.Extensions),
-                    id:                         smDB.Identifier,
-                    kind:                       Serializer.DeserializeElement<ModellingKind>(smDB.Kind),
-                    semanticId:                 !smDB.SemanticId.IsNullOrEmpty() ? new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, smDB.SemanticId) }) : null,
-                    supplementalSemanticIds:    Serializer.DeserializeList<IReference>(smDB.SupplementalSemanticIds),
-                    qualifiers:                 Serializer.DeserializeList<IQualifier>(smDB.Qualifiers),
+                    idShort: smDB.IdShort,
+                    displayName: Serializer.DeserializeList<ILangStringNameType>(smDB.DisplayName),
+                    category: smDB.Category,
+                    description: Serializer.DeserializeList<ILangStringTextType>(smDB.Description),
+                    extensions: Serializer.DeserializeList<IExtension>(smDB.Extensions),
+                    id: smDB.Identifier,
+                    kind: Serializer.DeserializeElement<ModellingKind>(smDB.Kind),
+                    semanticId: !smDB.SemanticId.IsNullOrEmpty() ? new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, smDB.SemanticId) }) : null,
+                    supplementalSemanticIds: Serializer.DeserializeList<IReference>(smDB.SupplementalSemanticIds),
+                    qualifiers: Serializer.DeserializeList<IQualifier>(smDB.Qualifiers),
                     embeddedDataSpecifications: Serializer.DeserializeList<IEmbeddedDataSpecification>(smDB.EmbeddedDataSpecifications),
                     administration: new AdministrativeInformation(
                         version: smDB.Version,
@@ -444,7 +460,7 @@ namespace AasxServerDB
                         templateId: smDB.TemplateId,
                         embeddedDataSpecifications: Serializer.DeserializeList<IEmbeddedDataSpecification>(smDB.AEmbeddedDataSpecifications)
                     ),
-                    submodelElements:           new List<ISubmodelElement>()
+                    submodelElements: new List<ISubmodelElement>()
                 );
 
                 // LoadSME(submodel, null, null, SMEList);
@@ -453,8 +469,8 @@ namespace AasxServerDB
                 LoadSME(submodel, null, null, SMEList, smeMerged);
 
                 submodel.TimeStampCreate = smDB.TimeStampCreate;
-                submodel.TimeStamp       = smDB.TimeStamp;
-                submodel.TimeStampTree   = smDB.TimeStampTree;
+                submodel.TimeStamp = smDB.TimeStamp;
+                submodel.TimeStampTree = smDB.TimeStampTree;
                 submodel.TimeStampDelete = smDB.TimeStampDelete;
                 submodel.SetAllParents();
 
@@ -901,6 +917,131 @@ namespace AasxServerDB
             return sme;
         }
 
+        public static void setTimeStampValue(int smSetId, int smeSetId, DateTime timeStamp, string value = null)
+        {
+            using (var db = new AasContext())
+            {
+                var smDB = db.SMSets.Where(sm => sm.Id == smSetId).FirstOrDefault();
+                if (smDB != null)
+                {
+                    smDB.TimeStampTree = timeStamp;
+                }
+
+                var smeFound = db.SMESets.Where(sme => sme.SMId == smSetId && sme.Id == smeSetId).FirstOrDefault();
+                if (smeFound != null)
+                {
+                    smeFound.TimeStamp = timeStamp;
+                    smeFound.TimeStampTree = timeStamp;
+                    if (value != null && smeFound.SMEType == "Prop")
+                    {
+                        var sValue = db.SValueSets.Where(v => v.SMEId == smeFound.Id).FirstOrDefault();
+                        if (sValue != null)
+                        {
+                            sValue.Value = value;
+                        }
+                        else
+                        {
+                            var iValue = db.IValueSets.Where(v => v.SMEId == smeFound.Id).FirstOrDefault();
+                            if (iValue != null)
+                            {
+                                iValue.Value = Convert.ToInt64(value);
+                            }
+                            else
+                            {
+                                var dValue = db.DValueSets.Where(v => v.SMEId == smeFound.Id).FirstOrDefault();
+                                if (dValue != null)
+                                {
+                                    dValue.Value = Convert.ToDouble(value);
+                                }
+                            }
+                        }
+                    }
+                    while (smeFound != null && smeFound.ParentSMEId != null)
+                    {
+                        smeFound = db.SMESets.Where(sme => sme.Id == smeFound.ParentSMEId).FirstOrDefault();
+                        if (smeFound != null)
+                        {
+                            smeFound.TimeStamp = timeStamp;
+                            smeFound.TimeStampTree = timeStamp;
+                        }
+                    }
+                }
+
+                try
+                {
+                    db.SaveChanges();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                };
+            }
+        }
+        public static void setTimeStampValue(string submodelId, string path, DateTime timeStamp, string value = null)
+        {
+            var idShortPathElements = path.Split('.');
+            using (var db = new AasContext())
+            {
+                var smDB = db.SMSets.Where(sm => sm.Identifier == submodelId).FirstOrDefault();
+                if (smDB == null || idShortPathElements.Length == 0)
+                {
+                    return;
+                };
+
+                var idShort = idShortPathElements[0];
+                var smeParent = db.SMESets.Where(sme => sme.SMId == smDB.Id && sme.ParentSMEId == null && sme.IdShort == idShort).FirstOrDefault();
+                if (smeParent == null)
+                {
+                    return;
+                }
+                var parentId = smeParent.Id;
+                var smeFound = smeParent;
+
+                for (int i = 1; i < idShortPathElements.Length; i++)
+                {
+                    idShort = idShortPathElements[i];
+                    smeFound = db.SMESets.Where(sme => sme.SMId == smDB.Id && sme.ParentSMEId == parentId && sme.IdShort == idShort).FirstOrDefault();
+                    if (smeFound == null)
+                    {
+                        return;
+                    }
+                    parentId = smeFound.Id;
+                }
+
+                setTimeStampValue(smeFound.SMId, smeFound.Id, timeStamp, value);
+            };
+        }
+
+        public static List<string[]>? GetValue(SMESet smeSet, List<SValueSet> sValueList, List<IValueSet> iValueList, List<DValueSet> dValueList)
+        {
+            var TValue = smeSet.TValue;
+            var SMEType = smeSet.SMEType;
+            var Id = smeSet.Id;
+
+            if (TValue == null)
+                return [[string.Empty, string.Empty]];
+
+            var list = new List<string[]>();
+            switch (TValue)
+            {
+                case "S":
+                    list = sValueList
+                        .ConvertAll<string[]>(s => [s.Value ?? string.Empty, s.Annotation ?? string.Empty]);
+                    break;
+                case "I":
+                    list = iValueList
+                        .ConvertAll<string[]>(s => [s.Value == null ? string.Empty : s.Value.ToString(), s.Annotation ?? string.Empty]);
+                    break;
+                case "D":
+                    list = dValueList
+                        .ConvertAll<string[]>(s => [s.Value == null ? string.Empty : s.Value.ToString(), s.Annotation ?? string.Empty]);
+                    break;
+            }
+            if (list.Count > 0 || (!SMEType.IsNullOrEmpty() && SMEType.Equals("MLP")))
+                return list;
+
+            return [[string.Empty, string.Empty]];
+        }
         public static List<string[]>? GetValue(SMESet smeSet, List<SmeMerged> tree)
         {
             var TValue = smeSet.TValue;

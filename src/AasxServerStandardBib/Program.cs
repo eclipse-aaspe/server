@@ -273,7 +273,11 @@ namespace AasxServer
                     }
                     else if (!smIdentifier.IsNullOrEmpty())
                     {
-                        envId = db.SMSets.Where(sm => sm.Identifier == smIdentifier).Select(sm => sm.EnvId).FirstOrDefault();
+                        var e = db.SMSets.Where(sm => sm.Identifier == smIdentifier).Select(sm => sm.EnvId).FirstOrDefault();
+                        if (e != null)
+                        {
+                            envId = (int)e;
+                        }
                     }
                     if (envId == 0)
                     {

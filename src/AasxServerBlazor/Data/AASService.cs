@@ -12,8 +12,10 @@
 ********************************************************************************/
 
 using AasxServer;
+using AdminShellNS;
 using Extensions;
 using Microsoft.IdentityModel.Tokens;
+using NJsonSchema.Annotations;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -34,7 +36,7 @@ public class AASService
     public List<Item> items;
     public List<Item> viewItems;
 
-    public List<Item> GetTree(Item selectedNode, IList<Item> ExpandedNodes)
+    public List<Item> GetTree()
     {
         return viewItems;
     }
@@ -47,14 +49,32 @@ public class AASService
             createSMECItems(item, smec, item.envIndex);
         }
     }
-
-    public void BuildTree()
+    public List<Item> BuildTree(string aasID)
     {
-        while (Program.isLoading) ;
+        if (aasID == "")
+        {
+            return BuildTree(Program.env, Program.envFileName);
+        }
+
+        var envFileName = "";
+        var env = AasxServerDB.Converter.GetPackageEnv(aasID, out envFileName);
+
+        if (env == null)
+        {
+            return null;
+        }
+
+        return BuildTree([env], [envFileName]);
+    }
+    public List<Item> BuildTree(AdminShellPackageEnv[] env, string[] envFileName)
+    {
+        while (Program.isLoading)
+        {
+        }
 
         lock (Program.changeAasxFile)
         {
-            items = new List<Item>();
+            items = [];
 
             // Check for README
             if (Directory.Exists("./readme"))
@@ -74,11 +94,11 @@ public class AASService
                 }
             }
 
-            for (var i = 0; i < Program.envimax; i++)
+            for (var i = 0; i < env.Length; i++)
             {
-                if (Program.env[i] != null && Program.env[i].AasEnv.AssetAdministrationShells != null && Program.env[i].AasEnv.AssetAdministrationShells.Count > 0)
+                if (env[i] != null && env[i].AasEnv.AssetAdministrationShells != null && env[i].AasEnv.AssetAdministrationShells.Count > 0)
                 {
-                    foreach (var aas in Program.env[i].AasEnv.AssetAdministrationShells)
+                    foreach (var aas in env[i].AasEnv.AssetAdministrationShells)
                     {
                         var root = new Item
                         {
@@ -86,15 +106,15 @@ public class AASService
                         };
                         root.Text = aas.IdShort;
                         root.Tag = aas;
-                        if (Program.envSymbols[i] != "L")
+                        // if (envSymbols[i] != "L")
                         {
                             var children = new List<Item>();
-                            var env = Program.env[i];
+                            var env1 = env[i];
                             //var aas = env.AasEnv.AssetAdministrationShells[0];
-                            if (env != null && aas.Submodels is { Count: > 0 })
+                            if (env1 != null && aas.Submodels is { Count: > 0 })
                                 foreach (var smr in aas.Submodels)
                                 {
-                                    var sm = env.AasEnv.FindSubmodel(smr);
+                                    var sm = env1.AasEnv.FindSubmodel(smr);
                                     if (sm is not { IdShort: not null })
                                     {
                                         continue;
@@ -155,19 +175,21 @@ public class AASService
                             items.Add(root);
                         }
 
+                        /*
                         if (Program.envSymbols[i] != "L")
                         {
                             continue;
                         }
 
-                        root.Text = Path.GetFileName(Program.envFileName[i]);
+                        root.Text = Path.GetFileName(envFileName[i]);
                         items.Add(root);
+                        */
                     }
                 }
             }
         }
 
-        viewItems = items;
+        return items;
     }
 
     private void CreateSMEListItems(Item smeRootItem, ISubmodelElementList smeList, int i)
