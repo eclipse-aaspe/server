@@ -455,8 +455,10 @@ namespace Events
                         {
                             var smeSearchSM = db.SMESets.Where(sme => sme.SMId == sm.Id);
                             var smeSearchTimeStamp = smeSearchSM
-                                .Where(sme => (sme.TimeStampTree != sme.TimeStampCreate) && (sme.TimeStampTree > diffTime1) && (sme.TimeStampCreate <= diffTime1))
-                                .Where(sme => (sme.TimeStamp > diffTime1) || (sme.TimeStampDelete > diffTime1))
+                                .Where(sme => sme.TimeStampCreate > diffTime1
+                                    || (sme.TimeStampTree != sme.TimeStampCreate && sme.TimeStampTree > diffTime1 && sme.TimeStampCreate <= diffTime1)
+                                    || sme.TimeStampDelete > diffTime1
+                                )
                                 .OrderBy(sme => sme.TimeStampTree).Skip(offsetSme).Take(limitSme).ToList();
                             if (smeSearchTimeStamp.Count != 0)
                             {
@@ -574,7 +576,14 @@ namespace Events
                     }
                     if (countSM == 0 && countSME == 0)
                     {
-                        timeStampMax = db.SMSets.Where(searchSM).Select(sm => sm.TimeStampTree).Max();
+                        if (searchSM is "(*)" or "*" or "")
+                        {
+                            timeStampMax = db.SMSets.Select(sm => sm.TimeStampTree).Max();
+                        }
+                        else
+                        {
+                            timeStampMax = db.SMSets.Where(searchSM).Select(sm => sm.TimeStampTree).Max();
+                        }
                     }
                     e.status.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(timeStampMax);
                     e.status.countSM = countSM;
@@ -743,9 +752,9 @@ namespace Events
                 foreach (var entry in eventPayload.eventEntries)
                 {
                     Console.WriteLine($"Event {entry.entryType} Type: {entry.payloadType} idShortPath: {entry.idShortPath}");
+                    Submodel receiveSM = null;
                     if (entry.payloadType == "sm")
                     {
-                        Submodel receiveSM = null;
                         if (entry.payload != "")
                         {
                             MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(entry.payload));
@@ -768,6 +777,7 @@ namespace Events
                                     db.SaveChanges();
                                 }
                                 var visitor = new VisitorAASX();
+                                visitor.currentDataTime = dt;
                                 visitor.VisitSubmodel(receiveSM);
                                 visitor._smDB.AASId = aasDB;
                                 visitor._smDB.EnvId = envDB;
@@ -777,7 +787,7 @@ namespace Events
                             }
                         }
                     }
-                    else
+                    if (entry.payloadType == "sme")
                     {
                         bool changeSubmodel = false;
                         bool addEntry = false;
@@ -807,11 +817,19 @@ namespace Events
                             using (var db = new AasContext())
                             {
                                 var smDBQuery = db.SMSets.Where(sm => sm.Identifier == submodelIdentifier);
-                                var smDB = smDBQuery.ToList();
-                                if (smDB != null && smDB.Count == 1)
+                                var smDB = smDBQuery.FirstOrDefault();
+                                if (smDB == null)
                                 {
-                                    var visitor = new VisitorAASX(smDB[0]);
-                                    var smDBId = smDB[0].Id;
+                                    smDB = new SMSet();
+                                    smDB.Identifier = submodelIdentifier;
+                                    Converter.setTimeStamp(smDB, dt);
+                                    db.Add(smDB);
+                                }
+                                if (smDB != null)
+                                {
+                                    var visitor = new VisitorAASX(smDB);
+                                    visitor.currentDataTime = dt;
+                                    var smDBId = smDB.Id;
                                     var smeSmList = db.SMESets.Where(sme => sme.SMId == smDBId).ToList();
                                     Converter.CreateIdShortPath(db, smeSmList);
                                     var smeSmMerged = Converter.GetSmeMerged(db, smeSmList);
@@ -830,6 +848,7 @@ namespace Events
                                         {
                                             var receiveSmeDB = visitor.VisitSMESet(receiveSme);
                                             receiveSmeDB.SMId = smDBId;
+
                                             var parentPath = "";
                                             if (e.idShortPath.Contains("."))
                                             {
@@ -849,17 +868,25 @@ namespace Events
                                                 case "UPDATE":
                                                     if (parentPath != "")
                                                     {
-                                                        var parentDB = smeSmMerged.Where(sme => sme.smeSet.IdShortPath == parentPath).ToList();
-                                                        if (parentDB.Count == 1)
+                                                        var parentDB = smeSmMerged.Where(sme => sme.smeSet.IdShortPath == parentPath).FirstOrDefault();
+                                                        if (parentDB != null)
                                                         {
-                                                            receiveSmeDB.ParentSMEId = parentDB[0].smeSet.Id;
+                                                            receiveSmeDB.ParentSMEId = parentDB.smeSet.Id;
                                                             receiveSmeDB.IdShortPath = e.idShortPath;
                                                             change = true;
                                                         }
                                                     }
                                                     if (change)
                                                     {
-                                                        db.SaveChanges();
+                                                        Converter.setTimeStampTree(db, smDB, receiveSmeDB, receiveSmeDB.TimeStamp);
+                                                        try
+                                                        {
+                                                            db.SMESets.Add(receiveSmeDB);
+                                                            db.SaveChanges();
+                                                        }
+                                                        catch (Exception ex)
+                                                        {
+                                                        }
                                                         var smeDB = smeSmMerged.Where(
                                                             sme => sme.smeSet.IdShortPath == e.idShortPath ||
                                                             sme.smeSet.IdShortPath.StartsWith(e.idShortPath + "."))

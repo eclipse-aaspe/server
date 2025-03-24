@@ -916,16 +916,49 @@ namespace AasxServerDB
             LoadSME(null, sme, smeSet, null, tree);
             return sme;
         }
-
+        public static void setTimeStamp(SMSet smDB, DateTime timeStamp)
+        {
+            if (smDB != null)
+            {
+                smDB.TimeStampCreate = timeStamp;
+                smDB.TimeStamp = timeStamp;
+                smDB.TimeStampTree = timeStamp;
+                smDB.TimeStampDelete = DateTime.MinValue;
+            }
+        }
+        public static void setTimeStamp(SMESet smeDB, DateTime timeStamp)
+        {
+            if (smeDB != null)
+            {
+                smeDB.TimeStampCreate = timeStamp;
+                smeDB.TimeStamp = timeStamp;
+                smeDB.TimeStampTree = timeStamp;
+                smeDB.TimeStampDelete = DateTime.MinValue;
+            }
+        }
+        public static void setTimeStampTree(AasContext db, SMSet smDB, SMESet smeDB, DateTime timeStamp)
+        {
+            if (smDB != null)
+            {
+                smDB.TimeStampTree = timeStamp;
+            }
+            if (smeDB != null)
+            {
+                while (smeDB != null && smeDB.ParentSMEId != null)
+                {
+                    smeDB = db.SMESets.Where(sme => sme.Id == smeDB.ParentSMEId).FirstOrDefault();
+                    if (smeDB != null)
+                    {
+                        smeDB.TimeStampTree = timeStamp;
+                    }
+                }
+            }
+        }
         public static void setTimeStampValue(int smSetId, int smeSetId, DateTime timeStamp, string value = null)
         {
             using (var db = new AasContext())
             {
                 var smDB = db.SMSets.Where(sm => sm.Id == smSetId).FirstOrDefault();
-                if (smDB != null)
-                {
-                    smDB.TimeStampTree = timeStamp;
-                }
 
                 var smeFound = db.SMESets.Where(sme => sme.SMId == smSetId && sme.Id == smeSetId).FirstOrDefault();
                 if (smeFound != null)
@@ -956,25 +989,17 @@ namespace AasxServerDB
                             }
                         }
                     }
-                    while (smeFound != null && smeFound.ParentSMEId != null)
-                    {
-                        smeFound = db.SMESets.Where(sme => sme.Id == smeFound.ParentSMEId).FirstOrDefault();
-                        if (smeFound != null)
-                        {
-                            smeFound.TimeStamp = timeStamp;
-                            smeFound.TimeStampTree = timeStamp;
-                        }
-                    }
-                }
+                    setTimeStampTree(db, smDB, smeFound, timeStamp);
 
-                try
-                {
-                    db.SaveChanges();
+                    try
+                    {
+                        db.SaveChanges();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.ToString());
+                    };
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-                };
             }
         }
         public static void setTimeStampValue(string submodelId, string path, DateTime timeStamp, string value = null)
