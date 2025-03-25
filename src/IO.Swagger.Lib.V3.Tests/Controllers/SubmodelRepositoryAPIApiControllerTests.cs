@@ -133,7 +133,7 @@ public class SubmodelRepositoryAPIApiControllerTests
         Action action = () => _controller.DeleteFileByPathSubmodelRepo(submodelIdentifier, idShortPath);
 
         // Assert
-        action.Should().ThrowExactly<AasSecurity.Exceptions.NotAllowed>();
+        action.Should().ThrowExactly<Contracts.Exceptions.NotAllowed>();
         _submodelServiceMock.Verify(x => x.DeleteFileByPath(decodedSubmodelIdentifier, idShortPath), Times.Never);
     }
 
@@ -157,7 +157,7 @@ public class SubmodelRepositoryAPIApiControllerTests
         Action action = () => _controller.DeleteFileByPathSubmodelRepo(submodelIdentifier, idShortPath);
 
         // Assert
-        action.Should().ThrowExactly<AasSecurity.Exceptions.NotAllowed>().WithMessage($"Decoding {submodelIdentifier} returned null");
+        action.Should().ThrowExactly<Contracts.Exceptions.NotAllowed>().WithMessage($"Decoding {submodelIdentifier} returned null");
         _submodelServiceMock.Verify(x => x.DeleteFileByPath(It.IsAny<string>(), idShortPath), Times.Never);
     }
 
@@ -196,7 +196,7 @@ public class SubmodelRepositoryAPIApiControllerTests
         Action action = () => _controller.DeleteSubmodelById(submodelIdentifier);
 
         // Assert
-        action.Should().ThrowExactly<AasSecurity.Exceptions.NotAllowed>().WithMessage($"Decoding {submodelIdentifier} returned null");
+        action.Should().ThrowExactly<Contracts.Exceptions.NotAllowed>().WithMessage($"Decoding {submodelIdentifier} returned null");
         _submodelServiceMock.Verify(x => x.DeleteSubmodelById(It.IsAny<string>()), Times.Never);
     }
 
@@ -237,7 +237,7 @@ public class SubmodelRepositoryAPIApiControllerTests
         Action action = () => _controller.DeleteSubmodelElementByPathSubmodelRepo(submodelIdentifier, idShortPath);
 
         // Assert
-        action.Should().ThrowExactly<AasSecurity.Exceptions.NotAllowed>().WithMessage($"Decoding {submodelIdentifier} returned null");
+        action.Should().ThrowExactly<Contracts.Exceptions.NotAllowed>().WithMessage($"Decoding {submodelIdentifier} returned null");
         _submodelServiceMock.Verify(x => x.DeleteSubmodelElementByPath(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
@@ -260,7 +260,7 @@ public class SubmodelRepositoryAPIApiControllerTests
         Action action = () => _controller.DeleteSubmodelElementByPathSubmodelRepo(submodelIdentifier, idShortPath);
 
         // Assert
-        action.Should().ThrowExactly<AasSecurity.Exceptions.NotAllowed>();
+        action.Should().ThrowExactly<Contracts.Exceptions.NotAllowed>();
         _submodelServiceMock.Verify(x => x.DeleteSubmodelElementByPath(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 

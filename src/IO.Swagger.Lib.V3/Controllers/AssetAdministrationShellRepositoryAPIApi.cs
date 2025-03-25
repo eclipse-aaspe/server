@@ -55,6 +55,7 @@ using Contracts;
 using AasxServerStandardBib.Services;
 using System.Threading.Tasks;
 using Contracts.DbRequests;
+using Contracts.Exceptions;
 
 namespace IO.Swagger.Controllers
 {

@@ -161,7 +161,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         if (!isAllowed)
         {
-            throw new Exception($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
+            throw new NotAllowed($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
         }
 
         // bool found = IsSubmodelPresentWithinAAS(securityConfig, aasIdentifier, submodelIdentifier, out ISubmodel output);
@@ -188,7 +188,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         bool isAllowed = InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
         if (!isAllowed)
         {
-            throw new Exception($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
+            throw new NotAllowed($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
         }
 
         var output = Converter.GetPagedSubmodelElements(paginationParameters, securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier);
@@ -205,7 +205,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         bool isAllowed = InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
         if (!isAllowed)
         {
-            throw new Exception($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
+            throw new NotAllowed($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
         }
 
         var output = Converter.GetSubmodelElementByPath(securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier, idShortPathElements);
@@ -247,7 +247,12 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         bool found = IsAssetAdministrationShellPresent(aasIdentifier, out IAssetAdministrationShell output);
         if (found)
         {
-            //_logger.LogDebug($"Asset Administration Shell with id {aasIdentifier} found.");
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                scopedLogger.LogDebug($"Asset Administration Shell with id {aasIdentifier} found.");
+            }
+
             return output;
         }
         else

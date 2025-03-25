@@ -11,7 +11,7 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-namespace AasSecurity.Exceptions
+namespace Contracts.Exceptions
 {
     public class NotAllowed : Exception
     {
