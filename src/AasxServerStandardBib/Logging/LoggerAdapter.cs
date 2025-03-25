@@ -41,28 +41,28 @@ public class LoggerAdapter<T> : IAppLogger<T>
     /// <inheritdoc />
     public void LogDebug(string message, params object[] args)
     {
-        var formattedMessage = string.Format(CultureInfo.InvariantCulture, message, args);
-        LogMessages.LogDebugMessage(_logger, formattedMessage);
+        //var formattedMessage = string.Format(CultureInfo.InvariantCulture, message, args);
+        LogMessages.LogDebugMessage(_logger, message);
     }
 
     /// <inheritdoc />
     public void LogError(string message, params object[] args)
     {
-        var formattedMessage = string.Format(CultureInfo.InvariantCulture, message, args);
-        LogMessages.LogErrorMessage(_logger, formattedMessage);
+        //var formattedMessage = string.Format(CultureInfo.InvariantCulture, message, args);
+        LogMessages.LogErrorMessage(_logger, message);
     }
 
     /// <inheritdoc />
     public void LogInformation(string message, params object[] args)
     {
-        var formattedMessage = string.Format(CultureInfo.InvariantCulture, message, args);
-        LogMessages.LogInformationMessage(_logger, formattedMessage);
+        //var formattedMessage = string.Format(CultureInfo.InvariantCulture, message, args);
+        LogMessages.LogInformationMessage(_logger, message);
     }
 
     /// <inheritdoc />
     public void LogWarning(string message, params object[] args)
     {
-        var formattedMessage = string.Format(CultureInfo.InvariantCulture, message, args);
-        LogMessages.LogWarningMessage(_logger, formattedMessage);
+        //var formattedMessage = string.Format(CultureInfo.InvariantCulture, message, args);
+        LogMessages.LogWarningMessage(_logger, message);
     }
 }
