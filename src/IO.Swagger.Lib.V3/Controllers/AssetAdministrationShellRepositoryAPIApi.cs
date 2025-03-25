@@ -897,7 +897,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAssetAdministrationShellById([FromRoute][Required] string aasIdentifier)
+        public virtual async Task<IActionResult> GetAssetAdministrationShellById([FromRoute][Required] string aasIdentifier)
         {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
 
@@ -909,7 +909,7 @@ namespace IO.Swagger.Controllers
             _logger.LogInformation($"Received request to get the AAS with id {aasIdentifier}.");
 
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
-            var aas = _persistenceService.ReadAssetAdministrationShellById(securityConfig, decodedAasIdentifier);
+            var aas = await _dbRequestHandlerService.ReadAssetAdministrationShellById(securityConfig, decodedAasIdentifier);
 
             /* Turn off AAS security to have existing demos run
             var authResult = _authorizationService.AuthorizeAsync(User, aas, "SecurityPolicy").Result;

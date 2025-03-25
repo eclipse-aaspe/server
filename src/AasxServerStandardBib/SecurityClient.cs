@@ -3018,32 +3018,32 @@ namespace AasxServer
         {
             Converter.setTimeStampValue(submodelId, path, timeStamp, value);
         }
-        public static AdminShellPackageEnv getEnv(string aasID)
-        {
-            if (aasID.IsNullOrEmpty())
-            {
-                return null;
-            }
+        //public static AdminShellPackageEnv getEnv(string aasID)
+        //{
+        //    if (aasID.IsNullOrEmpty())
+        //    {
+        //        return null;
+        //    }
 
-            var envFileName = "";
-            return AasxServerDB.Converter.GetPackageEnv(aasID, out envFileName);
-        }
-        public static void saveAASXtoTemp(string aasID)
-        {
-            if (aasID.IsNullOrEmpty())
-            {
-                return;
-            }
+        //    var envFileName = "";
+        //    return AasxServerDB.Converter.GetPackageEnv(aasID, out envFileName);
+        //}
+        //public static void saveAASXtoTemp(string aasID)
+        //{
+        //    if (aasID.IsNullOrEmpty())
+        //    {
+        //        return;
+        //    }
 
-            var env = getEnv(aasID);
+        //    var env = getEnv(aasID);
 
-            if (env == null)
-            {
-                return;
-            }
+        //    if (env == null)
+        //    {
+        //        return;
+        //    }
 
-            saveAASXtoTemp([env]);
-        }
+        //    saveAASXtoTemp([env]);
+        //}
         static void saveAASXtoTemp(AdminShellPackageEnv[] env)
         {
             bool newData = false;

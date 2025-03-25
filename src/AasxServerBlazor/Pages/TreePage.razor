@@ -1,6 +1,8 @@
 @page "/"
 @inject AASService SubmodelService
 @inject ISecurityService SecService
+@inject IDbRequestHandlerService DbReqService
+@using Contracts
 @using MW.Blazor
 @using AasCore.Aas3_0
 @using AasSecurity;
@@ -19,618 +21,618 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 
 <div class="col-12 row">
-    <br/>
-    <div class="col-5" style="border-width:3px; border-style: solid; border-color: blue; border-radius: 8px; background-color:aliceblue;
+	<br/>
+	<div class="col-5" style="border-width:3px; border-style: solid; border-color: blue; border-radius: 8px; background-color:aliceblue;
             word-wrap: break-word; word-break: break-all; position: sticky">
-        @{
-            updateVisibleTree();
-            if (Program.isLoading)
-            {
-                <span style="color:white;background-color:blue;">Loading...</span>
-            }
-        }
-        <span></span>
-        <Tree @bind-ExpandedNodes="ExpandedNodes" @bind-SelectedNode="SelectedNode" ChildSelector="@(item => item.Children)"
-              HasChildNodes="@(item => item.Children?.Any() == true)" HtmlId="@(item => GetHtmlId(item))" Nodes="Items" TreePage="this">
-            <TitleTemplate>
-                @{
-                    var getPolicy = string.Empty;
-                    @if (GlobalSecurityVariables.WithAuthentication)
-                    {
-                        var display = false;
-                        var access = false;
-                        var withAllow = false;
-                        switch (context.Tag)
-                        {
-                            case Submodel sm:
-                            {
-                                // check, if access to submodel is allowed
-                                withAllow = false;
-                                access = SecService.AuthorizeRequest(null, "/submodels", AccessRights.READ,
-                                    out _, out withAllow, out getPolicy, sm.IdShort!, "submodel", sm);
-                                display = true;
-                                break;
-                            }
-                            case ISubmodelElement sme:
-                            {
-                                var path = sme.IdShort;
-                                var p = sme.Parent;
-                                while (p is not Submodel)
-                                {
-                                    path = $"{(p as ISubmodelElement).IdShort}.{path}";
-                                    p = (p as ISubmodelElement).Parent;
-                                }
+		@{
+			updateVisibleTree();
+			if (Program.isLoading)
+			{
+				<span style="color:white;background-color:blue;">Loading...</span>
+			}
+		}
+		<span></span>
+		<Tree @bind-ExpandedNodes="ExpandedNodes" @bind-SelectedNode="SelectedNode" ChildSelector="@(item => item.Children)"
+		HasChildNodes="@(item => item.Children?.Any() == true)" HtmlId="@(item => GetHtmlId(item))" Nodes="Items" TreePage="this">
+			<TitleTemplate>
+				@{
+					var getPolicy = string.Empty;
+					@if (GlobalSecurityVariables.WithAuthentication)
+					{
+						var display = false;
+						var access = false;
+						var withAllow = false;
+						switch (context.Tag)
+						{
+							case Submodel sm:
+								{
+									// check, if access to submodel is allowed
+									withAllow = false;
+									access = SecService.AuthorizeRequest(null, "/submodels", AccessRights.READ,
+										out _, out withAllow, out getPolicy, sm.IdShort!, "submodel", sm);
+									display = true;
+									break;
+								}
+							case ISubmodelElement sme:
+								{
+									var path = sme.IdShort;
+									var p = sme.Parent;
+									while (p is not Submodel)
+									{
+										path = $"{(p as ISubmodelElement).IdShort}.{path}";
+										p = (p as ISubmodelElement).Parent;
+									}
 
-                                path = $"{(p as Submodel).IdShort}.{path}";
-                                var error = string.Empty;
-                                access = SecService.AuthorizeRequest(null, "/submodel-elements", AccessRights.READ,
-                                    out error, out withAllow, out getPolicy, path, string.Empty, p);
-                                display = true;
-                                break;
-                            }
-                        }
+									path = $"{(p as Submodel).IdShort}.{path}";
+									var error = string.Empty;
+									access = SecService.AuthorizeRequest(null, "/submodel-elements", AccessRights.READ,
+										out error, out withAllow, out getPolicy, path, string.Empty, p);
+									display = true;
+									break;
+								}
+						}
 
-                        if (display)
-                        {
-                            if (context.Children == null || !context.Children.Any())
-                                withAllow = false;
-                            if (access)
-                            {
-                                <span style="color:green;background-color:green;">&nbsp&nbsp</span>
-                            }
-                            else
-                            {
-                                if (!withAllow)
-                                {
-                                    <span style="color:red;background-color:red;">&nbsp&nbsp</span>
-                                }
-                                else
-                                {
-                                    <span style="color:red;background-color:red;">&nbsp</span>
-                                    <span style="color:green;background-color:green;">&nbsp</span>
-                                }
-                            }
-                            <span>&nbsp&nbsp</span>
-                        }
-                    }
+						if (display)
+						{
+							if (context.Children == null || !context.Children.Any())
+								withAllow = false;
+							if (access)
+							{
+								<span style="color:green;background-color:green;">&nbsp&nbsp</span>
+							}
+							else
+							{
+								if (!withAllow)
+								{
+									<span style="color:red;background-color:red;">&nbsp&nbsp</span>
+								}
+								else
+								{
+									<span style="color:red;background-color:red;">&nbsp</span>
+									<span style="color:green;background-color:green;">&nbsp</span>
+								}
+							}
+							<span>&nbsp&nbsp</span>
+						}
+					}
 
-                    <span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
-                    @ViewNodeID(context)@ViewNodeInfo(context)
-                    @if (Program.withPolicy && !string.IsNullOrEmpty(getPolicy))
-                    {
-                        <span style="color:blue"> @getPolicy</span>
-                    }
+					<span style="color:white;background-color:blue;">@ViewNodeType(context)</span>
+					@ViewNodeID(context)@ViewNodeInfo(context)
+					@if (Program.withPolicy && !string.IsNullOrEmpty(getPolicy))
+					{
+						<span style="color:blue"> @getPolicy</span>
+					}
 
-                    <span style="color:blue;font-size:14px">@GetSymbols(context)</span>
-                    <span style="color:lightgray;font-size:14px">@ViewTimeStamp(context)</span>
-                }
-            </TitleTemplate>
-        </Tree>
-    </div>
-    <div class="col-7" style="border-width: 3px; border-style: solid; border-color: blue; border-radius: 8px; position: sticky; background-color:aliceblue;">
-        <div class="sticky-top" style="word-wrap:break-word;word-break:break-all;">
-            @code
-            {
-                string idShortPath = "";
-                string parentSubmodelId = "";
+					<span style="color:blue;font-size:14px">@GetSymbols(context)</span>
+					<span style="color:lightgray;font-size:14px">@ViewTimeStamp(context)</span>
+				}
+			</TitleTemplate>
+		</Tree>
+	</div>
+	<div class="col-7" style="border-width: 3px; border-style: solid; border-color: blue; border-radius: 8px; position: sticky; background-color:aliceblue;">
+		<div class="sticky-top" style="word-wrap:break-word;word-break:break-all;">
+			@code
+			{
+				string idShortPath = "";
+				string parentSubmodelId = "";
             }
             @{
-                if (SelectedNode != null && SelectedNode.Tag is ISubmodelElement sme)
-                {
-                    idShortPath = sme.IdShort;
-                    var parent = sme.Parent as IReferable;
-                    while (parent != null && parent is not Submodel)
-                    {
-                        if (parent is ISubmodelElementList parentList)
-                        {
-                            //Considering child elements of SML can have null idShorts
-                            if (idShortPath == null || idShortPath.Equals(sme.IdShort))
-                            {
-                                var index = parentList.Value?.IndexOf(sme);
-                                idShortPath = $"[{index}]";
-                            }
+				if (SelectedNode != null && SelectedNode.Tag is ISubmodelElement sme)
+				{
+					idShortPath = sme.IdShort;
+					var parent = sme.Parent as IReferable;
+					while (parent != null && parent is not Submodel)
+					{
+						if (parent is ISubmodelElementList parentList)
+						{
+							//Considering child elements of SML can have null idShorts
+							if (idShortPath == null || idShortPath.Equals(sme.IdShort))
+							{
+								var index = parentList.Value?.IndexOf(sme);
+								idShortPath = $"[{index}]";
+							}
 
-                            idShortPath = parentList.IdShort + idShortPath;
-                        }
-                        else if (parent.Parent is ISubmodelElementList prevParentList)
-                        {
-                            var index = prevParentList.Value?.IndexOf(parent as ISubmodelElement);
-                            idShortPath = $"[{index}].{idShortPath}";
-                        }
-                        else
-                        {
-                            idShortPath = $"{parent.IdShort}.{idShortPath}";
-                        }
+							idShortPath = parentList.IdShort + idShortPath;
+						}
+						else if (parent.Parent is ISubmodelElementList prevParentList)
+						{
+							var index = prevParentList.Value?.IndexOf(parent as ISubmodelElement);
+							idShortPath = $"[{index}].{idShortPath}";
+						}
+						else
+						{
+							idShortPath = $"{parent.IdShort}.{idShortPath}";
+						}
 
-                        parent = (IReferable)parent.Parent;
+						parent = (IReferable)parent.Parent;
+					}
+					parentSubmodelId = (parent as Submodel).Id;
+				}
+
+				if (SelectedNode != null)
+				{
+					if (SelectedNode.Tag is not string)
+					{
+						<span style="color:white;background-color:blue;" id="SelectedNodeInfoType">@ViewNodeType(SelectedNode)</span>
+						<span id="SelectedNodeInfoId">@ViewNodeID(SelectedNode)</span>
+						<br>
+					}
+					else
+					{
+						if (SelectedNode.Tag is string && SelectedNode.Text.Contains("/readme"))
+						{
+							var text = System.IO.File.ReadAllText(SelectedNode.Text);
+							text = text.Replace("%BLAZOR%", Program.externalBlazor);
+							if (text.Contains("%ACCESSRULES%"))
+							{
+								var accessRules = SecService.GetSecurityRules();
+								<table class="table table-bordered table-sm">
+									<thead>
+										<tr>
+											<th>Name</th>
+											<th nowrap>Kind</th>
+											<th>Permission</th>
+											<th>Type</th>
+											<th>API</th>
+											<th>Path</th>
+											<th>SemanticID</th>
+											<th>See</th>
+										</tr>
+									</thead>
+									<tbody>
+										@{
+											var lines = accessRules.Split('\n');
+											foreach (var l in lines)
+											{
+												<tr>
+													@{
+														var cols = l.Split('\t');
+														for (var c = 0; c < cols.Count(); c++)
+														{
+															if (c != 1 && c != 2)
+															{
+																<td>@cols[c]</td>
+															}
+															else
+															{
+																<td nowrap>@cols[c]</td>
+															}
+														}
+													}
+												</tr>
+											}
+										}
+									</tbody>
+								</table>
+							}
+							else
+							{
+								<span>@((MarkupString) text)</span>
+							}
+						}
+					}
+				}
+
+				for (var line = 0; line < 20; line++)
+				{
+					var nodeDetails0 = ViewNodeDetails(SelectedNode, line, 0);
+					var nodeDetails1 = ViewNodeDetails(SelectedNode, line, 1);
+					var nodeDetails2 = ViewNodeDetails(SelectedNode, line, 2);
+					if (nodeDetails0 != "" && nodeDetails1 != "")
+					{
+						var detailsId = "SelectedNodeDetailsLeft_" + line;
+						<span style="color:white;background-color:blue;" id="@detailsId">@nodeDetails0</span>
+						detailsId = "SelectedNodeDetailsRight_" + line;
+						<span id="@detailsId">&nbsp;@nodeDetails1 @nodeDetails2</span>
+						<br>
+					}
+				}
+
+				if (SelectedNode != null && SelectedNode.Tag is IReferable r)
+				{
+					<span style="color:lightgray;">UPDATE @TimeStamp.DateTimeToString(r.TimeStamp)</span>
+					<br/>
+					@if (Program.edit)
+					{
+						<button style="border-width: 1px; border-color: black; background-color: lightgray" @onclick="SetTimeStamp">TIMESTAMP</button>
+						<br />
+					}
+					<span style="color:lightgray;">CREATE @TimeStamp.DateTimeToString(r.TimeStampCreate)</span>
+					<br/>
+					<span style="color:lightgray;">TREE @TimeStamp.DateTimeToString(r.TimeStampTree)</span>
+					<br />
+					<span style="color:lightgray;">DELETE @TimeStamp.DateTimeToString(r.TimeStampDelete)</span>
+					<br />
+					@code {
+
+					private void SetTimeStamp()
+					{
+						(SelectedNode.Tag as IReferable).SetTimeStamp(DateTime.UtcNow);
+						if (aasID == "")
+						{
+							Program.env[SelectedNode.envIndex].setWrite(true);
+						}
+						else
+						{
+							// AasxServer.AasxTask.getEnv(aasID).setWrite(true);
+							AasxServer.AasxTask.setTimeStampValue(parentSubmodelId, idShortPath, DateTime.UtcNow);
+						}
+					}
                     }
-                    parentSubmodelId = (parent as Submodel).Id;
-                }
+				}
 
-                if (SelectedNode != null)
-                {
-                    if (SelectedNode.Tag is not string)
-                    {
-                        <span style="color:white;background-color:blue;" id="SelectedNodeInfoType">@ViewNodeType(SelectedNode)</span>
-                        <span id="SelectedNodeInfoId">@ViewNodeID(SelectedNode)</span>
-                        <br>
-                    }
-                    else
-                    {
-                        if (SelectedNode.Tag is string && SelectedNode.Text.Contains("/readme"))
-                        {
-                            var text = System.IO.File.ReadAllText(SelectedNode.Text);
-                            text = text.Replace("%BLAZOR%", Program.externalBlazor);
-                            if (text.Contains("%ACCESSRULES%"))
-                            {
-                                var accessRules = SecService.GetSecurityRules();
-                                <table class="table table-bordered table-sm">
-                                    <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th nowrap>Kind</th>
-                                        <th>Permission</th>
-                                        <th>Type</th>
-                                        <th>API</th>
-                                        <th>Path</th>
-                                        <th>SemanticID</th>
-                                        <th>See</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    @{
-                                        var lines = accessRules.Split('\n');
-                                        foreach (var l in lines)
-                                        {
-                                            <tr>
-                                                @{
-                                                    var cols = l.Split('\t');
-                                                    for (var c = 0; c < cols.Count(); c++)
-                                                    {
-                                                        if (c != 1 && c != 2)
-                                                        {
-                                                            <td>@cols[c]</td>
-                                                        }
-                                                        else
-                                                        {
-                                                            <td nowrap>@cols[c]</td>
-                                                        }
-                                                    }
-                                                }
-                                            </tr>
-                                        }
-                                    }
-                                    </tbody>
-                                </table>
-                            }
-                            else
-                            {
-                                <span>@((MarkupString) text)</span>
-                            }
-                        }
-                    }
-                }
+				var externalLink = false;
+				var link = GetLink(SelectedNode, out externalLink);
 
-                for (var line = 0; line < 20; line++)
-                {
-                    var nodeDetails0 = ViewNodeDetails(SelectedNode, line, 0);
-                    var nodeDetails1 = ViewNodeDetails(SelectedNode, line, 1);
-                    var nodeDetails2 = ViewNodeDetails(SelectedNode, line, 2);
-                    if (nodeDetails0 != "" && nodeDetails1 != "")
-                    {
-                        var detailsId = "SelectedNodeDetailsLeft_" + line;
-                        <span style="color:white;background-color:blue;" id="@detailsId">@nodeDetails0</span>
-                        detailsId = "SelectedNodeDetailsRight_" + line;
-                        <span id="@detailsId">&nbsp;@nodeDetails1 @nodeDetails2</span>
-                        <br>
-                    }
-                }
+				if (SelectedNode != null && !string.IsNullOrEmpty(link))
+				{
+					<a href="@link" target="_blank">@link</a>
+					<br>
 
-                if (SelectedNode != null && SelectedNode.Tag is IReferable r)
-                {
-                    <span style="color:lightgray;">UPDATE @TimeStamp.DateTimeToString(r.TimeStamp)</span>
-                    <br/>
-                    @if (Program.edit)
-                    {
-                        <button style="border-width: 1px; border-color: black; background-color: lightgray" @onclick="SetTimeStamp">TIMESTAMP</button>
-                        <br />
-                    }
-                    <span style="color:lightgray;">CREATE @TimeStamp.DateTimeToString(r.TimeStampCreate)</span>
-                    <br/>
-                    <span style="color:lightgray;">TREE @TimeStamp.DateTimeToString(r.TimeStampTree)</span>
-                    <br />
-                    <span style="color:lightgray;">DELETE @TimeStamp.DateTimeToString(r.TimeStampDelete)</span>
-                    <br />
-                    @code {
+					if (SelectedNode != null && SelectedNode.Tag is Submodel && !string.IsNullOrEmpty(Program.connectServer))
+					{
+						var toPublish = Program.submodelsToPublish.Contains(SelectedNode.Tag);
+						var toSubscribe = Program.submodelsToSubscribe.Contains(SelectedNode.Tag);
+						if (toPublish)
+						{
+							<button style="color:white;background-color:blue" @onclick="ResetSubmodelToPublish">Publish</button>
+						}
+						else
+						{
+							<button @onclick="SetSubmodelToPublish">Publish</button>
+						}
 
-                        private void SetTimeStamp()
-                        {
-                            (SelectedNode.Tag as IReferable).SetTimeStamp(DateTime.UtcNow);
-                            if (aasID == "")
-                            {
-                                Program.env[SelectedNode.envIndex].setWrite(true);
-                            }
-                            else
-                            {
-                                // AasxServer.AasxTask.getEnv(aasID).setWrite(true);
-                                AasxServer.AasxTask.setTimeStampValue(parentSubmodelId, idShortPath, DateTime.UtcNow);
-                            }
-                        }
-                    }
-                }
+						if (toSubscribe)
+						{
+							<button style="color:white;background-color:blue" @onclick="ResetSubmodelToSubscribe">Subscribe</button>
+						}
+						else
+						{
+							<button @onclick="SetSubmodelToSubscribe">Subscribe</button>
+						}
+						@code {
 
-                var externalLink = false;
-                var link = GetLink(SelectedNode, out externalLink);
-                
-                if (SelectedNode != null && !string.IsNullOrEmpty(link))
-                {
-                    <a href="@link" target="_blank">@link</a>
-                    <br>
+					private void ResetSubmodelToPublish()
+					{
+						Program.submodelsToPublish.Remove(SelectedNode.Tag);
+					}
 
-                    if (SelectedNode != null && SelectedNode.Tag is Submodel && !string.IsNullOrEmpty(Program.connectServer))
-                    {
-                        var toPublish = Program.submodelsToPublish.Contains(SelectedNode.Tag);
-                        var toSubscribe = Program.submodelsToSubscribe.Contains(SelectedNode.Tag);
-                        if (toPublish)
-                        {
-                            <button style="color:white;background-color:blue" @onclick="ResetSubmodelToPublish">Publish</button>
-                        }
-                        else
-                        {
-                            <button @onclick="SetSubmodelToPublish">Publish</button>
-                        }
+					private void SetSubmodelToPublish()
+					{
+						var toSubscribe = Program.submodelsToSubscribe.Contains(SelectedNode.Tag);
+						if (!toSubscribe)
+							Program.submodelsToPublish.Add(SelectedNode.Tag);
+					}
 
-                        if (toSubscribe)
-                        {
-                            <button style="color:white;background-color:blue" @onclick="ResetSubmodelToSubscribe">Subscribe</button>
-                        }
-                        else
-                        {
-                            <button @onclick="SetSubmodelToSubscribe">Subscribe</button>
-                        }
-            @code {
+					private void ResetSubmodelToSubscribe()
+					{
+						Program.submodelsToSubscribe.Remove(SelectedNode.Tag);
+					}
 
-                private void ResetSubmodelToPublish()
-                {
-                    Program.submodelsToPublish.Remove(SelectedNode.Tag);
-                }
-
-                private void SetSubmodelToPublish()
-                {
-                    var toSubscribe = Program.submodelsToSubscribe.Contains(SelectedNode.Tag);
-                    if (!toSubscribe)
-                        Program.submodelsToPublish.Add(SelectedNode.Tag);
-                }
-
-                private void ResetSubmodelToSubscribe()
-                {
-                    Program.submodelsToSubscribe.Remove(SelectedNode.Tag);
-                }
-
-                private void SetSubmodelToSubscribe()
-                {
-                    var toPublish = Program.submodelsToPublish.Contains(SelectedNode.Tag);
-                    if (!toPublish)
-                        Program.submodelsToSubscribe.Add(SelectedNode.Tag);
-                }
+					private void SetSubmodelToSubscribe()
+					{
+						var toPublish = Program.submodelsToPublish.Contains(SelectedNode.Tag);
+						if (!toPublish)
+							Program.submodelsToSubscribe.Add(SelectedNode.Tag);
+					}
 
             }
-            }
-                }
+					}
+				}
 
-                if (SelectedNode is {Tag: Property} && Program.edit)
-                {
-                    <input @bind="CurrentValue" style="width:500px; border-width: 1px; border-color: black;"/>
-                    <span style="border-width: 1px; border-color: black; background-color: blue;">@CurrentValue</span>
-                    <br>
-                    @code { private string CurrentValue { get; set; } }
-                    if (!string.IsNullOrEmpty(CurrentValue))
-                    {
-                        if (SelectedNode.Tag is Property)
-                        {
-                            if (CurrentValue == " ")
-                                CurrentValue = string.Empty;
-                            (SelectedNode.Tag as Property).Value = CurrentValue;
-                            (SelectedNode.Tag as Property).SetTimeStamp(DateTime.UtcNow);
-                            if (aasID == "")
-                            {
-                                Program.env[SelectedNode.envIndex].setWrite(true);
-                            }
-                            else
-                            {
-                                // AasxServer.AasxTask.getEnv(aasID).setWrite(true);
-                                AasxServer.AasxTask.setTimeStampValue(parentSubmodelId, idShortPath, DateTime.UtcNow, CurrentValue);
-                            }
-                            Program.signalNewData(0);
-                        }
+				if (SelectedNode is {Tag: Property} && Program.edit)
+				{
+					<input @bind="CurrentValue" style="width:500px; border-width: 1px; border-color: black;"/>
+					<span style="border-width: 1px; border-color: black; background-color: blue;">@CurrentValue</span>
+					<br>
+					@code { private string CurrentValue { get; set; } }
+					if (!string.IsNullOrEmpty(CurrentValue))
+					{
+						if (SelectedNode.Tag is Property)
+						{
+							if (CurrentValue == " ")
+								CurrentValue = string.Empty;
+							(SelectedNode.Tag as Property).Value = CurrentValue;
+							(SelectedNode.Tag as Property).SetTimeStamp(DateTime.UtcNow);
+							if (aasID == "")
+							{
+								Program.env[SelectedNode.envIndex].setWrite(true);
+							}
+							else
+							{
+								// AasxServer.AasxTask.getEnv(aasID).setWrite(true);
+								AasxServer.AasxTask.setTimeStampValue(parentSubmodelId, idShortPath, DateTime.UtcNow, CurrentValue);
+							}
+							Program.signalNewData(0);
+						}
 
-                        CurrentValue = string.Empty;
-                    }
-                }
+						CurrentValue = string.Empty;
+					}
+				}
 
-                if (SelectedNode is {Tag: (AssetAdministrationShell or File) and AssetAdministrationShell})
-                @code {
+				if (SelectedNode is {Tag: (AssetAdministrationShell or File) and AssetAdministrationShell})
+				@code {
 
-                    private void runCreateQRCodeImage()
-                    {
-                        CreateQRCodeImage(SelectedNode);
-                    }
-
-                }
-                {
-                    <button style="border-width: 1px; border-color: black; color: white; background-color: blue" @onclick="runCreateQRCodeImage">QRCODE</button>
-                    <br/>
-                    var qrcodeLink = GetQRCodeLink(SelectedNode);
-                    if (Program.generatedQrCodes.ContainsKey(SelectedNode.Tag))
-                    {
-                        var qrcodeImage = GetQRCodeImage(SelectedNode);
-                        if (qrcodeImage != "")
-                        {
-                            <a href="@qrcodeLink" target="_blank">
-                                <div>
-                                    <img src=data:image;base64,@qrcodeImage style="max-width: 25%;" alt="Qrcode Image"/>
-                                </div>
-                            </a>
-                        }
-                    }
-                    else
-                    {
-                        <a href="@qrcodeLink" target="_blank">@qrcodeLink</a>
-                        @:<br>
-                    }
-                }
-
-                if (SelectedNode is {Tag: Submodel sm})
-                {
-                    var idEncoded = Base64UrlEncoder.Encode(sm.Id);
-                    var path2 = Program.externalBlazor + "/submodels/" + idEncoded;
-                    <span style="color:white;background-color:blue;">URL:</span>
-                    <a href="@path2" target="_blank">@path2</a>
-                    <br>
+					private void runCreateQRCodeImage()
+					{
+						CreateQRCodeImage(SelectedNode);
+					}
 
                 }
+				{
+					<button style="border-width: 1px; border-color: black; color: white; background-color: blue" @onclick="runCreateQRCodeImage">QRCODE</button>
+					<br/>
+					var qrcodeLink = GetQRCodeLink(SelectedNode);
+					if (Program.generatedQrCodes.ContainsKey(SelectedNode.Tag))
+					{
+						var qrcodeImage = GetQRCodeImage(SelectedNode);
+						if (qrcodeImage != "")
+						{
+							<a href="@qrcodeLink" target="_blank">
+								<div>
+									<img src=data:image;base64,@qrcodeImage style="max-width: 25%;" alt="Qrcode Image"/>
+								</div>
+							</a>
+						}
+					}
+					else
+					{
+						<a href="@qrcodeLink" target="_blank">@qrcodeLink</a>
+						@:<br>
+					}
+				}
 
-                if (SelectedNode != null && SelectedNode.Tag is ISubmodelElement sme2)
-                {
-                    if (parentSubmodelId != "")
-                    {
-                        var idEncoded = Base64UrlEncoder.Encode(parentSubmodelId);
-                        var path = idShortPath;
-                        if (!(sme2 is Operation) || !sme2.IdShort.ToLower().StartsWith("eventelement"))
-                        {
-                            path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodel-elements/" + path;
-                        }
-                        else
-                        {
-                            path = Program.externalBlazor + "/submodels/" + idEncoded + "/events/" + path + "/status";
-                        }
-                        <span style="color:white;background-color:blue;">URL:</span>
-                        <a href="@path" target="_blank">@path</a>
-                        <br>
-                    }
-                }
+				if (SelectedNode is {Tag: Submodel sm})
+				{
+					var idEncoded = Base64UrlEncoder.Encode(sm.Id);
+					var path2 = Program.externalBlazor + "/submodels/" + idEncoded;
+					<span style="color:white;background-color:blue;">URL:</span>
+					<a href="@path2" target="_blank">@path2</a>
+					<br>
 
-                if (SelectedNode != null && SelectedNode.Tag is SubmodelElementCollection smc)
-                {
-                    var semanticId = string.Empty;
+				}
 
-                    try
-                    {
-                        semanticId = smc.SemanticId?.GetAsIdentifier();
-                    }
-                    catch
-                    {
-                    }
+				if (SelectedNode != null && SelectedNode.Tag is ISubmodelElement sme2)
+				{
+					if (parentSubmodelId != "")
+					{
+						var idEncoded = Base64UrlEncoder.Encode(parentSubmodelId);
+						var path = idShortPath;
+						if (!(sme2 is Operation) || !sme2.IdShort.ToLower().StartsWith("eventelement"))
+						{
+							path = Program.externalBlazor + "/submodels/" + idEncoded + "/submodel-elements/" + path;
+						}
+						else
+						{
+							path = Program.externalBlazor + "/submodels/" + idEncoded + "/events/" + path + "/status";
+						}
+						<span style="color:white;background-color:blue;">URL:</span>
+						<a href="@path" target="_blank">@path</a>
+						<br>
+					}
+				}
 
-                    if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeries/1/0" ||
-                        semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
-                    {
-                        var diff = smc.TimeStamp - timeStampPlot;
+				if (SelectedNode != null && SelectedNode.Tag is SubmodelElementCollection smc)
+				{
+					var semanticId = string.Empty;
 
-                        if (smc != collectionPlot || diff.TotalSeconds < 0 || diff.TotalSeconds >= 5)
-                        {
-                            watchTimeToProcessImage = System.Diagnostics.Stopwatch.StartNew();
+					try
+					{
+						semanticId = smc.SemanticId?.GetAsIdentifier();
+					}
+					catch
+					{
+					}
 
-                            collectionPlot = smc;
-                            timeStampPlot = smc.TimeStampTree;
+					if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeries/1/0" ||
+						semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
+					{
+						var diff = smc.TimeStamp - timeStampPlot;
 
-                            _timeSeriesData.Clear();
+						if (smc != collectionPlot || diff.TotalSeconds < 0 || diff.TotalSeconds >= 5)
+						{
+							watchTimeToProcessImage = System.Diagnostics.Stopwatch.StartNew();
 
-                            // make initial data for time series
-                            var tsd = new TimeSeriesData() {SourceTimeSeries = smc};
-                            _timeSeriesData.Add(tsd);
+							collectionPlot = smc;
+							timeStampPlot = smc.TimeStampTree;
 
-                            // plot arguments for time series
-                            tsd.Args = PlotArguments.Parse(smc.FindQualifierOfType("TimeSeries.Args")?.Value);
+							_timeSeriesData.Clear();
 
-                            // TODO: info - ZveiTimeSeriesDataV10 is currently hardcoded as JSON string in code
-                            var pcts = ZveiTimeSeriesDataV10.Static;
+							// make initial data for time series
+							var tsd = new TimeSeriesData() {SourceTimeSeries = smc};
+							_timeSeriesData.Add(tsd);
 
-                            var tssReferenceKey = new Key(KeyTypes.ConceptDescription, "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0");
+							// plot arguments for time series
+							tsd.Args = PlotArguments.Parse(smc.FindQualifierOfType("TimeSeries.Args")?.Value);
 
-                            // is it a segment
-                            if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
-                            {
-                                TimeSeriesAddSegmentData(pcts, tsd, smc);
-                            }
-                            else
-                            {
-                                // search for segments on current level
-                                var smcAllValues = smc.Value.FindAllSemanticIdAs<SubmodelElementCollection>(tssReferenceKey, MatchMode.Relaxed);
+							// TODO: info - ZveiTimeSeriesDataV10 is currently hardcoded as JSON string in code
+							var pcts = ZveiTimeSeriesDataV10.Static;
 
-                                if (smcAllValues.Count() != 0)
-                                {
-                                    foreach (var smcseg in smcAllValues)
-                                    {
-                                        TimeSeriesAddSegmentData(pcts, tsd, smcseg);
-                                    }
-                                }
-                            }
+							var tssReferenceKey = new Key(KeyTypes.ConceptDescription, "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0");
 
-                            _timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en", bi.sessionNumber, plotFilter.combinedFromDate, plotFilter.combinedToDate);
-                            watchTimeToProcessImage.Stop();
-                        }
+							// is it a segment
+							if (semanticId == "https://admin-shell.io/sandbox/zvei/TimeSeriesData/TimeSeriesSegment/1/0")
+							{
+								TimeSeriesAddSegmentData(pcts, tsd, smc);
+							}
+							else
+							{
+								// search for segments on current level
+								var smcAllValues = smc.Value.FindAllSemanticIdAs<SubmodelElementCollection>(tssReferenceKey, MatchMode.Relaxed);
 
-                        var timeSeriesImageBase64 = string.Empty;
-                        var scottplotImgPath = $"wwwroot/images/scottplot/smc_timeseries_clientid{bi.sessionNumber}.png";
+								if (smcAllValues.Count() != 0)
+								{
+									foreach (var smcseg in smcAllValues)
+									{
+										TimeSeriesAddSegmentData(pcts, tsd, smcseg);
+									}
+								}
+							}
 
-                        if (System.IO.File.Exists(scottplotImgPath))
-                        {
-                            var imageArray = System.IO.File.ReadAllBytes(scottplotImgPath);
-                            timeSeriesImageBase64 = Convert.ToBase64String(imageArray);
-                        }
+							_timeSeriesData?.RenderTimeSeries(defPlotHeight: 200, "en", bi.sessionNumber, plotFilter.combinedFromDate, plotFilter.combinedToDate);
+							watchTimeToProcessImage.Stop();
+						}
 
-                        var elapsedMsToProcessImage = watchTimeToProcessImage.ElapsedMilliseconds;
+						var timeSeriesImageBase64 = string.Empty;
+						var scottplotImgPath = $"wwwroot/images/scottplot/smc_timeseries_clientid{bi.sessionNumber}.png";
 
-                        if (System.IO.File.Exists(scottplotImgPath))
-                        {
-                            <EditForm Model="@plotFilter" OnValidSubmit="() => plotFilter.UpdateFilter(_timeSeriesData, bi.sessionNumber)">
-                                <label for="filterFromDate">Filter from</label>
-                                <InputDate id="filterFromDate" @bind-Value="plotFilter.fromDate"/>
-                                <input type="time" @bind-value="plotFilter.fromTime"/>
-                                <label for="filterToDate">Filter to</label>
-                                <InputDate id="filterToDate" @bind-Value="plotFilter.toDate"/>
-                                <input type="time" @bind-value="plotFilter.toTime"/>
-                                <div>
-                                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                                            type="submit">
-                                        Apply
-                                    </button>
-                                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                                            @onclick="plotFilter.SetInitialFilterState">
-                                        Reset
-                                    </button>
-                                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                                            @onclick="() => { plotFilterTsdOffset = 0; plotFilter.SetFilterStateDay(0); }">
-                                        Today
-                                    </button>
-                                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                                            @onclick="() => { plotFilterTsdOffset = -1; plotFilter.SetFilterStateDay(-1); }">
-                                        Yesterday
-                                    </button>
-                                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                                            @onclick="() => plotFilter.SetFilterStateDay(--plotFilterTsdOffset)">
-                                        Prev day
-                                    </button>
-                                    <button style="border-width: 1px; border-color: black; background-color: lightgray"
-                                            @onclick="() => plotFilter.SetFilterStateDay(++plotFilterTsdOffset)">
-                                        Next day
-                                    </button>
-                                </div>
-                            </EditForm>
+						if (System.IO.File.Exists(scottplotImgPath))
+						{
+							var imageArray = System.IO.File.ReadAllBytes(scottplotImgPath);
+							timeSeriesImageBase64 = Convert.ToBase64String(imageArray);
+						}
 
-                            <div class="d-flex flex-column">
-                                <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series"
-                                     style="max-width:950px;cursor:zoom-in;"/>
-                                <span class="text-muted" style="font-size:14px;">
-                                    Image processing took @elapsedMsToProcessImage ms (Last update: @TimeStamp.DateTimeToString(timeStampPlot))
-                                </span>
-                            </div>
+						var elapsedMsToProcessImage = watchTimeToProcessImage.ElapsedMilliseconds;
 
-                            <div class="modal modal-fullscreen @(showImageModal ? " d-block" : "d-none")" style="margin-top:3.5rem;" tabindex="-1">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Visualization of time series</h5>
-                                            <button type="button" @onclick="() => showImageModal = !showImageModal" class="close" data-dismiss="modal" aria-label="Close">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
-                                        </div>
-                                        <div class="modal-body text-center">
-                                            <img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64
-                                                 alt="Visualization of time series" style="max-width:90%;max-height:90%;cursor:zoom-out;" class="mb-2"/>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="my-2">Rendering time series...</div>
-                        }
-                    }
-                    else
-                    {
-                        collectionPlot = null;
-                    }
-                }
-            }
+						if (System.IO.File.Exists(scottplotImgPath))
+						{
+							<EditForm Model="@plotFilter" OnValidSubmit="() => plotFilter.UpdateFilter(_timeSeriesData, bi.sessionNumber)">
+								<label for="filterFromDate">Filter from</label>
+								<InputDate id="filterFromDate" @bind-Value="plotFilter.fromDate"/>
+								<input type="time" @bind-value="plotFilter.fromTime"/>
+								<label for="filterToDate">Filter to</label>
+								<InputDate id="filterToDate" @bind-Value="plotFilter.toDate"/>
+								<input type="time" @bind-value="plotFilter.toTime"/>
+								<div>
+									<button style="border-width: 1px; border-color: black; background-color: lightgray"
+									type="submit">
+										Apply
+									</button>
+									<button style="border-width: 1px; border-color: black; background-color: lightgray"
+									@onclick="plotFilter.SetInitialFilterState">
+										Reset
+									</button>
+									<button style="border-width: 1px; border-color: black; background-color: lightgray"
+									@onclick="() => { plotFilterTsdOffset = 0; plotFilter.SetFilterStateDay(0); }">
+										Today
+									</button>
+									<button style="border-width: 1px; border-color: black; background-color: lightgray"
+									@onclick="() => { plotFilterTsdOffset = -1; plotFilter.SetFilterStateDay(-1); }">
+										Yesterday
+									</button>
+									<button style="border-width: 1px; border-color: black; background-color: lightgray"
+									@onclick="() => plotFilter.SetFilterStateDay(--plotFilterTsdOffset)">
+										Prev day
+									</button>
+									<button style="border-width: 1px; border-color: black; background-color: lightgray"
+									@onclick="() => plotFilter.SetFilterStateDay(++plotFilterTsdOffset)">
+										Next day
+									</button>
+								</div>
+							</EditForm>
 
-            @{
-                var detailsImage = CreateDetailsImage(SelectedNode, out var url, out var svg);
-                if (!string.IsNullOrEmpty(detailsImage))
-                {
-                    if (!svg)
-                    {
-                        if (!url)
-                        {
-                            <br/>
-                            <div>
-                                <img src=data:image;base64,@detailsImage style="max-width: 50%" alt="Details Image"/>
-                            </div>
-                        }
-                        else
-                        {
-                            <br/>
-                            <div>
-                                <img src="@detailsImage" style="max-width: 50%" alt="Details Image"/>
-                            </div>
-                        }
-                    }
-                    else
-                    {
-                        if (!url)
-                        {
-                            <br/>
-                            <div>
-                                <img src=data:image/svg+xml;base64,@detailsImage style="max-width: 50%" alt="Details Image"/>
-                            </div>
-                        }
-                        else
-                        {
-                            <br/>
-                            <div>
-                                <img src="detailsImage" style="max-width: 50%" alt="Details Image"/>
-                            </div>
-                        }
-                    }
-                }
+							<div class="d-flex flex-column">
+								<img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64 alt="Visualization of time series"
+								style="max-width:950px;cursor:zoom-in;"/>
+								<span class="text-muted" style="font-size:14px;">
+									Image processing took @elapsedMsToProcessImage ms (Last update: @TimeStamp.DateTimeToString(timeStampPlot))
+								</span>
+							</div>
 
-                if (SelectedNode is {Tag: BasicEventElement be} && be.Observed != null)
-                {
-                    // var observedSingleKey = be.Observed.GetAsExactlyOneKey().ToStringExtended();
-                    var observedSingleKey = be.Observed.Keys.ToStringExtended();
-                    <span style="color:white;background-color:blue;">Observed</span>
-                    <span>@($" {observedSingleKey}")</span>
-                    <br/>
-                    // var refsme = Program.env[0].AasEnv.FindReferableByReference(be.Observed);
-                    IReferable refsme = null;
-                    if (aasID == "")
-                    {
-                        refsme = Program.env[SelectedNode.envIndex].AasEnv.FindReferableByReference(be.Observed);
-                    }
-                    else
-                    {
-                        refsme = AasxServer.AasxTask.getEnv(aasID).AasEnv.FindReferableByReference(be.Observed);
-                    }
-                    if (refsme != null)
-                    {
-                        <span style="color:lightgray;">UPDATE @TimeStamp.DateTimeToString(refsme.TimeStamp)</span>
-                        <br />
-                        <span style="color:lightgray;">CREATE @TimeStamp.DateTimeToString(refsme.TimeStampCreate)</span>
-                        <br />
-                        <span style="color:lightgray;">DELETE @TimeStamp.DateTimeToString(refsme.TimeStampDelete)</span>
-                        <br />
-                    }
-                    else
-                    {
-                        <span>Referenced element does not exist!</span>
-                        <br />
-                    }
-                }
-            }
-        </div>
-    </div>
+							<div class="modal modal-fullscreen @(showImageModal ? " d-block" : "d-none")" style="margin-top:3.5rem;" tabindex="-1">
+								<div class="modal-dialog">
+									<div class="modal-content">
+										<div class="modal-header">
+											<h5 class="modal-title">Visualization of time series</h5>
+											<button type="button" @onclick="() => showImageModal = !showImageModal" class="close" data-dismiss="modal" aria-label="Close">
+												<span aria-hidden="true">&times;</span>
+											</button>
+										</div>
+										<div class="modal-body text-center">
+											<img @onclick="() => showImageModal = !showImageModal" src=data:image;base64,@timeSeriesImageBase64
+											alt="Visualization of time series" style="max-width:90%;max-height:90%;cursor:zoom-out;" class="mb-2"/>
+										</div>
+									</div>
+								</div>
+							</div>
+						}
+						else
+						{
+							<div class="my-2">Rendering time series...</div>
+						}
+					}
+					else
+					{
+						collectionPlot = null;
+					}
+				}
+			}
+
+			@{
+				var detailsImage = CreateDetailsImage(SelectedNode, out var url, out var svg);
+				if (!string.IsNullOrEmpty(detailsImage))
+				{
+					if (!svg)
+					{
+						if (!url)
+						{
+							<br/>
+							<div>
+								<img src=data:image;base64,@detailsImage style="max-width: 50%" alt="Details Image"/>
+							</div>
+						}
+						else
+						{
+							<br/>
+							<div>
+								<img src="@detailsImage" style="max-width: 50%" alt="Details Image"/>
+							</div>
+						}
+					}
+					else
+					{
+						if (!url)
+						{
+							<br/>
+							<div>
+								<img src=data:image/svg+xml;base64,@detailsImage style="max-width: 50%" alt="Details Image"/>
+							</div>
+						}
+						else
+						{
+							<br/>
+							<div>
+								<img src="detailsImage" style="max-width: 50%" alt="Details Image"/>
+							</div>
+						}
+					}
+				}
+
+				if (SelectedNode is {Tag: BasicEventElement be} && be.Observed != null)
+				{
+					// var observedSingleKey = be.Observed.GetAsExactlyOneKey().ToStringExtended();
+					var observedSingleKey = be.Observed.Keys.ToStringExtended();
+					<span style="color:white;background-color:blue;">Observed</span>
+					<span>@($" {observedSingleKey}")</span>
+					<br/>
+					// var refsme = Program.env[0].AasEnv.FindReferableByReference(be.Observed);
+					IReferable refsme = null;
+					if (aasID == "")
+					{
+						refsme = Program.env[SelectedNode.envIndex].AasEnv.FindReferableByReference(be.Observed);
+					}
+					else
+					{
+						refsme = DbReqService.ReadPackageEnv(aasID).Result.PackageEnv.AasEnv.FindReferableByReference(be.Observed);
+					}
+					if (refsme != null)
+					{
+						<span style="color:lightgray;">UPDATE @TimeStamp.DateTimeToString(refsme.TimeStamp)</span>
+						<br />
+						<span style="color:lightgray;">CREATE @TimeStamp.DateTimeToString(refsme.TimeStampCreate)</span>
+						<br />
+						<span style="color:lightgray;">DELETE @TimeStamp.DateTimeToString(refsme.TimeStampDelete)</span>
+						<br />
+					}
+					else
+					{
+						<span>Referenced element does not exist!</span>
+						<br />
+					}
+				}
+			}
+		</div>
+	</div>
 </div>
 
 
@@ -639,238 +641,242 @@
 @using AasxServer;
 
 @code {
-    string lastUpdate = TimeStamp.DateTimeToString(DateTime.UtcNow);
-    System.Diagnostics.Stopwatch watchTimeToProcessImage = new();
-    DateTime timeStampPlot = new();
-    PlotFilter plotFilter = new();
-    SubmodelElementCollection collectionPlot = null;
-    bool showImageModal = false;
-    ListOfTimeSeriesData _timeSeriesData = new();
-    int plotFilterTsdOffset = 0;
+	string lastUpdate = TimeStamp.DateTimeToString(DateTime.UtcNow);
+	System.Diagnostics.Stopwatch watchTimeToProcessImage = new();
+	DateTime timeStampPlot = new();
+	PlotFilter plotFilter = new();
+	SubmodelElementCollection collectionPlot = null;
+	bool showImageModal = false;
+	ListOfTimeSeriesData _timeSeriesData = new();
+	int plotFilterTsdOffset = 0;
 
-    private class PlotFilter
-    {
-        public DateTime fromDate { get; set; }
-        public DateTime fromTime { get; set; }
-        public DateTime toDate { get; set; }
-        public DateTime toTime { get; set; }
-        public DateTime combinedFromDate { get; set; }
-        public DateTime combinedToDate { get; set; }
+	private class PlotFilter
+	{
+		public DateTime fromDate { get; set; }
+		public DateTime fromTime { get; set; }
+		public DateTime toDate { get; set; }
+		public DateTime toTime { get; set; }
+		public DateTime combinedFromDate { get; set; }
+		public DateTime combinedToDate { get; set; }
 
-        public PlotFilter()
-        {
-            SetInitialFilterState();
-        }
+		public PlotFilter()
+		{
+			SetInitialFilterState();
+		}
 
-        public void SetInitialFilterState()
-        {
-            ResetTimeOfDates();
-            var initialFromDate = DateTime.Now.AddYears(-3);
-            var initialToDate = DateTime.Now.AddYears(3);
-            fromDate = initialFromDate;
-            toDate = initialToDate;
-            combinedFromDate = initialFromDate;
-            combinedToDate = initialToDate;
-        }
+		public void SetInitialFilterState()
+		{
+			ResetTimeOfDates();
+			var initialFromDate = DateTime.Now.AddYears(-3);
+			var initialToDate = DateTime.Now.AddYears(3);
+			fromDate = initialFromDate;
+			toDate = initialToDate;
+			combinedFromDate = initialFromDate;
+			combinedToDate = initialToDate;
+		}
 
-        public void SetFilterStateDay(int offset)
-        {
-            ResetTimeOfDates();
-            var day = DateTime.Today.AddDays(offset);
-            var midnight = new TimeSpan(0, 23, 59, 59);
-            var endOfDay = day.Add(midnight);
+		public void SetFilterStateDay(int offset)
+		{
+			ResetTimeOfDates();
+			var day = DateTime.Today.AddDays(offset);
+			var midnight = new TimeSpan(0, 23, 59, 59);
+			var endOfDay = day.Add(midnight);
 
-            fromDate = day;
-            fromTime = day;
-            toDate = endOfDay;
-            toTime = endOfDay;
-            combinedFromDate = day;
-            combinedToDate = endOfDay;
-        }
+			fromDate = day;
+			fromTime = day;
+			toDate = endOfDay;
+			toTime = endOfDay;
+			combinedFromDate = day;
+			combinedToDate = endOfDay;
+		}
 
-        public void ResetTimeOfDates()
-        {
-            // Reset to 0 AM
-            fromDate = new DateTime(fromDate.Year, fromDate.Month, fromDate.Day, 0, 0, 0);
-            toDate = new DateTime(toDate.Year, toDate.Month, toDate.Day, 0, 0, 0);
-        }
+		public void ResetTimeOfDates()
+		{
+			// Reset to 0 AM
+			fromDate = new DateTime(fromDate.Year, fromDate.Month, fromDate.Day, 0, 0, 0);
+			toDate = new DateTime(toDate.Year, toDate.Month, toDate.Day, 0, 0, 0);
+		}
 
-        public void UpdateFilter(ListOfTimeSeriesData tsd, int sessionNumber)
-        {
-            ResetTimeOfDates();
-            var fromTimeSpan = fromTime.TimeOfDay;
-            var toTimeSpan = toTime.TimeOfDay;
-            combinedFromDate = fromDate.Add(fromTimeSpan);
-            combinedToDate = toDate.Add(toTimeSpan);
-            tsd?.RenderTimeSeries(defPlotHeight: 200, "en", sessionNumber, combinedFromDate, combinedToDate);
-        }
-    }
+		public void UpdateFilter(ListOfTimeSeriesData tsd, int sessionNumber)
+		{
+			ResetTimeOfDates();
+			var fromTimeSpan = fromTime.TimeOfDay;
+			var toTimeSpan = toTime.TimeOfDay;
+			combinedFromDate = fromDate.Add(fromTimeSpan);
+			combinedToDate = toDate.Add(toTimeSpan);
+			tsd?.RenderTimeSeries(defPlotHeight: 200, "en", sessionNumber, combinedFromDate, combinedToDate);
+		}
+	}
 
-    async Task DownloadFile()
-    {
-        StateHasChanged();
-        if (SelectedNode.Tag is File f)
-        {
-            var fileName = System.IO.Path.GetFileName(f.Value);
-            if (!string.IsNullOrEmpty(fileName))
-            {
-                try
-                {
-                    byte[] data;
-                    using (var ms = new System.IO.MemoryStream())
-                    {
-                        if (aasID == "")
-                        {
-                            await Program.env[SelectedNode.envIndex].GetLocalStreamFromPackage(f.Value).CopyToAsync(ms);
-                        }
-                        else
-                        {
-                            await AasxServer.AasxTask.getEnv(aasID).GetLocalStreamFromPackage(f.Value).CopyToAsync(ms);
-                        }
-                        data = ms.ToArray();
-                    }
+	async Task DownloadFile()
+	{
+		StateHasChanged();
+		if (SelectedNode.Tag is File f)
+		{
+			var fileName = System.IO.Path.GetFileName(f.Value);
+			if (!string.IsNullOrEmpty(fileName))
+			{
+				try
+				{
+					byte[] data;
+					using (var ms = new System.IO.MemoryStream())
+					{
+						if (aasID == "")
+						{
+							await Program.env[SelectedNode.envIndex].GetLocalStreamFromPackage(f.Value).CopyToAsync(ms);
+						}
+						else
+						{
+							var packageEnvResult = await DbReqService.ReadPackageEnv(aasID);
+							await packageEnvResult.PackageEnv.GetLocalStreamFromPackage(f.Value).CopyToAsync(ms);
+						}
+						data = ms.ToArray();
+					}
 
-                    await SaveAs(js, fileName, data);
-                }
-                catch
-                {
-                }
-            }
-        }
-    }
+					await SaveAs(js, fileName, data);
+				}
+				catch
+				{
+				}
+			}
+		}
+	}
 
-    async Task SaveAs(IJSRuntime js, string filename, byte[] data)
-    {
-        ;
-        await js.InvokeAsync<object>(
-            "saveAsFile",
-            filename,
-            data
-        );
-    }
+	async Task SaveAs(IJSRuntime js, string filename, byte[] data)
+	{
+		;
+		await js.InvokeAsync<object>(
+			"saveAsFile",
+			filename,
+			data
+		);
+	}
 
-    public class Item
-    {
-        public string Text { get; set; }
-        public IEnumerable<Item> Children { get; set; }
+	public class Item
+	{
+		public string Text { get; set; }
+		public IEnumerable<Item> Children { get; set; }
 
-        public object parent { get; set; }
-        public string Type { get; set; }
-        public object Tag { get; set; }
-        public int envIndex { get; set; }
-    }
+		public object parent { get; set; }
+		public string Type { get; set; }
+		public object Tag { get; set; }
+		public int envIndex { get; set; }
+	}
 
-    List<Item> Items = null;
+	List<Item> Items = null;
 
-    IList<Item> ExpandedNodes = new List<Item>();
+	IList<Item> ExpandedNodes = new List<Item>();
 
-    private Item SelectedNode { get; set; }
+	private Item SelectedNode { get; set; }
 
-    private string aasID = "";
+	private string aasID = "";
 
-    static ulong dataVersion = 0;
+	static ulong dataVersion = 0;
 
-    public static void checkDataVersion()
-    {
-        if (Program.getDataVersion() != dataVersion)
-        {
-            dataVersion = Program.getDataVersion();
-        }
-    }
+	public static void checkDataVersion()
+	{
+		if (Program.getDataVersion() != dataVersion)
+		{
+			dataVersion = Program.getDataVersion();
+		}
+	}
 
-    System.Threading.Timer refresh = null;
+	System.Threading.Timer refresh = null;
 
-    /*
-    void StateHasChanged()
-    {
-    // Set a breakpoint on the following line
-    base.StateHasChanged();
-    }
-    */
+	/*
+	void StateHasChanged()
+	{
+	// Set a breakpoint on the following line
+	base.StateHasChanged();
+	}
+	*/
 
-    [CascadingParameter] private HttpContext HttpContext { get; set; }
+	[CascadingParameter] private HttpContext HttpContext { get; set; }
 
-    protected override void OnInitialized()
-    {
-        // OnInitialized() always called twice
-        if (HttpContext == null)
-        {
-            // Pre-rendering logic
-            SubmodelService.NewDataAvailable += NewData;
+	protected override void OnInitialized()
+	{
+	// OnInitialized() always called twice
+		if (HttpContext == null)
+		{
+		// Pre-rendering logic
+			SubmodelService.NewDataAvailable += NewData;
 
-            var uri = NavMan.Uri;
-            var splitUrl = uri.Split("?");
-            if (splitUrl.Length == 2)
-            {
-                var query = System.Web.HttpUtility.ParseQueryString(splitUrl[1]);
-                var list = query.Get("aas");
-                if (!list.IsNullOrEmpty())
-                {
-                    aasID = list;
-                }
-            }
+			var uri = NavMan.Uri;
+			var splitUrl = uri.Split("?");
+			if (splitUrl.Length == 2)
+			{
+				var query = System.Web.HttpUtility.ParseQueryString(splitUrl[1]);
+				var list = query.Get("aas");
+				if (!list.IsNullOrEmpty())
+				{
+					aasID = list;
+				}
+			}
 
-            newDataMode = 1;
-            // Program.signalNewData(1);
-        }
-        else
-        {
-            // Actual rendering logic
-        }
-    }
+			newDataMode = 1;
+			// Program.signalNewData(1);
+		}
+		else
+		{
+		// Actual rendering logic
+		}
+	}
 
-    public void Dispose()
-    {
-        // AasxServer.AasxTask.saveAASXtoTemp(aasID);
-        SubmodelService.NewDataAvailable -= NewData;
-    }
+	public void Dispose()
+	{
+	// AasxServer.AasxTask.saveAASXtoTemp(aasID);
+		SubmodelService.NewDataAvailable -= NewData;
+	}
 
-    int newDataMode = 0;
+	int newDataMode = 0;
 
-    void NewData(object source, EventArgs args)
-    {
-        if (Program.isLoading)
-            return;
+	void NewData(object source, EventArgs args)
+	{
+		if (Program.isLoading)
+			return;
 
-        if (newDataMode != 0 || args is not Program.NewDataAvailableArgs newArgs)
-        {
-            return;
-        }
+		if (newDataMode != 0 || args is not Program.NewDataAvailableArgs newArgs)
+		{
+			return;
+		}
 
-        newDataMode = newArgs.signalNewDataMode;
-        InvokeAsync(StateHasChanged);
-    }
+		newDataMode = newArgs.signalNewDataMode;
+		InvokeAsync(StateHasChanged);
+	}
 
-    bool update = true;
+	bool update = true;
 
-    void updateVisibleTree()
-    {
-        if (!update)
-        {
-            return;
-        }
+	void updateVisibleTree()
+	{
+		if (!update)
+		{
+			return;
+		}
 
-        var selectedNode = SelectedNode;
-        switch (newDataMode)
-        {
-            case 0:
-                break;
-            case 1:
-            case 2:
-                var isSelected = selectedNode != null;
-                var isExpanded = ExpandedNodes.Count != 0;
-                var expandedNodesPath = new List<string>[ExpandedNodes.Count + 1];
-                var selectedNodePath = GetPath(selectedNode);
-                if (isExpanded)
-                {
-                    for (var j = 0; j < ExpandedNodes.Count; j++)
-                    {
-                        expandedNodesPath[j] = GetPath(ExpandedNodes[j]);
-                    }
-                }
+		var selectedNode = SelectedNode;
+		switch (newDataMode)
+		{
+			case 0:
+				break;
+			case 1:
+			case 2:
+				var isSelected = selectedNode != null;
+				var isExpanded = ExpandedNodes.Count != 0;
+				var expandedNodesPath = new List<string>[ExpandedNodes.Count + 1];
+				var selectedNodePath = GetPath(selectedNode);
+				if (isExpanded)
+				{
+					for (var j = 0; j < ExpandedNodes.Count; j++)
+					{
+						expandedNodesPath[j] = GetPath(ExpandedNodes[j]);
+					}
+				}
 
-                Items = SubmodelService.BuildTree(aasID);
-                ExpandedNodes.Clear();
+				var buildTree = SubmodelService.BuildTree(aasID);
+
+				Items = buildTree;
+
+				ExpandedNodes.Clear();
                 selectedNode = null;
                 if (isSelected)
                 {
@@ -891,7 +897,9 @@
                 break;
             // 3 == build new tree, all nodes closed
             case 3:
-                Items = SubmodelService.BuildTree(aasID);
+				var buildTree2 = SubmodelService.BuildTree(aasID);
+				Items = buildTree2;
+
                 ExpandedNodes.Clear();
                 selectedNode = null;
                 newDataMode = 0;
@@ -1037,7 +1045,7 @@
         }
         else
         {
-            env = new AdminShellNS.AdminShellPackageEnv[] { AasxServer.AasxTask.getEnv(aasID) };
+            env = new AdminShellNS.AdminShellPackageEnv[] { DbReqService.ReadPackageEnv(aasID).Result.PackageEnv };
         }
 
         svg = false;

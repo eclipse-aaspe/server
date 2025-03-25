@@ -34,6 +34,7 @@ public class DbRequestParams
 
     public IReference ReferenceBody { get; set; }
 
+    public IAssetInformation AssetInformation { get; set; }
 
     public bool First { get; set; }
 }

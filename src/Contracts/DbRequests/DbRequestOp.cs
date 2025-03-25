@@ -16,6 +16,7 @@ public enum DbRequestOp
     ReadFileByPath,
     ReadAssetInformation,
     ReadThumbnail,
+    ReadPackageEnv,
     CreateSubmodel,
     CreateAssetAdministrationShell,
     CreateSubmodelElement,

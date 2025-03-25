@@ -1919,7 +1919,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult GetSubmodelElementByPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, 
+    public virtual async Task<IActionResult> GetSubmodelElementByPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, 
 	[FromQuery] string? level, [FromQuery] string? extent)
     {
         //Validate level and extent
@@ -1937,22 +1937,22 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-        if (!Program.noSecurity)
-        {
-            var submodel = _persistenceService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
-            var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
-            var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
-            var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
-            var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
-            if (!authResult.Succeeded)
-            {
-                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
-            }
-        }
+        //if (!Program.noSecurity)
+        //{
+        //    var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+        //    User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+        //    var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
+        //    var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
+        //    var principal = new System.Security.Principal.GenericPrincipal(identity, null);
+        //    var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
+        //    if (!authResult.Succeeded)
+        //    {
+        //        throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
+        //    }
+        //}
         var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
 
-        var submodelElement = _persistenceService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPathElements);
+        var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPathElements);
 
         var output = _levelExtentModifierService.ApplyLevelExtent(submodelElement, levelEnum, extentEnum);
         return new ObjectResult(output);

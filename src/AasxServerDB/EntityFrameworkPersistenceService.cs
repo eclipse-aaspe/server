@@ -316,6 +316,11 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         return fileName;
     }
 
+    public AdminShellPackageEnv ReadPackageEnv(string aasID, out string envFileName)
+    {
+        return Converter.GetPackageEnv(aasID, out envFileName);
+    }
+
     public void DeleteAssetAdministrationShellById(string aasIdentifier)
     {
         var aas = ReadAssetAdministrationShellById(null, aasIdentifier);
@@ -611,7 +616,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     public void UpdateFileByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream) => throw new NotImplementedException();
 
-    public void UpdateThumbnail(string aasIdentifier, string fileName, string contentType, Stream stream) => throw new NotImplementedException();
+    public void UpdateThumbnail(string aasIdentifier, string fileName, string contentType, MemoryStream stream) => throw new NotImplementedException();
 
     //public List<ISubmodel> GetAllSubmodels(string cursor, int limit){
 
@@ -772,6 +777,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             case DbRequestOp.ReadThumbnail:
                 var thumbnail = ReadThumbnail(dbRequest.Context.Params.AssetAdministrationShellIdentifier,
                     out content, out fileSize);
+
                 result.FileRequestResult = new DbFileRequestResult()
                 {
                     Content = content,
@@ -779,7 +785,16 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     FileSize = fileSize
                 };
                 break;
-
+            case DbRequestOp.ReadPackageEnv:
+                var envFile = "";
+                var packageEnv = ReadPackageEnv(dbRequest.Context.Params.AssetAdministrationShellIdentifier
+                    ,out envFile);
+                result.PackageEnv = new DbRequestPackageEnvResult()
+                {
+                    PackageEnv = packageEnv,
+                    EnvFileName = envFile
+                };
+                break;
             case DbRequestOp.CreateSubmodel:
                 var createdSubmodel = CreateSubmodel(dbRequest.Context.Params.SubmodelBody,
                     dbRequest.Context.Params.AssetAdministrationShellIdentifier);
@@ -791,8 +806,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 break;
             case DbRequestOp.CreateAssetAdministrationShell:
                 var createdAas = CreateAssetAdministrationShell(
-                    dbRequest.Context.Params.AasBody
-                    );
+                    dbRequest.Context.Params.AasBody);
                 result.AssetAdministrationShells = new List<IAssetAdministrationShell>
                 {
                     createdAas
@@ -804,8 +818,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     dbRequest.Context.Params.AssetAdministrationShellIdentifier,
                     dbRequest.Context.Params.SubmodelIdentifier,
                     dbRequest.Context.Params.SubmodelElementBody,
-                    dbRequest.Context.Params.First
-                    );
+                    dbRequest.Context.Params.First);
+
                 result.SubmodelElements = new List<ISubmodelElement>
                 {
                     createdsubmodelElement
@@ -818,8 +832,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     dbRequest.Context.Params.SubmodelIdentifier,
                     dbRequest.Context.Params.IdShort,
                     dbRequest.Context.Params.First,
-                    dbRequest.Context.Params.SubmodelElementBody
-                 );
+                    dbRequest.Context.Params.SubmodelElementBody);
+
                 result.SubmodelElements = new List<ISubmodelElement>
                 {
                     createdsubmodelElementbyPath
@@ -846,14 +860,27 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     dbRequest.Context.Params.SubmodelElementBody);
                 break;
             case DbRequestOp.UpdateAssetInformation:
-                //UpdateAssetInformation(dbRequest.Context.Params.AssetAdministrationShellIdentifier,
-                //    dbRequest.Context.Params.in);
+                UpdateAssetInformation(dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                    dbRequest.Context.Params.AssetInformation);
                 break;
             case DbRequestOp.UpdateFileByPath:
+                UpdateFileByPath(dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                    dbRequest.Context.Params.SubmodelIdentifier,
+                    dbRequest.Context.Params.IdShort,
+                    dbRequest.Context.Params.FileRequest.File,
+                    dbRequest.Context.Params.FileRequest.ContentType,
+                    dbRequest.Context.Params.FileRequest.Stream);
                 break;
             case DbRequestOp.UpdateThumbnail:
+                UpdateThumbnail(dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                    dbRequest.Context.Params.FileRequest.File,
+                    dbRequest.Context.Params.FileRequest.ContentType,
+                    dbRequest.Context.Params.FileRequest.Stream);
                 break;
             case DbRequestOp.UpdateAssetAdministrationShellById:
+                UpdateAssetAdministrationShellById(dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                    dbRequest.Context.Params.AasBody)
+                    ;
                 break;
             case DbRequestOp.ReplaceSubmodelById:
                 break;
@@ -874,7 +901,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             case DbRequestOp.DeleteThumbnail:
                 break;
             default:
-
+                dbRequest.TaskCompletionSource.SetException(new Exception("Unknown Operation"));
                 break;
         }
 
@@ -882,9 +909,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         return result;
     }
 
-    private ISubmodelElement CreateSubmodelElement(ISecurityConfig securityConfig, string assetAdministrationShellIdentifier, string submodelIdentifier, ISubmodelElement submodelElementBody, object first) => throw new NotImplementedException();
-    public ISubmodel CreateSubmodel(ISubmodel body, string aasIdentifier) => throw new NotImplementedException();
     public void ReplaceSubmodelById(string submodelIdentifier, ISubmodel body) => throw new NotImplementedException();
     public void ReplaceSubmodelElementByPath(string submodelIdentifier, string idShortPath, ISubmodelElement body) => throw new NotImplementedException();
     public void ReplaceFileByPath(string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream) => throw new NotImplementedException();
+    public ISubmodel CreateSubmodel(ISubmodel body, string decodedAasIdentifier) => throw new NotImplementedException();
 }

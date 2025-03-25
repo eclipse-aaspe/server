@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AasCore.Aas3_0;
+using AdminShellNS;
 
 public class DbRequestResult
 {
@@ -17,6 +18,8 @@ public class DbRequestResult
     public List<IReference> References { get; set; }
 
     public DbFileRequestResult FileRequestResult { get; set; }
+
+    public DbRequestPackageEnvResult PackageEnv { get; set; }
 
     public IAssetInformation AssetInformation { get; set; }
 }

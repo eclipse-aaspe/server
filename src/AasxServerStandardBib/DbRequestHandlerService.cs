@@ -37,6 +37,59 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         Task.Run(ProcessQueryOperations);
     }
 
+    private async Task ProcessQueryOperations()
+    {
+        foreach (var operation in _queryOperations.GetConsumingEnumerable())
+        {
+            if (operation != null)
+            {
+                _lock.Wait();
+                if (operation.CrudType != DbRequestCrudType.Read)
+                {
+                    while (_activeReadOperations > 0)
+                    {
+                        Thread.Sleep(100);
+                    }
+                }
+
+                try
+                {
+                    if (operation.CrudType == DbRequestCrudType.Read)
+                    {
+                        _lock.Release();
+                        IncrementCounter();
+                    }
+
+                    var result = await _persistenceService.DoDbOperation(operation);
+                }
+                catch (Exception ex)
+                {
+                    operation.TaskCompletionSource.SetException(ex);
+                }
+                finally
+                {
+                    if (operation.CrudType != DbRequestCrudType.Read)
+                    {
+                        _lock.Release();
+                    }
+                    else
+                    {
+                        DecrementCounter();
+                    }
+                }
+            }
+        }
+    }
+    public void IncrementCounter()
+    {
+        Interlocked.Increment(ref _activeReadOperations);
+    }
+
+    public void DecrementCounter()
+    {
+        Interlocked.Decrement(ref _activeReadOperations);
+    }
+
     public async Task<List<IAssetAdministrationShell>> ReadPagedAssetAdministrationShells(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, List<ISpecificAssetId> assetIds, string idShort)
     {
         var parameters = new DbRequestParams()
@@ -96,59 +149,94 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.Submodels[0];
     }
 
-    private async Task ProcessQueryOperations()
+    public async Task<List<ISubmodelElement>> ReadPagedSubmodelElements(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
     {
-        foreach (var operation in _queryOperations.GetConsumingEnumerable())
+        var parameters = new DbRequestParams()
         {
-            if (operation != null)
-            {
-                _lock.Wait();
-                if (operation.CrudType != DbRequestCrudType.Read)
-                {
-                    while (_activeReadOperations > 0)
-                    {
-                        Thread.Sleep(100);
-                    }
-                }
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            SubmodelIdentifier = submodelIdentifier,
+        };
 
-                try
-                {
-                    if (operation.CrudType == DbRequestCrudType.Read)
-                    {
-                        _lock.Release();
-                        IncrementCounter();
-                    }
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
 
-                    var result = await _persistenceService.DoDbOperation(operation);
-                }
-                catch (Exception ex)
-                {
-                    operation.TaskCompletionSource.SetException(ex);
-                }
-                finally
-                {
-                    if (operation.CrudType != DbRequestCrudType.Read)
-                    {
-                        _lock.Release();
-                    }
-                    else
-                    {
-                        DecrementCounter();
-                    }
-                }
-            }
-        }
+        var dbRequest = new DbRequest(DbRequestOp.ReadPagedSubmodelElements, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.SubmodelElements;
     }
 
-    public Task<List<IClass>> ReadPagedSubmodelElements(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier) => throw new NotImplementedException();
-
-    public void IncrementCounter()
+    public async Task<IAssetAdministrationShell> ReadAssetAdministrationShellById(ISecurityConfig securityConfig, string aasIdentifier)
     {
-        Interlocked.Increment(ref _activeReadOperations);
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReadAssetAdministrationShellById, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.AssetAdministrationShells[0];
     }
 
-    public void DecrementCounter()
+    public async Task<ISubmodelElement> ReadSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, List<object> idShortPathElements)
     {
-        Interlocked.Decrement(ref _activeReadOperations);
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            SubmodelIdentifier = submodelIdentifier,
+            IdShortElements = idShortPathElements
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReadSubmodelById, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.SubmodelElements[0];
+    }
+
+    public async Task<DbRequestPackageEnvResult> ReadPackageEnv(string aasId)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasId,
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            //SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReadPackageEnv, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task.ConfigureAwait(false);
+        return tcs.PackageEnv;
     }
 }
