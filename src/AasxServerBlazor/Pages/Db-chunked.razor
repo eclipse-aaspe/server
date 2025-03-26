@@ -792,17 +792,17 @@
 </div>
 
 @code {
-    bool update = false;
+    bool update = true;
     int totalCount = 0;
     int size = 1000;
     int offset = 0;
     string search = string.Empty;
-    long envid = 0;
-    long aasid = 0;
-    long smid = 0;
-    long smeid = 0;
-    long parid = 0;
-    long cdid = 0;
+    int envid = 0;
+    int aasid = 0;
+    int smid = 0;
+    int smeid = 0;
+    int parid = 0;
+    int cdid = 0;
     string smidentifier = string.Empty;
     string details = string.Empty;
     private long elapsedTime = 0;
@@ -904,7 +904,7 @@
 
         watch.Stop();
         elapsedTime = watch.ElapsedMilliseconds;
-        StateHasChanged();
+        // StateHasChanged();
 
         Console.WriteLine($"LoadItems: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
 
@@ -963,7 +963,7 @@
 
         watch.Stop();
         elapsedTime = watch.ElapsedMilliseconds;
-        StateHasChanged();
+        // StateHasChanged();
 
         Console.WriteLine($"LoadItems: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
 
@@ -1080,7 +1080,7 @@
 
         watch.Stop();
         elapsedTime = watch.ElapsedMilliseconds;
-        StateHasChanged();
+        // StateHasChanged();
 
         Console.WriteLine($"LoadItems SME: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
 
