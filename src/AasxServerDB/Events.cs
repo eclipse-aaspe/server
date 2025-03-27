@@ -454,10 +454,11 @@ namespace Events
                         if (sm.TimeStampCreate <= diffTime1)
                         {
                             var smeSearchSM = db.SMESets.Where(sme => sme.SMId == sm.Id);
-                            var smeSearchTimeStamp = smeSearchSM
-                                .Where(sme => sme.TimeStampCreate > diffTime1
-                                    || (sme.TimeStampTree != sme.TimeStampCreate && sme.TimeStampTree > diffTime1 && sme.TimeStampCreate <= diffTime1)
+                            var smeSearchTimeStamp = smeSearchSM.Where(sme =>
+                                    sme.TimeStampCreate > diffTime1
                                     || sme.TimeStampDelete > diffTime1
+                                    || (sme.TimeStampCreate <= diffTime1 && sme.TimeStampDelete <= diffTime1
+                                        && sme.TimeStampTree != sme.TimeStampCreate && sme.TimeStampTree > diffTime1)
                                 )
                                 .OrderBy(sme => sme.TimeStampTree).Skip(offsetSme).Take(limitSme).ToList();
                             if (smeSearchTimeStamp.Count != 0)
@@ -468,10 +469,15 @@ namespace Events
                                 // var lookupChildren = treeMerged?.ToLookup(m => m.smeSet.ParentSMEId);
 
                                 completeSM = false;
+                                List<int> skip = [];
                                 foreach (var sme in smeSearchTimeStamp)
-                                // foreach (var tm in treeMerged)
                                 {
-                                    // var sme = tm.smeSet;
+                                    if (skip.Contains(sme.Id))
+                                    {
+                                        var children = smeSearchSM.Where(c => sme.Id == c.ParentSMEId).Select(s => s.Id).ToList();
+                                        skip.AddRange(children);
+                                        continue;
+                                    }
                                     var notDeletedIdShortList = new List<string>();
                                     if (sme.TimeStampDelete > diffTime1)
                                     {
@@ -484,16 +490,36 @@ namespace Events
                                     }
                                     else
                                     {
-                                        // skip if at least 1 SME below with other TimeStampTree
-                                        // skip if at least 1 SME below with TimeStampCreate == TimeStampTree
-                                        // means: skip sme, if a child is in the list
-                                        if (smeSearchTimeStamp.Any(s => s.ParentSMEId == sme.Id))
+                                        var allChildren = smeSearchTimeStamp.Where(s => s.ParentSMEId == sme.Id).ToList();
+                                        var createChildren = allChildren.Where(s => s.ParentSMEId == sme.Id && s.TimeStampCreate > diffTime1).ToList();
+                                        var updateChildren = allChildren.Where(s => s.ParentSMEId == sme.Id && s.TimeStampTree > diffTime1).ToList();
+                                        var deleteChildren = allChildren.Where(s => s.ParentSMEId == sme.Id && s.TimeStampDelete > diffTime1).ToList();
+                                        if (sme.TimeStampCreate > diffTime1)
                                         {
-                                            // Console.WriteLine($"SKIP: {sme.IdShort}");
-                                            continue;
+                                            if (allChildren.Count == 0 || allChildren.Count == createChildren.Count)
+                                            {
+                                                entryType = "CREATE";
+                                                skip.AddRange(createChildren.Select(s => s.Id).ToList());
+                                            }
+                                            else // SKIP and use children instead
+                                            {
+                                                continue;
+                                            }
                                         }
-
-                                        entryType = "UPDATE";
+                                        else
+                                        {
+                                            if (allChildren.Count == 0 ||
+                                                (createChildren.Count == 0 && deleteChildren.Count == 0
+                                                    && allChildren.Count != 1 && allChildren.Count == updateChildren.Count))
+                                            {
+                                                entryType = "UPDATE";
+                                                skip.AddRange(updateChildren.Select(s => s.Id).ToList());
+                                            }
+                                            else // SKIP and use children instead
+                                            {
+                                                continue;
+                                            }
+                                        }
                                     }
                                     var parentId = sme.ParentSMEId;
                                     var idShortPath = sme.IdShort;

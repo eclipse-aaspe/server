@@ -781,6 +781,37 @@
                         </table>
                     </div>
                 }
+
+                if (url.EndsWith("/svalue"))
+                {
+                    <span>
+                        &nbsp&nbsp@($"SValue#: {totalCount} size={size} offset={offset} search={search} smeid={smeid}")
+                    </span>
+                    <br />
+                    <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
+                        <thead>
+                            <tr>
+                                <th style="word-break:keep-all">Par#</th>
+                                <th style="word-break:keep-all">Value</th>
+                                <th style="word-break:keep-all">Annotation</th>
+                                <th style="word-break:keep-all">Links</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                                <Virtualize Context="SValueSet" @ref="SValueSetContainer" ItemsProvider="LoadSValueSetItems" >
+                                    <tr>
+                                        <td style="word-break:keep-all">@SValueSet.SMEId</td>
+                                        <td style="word-break:keep-all">@SValueSet.Value</td>
+                                        <td style="word-break:keep-all">@SValueSet.Annotation</td>
+                                        <td style="word-break:keep-all">
+                                            <a href="@($"{shorturl}/sme?smeid={SValueSet.SMEId}")" target="_blank">par</a>
+                                        </td>
+                                    </tr>
+                            </Virtualize>
+                        </tbody>
+                    </table>
+                }
+
                 <br />
                 <span>@($"Elapsed ms for DB access: {elapsedTime}")</span>
             }
@@ -792,17 +823,17 @@
 </div>
 
 @code {
-    bool update = false;
+    bool update = true;
     int totalCount = 0;
     int size = 1000;
     int offset = 0;
     string search = string.Empty;
-    long envid = 0;
-    long aasid = 0;
-    long smid = 0;
-    long smeid = 0;
-    long parid = 0;
-    long cdid = 0;
+    int envid = 0;
+    int aasid = 0;
+    int smid = 0;
+    int smeid = 0;
+    int parid = 0;
+    int cdid = 0;
     string smidentifier = string.Empty;
     string details = string.Empty;
     private long elapsedTime = 0;
@@ -904,7 +935,7 @@
 
         watch.Stop();
         elapsedTime = watch.ElapsedMilliseconds;
-        StateHasChanged();
+        // StateHasChanged();
 
         Console.WriteLine($"LoadItems: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
 
@@ -963,7 +994,6 @@
 
         watch.Stop();
         elapsedTime = watch.ElapsedMilliseconds;
-        StateHasChanged();
 
         Console.WriteLine($"LoadItems: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
 
@@ -971,6 +1001,40 @@
     }
 
     private Virtualize<SMVirtualize> SMSetContainer { get; set; }
+
+    private async ValueTask<ItemsProviderResult<SValueSet>> LoadSValueSetItems(ItemsProviderRequest request)
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        watch.Start();
+
+        List<SValueSet> result = [];
+
+        using (AasContext db = new AasContext())
+        {
+            IQueryable<SValueSet> qSValue = db.SValueSets;
+            if (smeid != 0)
+            {
+                qSValue = qSValue.Where(s => s.SMEId == smeid);
+            }
+            totalCount = qSValue.Count();
+            CheckTotalCountAndUpdate();
+
+            result = qSValue
+                .OrderBy(s => s.Id)
+                .Skip(offset + request.StartIndex)
+                .Take(request.Count)
+                .ToList();
+        }
+
+        watch.Stop();
+        elapsedTime = watch.ElapsedMilliseconds;
+
+        Console.WriteLine($"LoadItems: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
+
+        return new ItemsProviderResult<SValueSet>(result, size);
+    }
+
+    private Virtualize<SValueSet> SValueSetContainer { get; set; }
 
     public async Task MaintainDatabaseAsync()
     {
@@ -1080,7 +1144,7 @@
 
         watch.Stop();
         elapsedTime = watch.ElapsedMilliseconds;
-        StateHasChanged();
+        // StateHasChanged();
 
         Console.WriteLine($"LoadItems SME: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
 
