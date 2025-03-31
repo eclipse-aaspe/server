@@ -16,21 +16,17 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
-using Newtonsoft.Json;
 
 namespace AasRegistryDiscovery.WebApi.Models
 {
     /// <summary>
     /// 
     /// </summary>
-    [DataContract]
     public partial class Result : IEquatable<Result>
     { 
         /// <summary>
         /// Gets or Sets Messages
         /// </summary>
-
-        [DataMember(Name="messages")]
         public List<Message> Messages { get; set; }
 
         /// <summary>
@@ -44,15 +40,6 @@ namespace AasRegistryDiscovery.WebApi.Models
             sb.Append("  Messages: ").Append(Messages).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
-        }
-
-        /// <summary>
-        /// Returns the JSON string presentation of the object
-        /// </summary>
-        /// <returns>JSON string presentation of the object</returns>
-        public string ToJson()
-        {
-            return JsonConvert.SerializeObject(this, Formatting.Indented);
         }
 
         /// <summary>

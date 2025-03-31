@@ -64,11 +64,7 @@ namespace AasRegistryDiscovery.WebApi.Formatters
             {
                 return base.CanWriteResult(context);
             }
-            else if(typeof(ValidationProblemDetails).IsAssignableFrom(context.ObjectType))
-            {
-                return true;
-            }
-            else if(typeof(ProblemDetails).IsAssignableFrom(context.ObjectType))
+            else if(typeof(ServiceDescription).IsAssignableFrom(context.ObjectType))
             {
                 return true;
             }
@@ -168,13 +164,16 @@ namespace AasRegistryDiscovery.WebApi.Formatters
                 jsonArray.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();
             }
-            else if(typeof(ValidationProblemDetails).IsAssignableFrom(context.ObjectType))
+            else if (typeof(ServiceDescription).IsAssignableFrom(context.ObjectType))
             {
-                var valProbDetails = context.Object as ValidationProblemDetails;
-            }
-            else if(typeof(ProblemDetails).IsAssignableFrom(context.ObjectType))
-            {
-                var valProbDetails = context.Object as ProblemDetails;
+                if (context.Object is ServiceDescription serviceDescription)
+                {
+                    var jsonObject = new JsonObject();
+                    jsonObject["profiles"] = JsonSerializer.SerializeToNode(serviceDescription.Profiles);
+                    var writer = new Utf8JsonWriter(response.Body);
+                    jsonObject.WriteTo(writer);
+                    writer.FlushAsync().GetAwaiter().GetResult(); 
+                }
             }
             else
             {

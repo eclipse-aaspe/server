@@ -16,21 +16,17 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
-using Newtonsoft.Json;
 
 namespace AasRegistryDiscovery.WebApi.Models
 {
     /// <summary>
     /// The Description object enables servers to present their capabilities to the clients, in particular which profiles they implement. At least one defined profile is required. Additional, proprietary attributes might be included. Nevertheless, the server must not expect that a regular client understands them.
     /// </summary>
-    [DataContract]
     public partial class ServiceDescription : IEquatable<ServiceDescription>
     { 
         /// <summary>
         /// Gets or Sets Profiles
         /// </summary>
-
-        [DataMember(Name="profiles")]
         public List<string> Profiles { get; set; }
 
         /// <summary>
@@ -44,15 +40,6 @@ namespace AasRegistryDiscovery.WebApi.Models
             sb.Append("  Profiles: ").Append(Profiles).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
-        }
-
-        /// <summary>
-        /// Returns the JSON string presentation of the object
-        /// </summary>
-        /// <returns>JSON string presentation of the object</returns>
-        public string ToJson()
-        {
-            return JsonConvert.SerializeObject(this, Formatting.Indented);
         }
 
         /// <summary>

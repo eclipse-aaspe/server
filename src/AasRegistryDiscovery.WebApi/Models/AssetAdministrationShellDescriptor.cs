@@ -23,7 +23,6 @@ namespace AasRegistryDiscovery.WebApi.Models
     /// <summary>
     /// 
     /// </summary>
-    [DataContract]
     public partial class AssetAdministrationShellDescriptor : Descriptor, IEquatable<AssetAdministrationShellDescriptor>
     {
 

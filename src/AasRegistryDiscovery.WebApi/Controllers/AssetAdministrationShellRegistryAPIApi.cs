@@ -62,8 +62,11 @@ namespace AasRegistryDiscovery.WebApi.Controllers
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult DeleteAssetAdministrationShellDescriptorById([FromRoute][Required]string aasIdentifier)
-        { 
-            throw new NotImplementedException();
+        {
+            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            _logger.LogInformation($"Received request to delete AasDescriptor by id: {aasIdentifier}");
+            _persistenceService.DeleteAssetAdministrationShellDescriptorById(decodedAasIdentifier);
+            return NoContent();
         }
 
         /// <summary>
@@ -85,8 +88,14 @@ namespace AasRegistryDiscovery.WebApi.Controllers
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult DeleteSubmodelDescriptorByIdThroughSuperpath([FromRoute][Required]string aasIdentifier, [FromRoute][Required]string submodelIdentifier)
-        { 
-            throw new NotImplementedException();
+        {
+            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedSmIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+
+            _logger.LogInformation($"Received request to delete SubmodelDescriptor with id {decodedSmIdentifier} within AasDescriptor with id {decodedAasIdentifier}");
+
+            _persistenceService.DeleteSmDescriptorWithinAasDescriptorById(decodedAasIdentifier, decodedSmIdentifier);
+            return NoContent();
         }
 
         /// <summary>
@@ -114,7 +123,14 @@ namespace AasRegistryDiscovery.WebApi.Controllers
         public virtual IActionResult GetAllAssetAdministrationShellDescriptors([FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]AssetKind? assetKind, [FromQuery]string? assetType)
         {
             _logger.LogDebug("Received request to get all AAS descriptors");
-            throw new NotImplementedException();
+            string decodedAssetType = null;
+            if (!string.IsNullOrEmpty(assetType))
+            {
+                decodedAssetType = _decoderService.Decode("assetType", assetType);
+            }
+
+            var output = _persistenceService.GetAllAsssetAdministrationShellDescriptors(limit, cursor, assetKind, decodedAssetType);
+            return new ObjectResult(output);
         }
 
         /// <summary>
@@ -139,9 +155,13 @@ namespace AasRegistryDiscovery.WebApi.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllSubmodelDescriptorsThroughSuperpath([FromRoute][Required]string aasIdentifier, [FromQuery]int? limit, [FromQuery]string cursor)
-        { 
-            throw new NotImplementedException() ;
+        public virtual IActionResult GetAllSubmodelDescriptorsThroughSuperpath([FromRoute][Required]string aasIdentifier, [FromQuery]int? limit, [FromQuery]string? cursor)
+        {
+            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+
+            _logger.LogInformation($"Received request to get all SubmodelDescriptors within AasDescriptor with id {decodedAasIdentifier}");
+            var output = _persistenceService.GetAllSmDescriptorsWithinAasDescriptor(decodedAasIdentifier, limit, cursor);
+            return new ObjectResult(output);
         }
 
         /// <summary>
@@ -288,8 +308,13 @@ namespace AasRegistryDiscovery.WebApi.Controllers
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult PutAssetAdministrationShellDescriptorById([FromBody]AssetAdministrationShellDescriptor body, [FromRoute][Required]string aasIdentifier)
-        { 
-            throw new NotImplementedException();
+        {
+            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            _logger.LogInformation($"Received request to update AasDescriptor with id {decodedAasIdentifier}");
+
+            _persistenceService.UpdateAssetAdministrationShellDescriptor(decodedAasIdentifier, body);
+
+            return NoContent();
         }
 
         /// <summary>
@@ -314,8 +339,15 @@ namespace AasRegistryDiscovery.WebApi.Controllers
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult PutSubmodelDescriptorByIdThroughSuperpath([FromBody]SubmodelDescriptor body, [FromRoute][Required]string aasIdentifier, [FromRoute][Required]string submodelIdentifier)
-        { 
-            throw new NotImplementedException();
+        {
+            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            var decodedSmIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+
+            _logger.LogInformation($"Received request to update SubmodelDescriptor with id {decodedSmIdentifier} within AasDescriptor with id {decodedAasIdentifier}");
+
+            _persistenceService.UpdateSmDescriptorWithinAasDescriptor(decodedAasIdentifier, decodedSmIdentifier, body);
+
+            return NoContent();
         }
     }
 }

@@ -10,5 +10,6 @@ public static class DependencyRegistry
     {
         services.AddTransient<IPersistenceService, InMemoryPersistenceService>();
         services.AddTransient<IBase64UrlDecoderService, Base64UrlDecoderService>();
+        services.AddTransient<IDescriptorPaginationService, DescriptorPaginationService>();
     }
 }

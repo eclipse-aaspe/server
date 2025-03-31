@@ -16,36 +16,30 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
-using Newtonsoft.Json;
 
 namespace AasRegistryDiscovery.WebApi.Models
 {
     /// <summary>
     /// 
     /// </summary>
-    [DataContract]
     public partial class Message : IEquatable<Message>
     { 
         /// <summary>
         /// Gets or Sets Code
         /// </summary>
-
-        [StringLength(32, MinimumLength=1)]
-        [DataMember(Name="code")]
+        //[StringLength(32, MinimumLength=1)]
         public string Code { get; set; }
 
         /// <summary>
         /// Gets or Sets CorrelationId
         /// </summary>
 
-        [StringLength(128, MinimumLength=1)]
-        [DataMember(Name="correlationId")]
+        //[StringLength(128, MinimumLength=1)]
         public string CorrelationId { get; set; }
 
         /// <summary>
         /// Gets or Sets MessageType
         /// </summary>
-        [JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
         public enum MessageTypeEnum
         {
             /// <summary>
@@ -77,22 +71,17 @@ namespace AasRegistryDiscovery.WebApi.Models
         /// <summary>
         /// Gets or Sets MessageType
         /// </summary>
-
-        [DataMember(Name="messageType")]
         public MessageTypeEnum? MessageType { get; set; }
 
         /// <summary>
         /// Gets or Sets Text
         /// </summary>
-
-        [DataMember(Name="text")]
         public string Text { get; set; }
 
         /// <summary>
         /// Gets or Sets Timestamp
         /// </summary>
-        [RegularExpression("/^-?(([1-9][0-9][0-9][0-9]+)|(0[0-9][0-9][0-9]))-((0[1-9])|(1[0-2]))-((0[1-9])|([12][0-9])|(3[01]))T(((([01][0-9])|(2[0-3])):[0-5][0-9]:([0-5][0-9])(\\.[0-9]+)?)|24:00:00(\\.0+)?)(Z|\\+00:00|-00:00)$/")]
-        [DataMember(Name="timestamp")]
+        //[RegularExpression("/^-?(([1-9][0-9][0-9][0-9]+)|(0[0-9][0-9][0-9]))-((0[1-9])|(1[0-2]))-((0[1-9])|([12][0-9])|(3[01]))T(((([01][0-9])|(2[0-3])):[0-5][0-9]:([0-5][0-9])(\\.[0-9]+)?)|24:00:00(\\.0+)?)(Z|\\+00:00|-00:00)$/")]
         public string Timestamp { get; set; }
 
         /// <summary>
@@ -110,15 +99,6 @@ namespace AasRegistryDiscovery.WebApi.Models
             sb.Append("  Timestamp: ").Append(Timestamp).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
-        }
-
-        /// <summary>
-        /// Returns the JSON string presentation of the object
-        /// </summary>
-        /// <returns>JSON string presentation of the object</returns>
-        public string ToJson()
-        {
-            return JsonConvert.SerializeObject(this, Formatting.Indented);
         }
 
         /// <summary>

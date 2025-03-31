@@ -22,7 +22,6 @@ namespace AasRegistryDiscovery.WebApi.Models
     /// <summary>
     /// 
     /// </summary>
-    [DataContract]
     public partial class Endpoint : IEquatable<Endpoint>
     {
         public Endpoint(

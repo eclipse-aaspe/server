@@ -16,21 +16,17 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
-using Newtonsoft.Json;
 
 namespace AasRegistryDiscovery.WebApi.Models
 {
     /// <summary>
     /// 
     /// </summary>
-    [DataContract]
     public partial class PagedResult : IEquatable<PagedResult>
     { 
         /// <summary>
         /// Gets or Sets PagingMetadata
         /// </summary>
-
-        [DataMember(Name="paging_metadata")]
         public PagedResultPagingMetadata PagingMetadata { get; set; }
 
         /// <summary>
@@ -44,15 +40,6 @@ namespace AasRegistryDiscovery.WebApi.Models
             sb.Append("  PagingMetadata: ").Append(PagingMetadata).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
-        }
-
-        /// <summary>
-        /// Returns the JSON string presentation of the object
-        /// </summary>
-        /// <returns>JSON string presentation of the object</returns>
-        public string ToJson()
-        {
-            return JsonConvert.SerializeObject(this, Formatting.Indented);
         }
 
         /// <summary>

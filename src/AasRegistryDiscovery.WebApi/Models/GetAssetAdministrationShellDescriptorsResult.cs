@@ -16,21 +16,18 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
-using Newtonsoft.Json;
 
 namespace AasRegistryDiscovery.WebApi.Models
 {
     /// <summary>
     /// 
     /// </summary>
-    [DataContract]
     public partial class GetAssetAdministrationShellDescriptorsResult : PagedResult, IEquatable<GetAssetAdministrationShellDescriptorsResult>
     { 
         /// <summary>
         /// Gets or Sets Result
         /// </summary>
 
-        [DataMember(Name="result")]
         public List<AssetAdministrationShellDescriptor> Result { get; set; }
 
         /// <summary>
@@ -44,15 +41,6 @@ namespace AasRegistryDiscovery.WebApi.Models
             sb.Append("  Result: ").Append(Result).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
-        }
-
-        /// <summary>
-        /// Returns the JSON string presentation of the object
-        /// </summary>
-        /// <returns>JSON string presentation of the object</returns>
-        public  new string ToJson()
-        {
-            return JsonConvert.SerializeObject(this, Formatting.Indented);
         }
 
         /// <summary>

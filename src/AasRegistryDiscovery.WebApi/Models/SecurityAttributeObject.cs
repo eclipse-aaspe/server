@@ -16,14 +16,12 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
-using Newtonsoft.Json;
 
 namespace AasRegistryDiscovery.WebApi.Models
 {
     /// <summary>
     /// 
     /// </summary>
-    [DataContract]
     public partial class SecurityAttributeObject : IEquatable<SecurityAttributeObject>
     {
         public SecurityAttributeObject(
@@ -39,7 +37,6 @@ namespace AasRegistryDiscovery.WebApi.Models
         /// <summary>
         /// Gets or Sets Type
         /// </summary>
-        [JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
         public enum TypeEnum
         {
             /// <summary>
@@ -61,25 +58,19 @@ namespace AasRegistryDiscovery.WebApi.Models
         /// <summary>
         /// Gets or Sets Type
         /// </summary>
-        [Required]
-
-        [DataMember(Name="type")]
+        //[Required]
         public TypeEnum? Type { get; set; }
 
         /// <summary>
         /// Gets or Sets Key
         /// </summary>
-        [Required]
-
-        [DataMember(Name="key")]
+        //[Required]
         public string Key { get; set; }
 
         /// <summary>
         /// Gets or Sets Value
         /// </summary>
-        [Required]
-
-        [DataMember(Name="value")]
+        //[Required]
         public string Value { get; set; }
 
         /// <summary>
@@ -95,15 +86,6 @@ namespace AasRegistryDiscovery.WebApi.Models
             sb.Append("  Value: ").Append(Value).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
-        }
-
-        /// <summary>
-        /// Returns the JSON string presentation of the object
-        /// </summary>
-        /// <returns>JSON string presentation of the object</returns>
-        public string ToJson()
-        {
-            return JsonConvert.SerializeObject(this, Formatting.Indented);
         }
 
         /// <summary>

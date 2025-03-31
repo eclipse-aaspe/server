@@ -18,6 +18,7 @@ using AasRegistryDiscovery.WebApi.Attributes;
 
 using Microsoft.AspNetCore.Authorization;
 using AasRegistryDiscovery.WebApi.Models;
+using Microsoft.Extensions.Logging;
 
 namespace AasRegistryDiscovery.WebApi.Controllers
 { 
@@ -26,7 +27,13 @@ namespace AasRegistryDiscovery.WebApi.Controllers
     /// </summary>
     [ApiController]
     public class DescriptionAPIApiController : ControllerBase
-    { 
+    {
+        private readonly ILogger<DescriptionAPIApiController> _logger;
+
+        public DescriptionAPIApiController(ILogger<DescriptionAPIApiController> logger)
+        {
+            _logger = logger;
+        }
         /// <summary>
         /// Returns the self-describing information of a network resource (ServiceDescription)
         /// </summary>
@@ -41,8 +48,14 @@ namespace AasRegistryDiscovery.WebApi.Controllers
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual IActionResult GetDescription()
-        { 
-            throw new NotImplementedException();
+        {
+            _logger.LogInformation("Received request to get description of the server.");
+
+            var output = new ServiceDescription();
+            output.Profiles ??= new();
+            output.Profiles.Add("https://admin-shell.io/aas/API/3/0/AssetAdministrationShellRegistryServiceSpecification/SSP-001");
+
+            return new ObjectResult(output);
         }
     }
 }

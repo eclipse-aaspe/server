@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AasRegistryDiscovery.WebApi.Exceptions;
 using AasRegistryDiscovery.WebApi.Models;
+using AasRegistryDiscovery.WebApi.Serializers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using static AasRegistryDiscovery.WebApi.Models.Message;
@@ -71,6 +72,15 @@ public class ExceptionMiddleware
                 message.MessageType = MessageTypeEnum.ErrorEnum;
                 break;
             }
+            case NotFoundException:
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                message.Code = HttpStatusCode.NotFound.ToString();
+                message.Text = exception.Message;
+                message.Timestamp = currentDateTime;
+                message.MessageType = MessageTypeEnum.ErrorEnum;
+                break;
+            }
             default:
             {
                 context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
@@ -83,6 +93,6 @@ public class ExceptionMiddleware
         }
 
         result.Messages = new List<Message>() { message };
-        await context.Response.WriteAsync(result.ToJson());
+        await context.Response.WriteAsync(DescriptorSerializer.ToJsonObject(result)!.ToString());
     }
 }

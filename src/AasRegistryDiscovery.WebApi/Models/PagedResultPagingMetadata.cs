@@ -16,21 +16,17 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
-using Newtonsoft.Json;
 
 namespace AasRegistryDiscovery.WebApi.Models
 {
     /// <summary>
     /// 
     /// </summary>
-    [DataContract]
     public partial class PagedResultPagingMetadata : IEquatable<PagedResultPagingMetadata>
     { 
         /// <summary>
         /// Gets or Sets Cursor
         /// </summary>
-
-        [DataMember(Name="cursor")]
         public string Cursor { get; set; }
 
         /// <summary>
@@ -44,15 +40,6 @@ namespace AasRegistryDiscovery.WebApi.Models
             sb.Append("  Cursor: ").Append(Cursor).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
-        }
-
-        /// <summary>
-        /// Returns the JSON string presentation of the object
-        /// </summary>
-        /// <returns>JSON string presentation of the object</returns>
-        public string ToJson()
-        {
-            return JsonConvert.SerializeObject(this, Formatting.Indented);
         }
 
         /// <summary>

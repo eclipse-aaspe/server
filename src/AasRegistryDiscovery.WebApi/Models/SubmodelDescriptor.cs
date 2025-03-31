@@ -16,14 +16,12 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
-using Newtonsoft.Json;
 
 namespace AasRegistryDiscovery.WebApi.Models
 {
     /// <summary>
     /// 
     /// </summary>
-    [DataContract]
     public partial class SubmodelDescriptor : Descriptor, IEquatable<SubmodelDescriptor>
     {
         public SubmodelDescriptor(
@@ -51,7 +49,6 @@ namespace AasRegistryDiscovery.WebApi.Models
         /// <summary>
         /// Gets or Sets Administration
         /// </summary>
-
         public AdministrativeInformation? Administration { get; set; }
 
         /// <summary>

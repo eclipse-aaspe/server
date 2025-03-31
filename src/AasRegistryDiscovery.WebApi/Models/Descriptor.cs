@@ -22,7 +22,6 @@ namespace AasRegistryDiscovery.WebApi.Models
     /// <summary>
     /// 
     /// </summary>
-    [DataContract]
     public partial class Descriptor : IEquatable<Descriptor>
     { 
         /// <summary>

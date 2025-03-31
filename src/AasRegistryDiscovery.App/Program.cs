@@ -86,7 +86,7 @@ void AddSwaggerGen(IServiceCollection services) => services
                 },
                 TermsOfService = new Uri("https://github.com/admin-shell-io/aas-specs")
             });
-            c.CustomSchemaIds(type => type.FullName);
+            c.CustomSchemaIds(type => type.FullName.Replace("+", "."));
             var swaggerCommentedAssembly =
                                        typeof(AssetAdministrationShellRegistryAPIApiController).Assembly.GetName().Name;
             c.IncludeXmlComments($"{AppContext.BaseDirectory}{Path.DirectorySeparatorChar}{swaggerCommentedAssembly}.xml");
