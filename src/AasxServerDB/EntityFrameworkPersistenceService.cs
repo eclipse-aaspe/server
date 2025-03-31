@@ -19,16 +19,19 @@ using AasxServerStandardBib.Logging;
 using Contracts.Exceptions;
 using Contracts.DbRequests;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 public class EntityFrameworkPersistenceService : IPersistenceService
 {
     private readonly IContractSecurityRules _contractSecurityRules;
+    private readonly IEventService _eventService;
     private readonly IServiceProvider _serviceProvider;
 
-    public EntityFrameworkPersistenceService(IServiceProvider serviceProvider, IContractSecurityRules contractSecurityRules)
+    public EntityFrameworkPersistenceService(IServiceProvider serviceProvider, IContractSecurityRules contractSecurityRules, IEventService eventService)
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _contractSecurityRules = contractSecurityRules ?? throw new ArgumentNullException(nameof(contractSecurityRules));
+        _eventService = eventService ?? throw new ArgumentNullException(nameof(eventService));
     }
 
     public void InitDB(bool reloadDB, string dataPath)
@@ -800,6 +803,11 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     EnvFileName = envFile
                 };
                 break;
+            case DbRequestOp.ReadEventMessages:
+                var eventPayload = ReadEventMessages(dbRequest.Context.Params.EventRequest);
+                result.EventPayload = eventPayload;
+
+                break;
             case DbRequestOp.CreateSubmodel:
                 var createdSubmodel = CreateSubmodel(dbRequest.Context.Params.SubmodelBody,
                     dbRequest.Context.Params.AssetAdministrationShellIdentifier);
@@ -919,9 +927,116 @@ public class EntityFrameworkPersistenceService : IPersistenceService
     public void ReplaceFileByPath(string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream) => throw new NotImplementedException();
     public ISubmodel CreateSubmodel(ISubmodel body, string decodedAasIdentifier) => throw new NotImplementedException();
 
-    public EventPayload ReadEventMessages(string aasIdentifier, out string envFileName)
+    public Contracts.Events.EventPayload ReadEventMessages(DbEventRequest dbEventRequest)
     {
+        var eventData = dbEventRequest.EventData;
+        var diff = dbEventRequest.Diff;
+        var wp = dbEventRequest.IsWithPayload;
+        var limSm = dbEventRequest.LimitSm;
+        var offSm = dbEventRequest.OffsetSm;
+        var limSme = dbEventRequest.LimitSme;
+        var offSme = dbEventRequest.OffsetSme;
 
-        throw new NotImplementedException();
+        var eventPayload = new Contracts.Events.EventPayload();
+        List<String> diffEntry = new List<String>();
+        string changes = "CREATE UPDATE DELETE";
+
+        if (eventData.Persistence == null || eventData.Persistence.Value == "" || eventData.Persistence.Value == "memory")
+        {
+            IReferable data = null;
+            if (eventData.DataSubmodel != null)
+            {
+                data = eventData.DataSubmodel;
+            }
+            if (eventData.DataCollection != null)
+            {
+                data = eventData.DataCollection;
+                // OUT: data
+                // IN: data.sme[0], copy
+                /*
+                if (eventData.direction != null && eventData.direction.Value == "IN")
+                {
+                    data = null;
+                    if (eventData.dataCollection is SubmodelElementCollection sme && sme.Value != null && sme.Value.Count == 1 && sme.Value[0] is SubmodelElementCollection smc)
+                    {
+                        data = smc;
+                    }
+                }
+                */
+                /*
+                if (eventData.direction != null && eventData.direction.Value == "IN" && eventData.mode != null && (eventData.mode.Value == "PUSH" || eventData.mode.Value == "PUT"))
+                {
+                    if (eventData.dataCollection.Value != null && eventData.dataCollection.Value.Count == 1 && eventData.dataCollection.Value[0] is SubmodelElementCollection)
+                    {
+                        data = eventData.dataCollection.Value[0];
+                    }
+                }
+                */
+            }
+            // if (data == null)
+            if (data == null || (data is SubmodelElementCollection smc && (smc.Value == null || smc.Value.Count == 0)))
+            {
+                return null;
+            }
+            int depth = 0;
+            if (eventData.Direction != null && eventData.Direction.Value == "IN" && eventData.Mode != null && (eventData.Mode.Value == "PUSH" || eventData.Mode.Value == "PUT"))
+            {
+                depth = 1;
+            }
+
+            eventPayload = _eventService.CollectPayload(changes, depth,
+            eventData.StatusData, eventData.DataReference, data, eventData.ConditionSM, eventData.ConditionSME,
+            diff, diffEntry, wp, limSm, offSm, limSme, offSme);
+        }
+        else // database
+        {
+            eventPayload = _eventService.CollectPayload(changes, 0,
+            eventData.StatusData, eventData.DataReference, null, eventData.ConditionSM, eventData.ConditionSME,
+            diff, diffEntry, wp, limSm, limSme, offSm, offSme);
+        }
+
+        if (diff == "status")
+        {
+            if (eventData.LastUpdate != null && eventData.LastUpdate.Value != null && eventData.LastUpdate.Value != "")
+            {
+                eventPayload.Status.LastUpdate = eventData.LastUpdate.Value;
+            }
+        }
+        else
+        {
+            var timeStamp = DateTime.UtcNow;
+            if (eventData.Transmitted != null)
+            {
+                eventData.Transmitted.Value = eventPayload.Status.Transmitted;
+                eventData.Transmitted.SetTimeStamp(DateTime.UtcNow);
+            }
+            var dt = DateTime.Parse(eventPayload.Status.LastUpdate);
+            if (eventData.LastUpdate != null)
+            {
+                eventData.LastUpdate.Value = eventPayload.Status.LastUpdate;
+                eventData.LastUpdate.SetTimeStamp(dt);
+            }
+            if (eventData.Diff != null)
+            {
+                if (diffEntry.Count > 0)
+                {
+                    eventData.Diff.Value = new List<ISubmodelElement>();
+                    int i = 0;
+                    foreach (var d in diffEntry)
+                    {
+                        var p = new Property(DataTypeDefXsd.String);
+                        p.IdShort = "diff" + i;
+                        p.Value = d;
+                        p.SetTimeStamp(dt);
+                        eventData.Diff.Value.Add(p);
+                        p.SetAllParentsAndTimestamps(eventData.Diff, dt, dt, DateTime.MinValue);
+                        i++;
+                    }
+                    eventData.Diff.SetTimeStamp(dt);
+                }
+            }
+        }
+        return eventPayload;
+
     }
 }

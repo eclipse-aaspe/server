@@ -6,11 +6,15 @@ using System.Diagnostics.Metrics;
 using System.Threading;
 using System.Threading.Tasks;
 using AasCore.Aas3_0;
+using AasxServer;
 using AasxServerStandardBib.Logging;
 using Contracts;
 using Contracts.DbRequests;
+using Contracts.Events;
 using Contracts.Pagination;
 using Microsoft.Extensions.DependencyInjection;
+using Org.BouncyCastle.Pqc.Crypto.Lms;
+using ScottPlot.Drawing.Colormaps;
 
 public class DbRequestHandlerService : IDbRequestHandlerService
 {
@@ -28,7 +32,6 @@ public class DbRequestHandlerService : IDbRequestHandlerService
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _persistenceService = persistenceService ?? throw new ArgumentNullException(nameof(persistenceService));
-
         _lock.Release();
 
         Task.Run(ProcessQueryOperations);
@@ -238,5 +241,27 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
         var tcs = await taskCompletionSource.Task.ConfigureAwait(false);
         return tcs.PackageEnv;
+    }
+
+    public async Task<Contracts.Events.EventPayload> ReadEventMessages(DbEventRequest dbEventRequest)
+    {
+        var parameters = new DbRequestParams()
+        {
+            EventRequest = dbEventRequest,
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            //SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReadEventMessages, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task.ConfigureAwait(false);
+        return tcs.EventPayload;
     }
 }

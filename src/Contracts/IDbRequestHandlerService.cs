@@ -24,4 +24,6 @@ public interface IDbRequestHandlerService
 
     Task<DbRequestPackageEnvResult> ReadPackageEnv(string aasIdentifier);
 
+    Task<Events.EventPayload> ReadEventMessages(DbEventRequest dbEventRequest);
+
 }

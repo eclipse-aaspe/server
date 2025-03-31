@@ -27,8 +27,7 @@ public interface IPersistenceService
     IAssetInformation ReadAssetInformation(string aasIdentifier);
     string ReadThumbnail(string aasIdentifier, out byte[] byteArray, out long fileSize);
     AdminShellPackageEnv ReadPackageEnv(string aasIdentifier, out string envFileName);
-
-    EventPayload ReadEventMessages(string aasIdentifier, out string envFileName);
+    Events.EventPayload ReadEventMessages(DbEventRequest eventRequest);
 
     ISubmodel CreateSubmodel(ISubmodel body, string decodedAasIdentifier);
     IAssetAdministrationShell CreateAssetAdministrationShell(IAssetAdministrationShell body);

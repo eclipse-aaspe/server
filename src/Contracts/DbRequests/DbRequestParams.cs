@@ -37,4 +37,6 @@ public class DbRequestParams
     public IAssetInformation AssetInformation { get; set; }
 
     public bool First { get; set; }
+
+    public DbEventRequest EventRequest { get; set; }
 }

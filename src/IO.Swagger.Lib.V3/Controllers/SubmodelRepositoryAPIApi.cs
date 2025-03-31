@@ -110,7 +110,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerOperation("GetEventMessages")]
     [SwaggerResponse(statusCode: 200, type: typeof(String), description: "List of Text")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-    public virtual IActionResult GetEventMessages([FromRoute][Required] string submodelIdentifier, [Required] string eventName,
+    public async virtual Task<IActionResult> GetEventMessages([FromRoute][Required] string submodelIdentifier, [Required] string eventName,
         [FromQuery] bool? withPayload, [FromQuery] int? limitSm, [FromQuery] int? limitSme, [FromQuery] int? offsetSm, [FromQuery] int? offsetSme, string? diff = "")
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -193,112 +193,31 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 diff = TimeStamp.DateTimeToString(DateTime.UtcNow.AddSeconds(-s));
             }
 
+
             var eventData = new EventDto();
             var op = _eventService.FindEvent(submodel, eventName);
-            eventData  = _eventService.ParseData(op, Program.env[packageIndex]);
+            eventData = _eventService.ParseData(op, Program.env[packageIndex]);
 
-            var eventPayload = new EventPayload();
-            List<String> diffEntry = new List<String>();
-            string changes = "CREATE UPDATE DELETE";
-
-            if (eventData.Persistence == null || eventData.Persistence.Value == "" || eventData.Persistence.Value == "memory")
+            var eventRequest = new DbEventRequest()
             {
-                IReferable data = null;
-                if (eventData.DataSubmodel != null)
-                {
-                    data = eventData.DataSubmodel;
-                }
-                if (eventData.DataCollection != null)
-                {
-                    data = eventData.DataCollection;
-                    // OUT: data
-                    // IN: data.sme[0], copy
-                    /*
-                    if (eventData.direction != null && eventData.direction.Value == "IN")
-                    {
-                        data = null;
-                        if (eventData.dataCollection is SubmodelElementCollection sme && sme.Value != null && sme.Value.Count == 1 && sme.Value[0] is SubmodelElementCollection smc)
-                        {
-                            data = smc;
-                        }
-                    }
-                    */
-                    /*
-                    if (eventData.direction != null && eventData.direction.Value == "IN" && eventData.mode != null && (eventData.mode.Value == "PUSH" || eventData.mode.Value == "PUT"))
-                    {
-                        if (eventData.dataCollection.Value != null && eventData.dataCollection.Value.Count == 1 && eventData.dataCollection.Value[0] is SubmodelElementCollection)
-                        {
-                            data = eventData.dataCollection.Value[0];
-                        }
-                    }
-                    */
-                }
-                // if (data == null)
-                if (data == null || (data is SubmodelElementCollection smc && (smc.Value == null || smc.Value.Count == 0)))
-                {
-                    return NoContent();
-                }
+                EventData = eventData,
+                Diff = diff,
+                IsWithPayload = wp,
+                LimitSm = limSm,
+                LimitSme = limSme,
+                OffsetSm = offSm,
+                OffsetSme = offSme,
+            };
 
-                int depth = 0;
-                if (eventData.Direction != null && eventData.Direction.Value == "IN" && eventData.Mode != null && (eventData.Mode.Value == "PUSH" || eventData.Mode.Value == "PUT"))
-                {
-                    depth = 1;
-                }
-
-                eventPayload = _eventService.CollectPayload(changes, depth,
-                    eventData.StatusData, eventData.DataReference, data, eventData.ConditionSM, eventData.ConditionSME,
-                    diff, diffEntry, wp, limSm, offSm, limSme, offSme);
-            }
-            else // database
-            {
-                eventPayload = _eventService.CollectPayload(changes, 0,
-                eventData.StatusData, eventData.DataReference, null, eventData.ConditionSM, eventData.ConditionSME,
-                    diff, diffEntry, wp, limSm, limSme, offSm, offSme);
-            }
-
-            if (diff == "status")
-            {
-                if (eventData.LastUpdate != null && eventData.LastUpdate.Value != null && eventData.LastUpdate.Value != "")
-                {
-                    eventPayload.Status.LastUpdate = eventData.LastUpdate.Value;
-                }
-            }
-            else
-            {
-                var timeStamp = DateTime.UtcNow;
-                if (eventData.Transmitted != null)
-                {
-                    eventData.Transmitted.Value = eventPayload.Status.Transmitted;
-                    eventData.Transmitted.SetTimeStamp(DateTime.UtcNow);
-                }
-                var dt = DateTime.Parse(eventPayload.Status.LastUpdate);
-                if (eventData.LastUpdate != null)
-                {
-                    eventData.LastUpdate.Value = eventPayload.Status.LastUpdate;
-                    eventData.LastUpdate.SetTimeStamp(dt);
-                }
-                if (eventData.Diff != null)
-                {
-                    if (diffEntry.Count > 0)
-                    {
-                        eventData.Diff.Value = new List<ISubmodelElement>();
-                        int i = 0;
-                        foreach (var d in diffEntry)
-                        {
-                            var p = new Property(DataTypeDefXsd.String);
-                            p.IdShort = "diff" + i;
-                            p.Value = d;
-                            p.SetTimeStamp(dt);
-                            eventData.Diff.Value.Add(p);
-                            p.SetAllParentsAndTimestamps(eventData.Diff, dt, dt, DateTime.MinValue);
-                            i++;
-                        }
-                        eventData.Diff.SetTimeStamp(dt);
-                    }
-                }
-            }
+            var eventPayload = await _dbRequestHandlerService.ReadEventMessages(eventRequest);
 
             Program.signalNewData(2);
+
+            if (eventPayload == null)
+            {
+                return NoContent();
+            }
+
             return new ObjectResult(eventPayload);
         }
 

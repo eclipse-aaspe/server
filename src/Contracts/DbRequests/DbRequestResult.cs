@@ -22,4 +22,6 @@ public class DbRequestResult
     public DbRequestPackageEnvResult PackageEnv { get; set; }
 
     public IAssetInformation AssetInformation { get; set; }
+
+    public Events.EventPayload EventPayload { get; set; }
 }
