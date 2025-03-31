@@ -73,6 +73,7 @@ public static class DependencyRegistry
         services.AddTransient<IValidateSerializationModifierService, ValidateSerializationModifierService>();
         services.AddTransient<IPersistenceService, EntityFrameworkPersistenceService>();
         services.AddSingleton<IDbRequestHandlerService, DbRequestHandlerService>();
+        services.AddSingleton<IEventService, EventService>();
 
         services.AddTransient<IContractSecurityRules, SecurityService>();
         // services.AddTransient<QueryGrammar>();

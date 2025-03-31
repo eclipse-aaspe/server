@@ -41,6 +41,8 @@ namespace AasxServer
     using System.Threading.Tasks;
     using System.Text.Json;
     using Microsoft.IdentityModel.Tokens;
+    using Microsoft.Extensions.DependencyInjection;
+    using Contracts;
 
     /// <summary>
     /// Checks whether the console will persist after the program exits.
@@ -430,8 +432,11 @@ namespace AasxServer
             // ReSharper enable UnusedAutoPropertyAccessor.Local
         }
 
-        private static async Task<int> Run(CommandLineArguments a, Contracts.IPersistenceService persistenceService)
+        private static async Task<int> Run(CommandLineArguments a, IServiceProvider serviceProvider)
         {
+            var persistenceService = serviceProvider.GetService<IPersistenceService>();
+            var dbRequestService = serviceProvider.GetService<IDbRequestHandlerService>();
+
             // Wait for Debugger
             if (a.DebugWait)
             {
@@ -980,7 +985,7 @@ namespace AasxServer
             EnergyModelInstance.StartAllAsOneThread(_energyModelInstances);
             */
 
-            AasxTask.taskInit();
+            AasxTask.taskInit(serviceProvider.GetService<IEventService>());
 
             // RunScript(true);
             //// Initialize            NewDataAvailable?.Invoke(null, EventArgs.Empty);
@@ -1148,7 +1153,7 @@ namespace AasxServer
             return 0;
         }
 
-        public static void Main(string[] args, Contracts.IPersistenceService persistenceService)
+        public static void Main(string[] args, IServiceProvider serviceProvider)
         {
             Console.WriteLine("args:");
             foreach (var a in args)
@@ -1250,7 +1255,7 @@ namespace AasxServer
 
             rootCommand.Handler = System.CommandLine.Invocation.CommandHandler.Create((CommandLineArguments a) =>
                                                                                       {
-                                                                                          var task = Run(a,persistenceService);
+                                                                                          var task = Run(a, serviceProvider);
                                                                                           task.Wait();
                                                                                           var op = task.Result;
                                                                                           return Task.FromResult(op);

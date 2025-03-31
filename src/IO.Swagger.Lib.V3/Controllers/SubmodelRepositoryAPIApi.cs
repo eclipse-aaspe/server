@@ -56,6 +56,7 @@ using TimeStamp;
 using Contracts;
 using Contracts.DbRequests;
 using Contracts.Exceptions;
+using Contracts.Events;
 
 /// <summary>
 /// 
@@ -77,12 +78,14 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     private readonly IValidateSerializationModifierService _validateModifierService;
     private readonly IIdShortPathParserService _idShortPathParserService;
     private readonly IDbRequestHandlerService _dbRequestHandlerService;
+    private readonly IEventService _eventService;
 
     public SubmodelRepositoryAPIApiController(IAppLogger<SubmodelRepositoryAPIApiController> logger, IBase64UrlDecoderService decoderService, IPersistenceService persistenceService,
                                               IReferenceModifierService referenceModifierService, IJsonQueryDeserializer jsonQueryDeserializer, IMappingService mappingService,
                                               IPathModifierService pathModifierService, ILevelExtentModifierService levelExtentModifierService,
                                               IPaginationService paginationService, IAuthorizationService authorizationService,
-                                              IValidateSerializationModifierService validateModifierService, IIdShortPathParserService idShortPathParserService, IDbRequestHandlerService dbRequestHandlerService)
+                                              IValidateSerializationModifierService validateModifierService, IIdShortPathParserService idShortPathParserService,
+                                              IDbRequestHandlerService dbRequestHandlerService, IEventService eventService)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _decoderService = decoderService ?? throw new ArgumentNullException(nameof(decoderService));
@@ -97,6 +100,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         _validateModifierService = validateModifierService ?? throw new ArgumentNullException(nameof(authorizationService));
         _idShortPathParserService = idShortPathParserService ?? throw new ArgumentNullException(nameof(idShortPathParserService));
         _dbRequestHandlerService = dbRequestHandlerService ?? throw new ArgumentNullException(nameof(dbRequestHandlerService));
+        _eventService = eventService ?? throw new ArgumentNullException(nameof(eventService));
     }
 
     // Events
@@ -189,24 +193,24 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 diff = TimeStamp.DateTimeToString(DateTime.UtcNow.AddSeconds(-s));
             }
 
-            var eventData = new Events.EventData();
-            var op = Events.EventData.FindEvent(submodel, eventName);
-            eventData.ParseData(op, Program.env[packageIndex]);
+            var eventData = new EventDto();
+            var op = _eventService.FindEvent(submodel, eventName);
+            eventData  = _eventService.ParseData(op, Program.env[packageIndex]);
 
-            var e = new Events.EventPayload();
+            var eventPayload = new EventPayload();
             List<String> diffEntry = new List<String>();
             string changes = "CREATE UPDATE DELETE";
 
-            if (eventData.persistence == null || eventData.persistence.Value == "" || eventData.persistence.Value == "memory")
+            if (eventData.Persistence == null || eventData.Persistence.Value == "" || eventData.Persistence.Value == "memory")
             {
                 IReferable data = null;
-                if (eventData.dataSubmodel != null)
+                if (eventData.DataSubmodel != null)
                 {
-                    data = eventData.dataSubmodel;
+                    data = eventData.DataSubmodel;
                 }
-                if (eventData.dataCollection != null)
+                if (eventData.DataCollection != null)
                 {
-                    data = eventData.dataCollection;
+                    data = eventData.DataCollection;
                     // OUT: data
                     // IN: data.sme[0], copy
                     /*
@@ -236,48 +240,48 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 }
 
                 int depth = 0;
-                if (eventData.direction != null && eventData.direction.Value == "IN" && eventData.mode != null && (eventData.mode.Value == "PUSH" || eventData.mode.Value == "PUT"))
+                if (eventData.Direction != null && eventData.Direction.Value == "IN" && eventData.Mode != null && (eventData.Mode.Value == "PUSH" || eventData.Mode.Value == "PUT"))
                 {
                     depth = 1;
                 }
 
-                e = Events.EventPayload.CollectPayload(changes, depth,
-                    eventData.statusData, eventData.dataReference, data, eventData.conditionSM, eventData.conditionSME,
+                eventPayload = _eventService.CollectPayload(changes, depth,
+                    eventData.StatusData, eventData.DataReference, data, eventData.ConditionSM, eventData.ConditionSME,
                     diff, diffEntry, wp, limSm, offSm, limSme, offSme);
             }
             else // database
             {
-                e = Events.EventPayload.CollectPayload(changes, 0,
-                eventData.statusData, eventData.dataReference, null, eventData.conditionSM, eventData.conditionSME,
+                eventPayload = _eventService.CollectPayload(changes, 0,
+                eventData.StatusData, eventData.DataReference, null, eventData.ConditionSM, eventData.ConditionSME,
                     diff, diffEntry, wp, limSm, limSme, offSm, offSme);
             }
 
             if (diff == "status")
             {
-                if (eventData.lastUpdate != null && eventData.lastUpdate.Value != null && eventData.lastUpdate.Value != "")
+                if (eventData.LastUpdate != null && eventData.LastUpdate.Value != null && eventData.LastUpdate.Value != "")
                 {
-                    e.status.lastUpdate = eventData.lastUpdate.Value;
+                    eventPayload.Status.LastUpdate = eventData.LastUpdate.Value;
                 }
             }
             else
             {
                 var timeStamp = DateTime.UtcNow;
-                if (eventData.transmitted != null)
+                if (eventData.Transmitted != null)
                 {
-                    eventData.transmitted.Value = e.status.transmitted;
-                    eventData.transmitted.SetTimeStamp(DateTime.UtcNow);
+                    eventData.Transmitted.Value = eventPayload.Status.Transmitted;
+                    eventData.Transmitted.SetTimeStamp(DateTime.UtcNow);
                 }
-                var dt = DateTime.Parse(e.status.lastUpdate);
-                if (eventData.lastUpdate != null)
+                var dt = DateTime.Parse(eventPayload.Status.LastUpdate);
+                if (eventData.LastUpdate != null)
                 {
-                    eventData.lastUpdate.Value = e.status.lastUpdate;
-                    eventData.lastUpdate.SetTimeStamp(dt);
+                    eventData.LastUpdate.Value = eventPayload.Status.LastUpdate;
+                    eventData.LastUpdate.SetTimeStamp(dt);
                 }
-                if (eventData.diff != null)
+                if (eventData.Diff != null)
                 {
                     if (diffEntry.Count > 0)
                     {
-                        eventData.diff.Value = new List<ISubmodelElement>();
+                        eventData.Diff.Value = new List<ISubmodelElement>();
                         int i = 0;
                         foreach (var d in diffEntry)
                         {
@@ -285,17 +289,17 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                             p.IdShort = "diff" + i;
                             p.Value = d;
                             p.SetTimeStamp(dt);
-                            eventData.diff.Value.Add(p);
-                            p.SetAllParentsAndTimestamps(eventData.diff, dt, dt, DateTime.MinValue);
+                            eventData.Diff.Value.Add(p);
+                            p.SetAllParentsAndTimestamps(eventData.Diff, dt, dt, DateTime.MinValue);
                             i++;
                         }
-                        eventData.diff.SetTimeStamp(dt);
+                        eventData.Diff.SetTimeStamp(dt);
                     }
                 }
             }
 
             Program.signalNewData(2);
-            return new ObjectResult(e);
+            return new ObjectResult(eventPayload);
         }
 
         return NoContent();
@@ -363,9 +367,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
             // Now you can use jsonBody as needed
 
-            var eventData = new Events.EventData();
-            var op = Events.EventData.FindEvent(submodel, eventName);
-            eventData.ParseData(op, Program.env[packageIndex]);
+            
+            var op = _eventService.FindEvent(submodel, eventName);
+            var eventData = _eventService.ParseData(op, Program.env[packageIndex]);
 
             string transmitted = "";
             string lastDiffValue = "";
@@ -373,50 +377,50 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             List<String> diffEntry = new List<string>();
             int count = 0;
 
-            if (eventData.persistence == null || eventData.persistence.Value == "" || eventData.persistence.Value == "memory")
+            if (eventData.Persistence == null || eventData.Persistence.Value == "" || eventData.Persistence.Value == "memory")
             {
                 IReferable data = null;
-                if (eventData.dataSubmodel != null)
+                if (eventData.DataSubmodel != null)
                 {
-                    data = eventData.dataSubmodel;
+                    data = eventData.DataSubmodel;
                 }
-                if (eventData.dataCollection != null)
+                if (eventData.DataCollection != null)
                 {
-                    data = eventData.dataCollection;
+                    data = eventData.DataCollection;
                 }
                 if (data == null)
                 {
                     return NoContent();
                 }
 
-                count = Events.EventPayload.changeData(body, eventData, Program.env, data, out transmitted, out lastDiffValue, out statusValue, diffEntry, packageIndex);
+                count = _eventService.ChangeData(body, eventData, Program.env, data, out transmitted, out lastDiffValue, out statusValue, diffEntry, packageIndex);
             }
             else // DB
             {
-                count = Events.EventPayload.changeData(body, eventData, Program.env, null, out transmitted, out lastDiffValue, out statusValue, diffEntry, packageIndex);
+                count = _eventService.ChangeData(body, eventData, Program.env, null, out transmitted, out lastDiffValue, out statusValue, diffEntry, packageIndex);
             }
 
-            if (eventData.transmitted != null)
+            if (eventData.Transmitted != null)
             {
-                eventData.transmitted.Value = transmitted;
-                eventData.transmitted.SetTimeStamp(DateTime.UtcNow);
+                eventData.Transmitted.Value = transmitted;
+                eventData.Transmitted.SetTimeStamp(DateTime.UtcNow);
             }
             var dt = DateTime.Parse(lastDiffValue);
-            if (eventData.lastUpdate != null)
+            if (eventData.LastUpdate != null)
             {
-                eventData.lastUpdate.Value = lastDiffValue;
-                eventData.lastUpdate.SetTimeStamp(dt);
+                eventData.LastUpdate.Value = lastDiffValue;
+                eventData.LastUpdate.SetTimeStamp(dt);
             }
-            if (eventData.message != null && statusValue != null)
+            if (eventData.Message != null && statusValue != null)
             {
-                eventData.message.Value = statusValue;
-                eventData.message.SetTimeStamp(DateTime.UtcNow);
+                eventData.Message.Value = statusValue;
+                eventData.Message.SetTimeStamp(DateTime.UtcNow);
             }
-            if (eventData.diff != null)
+            if (eventData.Diff != null)
             {
                 if (diffEntry.Count > 0)
                 {
-                    eventData.diff.Value = new List<ISubmodelElement>();
+                    eventData.Diff.Value = new List<ISubmodelElement>();
                     int i = 0;
                     foreach (var d in diffEntry)
                     {
@@ -424,11 +428,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                         p.IdShort = "diff" + i;
                         p.Value = d;
                         p.SetTimeStamp(dt);
-                        eventData.diff.Value.Add(p);
-                        p.SetAllParentsAndTimestamps(eventData.diff, dt, dt, DateTime.MinValue);
+                        eventData.Diff.Value.Add(p);
+                        p.SetAllParentsAndTimestamps(eventData.Diff, dt, dt, DateTime.MinValue);
                         i++;
                     }
-                    eventData.diff.SetTimeStamp(dt);
+                    eventData.Diff.SetTimeStamp(dt);
                 }
             }
 

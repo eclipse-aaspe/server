@@ -46,11 +46,9 @@ public static class BlazorServerStarter
 
     private static void InitializeProgram(string[] args, IConfiguration config, IServiceProvider services)
     {
-        var persistenceService = services.GetService<IPersistenceService>();
-        
         Console.WriteLine($"{nameof(InitializeProgram)}");
         Program.con = config;
-        Program.Main(args,persistenceService);
+        Program.Main(args,services);
         SecurityHelper.SecurityInit();
         // QueryGrammar.storeSecurityRoles(GlobalSecurityVariables.SecurityRoles);
     }

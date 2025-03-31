@@ -38,9 +38,12 @@ using System.Linq;
 namespace AasxServer
 {
     using System.IO.Packaging;
+    using System.Runtime.CompilerServices;
     using System.Text.Json;
     using System.Xml.Linq;
     using AasxServerStandardBib.Interfaces;
+    using Contracts;
+    using Contracts.Events;
     using Newtonsoft.Json;
     using Opc.Ua;
     using Org.BouncyCastle.Asn1.Ocsp;
@@ -60,8 +63,12 @@ namespace AasxServer
 
         public static WebProxy proxy = null;
 
-        public static void taskInit()
+        public static IEventService _eventService;
+
+        public static void taskInit(IEventService eventService)
         {
+            _eventService = eventService;
+
             string proxyFile = "proxy.txt";
             if (System.IO.File.Exists(proxyFile))
             {
@@ -218,14 +225,20 @@ namespace AasxServer
                     var idShort = sme2.IdShort.ToLower();
                     if (idShort.StartsWith("getevents"))
                     {
+                        //ToDo: Only at server start in future
+
                         operation_get_put_events(op, envIndex, timeStamp, "get");
                     }
                     if (idShort.StartsWith("putevents"))
                     {
+                        //ToDo: Only at server start in future
+
                         operation_get_put_events(op, envIndex, timeStamp, "put");
                     }
                     if (idShort.StartsWith("eventelement"))
                     {
+                        //ToDo: Only at server start in future
+
                         operation_get_put_events(op, envIndex, timeStamp, "");
                     }
                     switch (idShort)
@@ -1538,36 +1551,34 @@ namespace AasxServer
 
             HttpClient client = null;
             HttpClientHandler handler = null;
+            var eventData = _eventService.ParseData(op, Program.env[envIndex]);
 
-            var eventData = new Events.EventData();
-            eventData.ParseData(op, Program.env[envIndex]);
-
-            if (false && eventData.authType != null)
+            if (false && eventData.AuthType != null)
             {
-                switch (eventData.authType.Value.ToLower())
+                switch (eventData.AuthType.Value.ToLower())
                 {
                     case "openid":
-                        if (eventData.authServerEndPoint != null && eventData.authServerCertificate != null && eventData.clientCertificate != null
-                            && eventData.accessToken != null)
+                        if (eventData.AuthServerEndPoint != null && eventData.AuthServerCertificate != null && eventData.ClientCertificate != null
+                            && eventData.AccessToken != null)
                         {
-                            if (eventData.accessToken.Value == null)
-                                eventData.accessToken.Value = "";
+                            if (eventData.AccessToken.Value == null)
+                                eventData.AccessToken.Value = "";
 
-                            if (eventData.accessToken.Value != "")
+                            if (eventData.AccessToken.Value != "")
                             {
                                 bool valid = true;
-                                var jwtToken = new JwtSecurityToken(eventData.accessToken.Value);
+                                var jwtToken = new JwtSecurityToken(eventData.AccessToken.Value);
                                 if ((jwtToken == null) || (jwtToken.ValidFrom > DateTime.UtcNow) || (jwtToken.ValidTo < DateTime.UtcNow))
                                     valid = false;
                                 if (valid)
                                     break;
-                                eventData.accessToken.Value = "";
+                                eventData.AccessToken.Value = "";
                             }
 
-                            if (createAccessToken(envIndex, eventData.authServerEndPoint, eventData.authServerCertificate,
-                                                  eventData.clientCertificate, eventData.clientCertificatePassWord,
-                                                  eventData.accessToken, eventData.clientToken))
-                                eventData.accessToken.SetTimeStamp(timeStamp);
+                            if (createAccessToken(envIndex, eventData.AuthServerEndPoint, eventData.AuthServerCertificate,
+                                                  eventData.ClientCertificate, eventData.ClientCertificatePassWord,
+                                                  eventData.AccessToken, eventData.ClientToken))
+                                eventData.AccessToken.SetTimeStamp(timeStamp);
                         }
 
                         break;
@@ -1576,13 +1587,13 @@ namespace AasxServer
                 }
             }
 
-            if (eventData.direction != null && eventData.mode != null)
+            if (eventData.Direction != null && eventData.Mode != null)
             {
-                if (eventData.direction.Value == "OUT" && (eventData.mode.Value == "PUSH" || eventData.mode.Value == "PUT"))
+                if (eventData.Direction.Value == "OUT" && (eventData.Mode.Value == "PUSH" || eventData.Mode.Value == "PUT"))
                 {
                     getPut = "put";
                 }
-                if (eventData.direction.Value == "IN" && (eventData.mode.Value == "PULL" || eventData.mode.Value == "GET"))
+                if (eventData.Direction.Value == "IN" && (eventData.Mode.Value == "PULL" || eventData.Mode.Value == "GET"))
                 {
                     getPut = "get";
                 }
@@ -1596,15 +1607,15 @@ namespace AasxServer
 
             if (getPut == "get")
             {
-                string requestPath = eventData.endPoint.Value;
+                string requestPath = eventData.EndPoint.Value;
 
-                if (eventData.lastUpdate.Value == null || eventData.lastUpdate.Value == "")
+                if (eventData.LastUpdate.Value == null || eventData.LastUpdate.Value == "")
                 {
                     requestPath += "/init";
                 }
                 else
                 {
-                    requestPath += "/" + eventData.lastUpdate.Value;
+                    requestPath += "/" + eventData.LastUpdate.Value;
                 }
                 requestPath += "?withPayload=true";
 
@@ -1652,15 +1663,15 @@ namespace AasxServer
 
                     using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestPath))
                     {
-                        if (eventData.accessToken != null && eventData.accessToken.Value != null && eventData.accessToken.Value != "")
+                        if (eventData.AccessToken != null && eventData.AccessToken.Value != null && eventData.AccessToken.Value != "")
                         {
-                            client.SetBearerToken(eventData.accessToken.Value);
+                            client.SetBearerToken(eventData.AccessToken.Value);
                         }
                         else
                         {
-                            if (eventData.authType != null && eventData.authType.Value.ToLower() == "userpw" && eventData.userName != null && eventData.passWord != null)
+                            if (eventData.AuthType != null && eventData.AuthType.Value.ToLower() == "userpw" && eventData.UserName != null && eventData.PassWord != null)
                             {
-                                requestMessage.Headers.Authorization = new BasicAuthenticationHeaderValue(eventData.userName.Value, eventData.passWord.Value);
+                                requestMessage.Headers.Authorization = new BasicAuthenticationHeaderValue(eventData.UserName.Value, eventData.PassWord.Value);
                             }
                         }
 
@@ -1668,13 +1679,13 @@ namespace AasxServer
                         task.Wait();
                         if (!response.IsSuccessStatusCode)
                         {
-                            if (eventData.status != null)
+                            if (eventData.Status != null)
                             {
-                                eventData.message.Value = "ERROR: " +
+                                eventData.Message.Value = "ERROR: " +
                                     response.StatusCode.ToString() + " ; " +
                                     response.Content.ReadAsStringAsync().Result + " ; " +
                                     "GET " + requestPath;
-                                eventData.status.SetTimeStamp(DateTime.UtcNow);
+                                eventData.Status.SetTimeStamp(DateTime.UtcNow);
                             }
                         }
                         else // ok
@@ -1698,42 +1709,42 @@ namespace AasxServer
                             List<String> diffEntry = new List<string>();
 
                             IReferable dest = null;
-                            if (eventData.dataCollection != null)
+                            if (eventData.DataCollection != null)
                             {
-                                dest = eventData.dataCollection;
+                                dest = eventData.DataCollection;
                             }
                             else
                             {
-                                dest = eventData.dataSubmodel;
+                                dest = eventData.DataSubmodel;
                             }
 
 
-                            int count = Events.EventPayload.changeData(jsonString, eventData, Program.env, dest, out transmit, out lastDiffValue, out statusValue, diffEntry, envIndex);
+                            int count = _eventService.ChangeData(jsonString, eventData, Program.env, dest, out transmit, out lastDiffValue, out statusValue, diffEntry, envIndex);
                             // if (count > 0)
                             {
                                 update = 2;
                             }
-                            if (eventData.transmitted != null)
+                            if (eventData.Transmitted != null)
                             {
-                                eventData.transmitted.Value = transmit;
-                                eventData.transmitted.SetTimeStamp(DateTime.UtcNow);
+                                eventData.Transmitted.Value = transmit;
+                                eventData.Transmitted.SetTimeStamp(DateTime.UtcNow);
                             }
                             var dt = DateTime.Parse(lastDiffValue);
-                            if (eventData.lastUpdate != null)
+                            if (eventData.LastUpdate != null)
                             {
-                                eventData.lastUpdate.Value = lastDiffValue;
-                                eventData.lastUpdate.SetTimeStamp(dt);
+                                eventData.LastUpdate.Value = lastDiffValue;
+                                eventData.LastUpdate.SetTimeStamp(dt);
                             }
-                            if (eventData.message != null && statusValue != null)
+                            if (eventData.Message != null && statusValue != null)
                             {
-                                eventData.message.Value = statusValue;
-                                eventData.message.SetTimeStamp(DateTime.UtcNow);
+                                eventData.Message.Value = statusValue;
+                                eventData.Message.SetTimeStamp(DateTime.UtcNow);
                             }
-                            if (eventData.diff != null)
+                            if (eventData.Diff != null)
                             {
                                 if (diffEntry.Count > 0)
                                 {
-                                    eventData.diff.Value = new List<ISubmodelElement>();
+                                    eventData.Diff.Value = new List<ISubmodelElement>();
                                     int i = 0;
                                     foreach (var d in diffEntry)
                                     {
@@ -1741,11 +1752,11 @@ namespace AasxServer
                                         p.IdShort = "diff" + i;
                                         p.Value = d;
                                         p.SetTimeStamp(dt);
-                                        eventData.diff.Value.Add(p);
-                                        p.SetAllParentsAndTimestamps(eventData.diff, dt, dt, DateTime.MinValue);
+                                        eventData.Diff.Value.Add(p);
+                                        p.SetAllParentsAndTimestamps(eventData.Diff, dt, dt, DateTime.MinValue);
                                         i++;
                                     }
-                                    eventData.diff.SetTimeStamp(dt);
+                                    eventData.Diff.SetTimeStamp(dt);
                                 }
                             }
                         }
@@ -1753,10 +1764,10 @@ namespace AasxServer
                 }
                 catch (Exception ex)
                 {
-                    eventData.message.Value = "ERROR: " +
+                    eventData.Message.Value = "ERROR: " +
                         ex.Message +
                         " ; GET " + requestPath;
-                    eventData.status.SetTimeStamp(DateTime.UtcNow);
+                    eventData.Status.SetTimeStamp(DateTime.UtcNow);
                     update = 2;
                 }
 
@@ -1764,16 +1775,16 @@ namespace AasxServer
             }
             if (getPut == "put")
             {
-                string requestPath = eventData.endPoint.Value;
+                string requestPath = eventData.EndPoint.Value;
 
                 IReferable source = null;
-                if (eventData.dataCollection != null)
+                if (eventData.DataCollection != null)
                 {
-                    source = eventData.dataCollection;
+                    source = eventData.DataCollection;
                 }
                 else
                 {
-                    source = eventData.dataSubmodel;
+                    source = eventData.DataSubmodel;
                 }
 
                 /*
@@ -1796,7 +1807,7 @@ namespace AasxServer
                 */
 
                 var d = "";
-                if (eventData.lastUpdate != null && eventData.lastUpdate.Value != null && eventData.lastUpdate.Value == "init")
+                if (eventData.LastUpdate != null && eventData.LastUpdate.Value != null && eventData.LastUpdate.Value == "init")
                 {
                     d = "init";
                 }
@@ -1808,13 +1819,13 @@ namespace AasxServer
                     }
                     else
                     {
-                        if (eventData.lastUpdate == null && eventData.lastUpdate.Value == null)
+                        if (eventData.LastUpdate == null && eventData.LastUpdate.Value == null)
                         {
                             d = "init";
                         }
                         else
                         {
-                            d = eventData.lastUpdate.Value;
+                            d = eventData.LastUpdate.Value;
                         }
                     }
                 }
@@ -1826,15 +1837,15 @@ namespace AasxServer
                     {
                         using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, requestPath + "/status"))
                         {
-                            if (eventData.accessToken != null && eventData.accessToken.Value != null && eventData.accessToken.Value != "")
+                            if (eventData.AccessToken != null && eventData.AccessToken.Value != null && eventData.AccessToken.Value != "")
                             {
-                                client.SetBearerToken(eventData.accessToken.Value);
+                                client.SetBearerToken(eventData.AccessToken.Value);
                             }
                             else
                             {
-                                if (eventData.userName != null && eventData.passWord != null)
+                                if (eventData.UserName != null && eventData.PassWord != null)
                                 {
-                                    requestMessage.Headers.Authorization = new BasicAuthenticationHeaderValue(eventData.userName.Value, eventData.passWord.Value);
+                                    requestMessage.Headers.Authorization = new BasicAuthenticationHeaderValue(eventData.UserName.Value, eventData.PassWord.Value);
                                 }
                             }
 
@@ -1850,15 +1861,15 @@ namespace AasxServer
                                 var now = DateTime.UtcNow;
                                 if (!response.IsSuccessStatusCode)
                                 {
-                                    if (eventData.status != null)
+                                    if (eventData.Status != null)
                                     {
-                                        eventData.message.Value = "ERROR: " +
+                                        eventData.Message.Value = "ERROR: " +
                                             response.StatusCode.ToString() + " ; " +
                                             response.Content.ReadAsStringAsync().Result +
                                             " ; RECONNECT " + requestPath;
-                                        eventData.status.SetTimeStamp(now);
-                                        d = eventData.lastUpdate.Value = "reconnect";
-                                        eventData.lastUpdate.SetTimeStamp(now);
+                                        eventData.Status.SetTimeStamp(now);
+                                        d = eventData.LastUpdate.Value = "reconnect";
+                                        eventData.LastUpdate.SetTimeStamp(now);
                                     }
                                 }
                                 else
@@ -1866,11 +1877,11 @@ namespace AasxServer
                                     if (response.StatusCode == HttpStatusCode.NoContent)
                                     {
                                         d = "init";
-                                        eventData.lastUpdate.Value = d;
+                                        eventData.LastUpdate.Value = d;
                                         var dt = DateTime.UtcNow;
-                                        if (eventData.statusData != null)
+                                        if (eventData.StatusData != null)
                                         {
-                                            eventData.statusData.SetAllParentsAndTimestamps(eventData.statusData.Parent as IReferable, dt, dt, DateTime.MinValue);
+                                            eventData.StatusData.SetAllParentsAndTimestamps(eventData.StatusData.Parent as IReferable, dt, dt, DateTime.MinValue);
                                         }
                                         Program.signalNewData(2);
                                     }
@@ -1887,35 +1898,35 @@ namespace AasxServer
                                         });
                                         task.Wait();
 
-                                        Events.EventPayload eventPayload = System.Text.Json.JsonSerializer.Deserialize<Events.EventPayload>(jsonString);
+                                        EventPayload eventPayload = System.Text.Json.JsonSerializer.Deserialize<EventPayload>(jsonString);
 
-                                        if (eventPayload.statusData != "")
+                                        if (eventPayload.StatusData != "")
                                         {
                                             ISubmodelElement receiveSme = null;
-                                            MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(eventPayload.statusData));
+                                            MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(eventPayload.StatusData));
                                             JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
                                             receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
                                             if (receiveSme != null && receiveSme is SubmodelElementCollection smc)
                                             {
-                                                if (smc.Value != null && eventData.statusData != null && eventData.statusData.Value != null)
+                                                if (smc.Value != null && eventData.StatusData != null && eventData.StatusData.Value != null)
                                                 {
                                                     if (smc.Value.Count != 0 && smc.Value[0] is SubmodelElementCollection smcValue)
                                                     {
-                                                        eventData.statusData.Value = smcValue.Value;
+                                                        eventData.StatusData.Value = smcValue.Value;
                                                     }
                                                     else
                                                     {
-                                                        eventData.statusData.Value.Clear();
+                                                        eventData.StatusData.Value.Clear();
                                                     }
 
-                                                    var dt = eventData.statusData.TimeStamp;
-                                                    d = eventPayload.status.lastUpdate;
+                                                    var dt = eventData.StatusData.TimeStamp;
+                                                    d = eventPayload.Status.LastUpdate;
                                                     if (d == "")
                                                     {
                                                         d = "init";
                                                     }
-                                                    eventData.lastUpdate.Value = d;
-                                                    eventData.statusData.SetAllParentsAndTimestamps(eventData.statusData.Parent as IReferable, dt, dt, DateTime.MinValue);
+                                                    eventData.LastUpdate.Value = d;
+                                                    eventData.StatusData.SetAllParentsAndTimestamps(eventData.StatusData.Parent as IReferable, dt, dt, DateTime.MinValue);
                                                     Program.signalNewData(2);
                                                 }
                                             }
@@ -1926,9 +1937,9 @@ namespace AasxServer
                                         }
                                     }
                                     bool withReconnect = false;
-                                    if (eventData.statusData != null && eventData.statusData.Value != null)
+                                    if (eventData.StatusData != null && eventData.StatusData.Value != null)
                                     {
-                                        foreach (var r in eventData.statusData.Value)
+                                        foreach (var r in eventData.StatusData.Value)
                                         {
                                             if (r is Property p2 && p2.IdShort == "__RECONNECT__")
                                             {
@@ -1939,7 +1950,7 @@ namespace AasxServer
                                         if (!withReconnect)
                                         {
                                             var p = new Property(DataTypeDefXsd.String, idShort: "__RECONNECT__", value: "1");
-                                            eventData.statusData.Value.Add(p);
+                                            eventData.StatusData.Value.Add(p);
                                         }
                                     }
                                 }
@@ -1948,14 +1959,14 @@ namespace AasxServer
                     }
                     catch (Exception ex)
                     {
-                        eventData.message.Value = "ERROR: " +
+                        eventData.Message.Value = "ERROR: " +
                             ex.Message +
                             " ; RECONNECT " + requestPath;
                         var now = DateTime.UtcNow;
-                        eventData.status.SetTimeStamp(now);
-                        eventData.status.SetTimeStamp(now);
-                        d = eventData.lastUpdate.Value = "reconnect";
-                        eventData.lastUpdate.SetTimeStamp(now);
+                        eventData.Status.SetTimeStamp(now);
+                        eventData.Status.SetTimeStamp(now);
+                        d = eventData.LastUpdate.Value = "reconnect";
+                        eventData.LastUpdate.SetTimeStamp(now);
                     }
                 }
 
@@ -1963,14 +1974,14 @@ namespace AasxServer
                 {
                     List<String> diffEntry = new List<String>();
                     bool np = false;
-                    np = eventData.noPayload != null && eventData.noPayload.Value != null && eventData.noPayload.Value.ToLower() == "true";
+                    np = eventData.NoPayload != null && eventData.NoPayload.Value != null && eventData.NoPayload.Value.ToLower() == "true";
                     string c = "";
-                    if (eventData.changes != null)
+                    if (eventData.Changes != null)
                     {
-                        c = eventData.changes.Value;
+                        c = eventData.Changes.Value;
                     }
-                    var e = Events.EventPayload.CollectPayload(c, 0, eventData.statusData,
-                        eventData.dataReference, source, eventData.conditionSM, eventData.conditionSME,
+                    var e = _eventService.CollectPayload(c, 0, eventData.StatusData,
+                        eventData.DataReference, source, eventData.ConditionSM, eventData.ConditionSME,
                         d, diffEntry, !np, 1000, 1000, 0, 0);
                     foreach (var diff in diffEntry)
                     {
@@ -2001,15 +2012,15 @@ namespace AasxServer
                     {
                         using (var requestMessage = new HttpRequestMessage(HttpMethod.Put, requestPath))
                         {
-                            if (eventData.accessToken != null && eventData.accessToken.Value != null && eventData.accessToken.Value != "")
+                            if (eventData.AccessToken != null && eventData.AccessToken.Value != null && eventData.AccessToken.Value != "")
                             {
-                                client.SetBearerToken(eventData.accessToken.Value);
+                                client.SetBearerToken(eventData.AccessToken.Value);
                             }
                             else
                             {
-                                if (eventData.userName != null && eventData.passWord != null)
+                                if (eventData.UserName != null && eventData.PassWord != null)
                                 {
-                                    requestMessage.Headers.Authorization = new BasicAuthenticationHeaderValue(eventData.userName.Value, eventData.passWord.Value);
+                                    requestMessage.Headers.Authorization = new BasicAuthenticationHeaderValue(eventData.UserName.Value, eventData.PassWord.Value);
                                 }
                             }
 
@@ -2024,38 +2035,38 @@ namespace AasxServer
                                 var now = DateTime.UtcNow;
                                 if (!response.IsSuccessStatusCode)
                                 {
-                                    if (eventData.status != null)
+                                    if (eventData.Status != null)
                                     {
-                                        eventData.message.Value = "ERROR: " +
+                                        eventData.Message.Value = "ERROR: " +
                                             response.StatusCode.ToString() + " ; " +
                                             response.Content.ReadAsStringAsync().Result +
                                             " ; PUT " + requestPath;
-                                        eventData.status.SetTimeStamp(now);
-                                        d = eventData.lastUpdate.Value = "reconnect";
-                                        eventData.lastUpdate.SetTimeStamp(now);
+                                        eventData.Status.SetTimeStamp(now);
+                                        d = eventData.LastUpdate.Value = "reconnect";
+                                        eventData.LastUpdate.SetTimeStamp(now);
                                     }
                                 }
                                 else
                                 {
-                                    if (eventData.transmitted != null)
+                                    if (eventData.Transmitted != null)
                                     {
-                                        eventData.transmitted.Value = e.status.transmitted;
-                                        eventData.transmitted.SetTimeStamp(now);
+                                        eventData.Transmitted.Value = e.Status.Transmitted;
+                                        eventData.Transmitted.SetTimeStamp(now);
                                     }
-                                    var dt = DateTime.Parse(e.status.lastUpdate);
-                                    if (eventData.lastUpdate != null)
+                                    var dt = DateTime.Parse(e.Status.LastUpdate);
+                                    if (eventData.LastUpdate != null)
                                     {
-                                        eventData.lastUpdate.Value = e.status.lastUpdate;
-                                        eventData.lastUpdate.SetTimeStamp(dt);
+                                        eventData.LastUpdate.Value = e.Status.LastUpdate;
+                                        eventData.LastUpdate.SetTimeStamp(dt);
                                     }
-                                    if (eventData.status != null)
+                                    if (eventData.Status != null)
                                     {
-                                        eventData.message.Value = "on";
-                                        eventData.status.SetTimeStamp(now);
+                                        eventData.Message.Value = "on";
+                                        eventData.Status.SetTimeStamp(now);
                                     }
-                                    if (eventData.diff != null && diffEntry.Count > 0)
+                                    if (eventData.Diff != null && diffEntry.Count > 0)
                                     {
-                                        eventData.diff.Value = new List<ISubmodelElement>();
+                                        eventData.Diff.Value = new List<ISubmodelElement>();
                                         int i = 0;
                                         foreach (var d in diffEntry)
                                         {
@@ -2063,11 +2074,11 @@ namespace AasxServer
                                             p.IdShort = "diff" + i;
                                             p.Value = d;
                                             p.SetTimeStamp(dt);
-                                            eventData.diff.Value.Add(p);
-                                            p.SetAllParentsAndTimestamps(eventData.diff, dt, dt, DateTime.MinValue);
+                                            eventData.Diff.Value.Add(p);
+                                            p.SetAllParentsAndTimestamps(eventData.Diff, dt, dt, DateTime.MinValue);
                                             i++;
                                         }
-                                        eventData.diff.SetTimeStamp(dt);
+                                        eventData.Diff.SetTimeStamp(dt);
                                     }
                                 }
                             });
@@ -2076,14 +2087,14 @@ namespace AasxServer
                     }
                     catch (Exception ex)
                     {
-                        eventData.message.Value = "ERROR: " +
+                        eventData.Message.Value = "ERROR: " +
                             ex.Message +
                             " ; PUT " + requestPath;
                         var now = DateTime.UtcNow;
-                        eventData.status.SetTimeStamp(now);
-                        eventData.status.SetTimeStamp(now);
-                        d = eventData.lastUpdate.Value = "reconnect";
-                        eventData.lastUpdate.SetTimeStamp(now);
+                        eventData.Status.SetTimeStamp(now);
+                        eventData.Status.SetTimeStamp(now);
+                        d = eventData.LastUpdate.Value = "reconnect";
+                        eventData.LastUpdate.SetTimeStamp(now);
                     }
                 }
 

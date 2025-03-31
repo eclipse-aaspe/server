@@ -28,6 +28,8 @@ public interface IPersistenceService
     string ReadThumbnail(string aasIdentifier, out byte[] byteArray, out long fileSize);
     AdminShellPackageEnv ReadPackageEnv(string aasIdentifier, out string envFileName);
 
+    EventPayload ReadEventMessages(string aasIdentifier, out string envFileName);
+
     ISubmodel CreateSubmodel(ISubmodel body, string decodedAasIdentifier);
     IAssetAdministrationShell CreateAssetAdministrationShell(IAssetAdministrationShell body);
     IReference CreateSubmodelReferenceInAAS(IReference body, string aasIdentifier);

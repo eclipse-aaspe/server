@@ -918,4 +918,10 @@ public class EntityFrameworkPersistenceService : IPersistenceService
     public void ReplaceSubmodelElementByPath(string submodelIdentifier, string idShortPath, ISubmodelElement body) => throw new NotImplementedException();
     public void ReplaceFileByPath(string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream) => throw new NotImplementedException();
     public ISubmodel CreateSubmodel(ISubmodel body, string decodedAasIdentifier) => throw new NotImplementedException();
+
+    public EventPayload ReadEventMessages(string aasIdentifier, out string envFileName)
+    {
+
+        throw new NotImplementedException();
+    }
 }
