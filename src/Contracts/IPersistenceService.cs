@@ -42,6 +42,9 @@ public interface IPersistenceService
     //void UpdateSubmodelElementByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, ISubmodelElement body);
     void UpdateFileByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream);
     void UpdateThumbnail(string aasIdentifier, string fileName, string contentType, MemoryStream stream);
+
+    void UpdateEventMessages(DbEventRequest eventRequest);
+
     void ReplaceSubmodelById(string submodelIdentifier, ISubmodel body);
     void ReplaceSubmodelElementByPath(string submodelIdentifier, string idShortPath, ISubmodelElement body);
     void ReplaceFileByPath(string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream);

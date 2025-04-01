@@ -26,4 +26,6 @@ public interface IDbRequestHandlerService
 
     Task<Events.EventPayload> ReadEventMessages(DbEventRequest dbEventRequest);
 
+    Task UpdateEventMessages(DbEventRequest dbEventRequest);
+
 }

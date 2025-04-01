@@ -57,6 +57,8 @@ using Contracts;
 using Contracts.DbRequests;
 using Contracts.Exceptions;
 using Contracts.Events;
+using Org.BouncyCastle.Pqc.Crypto.Lms;
+using ScottPlot.Drawing.Colormaps;
 
 /// <summary>
 /// 
@@ -192,15 +194,13 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 int s = Convert.ToInt32(diff);
                 diff = TimeStamp.DateTimeToString(DateTime.UtcNow.AddSeconds(-s));
             }
-
-
-            var eventData = new EventDto();
-            var op = _eventService.FindEvent(submodel, eventName);
-            eventData = _eventService.ParseData(op, Program.env[packageIndex]);
-
+            
             var eventRequest = new DbEventRequest()
             {
-                EventData = eventData,
+                Env = Program.env,
+                PackageIndex = packageIndex,
+                EventName = eventName,
+                Submodel = submodel,
                 Diff = diff,
                 IsWithPayload = wp,
                 LimitSm = limSm,
@@ -233,7 +233,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerOperation("PutEventMessages")]
     [SwaggerResponse(statusCode: 200, type: typeof(String), description: "List of Text")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-    public virtual IActionResult PutEventMessages([FromRoute][Required] string submodelIdentifier, [Required] string eventName)
+    public async virtual Task<IActionResult> PutEventMessages([FromRoute][Required] string submodelIdentifier, [Required] string eventName)
     {
         if (debug)
         {
@@ -286,74 +286,16 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
             // Now you can use jsonBody as needed
 
-            
-            var op = _eventService.FindEvent(submodel, eventName);
-            var eventData = _eventService.ParseData(op, Program.env[packageIndex]);
+            var eventRequest = new DbEventRequest()
+            {
+                Env = Program.env,
+                PackageIndex = packageIndex,
+                EventName = eventName,
+                Submodel = submodel,
+                Body = body,
+            };
 
-            string transmitted = "";
-            string lastDiffValue = "";
-            string statusValue = "";
-            List<String> diffEntry = new List<string>();
-            int count = 0;
-
-            if (eventData.Persistence == null || eventData.Persistence.Value == "" || eventData.Persistence.Value == "memory")
-            {
-                IReferable data = null;
-                if (eventData.DataSubmodel != null)
-                {
-                    data = eventData.DataSubmodel;
-                }
-                if (eventData.DataCollection != null)
-                {
-                    data = eventData.DataCollection;
-                }
-                if (data == null)
-                {
-                    return NoContent();
-                }
-
-                count = _eventService.ChangeData(body, eventData, Program.env, data, out transmitted, out lastDiffValue, out statusValue, diffEntry, packageIndex);
-            }
-            else // DB
-            {
-                count = _eventService.ChangeData(body, eventData, Program.env, null, out transmitted, out lastDiffValue, out statusValue, diffEntry, packageIndex);
-            }
-
-            if (eventData.Transmitted != null)
-            {
-                eventData.Transmitted.Value = transmitted;
-                eventData.Transmitted.SetTimeStamp(DateTime.UtcNow);
-            }
-            var dt = DateTime.Parse(lastDiffValue);
-            if (eventData.LastUpdate != null)
-            {
-                eventData.LastUpdate.Value = lastDiffValue;
-                eventData.LastUpdate.SetTimeStamp(dt);
-            }
-            if (eventData.Message != null && statusValue != null)
-            {
-                eventData.Message.Value = statusValue;
-                eventData.Message.SetTimeStamp(DateTime.UtcNow);
-            }
-            if (eventData.Diff != null)
-            {
-                if (diffEntry.Count > 0)
-                {
-                    eventData.Diff.Value = new List<ISubmodelElement>();
-                    int i = 0;
-                    foreach (var d in diffEntry)
-                    {
-                        var p = new Property(DataTypeDefXsd.String);
-                        p.IdShort = "diff" + i;
-                        p.Value = d;
-                        p.SetTimeStamp(dt);
-                        eventData.Diff.Value.Add(p);
-                        p.SetAllParentsAndTimestamps(eventData.Diff, dt, dt, DateTime.MinValue);
-                        i++;
-                    }
-                    eventData.Diff.SetTimeStamp(dt);
-                }
-            }
+            await _dbRequestHandlerService.UpdateEventMessages(eventRequest);
 
             Program.signalNewData(2);
         }

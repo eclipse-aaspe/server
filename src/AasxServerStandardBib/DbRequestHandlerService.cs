@@ -264,4 +264,25 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         var tcs = await taskCompletionSource.Task.ConfigureAwait(false);
         return tcs.EventPayload;
     }
+
+    public Task UpdateEventMessages(DbEventRequest dbEventRequest)
+    {
+        var parameters = new DbRequestParams()
+        {
+            EventRequest = dbEventRequest,
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            //SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.UpdateEventMessages, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        return taskCompletionSource.Task;
+    }
 }

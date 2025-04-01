@@ -181,7 +181,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
         else
         {
-          throw new NotFoundException($"Submodel wit id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} not found.");
+            throw new NotFoundException($"Submodel wit id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} not found.");
         }
     }
 
@@ -634,7 +634,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
     {
         output = default;
 
-        var assetAdministrationShell = Converter.GetAssetAdministrationShell(null,aasIdentifier);
+        var assetAdministrationShell = Converter.GetAssetAdministrationShell(null, aasIdentifier);
         if (assetAdministrationShell == null)
         {
             return false;
@@ -796,7 +796,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             case DbRequestOp.ReadPackageEnv:
                 var envFile = "";
                 var packageEnv = ReadPackageEnv(dbRequest.Context.Params.AssetAdministrationShellIdentifier
-                    ,out envFile);
+                    , out envFile);
                 result.PackageEnv = new DbRequestPackageEnvResult()
                 {
                     PackageEnv = packageEnv,
@@ -895,6 +895,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     dbRequest.Context.Params.AasBody)
                     ;
                 break;
+            case DbRequestOp.UpdateEventMessages:
+                UpdateEventMessages(dbRequest.Context.Params.EventRequest);
+                break;
             case DbRequestOp.ReplaceSubmodelById:
                 break;
             case DbRequestOp.ReplaceSubmodelElementByPath:
@@ -929,7 +932,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     public Contracts.Events.EventPayload ReadEventMessages(DbEventRequest dbEventRequest)
     {
-        var eventData = dbEventRequest.EventData;
+        var op = _eventService.FindEvent(dbEventRequest.Submodel, dbEventRequest.EventName);
+        var eventData = _eventService.ParseData(op, dbEventRequest.Env[dbEventRequest.PackageIndex]);
+
         var diff = dbEventRequest.Diff;
         var wp = dbEventRequest.IsWithPayload;
         var limSm = dbEventRequest.LimitSm;
@@ -1037,6 +1042,78 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             }
         }
         return eventPayload;
+
+    }
+
+    public void UpdateEventMessages(DbEventRequest eventRequest)
+    {
+        var op = _eventService.FindEvent(eventRequest.Submodel, eventRequest.EventName);
+        var eventData = _eventService.ParseData(op, eventRequest.Env[eventRequest.PackageIndex]);
+
+        string transmitted = "";
+        string lastDiffValue = "";
+        string statusValue = "";
+        List<String> diffEntry = new List<string>();
+        int count = 0;
+
+        if (eventData.Persistence == null || eventData.Persistence.Value == "" || eventData.Persistence.Value == "memory")
+        {
+            IReferable data = null;
+            if (eventData.DataSubmodel != null)
+            {
+                data = eventData.DataSubmodel;
+            }
+            if (eventData.DataCollection != null)
+            {
+                data = eventData.DataCollection;
+            }
+            if (data == null)
+            {
+                return;
+            }
+
+            count = _eventService.ChangeData(eventRequest.Body, eventData, eventRequest.Env, data, out transmitted, out lastDiffValue, out statusValue, diffEntry, eventRequest.PackageIndex);
+        }
+        else // DB
+        {
+            count = _eventService.ChangeData(eventRequest.Body, eventData, eventRequest.Env, null, out transmitted, out lastDiffValue, out statusValue, diffEntry, eventRequest.PackageIndex);
+        }
+
+        if (eventData.Transmitted != null)
+        {
+            eventData.Transmitted.Value = transmitted;
+            eventData.Transmitted.SetTimeStamp(DateTime.UtcNow);
+        }
+        var dt = DateTime.Parse(lastDiffValue);
+        if (eventData.LastUpdate != null)
+        {
+            eventData.LastUpdate.Value = lastDiffValue;
+            eventData.LastUpdate.SetTimeStamp(dt);
+        }
+        if (eventData.Message != null && statusValue != null)
+        {
+            eventData.Message.Value = statusValue;
+            eventData.Message.SetTimeStamp(DateTime.UtcNow);
+        }
+        if (eventData.Diff != null)
+        {
+            if (diffEntry.Count > 0)
+            {
+                eventData.Diff.Value = new List<ISubmodelElement>();
+                int i = 0;
+                foreach (var d in diffEntry)
+                {
+                    var p = new Property(DataTypeDefXsd.String);
+                    p.IdShort = "diff" + i;
+                    p.Value = d;
+                    p.SetTimeStamp(dt);
+                    eventData.Diff.Value.Add(p);
+                    p.SetAllParentsAndTimestamps(eventData.Diff, dt, dt, DateTime.MinValue);
+                    i++;
+                }
+                eventData.Diff.SetTimeStamp(dt);
+            }
+        }
 
     }
 }

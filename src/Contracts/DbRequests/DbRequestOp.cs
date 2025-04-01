@@ -29,6 +29,7 @@ public enum DbRequestOp
     UpdateFileByPath,
     UpdateThumbnail,
     UpdateAssetAdministrationShellById,
+    UpdateEventMessages,
     ReplaceSubmodelById,
     ReplaceSubmodelElementByPath,
     ReplaceFileByPath,
