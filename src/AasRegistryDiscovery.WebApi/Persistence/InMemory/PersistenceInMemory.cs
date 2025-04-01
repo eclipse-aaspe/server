@@ -15,18 +15,18 @@ internal static class PersistenceInMemory
 
     internal static void AddAasDescriptor(AssetAdministrationShellDescriptor aasDescriptor)
     {
-        AssetAdministrationShellDescriptors ??= new();
-        if(IsAasDescriptorPresent(aasDescriptor))
+        if (AssetAdministrationShellDescriptors != null)
         {
-            throw new DuplicateResourceException($"AasDescriptor with {aasDescriptor.Id} already exists.");
+            if (IsAasDescriptorPresent(aasDescriptor))
+            {
+                throw new DuplicateResourceException($"AasDescriptor with {aasDescriptor.Id} already exists.");
+            } 
         }
+        AssetAdministrationShellDescriptors ??= new();
         AssetAdministrationShellDescriptors.Add(aasDescriptor);
     }
 
-    private static bool IsAasDescriptorPresent(AssetAdministrationShellDescriptor aasDescriptor)
-    {
-        return AssetAdministrationShellDescriptors.Exists(a => a.Id.Equals(aasDescriptor.Id));
-    }
+    private static bool IsAasDescriptorPresent(AssetAdministrationShellDescriptor aasDescriptor) => AssetAdministrationShellDescriptors.Exists(a => a.Id.Equals(aasDescriptor.Id));
 
     internal static void RemoveAasDescriptor(AssetAdministrationShellDescriptor aasDescriptor)
     {
@@ -38,9 +38,19 @@ internal static class PersistenceInMemory
 
     internal static void AddSubmodelDescriptor(SubmodelDescriptor smDescriptor)
     {
+        if (SubmodelDescriptors != null)
+        {
+            if (IsSmDescriptorPresent(smDescriptor))
+            {
+                throw new DuplicateResourceException($"SubmodelDescriptor with {smDescriptor.Id} already exists.");
+            } 
+        }
         SubmodelDescriptors ??= new();
         SubmodelDescriptors.Add(smDescriptor);
     }
+
+    private static bool IsSmDescriptorPresent(SubmodelDescriptor smDescriptor) => SubmodelDescriptors.Exists(
+        s => s.Id.Equals(smDescriptor.Id));
 
     internal static void RemoveSubmodelDescriptor(SubmodelDescriptor smDescriptor)
     {

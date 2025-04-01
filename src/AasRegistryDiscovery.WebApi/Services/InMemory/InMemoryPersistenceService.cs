@@ -25,6 +25,7 @@ public class InMemoryPersistenceService : IPersistenceService
         _paginationService = paginationService;
     }
 
+    #region AAS Registry
     public AssetAdministrationShellDescriptor CreateAssetAdminitrationShellDescriptor(AssetAdministrationShellDescriptor newAasDescriptor)
     {
         PersistenceInMemory.AddAasDescriptor(newAasDescriptor);
@@ -39,10 +40,10 @@ public class InMemoryPersistenceService : IPersistenceService
         bool isSmDescPresent = false;
         if (aasDescriptor.SubmodelDescriptors != null)
         {
-            isSmDescPresent = aasDescriptor.SubmodelDescriptors.Exists(s => s.Id.Equals(smDescriptor.Id)); 
+            isSmDescPresent = aasDescriptor.SubmodelDescriptors.Exists(s => s.Id.Equals(smDescriptor.Id));
         }
 
-        if(isSmDescPresent)
+        if (isSmDescPresent)
         {
             throw new DuplicateResourceException($"SubmodelDescriptor with {smDescriptor.Id} already present in AasDescriptor with id {aasIdentifier}.");
         }
@@ -62,7 +63,7 @@ public class InMemoryPersistenceService : IPersistenceService
     public void DeleteSmDescriptorWithinAasDescriptorById(string aasIdentifier, string smIdentifier)
     {
         var submodelDescriptor = GetSubmodelDescriptorWithinAasDescriptor(aasIdentifier, smIdentifier, out AssetAdministrationShellDescriptor aasDescriptor);
-        if(submodelDescriptor != null)
+        if (submodelDescriptor != null)
         {
             aasDescriptor.SubmodelDescriptors?.Remove(submodelDescriptor);
         }
@@ -73,7 +74,7 @@ public class InMemoryPersistenceService : IPersistenceService
         AssetAdministrationShellDescriptor output = null;
         if (PersistenceInMemory.AssetAdministrationShellDescriptors != null)
         {
-            output = PersistenceInMemory.AssetAdministrationShellDescriptors.Find(a => a.Id.Equals(aasIdentifier)); 
+            output = PersistenceInMemory.AssetAdministrationShellDescriptors.Find(a => a.Id.Equals(aasIdentifier));
         }
         if (output == null)
         {
@@ -95,12 +96,12 @@ public class InMemoryPersistenceService : IPersistenceService
         SubmodelDescriptor output = null;
         aasDescriptor = GetAssetAdministrationShellDescriptorById(aasIdentifier);
 
-        if(aasDescriptor.SubmodelDescriptors !=null)
+        if (aasDescriptor.SubmodelDescriptors != null)
         {
             output = aasDescriptor.SubmodelDescriptors.Find(s => s.Id.Equals(smIdentifier));
         }
 
-        if(output == null)
+        if (output == null)
         {
             aasDescriptor = null;
             throw new NotFoundException($"SubmodelDescriptor with id {smIdentifier} NOT found within AasDescriptor with id {aasIdentifier}.");
@@ -112,7 +113,7 @@ public class InMemoryPersistenceService : IPersistenceService
     public void UpdateAssetAdministrationShellDescriptor(string aasIdentifier, AssetAdministrationShellDescriptor newAasDescriptor)
     {
         var aasDescriptor = GetAssetAdministrationShellDescriptorById(aasIdentifier);
-        if(aasDescriptor != null)
+        if (aasDescriptor != null)
         {
             PersistenceInMemory.RemoveAasDescriptor(aasDescriptor);
             PersistenceInMemory.AddAasDescriptor(newAasDescriptor);
@@ -132,20 +133,20 @@ public class InMemoryPersistenceService : IPersistenceService
     public AasDescriptorPagedResult GetAllAsssetAdministrationShellDescriptors(int? limit, string? cursor, AssetKind? assetKind, string? assetType)
     {
         var output = PersistenceInMemory.AssetAdministrationShellDescriptors;
-        if(output != null && output.Count != 0)
+        if (output != null && output.Count != 0)
         {
-            if(assetKind != null && assetKind.HasValue)
+            if (assetKind != null && assetKind.HasValue)
             {
                 output = output.Where(a => a.AssetKind == assetKind).ToList();
             }
 
-            if(!string.IsNullOrEmpty(assetType))
+            if (!string.IsNullOrEmpty(assetType))
             {
                 output = output.Where(a => !string.IsNullOrEmpty(a.AssetType) && a.AssetType.Equals(assetType)).ToList();
             }
         }
 
-        if(output == null)
+        if (output == null)
         {
             output = new List<AssetAdministrationShellDescriptor>();
         }
@@ -159,7 +160,7 @@ public class InMemoryPersistenceService : IPersistenceService
     {
         List<SubmodelDescriptor> output = new();
         var aasDescriptor = GetAssetAdministrationShellDescriptorById(aasIdentifier);
-        if(aasDescriptor != null && aasDescriptor.SubmodelDescriptors != null)
+        if (aasDescriptor != null && aasDescriptor.SubmodelDescriptors != null)
         {
             output = aasDescriptor.SubmodelDescriptors;
         }
@@ -167,4 +168,60 @@ public class InMemoryPersistenceService : IPersistenceService
         var finalOutput = _paginationService.GetPaginatedList(output, new PaginationParameters(cursor, limit));
         return finalOutput;
     }
+
+    #endregion
+
+    #region Submodel Registry
+    public SubmodelDescriptor CreateSubmodelDescriptor(SubmodelDescriptor submodelDescriptor)
+    {
+        PersistenceInMemory.AddSubmodelDescriptor(submodelDescriptor);
+        _logger.LogInformation($"Added new SubmodelDescriptor with Id {submodelDescriptor.Id}");
+        return submodelDescriptor;
+    }
+
+    public SubmodelDescriptor GetSubmodelDescriptorById(string smIdentifier)
+    {
+        SubmodelDescriptor output = null;
+        if (PersistenceInMemory.SubmodelDescriptors != null)
+        {
+            output = PersistenceInMemory.SubmodelDescriptors.Find(s => s.Id.Equals(smIdentifier));
+        }
+        if (output == null)
+        {
+            throw new NotFoundException($"SubmodelDescriptor with id {smIdentifier} NOT found.");
+        }
+
+        return output;
+    }
+
+    public void DeleteSubmodeldescriptorById(string smIdentifier)
+    {
+        var smDescriptor = GetSubmodelDescriptorById(smIdentifier);
+        PersistenceInMemory.RemoveSubmodelDescriptor(smDescriptor);
+    }
+
+    public SubmodelDescriptorPagedResult GetAllSubmodelDescriptors(int? limit, string? cursor)
+    {
+        var output = PersistenceInMemory.SubmodelDescriptors;
+
+        if (output == null)
+        {
+            output = new List<SubmodelDescriptor>();
+        }
+
+        var finalOutput = _paginationService.GetPaginatedList(output, new PaginationParameters(cursor, limit));
+
+        return finalOutput;
+    }
+
+    public void UpdateSubmodelDescriptorById(string smIdentifier, SubmodelDescriptor newSmDescriptor)
+    {
+        var smDescriptor = GetSubmodelDescriptorById(smIdentifier);
+        if (smDescriptor != null)
+        {
+            PersistenceInMemory.RemoveSubmodelDescriptor(smDescriptor);
+            PersistenceInMemory.AddSubmodelDescriptor(newSmDescriptor);
+        }
+    }
+    #endregion
 }
