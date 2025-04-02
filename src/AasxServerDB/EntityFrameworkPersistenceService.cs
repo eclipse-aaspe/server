@@ -21,6 +21,7 @@ using Contracts.DbRequests;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using System.Collections;
+using System.Reflection.Metadata;
 
 public class EntityFrameworkPersistenceService : IPersistenceService
 {
@@ -357,12 +358,12 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         return aas.AssetInformation;
     }
 
-    public string ReadThumbnail(string aasIdentifier, out byte[] byteArray, out long fileSize)
+    public string ReadThumbnail(ISecurityConfig securityConfig, string aasIdentifier, out byte[] byteArray, out long fileSize)
     {
         string fileName = null;
         byteArray = null;
         fileSize = 0;
-        var aas = ReadAssetAdministrationShellById(null, aasIdentifier);
+        var aas = ReadAssetAdministrationShellById(securityConfig, aasIdentifier);
         if (aas != null)
         {
             if (aas.AssetInformation != null)
@@ -371,23 +372,34 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 {
                     fileName = aas.AssetInformation.DefaultThumbnail.Path;
 
-                    //ToDo: Soultion for thumbnail stream
-                    //Stream stream = _packageEnvService.GetAssetInformationThumbnail(packageIndex);
-                    //byteArray = stream.ToByteArray();
-                    //fileSize = byteArray.Length;
+                    var envFileName = string.Empty;
+                    var packageEnv = Converter.GetPackageEnv(aasIdentifier, null, out envFileName);
 
-                    //_logger.LogDebug($"Updated the thumbnail in AAS with Id {aasIdentifier}");
+                    if (packageEnv != null)
+                    {
+                        var stream = packageEnv.GetLocalStreamFromPackage(fileName);
+                        byteArray = stream.ToByteArray();
+                        fileSize = byteArray.Length;
+                    }
+                    else
+                    {
+                        throw new NotFoundException($"Package for aas id {aasIdentifier} not found");
+                    }
+
+                    using (var scope = _serviceProvider.CreateScope())
+                    {
+                        var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                        scopedLogger.LogDebug($"Updated the thumbnail in AAS with Id {aasIdentifier}");
+                    }
                 }
                 else
                 {
-                    //ToDo: NotFoundException?
-                    throw new Exception($"No default thumbnail embedded in the AssetInformation of the requested AAS.");
+                    throw new NotFoundException($"No default thumbnail embedded in the AssetInformation of the requested AAS.");
                 }
             }
             else
             {
-                //ToDo: NotFoundException?
-                throw new Exception($"AssetInformation is NULL in requested AAS with id {aasIdentifier}");
+                throw new NotFoundException($"AssetInformation is NULL in requested AAS with id {aasIdentifier}");
             }
         }
 
@@ -448,7 +460,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
         else
         {
-            throw new Exception($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
         }
     }
 
@@ -497,8 +509,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 }
                 else
                 {
-                    //ToDo: NotFoundException?
-                    throw new Exception($"No default thumbnail embedded in the AssetInformation of the requested AAS.");
+                    throw new NotFoundException($"No default thumbnail embedded in the AssetInformation of the requested AAS.");
                 }
             }
         }
@@ -564,7 +575,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         if (found)
         {
             //_logger.LogDebug($"Cannot create requested AAS !!");
-            throw new Exception($"AssetAdministrationShell with id {body.Id} already exists.");
+            throw new DuplicateException($"AssetAdministrationShell with id {body.Id} already exists.");
         }
 
         //if (EmptyPackageAvailable(out int emptyPackageIndex))
@@ -857,7 +868,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 result.AssetInformation = assetInformation;
                 break;
             case DbRequestOp.ReadThumbnail:
-                var thumbnail = ReadThumbnail(dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                var thumbnail = ReadThumbnail(
+                    dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.AssetAdministrationShellIdentifier,
                     out content, out fileSize);
 
                 result.FileRequestResult = new DbFileRequestResult()

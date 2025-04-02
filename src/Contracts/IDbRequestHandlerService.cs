@@ -26,6 +26,8 @@ public interface IDbRequestHandlerService
 
     Task<IAssetInformation> ReadAssetInformation(ISecurityConfig securityConfig, string aasIdentifier);
 
+    Task<DbFileRequestResult> ReadThumbnail(ISecurityConfig securityConfig, string aasIdentifier);
+
     Task<DbRequestPackageEnvResult> ReadPackageEnv(string aasIdentifier);
 
     Task<Events.EventPayload> ReadEventMessages(DbEventRequest dbEventRequest);

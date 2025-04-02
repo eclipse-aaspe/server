@@ -25,7 +25,7 @@ public interface IPersistenceService
     IAssetAdministrationShell ReadAssetAdministrationShellById(ISecurityConfig securityConfig, string aasIdentifier);
     string ReadFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, List<object> idShortPathELements, out byte[] content, out long fileSize);
     IAssetInformation ReadAssetInformation(ISecurityConfig securityConfig, string aasIdentifier);
-    string ReadThumbnail(string aasIdentifier, out byte[] byteArray, out long fileSize);
+    string ReadThumbnail(ISecurityConfig securityConfig, string aasIdentifier, out byte[] byteArray, out long fileSize);
     AdminShellPackageEnv ReadPackageEnv(string aasIdentifier, out string envFileName);
     Events.EventPayload ReadEventMessages(DbEventRequest eventRequest);
 

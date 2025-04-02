@@ -1813,7 +1813,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetThumbnailAasRepository([FromRoute][Required]string aasIdentifier)
+        public async virtual Task<IActionResult> GetThumbnailAasRepository([FromRoute][Required]string aasIdentifier)
         { 
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
 
@@ -1824,7 +1824,11 @@ namespace IO.Swagger.Controllers
 
             _logger.LogInformation($"Received request to get the thumbnail of the AAS with Id {aasIdentifier}");
 
-            var fileName = _persistenceService.ReadThumbnail(decodedAasIdentifier, out var content, out var fileSize);
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            var fileRequestResult = await _dbRequestHandlerService.ReadThumbnail(securityConfig, decodedAasIdentifier);
+            var content = fileRequestResult.Content;
+            var fileSize = fileRequestResult.FileSize;
+            var fileName = fileRequestResult.File;
 
             //content-disposition so that the aasx file can be downloaded from the web browser.
             ContentDisposition contentDisposition = new() { FileName = fileName };
