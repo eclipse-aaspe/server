@@ -1166,7 +1166,13 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
         }
 
-        var fileName = _persistenceService.ReadFileByPath(null, decodedSubmodelIdentifier, idShortPath, out var content, out var fileSize);
+        var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
+
+        var dbFileRequestResult = await _dbRequestHandlerService.ReadFileByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPathElements);
+
+        var fileName = dbFileRequestResult.File;
+        var fileSize = dbFileRequestResult.FileSize;
+        var content = dbFileRequestResult.Content;
 
         //content-disposition so that the aasx file can be downloaded from the web browser.
         ContentDisposition contentDisposition = new()

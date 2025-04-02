@@ -2,19 +2,14 @@ namespace AasxServerStandardBib;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics.Metrics;
 using System.Threading;
 using System.Threading.Tasks;
 using AasCore.Aas3_0;
-using AasxServer;
 using AasxServerStandardBib.Logging;
 using Contracts;
 using Contracts.DbRequests;
-using Contracts.Events;
 using Contracts.Pagination;
 using Microsoft.Extensions.DependencyInjection;
-using Org.BouncyCastle.Pqc.Crypto.Lms;
-using ScottPlot.Drawing.Colormaps;
 
 public class DbRequestHandlerService : IDbRequestHandlerService
 {
@@ -25,7 +20,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
     private readonly SemaphoreSlim _lock = new(0);
 
-    private static int _activeReadOperations = 0;
+    private static int ActiveReadOperations = 0;
 
 
     public DbRequestHandlerService(IServiceProvider serviceProvider, IPersistenceService persistenceService)
@@ -49,7 +44,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
                 _lock.Wait();
                 if (operation.CrudType != DbRequestCrudType.Read)
                 {
-                    while (_activeReadOperations > 0)
+                    while (ActiveReadOperations > 0)
                     {
                         Thread.Sleep(100);
                     }
@@ -85,12 +80,12 @@ public class DbRequestHandlerService : IDbRequestHandlerService
     }
     public void IncrementCounter()
     {
-        Interlocked.Increment(ref _activeReadOperations);
+        Interlocked.Increment(ref ActiveReadOperations);
     }
 
     public void DecrementCounter()
     {
-        Interlocked.Decrement(ref _activeReadOperations);
+        Interlocked.Decrement(ref ActiveReadOperations);
     }
 
     public async Task<List<IAssetAdministrationShell>> ReadPagedAssetAdministrationShells(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, List<ISpecificAssetId> assetIds, string idShort)
@@ -219,6 +214,30 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
         var tcs = await taskCompletionSource.Task;
         return tcs.SubmodelElements[0];
+    }
+
+    public async Task<DbFileRequestResult> ReadFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, List<object> idShortPathElements)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            SubmodelIdentifier = submodelIdentifier,
+            IdShortElements = idShortPathElements
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReadFileByPath, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.FileRequestResult;
     }
 
     public async Task<DbRequestPackageEnvResult> ReadPackageEnv(string aasId)

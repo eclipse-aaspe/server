@@ -20,6 +20,7 @@ using Contracts.Exceptions;
 using Contracts.DbRequests;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using System.Collections;
 
 public class EntityFrameworkPersistenceService : IPersistenceService
 {
@@ -167,7 +168,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             throw new NotAllowed($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
         }
 
-        // bool found = IsSubmodelPresentWithinAAS(securityConfig, aasIdentifier, submodelIdentifier, out ISubmodel output);
         var output = Converter.GetSubmodel(null, submodelIdentifier);
         var found = output != null;
         if (found)
@@ -264,20 +264,83 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    public string ReadFileByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, out byte[] content, out long fileSize)
+    public string ReadFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, List<object> idShortPathElements, out byte[] content, out long fileSize)
     {
+        string securityConditionSM, securityConditionSME;
+        bool isAllowed = InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
+
+        if (!isAllowed)
+        {
+            throw new NotAllowed($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
+        }
+
         content = null;
         fileSize = 0;
-        var found = IsSubmodelPresentWithinAAS(null, aasIdentifier, submodelIdentifier, out ISubmodel output);
+
+        var fileElement = Converter.GetSubmodelElementByPath(securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier, idShortPathElements);
+
+        var found = fileElement != null;
         if (found)
         {
-            //ToDo submodel service solution
-            //return _submodelService.GetFileByPath(submodelIdentifier, idShortPath, out content, out fileSize);
-            return "dummy";
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                scopedLogger.LogDebug($"Asset Administration Shell with id {aasIdentifier} found.");
+
+                string fileName = null;
+
+                if (fileElement is AasCore.Aas3_0.File file)
+                {
+                    fileName = file.Value;
+
+                    if (string.IsNullOrEmpty(fileName))
+                    {
+                        scopedLogger.LogError($"File name is empty. Cannot fetch the file.");
+                        throw new UnprocessableEntityException($"File value Null!!");
+                    }
+
+                    //check if it is external location
+                    if (file.Value.StartsWith("http") || file.Value.StartsWith("https"))
+                    {
+                        scopedLogger.LogWarning($"Value of the Submodel-Element File with IdShort {file.IdShort} is an external link.");
+                        throw new NotImplementedException($"File location for {file.IdShort} is external {file.Value}. Currently this fuctionality is not supported.");
+                    }
+                    //Check if a directory
+                    else if (file.Value.StartsWith('/') || file.Value.StartsWith('\\'))
+                    {
+                        scopedLogger.LogInformation($"Value of the Submodel-Element File with IdShort {file.IdShort} is a File-Path.");
+                        var envFileName = string.Empty;
+                        var packageEnv = Converter.GetPackageEnv(aasIdentifier, submodelIdentifier, out envFileName);
+
+                        if (packageEnv != null)
+                        {
+                            var stream = packageEnv.GetLocalStreamFromPackage(fileName);
+                            content = stream.ToByteArray();
+                            fileSize = content.Length;
+                        }
+                        else
+                        {
+                            throw new NotFoundException($"Package for aas id {aasIdentifier} and submodel id {submodelIdentifier} not found");
+                        }
+                    }
+                    // incorrect value
+                    else
+                    {
+                        scopedLogger.LogError($"Incorrect value {file.Value} of the Submodel-Element File with IdShort {file.IdShort}");
+                        throw new UnprocessableEntityException($"Incorrect value {file.Value} of the File with IdShort {file.IdShort}.");
+                    }
+                }
+                else
+                {
+                    throw new NotFoundException($"Submodel element {fileElement.IdShort} is not of type File.");
+                }
+
+                return fileName;
+            }
         }
         else
         {
-            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+            throw new NotFoundException($"Submodel wit id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} not found.");
         }
     }
 
@@ -326,7 +389,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     public AdminShellPackageEnv ReadPackageEnv(string aasID, out string envFileName)
     {
-        return Converter.GetPackageEnv(aasID, out envFileName);
+        return Converter.GetPackageEnv(aasID, null, out envFileName);
     }
 
     public void DeleteAssetAdministrationShellById(string aasIdentifier)
@@ -768,9 +831,11 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             case DbRequestOp.ReadFileByPath:
                 byte[] content;
                 long fileSize;
-                var file = ReadFileByPath(dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                var file = ReadFileByPath(
+                    dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.AssetAdministrationShellIdentifier,
                     dbRequest.Context.Params.SubmodelIdentifier,
-                    dbRequest.Context.Params.IdShort, out content, out fileSize);
+                    dbRequest.Context.Params.IdShortElements, out content, out fileSize);
                 result.FileRequestResult = new DbFileRequestResult()
                 {
                     Content = content,

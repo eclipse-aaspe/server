@@ -22,6 +22,8 @@ public interface IDbRequestHandlerService
 
     Task<ISubmodelElement> ReadSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, List<object> idShortPathElements);
 
+    Task<DbFileRequestResult> ReadFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, List<object> idShortPathElements);
+
     Task<DbRequestPackageEnvResult> ReadPackageEnv(string aasIdentifier);
 
     Task<Events.EventPayload> ReadEventMessages(DbEventRequest dbEventRequest);

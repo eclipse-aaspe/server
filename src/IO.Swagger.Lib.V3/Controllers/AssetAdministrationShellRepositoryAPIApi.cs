@@ -1047,10 +1047,10 @@ namespace IO.Swagger.Controllers
 
             _logger.LogInformation($"Received request to get file by path at the submodel element {idShortPath} from submodel with id {submodelIdentifier} and the AAS with id {aasIdentifier}.");
 
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
             if (!Program.noSecurity)
             {
-                var securityConfig = new SecurityConfig(Program.noSecurity, this);
-
                 var submodel = _persistenceService.ReadSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier);
                 User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
                 var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
@@ -1062,8 +1062,9 @@ namespace IO.Swagger.Controllers
                     throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
                 }
             }
+            var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
 
-            var fileName = _persistenceService.ReadFileByPath(decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath, out var content, out var fileSize);
+            var fileName = _persistenceService.ReadFileByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPathElements, out var content, out var fileSize);
 
             //content-disposition so that the aasx file can be downloaded from the web browser.
             ContentDisposition contentDisposition = new() { FileName = fileName, Inline = fileName.ToLower().EndsWith(".pdf") };

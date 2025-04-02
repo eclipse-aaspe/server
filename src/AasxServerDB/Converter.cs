@@ -14,20 +14,16 @@
 namespace AasxServerDB
 {
     using System.Collections.Generic;
-    using System.IO.Packaging;
     using System.Linq;
     using System.Linq.Dynamic.Core;
     using System.Text;
     using AasCore.Aas3_0;
     using AasxServerDB.Entities;
-    using AasxServerDB.Result;
     using AdminShellNS;
     using Contracts.Pagination;
     using Extensions;
     using Microsoft.EntityFrameworkCore;
     using Microsoft.IdentityModel.Tokens;
-    using TimeStamp;
-    using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 
     public class Converter
@@ -52,22 +48,55 @@ namespace AasxServerDB
             return paths;
         }
 
-        public static AdminShellPackageEnv? GetPackageEnv(string aasID, out string envFileName)
+        public static AdminShellPackageEnv? GetPackageEnv(string aasID, string smId, out string envFileName)
         {
             var db = new AasContext();
             envFileName = ";";
 
-            var aasDBList = db.AASSets.Where(aas => aas.Identifier == aasID).ToList();
+            int envId = -1; 
 
-            if (aasDBList.Count != 1)
+            if (!smId.IsNullOrEmpty())
+            {
+                var smDBQuery = db.SMSets.Where(sm => sm.Identifier == smId);
+                if (!aasID.IsNullOrEmpty())
+                {
+                    var aasDB = db.AASSets
+                            .Where(aas => aas.Identifier == aasID).ToList();
+                    if (aasDB == null || aasDB.Count != 1)
+                    {
+                        return null;
+                    }
+                    var aasDBId = aasDB[0].Id;
+                    smDBQuery = smDBQuery.Where(sm => sm.AASId == aasDBId);
+                }
+                var smDB = smDBQuery.ToList();
+                if (smDB == null || smDB.Count != 1 || !smDB[0].EnvId.HasValue)
+                {
+                    return null;
+                }
+                envId = smDB[0].EnvId.Value;
+            }
+            else
+            {
+                var aasDBList = db.AASSets.Where(aas => aas.Identifier == aasID).ToList();
+
+                if (aasDBList.Count != 1)
+                {
+                    return null;
+                }
+                envId = aasDBList[0].EnvId;
+            }
+
+            if (envId == -1)
             {
                 return null;
             }
 
-            envFileName = GetAASXPath(aasDBList[0].EnvId);
+            envFileName = GetAASXPath(envId);
 
-            return GetPackageEnv(aasDBList[0].EnvId);
+            return GetPackageEnv(envId);
         }
+
         public static AdminShellPackageEnv? GetPackageEnv(int envId)
         {
             var timeStamp = DateTime.UtcNow;
@@ -289,7 +318,6 @@ namespace AasxServerDB
 
             return null;
         }
-
 
         public static List<ISubmodel> GetSubmodels(IPaginationParameters paginationParameters, string securityConditionSM, string securityConditionSME, Reference? reqSemanticId, string idShort)
         {
