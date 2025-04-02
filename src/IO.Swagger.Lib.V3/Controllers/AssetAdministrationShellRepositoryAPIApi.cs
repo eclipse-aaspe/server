@@ -989,8 +989,8 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAssetInformationAasRepository([FromRoute][Required]string aasIdentifier)
-        { 
+        public async virtual Task<IActionResult> GetAssetInformationAasRepository([FromRoute][Required]string aasIdentifier)
+        {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
 
             if (decodedAasIdentifier == null)
@@ -1000,7 +1000,8 @@ namespace IO.Swagger.Controllers
 
             _logger.LogInformation($"Received request to get the AAS with id {decodedAasIdentifier}.");
 
-            var output = _persistenceService.ReadAssetInformation(decodedAasIdentifier);
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            var output = await _dbRequestHandlerService.ReadAssetInformation(securityConfig, decodedAasIdentifier);
 
             return new ObjectResult(output);
         }

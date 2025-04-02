@@ -228,7 +228,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         if (reqSemanticId != null)
         {
-
             using (var scope = _serviceProvider.CreateScope())
             {
                 var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
@@ -247,6 +246,14 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     public IAssetAdministrationShell ReadAssetAdministrationShellById(ISecurityConfig securityConfig, string aasIdentifier)
     {
+        string securityConditionSM, securityConditionSME;
+        bool isAllowed = InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
+
+        if (!isAllowed)
+        {
+            throw new NotAllowed($"NOT ALLOWED: AAS with id {aasIdentifier}");
+        }
+
         bool found = IsAssetAdministrationShellPresent(aasIdentifier, out IAssetAdministrationShell output);
         if (found)
         {
@@ -344,9 +351,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    public IAssetInformation ReadAssetInformation(string aasIdentifier)
+    public IAssetInformation ReadAssetInformation(ISecurityConfig securityConfig, string aasIdentifier)
     {
-        var aas = ReadAssetAdministrationShellById(null, aasIdentifier);
+        var aas = ReadAssetAdministrationShellById(securityConfig, aasIdentifier);
         return aas.AssetInformation;
     }
 
@@ -844,7 +851,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 };
                 break;
             case DbRequestOp.ReadAssetInformation:
-                var assetInformation = ReadAssetInformation(dbRequest.Context.Params.AssetAdministrationShellIdentifier);
+                var assetInformation = ReadAssetInformation(
+                    dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.AssetAdministrationShellIdentifier);
                 result.AssetInformation = assetInformation;
                 break;
             case DbRequestOp.ReadThumbnail:

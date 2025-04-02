@@ -240,6 +240,28 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.FileRequestResult;
     }
 
+    public async Task<IAssetInformation> ReadAssetInformation(ISecurityConfig securityConfig, string aasIdentifier)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReadAssetInformation, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.AssetInformation;
+    }
+
     public async Task<DbRequestPackageEnvResult> ReadPackageEnv(string aasId)
     {
         var parameters = new DbRequestParams()
@@ -304,4 +326,5 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
         return taskCompletionSource.Task;
     }
+
 }
