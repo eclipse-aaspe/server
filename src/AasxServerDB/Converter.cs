@@ -319,7 +319,7 @@ namespace AasxServerDB
             return null;
         }
 
-        public static List<ISubmodel> GetSubmodels(IPaginationParameters paginationParameters, string securityConditionSM, string securityConditionSME, Reference? reqSemanticId, string idShort)
+        public static List<ISubmodel> GetSubmodels(IPaginationParameters paginationParameters, string securityConditionSM, string securityConditionSME, IReference reqSemanticId, string idShort)
         {
             List<ISubmodel> output = new List<ISubmodel>();
 

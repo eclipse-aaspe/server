@@ -11,7 +11,7 @@ public enum DbRequestOp
     ReadSubmodelById,
     ReadPagedSubmodelElements,
     ReadSubmodelElementByPath,
-    ReadAllSubmodels,
+    ReadPagedSubmodels,
     ReadAssetAdministrationShellById,
     ReadFileByPath,
     ReadAssetInformation,

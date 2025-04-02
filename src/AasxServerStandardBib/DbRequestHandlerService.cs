@@ -147,6 +147,30 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.Submodels[0];
     }
 
+    public async Task<List<ISubmodel>> ReadPagedSubmodels(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, Reference reqSemanticId, string idShort)
+    {
+        var parameters = new DbRequestParams()
+        {
+            PaginationParameters = paginationParameters,
+            Reference = reqSemanticId,
+            IdShort = idShort
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReadPagedSubmodels, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.Submodels;
+    }
+
     public async Task<List<ISubmodelElement>> ReadPagedSubmodelElements(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
     {
         var parameters = new DbRequestParams()
