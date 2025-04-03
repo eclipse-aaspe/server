@@ -80,13 +80,14 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     private readonly IValidateSerializationModifierService _validateModifierService;
     private readonly IIdShortPathParserService _idShortPathParserService;
     private readonly IDbRequestHandlerService _dbRequestHandlerService;
+    private readonly IMetamodelVerificationService _verificationService;
 
     public SubmodelRepositoryAPIApiController(IAppLogger<SubmodelRepositoryAPIApiController> logger, IBase64UrlDecoderService decoderService, IPersistenceService persistenceService,
                                               IReferenceModifierService referenceModifierService, IJsonQueryDeserializer jsonQueryDeserializer, IMappingService mappingService,
                                               IPathModifierService pathModifierService, ILevelExtentModifierService levelExtentModifierService,
                                               IPaginationService paginationService, IAuthorizationService authorizationService,
                                               IValidateSerializationModifierService validateModifierService, IIdShortPathParserService idShortPathParserService,
-                                              IDbRequestHandlerService dbRequestHandlerService)
+                                              IDbRequestHandlerService dbRequestHandlerService, IMetamodelVerificationService verificationService)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _decoderService = decoderService ?? throw new ArgumentNullException(nameof(decoderService));
@@ -101,6 +102,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         _validateModifierService = validateModifierService ?? throw new ArgumentNullException(nameof(authorizationService));
         _idShortPathParserService = idShortPathParserService ?? throw new ArgumentNullException(nameof(idShortPathParserService));
         _dbRequestHandlerService = dbRequestHandlerService ?? throw new ArgumentNullException(nameof(dbRequestHandlerService));
+        _verificationService = verificationService ?? throw new ArgumentNullException(nameof(verificationService));
     }
 
     // Events
@@ -2316,7 +2318,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 409, type: typeof(Result), description: "Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult PostSubmodel([FromBody]Submodel body, [FromQuery] string aasIdentifier)
+    public async virtual Task<IActionResult> PostSubmodel([FromBody]Submodel body, [FromQuery] string aasIdentifier)
     {
         if (body == null)
         {
@@ -2325,13 +2327,19 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         _logger.LogInformation($"Received request to create a submodel.");
 
+
         var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
         if (decodedAasIdentifier == null)
         {
             throw new NotAllowed($"Cannot proceed as {nameof(decodedAasIdentifier)} is null");
         }
 
-        var output = _persistenceService.CreateSubmodel(body, decodedAasIdentifier);
+        //Verify the body first
+        _verificationService.VerifyRequestBody(body);
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+        var output = await _dbRequestHandlerService.CreateSubmodel(securityConfig, body, decodedAasIdentifier);
 
         return CreatedAtAction("PostSubmodel", output);
     }

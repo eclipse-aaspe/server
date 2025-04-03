@@ -16,7 +16,6 @@ public interface IPersistenceService
     List<string> ReadFilteredPackages(string filterPath, List<AdminShellPackageEnv> list);
 
 
-    ISubmodel CreateSubmodel(ISubmodel body, string decodedAasIdentifier);
     IAssetAdministrationShell CreateAssetAdministrationShell(IAssetAdministrationShell body);
     IReference CreateSubmodelReferenceInAAS(IReference body, string aasIdentifier);
     ISubmodelElement CreateSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath, bool first, ISubmodelElement body);

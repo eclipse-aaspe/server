@@ -48,10 +48,11 @@ namespace AasxServerDB
             return paths;
         }
 
-        public static AdminShellPackageEnv? GetPackageEnv(string aasID, string smId, out string envFileName)
+        public static bool IsPackageEnvPresent(string aasID, string smId, bool loadInMemory, out string envFileName, out AdminShellPackageEnv? packageEnv)
         {
             var db = new AasContext();
             envFileName = ";";
+            packageEnv = null;
 
             int envId = -1; 
 
@@ -64,7 +65,7 @@ namespace AasxServerDB
                             .Where(aas => aas.Identifier == aasID).ToList();
                     if (aasDB == null || aasDB.Count != 1)
                     {
-                        return null;
+                        return false;
                     }
                     var aasDBId = aasDB[0].Id;
                     smDBQuery = smDBQuery.Where(sm => sm.AASId == aasDBId);
@@ -72,7 +73,7 @@ namespace AasxServerDB
                 var smDB = smDBQuery.ToList();
                 if (smDB == null || smDB.Count != 1 || !smDB[0].EnvId.HasValue)
                 {
-                    return null;
+                    return false;
                 }
                 envId = smDB[0].EnvId.Value;
             }
@@ -82,19 +83,24 @@ namespace AasxServerDB
 
                 if (aasDBList.Count != 1)
                 {
-                    return null;
+                    return false;
                 }
                 envId = aasDBList[0].EnvId;
             }
 
             if (envId == -1)
             {
-                return null;
+                return false;
             }
 
             envFileName = GetAASXPath(envId);
 
-            return GetPackageEnv(envId);
+            if (loadInMemory)
+            {
+                packageEnv = GetPackageEnv(envId);
+            }
+
+            return true;
         }
 
         public static AdminShellPackageEnv? GetPackageEnv(int envId)
@@ -334,8 +340,7 @@ namespace AasxServerDB
                     .Take(paginationParameters.Limit)
                     .ToList();
 
-                //ToDo: Verify whether this is correct
-                foreach (var sm in smDBList.Select(selector: submodelDB => GetSubmodel(smDB: submodelDB)))
+                foreach (var sm in smDBList.Select(selector: submodelDB => GetSubmodel(smDB: submodelDB, "", securityConditionSM, securityConditionSME)))
                 {
                     if (sm.TimeStamp == DateTime.MinValue)
                     {

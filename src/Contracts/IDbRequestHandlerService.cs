@@ -34,6 +34,8 @@ public interface IDbRequestHandlerService
 
     Task<Events.EventPayload> ReadEventMessages(DbEventRequest dbEventRequest);
 
+    Task<ISubmodel> CreateSubmodel(ISecurityConfig securityConfig, ISubmodel newSubmodel, string aasIdentifier);
+
     Task UpdateEventMessages(DbEventRequest dbEventRequest);
 
 }
