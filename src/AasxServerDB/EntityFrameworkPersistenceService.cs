@@ -547,7 +547,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                             using (var fileStream = new FileStream(AasContext.DataPath + "/files/" + Path.GetFileName(envFileName) + ".zip", FileMode.Open))
                             using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
                             {
-                                var archiveFile = archive.GetEntry(envFileName);
+                                var archiveFile = archive.GetEntry(file.Value);
                                 var tempStream = archiveFile.Open();
                                 var ms = new MemoryStream();
                                 tempStream.CopyTo(ms);
