@@ -14,7 +14,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using System;
 
-namespace AasxServerStandardBib.Extensions
+namespace AasxServerStandardBib.ServiceExtensions
 {
     public static class ExtendServiceCollection
     {

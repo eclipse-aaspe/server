@@ -39,6 +39,7 @@ namespace IO.Swagger.Controllers;
 
 using AasSecurity.Exceptions;
 using Contracts;
+using Contracts.Exceptions;
 
 /// <summary>
 /// 

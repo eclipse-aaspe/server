@@ -18,7 +18,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AasSecurity;
 using AasxServerDB;
-using AasxServerStandardBib.Extensions;
+using AasxServerStandardBib.ServiceExtensions;
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
 using AasxServerStandardBib.Services;

@@ -13,11 +13,11 @@
 
 using System;
 
-namespace AasxServerStandardBib.Exceptions
+namespace Contracts.Exceptions
 {
-    public class UnprocessableEntityException : Exception
+    public class DuplicateException : Exception
     {
-        public UnprocessableEntityException(string message) : base(message)
+        public DuplicateException(string message) : base(message)
         {
 
         }

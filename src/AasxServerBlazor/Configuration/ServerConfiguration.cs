@@ -16,7 +16,7 @@ using System.Collections.Generic;
 using System.IO;
 using AasSecurity;
 using AasxServerDB;
-using AasxServerStandardBib.Extensions;
+using AasxServerStandardBib.ServiceExtensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Connections;

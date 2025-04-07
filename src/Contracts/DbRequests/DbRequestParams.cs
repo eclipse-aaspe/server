@@ -21,8 +21,6 @@ public class DbRequestParams
 
     public string SubmodelIdentifier { get; set; }
 
-    public Reference SemanticId { get; set; }
-
     public DbFileRequestResult FileRequest { get; set; }
 
     //ToDo: Decide whether differentiate between params of the different CRUD?
@@ -32,8 +30,11 @@ public class DbRequestParams
 
     public ISubmodelElement SubmodelElementBody { get; set; }
 
-    public IReference ReferenceBody { get; set; }
+    public IReference Reference { get; set; }
 
+    public IAssetInformation AssetInformation { get; set; }
 
     public bool First { get; set; }
+
+    public DbEventRequest EventRequest { get; set; }
 }

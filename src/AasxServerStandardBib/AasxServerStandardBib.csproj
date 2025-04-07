@@ -80,8 +80,4 @@
         </None>
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="DbRequest\" />
-    </ItemGroup>
-
 </Project>

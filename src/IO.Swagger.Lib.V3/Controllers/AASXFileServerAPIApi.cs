@@ -42,6 +42,7 @@ namespace IO.Swagger.Controllers;
 
 using System.Threading.Tasks;
 using Contracts;
+using Contracts.Exceptions;
 
 /// <summary>
 /// 

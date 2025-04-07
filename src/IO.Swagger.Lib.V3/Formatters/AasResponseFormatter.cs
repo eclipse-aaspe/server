@@ -75,7 +75,11 @@ namespace IO.Swagger.Lib.V3.Formatters
 
         public override bool CanWriteResult(OutputFormatterCanWriteContext context)
         {
-            if (context.Object is Events.EventPayload)
+            if (context.Object is EventPayload)
+            {
+                return true;
+            }
+            if (context.Object is Contracts.EventPayload)
             {
                 return true;
             }
@@ -150,7 +154,7 @@ namespace IO.Swagger.Lib.V3.Formatters
             //SerializationModifier
             GetSerializationMidifiersFromRequest(context.HttpContext.Request, out LevelEnum level, out ExtentEnum extent);
 
-            if (context.Object is List<string> s || context.Object is Events.EventPayload)
+            if (context.Object is List<string> s || context.Object is EventPayload || context.Object is Contracts.Events.EventPayload)
             {
                 /*
                 string json = JsonSerializer.Serialize(context.Object);

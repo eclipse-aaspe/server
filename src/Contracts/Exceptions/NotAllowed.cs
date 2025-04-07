@@ -11,13 +11,11 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-using System;
-
-namespace AasxServerStandardBib.Exceptions
+namespace Contracts.Exceptions
 {
-    public class DuplicateException : Exception
+    public class NotAllowed : Exception
     {
-        public DuplicateException(string message) : base(message)
+        public NotAllowed(string message) : base(message)
         {
 
         }

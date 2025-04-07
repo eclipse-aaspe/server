@@ -39,6 +39,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using IO.Swagger.Models;
 using Contracts;
+using Contracts.Exceptions;
 
 namespace IO.Swagger.Controllers
 {

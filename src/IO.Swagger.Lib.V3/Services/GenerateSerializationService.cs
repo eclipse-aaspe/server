@@ -29,7 +29,7 @@ using Environment = AasCore.Aas3_0.Environment;
 public class GenerateSerializationService : IGenerateSerializationService
 {
     private readonly IAppLogger<GenerateSerializationService> _logger;
-    private readonly IPersistenceService _persistenceService;
+    private readonly IDbRequestHandlerService _dbRequestHandlerService;
     private readonly ISubmodelService _submodelService;
     private readonly IConceptDescriptionService _cdService;
 
@@ -42,10 +42,10 @@ public class GenerateSerializationService : IGenerateSerializationService
     /// <exception cref="ArgumentNullException">
     /// Thrown when any of the required services (logger, aasService, submodelService) are null.
     /// </exception>
-    public GenerateSerializationService(IAppLogger<GenerateSerializationService> logger, IPersistenceService persistenceService, ISubmodelService submodelService, IConceptDescriptionService cdService)
+    public GenerateSerializationService(IAppLogger<GenerateSerializationService> logger, IDbRequestHandlerService dbRequestHandlerService, ISubmodelService submodelService, IConceptDescriptionService cdService)
     {
         _logger          = logger ?? throw new ArgumentNullException(nameof(logger));
-        _persistenceService      = persistenceService ?? throw new ArgumentNullException(nameof(persistenceService));
+        _dbRequestHandlerService = dbRequestHandlerService ?? throw new ArgumentNullException(nameof(dbRequestHandlerService));
         _submodelService = submodelService ?? throw new ArgumentNullException(nameof(submodelService));
         _cdService = cdService ?? throw new ArgumentNullException(nameof(cdService));
     }
@@ -63,7 +63,7 @@ public class GenerateSerializationService : IGenerateSerializationService
         var pagination = new PaginationParameters("null",100);
 
         //ToDo: Fix no security
-        var aasList = _persistenceService.ReadPagedAssetAdministrationShells(pagination, null, new List<ISpecificAssetId>(),null);
+        var aasList = _dbRequestHandlerService.ReadPagedAssetAdministrationShells(pagination, null, new List<ISpecificAssetId>(),null).Result;
         //Using is null or empty, as the query parameter in controll currently receives empty list (not null, but count = 0)
         if (!aasIds.IsNullOrEmpty())
         {

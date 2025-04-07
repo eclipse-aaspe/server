@@ -11,11 +11,13 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-namespace AasSecurity.Exceptions
+using System;
+
+namespace Contracts.Exceptions
 {
-    public class NotAllowed : Exception
+    public class UnprocessableEntityException : Exception
     {
-        public NotAllowed(string message) : base(message)
+        public UnprocessableEntityException(string message) : base(message)
         {
 
         }

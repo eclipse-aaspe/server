@@ -13,6 +13,7 @@
 
 using AasxServer;
 using AdminShellNS;
+using Contracts;
 using Extensions;
 using Microsoft.IdentityModel.Tokens;
 using NJsonSchema.Annotations;
@@ -20,14 +21,17 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using static AasxServerBlazor.Pages.TreePage;
 
 namespace AasxServerBlazor.Data;
 
 public class AASService
 {
-    public AASService()
+    public AASService(IDbRequestHandlerService dbRequestHandlerService)
     {
+        this._dbRequestHandlerService = dbRequestHandlerService;
+
         Program.NewDataAvailable += (s, a) => { NewDataAvailable?.Invoke(this, a); };
     }
 
@@ -35,6 +39,7 @@ public class AASService
 
     public List<Item> items;
     public List<Item> viewItems;
+    private IDbRequestHandlerService _dbRequestHandlerService;
 
     public List<Item> GetTree()
     {
@@ -56,15 +61,14 @@ public class AASService
             return BuildTree(Program.env, Program.envFileName);
         }
 
-        var envFileName = "";
-        var env = AasxServerDB.Converter.GetPackageEnv(aasID, out envFileName);
+        var env = _dbRequestHandlerService.ReadPackageEnv(aasID).Result;
 
         if (env == null)
         {
             return null;
         }
 
-        return BuildTree([env], [envFileName]);
+        return BuildTree([env.PackageEnv], [env.EnvFileName]);
     }
     public List<Item> BuildTree(AdminShellPackageEnv[] env, string[] envFileName)
     {
