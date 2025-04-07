@@ -1900,10 +1900,10 @@ namespace AasxServer
 
                                         EventPayload eventPayload = System.Text.Json.JsonSerializer.Deserialize<EventPayload>(jsonString);
 
-                                        if (eventPayload.StatusData != "")
+                                        if (eventPayload.statusData != "")
                                         {
                                             ISubmodelElement receiveSme = null;
-                                            MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(eventPayload.StatusData));
+                                            MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(eventPayload.statusData));
                                             JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
                                             receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
                                             if (receiveSme != null && receiveSme is SubmodelElementCollection smc)
@@ -1920,7 +1920,7 @@ namespace AasxServer
                                                     }
 
                                                     var dt = eventData.StatusData.TimeStamp;
-                                                    d = eventPayload.Status.LastUpdate;
+                                                    d = eventPayload.status.lastUpdate;
                                                     if (d == "")
                                                     {
                                                         d = "init";
@@ -2050,13 +2050,13 @@ namespace AasxServer
                                 {
                                     if (eventData.Transmitted != null)
                                     {
-                                        eventData.Transmitted.Value = e.Status.Transmitted;
+                                        eventData.Transmitted.Value = e.status.transmitted;
                                         eventData.Transmitted.SetTimeStamp(now);
                                     }
-                                    var dt = DateTime.Parse(e.Status.LastUpdate);
+                                    var dt = DateTime.Parse(e.status.lastUpdate);
                                     if (eventData.LastUpdate != null)
                                     {
-                                        eventData.LastUpdate.Value = e.Status.LastUpdate;
+                                        eventData.LastUpdate.Value = e.status.lastUpdate;
                                         eventData.LastUpdate.SetTimeStamp(dt);
                                     }
                                     if (eventData.Status != null)

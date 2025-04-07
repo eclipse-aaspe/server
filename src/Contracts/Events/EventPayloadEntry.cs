@@ -7,38 +7,38 @@ using System.Threading.Tasks;
 
 public class EventPayloadEntry : IComparable<EventPayloadEntry>
 {
-    public string EntryType { get; set; } // CREATE, UPDATE, DELETE
-    public string LastUpdate { get; set; } // timeStamp for this entry
-    public string PayloadType { get; set; } // Submodel, SME, AAS
-    public string Payload { get; set; } // JSON Serialization
-    public string SubmodelId { get; set; } // ID of related Submodel
-    public string IdShortPath { get; set; } // for SMEs only
-    public List<string> NotDeletedIdShortList { get; set; } // for DELETE only, remaining idShort
+    public string entryType { get; set; } // CREATE, UPDATE, DELETE
+    public string lastUpdate { get; set; } // timeStamp for this entry
+    public string payloadType { get; set; } // Submodel, SME, AAS
+    public string payload { get; set; } // JSON Serialization
+    public string submodelId { get; set; } // ID of related Submodel
+    public string idShortPath { get; set; } // for SMEs only
+    public List<string> notDeletedIdShortList { get; set; } // for DELETE only, remaining idShort
 
     public EventPayloadEntry()
     {
-        EntryType = "";
-        LastUpdate = "";
-        PayloadType = "";
-        Payload = "";
-        SubmodelId = "";
-        IdShortPath = "";
-        NotDeletedIdShortList = new List<string>();
+        entryType = "";
+        lastUpdate = "";
+        payloadType = "";
+        payload = "";
+        submodelId = "";
+        idShortPath = "";
+        notDeletedIdShortList = new List<string>();
     }
 
     public int CompareTo(EventPayloadEntry other)
     {
-        var result = string.Compare(this.SubmodelId, other.SubmodelId);
+        var result = string.Compare(this.submodelId, other.submodelId);
 
         if (result == 0)
         {
-            if (this.PayloadType == other.PayloadType)
+            if (this.payloadType == other.payloadType)
             {
                 result = 0;
             }
             else
             {
-                if (this.PayloadType == "sm")
+                if (this.payloadType == "sm")
                 {
                     result = -1;
                 }
@@ -51,7 +51,7 @@ public class EventPayloadEntry : IComparable<EventPayloadEntry>
 
         if (result == 0)
         {
-            result = string.Compare(this.IdShortPath, other.IdShortPath);
+            result = string.Compare(this.idShortPath, other.idShortPath);
         }
 
         return result;

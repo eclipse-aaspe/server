@@ -1225,7 +1225,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         {
             if (eventData.LastUpdate != null && eventData.LastUpdate.Value != null && eventData.LastUpdate.Value != "")
             {
-                eventPayload.Status.LastUpdate = eventData.LastUpdate.Value;
+                eventPayload.status.lastUpdate = eventData.LastUpdate.Value;
             }
         }
         else
@@ -1233,13 +1233,13 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             var timeStamp = DateTime.UtcNow;
             if (eventData.Transmitted != null)
             {
-                eventData.Transmitted.Value = eventPayload.Status.Transmitted;
+                eventData.Transmitted.Value = eventPayload.status.transmitted;
                 eventData.Transmitted.SetTimeStamp(DateTime.UtcNow);
             }
-            var dt = DateTime.Parse(eventPayload.Status.LastUpdate);
+            var dt = DateTime.Parse(eventPayload.status.lastUpdate);
             if (eventData.LastUpdate != null)
             {
-                eventData.LastUpdate.Value = eventPayload.Status.LastUpdate;
+                eventData.LastUpdate.Value = eventPayload.status.lastUpdate;
                 eventData.LastUpdate.SetTimeStamp(dt);
             }
             if (eventData.Diff != null)

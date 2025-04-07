@@ -113,15 +113,15 @@ public class EventService : IEventService
                 diffEntry.Add(entryType + " " + idShortPath + sme.IdShort);
                 var j = Jsonization.Serialize.ToJsonObject(sme);
                 var e = new EventPayloadEntry();
-                e.EntryType = entryType;
-                e.LastUpdate = TimeStamp.TimeStamp.DateTimeToString(timeStamp);
-                e.PayloadType = "sme";
+                e.entryType = entryType;
+                e.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(timeStamp);
+                e.payloadType = "sme";
                 if (withPayload)
                 {
-                    e.Payload = j.ToJsonString();
+                    e.payload = j.ToJsonString();
                 }
-                e.SubmodelId = submodelId;
-                e.IdShortPath = idShortPath + sme.IdShort;
+                e.submodelId = submodelId;
+                e.idShortPath = idShortPath + sme.IdShort;
                 entries.Add(e);
                 count++;
             }
@@ -130,16 +130,16 @@ public class EventService : IEventService
                 Console.WriteLine("DELETE SME " + idShortPath + sme.IdShort);
                 diffEntry.Add(entryType + " " + idShortPath + sme.IdShort + ".*");
                 var e = new EventPayloadEntry();
-                e.EntryType = entryType;
-                e.LastUpdate = TimeStamp.TimeStamp.DateTimeToString(timeStamp);
-                e.PayloadType = "sme";
-                e.SubmodelId = submodelId;
-                e.IdShortPath = idShortPath + sme.IdShort;
+                e.entryType = entryType;
+                e.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(timeStamp);
+                e.payloadType = "sme";
+                e.submodelId = submodelId;
+                e.idShortPath = idShortPath + sme.IdShort;
                 if (children != null || children.Count != 0)
                 {
                     foreach (var child in children)
                     {
-                        e.NotDeletedIdShortList.Add(child.IdShort);
+                        e.notDeletedIdShortList.Add(child.IdShort);
                     }
                 }
                 entries.Add(e);
@@ -161,9 +161,9 @@ public class EventService : IEventService
         string diff, List<String> diffEntry, bool withPayload, int limitSm, int limitSme, int offsetSm, int offsetSme)
     {
         var e = new EventPayload();
-        e.Status.Transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
-        e.Status.LastUpdate = "";
-        e.EventEntries = new List<EventPayloadEntry>();
+        e.status.transmitted = TimeStamp.TimeStamp.DateTimeToString(DateTime.UtcNow);
+        e.status.lastUpdate = "";
+        e.eventEntries = new List<EventPayloadEntry>();
 
         var isInitial = diff == "init";
         var isStatus = diff == "status";
@@ -171,7 +171,7 @@ public class EventService : IEventService
         if (statusData != null && statusData.Value != null)
         {
             var j = Jsonization.Serialize.ToJsonObject(statusData);
-            e.StatusData = j.ToJsonString();
+            e.statusData = j.ToJsonString();
             /*
             if (depth == 0)
             {
@@ -200,8 +200,8 @@ public class EventService : IEventService
                     {
                         submodel = referable as Submodel;
                         children = submodel.SubmodelElements;
-                        entry.SubmodelId = submodel.Id;
-                        entry.PayloadType = "submodel";
+                        entry.submodelId = submodel.Id;
+                        entry.payloadType = "submodel";
                     }
                     else
                     {
@@ -222,16 +222,16 @@ public class EventService : IEventService
                         if (r is Submodel)
                         {
                             submodel = r as Submodel;
-                            entry.SubmodelId = submodel.Id;
+                            entry.submodelId = submodel.Id;
                         }
-                        entry.PayloadType = "sme";
+                        entry.payloadType = "sme";
                         if (depth == 0)
                         {
                             idShortPath = referable.IdShort + ".";
                         }
                     }
 
-                    e.Status.LastUpdate = TimeStamp.TimeStamp.DateTimeToString(referable.TimeStampTree);
+                    e.status.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(referable.TimeStampTree);
 
                     // foreach (var c in children)
                     {
@@ -241,16 +241,16 @@ public class EventService : IEventService
                             var j = Jsonization.Serialize.ToJsonObject(referable);
                             json = j.ToJsonString();
 
-                            entry.EntryType = "CREATE";
-                            e.Status.LastUpdate = TimeStamp.TimeStamp.DateTimeToString(referable.TimeStampTree);
+                            entry.entryType = "CREATE";
+                            e.status.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(referable.TimeStampTree);
                             if (withPayload)
                             {
-                                entry.Payload = json;
+                                entry.payload = json;
                             }
-                            entry.LastUpdate = e.Status.LastUpdate;
-                            entry.IdShortPath = idShortPath.TrimEnd('.');
-                            e.EventEntries.Add(entry);
-                            diffEntry.Add(entry.EntryType + " " + entry.IdShortPath);
+                            entry.lastUpdate = e.status.lastUpdate;
+                            entry.idShortPath = idShortPath.TrimEnd('.');
+                            e.eventEntries.Add(entry);
+                            diffEntry.Add(entry.entryType + " " + entry.idShortPath);
                             /*
                             string json = string.Empty;
                             if (referable != null)
@@ -277,7 +277,7 @@ public class EventService : IEventService
                             var diffTime = DateTime.Parse(diff);
                             if (changes == null || changes.Contains("CREATE"))
                             {
-                                CollectSubmodelElements(children, diffTime, "CREATE", submodel.Id, idShortPath, e.EventEntries, diffEntry, withPayload);
+                                CollectSubmodelElements(children, diffTime, "CREATE", submodel.Id, idShortPath, e.eventEntries, diffEntry, withPayload);
                             }
                             if (changes == null || changes.Contains("DELETE"))
                             {
@@ -285,16 +285,16 @@ public class EventService : IEventService
                                 {
                                     var c = new List<ISubmodelElement>();
                                     c.Add(referable as ISubmodelElement);
-                                    CollectSubmodelElements(c, diffTime, "DELETE", submodel.Id, "", e.EventEntries, diffEntry, withPayload);
+                                    CollectSubmodelElements(c, diffTime, "DELETE", submodel.Id, "", e.eventEntries, diffEntry, withPayload);
                                 }
                                 else
                                 {
-                                    CollectSubmodelElements(children, diffTime, "DELETE", submodel.Id, idShortPath, e.EventEntries, diffEntry, withPayload);
+                                    CollectSubmodelElements(children, diffTime, "DELETE", submodel.Id, idShortPath, e.eventEntries, diffEntry, withPayload);
                                 }
                             }
                             if (changes == null || changes.Contains("UPDATE"))
                             {
-                                CollectSubmodelElements(children, diffTime, "UPDATE", submodel.Id, idShortPath, e.EventEntries, diffEntry, withPayload);
+                                CollectSubmodelElements(children, diffTime, "UPDATE", submodel.Id, idShortPath, e.eventEntries, diffEntry, withPayload);
                             }
                         }
                     }
@@ -336,7 +336,7 @@ public class EventService : IEventService
                             timeStampMax = s.Max();
                         }
                     }
-                    e.Status.LastUpdate = TimeStamp.TimeStamp.DateTimeToString(timeStampMax);
+                    e.status.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(timeStampMax);
                     return e;
                 }
 
@@ -450,12 +450,12 @@ public class EventService : IEventService
                                 }
 
                                 var entry = new EventPayloadEntry();
-                                entry.EntryType = entryType;
-                                entry.PayloadType = "sme";
-                                entry.IdShortPath = idShortPath;
-                                entry.SubmodelId = sm.Identifier;
-                                entry.LastUpdate = TimeStamp.TimeStamp.DateTimeToString(sme.TimeStampTree);
-                                entry.NotDeletedIdShortList = notDeletedIdShortList;
+                                entry.entryType = entryType;
+                                entry.payloadType = "sme";
+                                entry.idShortPath = idShortPath;
+                                entry.submodelId = sm.Identifier;
+                                entry.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(sme.TimeStampTree);
+                                entry.notDeletedIdShortList = notDeletedIdShortList;
 
                                 if (entryType != "DELETE" && withPayload)
                                 {
@@ -467,14 +467,14 @@ public class EventService : IEventService
                                         if (j != null)
                                         {
                                             var json = j.ToJsonString();
-                                            entry.Payload = json;
+                                            entry.payload = json;
                                         }
                                     }
                                 }
 
-                                e.EventEntries.Add(entry);
-                                diffEntry.Add(entry.EntryType + " " + entry.IdShortPath);
-                                Console.WriteLine($"Event {entry.EntryType} Type: {entry.PayloadType} idShortPath: {entry.IdShortPath}");
+                                e.eventEntries.Add(entry);
+                                diffEntry.Add(entry.entryType + " " + entry.idShortPath);
+                                Console.WriteLine($"Event {entry.entryType} Type: {entry.payloadType} idShortPath: {entry.idShortPath}");
                                 countSME++;
                             }
                         }
@@ -488,11 +488,11 @@ public class EventService : IEventService
                         }
 
                         var entry = new EventPayloadEntry();
-                        entry.EntryType = entryType;
-                        entry.PayloadType = "sm";
-                        entry.IdShortPath = sm.IdShort;
-                        entry.SubmodelId = sm.Identifier;
-                        entry.LastUpdate = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree);
+                        entry.entryType = entryType;
+                        entry.payloadType = "sm";
+                        entry.idShortPath = sm.IdShort;
+                        entry.submodelId = sm.Identifier;
+                        entry.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(sm.TimeStampTree);
 
                         if (withPayload)
                         {
@@ -503,14 +503,14 @@ public class EventService : IEventService
                                 if (j != null)
                                 {
                                     var json = j.ToJsonString();
-                                    entry.Payload = json;
+                                    entry.payload = json;
                                 }
                             }
                         }
 
-                        diffEntry.Add(entry.EntryType + " " + entry.IdShortPath);
-                        Console.WriteLine($"Event {entry.EntryType} Type: {entry.PayloadType} idShortPath: {entry.IdShortPath}");
-                        e.EventEntries.Add(entry);
+                        diffEntry.Add(entry.entryType + " " + entry.idShortPath);
+                        Console.WriteLine($"Event {entry.entryType} Type: {entry.payloadType} idShortPath: {entry.idShortPath}");
+                        e.eventEntries.Add(entry);
                         countSM++;
                     }
                 }
@@ -525,16 +525,16 @@ public class EventService : IEventService
                         timeStampMax = db.SMSets.Where(searchSM).Select(sm => sm.TimeStampTree).Max();
                     }
                 }
-                e.Status.LastUpdate = TimeStamp.TimeStamp.DateTimeToString(timeStampMax);
-                e.Status.CountSM = countSM;
-                e.Status.CountSME = countSME;
+                e.status.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(timeStampMax);
+                e.status.countSM = countSM;
+                e.status.countSME = countSME;
                 if (countSM == limitSm)
                 {
-                    e.Status.Cursor = $"offsetSM={offsetSm + limitSm}";
+                    e.status.cursor = $"offsetSM={offsetSm + limitSm}";
                 }
                 else if (countSM == limitSm)
                 {
-                    e.Status.Cursor = $"offsetSME={offsetSme + limitSme}";
+                    e.status.cursor = $"offsetSME={offsetSme + limitSme}";
                 }
             }
         }
@@ -552,16 +552,16 @@ public class EventService : IEventService
         var statusData = eventData.StatusData;
 
         EventPayload eventPayload = JsonSerializer.Deserialize<EventPayload>(json);
-        transmit = eventPayload.Status.Transmitted;
-        var dt = TimeStamp.TimeStamp.StringToDateTime(eventPayload.Status.LastUpdate);
-        dt = DateTime.Parse(eventPayload.Status.LastUpdate);
+        transmit = eventPayload.status.transmitted;
+        var dt = TimeStamp.TimeStamp.StringToDateTime(eventPayload.status.lastUpdate);
+        dt = DateTime.Parse(eventPayload.status.lastUpdate);
         lastDiffValue = TimeStamp.TimeStamp.DateTimeToString(dt);
 
         ISubmodelElementCollection statusDataCollection = null;
-        if (eventPayload.StatusData != "" && statusData != null)
+        if (eventPayload.statusData != "" && statusData != null)
         {
             ISubmodelElement receiveSme = null;
-            MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(eventPayload.StatusData));
+            MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(eventPayload.statusData));
             JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
             receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
             if (receiveSme is SubmodelElementCollection smc)
@@ -628,15 +628,15 @@ public class EventService : IEventService
 
             lock (EventLock)
             {
-                foreach (var entry in eventPayload.EventEntries)
+                foreach (var entry in eventPayload.eventEntries)
                 {
-                    var submodelId = entry.SubmodelId;
+                    var submodelId = entry.submodelId;
                     ISubmodel receiveSubmodel = null;
                     IAssetAdministrationShell aas = null;
 
-                    if (entry.PayloadType == "submodel" && entry.Payload != "")
+                    if (entry.payloadType == "submodel" && entry.payload != "")
                     {
-                        MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(entry.Payload));
+                        MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(entry.payload));
                         JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
                         receiveSubmodel = Jsonization.Deserialize.SubmodelFrom(node);
                         receiveSubmodel.TimeStampCreate = dt;
@@ -673,7 +673,7 @@ public class EventService : IEventService
                         }
                     }
 
-                    if (entry.PayloadType == "sme" && referable != null && (entry.Payload != "" || entry.NotDeletedIdShortList.Count != 0))
+                    if (entry.payloadType == "sme" && referable != null && (entry.payload != "" || entry.notDeletedIdShortList.Count != 0))
                     {
                         count += ChangeSubmodelElement(eventData, entry, referable as ISubmodelElement, children, "", diffEntry);
                         if (count > 0)
@@ -687,17 +687,17 @@ public class EventService : IEventService
         else // DB
         {
             // sort by submodelID + entryType + idShortPath by CompareTo(EventPayloadEntry)
-            eventPayload.EventEntries.Sort();
+            eventPayload.eventEntries.Sort();
             var entriesSubmodel = new List<EventPayloadEntry>();
-            foreach (var entry in eventPayload.EventEntries)
+            foreach (var entry in eventPayload.eventEntries)
             {
-                Console.WriteLine($"Event {entry.EntryType} Type: {entry.PayloadType} idShortPath: {entry.IdShortPath}");
+                Console.WriteLine($"Event {entry.entryType} Type: {entry.payloadType} idShortPath: {entry.idShortPath}");
                 Submodel receiveSM = null;
-                if (entry.PayloadType == "sm")
+                if (entry.payloadType == "sm")
                 {
-                    if (entry.Payload != "")
+                    if (entry.payload != "")
                     {
-                        MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(entry.Payload));
+                        MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(entry.payload));
                         JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
                         receiveSM = Jsonization.Deserialize.SubmodelFrom(node);
                     }
@@ -727,7 +727,7 @@ public class EventService : IEventService
                         }
                     }
                 }
-                if (entry.PayloadType == "sme")
+                if (entry.payloadType == "sme")
                 {
                     bool changeSubmodel = false;
                     bool addEntry = false;
@@ -737,12 +737,12 @@ public class EventService : IEventService
                     }
                     else
                     {
-                        if (entry.SubmodelId != entriesSubmodel.Last().SubmodelId)
+                        if (entry.submodelId != entriesSubmodel.Last().submodelId)
                         {
                             changeSubmodel = true;
                         }
                     }
-                    if (entry == eventPayload.EventEntries.Last())
+                    if (entry == eventPayload.eventEntries.Last())
                     {
                         addEntry = true;
                         changeSubmodel = true;
@@ -753,7 +753,7 @@ public class EventService : IEventService
                     }
                     if (changeSubmodel)
                     {
-                        var submodelIdentifier = entriesSubmodel.Last().SubmodelId;
+                        var submodelIdentifier = entriesSubmodel.Last().submodelId;
                         using (var db = new AasContext())
                         {
                             var smDBQuery = db.SMSets.Where(sm => sm.Identifier == submodelIdentifier);
@@ -778,9 +778,9 @@ public class EventService : IEventService
                                 {
                                     bool change = false;
                                     ISubmodelElement receiveSme = null;
-                                    if (e.Payload != "")
+                                    if (e.payload != "")
                                     {
-                                        MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(entry.Payload));
+                                        MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(entry.payload));
                                         JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
                                         receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
                                     }
@@ -790,19 +790,19 @@ public class EventService : IEventService
                                         receiveSmeDB.SMId = smDBId;
 
                                         var parentPath = "";
-                                        if (e.IdShortPath.Contains("."))
+                                        if (e.idShortPath.Contains("."))
                                         {
-                                            int lastDotIndex = e.IdShortPath.LastIndexOf('.');
+                                            int lastDotIndex = e.idShortPath.LastIndexOf('.');
                                             if (lastDotIndex != -1)
                                             {
-                                                parentPath = e.IdShortPath.Substring(0, lastDotIndex);
+                                                parentPath = e.idShortPath.Substring(0, lastDotIndex);
                                             }
                                         }
                                         else
                                         {
                                             change = true;
                                         }
-                                        switch (e.EntryType)
+                                        switch (e.entryType)
                                         {
                                             case "CREATE":
                                             case "UPDATE":
@@ -812,7 +812,7 @@ public class EventService : IEventService
                                                     if (parentDB != null)
                                                     {
                                                         receiveSmeDB.ParentSMEId = parentDB.smeSet.Id;
-                                                        receiveSmeDB.IdShortPath = e.IdShortPath;
+                                                        receiveSmeDB.IdShortPath = e.idShortPath;
                                                         change = true;
                                                     }
                                                 }
@@ -828,8 +828,8 @@ public class EventService : IEventService
                                                     {
                                                     }
                                                     var smeDB = smeSmMerged.Where(
-                                                        sme => sme.smeSet.IdShortPath == e.IdShortPath ||
-                                                        sme.smeSet.IdShortPath.StartsWith(e.IdShortPath + "."))
+                                                        sme => sme.smeSet.IdShortPath == e.idShortPath ||
+                                                        sme.smeSet.IdShortPath.StartsWith(e.idShortPath + "."))
                                                         .ToList();
                                                     var smeDBList = smeDB.Select(sme => sme.smeSet.Id).ToList();
                                                     if (smeDBList.Count > 0)
@@ -847,10 +847,10 @@ public class EventService : IEventService
                                     }
                                     else
                                     {
-                                        if (e.EntryType == "DELETE")
+                                        if (e.entryType == "DELETE")
                                         {
-                                            var notDeleted = e.NotDeletedIdShortList;
-                                            var parentPath = e.IdShortPath;
+                                            var notDeleted = e.notDeletedIdShortList;
+                                            var parentPath = e.idShortPath;
                                             db.SaveChanges();
                                             var deletePathList = smeSmMerged.Where(
                                                 sme => sme.smeSet.IdShort != null
@@ -895,7 +895,7 @@ public class EventService : IEventService
     public int ChangeSubmodelElement(EventDto eventData, EventPayloadEntry entry, IReferable parent, List<ISubmodelElement> submodelElements, string idShortPath, List<String> diffEntry)
     {
         int count = 0;
-        var dt = DateTime.Parse(entry.LastUpdate);
+        var dt = DateTime.Parse(entry.lastUpdate);
 
         int maxCount = 0;
         if (eventData.DataMaxSize != null && eventData.DataMaxSize.Value != null)
@@ -904,26 +904,26 @@ public class EventService : IEventService
         }
 
         ISubmodelElement receiveSme = null;
-        if (entry.Payload != "")
+        if (entry.payload != "")
         {
-            MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(entry.Payload));
+            MemoryStream mStrm = new MemoryStream(Encoding.UTF8.GetBytes(entry.payload));
             JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(mStrm).Result;
             receiveSme = Jsonization.Deserialize.ISubmodelElementFrom(node);
             receiveSme.Parent = parent;
         }
 
-        if (entry.EntryType == "CREATE")
+        if (entry.entryType == "CREATE")
         {
-            if (entry.IdShortPath.StartsWith(idShortPath))
+            if (entry.idShortPath.StartsWith(idShortPath))
             {
-                var path = entry.IdShortPath;
+                var path = entry.idShortPath;
                 if (idShortPath != "")
                 {
                     path = path.Replace(idShortPath, "");
                 }
                 if (!path.Contains("."))
                 {
-                    Console.WriteLine("Event CREATE SME: " + entry.IdShortPath);
+                    Console.WriteLine("Event CREATE SME: " + entry.idShortPath);
                     receiveSme.TimeStampCreate = dt;
                     receiveSme.TimeStampDelete = new DateTime();
                     int i = 0;
@@ -947,7 +947,7 @@ public class EventService : IEventService
                     }
                     receiveSme.SetAllParentsAndTimestamps(parent, dt, receiveSme.TimeStampCreate, receiveSme.TimeStampDelete);
                     receiveSme.SetTimeStamp(dt);
-                    diffEntry.Add(entry.EntryType + " " + entry.IdShortPath);
+                    diffEntry.Add(entry.entryType + " " + entry.idShortPath);
                     count++;
                     return count;
                 }
@@ -970,25 +970,25 @@ public class EventService : IEventService
                 }
             }
         }
-        if (entry.EntryType == "UPDATE")
+        if (entry.entryType == "UPDATE")
         {
             for (int i = 0; i < submodelElements.Count; i++)
             {
                 var sme = submodelElements[i];
-                if (entry.IdShortPath == idShortPath + sme.IdShort)
+                if (entry.idShortPath == idShortPath + sme.IdShort)
                 {
-                    Console.WriteLine("Event UPDATE SME: " + entry.IdShortPath);
+                    Console.WriteLine("Event UPDATE SME: " + entry.idShortPath);
                     receiveSme.TimeStampCreate = submodelElements[i].TimeStampCreate;
                     receiveSme.TimeStampDelete = submodelElements[i].TimeStampDelete;
                     submodelElements[i] = receiveSme;
                     receiveSme.SetAllParentsAndTimestamps(parent, dt, receiveSme.TimeStampCreate, receiveSme.TimeStampDelete);
                     receiveSme.SetTimeStamp(dt);
-                    diffEntry.Add(entry.EntryType + " " + entry.IdShortPath);
+                    diffEntry.Add(entry.entryType + " " + entry.idShortPath);
                     count++;
                     return count;
                 }
                 var path = idShortPath + sme.IdShort + ".";
-                if (entry.IdShortPath.StartsWith(path))
+                if (entry.idShortPath.StartsWith(path))
                 {
                     switch (sme)
                     {
@@ -1002,7 +1002,7 @@ public class EventService : IEventService
                 }
             }
         }
-        if (entry.EntryType == "DELETE")
+        if (entry.entryType == "DELETE")
         {
             if (maxCount == 0 || eventData.DataCollection != parent)
             {
@@ -1019,15 +1019,15 @@ public class EventService : IEventService
                             children = sml.Value;
                             break;
                     }
-                    if (entry.IdShortPath == idShortPath + sme.IdShort)
+                    if (entry.idShortPath == idShortPath + sme.IdShort)
                     {
-                        Console.WriteLine("Event DELETE SME: " + entry.IdShortPath);
+                        Console.WriteLine("Event DELETE SME: " + entry.idShortPath);
                         if (children.Count != 0)
                         {
                             int c = 0;
                             while (c < children.Count)
                             {
-                                if (!entry.NotDeletedIdShortList.Contains(children[c].IdShort))
+                                if (!entry.notDeletedIdShortList.Contains(children[c].IdShort))
                                 {
                                     children.RemoveAt(c);
                                     sme.SetTimeStampDelete(dt);
@@ -1039,12 +1039,12 @@ public class EventService : IEventService
                                 }
                             }
                         }
-                        diffEntry.Add(entry.EntryType + " " + entry.IdShortPath + ".*");
+                        diffEntry.Add(entry.entryType + " " + entry.idShortPath + ".*");
                         count++;
                         break;
                     }
                     var path = idShortPath + sme.IdShort + ".";
-                    if (entry.IdShortPath.StartsWith(path))
+                    if (entry.idShortPath.StartsWith(path))
                     {
                         count += ChangeSubmodelElement(eventData, entry, sme, children, path, diffEntry);
                     }
