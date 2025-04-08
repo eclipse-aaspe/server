@@ -389,7 +389,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         };
         var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
 
-        var dbRequest = new DbRequest(DbRequestOp.ReadSubmodelById, DbRequestCrudType.Create, dbRequestContext, taskCompletionSource);
+        var dbRequest = new DbRequest(DbRequestOp.CreateSubmodel, DbRequestCrudType.Create, dbRequestContext, taskCompletionSource);
 
         _queryOperations.Add(dbRequest);
 
