@@ -607,13 +607,13 @@
 					<br/>
 					// var refsme = Program.env[0].AasEnv.FindReferableByReference(be.Observed);
 					IReferable refsme = null;
-					if (aasID == "")
+					if (aasID == "" && smID == "")
 					{
 						refsme = Program.env[SelectedNode.envIndex].AasEnv.FindReferableByReference(be.Observed);
 					}
 					else
 					{
-						refsme = DbReqService.ReadPackageEnv(aasID).Result.PackageEnv.AasEnv.FindReferableByReference(be.Observed);
+						refsme = DbReqService.ReadPackageEnv(aasID, smID).Result.PackageEnv.AasEnv.FindReferableByReference(be.Observed);
 					}
 					if (refsme != null)
 					{
@@ -727,7 +727,7 @@
 						}
 						else
 						{
-							var packageEnvResult = await DbReqService.ReadPackageEnv(aasID);
+							var packageEnvResult = await DbReqService.ReadPackageEnv(aasID, smID);
 							await packageEnvResult.PackageEnv.GetLocalStreamFromPackage(f.Value).CopyToAsync(ms);
 						}
 						data = ms.ToArray();
@@ -770,6 +770,7 @@
 	private Item SelectedNode { get; set; }
 
 	private string aasID = "";
+    private string smID = "";
 
 	static ulong dataVersion = 0;
 
@@ -811,7 +812,12 @@
 				{
 					aasID = list;
 				}
-			}
+                list = query.Get("sm");
+                if (!list.IsNullOrEmpty())
+                {
+                    smID = list;
+                }
+            }
 
 			newDataMode = 1;
 			// Program.signalNewData(1);
@@ -824,7 +830,6 @@
 
 	public void Dispose()
 	{
-	// AasxServer.AasxTask.saveAASXtoTemp(aasID);
 		SubmodelService.NewDataAvailable -= NewData;
 	}
 
@@ -872,7 +877,7 @@
 					}
 				}
 
-				var buildTree = SubmodelService.BuildTree(aasID);
+				var buildTree = SubmodelService.BuildTree(aasID, smID);
 
 				Items = buildTree;
 
@@ -897,7 +902,7 @@
                 break;
             // 3 == build new tree, all nodes closed
             case 3:
-				var buildTree2 = SubmodelService.BuildTree(aasID);
+				var buildTree2 = SubmodelService.BuildTree(aasID, smID);
 				Items = buildTree2;
 
                 ExpandedNodes.Clear();
@@ -1039,13 +1044,13 @@
     public string CreateDetailsImage(Item item, out bool url, out bool svg)
     {
         AdminShellNS.AdminShellPackageEnv[] env = null;
-        if (aasID.IsNullOrEmpty())
+        if (aasID.IsNullOrEmpty() && smID.IsNullOrEmpty())
         {
             env = Program.env;
         }
         else
         {
-            env = new AdminShellNS.AdminShellPackageEnv[] { DbReqService.ReadPackageEnv(aasID).Result.PackageEnv };
+            env = new AdminShellNS.AdminShellPackageEnv[] { DbReqService.ReadPackageEnv(aasID, smID).Result.PackageEnv };
         }
 
         svg = false;

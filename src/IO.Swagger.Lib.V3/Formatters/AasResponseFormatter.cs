@@ -79,7 +79,7 @@ namespace IO.Swagger.Lib.V3.Formatters
             {
                 return true;
             }
-            if (context.Object is Contracts.EventPayload)
+            if (context.Object is Contracts.Events.EventPayload)
             {
                 return true;
             }

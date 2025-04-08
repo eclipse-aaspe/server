@@ -197,8 +197,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 break;
             case DbRequestOp.ReadPackageEnv:
                 var envFile = "";
-                var packageEnv = ReadPackageEnv(dbRequest.Context.Params.AssetAdministrationShellIdentifier
-                    , out envFile);
+                var packageEnv = ReadPackageEnv(dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                    dbRequest.Context.Params.SubmodelIdentifier,
+                    out envFile);
                 result.PackageEnv = new DbRequestPackageEnvResult()
                 {
                     PackageEnv = packageEnv,
@@ -649,9 +650,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         return fileName;
     }
 
-    private AdminShellPackageEnv ReadPackageEnv(string aasID, out string envFileName)
+    private AdminShellPackageEnv ReadPackageEnv(string aasID, string smID, out string envFileName)
     {
-        Converter.IsPackageEnvPresent(aasID, null, true, out envFileName, out AdminShellPackageEnv packageEnv);
+        Converter.IsPackageEnvPresent(aasID, smID, true, out envFileName, out AdminShellPackageEnv packageEnv);
         return packageEnv;
     }
 

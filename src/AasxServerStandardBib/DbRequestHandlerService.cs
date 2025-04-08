@@ -308,11 +308,12 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.FileRequestResult;
     }
 
-    public async Task<DbRequestPackageEnvResult> ReadPackageEnv(string aasId)
+    public async Task<DbRequestPackageEnvResult> ReadPackageEnv(string aasId, string smId)
     {
         var parameters = new DbRequestParams()
         {
             AssetAdministrationShellIdentifier = aasId,
+            SubmodelIdentifier = smId
         };
 
         var dbRequestContext = new DbRequestContext()
