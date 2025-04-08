@@ -16,6 +16,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text.Json;
 using Extensions;
 using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 
 public class EventService : IEventService
 {
@@ -551,7 +552,15 @@ public class EventService : IEventService
 
         var statusData = eventData.StatusData;
 
-        EventPayload eventPayload = JsonSerializer.Deserialize<EventPayload>(json);
+        EventPayload eventPayload = null;
+        try
+        {
+            eventPayload = JsonSerializer.Deserialize<EventPayload>(json);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+        }
         transmit = eventPayload.status.transmitted;
         var dt = TimeStamp.TimeStamp.StringToDateTime(eventPayload.status.lastUpdate);
         dt = DateTime.Parse(eventPayload.status.lastUpdate);
@@ -683,6 +692,11 @@ public class EventService : IEventService
                     }
                 }
             }
+
+            if (count > 0)
+            {
+                env[packageIndex].setWrite(true);
+            }
         }
         else // DB
         {
@@ -762,6 +776,9 @@ public class EventService : IEventService
                             {
                                 smDB = new SMSet();
                                 smDB.Identifier = submodelIdentifier;
+                                var idShort = Regex.Replace(submodelIdentifier, @"[^\w\d]", "_");
+                                smDB.IdShort = idShort;
+                                smDB.Kind = ModellingKind.Instance.ToString();
                                 Converter.setTimeStamp(smDB, dt);
                                 db.Add(smDB);
                             }
@@ -884,10 +901,6 @@ public class EventService : IEventService
         }
 
         statusValue = "Updated: " + count;
-        if (count > 0)
-        {
-            env[packageIndex].setWrite(true);
-        }
 
         return count;
     }

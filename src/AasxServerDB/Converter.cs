@@ -71,11 +71,14 @@ namespace AasxServerDB
                     smDBQuery = smDBQuery.Where(sm => sm.AASId == aasDBId);
                 }
                 var smDB = smDBQuery.ToList();
-                if (smDB == null || smDB.Count != 1 || !smDB[0].EnvId.HasValue)
+                if (smDB == null || smDB.Count != 1)
                 {
                     return false;
                 }
-                envId = smDB[0].EnvId.Value;
+                if (smDB[0].EnvId.HasValue)
+                {
+                    envId = smDB[0].EnvId.Value;
+                }
             }
             else
             {
@@ -88,7 +91,7 @@ namespace AasxServerDB
                 envId = aasDBList[0].EnvId;
             }
 
-            if (envId == -1)
+            if (smId.IsNullOrEmpty() && envId == -1)
             {
                 return false;
             }
@@ -97,13 +100,13 @@ namespace AasxServerDB
 
             if (loadInMemory)
             {
-                packageEnv = GetPackageEnv(envId);
+                packageEnv = GetPackageEnv(envId, smId);
             }
 
             return true;
         }
 
-        public static AdminShellPackageEnv? GetPackageEnv(int envId)
+        public static AdminShellPackageEnv? GetPackageEnv(int envId, string smId = "")
         {
             var timeStamp = DateTime.UtcNow;
 
@@ -117,7 +120,10 @@ namespace AasxServerDB
             var db = new AasContext();
 
             // path
-            env.SetFilename(fileName: GetAASXPath(envId));
+            if (envId != -1)
+            {
+                env.SetFilename(fileName: GetAASXPath(envId));
+            }
 
             // cd
             var cdDBList = db.EnvCDSets.Where(envcd => envcd.EnvId == envId).Join(db.CDSets, envcd => envcd.CDId, cd => cd.Id, (envcd, cd) => cd).ToList();
@@ -147,7 +153,18 @@ namespace AasxServerDB
             }
 
             // sm
-            var smDBList = db.SMSets.Where(cd => cd.EnvId == envId).ToList();
+            var smDBList = new List<SMSet>();
+            if (envId != -1)
+            {
+                smDBList = db.SMSets.Where(cd => cd.EnvId == envId).ToList();
+            }
+            else
+            {
+                if (!smId.IsNullOrEmpty())
+                {
+                    smDBList = db.SMSets.Where(cd => cd.Identifier == smId).ToList();
+                }
+            }
             foreach (var sm in smDBList.Select(selector: submodelDB => GetSubmodel(smDB: submodelDB)))
             {
                 if (sm.TimeStamp == DateTime.MinValue)
@@ -518,7 +535,8 @@ namespace AasxServerDB
             {
                 smeSets = tree.Select(t => t.smeSet).Distinct().ToList();
             }
-            smeSets = smeSets.Where(s => s.ParentSMEId == (smeSet != null ? smeSet.Id : null)).OrderBy(s => s.IdShort).ToList();
+            // smeSets = smeSets.Where(s => s.ParentSMEId == (smeSet != null ? smeSet.Id : null)).OrderBy(s => s.IdShort).ToList();
+            smeSets = smeSets.Where(s => s.ParentSMEId == (smeSet != null ? smeSet.Id : null)).OrderBy(s => s.TimeStampTree).ToList();
 
             foreach (var smel in smeSets)
             {

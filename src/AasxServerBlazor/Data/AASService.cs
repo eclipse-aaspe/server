@@ -54,14 +54,14 @@ public class AASService
             createSMECItems(item, smec, item.envIndex);
         }
     }
-    public List<Item> BuildTree(string aasID)
+    public List<Item> BuildTree(string aasID, string smID)
     {
-        if (aasID == "")
+        if (aasID == "" && smID == "")
         {
             return BuildTree(Program.env, Program.envFileName);
         }
 
-        var env = _dbRequestHandlerService.ReadPackageEnv(aasID).Result;
+        var env = _dbRequestHandlerService.ReadPackageEnv(aasID, smID).Result;
 
         if (env == null)
         {
@@ -69,6 +69,60 @@ public class AASService
         }
 
         return BuildTree([env.PackageEnv], [env.EnvFileName]);
+    }
+
+    private Item BuildTree(ISubmodel sm, int i)
+    {
+        var smItem = new Item
+        {
+            envIndex = i,
+            Text = sm.IdShort,
+            Tag = sm
+        };
+        var smItemChildren = new List<Item>();
+        if (sm.SubmodelElements != null)
+            foreach (var sme in sm.SubmodelElements)
+            {
+                var smeItem = new Item
+                {
+                    envIndex = i,
+                    Text = sme.IdShort,
+                    Tag = sme
+                };
+                smItemChildren.Add(smeItem);
+                switch (sme)
+                {
+                    case SubmodelElementCollection collection:
+                    {
+                        createSMECItems(smeItem, collection, i);
+                        break;
+                    }
+                    case Operation operation:
+                    {
+                        createOperationItems(smeItem, operation, i);
+                        break;
+                    }
+                    case Entity entity:
+                    {
+                        CreateEntityItems(smeItem, entity, i);
+                        break;
+                    }
+                    case AnnotatedRelationshipElement annotatedRelationshipElement:
+                        CreateAnnotatedRelationshipElementItems(smeItem, annotatedRelationshipElement, i);
+                        break;
+                    case SubmodelElementList smeList:
+                        CreateSMEListItems(smeItem, smeList, i);
+                        break;
+                }
+            }
+
+        smItem.Children = smItemChildren;
+        foreach (var c in smItemChildren)
+        {
+            c.parent = smItem;
+        }
+
+        return smItem;
     }
     public List<Item> BuildTree(AdminShellPackageEnv[] env, string[] envFileName)
     {
@@ -100,94 +154,58 @@ public class AASService
 
             for (var i = 0; i < env.Length; i++)
             {
-                if (env[i] != null && env[i].AasEnv.AssetAdministrationShells != null && env[i].AasEnv.AssetAdministrationShells.Count > 0)
+                if (env[i] != null)
                 {
-                    foreach (var aas in env[i].AasEnv.AssetAdministrationShells)
+                    var smDisplayed = new List<String>();
+                    if (env[i].AasEnv.AssetAdministrationShells != null && env[i].AasEnv.AssetAdministrationShells.Count > 0)
                     {
-                        var root = new Item
+                        foreach (var aas in env[i].AasEnv.AssetAdministrationShells)
                         {
-                            envIndex = i
-                        };
-                        root.Text = aas.IdShort;
-                        root.Tag = aas;
-                        // if (envSymbols[i] != "L")
-                        {
-                            var children = new List<Item>();
-                            var env1 = env[i];
-                            //var aas = env.AasEnv.AssetAdministrationShells[0];
-                            if (env1 != null && aas.Submodels is { Count: > 0 })
-                                foreach (var smr in aas.Submodels)
+                            var root = new Item
+                            {
+                                envIndex = i
+                            };
+                            root.Text = aas.IdShort;
+                            root.Tag = aas;
+                            // if (envSymbols[i] != "L")
+                            {
+                                var children = new List<Item>();
+                                var env1 = env[i];
+                                //var aas = env.AasEnv.AssetAdministrationShells[0];
+                                if (env1 != null && aas.Submodels is { Count: > 0 })
                                 {
-                                    var sm = env1.AasEnv.FindSubmodel(smr);
-                                    if (sm is not { IdShort: not null })
+                                    foreach (var smr in aas.Submodels)
                                     {
-                                        continue;
-                                    }
-
-                                    var smItem = new Item
-                                    {
-                                        envIndex = i,
-                                        Text = sm.IdShort,
-                                        Tag = sm
-                                    };
-                                    children.Add(smItem);
-                                    var smItemChildren = new List<Item>();
-                                    if (sm.SubmodelElements != null)
-                                        foreach (var sme in sm.SubmodelElements)
+                                        var sm = env1.AasEnv.FindSubmodel(smr);
+                                        if (sm is not { IdShort: not null })
                                         {
-                                            var smeItem = new Item
-                                            {
-                                                envIndex = i,
-                                                Text = sme.IdShort,
-                                                Tag = sme
-                                            };
-                                            smItemChildren.Add(smeItem);
-                                            switch (sme)
-                                            {
-                                                case SubmodelElementCollection collection:
-                                                {
-                                                    createSMECItems(smeItem, collection, i);
-                                                    break;
-                                                }
-                                                case Operation operation:
-                                                {
-                                                    createOperationItems(smeItem, operation, i);
-                                                    break;
-                                                }
-                                                case Entity entity:
-                                                {
-                                                    CreateEntityItems(smeItem, entity, i);
-                                                    break;
-                                                }
-                                                case AnnotatedRelationshipElement annotatedRelationshipElement:
-                                                    CreateAnnotatedRelationshipElementItems(smeItem, annotatedRelationshipElement, i);
-                                                    break;
-                                                case SubmodelElementList smeList:
-                                                    CreateSMEListItems(smeItem, smeList, i);
-                                                    break;
-                                            }
+                                            continue;
                                         }
 
-                                    smItem.Children = smItemChildren;
-                                    foreach (var c in smItemChildren)
-                                        c.parent = smItem;
+                                        smDisplayed.Add(sm.Id);
+                                        var smItem = BuildTree(sm, i);
+                                        children.Add(smItem);
+                                    }
                                 }
 
-                            root.Children = children;
-                            foreach (var c in children)
-                                c.parent = root;
-                            items.Add(root);
+                                root.Children = children;
+                                foreach (var c in children)
+                                {
+                                    c.parent = root;
+                                }
+                                items.Add(root);
+                            }
                         }
-
-                        /*
-                        if (Program.envSymbols[i] != "L")
+                    }
+                    if (env[i].AasEnv.Submodels != null && env[i].AasEnv.Submodels.Count > 0)
+                    {
+                        foreach (var sm in env[i].AasEnv.Submodels)
                         {
-                            continue;
+                            if (!smDisplayed.Contains(sm.Id))
+                            {
+                                items.Add(BuildTree(sm, i));
+                            }
                         }
-
-                        root.Text = Path.GetFileName(envFileName[i]);
-                        items.Add(root);
-                        */
                     }
                 }
             }

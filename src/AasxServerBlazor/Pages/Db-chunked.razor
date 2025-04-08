@@ -11,6 +11,7 @@
 @page "/db-chunked/ovalue";
 @using AasxServer
 @using AasxServerDB
+@using Microsoft.AspNetCore.Http;
 @using Microsoft.AspNetCore.Html;
 @using Microsoft.AspNetCore.Components.Web.Virtualization
 @using Microsoft.EntityFrameworkCore
@@ -21,6 +22,7 @@
 @using TimeStamp;
 @using Nodes = System.Text.Json.Nodes;
 @inject NavigationManager NavMan
+@inject AasxServerBlazor.Data.AASService SubmodelService
 
 <style>
     .cell-content {
@@ -530,8 +532,19 @@
                                             @($"DELETE {TimeStamp.DateTimeToString(SMVirtualize.smSet.TimeStampDelete)}")
                                         </td>
                                         <td style="width:4%;font-size:small;word-break:keep-all;border-color:blue;">
-                                            <a href="@($"{shorturl}/env?envid={SMVirtualize?.smSet?.EnvId}")" target="_blank;border-color:blue;">env </a>
-                                            <a href="@($"{shorturl}/aas?aasid={SMVirtualize?.smSet?.AASId}")" target="_blank;border-color:blue;">aas </a>
+                                            @{
+                                                var envID = SMVirtualize?.smSet?.EnvId;
+                                                if (envID != null && envID != 0)
+                                                {
+                                                    <a href="@($"{shorturl}/env?envid={envID}")" target="_blank;border-color:blue;">env </a>
+                                                }
+                                                var aasID = SMVirtualize?.smSet?.AASId;
+                                                if (aasID != null && aasID != 0)
+                                                {
+                                                    <a href="@($"{shorturl}/aas?aasid={aasID}")" target="_blank;border-color:blue;">aas </a>
+                                                }
+                                                <a href="@($"{Program.externalBlazor}?sm={SMVirtualize?.smSet?.Identifier}")" target="_blank">tree </a>
+                                            }
                                             <a href="@($"{shorturl}/sme?smid={SMVirtualize?.smSet?.Id}")" target="_blank;border-color:blue;">sme:@SMVirtualize.smeCount</a>
                                         </td>
                                         <td style="width:4%;font-size:small;word-break:keep-all;border-color:blue;">
@@ -1179,5 +1192,47 @@
 
             return new ItemsProviderResult<T>(items, size);
         }
+    }
+
+    [CascadingParameter] private HttpContext HttpContext { get; set; }
+
+    protected override void OnInitialized()
+    {
+        // OnInitialized() always called twice
+        if (HttpContext == null)
+        {
+            // Pre-rendering logic
+            SubmodelService.NewDataAvailable += NewData;
+        }
+        else
+        {
+            // Actual rendering logic
+        }
+    }
+
+    public void Dispose()
+    {
+        SubmodelService.NewDataAvailable -= NewData;
+    }
+
+    int newDataMode = 0;
+
+    void NewData(object source, EventArgs args)
+    {
+        if (Program.isLoading)
+            return;
+
+        if (newDataMode != 0 || args is not Program.NewDataAvailableArgs newArgs)
+        {
+            return;
+        }
+
+        newDataMode = newArgs.signalNewDataMode;
+        /*
+        totalCount = 0;
+        update = true;
+        InvokeAsync(StateHasChanged);
+        */
+        NavMan.NavigateTo(NavMan.Uri, forceLoad: true);
     }
 }

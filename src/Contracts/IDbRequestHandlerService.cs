@@ -30,7 +30,7 @@ public interface IDbRequestHandlerService
 
     Task<DbFileRequestResult> ReadThumbnail(ISecurityConfig securityConfig, string aasIdentifier);
 
-    Task<DbRequestPackageEnvResult> ReadPackageEnv(string aasIdentifier);
+    Task<DbRequestPackageEnvResult> ReadPackageEnv(string aasIdentifier, string submodelIdentifier);
 
     Task<Events.EventPayload> ReadEventMessages(DbEventRequest dbEventRequest);
 
