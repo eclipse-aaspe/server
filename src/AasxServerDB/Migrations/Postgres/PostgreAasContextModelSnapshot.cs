@@ -66,7 +66,7 @@ namespace AasxServerDB.Migrations.Postgres
                     b.Property<string>("EmbeddedDataSpecifications")
                         .HasColumnType("text");
 
-                    b.Property<int>("EnvId")
+                    b.Property<int?>("EnvId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Extensions")
@@ -531,9 +531,7 @@ namespace AasxServerDB.Migrations.Postgres
                 {
                     b.HasOne("AasxServerDB.Entities.EnvSet", "EnvSet")
                         .WithMany("AASSets")
-                        .HasForeignKey("EnvId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("EnvId");
 
                     b.Navigation("EnvSet");
                 });
