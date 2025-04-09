@@ -36,6 +36,12 @@ public interface IDbRequestHandlerService
 
     Task<ISubmodel> CreateSubmodel(ISecurityConfig securityConfig, ISubmodel newSubmodel, string aasIdentifier);
 
-    Task UpdateEventMessages(DbEventRequest dbEventRequest);
+    Task<ISubmodelElement> CreateSubmodelElement(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodelElement body, string idShortPath, bool first);
 
+    Task<IAssetAdministrationShell> CreateAssetAdministrationShell(ISecurityConfig securityConfig, IAssetAdministrationShell body);
+
+    Task<IReference> CreateSubmodelReferenceInAAS(ISecurityConfig securityConfig, Reference body, string aasIdentifier);
+
+
+    Task UpdateEventMessages(DbEventRequest dbEventRequest);
 }

@@ -78,6 +78,7 @@ namespace IO.Swagger.Controllers
         private readonly IPersistenceService _persistenceService;
         private readonly IIdShortPathParserService _idShortPathParserService;
         private readonly IDbRequestHandlerService _dbRequestHandlerService;
+        private readonly IMetamodelVerificationService _verificationService;
 
         /// <summary>
         /// 
@@ -94,6 +95,7 @@ namespace IO.Swagger.Controllers
         /// <param name="validateModifierService"></param>
         /// <param name="idShortPathParserService"></param>
         /// <param name="dbRequestHandlerService"></param>
+        /// <param name="verificationService"></param>
         /// <exception cref="ArgumentNullException"></exception>
         public AssetAdministrationShellRepositoryAPIApiController(IAppLogger<AssetAdministrationShellRepositoryAPIApiController> logger,
                                                                   IPersistenceService persistenceService, IBase64UrlDecoderService decoderService,
@@ -101,7 +103,8 @@ namespace IO.Swagger.Controllers
                                                                   IMappingService mappingService, IPathModifierService pathModifierService,
                                                                   ILevelExtentModifierService levelExtentModifierService, IPaginationService paginationService,
                                                                   IAuthorizationService authorizationService, IValidateSerializationModifierService validateModifierService,
-                                                                  IIdShortPathParserService idShortPathParserService, IDbRequestHandlerService dbRequestHandlerService)
+                                                                  IIdShortPathParserService idShortPathParserService, IDbRequestHandlerService dbRequestHandlerService,
+                                                                  IMetamodelVerificationService verificationService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _persistenceService = persistenceService ?? throw new ArgumentNullException(nameof(persistenceService));
@@ -115,6 +118,7 @@ namespace IO.Swagger.Controllers
             _validateModifierService = validateModifierService ?? throw new ArgumentNullException(nameof(authorizationService));
             _idShortPathParserService = idShortPathParserService ?? throw new ArgumentNullException(nameof(idShortPathParserService));
             _dbRequestHandlerService = dbRequestHandlerService ?? throw new ArgumentNullException(nameof(dbRequestHandlerService));
+            _verificationService = verificationService ?? throw new ArgumentNullException(nameof(verificationService));
         }
 
 
@@ -2311,14 +2315,19 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 409, type: typeof(Result), description: "Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PostAssetAdministrationShell([FromBody] AssetAdministrationShell body)
+        public async virtual Task<IActionResult> PostAssetAdministrationShell([FromBody] AssetAdministrationShell body)
         { 
             if (body == null)
             {
                 return BadRequest($"Could not proceed, as {nameof(body)} is null.");
             }
 
-            var output = _persistenceService.CreateAssetAdministrationShell(body);
+            //Verify the body first
+            _verificationService.VerifyRequestBody(body);
+
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+            var output = await _dbRequestHandlerService.CreateAssetAdministrationShell(securityConfig, body);
 
             return CreatedAtAction("PostAssetAdministrationShell", output);
         }
@@ -2387,7 +2396,10 @@ namespace IO.Swagger.Controllers
                 return BadRequest($"Could not proceed, as {nameof(body)} is null.");
             }
 
-            var output = _persistenceService.CreateSubmodelElement(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, body, first);
+            //Verify the body first
+            _verificationService.VerifyRequestBody(body);
+
+            var output = await _dbRequestHandlerService.CreateSubmodelElement(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, body, null, first);
 
             return CreatedAtAction("PostSubmodelElementAasRepository", output);
         }
@@ -2457,7 +2469,7 @@ namespace IO.Swagger.Controllers
                 return BadRequest($"Could not proceed, as {nameof(body)} is null.");
             }
 
-            var output = _persistenceService.CreateSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath, first, body);
+            var output = _dbRequestHandlerService.CreateSubmodelElement(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, body, idShortPath, first);
 
             return CreatedAtAction("PostSubmodelElementByPathAasRepository", output);
         }
@@ -2501,8 +2513,9 @@ namespace IO.Swagger.Controllers
             {
                 return BadRequest($"Could not proceed, as {nameof(body)} is null.");
             }
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-            var output = _persistenceService.CreateSubmodelReferenceInAAS(body, decodedAasIdentifier);
+            var output = _dbRequestHandlerService.CreateSubmodelReferenceInAAS(securityConfig, body, decodedAasIdentifier);
 
             return CreatedAtAction("PostSubmodelReferenceAasRepository", output);
         }

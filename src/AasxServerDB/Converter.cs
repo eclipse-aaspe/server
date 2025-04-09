@@ -626,10 +626,19 @@ namespace AasxServerDB
 
         public static ISubmodelElement CreateSubmodelElement(string aasIdentifier, string submodelIdentifier, ISubmodelElement newSubmodelElement, string idShortPath, bool first)
         {
+            //ToDo: Take into account first parameter
+
             ISubmodelElement submodelElement = null;
             using (var db = new AasContext())
             {
                 var smDBQuery = db.SMSets.Where(sm => sm.Identifier == submodelIdentifier);
+                if (!String.IsNullOrEmpty(aasIdentifier))
+                {
+                    var aasDB = db.AASSets
+                            .Where(aas => aas.Identifier == aasIdentifier).ToList();
+                    var aasDBId = aasDB[0].Id;
+                    smDBQuery = smDBQuery.Where(sm => sm.AASId == aasDBId);
+                }
                 var smDB = smDBQuery.FirstOrDefault();
                 var visitor = new VisitorAASX(db);
                 visitor._smDB = smDB;

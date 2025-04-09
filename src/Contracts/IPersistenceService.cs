@@ -15,12 +15,6 @@ public interface IPersistenceService
 
     List<string> ReadFilteredPackages(string filterPath, List<AdminShellPackageEnv> list);
 
-
-    IAssetAdministrationShell CreateAssetAdministrationShell(IAssetAdministrationShell body);
-    IReference CreateSubmodelReferenceInAAS(IReference body, string aasIdentifier);
-    ISubmodelElement CreateSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath, bool first, ISubmodelElement body);
-    ISubmodelElement CreateSubmodelElement(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodelElement body, bool first);
-
     void UpdateSubmodelById(string? aasIdentifier, string? submodelIdentifier, ISubmodel body);
     void UpdateSubmodelElementByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, ISubmodelElement body);
     void UpdateAssetAdministrationShellById(string aasIdentifier, IAssetAdministrationShell newAas);
