@@ -307,7 +307,7 @@ namespace AasxServerDB
             _smDB.TimeStampTree = that.TimeStampTree == default ? currentDataTime : that.TimeStampTree;
             _smDB.TimeStampDelete = that.TimeStampDelete;
 
-            if (create)
+            // if (create)
             {
                 _envDB?.SMSets.Add(_smDB);
             }
