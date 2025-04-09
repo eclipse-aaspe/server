@@ -845,6 +845,14 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         var found = IsSubmodelPresent(null, aasIdentifier, submodelIdentifier, false, out ISubmodel output);
         if (found)
         {
+            using (var db = new AasContext())
+            {
+                var visitor = new VisitorAASX(db);
+                visitor.update = true;
+                visitor.currentDataTime = DateTime.UtcNow;
+                visitor.VisitSubmodel(newSubmodel);
+            }
+
             //ToDo submodel service solution, do we really need a different solution for replace and update?
             // Replace
             //_submodelService.ReplaceSubmodelById(submodelIdentifier, newSubmodel);
@@ -1299,6 +1307,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         else // DB
         {
             count = _eventService.ChangeData(eventRequest.Body, eventData, eventRequest.Env, null, out transmitted, out lastDiffValue, out statusValue, diffEntry, eventRequest.PackageIndex);
+            UpdateSubmodelById(null, eventRequest.Submodel.Id, eventRequest.Submodel);
         }
 
         if (eventData.Transmitted != null)

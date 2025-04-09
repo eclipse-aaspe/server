@@ -22,13 +22,22 @@ namespace AasxServerDB
     using AasxServerDB.Entities;
     using System.Text;
     using System.Collections.Generic;
+    using HotChocolate.Language;
+    using static AasxServerDB.Converter;
+    using Microsoft.EntityFrameworkCore;
 
     public class VisitorAASX : VisitorThrough
     {
+        AasContext db = null;
+        public bool update = false;
         private EnvSet? _envDB;
         public SMSet? _smDB;
         private SMESet? _parSME;
         private SMESet? _resultSME;
+        public List<Converter.SmeMerged> smSmeMerged = null;
+        public List<int> keepSme = new List<int>();
+        public List<int> deleteSme = new List<int>();
+        public string idShortPath = "";
         private static Dictionary<string, int> _cdDBId = new Dictionary<string, int>();
         private string _oprPrefix = string.Empty;
         public const string OPERATION_INPUT = "In";
@@ -37,8 +46,9 @@ namespace AasxServerDB
         public const string OPERATION_SPLIT = "-";
         public DateTime currentDataTime = DateTime.UtcNow;
 
-        public VisitorAASX()
+        public VisitorAASX(AasContext db)
         {
+            this.db = db;
         }
         private VisitorAASX(EnvSet envDB)
         {
@@ -259,66 +269,130 @@ namespace AasxServerDB
         // Submodel
         public override void VisitSubmodel(ISubmodel that)
         {
-            _smDB = new SMSet()
+            var create = false;
+            if (!update)
             {
-                IdShort                     = that.IdShort,
-                DisplayName                 = Serializer.SerializeList(that.DisplayName),
-                Category                    = that.Category,
-                Description                 = Serializer.SerializeList(that.Description),
-                Extensions                  = Serializer.SerializeList(that.Extensions),
-                Identifier                  = that.Id,
-                Kind                        = Serializer.SerializeElement(that.Kind),
-                SemanticId                  = that.SemanticId?.GetAsIdentifier(),
-                SupplementalSemanticIds     = Serializer.SerializeList(that.SupplementalSemanticIds),
-                Qualifiers                  = Serializer.SerializeList(that.Qualifiers),
-                EmbeddedDataSpecifications  = Serializer.SerializeList(that.EmbeddedDataSpecifications),
-                Version                     = that.Administration?.Version,
-                Revision                    = that.Administration?.Revision,
-                Creator                     = Serializer.SerializeElement(that.Administration?.Creator),
-                TemplateId                  = that.Administration?.TemplateId,
-                AEmbeddedDataSpecifications = Serializer.SerializeList(that.Administration?.EmbeddedDataSpecifications),
+                create = true;
+                _smDB = null;
+            }
+            else
+            {
+                _smDB = db.SMSets.FirstOrDefault(s => s.Identifier == that.Id);
+                if (_smDB != null && smSmeMerged == null)
+                {
+                    var smeSmList = db.SMESets.Where(sme => sme.SMId == _smDB.Id).ToList();
+                    Converter.CreateIdShortPath(db, smeSmList);
+                    smSmeMerged = Converter.GetSmeMerged(db, smeSmList);
+                }
+            }
+            _smDB ??= new SMSet();
 
-                TimeStampCreate = that.TimeStampCreate == default ? currentDataTime : that.TimeStampCreate,
-                TimeStamp = that.TimeStamp == default ? currentDataTime : that.TimeStamp,
-                TimeStampTree = that.TimeStampTree == default ? currentDataTime : that.TimeStampTree,
-                TimeStampDelete = that.TimeStampDelete
-            };
-            _envDB?.SMSets.Add(_smDB);
+            _smDB.IdShort = that.IdShort;
+            _smDB.DisplayName = Serializer.SerializeList(that.DisplayName);
+            _smDB.Category = that.Category;
+            _smDB.Description = Serializer.SerializeList(that.Description);
+            _smDB.Extensions = Serializer.SerializeList(that.Extensions);
+            _smDB.Identifier = that.Id;
+            _smDB.Kind = Serializer.SerializeElement(that.Kind);
+            _smDB.SemanticId = that.SemanticId?.GetAsIdentifier();
+            _smDB.SupplementalSemanticIds = Serializer.SerializeList(that.SupplementalSemanticIds);
+            _smDB.Qualifiers = Serializer.SerializeList(that.Qualifiers);
+            _smDB.EmbeddedDataSpecifications = Serializer.SerializeList(that.EmbeddedDataSpecifications);
+            _smDB.Version = that.Administration?.Version;
+            _smDB.Revision = that.Administration?.Revision;
+            _smDB.TemplateId = that.Administration?.TemplateId;
+            _smDB.AEmbeddedDataSpecifications = Serializer.SerializeList(that.Administration?.EmbeddedDataSpecifications);
+            _smDB.TimeStampCreate = that.TimeStampCreate == default ? currentDataTime : that.TimeStampCreate;
+            _smDB.TimeStamp = that.TimeStamp == default ? currentDataTime : that.TimeStamp;
+            _smDB.TimeStampTree = that.TimeStampTree == default ? currentDataTime : that.TimeStampTree;
+            _smDB.TimeStampDelete = that.TimeStampDelete;
+
+            if (create)
+            {
+                _envDB?.SMSets.Add(_smDB);
+            }
             base.VisitSubmodel(that);
+
+            if (update)
+            {
+                var smeDB = smSmeMerged.Where(sme => !keepSme.Contains(sme.smeSet.Id)).ToList();
+                var smeDBList = smeDB.Select(sme => sme.smeSet.Id).Distinct().ToList();
+                if (smeDBList.Count > 0)
+                {
+                    db.SMESets.Where(sme => smeDBList.Contains(sme.Id)).ExecuteDeleteAsync().Wait();
+                }
+            }
         }
-
-
-
-
 
         // SubmodelElement
         public SMESet? VisitSMESet(ISubmodelElement sme)
         {
+            _parSME = null;
+            keepSme = [];
+            deleteSme = [];
             _resultSME = null;
+            if (smSmeMerged != null && idShortPath != "")
+            {
+                var smeDB = smSmeMerged.Where(s => (s.smeSet.IdShortPath + ".").Contains(idShortPath + "."));
+                if (smeDB != null)
+                {
+                    deleteSme = smeDB.Select(s => s.smeSet.Id).ToList();
+                }
+                if (idShortPath.Contains("."))
+                {
+                    var lastIndex = idShortPath.LastIndexOf('.');
+                    if (lastIndex != -1)
+                    {
+                        var parentPath = idShortPath.Substring(0, lastIndex);
+                        var smeDBp = smSmeMerged.FirstOrDefault(s => s.smeSet.IdShortPath == parentPath);
+                        if (smeDBp != null)
+                        {
+                            _parSME = smeDBp.smeSet;
+                        }
+                    }
+                }
+            }
             base.Visit(sme);
             return _resultSME;
         }
-        public SMESet CreateSMESet(ISubmodelElement sme)
+        public SMESet CreateOrUpdateSMESet(ISubmodelElement sme)
         {
-            var smeDB = new SMESet()
+            SMESet? smeDB = null;
+            if (update)
             {
-                ParentSME                  = _parSME,
-                SMEType                    = ShortSMEType(sme),
-                IdShort                    = sme.IdShort,
-                DisplayName                = Serializer.SerializeList(sme.DisplayName),
-                Category                   = sme.Category,
-                Description                = Serializer.SerializeList(sme.Description),
-                Extensions                 = Serializer.SerializeList(sme.Extensions),
-                SemanticId                 = sme.SemanticId?.GetAsIdentifier(),
-                SupplementalSemanticIds    = Serializer.SerializeList(sme.SupplementalSemanticIds),
-                Qualifiers                 = Serializer.SerializeList(sme.Qualifiers),
-                EmbeddedDataSpecifications = Serializer.SerializeList(sme.EmbeddedDataSpecifications),
+                Converter.SmeMerged? s = null;
+                if (_parSME == null)
+                {
+                    s = smSmeMerged.FirstOrDefault(s => s.smeSet.IdShort == sme.IdShort);
+                }
+                else
+                {
+                    s = smSmeMerged.FirstOrDefault(s => s.smeSet.ParentSMEId == _parSME.Id && s.smeSet.IdShort == sme.IdShort);
+                }
+                if (s != null)
+                {
+                    smeDB = s.smeSet;
+                    keepSme.Add(smeDB.Id);
+                }
+            }
+            smeDB ??= new SMESet();
+            smeDB.ParentSME = _parSME;
+            smeDB.SMEType = ShortSMEType(sme);
+            smeDB.IdShort = sme.IdShort;
+            smeDB.DisplayName = Serializer.SerializeList(sme.DisplayName);
+            smeDB.Category = sme.Category;
+            smeDB.Description = Serializer.SerializeList(sme.Description);
+            smeDB.Extensions = Serializer.SerializeList(sme.Extensions);
+            smeDB.SemanticId = sme.SemanticId?.GetAsIdentifier();
+            smeDB.SupplementalSemanticIds = Serializer.SerializeList(sme.SupplementalSemanticIds);
+            smeDB.Qualifiers = Serializer.SerializeList(sme.Qualifiers);
+            smeDB.EmbeddedDataSpecifications = Serializer.SerializeList(sme.EmbeddedDataSpecifications);
 
-                TimeStampCreate = sme.TimeStampCreate == default ? currentDataTime : sme.TimeStampCreate,
-                TimeStamp = sme.TimeStamp == default ? currentDataTime : sme.TimeStamp,
-                TimeStampTree = sme.TimeStampTree == default ? currentDataTime : sme.TimeStampTree,
-                TimeStampDelete = sme.TimeStampDelete
-            };
+            smeDB.TimeStampCreate = sme.TimeStampCreate == default ? currentDataTime : sme.TimeStampCreate;
+            smeDB.TimeStamp = sme.TimeStamp == default ? currentDataTime : sme.TimeStamp;
+            smeDB.TimeStampTree = sme.TimeStampTree == default ? currentDataTime : sme.TimeStampTree;
+            smeDB.TimeStampDelete = sme.TimeStampDelete;
+
             SetValues(sme, smeDB);
             _smDB?.SMESets.Add(smeDB);
             if (_resultSME == null)
@@ -606,80 +680,80 @@ namespace AasxServerDB
         // 14 SubmodelElemente (+ OperationVariable)
         public override void VisitCapability(ICapability that)
         {
-            CreateSMESet(that);
+            CreateOrUpdateSMESet(that);
             base.VisitCapability(that);
         }
         public override void VisitRelationshipElement(IRelationshipElement that)
         {
-            CreateSMESet(that);
+            CreateOrUpdateSMESet(that);
             base.VisitRelationshipElement(that);
         }
         public override void VisitSubmodelElementList(ISubmodelElementList that)
         {
-            var smeSet = CreateSMESet(that);
+            var smeSet = CreateOrUpdateSMESet(that);
             _parSME = smeSet;
             base.VisitSubmodelElementList(that);
             _parSME = smeSet.ParentSME;
         }
         public override void VisitSubmodelElementCollection(ISubmodelElementCollection that)
         {
-            var smeSet = CreateSMESet(that);
+            var smeSet = CreateOrUpdateSMESet(that);
             _parSME = smeSet;
             base.VisitSubmodelElementCollection(that);
             _parSME = smeSet.ParentSME;
         }
         public override void VisitProperty(IProperty that)
         {
-            CreateSMESet(that);
+            CreateOrUpdateSMESet(that);
             base.VisitProperty(that);
         }
         public override void VisitMultiLanguageProperty(IMultiLanguageProperty that)
         {
-            CreateSMESet(that);
+            CreateOrUpdateSMESet(that);
             base.VisitMultiLanguageProperty(that);
         }
         public override void VisitRange(IRange that)
         {
-            CreateSMESet(that);
+            CreateOrUpdateSMESet(that);
             base.VisitRange(that);
         }
         public override void VisitReferenceElement(IReferenceElement that)
         {
-            CreateSMESet(that);
+            CreateOrUpdateSMESet(that);
             base.VisitReferenceElement(that);
         }
         public override void VisitBlob(IBlob that)
         {
-            CreateSMESet(that);
+            CreateOrUpdateSMESet(that);
             base.VisitBlob(that);
         }
         public override void VisitFile(IFile that)
         {
-            CreateSMESet(that);
+            CreateOrUpdateSMESet(that);
             base.VisitFile(that);
         }
         public override void VisitAnnotatedRelationshipElement(IAnnotatedRelationshipElement that)
         {
-            var smeSet = CreateSMESet(that);
+            var smeSet = CreateOrUpdateSMESet(that);
             _parSME = smeSet;
             base.VisitAnnotatedRelationshipElement(that);
             _parSME = smeSet.ParentSME;
         }
         public override void VisitEntity(IEntity that)
         {
-            var smeSet = CreateSMESet(that);
+            var smeSet = CreateOrUpdateSMESet(that);
             _parSME = smeSet;
             base.VisitEntity(that);
             _parSME = smeSet.ParentSME;
         }
         public override void VisitBasicEventElement(IBasicEventElement that)
         {
-            CreateSMESet(that);
+            CreateOrUpdateSMESet(that);
             base.VisitBasicEventElement(that);
         }
         public override void VisitOperation(IOperation that)
         {
-            var smeSet = CreateSMESet(that);
+            var smeSet = CreateOrUpdateSMESet(that);
             _parSME = smeSet;
 
             if (that.InputVariables != null)
