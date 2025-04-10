@@ -2042,7 +2042,7 @@ namespace AasxServer
                                             response.Content.ReadAsStringAsync().Result +
                                             " ; PUT " + requestPath;
                                         eventData.Status.SetTimeStamp(now);
-                                        d = eventData.LastUpdate.Value = "reconnect";
+                                        // d = eventData.LastUpdate.Value = "reconnect";
                                         eventData.LastUpdate.SetTimeStamp(now);
                                     }
                                 }
