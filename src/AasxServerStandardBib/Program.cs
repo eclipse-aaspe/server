@@ -271,7 +271,7 @@ namespace AasxServer
                     }
                     else if (!aasIdentifier.IsNullOrEmpty())
                     {
-                        envId = db.AASSets.Where(aas => aas.Identifier == aasIdentifier).Select(aas => aas.EnvId).FirstOrDefault();
+                        envId = db.AASSets.Where(aas => aas.Identifier == aasIdentifier).Select(aas => aas.EnvId.Value).FirstOrDefault();
                     }
                     else if (!smIdentifier.IsNullOrEmpty())
                     {

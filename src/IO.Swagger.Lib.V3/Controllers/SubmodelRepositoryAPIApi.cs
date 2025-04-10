@@ -2403,7 +2403,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
         }
 
-        var output = _persistenceService.CreateSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath, first, body);
+        var output = _dbRequestHandlerService.CreateSubmodelElement(securityConfig, null, decodedSubmodelIdentifier, body, idShortPath, first);
 
         return CreatedAtAction("PostSubmodelElementByPathSubmodelRepo", output);
     }
@@ -2467,7 +2467,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
         }
 
-        var output = _persistenceService.CreateSubmodelElement(securityConfig, null, decodedSubmodelIdentifier, body, first);
+        //Verify the body first
+        _verificationService.VerifyRequestBody(body);
+
+
+        var output = await _dbRequestHandlerService.CreateSubmodelElement(securityConfig, null, decodedSubmodelIdentifier, body, null, first);
 
         return CreatedAtAction("PostSubmodelElementSubmodelRepo", output);
     }

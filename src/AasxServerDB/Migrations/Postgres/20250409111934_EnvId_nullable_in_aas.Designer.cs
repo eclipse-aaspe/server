@@ -3,6 +3,7 @@ using System;
 using AasxServerDB.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AasxServerDB.Migrations.Postgres
 {
     [DbContext(typeof(PostgreAasContext))]
-    partial class PostgreAasContextModelSnapshot : ModelSnapshot
+    [Migration("20250409111934_EnvId_nullable_in_aas")]
+    partial class EnvId_nullable_in_aas
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

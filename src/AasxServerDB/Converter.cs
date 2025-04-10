@@ -17,6 +17,7 @@ namespace AasxServerDB
     using System.Linq;
     using System.Linq.Dynamic.Core;
     using System.Text;
+    using System.Text.RegularExpressions;
     using AasCore.Aas3_0;
     using AasxServerDB.Entities;
     using AdminShellNS;
@@ -88,7 +89,7 @@ namespace AasxServerDB
                 {
                     return false;
                 }
-                envId = aasDBList[0].EnvId;
+                envId = aasDBList[0].EnvId.Value;
             }
 
             if (smId.IsNullOrEmpty() && envId == -1)
@@ -528,6 +529,150 @@ namespace AasxServerDB
             }
         }
 
+        public static ISubmodel CreateSubmodel(ISubmodel newSubmodel, string aasIdentifier = null)
+        {
+            ISubmodel submodel = null;
+
+            using (var db = new AasContext())
+            {
+                int? aasDB = null;
+                int? envDB = null;
+
+                //ToDo: For EventService always null?
+                if (!String.IsNullOrEmpty(aasIdentifier))
+                {
+                    var aasDBQuery = db.AASSets.Where(sm => sm.Identifier == aasIdentifier);
+                    if (aasDBQuery != null && aasDBQuery.Any())
+                    {
+                        aasDB = aasDBQuery.First().Id;
+                        envDB = aasDBQuery.First().EnvId;
+                    }
+                }
+
+                var visitor = new VisitorAASX(db);
+
+                //ToDo: For EventService
+                //visitor.currentDataTime = dt;
+                visitor.VisitSubmodel(newSubmodel);
+                visitor._smDB.AASId = aasDB;
+                visitor._smDB.EnvId = envDB;
+                db.Add(visitor._smDB);
+                db.SaveChanges();
+
+
+                var smDBQuery = db.SMSets.Where(sm => sm.Identifier == newSubmodel.Id);
+                if (smDBQuery != null && smDBQuery.Count() > 0)
+                {
+                    submodel = GetSubmodel(smDBQuery.First());
+                }
+            }
+
+            return submodel;
+        }
+
+        public static IAssetAdministrationShell CreateAas(IAssetAdministrationShell newAas)
+        {
+            IAssetAdministrationShell aas = null;
+
+            using (var db = new AasContext())
+            {
+                //var visitor = new VisitorAASX();
+                var currentDataTime = DateTime.UtcNow;
+
+                var smDB = new SMSet();
+                smDB.Identifier =  "1";
+                Converter.setTimeStamp(smDB, currentDataTime);
+                db.Add(smDB);
+                db.SaveChanges();
+
+                var aasDB = new AASSet()
+                {
+                    IdShort = newAas.IdShort,
+                    DisplayName = Serializer.SerializeList(newAas.DisplayName),
+                    Category = newAas.Category,
+                    Description = Serializer.SerializeList(newAas.Description),
+                    Extensions = Serializer.SerializeList(newAas.Extensions),
+                    Identifier = newAas.Id,
+                    EmbeddedDataSpecifications = Serializer.SerializeList(newAas.EmbeddedDataSpecifications),
+                    DerivedFrom = Serializer.SerializeElement(newAas.DerivedFrom),
+                    Version = newAas.Administration?.Version,
+                    Revision = newAas.Administration?.Revision,
+                    Creator = Serializer.SerializeElement(newAas.Administration?.Creator),
+                    TemplateId = newAas.Administration?.TemplateId,
+                    AEmbeddedDataSpecifications = Serializer.SerializeList(newAas.Administration?.EmbeddedDataSpecifications),
+                    AssetKind = Serializer.SerializeElement(newAas.AssetInformation?.AssetKind),
+                    SpecificAssetIds = Serializer.SerializeList(newAas.AssetInformation?.SpecificAssetIds),
+                    GlobalAssetId = newAas.AssetInformation?.GlobalAssetId,
+                    AssetType = newAas.AssetInformation?.AssetType,
+                    DefaultThumbnailPath = newAas.AssetInformation?.DefaultThumbnail?.Path,
+                    DefaultThumbnailContentType = newAas.AssetInformation?.DefaultThumbnail?.ContentType,
+
+                    TimeStampCreate = newAas.TimeStampCreate == default ? currentDataTime : newAas.TimeStampCreate,
+                    TimeStamp = newAas.TimeStamp == default ? currentDataTime : newAas.TimeStamp,
+                    TimeStampTree = newAas.TimeStampTree == default ? currentDataTime : newAas .TimeStampTree,
+                    TimeStampDelete = newAas.TimeStampDelete
+                };
+                //ToDo: For EventService
+                //visitor.currentDataTime = dt;
+                var aasDBQuery = db.Add(aasDB);
+                db.SaveChanges();
+
+                aas = GetAssetAdministrationShell(aasDBQuery.Entity);
+            }
+
+            return aas;
+        }
+
+
+        public static ISubmodelElement CreateSubmodelElement(string aasIdentifier, string submodelIdentifier, ISubmodelElement newSubmodelElement, string idShortPath, bool first)
+        {
+            //ToDo: Take into account first parameter
+
+            ISubmodelElement submodelElement = null;
+            using (var db = new AasContext())
+            {
+                var smDBQuery = db.SMSets.Where(sm => sm.Identifier == submodelIdentifier);
+                if (!String.IsNullOrEmpty(aasIdentifier))
+                {
+                    var aasDB = db.AASSets
+                            .Where(aas => aas.Identifier == aasIdentifier).ToList();
+                    var aasDBId = aasDB[0].Id;
+                    smDBQuery = smDBQuery.Where(sm => sm.AASId == aasDBId);
+                }
+                var smDB = smDBQuery.FirstOrDefault();
+                var visitor = new VisitorAASX(db);
+                visitor._smDB = smDB;
+                visitor.currentDataTime = DateTime.UtcNow;
+                var smDBId = smDB.Id;
+                var smeSmList = db.SMESets.Where(sme => sme.SMId == smDBId).ToList();
+                Converter.CreateIdShortPath(db, smeSmList);
+                var smeSmMerged = Converter.GetSmeMerged(db, smeSmList);
+                visitor.smSmeMerged = smeSmMerged;
+
+                if (!String.IsNullOrEmpty(idShortPath))
+                {
+                    visitor.idShortPath = idShortPath;
+                }
+                visitor.update = false;
+                var receiveSmeDB = visitor.VisitSMESet(newSubmodelElement);
+                receiveSmeDB.SMId = smDBId;
+                Converter.setTimeStampTree(db, smDB, receiveSmeDB, receiveSmeDB.TimeStamp);
+                try
+                {
+                    db.SMESets.Add(receiveSmeDB);
+                    db.SaveChanges();
+                }
+                catch (Exception ex)
+                {
+                }
+
+                submodelElement = Converter.GetSubmodelElement(receiveSmeDB);
+            }
+
+            return submodelElement;
+        }
+
+
         private static void LoadSME(Submodel submodel, ISubmodelElement? sme, SMESet? smeSet, List<SMESet> SMEList, List<SmeMerged> tree = null)
         {
             var smeSets = SMEList;
@@ -727,7 +872,7 @@ namespace AasxServerDB
 
             return GetSmeMerged(db, querySME);
         }
-        public static List<SmeMerged> GetSmeMerged(AasContext db, IQueryable<SMESet>? querySME)
+        private static List<SmeMerged> GetSmeMerged(AasContext db, IQueryable<SMESet>? querySME)
         {
             if (querySME == null)
                 return null;

@@ -24,7 +24,7 @@ namespace AasxServerDB.Entities
     {
         // env
         [ForeignKey("EnvSet")]
-        public         int      EnvId  { get; set; }
+        public         int?      EnvId  { get; set; }
         public virtual EnvSet? EnvSet { get; set; }
 
         // aas

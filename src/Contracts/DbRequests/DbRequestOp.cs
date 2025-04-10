@@ -21,7 +21,6 @@ public enum DbRequestOp
     CreateSubmodel,
     CreateAssetAdministrationShell,
     CreateSubmodelElement,
-    CreateSubmodelElementByPath,
     CreateSubmodelReference,
     UpdateSubmodelById,
     UpdateSubmodelElementByPath,

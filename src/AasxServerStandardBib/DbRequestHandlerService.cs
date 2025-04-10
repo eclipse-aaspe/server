@@ -389,11 +389,82 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         };
         var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
 
-        var dbRequest = new DbRequest(DbRequestOp.ReadSubmodelById, DbRequestCrudType.Create, dbRequestContext, taskCompletionSource);
+        var dbRequest = new DbRequest(DbRequestOp.CreateSubmodel, DbRequestCrudType.Create, dbRequestContext, taskCompletionSource);
 
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
         return tcs.Submodels[0];
     }
+
+    public async Task<IAssetAdministrationShell> CreateAssetAdministrationShell(ISecurityConfig securityConfig, IAssetAdministrationShell body)
+    {
+        var parameters = new DbRequestParams()
+        {
+           AasBody = body,
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.CreateAssetAdministrationShell, DbRequestCrudType.Create, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.AssetAdministrationShells[0];
+    }
+
+    public async Task<ISubmodelElement> CreateSubmodelElement(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodelElement body, string idShortPath, bool first)
+    {
+        var parameters = new DbRequestParams()
+        {
+            SubmodelElementBody = body,
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            SubmodelIdentifier = submodelIdentifier,
+            IdShort = idShortPath,
+            First = first
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.CreateSubmodelElement, DbRequestCrudType.Create, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.SubmodelElements[0];
+    }
+
+    public async Task<IReference> CreateSubmodelReferenceInAAS(ISecurityConfig securityConfig, Reference body, string aasIdentifier)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.CreateSubmodelReference, DbRequestCrudType.Create, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.References[0];
+    }
+
 }
