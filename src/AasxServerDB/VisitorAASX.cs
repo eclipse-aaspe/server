@@ -494,8 +494,15 @@ namespace AasxServerDB
             tableDataType = "S";
             return true;
         }
-        private static void SetValues(ISubmodelElement sme, SMESet smeDB)
+        private void SetValues(ISubmodelElement sme, SMESet smeDB)
         {
+            if (update)
+            {
+                smeDB.OValueSets.Clear();
+                smeDB.SValueSets.Clear();
+                smeDB.IValueSets.Clear();
+                smeDB.DValueSets.Clear();
+            }
             if (sme is RelationshipElement rel)
             {
                 if (rel.First != null)

@@ -1222,17 +1222,8 @@
         if (Program.isLoading)
             return;
 
-        if (newDataMode != 0 || args is not Program.NewDataAvailableArgs newArgs)
-        {
-            return;
-        }
-
-        newDataMode = newArgs.signalNewDataMode;
-        /*
         totalCount = 0;
         update = true;
         InvokeAsync(StateHasChanged);
-        */
-        NavMan.NavigateTo(NavMan.Uri, forceLoad: true);
     }
 }
