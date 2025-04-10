@@ -531,7 +531,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         };
         var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
 
-        var dbRequest = new DbRequest(DbRequestOp.UpdateSubmodelById, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
+        var dbRequest = new DbRequest(DbRequestOp.UpdateSubmodelElementByPath, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
 
         _queryOperations.Add(dbRequest);
         var tcs = await taskCompletionSource.Task;
@@ -555,7 +555,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         };
         var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
 
-        var dbRequest = new DbRequest(DbRequestOp.ReplaceSubmodelById, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
+        var dbRequest = new DbRequest(DbRequestOp.ReplaceSubmodelElementByPath, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
 
         _queryOperations.Add(dbRequest);
         var tcs = await taskCompletionSource.Task;
@@ -600,7 +600,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         };
         var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
 
-        var dbRequest = new DbRequest(DbRequestOp.ReadAssetInformation, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
+        var dbRequest = new DbRequest(DbRequestOp.ReplaceAssetInformation, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
 
         _queryOperations.Add(dbRequest);
         var tcs = await taskCompletionSource.Task;
