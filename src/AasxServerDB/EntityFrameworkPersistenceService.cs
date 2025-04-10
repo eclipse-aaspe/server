@@ -851,6 +851,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 visitor.update = true;
                 visitor.currentDataTime = DateTime.UtcNow;
                 visitor.VisitSubmodel(newSubmodel);
+                db.SaveChanges();
             }
 
             //ToDo submodel service solution, do we really need a different solution for replace and update?
@@ -1310,12 +1311,13 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             UpdateSubmodelById(null, eventRequest.Submodel.Id, eventRequest.Submodel);
         }
 
+        var dt = DateTime.Parse(lastDiffValue);
+        var dtTransmit = DateTime.Parse(transmitted);
         if (eventData.Transmitted != null)
         {
             eventData.Transmitted.Value = transmitted;
-            eventData.Transmitted.SetTimeStamp(DateTime.UtcNow);
+            eventData.Transmitted.SetTimeStamp(dtTransmit);
         }
-        var dt = DateTime.Parse(lastDiffValue);
         if (eventData.LastUpdate != null)
         {
             eventData.LastUpdate.Value = lastDiffValue;
@@ -1324,7 +1326,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         if (eventData.Message != null && statusValue != null)
         {
             eventData.Message.Value = statusValue;
-            eventData.Message.SetTimeStamp(DateTime.UtcNow);
+            eventData.Message.SetTimeStamp(dtTransmit);
         }
         if (eventData.Diff != null)
         {
@@ -1345,6 +1347,5 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 eventData.Diff.SetTimeStamp(dt);
             }
         }
-
     }
 }
