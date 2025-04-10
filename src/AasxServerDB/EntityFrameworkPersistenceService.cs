@@ -731,52 +731,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     public IReference CreateSubmodelReferenceInAAS(IReference body, string aasIdentifier)
     {
-        //Verify request body
-        //_verificationService.VerifyRequestBody(body);
-
-        IReference output = null;
-
-        // TODO (jtikekar, 2023-09-04): to check if submodel with requested submodelReference exists in the server
-        //var aas = this.GetAssetAdministrationShellById(aasIdentifier, out int packageIndex);
-
-        //if (aas != null)
-        //{
-        //    if (aas.Submodels.IsNullOrEmpty())
-        //    {
-        //        aas.Submodels = new List<IReference>
-        //            {
-        //                body
-        //            };
-        //        output = aas.Submodels.Last();
-        //    }
-        //    else
-        //    {
-        //        bool found = false;
-        //        //Check if duplicate
-        //        foreach (var submodelReference in aas.Submodels)
-        //        {
-        //            if (submodelReference.Matches(body))
-        //            {
-        //                found = true;
-        //                break;
-        //            }
-        //        }
-
-        //        if (found)
-        //        {
-        //            _logger.LogDebug($"Cannot create requested Submodel-Reference in the AAS !!");
-        //            throw new DuplicateException($"Requested SubmodelReference already exists in the AAS with Id {aasIdentifier}.");
-        //        }
-        //        else
-        //        {
-        //            aas.Submodels.Add(body);
-        //            output = aas.Submodels.Last();
-        //        }
-        //    }
-        //}
-
-        return output;
-
+        throw new NotImplementedException();
     }
 
     public void DeleteAssetAdministrationShellById(string aasIdentifier)
@@ -1145,6 +1100,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     private bool IsSubmodelElementPresent(ISubmodel submodel, string idShortPath)
     {
+        //ToDo: Do parsing for proper check
         return submodel.FindSubmodelElementByIdShort(idShortPath) != null;
     }
 
