@@ -40,18 +40,34 @@ namespace AasxServerStandardBib.Services
         private bool EmptyPackageAvailable(out int emptyPackageIndex)
         {
             emptyPackageIndex = -1;
+            var found = false;
 
-            for (int envi = 0; envi < _packages.Length; envi++)
+            for (var envi = 0; envi < _packages.Length; envi++)
             {
                 if (_packages[envi] == null)
                 {
-                    emptyPackageIndex            = envi;
-                    _packages[emptyPackageIndex] = new AdminShellPackageEnv();
-                    return true;
+                    emptyPackageIndex = envi;
+                    found = true;
+                    break;
                 }
             }
 
-            return false;
+            if (!found && Program.withDb)
+            {
+                emptyPackageIndex = Program.oldest++;
+                if (Program.oldest == _packages.Length)
+                {
+                    Program.oldest = Program.envimin;
+                }
+                found = true;
+            }
+
+            if (found)
+            {
+                _packages[emptyPackageIndex] = new AdminShellPackageEnv();
+            }
+
+            return found;
         }
 
         public void setWrite(int packageIndex, bool status)

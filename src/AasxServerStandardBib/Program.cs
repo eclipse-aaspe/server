@@ -93,7 +93,7 @@ namespace AasxServer
             System.IO.File.Delete(copyFileName);
         }
 
-        static int oldest = 0;
+        public static int oldest = 0;
 
         public static bool isLoadingDB = false;
         static bool isLoaded = false;
