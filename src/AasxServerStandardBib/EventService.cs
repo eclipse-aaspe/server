@@ -564,6 +564,7 @@ public class EventService : IEventService
         transmit = eventPayload.status.transmitted;
         var dt = TimeStamp.TimeStamp.StringToDateTime(eventPayload.status.lastUpdate);
         dt = DateTime.Parse(eventPayload.status.lastUpdate);
+        var dtTransmit = DateTime.Parse(eventPayload.status.transmitted);
         lastDiffValue = TimeStamp.TimeStamp.DateTimeToString(dt);
 
         ISubmodelElementCollection statusDataCollection = null;
@@ -577,10 +578,10 @@ public class EventService : IEventService
             {
                 statusData.Value = new List<ISubmodelElement>();
                 statusData.Add(smc);
-                receiveSme.TimeStampCreate = dt;
+                receiveSme.TimeStampCreate = dtTransmit;
                 receiveSme.TimeStampDelete = new DateTime();
-                receiveSme.SetAllParentsAndTimestamps(statusData, dt, receiveSme.TimeStampCreate, receiveSme.TimeStampDelete);
-                receiveSme.SetTimeStamp(dt);
+                receiveSme.SetAllParentsAndTimestamps(statusData, dtTransmit, receiveSme.TimeStampCreate, receiveSme.TimeStampDelete);
+                receiveSme.SetTimeStamp(dtTransmit);
             }
         }
 
@@ -719,22 +720,20 @@ public class EventService : IEventService
                     {
                         using (var db = new AasContext())
                         {
-                            int? aasDB = null;
-                            int? envDB = null;
-                            var smDBQuery = db.SMSets.Where(sm => sm.Identifier == receiveSM.Id);
-                            var smDB = smDBQuery.ToList();
-                            if (smDB != null && smDB.Count > 0)
+                            if (entry.entryType == "DELETE")
                             {
-                                aasDB = smDB[0].AASId;
-                                envDB = smDB[0].EnvId;
-                                smDBQuery.ExecuteDeleteAsync().Wait();
-                                db.SaveChanges();
+                                var smDBQuery = db.SMSets.Where(sm => sm.Identifier == receiveSM.Id);
+                                var smDB = smDBQuery.ToList();
+                                if (smDB != null && smDB.Count > 0)
+                                {
+                                    smDBQuery.ExecuteDeleteAsync().Wait();
+                                    db.SaveChanges();
+                                }
                             }
-                            var visitor = new VisitorAASX();
+                            var visitor = new VisitorAASX(db);
+                            visitor.update = entry.entryType == "UPDATE";
                             visitor.currentDataTime = dt;
                             visitor.VisitSubmodel(receiveSM);
-                            visitor._smDB.AASId = aasDB;
-                            visitor._smDB.EnvId = envDB;
                             db.Add(visitor._smDB);
                             db.SaveChanges();
                             count++;
@@ -768,6 +767,7 @@ public class EventService : IEventService
                     if (changeSubmodel)
                     {
                         var submodelIdentifier = entriesSubmodel.Last().submodelId;
+                        List<int> smeDelete = [];
                         using (var db = new AasContext())
                         {
                             var smDBQuery = db.SMSets.Where(sm => sm.Identifier == submodelIdentifier);
@@ -781,15 +781,18 @@ public class EventService : IEventService
                                 smDB.Kind = ModellingKind.Instance.ToString();
                                 Converter.setTimeStamp(smDB, dt);
                                 db.Add(smDB);
+                                db.SaveChanges();
                             }
                             if (smDB != null)
                             {
-                                var visitor = new VisitorAASX(smDB);
+                                var visitor = new VisitorAASX(db);
+                                visitor._smDB = smDB;
                                 visitor.currentDataTime = dt;
                                 var smDBId = smDB.Id;
                                 var smeSmList = db.SMESets.Where(sme => sme.SMId == smDBId).ToList();
                                 Converter.CreateIdShortPath(db, smeSmList);
                                 var smeSmMerged = Converter.GetSmeMerged(db, smeSmList);
+                                visitor.smSmeMerged = smeSmMerged;
 
                                 foreach (var e in entriesSubmodel)
                                 {
@@ -803,6 +806,8 @@ public class EventService : IEventService
                                     }
                                     if (receiveSme != null)
                                     {
+                                        visitor.idShortPath = e.idShortPath;
+                                        visitor.update = e.entryType == "UPDATE";
                                         var receiveSmeDB = visitor.VisitSMESet(receiveSme);
                                         receiveSmeDB.SMId = smDBId;
 
@@ -844,19 +849,12 @@ public class EventService : IEventService
                                                     catch (Exception ex)
                                                     {
                                                     }
-                                                    var smeDB = smeSmMerged.Where(
-                                                        sme => sme.smeSet.IdShortPath == e.idShortPath ||
-                                                        sme.smeSet.IdShortPath.StartsWith(e.idShortPath + "."))
-                                                        .ToList();
-                                                    var smeDBList = smeDB.Select(sme => sme.smeSet.Id).ToList();
-                                                    if (smeDBList.Count > 0)
-                                                    {
-                                                        if (receiveSme != null)
-                                                        {
-                                                            db.SMESets.Where(sme => smeDBList.Contains(sme.Id)).ExecuteDeleteAsync().Wait();
-                                                            db.SaveChanges();
-                                                        }
-                                                    }
+                                                    var smeDB = smeSmMerged.Where(sme =>
+                                                            !visitor.keepSme.Contains(sme.smeSet.Id) &&
+                                                            visitor.deleteSme.Contains(sme.smeSet.Id)
+                                                        ).ToList();
+                                                    var smeDBList = smeDB.Select(sme => sme.smeSet.Id).Distinct().ToList();
+                                                    smeDelete.AddRange(smeDBList);
                                                     count++;
                                                 }
                                                 break;
@@ -878,20 +876,22 @@ public class EventService : IEventService
                                             foreach (var deletePath in deletePathList)
                                             {
                                                 smeDBList.AddRange(
-                                                    smeSmMerged.Where(
-                                                    sme => sme.smeSet.IdShortPath == deletePath ||
-                                                    sme.smeSet.IdShortPath.StartsWith(deletePath + "."))
+                                                    smeSmMerged.Where(sme =>
+                                                        sme.smeSet.IdShortPath != null &&
+                                                        (sme.smeSet.IdShortPath == deletePath ||
+                                                        sme.smeSet.IdShortPath.StartsWith(deletePath + ".")))
                                                     .Select(sme => sme.smeSet.Id).ToList());
                                             }
-                                            if (smeDBList.Count > 0)
-                                            {
-                                                db.SMESets.Where(sme => smeDBList.Contains(sme.Id)).ExecuteDeleteAsync().Wait();
-                                                db.SaveChanges();
-                                            }
+                                            smeDelete.AddRange(smeDBList);
                                             count++;
                                         }
                                     }
                                 }
+                            }
+                            if (smeDelete.Count > 0)
+                            {
+                                db.SMESets.Where(sme => smeDelete.Contains(sme.Id)).ExecuteDeleteAsync().Wait();
+                                db.SaveChanges();
                             }
                         }
                         entriesSubmodel.Clear();

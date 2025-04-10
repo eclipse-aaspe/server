@@ -191,7 +191,13 @@ public static class ServerConfiguration
     private static void ConfigureRazorPages(IServiceCollection services)
     {
         services.AddRazorPages();
-        services.AddServerSideBlazor();
+        services.AddServerSideBlazor()
+             .AddHubOptions(options =>
+             {
+                 options.ClientTimeoutInterval = TimeSpan.FromMinutes(2);
+                 options.HandshakeTimeout = TimeSpan.FromMinutes(2);
+                 options.KeepAliveInterval = TimeSpan.FromMinutes(1);
+             });
     }
 
     #endregion

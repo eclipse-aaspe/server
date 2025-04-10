@@ -913,10 +913,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 visitor.update = true;
                 visitor.currentDataTime = DateTime.UtcNow;
                 visitor.VisitSubmodel(newSubmodel);
-            }
-
-
-            //ToDo submodel service solution, do we really need a different solution for replace and update?
+                        //ToDo submodel service solution, do we really need a different solution for replace and update?
             // Replace
             //_submodelService.ReplaceSubmodelById(submodelIdentifier, newSubmodel);
             //_verificationService.VerifyRequestBody(newSubmodel);
