@@ -710,7 +710,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
                 scopedLogger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
 
-
+                //ToDo: Do not use in-memory submodel for check
                 var smeFound = IsSubmodelElementPresent(output, newSubmodelElement.IdShort);
                 if (smeFound)
                 {
@@ -829,6 +829,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 var smDBQuery = db.SMSets.Where(sm => sm.Identifier == submodelIdentifier);
                 var smDB = smDBQuery.FirstOrDefault();
                 var smDBId = smDB.Id;
+
+                var smeSmList = db.SMESets.Where(sme => sme.SMId == smDBId).ToList();
+                Converter.CreateIdShortPath(db, smeSmList);
 
                 var smeDBDelete = db.SMESets.Where(s => s.SMId == smDBId && (s.IdShortPath + ".").StartsWith(idShortPath + "."));
 
