@@ -308,6 +308,151 @@
                     <img src="db-schema.jpg"/>
                 }
 
+                if (url.EndsWith("/env"))
+                {
+                    if (totalCount == 0)
+                    {
+                        totalCount = db.EnvSets.Select(x => x.Id).Count();
+                    }
+                    CheckTotalCountAndUpdate();
+                    if (update)
+                    {
+                        update = false;
+                        loadedItems = null;
+                        if (EnvSetContainer != null)
+                        {
+                            EnvSetContainer.RefreshDataAsync();
+                            this.StateHasChanged();
+                        }
+                    }
+
+                    <span>
+                        &nbsp&nbsp@($"Env#: {totalCount} size={size} offset={offset} search={search} smeid={smeid}")
+                    </span>
+                    <br />
+                    <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
+                        <thead>
+                            <tr>
+                                <th style="word-break:keep-all">Env#</th>
+                                <th style="word-break:keep-all">Path</th>
+                                <th style="word-break:keep-all">Links</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <Virtualize Context="EnvSet" @ref="EnvSetContainer" ItemsProvider="LoadEnvSetItems">
+                                <tr>
+                                    <td style="word-break:keep-all">
+                                        <b>@EnvSet.Id</b>
+                                    </td>
+                                    <td>@EnvSet.Path</td>
+                                    <td style="word-break:keep-all">
+                                        <a href="@($"{shorturl}/aas?envid={EnvSet.Id}")" target="_blank">aas </a>
+                                        <a href="@($"{shorturl}/sm?envid={EnvSet.Id}")" target="_blank">sm </a>
+                                        <a href="@($"{shorturl}/cd?envid={EnvSet.Id}")" target="_blank">cd </a>
+                                        @if (cdid != 0)
+
+                                        {
+                                            <a href="@($"{shorturl}/cd?envid={EnvSet.Id}&cdid={cdid}")" target="_blank">givenCd</a>
+                                        }
+                                    </td>
+                                </tr>
+                            </Virtualize>
+                        </tbody>
+                    </table>
+                }
+
+                if (url.EndsWith("/cd"))
+                {
+                    if (totalCount == 0)
+                    {
+                        totalCount = db.CDSets.Select(x => x.Id).Count();
+                    }
+                    CheckTotalCountAndUpdate();
+                    if (update)
+                    {
+                        update = false;
+                        loadedItems = null;
+                        if (CDSetContainer != null)
+                        {
+                            CDSetContainer.RefreshDataAsync();
+                            this.StateHasChanged();
+                        }
+                    }
+
+                    <span>
+                        &nbsp&nbsp@($"CD#: {totalCount} size={size} offset={offset} search={search} smeid={smeid}")
+                    </span>
+                    <br />
+                    <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
+                        <thead>
+                            <tr>
+                                <th style="word-break:keep-all">CD#</th>
+                                <th style="word-break:keep-all">Id Short</th>
+                                <th style="word-break:keep-all">Display Name</th>
+                                <th style="word-break:keep-all">Category</th>
+                                <th style="word-break:keep-all">Description</th>
+                                <th style="word-break:keep-all">Extensions</th>
+                                <th style="word-break:keep-all">Identifier</th>
+                                <th style="word-break:keep-all">Is Case Of</th>
+                                <th style="word-break:keep-all">Embedded Data Specifications</th>
+                                <th style="word-break:keep-all">Version</th>
+                                <th style="word-break:keep-all">Revision</th>
+                                <th style="word-break:keep-all">Creator</th>
+                                <th style="word-break:keep-all">Template Id</th>
+                                <th style="word-break:keep-all">A Embedded Data Specifications</th>
+                                <th style="word-break:keep-all">Time Stamp</th>
+                                <th style="word-break:keep-all">Links</th>
+                                <th style="word-break:keep-all">API</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <Virtualize Context="CDSet" @ref="CDSetContainer" ItemsProvider="LoadCDSetItems">
+                                @{
+                                    var cd64 = Base64UrlEncoder.Encode(CDSet.Identifier);
+                                    var link = $"{AasxServer.Program.externalBlazor}/concept-descriptions/{cd64}";
+                                }
+                                <tr>
+                                    <td style="word-break:keep-all">
+                                        <b>@CDSet.Id</b>
+                                    </td>
+                                    <td style="word-break:keep-all;max-width:200px">@CDSet.IdShort</td>
+                                    <td style="font-size:small">@CDSet.DisplayName</td>
+                                    <td style="word-break:keep-all">@CDSet.Category</td>
+                                    <td style="font-size:small">@CDSet.Description</td>
+                                    <td style="font-size:small">@CDSet.Extensions</td>
+                                    <td>@CDSet.Identifier</td>
+                                    <td style="font-size:small">@CDSet.IsCaseOf</td>
+                                    <td style="font-size:small">@CDSet.EmbeddedDataSpecifications</td>
+                                    <td>@CDSet.Version</td>
+                                    <td>@CDSet.Revision</td>
+                                    <td style="font-size:small">@CDSet.Creator</td>
+                                    <td>@CDSet.TemplateId</td>
+                                    <td style="font-size:small">@CDSet.AEmbeddedDataSpecifications</td>
+                                    <td style="width:175px;color:lightgray;font-size:x-small">
+                                        @($"CREATE {TimeStamp.DateTimeToString(CDSet.TimeStampCreate)}")<br />
+                                        @($"UPDATE {TimeStamp.DateTimeToString(CDSet.TimeStamp)}")<br />
+                                        @($"TREE {TimeStamp.DateTimeToString(CDSet.TimeStampTree)}")<br />
+                                        @($"DELETE {TimeStamp.DateTimeToString(CDSet.TimeStampDelete)}")
+                                    </td>
+                                    <td style="word-break:keep-all">
+                                        <a href="@($"{shorturl}/env?cdid={CDSet.Id}")" target="_blank">env </a>
+                                        @if (envid != 0)
+                                        {
+                                            <a href="@($"{shorturl}/env?cdid={CDSet.Id}&envid={envid}")" target="_blank">givenEnv</a>
+                                        }
+                                    </td>
+                                    <td style="word-break:keep-all">
+                                        @if (!CDSet.Identifier.IsNullOrEmpty())
+                                        {
+                                            <a href="@link" target="_blank">api</a>
+                                        }
+                                    </td>
+                                </tr>
+                            </Virtualize>
+                        </tbody>
+                    </table>
+                }
+
                 if (url.EndsWith("/aas"))
                 {
                     if (totalCount == 0)
@@ -797,6 +942,22 @@
 
                 if (url.EndsWith("/svalue"))
                 {
+                    if (totalCount == 0)
+                    {
+                        totalCount = db.SValueSets.Select(x => x.Id).Count();
+                    }
+                    CheckTotalCountAndUpdate();
+                    if (update)
+                    {
+                        update = false;
+                        loadedItems = null;
+                        if (SValueSetContainer != null)
+                        {
+                            SValueSetContainer.RefreshDataAsync();
+                            this.StateHasChanged();
+                        }
+                    }
+
                     <span>
                         &nbsp&nbsp@($"SValue#: {totalCount} size={size} offset={offset} search={search} smeid={smeid}")
                     </span>
@@ -820,6 +981,144 @@
                                             <a href="@($"{shorturl}/sme?smeid={SValueSet.SMEId}")" target="_blank">par</a>
                                         </td>
                                     </tr>
+                            </Virtualize>
+                        </tbody>
+                    </table>
+                }
+
+                if (url.EndsWith("/ivalue"))
+                {
+                    if (totalCount == 0)
+                    {
+                        totalCount = db.IValueSets.Select(x => x.Id).Count();
+                    }
+                    CheckTotalCountAndUpdate();
+                    if (update)
+                    {
+                        update = false;
+                        loadedItems = null;
+                        if (IValueSetContainer != null)
+                        {
+                            IValueSetContainer.RefreshDataAsync();
+                            this.StateHasChanged();
+                        }
+                    }
+
+                    <span>
+                        &nbsp&nbsp@($"IValue#: {totalCount} size={size} offset={offset} search={search} smeid={smeid}")
+                    </span>
+                    <br />
+                    <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
+                        <thead>
+                            <tr>
+                                <th style="word-break:keep-all">Par#</th>
+                                <th style="word-break:keep-all">Value</th>
+                                <th style="word-break:keep-all">Annotation</th>
+                                <th style="word-break:keep-all">Links</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <Virtualize Context="IValueSet" @ref="IValueSetContainer" ItemsProvider="LoadIValueSetItems">
+                                <tr>
+                                    <td style="word-break:keep-all">@IValueSet.SMEId</td>
+                                    <td style="word-break:keep-all">@IValueSet.Value</td>
+                                    <td style="word-break:keep-all">@IValueSet.Annotation</td>
+                                    <td style="word-break:keep-all">
+                                        <a href="@($"{shorturl}/sme?smeid={IValueSet.SMEId}")" target="_blank">par</a>
+                                    </td>
+                                </tr>
+                            </Virtualize>
+                        </tbody>
+                    </table>
+                }
+
+                if (url.EndsWith("/dvalue"))
+                {
+                    if (totalCount == 0)
+                    {
+                        totalCount = db.DValueSets.Select(x => x.Id).Count();
+                    }
+                    CheckTotalCountAndUpdate();
+                    if (update)
+                    {
+                        update = false;
+                        loadedItems = null;
+                        if (DValueSetContainer != null)
+                        {
+                            DValueSetContainer.RefreshDataAsync();
+                            this.StateHasChanged();
+                        }
+                    }
+
+                    <span>
+                        &nbsp&nbsp@($"DValue#: {totalCount} size={size} offset={offset} search={search} smeid={smeid}")
+                    </span>
+                    <br />
+                    <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
+                        <thead>
+                            <tr>
+                                <th style="word-break:keep-all">Par#</th>
+                                <th style="word-break:keep-all">Value</th>
+                                <th style="word-break:keep-all">Annotation</th>
+                                <th style="word-break:keep-all">Links</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <Virtualize Context="DValueSet" @ref="DValueSetContainer" ItemsProvider="LoadDValueSetItems">
+                                <tr>
+                                    <td style="word-break:keep-all">@DValueSet.SMEId</td>
+                                    <td style="word-break:keep-all">@DValueSet.Value</td>
+                                    <td style="word-break:keep-all">@DValueSet.Annotation</td>
+                                    <td style="word-break:keep-all">
+                                        <a href="@($"{shorturl}/sme?smeid={DValueSet.SMEId}")" target="_blank">par</a>
+                                    </td>
+                                </tr>
+                            </Virtualize>
+                        </tbody>
+                    </table>
+                }
+
+                if (url.EndsWith("/ovalue"))
+                {
+                    if (totalCount == 0)
+                    {
+                        totalCount = db.OValueSets.Select(x => x.Id).Count();
+                    }
+                    CheckTotalCountAndUpdate();
+                    if (update)
+                    {
+                        update = false;
+                        loadedItems = null;
+                        if (OValueSetContainer != null)
+                        {
+                            OValueSetContainer.RefreshDataAsync();
+                            this.StateHasChanged();
+                        }
+                    }
+
+                    <span>
+                        &nbsp&nbsp@($"OValue#: {totalCount} size={size} offset={offset} search={search} smeid={smeid}")
+                    </span>
+                    <br />
+                    <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;">
+                        <thead>
+                            <tr>
+                                <th style="word-break:keep-all">Par#</th>
+                                <th style="word-break:keep-all">Value</th>
+                                <th style="word-break:keep-all">Attribute</th>
+                                <th style="word-break:keep-all">Links</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <Virtualize Context="OValueSet" @ref="OValueSetContainer" ItemsProvider="LoadOValueSetItems">
+                                <tr>
+                                    <td style="word-break:keep-all">@OValueSet.SMEId</td>
+                                    <td style="word-break:keep-all">@OValueSet.Value</td>
+                                    <td style="word-break:keep-all">@OValueSet.Attribute</td>
+                                    <td style="word-break:keep-all">
+                                        <a href="@($"{shorturl}/sme?smeid={OValueSet.SMEId}")" target="_blank">par</a>
+                                    </td>
+                                </tr>
                             </Virtualize>
                         </tbody>
                     </table>
@@ -887,13 +1186,27 @@
         var watch = System.Diagnostics.Stopwatch.StartNew();
         watch.Start();
 
-        var result = await LoadItems<EnvSet>(request);
+        List<EnvSet> result = [];
+
+        using (AasContext db = new AasContext())
+        {
+            IQueryable<EnvSet> qEnv = db.EnvSets;
+            totalCount = qEnv.Count();
+            CheckTotalCountAndUpdate();
+
+            result = qEnv
+                .OrderBy(aas => aas.Id)
+                .Skip(offset + request.StartIndex)
+                .Take(request.Count)
+                .ToList();
+        }
 
         watch.Stop();
         elapsedTime = watch.ElapsedMilliseconds;
-        StateHasChanged();
 
-        return result;
+        Console.WriteLine($"LoadItems Env: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
+
+        return new ItemsProviderResult<EnvSet>(result, size);
     }
 
     private Virtualize<EnvSet> EnvSetContainer { get; set; }
@@ -903,16 +1216,30 @@
         var watch = System.Diagnostics.Stopwatch.StartNew();
         watch.Start();
 
-        var result = await LoadItems<CDSet>(request);
+        List<CDSet> result = [];
+
+        using (AasContext db = new AasContext())
+        {
+            IQueryable<CDSet> qCD = db.CDSets;
+            totalCount = qCD.Count();
+            CheckTotalCountAndUpdate();
+
+            result = qCD
+                .OrderBy(aas => aas.Id)
+                .Skip(offset + request.StartIndex)
+                .Take(request.Count)
+                .ToList();
+        }
 
         watch.Stop();
         elapsedTime = watch.ElapsedMilliseconds;
-        StateHasChanged();
 
-        return result;
+        Console.WriteLine($"LoadItems CD: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
+
+        return new ItemsProviderResult<CDSet>(result, size);
     }
 
-    private Virtualize<EnvSet> CDSetContainer { get; set; }
+    private Virtualize<CDSet> CDSetContainer { get; set; }
 
     private async ValueTask<ItemsProviderResult<AASSet>> LoadAASSetItems(ItemsProviderRequest request)
     {
@@ -950,7 +1277,7 @@
         elapsedTime = watch.ElapsedMilliseconds;
         // StateHasChanged();
 
-        Console.WriteLine($"LoadItems: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
+        Console.WriteLine($"LoadItems AAS: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
 
         return new ItemsProviderResult<AASSet>(result, size);
     }
@@ -1008,7 +1335,7 @@
         watch.Stop();
         elapsedTime = watch.ElapsedMilliseconds;
 
-        Console.WriteLine($"LoadItems: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
+        Console.WriteLine($"LoadItems SM: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
 
         return new ItemsProviderResult<SMVirtualize>(result, size);
     }
@@ -1029,6 +1356,10 @@
             {
                 qSValue = qSValue.Where(s => s.SMEId == smeid);
             }
+            if (search != "")
+            {
+                qSValue = qSValue.Where(s => s.Value.Contains(search));
+            }
             totalCount = qSValue.Count();
             CheckTotalCountAndUpdate();
 
@@ -1042,12 +1373,114 @@
         watch.Stop();
         elapsedTime = watch.ElapsedMilliseconds;
 
-        Console.WriteLine($"LoadItems: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
+        Console.WriteLine($"LoadItems SValue: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
 
         return new ItemsProviderResult<SValueSet>(result, size);
     }
 
     private Virtualize<SValueSet> SValueSetContainer { get; set; }
+
+    private async ValueTask<ItemsProviderResult<IValueSet>> LoadIValueSetItems(ItemsProviderRequest request)
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        watch.Start();
+
+        List<IValueSet> result = [];
+
+        using (AasContext db = new AasContext())
+        {
+            IQueryable<IValueSet> qIValue = db.IValueSets;
+            if (smeid != 0)
+            {
+                qIValue = qIValue.Where(s => s.SMEId == smeid);
+            }
+            totalCount = qIValue.Count();
+            CheckTotalCountAndUpdate();
+
+            result = qIValue
+                .OrderBy(s => s.Id)
+                .Skip(offset + request.StartIndex)
+                .Take(request.Count)
+                .ToList();
+        }
+
+        watch.Stop();
+        elapsedTime = watch.ElapsedMilliseconds;
+
+        Console.WriteLine($"LoadItems IValue: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
+
+        return new ItemsProviderResult<IValueSet>(result, size);
+    }
+
+    private Virtualize<IValueSet> IValueSetContainer { get; set; }
+
+    private async ValueTask<ItemsProviderResult<DValueSet>> LoadDValueSetItems(ItemsProviderRequest request)
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        watch.Start();
+
+        List<DValueSet> result = [];
+
+        using (AasContext db = new AasContext())
+        {
+            IQueryable<DValueSet> qDValue = db.DValueSets;
+            if (smeid != 0)
+            {
+                qDValue = qDValue.Where(s => s.SMEId == smeid);
+            }
+            totalCount = qDValue.Count();
+            CheckTotalCountAndUpdate();
+
+            result = qDValue
+                .OrderBy(s => s.Id)
+                .Skip(offset + request.StartIndex)
+                .Take(request.Count)
+                .ToList();
+        }
+
+        watch.Stop();
+        elapsedTime = watch.ElapsedMilliseconds;
+
+        Console.WriteLine($"LoadItems DValue: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
+
+        return new ItemsProviderResult<DValueSet>(result, size);
+    }
+
+    private Virtualize<DValueSet> DValueSetContainer { get; set; }
+
+    private async ValueTask<ItemsProviderResult<OValueSet>> LoadOValueSetItems(ItemsProviderRequest request)
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        watch.Start();
+
+        List<OValueSet> result = [];
+
+        using (AasContext db = new AasContext())
+        {
+            IQueryable<OValueSet> qOValue = db.OValueSets;
+            if (smeid != 0)
+            {
+                qOValue = qOValue.Where(s => s.SMEId == smeid);
+            }
+            totalCount = qOValue.Count();
+            CheckTotalCountAndUpdate();
+
+            result = qOValue
+                .OrderBy(s => s.Id)
+                .Skip(offset + request.StartIndex)
+                .Take(request.Count)
+                .ToList();
+        }
+
+        watch.Stop();
+        elapsedTime = watch.ElapsedMilliseconds;
+
+        Console.WriteLine($"LoadItems DValue: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
+
+        return new ItemsProviderResult<OValueSet>(result, size);
+    }
+
+    private Virtualize<OValueSet> OValueSetContainer { get; set; }
 
     public async Task MaintainDatabaseAsync()
     {
@@ -1097,8 +1530,6 @@
 
         List<SMEVirtualize> result = [];
 
-        Console.WriteLine($"LoadItems SME: 1");
-
         using (AasContext db = new AasContext())
         {
             IQueryable<SMESet> qSME = db.SMESets;
@@ -1124,23 +1555,16 @@
             totalCount = qSME.Count();
             CheckTotalCountAndUpdate();
 
-            Console.WriteLine($"LoadItems SME: 2");
-
             var smeList = qSME
                 .OrderBy(sme => sme.Id)
                 .Skip(offset + request.StartIndex)
                 .Take(request.Count)
                 .ToList();
 
-            Console.WriteLine($"LoadItems SME: 3");
-            // Converter.CreateIdShortPath(db, smeList);
             CreateIdShortPath(db, smeList);
-            Console.WriteLine($"LoadItems SME: 4");
             var merged = Converter.GetSmeMerged(db, smeList);
             var smIdList = smeList.Select(sme => sme.SMId).Distinct();
-            Console.WriteLine($"LoadItems SME: 5");
             var smList = db.SMSets.Where(sm => smIdList.Contains(sm.Id)).ToList();
-            Console.WriteLine($"LoadItems SME: 6");
             foreach (var sme in smeList)
             {
                 result.Add(new SMEVirtualize
