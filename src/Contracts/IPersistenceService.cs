@@ -15,18 +15,6 @@ public interface IPersistenceService
 
     List<string> ReadFilteredPackages(string filterPath, List<AdminShellPackageEnv> list);
 
-    void UpdateSubmodelById(string? aasIdentifier, string? submodelIdentifier, ISubmodel body);
-    void UpdateSubmodelElementByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, ISubmodelElement body);
-    void UpdateAssetAdministrationShellById(string aasIdentifier, IAssetAdministrationShell newAas);
-    void UpdateAssetInformation(string aasIdentifier, IAssetInformation newAssetInformation);
-    //void UpdateSubmodelElementByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, ISubmodelElement body);
-    void UpdateFileByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream);
-    void UpdateThumbnail(string aasIdentifier, string fileName, string contentType, MemoryStream stream);
-
-    void ReplaceSubmodelById(string submodelIdentifier, ISubmodel body);
-    void ReplaceSubmodelElementByPath(string submodelIdentifier, string idShortPath, ISubmodelElement body);
-    void ReplaceFileByPath(string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream);
-
     void DeleteAssetAdministrationShellById(string aasIdentifier);
     void DeleteSubmodelById(string aasIdentifier, string submodelIdentifier);
     void DeleteSubmodelReferenceById(string aasIdentifier, string submodelIdentifier);

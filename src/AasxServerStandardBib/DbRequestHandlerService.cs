@@ -2,6 +2,7 @@ namespace AasxServerStandardBib;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using AasCore.Aas3_0;
@@ -353,7 +354,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.EventPayload;
     }
 
-    public Task UpdateEventMessages(DbEventRequest dbEventRequest)
+    public async Task<DbRequestResult> UpdateEventMessages(ISecurityConfig securityConfig, DbEventRequest dbEventRequest)
     {
         var parameters = new DbRequestParams()
         {
@@ -362,16 +363,16 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
         var dbRequestContext = new DbRequestContext()
         {
-            //SecurityConfig = securityConfig,
+            SecurityConfig = securityConfig,
             Params = parameters
         };
         var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
 
-        var dbRequest = new DbRequest(DbRequestOp.UpdateEventMessages, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+        var dbRequest = new DbRequest(DbRequestOp.UpdateEventMessages, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
 
         _queryOperations.Add(dbRequest);
-
-        return taskCompletionSource.Task;
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
     }
 
     public async Task<ISubmodel> CreateSubmodel(ISecurityConfig securityConfig, ISubmodel newSubmodel, string aasIdentifier)
@@ -467,4 +468,200 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.References[0];
     }
 
+    public async Task<DbRequestResult> ReplaceSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodel body)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            SubmodelIdentifier = submodelIdentifier,
+            SubmodelBody = body
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReplaceSubmodelById, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
+    public async Task<DbRequestResult> UpdateSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodel body)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            SubmodelIdentifier = submodelIdentifier,
+            SubmodelBody = body
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.UpdateSubmodelById, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
+    public async Task<DbRequestResult> UpdateSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath, ISubmodelElement body)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            SubmodelIdentifier = submodelIdentifier,
+            IdShort = idShortPath,
+            SubmodelElementBody = body
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.UpdateSubmodelElementByPath, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
+    public async Task<DbRequestResult> ReplaceSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath, ISubmodelElement body)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            SubmodelIdentifier = submodelIdentifier,
+            IdShort = idShortPath,
+            SubmodelElementBody = body
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReplaceSubmodelElementByPath, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
+
+    public async Task<DbRequestResult> ReplaceAssetAdministrationShellById(ISecurityConfig security, string aasIdentifier, AssetAdministrationShell body)
+    {
+            var parameters = new DbRequestParams()
+            {
+                AssetAdministrationShellIdentifier = aasIdentifier,
+                AasBody = body
+            };
+
+            var dbRequestContext = new DbRequestContext()
+            {
+                SecurityConfig = security,
+                Params = parameters
+            };
+            var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+            var dbRequest = new DbRequest(DbRequestOp.ReplaceAssetAdministrationShellById, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
+
+            _queryOperations.Add(dbRequest);
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
+    public async Task<DbRequestResult> ReplaceAssetInformation(ISecurityConfig securityConfig, string aasIdentifier, AssetInformation body)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            AssetInformation = body
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReplaceAssetInformation, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
+    public async Task<DbRequestResult> ReplaceFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            SubmodelIdentifier = submodelIdentifier,
+            IdShort = idShortPath,
+            FileRequest = new DbFileRequestResult()
+            {
+                Stream = stream,
+                ContentType = contentType,
+                File = fileName
+            }
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReplaceFileByPath, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
+    public async Task<DbRequestResult> ReplaceThumbnail(ISecurityConfig securityConfig, string aasIdentifier, string fileName, string contentType, MemoryStream stream)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            FileRequest = new DbFileRequestResult()
+            {
+                Stream = stream,
+                ContentType = contentType,
+                File = fileName
+            }
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReplaceThumbnail, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
 }

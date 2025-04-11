@@ -339,8 +339,6 @@ namespace AasxServerDB
 
                 return sme;
             }
-
-            return null;
         }
 
         public static List<ISubmodel> GetSubmodels(IPaginationParameters paginationParameters, string securityConditionSM, string securityConditionSME, IReference reqSemanticId, string idShort)
@@ -415,53 +413,56 @@ namespace AasxServerDB
 
         public static AssetAdministrationShell? GetAssetAdministrationShell(AASSet? aasDB = null, string aasIdentifier = "")
         {
-            var db = new AasContext();
-            if (!aasIdentifier.IsNullOrEmpty())
+            AssetAdministrationShell aas = null;
+
+            using (var db = new AasContext())
             {
-                var aasList = db.AASSets.Where(cd => cd.Identifier == aasIdentifier).ToList();
-                if (aasList.Count == 0)
+                if (!aasIdentifier.IsNullOrEmpty())
+                {
+                    var aasList = db.AASSets.Where(cd => cd.Identifier == aasIdentifier).ToList();
+                    if (aasList.Count == 0)
+                        return null;
+                    aasDB = aasList.First();
+                }
+
+                if (aasDB == null)
                     return null;
-                aasDB = aasList.First();
-            }
 
-            if (aasDB == null)
-                return null;
-
-            var aas = new AssetAdministrationShell(
-                idShort: aasDB.IdShort,
-                displayName: Serializer.DeserializeList<ILangStringNameType>(aasDB.DisplayName),
-                category: aasDB.Category,
-                description: Serializer.DeserializeList<ILangStringTextType>(aasDB.Description),
-                extensions: Serializer.DeserializeList<IExtension>(aasDB.Extensions),
-                id: aasDB.Identifier,
-                embeddedDataSpecifications: Serializer.DeserializeList<IEmbeddedDataSpecification>(aasDB.EmbeddedDataSpecifications),
-                derivedFrom: Serializer.DeserializeElement<IReference>(aasDB.DerivedFrom),
-                submodels: new List<IReference>(),
-                administration: new AdministrativeInformation(
-                    version: aasDB.Version,
-                    revision: aasDB.Revision,
-                    creator: Serializer.DeserializeElement<IReference>(aasDB.Creator),
-                    templateId: aasDB.TemplateId,
-                    embeddedDataSpecifications: Serializer.DeserializeList<IEmbeddedDataSpecification>(aasDB.AEmbeddedDataSpecifications)
-                ),
-                assetInformation: new AssetInformation(
-                    assetKind: Serializer.DeserializeElement<AssetKind>(aasDB.AssetKind),
-                    specificAssetIds: Serializer.DeserializeList<ISpecificAssetId>(aasDB.SpecificAssetIds),
-                    globalAssetId: aasDB.GlobalAssetId,
-                    assetType: aasDB.AssetType,
-                    defaultThumbnail: new Resource(
-                        path: aasDB.DefaultThumbnailPath,
-                        contentType: aasDB.DefaultThumbnailContentType
+                aas = new AssetAdministrationShell(
+                    idShort: aasDB.IdShort,
+                    displayName: Serializer.DeserializeList<ILangStringNameType>(aasDB.DisplayName),
+                    category: aasDB.Category,
+                    description: Serializer.DeserializeList<ILangStringTextType>(aasDB.Description),
+                    extensions: Serializer.DeserializeList<IExtension>(aasDB.Extensions),
+                    id: aasDB.Identifier,
+                    embeddedDataSpecifications: Serializer.DeserializeList<IEmbeddedDataSpecification>(aasDB.EmbeddedDataSpecifications),
+                    derivedFrom: Serializer.DeserializeElement<IReference>(aasDB.DerivedFrom),
+                    submodels: new List<IReference>(),
+                    administration: new AdministrativeInformation(
+                        version: aasDB.Version,
+                        revision: aasDB.Revision,
+                        creator: Serializer.DeserializeElement<IReference>(aasDB.Creator),
+                        templateId: aasDB.TemplateId,
+                        embeddedDataSpecifications: Serializer.DeserializeList<IEmbeddedDataSpecification>(aasDB.AEmbeddedDataSpecifications)
+                    ),
+                    assetInformation: new AssetInformation(
+                        assetKind: Serializer.DeserializeElement<AssetKind>(aasDB.AssetKind),
+                        specificAssetIds: Serializer.DeserializeList<ISpecificAssetId>(aasDB.SpecificAssetIds),
+                        globalAssetId: aasDB.GlobalAssetId,
+                        assetType: aasDB.AssetType,
+                        defaultThumbnail: new Resource(
+                            path: aasDB.DefaultThumbnailPath,
+                            contentType: aasDB.DefaultThumbnailContentType
+                        )
                     )
                 )
-            )
-            {
-                TimeStampCreate = aasDB.TimeStampCreate,
-                TimeStamp = aasDB.TimeStamp,
-                TimeStampTree = aasDB.TimeStampTree,
-                TimeStampDelete = aasDB.TimeStampDelete
-            };
-
+                {
+                    TimeStampCreate = aasDB.TimeStampCreate,
+                    TimeStamp = aasDB.TimeStamp,
+                    TimeStampTree = aasDB.TimeStampTree,
+                    TimeStampDelete = aasDB.TimeStampDelete
+                };
+            }
             return aas;
         }
 

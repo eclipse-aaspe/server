@@ -1993,14 +1993,17 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PatchSubmodelAasRepository([FromBody]Submodel body, [FromRoute][Required]string aasIdentifier, 
+        public async virtual Task<IActionResult> PatchSubmodelAasRepository([FromBody]Submodel body, [FromRoute][Required]string aasIdentifier, 
 		[FromRoute][Required]string submodelIdentifier, [FromQuery]string? level)
         { 
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
             _logger.LogInformation($"Received request to update the submodel with id {decodedSubmodelIdentifier} from the AAS with id {decodedAasIdentifier}");
-            _persistenceService.UpdateSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier, (ISubmodel)body);
+
+            ISecurityConfig securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+            await _dbRequestHandlerService.UpdateSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, (ISubmodel)body);
 
             return NoContent();
         }
@@ -2028,7 +2031,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PatchSubmodelByIdMetadataAasRepository([FromBody]SubmodelMetadata body, [FromRoute][Required]string aasIdentifier, 
+        public async virtual Task<IActionResult> PatchSubmodelByIdMetadataAasRepository([FromBody]SubmodelMetadata body, [FromRoute][Required]string aasIdentifier, 
 		[FromRoute][Required]string submodelIdentifier)
         { 
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
@@ -2060,7 +2063,8 @@ namespace IO.Swagger.Controllers
                 return BadRequest($"Could not update Submodel  as {nameof(submodel)} is null.");
             }
 
-            _persistenceService.UpdateSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier, submodel);
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            await _dbRequestHandlerService.UpdateSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, submodel);
 
             return NoContent();
         }
@@ -2089,7 +2093,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PatchSubmodelByIdValueOnlyAasRepository([FromBody]SubmodelValue body, [FromRoute][Required]string aasIdentifier, 
+        public virtual async Task<IActionResult> PatchSubmodelByIdValueOnlyAasRepository([FromBody]SubmodelValue body, [FromRoute][Required]string aasIdentifier, 
 		[FromRoute][Required]string submodelIdentifier, [FromQuery]string? level)
         { 
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
@@ -2118,7 +2122,8 @@ namespace IO.Swagger.Controllers
                 return BadRequest($"Could not update Submodel  as {nameof(submodel)} is null.");
             }
 
-            _persistenceService.UpdateSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier, (ISubmodel)submodel);
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            await _dbRequestHandlerService.UpdateSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, submodel);
 
             return NoContent();
         }
@@ -2148,7 +2153,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PatchSubmodelElementValueByPathAasRepository([FromBody]ISubmodelElement body, [FromRoute][Required]string aasIdentifier, 
+        public virtual async Task<IActionResult> PatchSubmodelElementValueByPathAasRepository([FromBody]ISubmodelElement body, [FromRoute][Required]string aasIdentifier, 
 		[FromRoute][Required]string submodelIdentifier, [FromRoute][Required]string idShortPath, [FromQuery]string? level)
         { 
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
@@ -2169,8 +2174,8 @@ namespace IO.Swagger.Controllers
             {
                 return BadRequest($"Could not proceed, as {nameof(body)} is null.");
             }
-
-            _persistenceService.UpdateSubmodelElementByPath(decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath, body);
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            await _dbRequestHandlerService.UpdateSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath, body);
 
             return NoContent();
         }
@@ -2199,7 +2204,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PatchSubmodelElementValueByPathMetadata([FromBody]ISubmodelElementMetadata body, [FromRoute][Required]string aasIdentifier, 
+        public async virtual Task<IActionResult> PatchSubmodelElementValueByPathMetadata([FromBody]ISubmodelElementMetadata body, [FromRoute][Required]string aasIdentifier, 
 		[FromRoute][Required]string submodelIdentifier, [FromRoute][Required]string idShortPath)
         { 
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
@@ -2227,8 +2232,9 @@ namespace IO.Swagger.Controllers
                 return BadRequest($"Could not update Submodel  as {nameof(submodelElement)} is null.");
             }
 
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
             //Update
-            _persistenceService.UpdateSubmodelElementByPath(decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath, submodelElement);
+            await _dbRequestHandlerService.UpdateSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath, submodelElement);
 
             return NoContent();
         }
@@ -2258,7 +2264,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PatchSubmodelElementValueByPathValueOnly([FromBody]ISubmodelElementValue body, [FromRoute][Required]string aasIdentifier, 
+        public async virtual Task<IActionResult> PatchSubmodelElementValueByPathValueOnly([FromBody]ISubmodelElementValue body, [FromRoute][Required]string aasIdentifier, 
 		[FromRoute][Required]string submodelIdentifier, [FromRoute][Required]string idShortPath, [FromQuery]string? level)
         { 
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
@@ -2288,7 +2294,9 @@ namespace IO.Swagger.Controllers
                 return BadRequest($"Could not update Submodel  as {nameof(submodelElement)} is null.");
             }
 
-            _persistenceService.UpdateSubmodelElementByPath(decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath, submodelElement);
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            //Update
+            await _dbRequestHandlerService.UpdateSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath, submodelElement);
 
             return NoContent();
         }
@@ -2542,7 +2550,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PutAssetAdministrationShellById([FromBody]AssetAdministrationShell body, [FromRoute][Required]string aasIdentifier)
+        public async virtual Task<IActionResult> PutAssetAdministrationShellById([FromBody]AssetAdministrationShell body, [FromRoute][Required]string aasIdentifier)
         { 
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             if (decodedAasIdentifier == null)
@@ -2556,7 +2564,8 @@ namespace IO.Swagger.Controllers
                 return BadRequest($"Could not proceed, as {nameof(body)} is null.");
             }
 
-            _persistenceService.UpdateAssetAdministrationShellById(decodedAasIdentifier, body);
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            await _dbRequestHandlerService.ReplaceAssetAdministrationShellById(securityConfig, decodedAasIdentifier, body);
 
             return NoContent();
         }
@@ -2583,7 +2592,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PutAssetInformationAasRepository([FromBody]AssetInformation body, [FromRoute][Required]string aasIdentifier)
+        public async virtual Task<IActionResult> PutAssetInformationAasRepository([FromBody]AssetInformation body, [FromRoute][Required]string aasIdentifier)
         { 
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             if (decodedAasIdentifier == null)
@@ -2597,7 +2606,8 @@ namespace IO.Swagger.Controllers
                 return BadRequest($"Could not proceed, as {nameof(body)} is null.");
             }
 
-            _persistenceService.UpdateAssetInformation(decodedAasIdentifier, body);
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            await _dbRequestHandlerService.ReplaceAssetInformation(securityConfig, decodedAasIdentifier, body);
 
             return NoContent();
         }
@@ -2626,7 +2636,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PutSubmodelByIdAasRepository([FromBody]Submodel body, [FromRoute][Required]string aasIdentifier, 
+        public virtual async Task<IActionResult> PutSubmodelByIdAasRepository([FromBody]Submodel body, [FromRoute][Required]string aasIdentifier, 
 		[FromRoute][Required]string submodelIdentifier)
         { 
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
@@ -2647,7 +2657,8 @@ namespace IO.Swagger.Controllers
                 return BadRequest($"Could not proceed, as {nameof(body)} is null.");
             }
 
-            _persistenceService.UpdateSubmodelById(decodedAasIdentifier, decodedSubmodelIdentifier, body);
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            await _dbRequestHandlerService.ReplaceSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, body);
 
             return NoContent();
         }
@@ -2676,7 +2687,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PutSubmodelElementByPathAasRepository([FromBody]ISubmodelElement body, [FromRoute][Required]string aasIdentifier, 
+        public virtual async Task<IActionResult> PutSubmodelElementByPathAasRepository([FromBody]ISubmodelElement body, [FromRoute][Required]string aasIdentifier, 
 		[FromRoute][Required]string submodelIdentifier, [FromRoute][Required]string idShortPath)
         { 
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
@@ -2697,7 +2708,8 @@ namespace IO.Swagger.Controllers
                 return BadRequest($"Could not proceed, as {nameof(body)} is null.");
             }
 
-            _persistenceService.UpdateSubmodelElementByPath(decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath, body);
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            await _dbRequestHandlerService.ReplaceSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath, body);
 
             return NoContent();
         }
@@ -2721,7 +2733,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PutFileByPath([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute] string? idShortPath,
+        public async virtual Task<IActionResult> PutFileByPath([FromRoute][Required] string aasIdentifier, [FromRoute][Required] string submodelIdentifier, [FromRoute] string? idShortPath,
                                                    IFormFile? file)
         {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
@@ -2751,7 +2763,8 @@ namespace IO.Swagger.Controllers
                 return BadRequest($"Could not proceed, as {nameof(idShortPath)} is null.");
             }
 
-            _persistenceService.UpdateFileByPath(decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath, fileName, contentType, stream);
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            await _dbRequestHandlerService.ReplaceFileByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath, fileName, contentType, stream);
 
             return NoContent();
         }
@@ -2775,7 +2788,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PutThumbnail([FromRoute][Required] string aasIdentifier, IFormFile? file)
+        public virtual async Task<IActionResult> PutThumbnail([FromRoute][Required] string aasIdentifier, IFormFile? file)
         {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             if (decodedAasIdentifier == null)
@@ -2793,7 +2806,8 @@ namespace IO.Swagger.Controllers
             var fileName = file.FileName;
             var contentType = file.ContentType;
 
-            _persistenceService.UpdateThumbnail(decodedAasIdentifier, fileName, contentType, stream);
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            await _dbRequestHandlerService.ReplaceThumbnail(securityConfig, decodedAasIdentifier, fileName, contentType, stream);
 
             return NoContent();
         }

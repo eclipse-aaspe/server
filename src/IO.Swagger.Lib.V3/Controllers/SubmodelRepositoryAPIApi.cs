@@ -295,7 +295,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 Body = body,
             };
 
-            await _dbRequestHandlerService.UpdateEventMessages(eventRequest);
+            await _dbRequestHandlerService.UpdateEventMessages(securityConfig, eventRequest);
 
             Program.signalNewData(2);
         }
@@ -2031,7 +2031,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult PatchSubmodelById([FromBody]Submodel? body, [FromRoute][Required] string submodelIdentifier, [FromQuery] string? level)
+    public virtual async Task<IActionResult> PatchSubmodelById([FromBody]Submodel? body, [FromRoute][Required] string submodelIdentifier, [FromQuery] string? level)
     {
         if (body == null)
         {
@@ -2046,7 +2046,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
         }
 
-        _persistenceService.UpdateSubmodelById(null, decodedSubmodelIdentifier, body);
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+        await _dbRequestHandlerService.UpdateSubmodelById(securityConfig, null, decodedSubmodelIdentifier, body);
 
         return NoContent();
     }
@@ -2073,7 +2074,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult PatchSubmodelByIdMetadata([FromBody]SubmodelMetadata? body, [FromRoute][Required] string? submodelIdentifier)
+    public async virtual Task<IActionResult> PatchSubmodelByIdMetadata([FromBody]SubmodelMetadata? body, [FromRoute][Required] string? submodelIdentifier)
     {
         if (body == null)
         {
@@ -2093,8 +2094,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(submodel)} is null");
         }
 
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
         //Update
-        _persistenceService.UpdateSubmodelById(null, decodedSubmodelIdentifier, submodel);
+        await _dbRequestHandlerService.UpdateSubmodelById(securityConfig, null, decodedSubmodelIdentifier, submodel);
 
         return NoContent();
     }
@@ -2122,7 +2125,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult PatchSubmodelByIdValueOnly([FromBody]SubmodelValue? body, [FromRoute][Required]string submodelIdentifier, 
+    public virtual async Task<IActionResult> PatchSubmodelByIdValueOnly([FromBody]SubmodelValue? body, [FromRoute][Required]string submodelIdentifier, 
 	[FromQuery]string? level)
     {
         if (body == null)
@@ -2143,8 +2146,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         {
             throw new NotAllowed($"Cannot proceed as {nameof(submodel)} is null");
         }
-
-        _persistenceService.UpdateSubmodelById(null, decodedSubmodelIdentifier, submodel);
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+        await _dbRequestHandlerService.UpdateSubmodelById(securityConfig, null, decodedSubmodelIdentifier, submodel);
 
         return NoContent();
     }
@@ -2172,7 +2175,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult PatchSubmodelElementByPathMetadataSubmodelRepo([FromBody] ISubmodelElementMetadata? body,
+    public virtual async Task<IActionResult> PatchSubmodelElementByPathMetadataSubmodelRepo([FromBody] ISubmodelElementMetadata? body,
     [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath)
     {
         if (body == null)
@@ -2194,8 +2197,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(submodelElement)} is null");
         }
 
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
         //Update
-        _persistenceService.UpdateSubmodelElementByPath(null, decodedSubmodelIdentifier, idShortPath, submodelElement);
+        await _dbRequestHandlerService.UpdateSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath, submodelElement);
 
         return NoContent();
     }
@@ -2224,7 +2229,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult PatchSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement? body, [FromRoute][Required] string submodelIdentifier,
+    public async virtual Task<IActionResult> PatchSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement? body, [FromRoute][Required] string submodelIdentifier,
     [FromRoute][Required] string idShortPath, [FromQuery] string? level)
     {
         if (body == null)
@@ -2239,7 +2244,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         _logger.LogInformation($"Received request to update the submodel element at {idShortPath} from submodel with id {decodedSubmodelIdentifier}.");
-        _persistenceService.UpdateSubmodelElementByPath(null, decodedSubmodelIdentifier, idShortPath, body);
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+        await _dbRequestHandlerService.UpdateSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath, body);
 
         return NoContent();
     }
@@ -2268,7 +2275,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult PatchSubmodelElementByPathValueOnlySubmodelRepo([FromBody] ISubmodelElementValue? body,
+    public virtual async Task<IActionResult> PatchSubmodelElementByPathValueOnlySubmodelRepo([FromBody] ISubmodelElementValue? body,
     [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath,
     [FromQuery] string? level)
     {
@@ -2289,8 +2296,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(submodelElement)} is null");
         }
 
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
         //Update
-        _persistenceService.UpdateSubmodelElementByPath(null, decodedSubmodelIdentifier, idShortPath, submodelElement);
+        await _dbRequestHandlerService.UpdateSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath, submodelElement);
 
         return NoContent();
     }
@@ -2499,7 +2507,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult PutSubmodelById([FromBody] Submodel? body, [FromRoute][Required] string submodelIdentifier)
+    public virtual async Task<IActionResult> PutSubmodelById([FromBody] Submodel? body, [FromRoute][Required] string submodelIdentifier)
     {
         if (body == null)
         {
@@ -2514,7 +2522,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
         }
 
-        _persistenceService.ReplaceSubmodelById(decodedSubmodelIdentifier, body);
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+        await _dbRequestHandlerService.ReplaceSubmodelById(securityConfig, null, decodedSubmodelIdentifier, body);
 
         return NoContent();
     }
@@ -2574,8 +2583,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
-
-        _persistenceService.ReplaceSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath, body);
+        await _dbRequestHandlerService.ReplaceSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath, body);
 
         return NoContent();
     }
@@ -2598,7 +2606,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult PutFileByPathSubmodelRepo([FromRoute] [Required] string submodelIdentifier, [FromRoute] string? idShortPath, IFormFile? file)
+    public virtual async Task<IActionResult> PutFileByPathSubmodelRepo([FromRoute] [Required] string submodelIdentifier, [FromRoute] string? idShortPath, IFormFile? file)
     {
         if (idShortPath == null)
         {
@@ -2625,7 +2633,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(contentType)} is null");
         }
 
-        _persistenceService.ReplaceFileByPath(decodedSubmodelIdentifier, idShortPath, fileName, contentType, stream);
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+        await _dbRequestHandlerService.ReplaceFileByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath, fileName, contentType, stream);
 
         return NoContent();
     }

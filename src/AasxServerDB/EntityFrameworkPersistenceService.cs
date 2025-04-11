@@ -261,47 +261,62 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 };
                 break;
             case DbRequestOp.UpdateSubmodelById:
-                UpdateSubmodelById(dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                UpdateSubmodelById(dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.AssetAdministrationShellIdentifier,
                     dbRequest.Context.Params.SubmodelIdentifier,
                     dbRequest.Context.Params.SubmodelBody);
                 break;
             case DbRequestOp.UpdateSubmodelElementByPath:
-                UpdateSubmodelElementByPath(dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                UpdateSubmodelElementByPath(
+                    dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.AssetAdministrationShellIdentifier,
                     dbRequest.Context.Params.SubmodelIdentifier,
                     dbRequest.Context.Params.IdShort,
                     dbRequest.Context.Params.SubmodelElementBody);
                 break;
-            case DbRequestOp.UpdateAssetInformation:
-                UpdateAssetInformation(dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+            case DbRequestOp.UpdateEventMessages:
+                UpdateEventMessages(dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.EventRequest);
+                break;
+            case DbRequestOp.ReplaceAssetInformation:
+                ReplaceAssetInformation(dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.AssetAdministrationShellIdentifier,
                     dbRequest.Context.Params.AssetInformation);
                 break;
-            case DbRequestOp.UpdateFileByPath:
-                UpdateFileByPath(dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+            case DbRequestOp.ReplaceFileByPath:
+                ReplaceFileByPath(dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.AssetAdministrationShellIdentifier,
                     dbRequest.Context.Params.SubmodelIdentifier,
                     dbRequest.Context.Params.IdShort,
                     dbRequest.Context.Params.FileRequest.File,
                     dbRequest.Context.Params.FileRequest.ContentType,
                     dbRequest.Context.Params.FileRequest.Stream);
                 break;
-            case DbRequestOp.UpdateThumbnail:
-                UpdateThumbnail(dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+            case DbRequestOp.ReplaceThumbnail:
+                ReplaceThumbnail(dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.AssetAdministrationShellIdentifier,
                     dbRequest.Context.Params.FileRequest.File,
                     dbRequest.Context.Params.FileRequest.ContentType,
                     dbRequest.Context.Params.FileRequest.Stream);
                 break;
-            case DbRequestOp.UpdateAssetAdministrationShellById:
-                UpdateAssetAdministrationShellById(dbRequest.Context.Params.AssetAdministrationShellIdentifier,
-                    dbRequest.Context.Params.AasBody)
-                    ;
-                break;
-            case DbRequestOp.UpdateEventMessages:
-                UpdateEventMessages(dbRequest.Context.Params.EventRequest);
+            case DbRequestOp.ReplaceAssetAdministrationShellById:
+                ReplaceAssetAdministrationShellById(
+                    dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                    dbRequest.Context.Params.AasBody);
                 break;
             case DbRequestOp.ReplaceSubmodelById:
+                ReplaceSubmodelById(dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                    dbRequest.Context.Params.SubmodelIdentifier,
+                    dbRequest.Context.Params.SubmodelBody);
                 break;
             case DbRequestOp.ReplaceSubmodelElementByPath:
-                break;
-            case DbRequestOp.ReplaceFileByPath:
+                ReplaceSubmodelElementByPath(dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                    dbRequest.Context.Params.SubmodelIdentifier,
+                    dbRequest.Context.Params.IdShort,
+                    dbRequest.Context.Params.SubmodelElementBody);
                 break;
             case DbRequestOp.DeleteAssetAdministrationShellById:
                 break;
@@ -731,52 +746,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     public IReference CreateSubmodelReferenceInAAS(IReference body, string aasIdentifier)
     {
-        //Verify request body
-        //_verificationService.VerifyRequestBody(body);
-
-        IReference output = null;
-
-        // TODO (jtikekar, 2023-09-04): to check if submodel with requested submodelReference exists in the server
-        //var aas = this.GetAssetAdministrationShellById(aasIdentifier, out int packageIndex);
-
-        //if (aas != null)
-        //{
-        //    if (aas.Submodels.IsNullOrEmpty())
-        //    {
-        //        aas.Submodels = new List<IReference>
-        //            {
-        //                body
-        //            };
-        //        output = aas.Submodels.Last();
-        //    }
-        //    else
-        //    {
-        //        bool found = false;
-        //        //Check if duplicate
-        //        foreach (var submodelReference in aas.Submodels)
-        //        {
-        //            if (submodelReference.Matches(body))
-        //            {
-        //                found = true;
-        //                break;
-        //            }
-        //        }
-
-        //        if (found)
-        //        {
-        //            _logger.LogDebug($"Cannot create requested Submodel-Reference in the AAS !!");
-        //            throw new DuplicateException($"Requested SubmodelReference already exists in the AAS with Id {aasIdentifier}.");
-        //        }
-        //        else
-        //        {
-        //            aas.Submodels.Add(body);
-        //            output = aas.Submodels.Last();
-        //        }
-        //    }
-        //}
-
-        return output;
-
+        throw new NotImplementedException();
     }
 
     public void DeleteAssetAdministrationShellById(string aasIdentifier)
@@ -905,7 +875,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    public void UpdateSubmodelById(string? aasIdentifier, string? submodelIdentifier, ISubmodel newSubmodel)
+    public void UpdateSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodel newSubmodel)
     {
         var found = IsSubmodelPresent(null, aasIdentifier, submodelIdentifier, false, out ISubmodel output);
         if (found)
@@ -954,7 +924,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    public void UpdateSubmodelElementByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, ISubmodelElement body)
+    public void UpdateSubmodelElementByPath(ISecurityConfig securityConfig,string aasIdentifier, string submodelIdentifier, string idShortPath, ISubmodelElement body)
     {
         //string securityConditionSM, securityConditionSME;
         //bool isAllowed = InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
@@ -1018,15 +988,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    public void UpdateAssetAdministrationShellById(string aasIdentifier, IAssetAdministrationShell newAas)
-    {
-        ////Verify the body first
-        //_verificationService.VerifyRequestBody(body);
-
-        //_packageEnvService.UpdateAssetAdministrationShellById(body, aasIdentifier);
-    }
-
-    public void UpdateAssetInformation(string aasIdentifier, IAssetInformation newAssetInformation)
+    public void ReplaceAssetInformation(ISecurityConfig securityConfig, string aasIdentifier, IAssetInformation newAssetInformation)
     {
         //_verificationService.VerifyRequestBody(body);
         //var aas = _packageEnvService.GetAssetAdministrationShellById(aasIdentifier, out _);
@@ -1039,11 +1001,19 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         //}
     }
 
-    public void UpdateSubmodelById(string aasIdentifier, string submodelIdentifier, AasCore.Aas3_0.Submodel newSubmodel) => throw new NotImplementedException();
+    public void ReplaceAssetAdministrationShellById(ISecurityConfig securityConfig, string aasIdentifier, IAssetAdministrationShell newAas)
+    {
+        ////Verify the body first
+        //_verificationService.VerifyRequestBody(body);
 
-    public void UpdateFileByPath(string aasIdentifier, string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream) => throw new NotImplementedException();
+        //_packageEnvService.UpdateAssetAdministrationShellById(body, aasIdentifier);
+    }
 
-    public void UpdateThumbnail(string aasIdentifier, string fileName, string contentType, MemoryStream stream) => throw new NotImplementedException();
+    public void ReplaceSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodel newSubmodel) => throw new NotImplementedException();
+
+    public void ReplaceFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream) => throw new NotImplementedException();
+
+    public void ReplaceThumbnail(ISecurityConfig securityConfig, string aasIdentifier, string fileName, string contentType, MemoryStream stream) => throw new NotImplementedException();
 
     //public List<ISubmodel> GetAllSubmodels(string cursor, int limit){
 
@@ -1145,6 +1115,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     private bool IsSubmodelElementPresent(ISubmodel submodel, string idShortPath)
     {
+        //ToDo: Do parsing for proper check
         return submodel.FindSubmodelElementByIdShort(idShortPath) != null;
     }
 
@@ -1173,8 +1144,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
     }
 
     
-    public void ReplaceSubmodelById(string submodelIdentifier, ISubmodel body) => throw new NotImplementedException();
-    public void ReplaceSubmodelElementByPath(string submodelIdentifier, string idShortPath, ISubmodelElement body) => throw new NotImplementedException();
+    public void ReplaceSubmodelElementByPath(ISecurityConfig security, string aasIdentifier, string submodelIdentifier, string idShortPath, ISubmodelElement body) => throw new NotImplementedException();
     public void ReplaceFileByPath(string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream) => throw new NotImplementedException();
 
     private Contracts.Events.EventPayload ReadEventMessages(DbEventRequest dbEventRequest)
@@ -1292,7 +1262,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     }
 
-    private void UpdateEventMessages(DbEventRequest eventRequest)
+    private void UpdateEventMessages(ISecurityConfig securityConfig, DbEventRequest eventRequest)
     {
         var op = _eventService.FindEvent(eventRequest.Submodel, eventRequest.EventName);
         var eventData = _eventService.ParseData(op, eventRequest.Env[eventRequest.PackageIndex]);
@@ -1324,7 +1294,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         else // DB
         {
             count = _eventService.ChangeData(eventRequest.Body, eventData, eventRequest.Env, null, out transmitted, out lastDiffValue, out statusValue, diffEntry, eventRequest.PackageIndex);
-            UpdateSubmodelById(null, eventRequest.Submodel.Id, eventRequest.Submodel);
+            UpdateSubmodelById(securityConfig, null, eventRequest.Submodel.Id, eventRequest.Submodel);
         }
 
         var dt = DateTime.Parse(lastDiffValue);
