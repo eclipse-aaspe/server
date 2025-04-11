@@ -269,6 +269,8 @@ namespace AasxServerDB
         // Submodel
         public override void VisitSubmodel(ISubmodel that)
         {
+            keepSme = [];
+            deleteSme = [];
             var create = false;
             if (!update)
             {
