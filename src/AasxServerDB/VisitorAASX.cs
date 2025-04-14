@@ -38,6 +38,7 @@ namespace AasxServerDB
         public List<int> keepSme = new List<int>();
         public List<int> deleteSme = new List<int>();
         public string idShortPath = "";
+        public string parentPath = "";
         private static Dictionary<string, int> _cdDBId = new Dictionary<string, int>();
         private string _oprPrefix = string.Empty;
         public const string OPERATION_INPUT = "In";
@@ -333,15 +334,47 @@ namespace AasxServerDB
             keepSme = [];
             deleteSme = [];
             _resultSME = null;
-            if (smSmeMerged != null && idShortPath != "")
+            if (smSmeMerged != null)
             {
-                var smeDB = smSmeMerged.Where(s => (s.smeSet.IdShortPath + ".").Contains(idShortPath + "."));
-                if (smeDB != null)
+                if (!idShortPath.IsNullOrEmpty() && parentPath.IsNullOrEmpty())
                 {
-                    deleteSme = smeDB.Select(s => s.smeSet.Id).ToList();
+                    var smeDB = smSmeMerged.FirstOrDefault(s => s.smeSet.IdShortPath == idShortPath)?.smeSet;
+                    if (smeDB == null)
+                    {
+                        return null;
+                    }
+                    if (!update)
+                    {
+                        _parSME = smeDB.ParentSME;
+                    }
+                    deleteSme = smSmeMerged.Where(s => (s.smeSet.IdShortPath + ".").Contains(idShortPath + "."))
+                        .Select(s => s.smeSet.Id).ToList();
                 }
+                else if (!parentPath.IsNullOrEmpty() && idShortPath.IsNullOrEmpty())
+                {
+                    var smeDB = smSmeMerged.FirstOrDefault(s => s.smeSet.IdShortPath == parentPath + "." + sme.IdShort)?.smeSet;
+                    if (smeDB != null)
+                    {
+                        return null;
+                    }
+                    _parSME = smSmeMerged.FirstOrDefault(s => s.smeSet.IdShortPath == parentPath)?.smeSet;
+                    if (_parSME == null)
+                    {
+                        return null;
+                    }
+                }
+                else
+                {
+                    return null;
+                }
+                /*
                 if (idShortPath.Contains("."))
                 {
+                    var smeDBp = smSmeMerged.FirstOrDefault(s => s.smeSet.IdShortPath == idShortPath);
+                    if (smeDBp != null)
+                    {
+                        _parSME = smeDBp.smeSet;
+                    }
                     var lastIndex = idShortPath.LastIndexOf('.');
                     if (lastIndex != -1)
                     {
@@ -353,6 +386,7 @@ namespace AasxServerDB
                         }
                     }
                 }
+                */
             }
             base.Visit(sme);
             return _resultSME;

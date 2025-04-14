@@ -2414,6 +2414,13 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var output = _dbRequestHandlerService.CreateSubmodelElement(securityConfig, null, decodedSubmodelIdentifier, body, idShortPath);
 
+        /*
+        if (output != null)
+        {
+            Program.signalNewData(2);
+        }
+        */
+
         return CreatedAtAction("PostSubmodelElementByPathSubmodelRepo", output);
     }
 
@@ -2481,6 +2488,13 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
 
         var output = await _dbRequestHandlerService.CreateSubmodelElement(securityConfig, null, decodedSubmodelIdentifier, body, null, first);
+
+        /*
+        if (output != null)
+        {
+            Program.signalNewData(2);
+        }
+        */
 
         return CreatedAtAction("PostSubmodelElementSubmodelRepo", output);
     }

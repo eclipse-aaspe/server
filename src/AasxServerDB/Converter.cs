@@ -655,13 +655,13 @@ namespace AasxServerDB
         }
 
 
-        public static ISubmodelElement CreateSubmodelElement(string aasIdentifier, string submodelIdentifier, ISubmodelElement newSubmodelElement, string idShortPath, bool first)
+        public static ISubmodelElement? CreateSubmodelElement(string aasIdentifier, string submodelIdentifier, ISubmodelElement newSubmodelElement, string idShortPath, bool first)
         {
             // first is not possible any more
             // SME read from DB are now ordered by TimeStampTree
             // new SME with new time can only be at the end
 
-            ISubmodelElement submodelElement = null;
+            ISubmodelElement? submodelElement = null;
             using (var db = new AasContext())
             {
                 var smDBQuery = db.SMSets.Where(sm => sm.Identifier == submodelIdentifier);
@@ -684,11 +684,16 @@ namespace AasxServerDB
 
                 if (!String.IsNullOrEmpty(idShortPath))
                 {
-                    visitor.idShortPath = idShortPath;
+                    visitor.parentPath = idShortPath;
                 }
                 visitor.update = false;
                 // continue debug here
                 var receiveSmeDB = visitor.VisitSMESet(newSubmodelElement);
+                if (receiveSmeDB == null)
+                {
+                    return null;
+                }
+
                 receiveSmeDB.SMId = smDBId;
                 Converter.setTimeStampTree(db, smDB, receiveSmeDB, receiveSmeDB.TimeStamp);
                 try
