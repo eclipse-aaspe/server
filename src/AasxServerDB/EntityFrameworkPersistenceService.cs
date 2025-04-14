@@ -1033,7 +1033,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 Converter.setTimeStampTree(db, smDB, receiveSmeDB, receiveSmeDB.TimeStamp);
                 try
                 {
-                    db.SMESets.Add(receiveSmeDB);
+                    // db.SMESets.Add(receiveSmeDB);
                     db.SaveChanges();
                 }
                 catch (Exception ex)

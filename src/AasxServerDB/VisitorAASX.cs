@@ -336,6 +336,16 @@ namespace AasxServerDB
             _resultSME = null;
             if (smSmeMerged != null)
             {
+                if (!update && !idShortPath.IsNullOrEmpty())
+                {
+                    parentPath = "";
+                    var lastIndex = idShortPath.LastIndexOf('.');
+                    if (lastIndex != -1)
+                    {
+                        parentPath = idShortPath.Substring(0, lastIndex);
+                    }
+                    idShortPath = "";
+                }
                 if (!idShortPath.IsNullOrEmpty() && parentPath.IsNullOrEmpty())
                 {
                     var smeDB = smSmeMerged.FirstOrDefault(s => s.smeSet.IdShortPath == idShortPath)?.smeSet;
@@ -343,10 +353,7 @@ namespace AasxServerDB
                     {
                         return null;
                     }
-                    if (!update)
-                    {
-                        _parSME = smeDB.ParentSME;
-                    }
+                    _parSME = smeDB.ParentSME;
                     deleteSme = smSmeMerged.Where(s => (s.smeSet.IdShortPath + ".").Contains(idShortPath + "."))
                         .Select(s => s.smeSet.Id).ToList();
                 }
@@ -362,10 +369,6 @@ namespace AasxServerDB
                     {
                         return null;
                     }
-                }
-                else
-                {
-                    return null;
                 }
                 /*
                 if (idShortPath.Contains("."))
