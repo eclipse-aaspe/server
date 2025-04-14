@@ -14,6 +14,7 @@
 namespace AasxServerDB
 {
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Linq.Dynamic.Core;
     using System.Text;
@@ -180,7 +181,9 @@ namespace AasxServerDB
 
         public static List<IAssetAdministrationShell> GetPagedAssetAdministrationShells(IPaginationParameters paginationParameters, List<ISpecificAssetId> assetIds, string idShort)
         {
-            List<IAssetAdministrationShell> output = new List<IAssetAdministrationShell>();
+            var output = new List<IAssetAdministrationShell>();
+
+            var globalAssetId = assetIds?.Where(a => a.Name == "globalAssetId").Select(a => a.Value).FirstOrDefault();
 
             using (var db = new AasContext())
             {
@@ -188,6 +191,7 @@ namespace AasxServerDB
 
                 var aasDBList = db.AASSets
                     .Where(aas => idShort == null || aas.IdShort == idShort)
+                    .Where(aas => globalAssetId == null || aas.GlobalAssetId == globalAssetId)
                     .OrderBy(aas => aas.Id)
                     .Skip(paginationParameters.Cursor)
                     .Take(paginationParameters.Limit)
@@ -199,7 +203,7 @@ namespace AasxServerDB
                 foreach (var aasDB in aasDBList)
                 {
                     var aas = GetAssetAdministrationShell(aasDB: aasDB);
-                    if (aas.TimeStamp == DateTime.MinValue)
+                    if (aas?.TimeStamp == DateTime.MinValue)
                     {
                         aas.TimeStampCreate = timeStamp;
                         aas.SetTimeStamp(timeStamp);
@@ -208,7 +212,7 @@ namespace AasxServerDB
                     // sm
                     foreach (var sm in smDBList.Where(sm => sm.AASId == aasDB.Id))
                     {
-                        aas.Submodels?.Add(new Reference(type: ReferenceTypes.ModelReference,
+                        aas?.Submodels?.Add(new Reference(type: ReferenceTypes.ModelReference,
                             keys: new List<IKey>() { new Key(KeyTypes.Submodel, sm.Identifier) }
                         ));
                     }
@@ -345,13 +349,30 @@ namespace AasxServerDB
         {
             List<ISubmodel> output = new List<ISubmodel>();
 
+            string? semanticId = null;
+            if (reqSemanticId != null)
+            {
+                var keys = reqSemanticId.Keys;
+                if (keys != null && keys.Count > 0)
+                {
+                    semanticId = keys[0].Value;
+                }
+            }
+
+            if (securityConditionSM.IsNullOrEmpty() || securityConditionSM == "*")
+            {
+                securityConditionSM = "true";
+            }
+
             using (var db = new AasContext())
             {
                 var timeStamp = DateTime.UtcNow;
 
                 var smDBList = db.SMSets
                     .Where(sm => idShort == null || sm.IdShort == idShort)
-                    .OrderBy(aas => aas.Id)
+                    .Where(sm => semanticId == null || sm.SemanticId == semanticId)
+                    .Where(securityConditionSM)
+                    .OrderBy(sm => sm.Id)
                     .Skip(paginationParameters.Cursor)
                     .Take(paginationParameters.Limit)
                     .ToList();
@@ -419,10 +440,13 @@ namespace AasxServerDB
             {
                 if (!aasIdentifier.IsNullOrEmpty())
                 {
+                    aasDB = db.AASSets.FirstOrDefault(cd => cd.Identifier == aasIdentifier);
+                    /*
                     var aasList = db.AASSets.Where(cd => cd.Identifier == aasIdentifier).ToList();
                     if (aasList.Count == 0)
                         return null;
                     aasDB = aasList.First();
+                    */
                 }
 
                 if (aasDB == null)
@@ -493,6 +517,11 @@ namespace AasxServerDB
                     .OrderBy(sme => sme.Id)
                     .Where(sme => sme.SMId == smDB.Id);
 
+                if (securityConditionSME != "")
+                {
+                    SMEQuery = SMEQuery.Where(securityConditionSME);
+                }
+
                 var submodel = new Submodel(
                     idShort: smDB.IdShort,
                     displayName: Serializer.DeserializeList<ILangStringNameType>(smDB.DisplayName),
@@ -553,13 +582,12 @@ namespace AasxServerDB
                 var visitor = new VisitorAASX(db);
 
                 //ToDo: For EventService
-                //visitor.currentDataTime = dt;
+                visitor.currentDataTime = DateTime.UtcNow;
                 visitor.VisitSubmodel(newSubmodel);
                 visitor._smDB.AASId = aasDB;
                 visitor._smDB.EnvId = envDB;
                 db.Add(visitor._smDB);
                 db.SaveChanges();
-
 
                 var smDBQuery = db.SMSets.Where(sm => sm.Identifier == newSubmodel.Id);
                 if (smDBQuery != null && smDBQuery.Count() > 0)
@@ -580,11 +608,13 @@ namespace AasxServerDB
                 //var visitor = new VisitorAASX();
                 var currentDataTime = DateTime.UtcNow;
 
+                /*
                 var smDB = new SMSet();
                 smDB.Identifier =  "1";
                 Converter.setTimeStamp(smDB, currentDataTime);
                 db.Add(smDB);
                 db.SaveChanges();
+                */
 
                 var aasDB = new AASSet()
                 {
@@ -610,7 +640,7 @@ namespace AasxServerDB
 
                     TimeStampCreate = newAas.TimeStampCreate == default ? currentDataTime : newAas.TimeStampCreate,
                     TimeStamp = newAas.TimeStamp == default ? currentDataTime : newAas.TimeStamp,
-                    TimeStampTree = newAas.TimeStampTree == default ? currentDataTime : newAas .TimeStampTree,
+                    TimeStampTree = newAas.TimeStampTree == default ? currentDataTime : newAas.TimeStampTree,
                     TimeStampDelete = newAas.TimeStampDelete
                 };
                 //ToDo: For EventService
@@ -625,11 +655,13 @@ namespace AasxServerDB
         }
 
 
-        public static ISubmodelElement CreateSubmodelElement(string aasIdentifier, string submodelIdentifier, ISubmodelElement newSubmodelElement, string idShortPath, bool first)
+        public static ISubmodelElement? CreateSubmodelElement(string aasIdentifier, string submodelIdentifier, ISubmodelElement newSubmodelElement, string idShortPath, bool first)
         {
-            //ToDo: Take into account first parameter
+            // first is not possible any more
+            // SME read from DB are now ordered by TimeStampTree
+            // new SME with new time can only be at the end
 
-            ISubmodelElement submodelElement = null;
+            ISubmodelElement? submodelElement = null;
             using (var db = new AasContext())
             {
                 var smDBQuery = db.SMSets.Where(sm => sm.Identifier == submodelIdentifier);
@@ -652,10 +684,16 @@ namespace AasxServerDB
 
                 if (!String.IsNullOrEmpty(idShortPath))
                 {
-                    visitor.idShortPath = idShortPath;
+                    visitor.parentPath = idShortPath;
                 }
                 visitor.update = false;
+                // continue debug here
                 var receiveSmeDB = visitor.VisitSMESet(newSubmodelElement);
+                if (receiveSmeDB == null)
+                {
+                    return null;
+                }
+
                 receiveSmeDB.SMId = smDBId;
                 Converter.setTimeStampTree(db, smDB, receiveSmeDB, receiveSmeDB.TimeStamp);
                 try
@@ -761,7 +799,6 @@ namespace AasxServerDB
                 }
                 return result;
             }
-            return null;
         }
 
         public class smeREsult
@@ -769,41 +806,6 @@ namespace AasxServerDB
             public int Id { get; set; }
             public string? IdShortPath { get; set; }
             public int? ParentSMEId { get; set; }
-        }
-
-        public static void CreateIdShortPath1(AasContext db, List<SMESet> smeList)
-        {
-            /*
-            // created idShortPath for result only
-            var smeSearch = smeList.Select(sme => new smeREsult { Id = sme.Id, IdShortPath = sme.IdShort, ParentSMEId = sme.ParentSMEId }).ToList();
-            var smeResult = smeSearch.Where(sme => sme.ParentSMEId == null).ToList();
-            smeSearch = smeSearch.Where(sme => sme.ParentSMEId != null).ToList();
-            while (smeSearch != null && smeSearch.Count != 0)
-            {
-                var parentIds = smeSearch.Where(sme => sme.ParentSMEId != null).Select(sme => sme.ParentSMEId).ToList();
-                var smeWithIdShortPath = db.SMESets.Where(sme => parentIds.Contains(sme.Id))
-                    .Select(sme => new smeREsult { Id = sme.Id, IdShortPath = sme.IdShort, ParentSMEId = sme.ParentSMEId }).ToList();
-                if (smeParents != null && smeParents.Count != 0)
-                {
-                    smeResult.AddRange(smeParents.Where(sme => sme.ParentSMEId == null).ToList());
-                    smeSearch = smeParents.Where(sme => sme.ParentSMEId != null).ToList();
-                }
-                else
-                {
-                    smeSearch = null;
-                }
-            };
-
-            var smeResultDict = smeResult.ToDictionary(sme => sme.Id, sme => sme.IdShortPath);
-
-            foreach (var sme in smeList)
-            {
-                if (smeResultDict.TryGetValue(sme.Id, out var idShortPath))
-                {
-                    sme.IdShortPath = idShortPath;
-                }
-            }
-            */
         }
 
         public static void CreateIdShortPath(AasContext db, List<SMESet> smeList)
@@ -918,190 +920,8 @@ namespace AasxServerDB
             result.AddRange(noValue);
 
             return result;
-
-
-            /*
-            var joinSValue = querySME.GroupJoin(
-                db.SValueSets,
-                sme => sme.Id,
-                sv => sv.SMEId,
-                (sme, sv) => new { sme, sv })
-                .SelectMany(
-                    x => x.sv.DefaultIfEmpty(),
-                    (x, sv) => new SmeMerged { smeSet = x.sme, sValueSet = sv, iValueSet = null, dValueSet = null, oValueSet = null });
-            var l1 = joinSValue.ToList();
-
-            var joinIValue = querySME.GroupJoin(
-                db.IValueSets,
-                sme => sme.Id,
-                iv => iv.SMEId,
-                (sme, iv) => new { sme, iv })
-                .SelectMany(
-                    x => x.iv.DefaultIfEmpty(),
-                    (x, iv) => new SmeMerged { smeSet = x.sme, sValueSet = null, iValueSet = iv, dValueSet = null, oValueSet = null });
-            var l2 = joinIValue.ToList();
-
-            var joinDValue = querySME.GroupJoin(
-                db.DValueSets,
-                sme => sme.Id,
-                dv => dv.SMEId,
-                (sme, dv) => new { sme, dv })
-                .SelectMany(
-                    x => x.dv.DefaultIfEmpty(),
-                    (x, dv) => new SmeMerged { smeSet = x.sme, dValueSet = dv, sValueSet = null, iValueSet = null, oValueSet = null });
-            var l3 = joinDValue.ToList();
-
-            var joinOValue = querySME.GroupJoin(
-                db.OValueSets,
-                sme => sme.Id,
-                ov => ov.SMEId,
-                (sme, ov) => new { sme, ov })
-                .SelectMany(
-                    x => x.ov.DefaultIfEmpty(),
-                    (x, ov) => new SmeMerged { smeSet = x.sme, oValueSet = ov, sValueSet = null, iValueSet = null, dValueSet = null });
-            var l4 = joinOValue.ToList();
-
-            var result = joinSValue
-                .Union(joinIValue)
-                .Union(joinDValue)
-                .Union(joinOValue)
-                .ToList();
-
-            var joinSValue = querySME.GroupJoin(
-                db.SValueSets,
-                sme => sme.Id,
-                sv => sv.SMEId,
-                (sme, sv) => new { sme, sv })
-                .SelectMany(
-                    x => x.sv.DefaultIfEmpty(),
-                    (x, sv) => new { x.sme, sValueSet = sv });
-
-            var joinIValue = querySME.GroupJoin(
-                db.IValueSets,
-                sme => sme.Id,
-                iv => iv.SMEId,
-                (sme, iv) => new { sme, iv })
-                .SelectMany(
-                    x => x.iv.DefaultIfEmpty(),
-                    (x, iv) => new { x.sme, iValueSet = iv });
-
-            var joinDValue = querySME.GroupJoin(
-                db.DValueSets,
-                sme => sme.Id,
-                dv => dv.SMEId,
-                (sme, dv) => new { sme, dv })
-                .SelectMany(
-                    x => x.dv.DefaultIfEmpty(),
-                    (x, dv) => new { x.sme, dValueSet = dv });
-
-            var joinOValue = querySME.GroupJoin(
-                db.OValueSets,
-                sme => sme.Id,
-                ov => ov.SMEId,
-                (sme, ov) => new { sme, ov })
-                .SelectMany(
-                    x => x.ov.DefaultIfEmpty(),
-                    (x, ov) => new { x.sme, oValueSet = ov });
-
-            var result = joinSValue.Select(x => new { x.sme, x.sValueSet, iValueSet = (IValueSet)null, dValueSet = (DValueSet)null, oValueSet = (OValueSet)null })
-                .Union(joinIValue.Select(x => new { x.sme, sValueSet = (SValueSet)null, x.iValueSet, dValueSet = (DValueSet)null, oValueSet = (OValueSet)null }))
-                .Union(joinDValue.Select(x => new { x.sme, sValueSet = (SValueSet)null, iValueSet = (IValueSet)null, x.dValueSet, oValueSet = (OValueSet)null }))
-                .Union(joinOValue.Select(x => new { x.sme, sValueSet = (SValueSet)null, iValueSet = (IValueSet)null, dValueSet = (DValueSet)null, x.oValueSet }))
-                .Select(x => new SmeMerged
-                {
-                    smeSet = x.sme,
-                    sValueSet = x.sValueSet,
-                    iValueSet = x.iValueSet,
-                    dValueSet = x.dValueSet,
-                    oValueSet = x.oValueSet
-                })
-                .ToList();
-            */
         }
-        public static List<SmeMerged> GetSmeMerged0(AasContext db, List<SMESet>? listSME)
-        {
-            if (listSME == null)
-                return null;
 
-            var join1 = listSME.Join(
-                db.SValueSets,
-                sme => sme.Id,
-                sv => sv.SMEId,
-                (sme, sv) => new { sme, sv })
-                .ToList();
-
-            var join2 = listSME.Join(
-                db.IValueSets,
-                sme => sme.Id,
-                sv => sv.SMEId,
-                (sme, sv) => new { sme, sv })
-                .ToList();
-
-            var join3 = listSME.Join(
-                db.DValueSets,
-                sme => sme.Id,
-                sv => sv.SMEId,
-                (sme, sv) => new { sme, sv })
-                .ToList();
-
-            var join4 = listSME.Join(
-                db.OValueSets,
-                sme => sme.Id,
-                sv => sv.SMEId,
-                (sme, sv) => new { sme, sv })
-                .ToList();
-
-
-
-
-            var joinSValue = listSME.GroupJoin(
-                db.SValueSets,
-                sme => sme.Id,
-                sv => sv.SMEId,
-                (sme, sv) => new { sme, sv })
-                .SelectMany(
-                    x => x.sv.DefaultIfEmpty(),
-                    (x, sv) => new SmeMerged { smeSet = x.sme, sValueSet = sv });
-            var l1 = joinSValue.ToList();
-
-            var joinIValue = listSME.GroupJoin(
-                db.IValueSets,
-                sme => sme.Id,
-                iv => iv.SMEId,
-                (sme, iv) => new { sme, iv })
-                .SelectMany(
-                    x => x.iv.DefaultIfEmpty(),
-                    (x, iv) => new SmeMerged { smeSet = x.sme, iValueSet = iv });
-            var l2 = joinIValue.ToList();
-
-            var joinDValue = listSME.GroupJoin(
-                db.DValueSets,
-                sme => sme.Id,
-                dv => dv.SMEId,
-                (sme, dv) => new { sme, dv })
-                .SelectMany(
-                    x => x.dv.DefaultIfEmpty(),
-                    (x, dv) => new SmeMerged { smeSet = x.sme, dValueSet = dv });
-            var l3 = joinDValue.ToList();
-
-            var joinOValue = listSME.GroupJoin(
-                db.OValueSets,
-                sme => sme.Id,
-                ov => ov.SMEId,
-                (sme, ov) => new { sme, ov })
-                .SelectMany(
-                    x => x.ov.DefaultIfEmpty(),
-                    (x, ov) => new SmeMerged { smeSet = x.sme, oValueSet = ov });
-            var l4 = joinOValue.ToList();
-
-            var result = joinSValue
-                .Union(joinIValue)
-                .Union(joinDValue)
-                .Union(joinOValue)
-                .ToList();
-
-            return result;
-        }
         public static ISubmodelElement? GetSubmodelElement(SMESet smeSet)
         {
             return CreateSME(smeSet, null);

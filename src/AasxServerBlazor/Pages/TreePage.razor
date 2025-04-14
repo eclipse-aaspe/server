@@ -382,6 +382,15 @@
 					}
 				}
 
+                if (SelectedNode is { Tag: AssetAdministrationShell aas })
+                {
+                    var idEncoded = Base64UrlEncoder.Encode(aas.Id);
+                    var pathaas = Program.externalBlazor + "/shells/" + idEncoded;
+                    <span style="color:white;background-color:blue;">URL:</span>
+                    <a href="@pathaas" target="_blank">@pathaas</a>
+                    <br>
+                }
+
 				if (SelectedNode is {Tag: Submodel sm})
 				{
 					var idEncoded = Base64UrlEncoder.Encode(sm.Id);
@@ -846,7 +855,7 @@
 		}
 
 		newDataMode = newArgs.signalNewDataMode;
-		InvokeAsync(StateHasChanged);
+		// InvokeAsync(StateHasChanged);
 	}
 
 	bool update = true;
