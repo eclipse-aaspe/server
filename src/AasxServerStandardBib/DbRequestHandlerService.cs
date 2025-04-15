@@ -76,15 +76,6 @@ public class DbRequestHandlerService : IDbRequestHandlerService
                     if (operation.CrudType != DbRequestCrudType.Read)
                     {
                         _lock.Release();
-
-                        if (exception != null)
-                        {
-                            operation.TaskCompletionSource.SetException(exception);
-                        }
-                        else
-                        {
-                            operation.TaskCompletionSource.SetResult(dbRequestResult);
-                        }
                     }
                     else
                     {
@@ -94,6 +85,15 @@ public class DbRequestHandlerService : IDbRequestHandlerService
                         //{
                         //    ReadActiveEvents.Set();
                         //}
+                    }
+
+                    if (exception != null)
+                    {
+                        operation.TaskCompletionSource.SetException(exception);
+                    }
+                    else
+                    {
+                        operation.TaskCompletionSource.SetResult(dbRequestResult);
                     }
                 }
             }
