@@ -76,7 +76,6 @@ public static class DependencyRegistry
         services.AddSingleton<IEventService, EventService>();
 
         services.AddTransient<IContractSecurityRules, SecurityService>();
-        // services.AddTransient<QueryGrammar>();
         services.AddTransient<QueryGrammarJSON>();
     }
 }
