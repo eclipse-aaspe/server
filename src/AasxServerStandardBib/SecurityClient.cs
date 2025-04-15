@@ -1868,7 +1868,7 @@ namespace AasxServer
                                             response.Content.ReadAsStringAsync().Result +
                                             " ; RECONNECT " + requestPath;
                                         eventData.Status.SetTimeStamp(now);
-                                        d = eventData.LastUpdate.Value = "reconnect";
+                                        // d = eventData.LastUpdate.Value = "reconnect";
                                         eventData.LastUpdate.SetTimeStamp(now);
                                     }
                                 }
@@ -1965,7 +1965,7 @@ namespace AasxServer
                         var now = DateTime.UtcNow;
                         eventData.Status.SetTimeStamp(now);
                         eventData.Status.SetTimeStamp(now);
-                        d = eventData.LastUpdate.Value = "reconnect";
+                        // d = eventData.LastUpdate.Value = "reconnect";
                         eventData.LastUpdate.SetTimeStamp(now);
                     }
                 }
@@ -2093,7 +2093,7 @@ namespace AasxServer
                         var now = DateTime.UtcNow;
                         eventData.Status.SetTimeStamp(now);
                         eventData.Status.SetTimeStamp(now);
-                        d = eventData.LastUpdate.Value = "reconnect";
+                        // d = eventData.LastUpdate.Value = "reconnect";
                         eventData.LastUpdate.SetTimeStamp(now);
                     }
                 }
