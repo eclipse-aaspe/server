@@ -75,7 +75,6 @@ namespace IO.Swagger.Controllers
         private readonly IPaginationService _paginationService;
         private readonly IAuthorizationService _authorizationService;
         private readonly IValidateSerializationModifierService _validateModifierService;
-        private readonly IPersistenceService _persistenceService;
         private readonly IIdShortPathParserService _idShortPathParserService;
         private readonly IDbRequestHandlerService _dbRequestHandlerService;
         private readonly IMetamodelVerificationService _verificationService;
@@ -97,8 +96,7 @@ namespace IO.Swagger.Controllers
         /// <param name="dbRequestHandlerService"></param>
         /// <param name="verificationService"></param>
         /// <exception cref="ArgumentNullException"></exception>
-        public AssetAdministrationShellRepositoryAPIApiController(IAppLogger<AssetAdministrationShellRepositoryAPIApiController> logger,
-                                                                  IPersistenceService persistenceService, IBase64UrlDecoderService decoderService,
+        public AssetAdministrationShellRepositoryAPIApiController(IAppLogger<AssetAdministrationShellRepositoryAPIApiController> logger, IBase64UrlDecoderService decoderService,
                                                                   IReferenceModifierService referenceModifierService,
                                                                   IMappingService mappingService, IPathModifierService pathModifierService,
                                                                   ILevelExtentModifierService levelExtentModifierService, IPaginationService paginationService,
@@ -107,7 +105,6 @@ namespace IO.Swagger.Controllers
                                                                   IMetamodelVerificationService verificationService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _persistenceService = persistenceService ?? throw new ArgumentNullException(nameof(persistenceService));
             _decoderService = decoderService ?? throw new ArgumentNullException(nameof(decoderService));
             _referenceModifierService = referenceModifierService ?? throw new ArgumentNullException(nameof(referenceModifierService));
             _mappingService = mappingService ?? throw new ArgumentNullException(nameof(mappingService));

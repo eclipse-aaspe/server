@@ -354,7 +354,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 break;
         }
 
-        dbRequest.TaskCompletionSource.SetResult(result);
         return result;
     }
 
