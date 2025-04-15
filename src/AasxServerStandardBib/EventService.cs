@@ -809,55 +809,58 @@ public class EventService : IEventService
                                         visitor.idShortPath = e.idShortPath;
                                         visitor.update = e.entryType == "UPDATE";
                                         var receiveSmeDB = visitor.VisitSMESet(receiveSme);
-                                        receiveSmeDB.SMId = smDBId;
+                                        if (receiveSmeDB != null)
+                                        {
+                                            receiveSmeDB.SMId = smDBId;
 
-                                        var parentPath = "";
-                                        if (e.idShortPath.Contains("."))
-                                        {
-                                            int lastDotIndex = e.idShortPath.LastIndexOf('.');
-                                            if (lastDotIndex != -1)
+                                            var parentPath = "";
+                                            if (e.idShortPath.Contains("."))
                                             {
-                                                parentPath = e.idShortPath.Substring(0, lastDotIndex);
+                                                int lastDotIndex = e.idShortPath.LastIndexOf('.');
+                                                if (lastDotIndex != -1)
+                                                {
+                                                    parentPath = e.idShortPath.Substring(0, lastDotIndex);
+                                                }
                                             }
-                                        }
-                                        else
-                                        {
-                                            change = true;
-                                        }
-                                        switch (e.entryType)
-                                        {
-                                            case "CREATE":
-                                            case "UPDATE":
-                                                if (parentPath != "")
-                                                {
-                                                    var parentDB = smeSmMerged.Where(sme => sme.smeSet.IdShortPath == parentPath).FirstOrDefault();
-                                                    if (parentDB != null)
+                                            else
+                                            {
+                                                change = true;
+                                            }
+                                            switch (e.entryType)
+                                            {
+                                                case "CREATE":
+                                                case "UPDATE":
+                                                    if (parentPath != "")
                                                     {
-                                                        receiveSmeDB.ParentSMEId = parentDB.smeSet.Id;
-                                                        receiveSmeDB.IdShortPath = e.idShortPath;
-                                                        change = true;
+                                                        var parentDB = smeSmMerged.Where(sme => sme.smeSet.IdShortPath == parentPath).FirstOrDefault();
+                                                        if (parentDB != null)
+                                                        {
+                                                            receiveSmeDB.ParentSMEId = parentDB.smeSet.Id;
+                                                            receiveSmeDB.IdShortPath = e.idShortPath;
+                                                            change = true;
+                                                        }
                                                     }
-                                                }
-                                                if (change)
-                                                {
-                                                    Converter.setTimeStampTree(db, smDB, receiveSmeDB, receiveSmeDB.TimeStamp);
-                                                    try
+                                                    if (change)
                                                     {
-                                                        db.SMESets.Add(receiveSmeDB);
-                                                        db.SaveChanges();
+                                                        Converter.setTimeStampTree(db, smDB, receiveSmeDB, receiveSmeDB.TimeStamp);
+                                                        try
+                                                        {
+                                                            db.SMESets.Add(receiveSmeDB);
+                                                            db.SaveChanges();
+                                                        }
+                                                        catch (Exception ex)
+                                                        {
+                                                        }
+                                                        var smeDB = smeSmMerged.Where(sme =>
+                                                                !visitor.keepSme.Contains(sme.smeSet.Id) &&
+                                                                visitor.deleteSme.Contains(sme.smeSet.Id)
+                                                            ).ToList();
+                                                        var smeDBList = smeDB.Select(sme => sme.smeSet.Id).Distinct().ToList();
+                                                        smeDelete.AddRange(smeDBList);
+                                                        count++;
                                                     }
-                                                    catch (Exception ex)
-                                                    {
-                                                    }
-                                                    var smeDB = smeSmMerged.Where(sme =>
-                                                            !visitor.keepSme.Contains(sme.smeSet.Id) &&
-                                                            visitor.deleteSme.Contains(sme.smeSet.Id)
-                                                        ).ToList();
-                                                    var smeDBList = smeDB.Select(sme => sme.smeSet.Id).Distinct().ToList();
-                                                    smeDelete.AddRange(smeDBList);
-                                                    count++;
-                                                }
-                                                break;
+                                                    break;
+                                            }
                                         }
                                     }
                                     else

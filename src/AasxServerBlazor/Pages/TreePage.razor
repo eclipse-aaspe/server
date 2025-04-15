@@ -849,13 +849,11 @@
 		if (Program.isLoading)
 			return;
 
-		if (newDataMode != 0 || args is not Program.NewDataAvailableArgs newArgs)
+		if (newDataMode == 0 && args is Program.NewDataAvailableArgs)
 		{
-			return;
-		}
-
-		newDataMode = newArgs.signalNewDataMode;
-		InvokeAsync(StateHasChanged);
+            newDataMode = (args as Program.NewDataAvailableArgs).signalNewDataMode;
+            InvokeAsync(StateHasChanged);
+        }
 	}
 
 	bool update = true;
@@ -1059,7 +1057,10 @@
         }
         else
         {
-            env = new AdminShellNS.AdminShellPackageEnv[] { DbReqService.ReadPackageEnv(aasID, smID).Result.PackageEnv };
+            // env = new AdminShellNS.AdminShellPackageEnv[] { DbReqService.ReadPackageEnv(aasID, smID).Result.PackageEnv };
+            svg = false;
+            url = false;
+            return string.Empty;
         }
 
         svg = false;
