@@ -194,7 +194,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 int s = Convert.ToInt32(diff);
                 diff = TimeStamp.DateTimeToString(DateTime.UtcNow.AddSeconds(-s));
             }
-            
+
             var eventRequest = new DbEventRequest()
             {
                 Env = Program.env,
@@ -358,7 +358,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
         }
 
-        _persistenceService.DeleteFileByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
+        await _dbRequestHandlerService.DeleteFileByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
 
         return NoContent();
     }
@@ -384,7 +384,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual IActionResult DeleteSubmodelById([FromRoute][Required] string submodelIdentifier)
+    public async virtual Task<IActionResult> DeleteSubmodelById([FromRoute][Required] string submodelIdentifier)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -394,7 +394,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         _logger.LogInformation($"Received a request to delete a submodel with id {decodedSubmodelIdentifier}");
-        _persistenceService.DeleteSubmodelById(null, decodedSubmodelIdentifier);
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+        await _dbRequestHandlerService.DeleteSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
 
         return NoContent();
     }
@@ -449,7 +451,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         _logger.LogInformation($"Received a request to delete a submodel element at {idShortPath} from submodel with id {decodedSubmodelIdentifier}");
         // return StatusCode(500, default(Result));
 
-        _persistenceService.DeleteSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
+        await _dbRequestHandlerService.DeleteSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
 
         return NoContent();
     }

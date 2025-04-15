@@ -14,12 +14,5 @@ public interface IPersistenceService
     void ImportAASXIntoDB(string filePath, bool createFilesOnly, bool withDbFiles);
 
     List<string> ReadFilteredPackages(string filterPath, List<AdminShellPackageEnv> list);
-
-    void DeleteAssetAdministrationShellById(string aasIdentifier);
-    void DeleteSubmodelById(string aasIdentifier, string submodelIdentifier);
-    void DeleteSubmodelReferenceById(string aasIdentifier, string submodelIdentifier);
-    void DeleteThumbnail(string aasIdentifier);
-    void DeleteFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath);
-    void DeleteSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath);
 }
 

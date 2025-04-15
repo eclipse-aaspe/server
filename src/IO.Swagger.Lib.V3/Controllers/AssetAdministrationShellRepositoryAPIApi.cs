@@ -75,7 +75,6 @@ namespace IO.Swagger.Controllers
         private readonly IPaginationService _paginationService;
         private readonly IAuthorizationService _authorizationService;
         private readonly IValidateSerializationModifierService _validateModifierService;
-        private readonly IPersistenceService _persistenceService;
         private readonly IIdShortPathParserService _idShortPathParserService;
         private readonly IDbRequestHandlerService _dbRequestHandlerService;
         private readonly IMetamodelVerificationService _verificationService;
@@ -97,8 +96,7 @@ namespace IO.Swagger.Controllers
         /// <param name="dbRequestHandlerService"></param>
         /// <param name="verificationService"></param>
         /// <exception cref="ArgumentNullException"></exception>
-        public AssetAdministrationShellRepositoryAPIApiController(IAppLogger<AssetAdministrationShellRepositoryAPIApiController> logger,
-                                                                  IPersistenceService persistenceService, IBase64UrlDecoderService decoderService,
+        public AssetAdministrationShellRepositoryAPIApiController(IAppLogger<AssetAdministrationShellRepositoryAPIApiController> logger, IBase64UrlDecoderService decoderService,
                                                                   IReferenceModifierService referenceModifierService,
                                                                   IMappingService mappingService, IPathModifierService pathModifierService,
                                                                   ILevelExtentModifierService levelExtentModifierService, IPaginationService paginationService,
@@ -107,7 +105,6 @@ namespace IO.Swagger.Controllers
                                                                   IMetamodelVerificationService verificationService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _persistenceService = persistenceService ?? throw new ArgumentNullException(nameof(persistenceService));
             _decoderService = decoderService ?? throw new ArgumentNullException(nameof(decoderService));
             _referenceModifierService = referenceModifierService ?? throw new ArgumentNullException(nameof(referenceModifierService));
             _mappingService = mappingService ?? throw new ArgumentNullException(nameof(mappingService));
@@ -141,12 +138,14 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult DeleteAssetAdministrationShellById([FromRoute][Required] string aasIdentifier)
+        public async virtual Task<IActionResult> DeleteAssetAdministrationShellById([FromRoute][Required] string aasIdentifier)
         {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
 
             _logger.LogInformation($"Received request to delete AAS with id {decodedAasIdentifier}");
-            _persistenceService.DeleteAssetAdministrationShellById(decodedAasIdentifier);
+
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            await _dbRequestHandlerService.DeleteAssetAdministrationShellById(securityConfig, decodedAasIdentifier);
 
             return NoContent();
         }
@@ -208,7 +207,7 @@ namespace IO.Swagger.Controllers
             }
 
             //ToDo: Probably we will need only one db request here
-            _persistenceService.DeleteFileByPath(securityConfig, decodedAasIdentifier, decodedSmIdentifier, idShortPath);
+            await _dbRequestHandlerService.DeleteFileByPath(securityConfig, decodedAasIdentifier, decodedSmIdentifier, idShortPath);
 
             return NoContent();
         }
@@ -235,7 +234,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult DeleteSubmodelByIdAasRepository([FromRoute][Required]string aasIdentifier, [FromRoute][Required]string submodelIdentifier)
+        public async virtual Task<IActionResult> DeleteSubmodelByIdAasRepository([FromRoute][Required]string aasIdentifier, [FromRoute][Required]string submodelIdentifier)
         {
             _logger.LogInformation($"Received request to delete a submodel from AAS");
 
@@ -252,7 +251,8 @@ namespace IO.Swagger.Controllers
                 throw new NotAllowed($"Cannot proceed as {nameof(decodedSmIdentifier)} is null");
             }
 
-            _persistenceService.DeleteSubmodelById(decodedAasIdentifier, decodedSmIdentifier);
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            await _dbRequestHandlerService.DeleteSubmodelById(securityConfig, decodedAasIdentifier, decodedSmIdentifier);
 
             return NoContent();
         }
@@ -314,7 +314,7 @@ namespace IO.Swagger.Controllers
             }
 
 
-            _persistenceService.DeleteSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSmIdentifier, idShortPath);
+            await _dbRequestHandlerService.DeleteSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSmIdentifier, idShortPath);
 
             return NoContent();
         }
@@ -341,7 +341,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult DeleteSubmodelReferenceByIdAasRepository([FromRoute][Required]string aasIdentifier, [FromRoute][Required]string submodelIdentifier)
+        public async virtual Task<IActionResult> DeleteSubmodelReferenceByIdAasRepository([FromRoute][Required]string aasIdentifier, [FromRoute][Required]string submodelIdentifier)
         {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             var decodedSmIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
@@ -357,7 +357,9 @@ namespace IO.Swagger.Controllers
             }
 
             _logger.LogInformation($"Received request to delete submodel reference with id {submodelIdentifier} from the AAS with id {aasIdentifier}.");
-            _persistenceService.DeleteSubmodelReferenceById(decodedAasIdentifier, decodedSmIdentifier);
+
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            await _dbRequestHandlerService.DeleteSubmodelReferenceById(securityConfig, decodedAasIdentifier, decodedSmIdentifier);
 
             return NoContent();
         }
@@ -383,7 +385,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult DeleteThumbnailAasRepository([FromRoute][Required]string aasIdentifier)
+        public async virtual Task<IActionResult> DeleteThumbnailAasRepository([FromRoute][Required]string aasIdentifier)
         {
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
 
@@ -394,7 +396,8 @@ namespace IO.Swagger.Controllers
                 throw new NotAllowed($"Cannot proceed as {nameof(decodedAasIdentifier)} is null");
             }
 
-            _persistenceService.DeleteThumbnail(decodedAasIdentifier);
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            await _dbRequestHandlerService.DeleteThumbnail(securityConfig, decodedAasIdentifier);
 
             return NoContent();
         }

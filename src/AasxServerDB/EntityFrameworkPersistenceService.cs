@@ -320,23 +320,40 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     dbRequest.Context.Params.SubmodelElementBody);
                 break;
             case DbRequestOp.DeleteAssetAdministrationShellById:
+                DeleteAssetAdministrationShellById(dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.AssetAdministrationShellIdentifier);
                 break;
             case DbRequestOp.DeleteFileByPath:
+                DeleteFileByPath(dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                    dbRequest.Context.Params.SubmodelIdentifier,
+                    dbRequest.Context.Params.IdShort);
                 break;
             case DbRequestOp.DeleteSubmodelById:
+                DeleteSubmodelById(dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                    dbRequest.Context.Params.SubmodelIdentifier);
                 break;
             case DbRequestOp.DeleteSubmodelElementByPath:
+                DeleteSubmodelElementByPath(dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                    dbRequest.Context.Params.SubmodelIdentifier,
+                    dbRequest.Context.Params.IdShort);
                 break;
             case DbRequestOp.DeleteSubmodelReferenceById:
+                DeleteSubmodelReferenceById(dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                    dbRequest.Context.Params.SubmodelIdentifier);
                 break;
             case DbRequestOp.DeleteThumbnail:
+                DeleteThumbnail(dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.AssetAdministrationShellIdentifier);
                 break;
             default:
                 dbRequest.TaskCompletionSource.SetException(new Exception("Unknown Operation"));
                 break;
         }
 
-        dbRequest.TaskCompletionSource.SetResult(result);
         return result;
     }
 
@@ -750,7 +767,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         throw new NotImplementedException();
     }
 
-    public void DeleteAssetAdministrationShellById(string aasIdentifier)
+    public void DeleteAssetAdministrationShellById(ISecurityConfig securityConfig, string aasIdentifier)
     {
         // var aas = ReadAssetAdministrationShellById(null, aasIdentifier);
         // if (aas != null)
@@ -775,7 +792,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    public void DeleteSubmodelById(string aasIdentifier, string submodelIdentifier)
+    public void DeleteSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
     {
         if (IsSubmodelPresent(null, aasIdentifier, submodelIdentifier, false, out _))
         {
@@ -894,38 +911,13 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    public void DeleteSubmodelReferenceById(string aasIdentifier, string submodelIdentifier)
+    public void DeleteSubmodelReferenceById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
     {
-        var aas = this.ReadAssetAdministrationShellById(null, aasIdentifier);
-
-        if (aas != null)
-        {
-            var submodelReference = aas.Submodels.Where(s => s.Matches(submodelIdentifier));
-            if (submodelReference.Any())
-            {
-                //_logger.LogDebug($"Found requested submodel reference in the aas.");
-
-                //ToDo: How to delete reference properly? This is probably not enough
-                bool deleted = aas.Submodels.Remove(submodelReference.First());
-                if (deleted)
-                {
-                    //_logger.LogDebug($"Deleted submodel reference with id {submodelIdentifier} from the AAS with id {aasIdentifier}.");
-                    //_packages[packageIndex].setWrite(true);
-                    //Program.signalNewData(1);
-                }
-                else
-                {
-                    //_logger.LogError($"Could not delete submodel reference with id {submodelIdentifier} from the AAS with id {aasIdentifier}.");
-                }
-            }
-            else
-            {
-                throw new NotFoundException($"SubmodelReference with id {submodelIdentifier} not found in AAS with id {aasIdentifier}");
-            }
-        }
+        //ToDo: Database currently does not support references
+        throw new NotImplementedException();
     }
 
-    public void DeleteThumbnail(string aasIdentifier)
+    public void DeleteThumbnail(ISecurityConfig securityConfig, string aasIdentifier)
     {
         var aas = this.ReadAssetAdministrationShellById(null, aasIdentifier);
         if (aas != null)

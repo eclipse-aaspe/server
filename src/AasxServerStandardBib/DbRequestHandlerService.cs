@@ -43,27 +43,33 @@ public class DbRequestHandlerService : IDbRequestHandlerService
             if (operation != null)
             {
                 _lock.Wait();
+
+                Exception exception = null;
+                DbRequestResult dbRequestResult = null;
+
                 if (operation.CrudType != DbRequestCrudType.Read)
                 {
                     while (ActiveReadOperations > 0)
                     {
                         Thread.Sleep(100);
                     }
-                }
 
+                    //ReadActiveEvents.WaitOne();
+                }
                 try
                 {
                     if (operation.CrudType == DbRequestCrudType.Read)
                     {
                         _lock.Release();
+
                         IncrementCounter();
                     }
 
-                    var result = await _persistenceService.DoDbOperation(operation);
+                    dbRequestResult = await _persistenceService.DoDbOperation(operation);
                 }
                 catch (Exception ex)
                 {
-                    operation.TaskCompletionSource.SetException(ex);
+                    exception = ex;
                 }
                 finally
                 {
@@ -74,6 +80,20 @@ public class DbRequestHandlerService : IDbRequestHandlerService
                     else
                     {
                         DecrementCounter();
+
+                        //if(ActiveReadOperations == 0)
+                        //{
+                        //    ReadActiveEvents.Set();
+                        //}
+                    }
+
+                    if (exception != null)
+                    {
+                        operation.TaskCompletionSource.SetException(exception);
+                    }
+                    else
+                    {
+                        operation.TaskCompletionSource.SetResult(dbRequestResult);
                     }
                 }
             }
@@ -371,7 +391,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         var dbRequest = new DbRequest(DbRequestOp.UpdateEventMessages, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
 
         _queryOperations.Add(dbRequest);
-        var tcs = await taskCompletionSource.Task;
+        var tcs = await taskCompletionSource.Task.ConfigureAwait(false);
         return tcs;
     }
 
@@ -565,22 +585,22 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
     public async Task<DbRequestResult> ReplaceAssetAdministrationShellById(ISecurityConfig security, string aasIdentifier, AssetAdministrationShell body)
     {
-            var parameters = new DbRequestParams()
-            {
-                AssetAdministrationShellIdentifier = aasIdentifier,
-                AasBody = body
-            };
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            AasBody = body
+        };
 
-            var dbRequestContext = new DbRequestContext()
-            {
-                SecurityConfig = security,
-                Params = parameters
-            };
-            var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = security,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
 
-            var dbRequest = new DbRequest(DbRequestOp.ReplaceAssetAdministrationShellById, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
+        var dbRequest = new DbRequest(DbRequestOp.ReplaceAssetAdministrationShellById, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
 
-            _queryOperations.Add(dbRequest);
+        _queryOperations.Add(dbRequest);
         var tcs = await taskCompletionSource.Task;
         return tcs;
     }
@@ -658,6 +678,144 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
 
         var dbRequest = new DbRequest(DbRequestOp.ReplaceThumbnail, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
+    public async Task<DbRequestResult> DeleteAssetAdministrationShellById(ISecurityConfig securityConfig, string aasIdentifier)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.DeleteAssetAdministrationShellById, DbRequestCrudType.Delete, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
+    public async Task<DbRequestResult> DeleteFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            SubmodelIdentifier = submodelIdentifier,
+            IdShort = idShortPath
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.DeleteFileByPath, DbRequestCrudType.Delete, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
+    public async Task<DbRequestResult> DeleteSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            SubmodelIdentifier = submodelIdentifier
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.DeleteSubmodelById, DbRequestCrudType.Delete, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
+    public async Task<DbRequestResult> DeleteSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            SubmodelIdentifier = submodelIdentifier,
+            IdShort = idShortPath
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.DeleteSubmodelElementByPath, DbRequestCrudType.Delete, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
+    public async Task<DbRequestResult> DeleteSubmodelReferenceById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+            SubmodelIdentifier = submodelIdentifier,
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.DeleteSubmodelReferenceById, DbRequestCrudType.Delete, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
+    public async Task<DbRequestResult> DeleteThumbnail(ISecurityConfig securityConfig, string aasIdentifier)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasIdentifier,
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.DeleteThumbnail, DbRequestCrudType.Delete, dbRequestContext, taskCompletionSource);
 
         _queryOperations.Add(dbRequest);
 
