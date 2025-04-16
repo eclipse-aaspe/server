@@ -205,8 +205,8 @@ namespace IO.Swagger.Controllers
                     throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
                 }
             }
-
-            await _dbRequestHandlerService.DeleteFileByPath(securityConfig, decodedAasIdentifier, decodedSmIdentifier, idShortPath);
+            var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
+            await _dbRequestHandlerService.DeleteFileByPath(securityConfig, decodedAasIdentifier, decodedSmIdentifier, idShortPathElements);
 
             return NoContent();
         }

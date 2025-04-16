@@ -357,8 +357,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
-
-        await _dbRequestHandlerService.DeleteFileByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
+        var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
+        await _dbRequestHandlerService.DeleteFileByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPathElements);
 
         return NoContent();
     }

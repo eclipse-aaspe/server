@@ -29,25 +29,19 @@ using Environment = AasCore.Aas3_0.Environment;
 /// <inheritdoc />
 public class GenerateSerializationService : IGenerateSerializationService
 {
-    private readonly IAppLogger<GenerateSerializationService> _logger;
     private readonly IDbRequestHandlerService _dbRequestHandlerService;
-    private readonly ISubmodelService _submodelService;
     private readonly IConceptDescriptionService _cdService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GenerateSerializationService"/> class.
     /// </summary>
-    /// <param name="logger">Logger instance for logging activities.</param>
-    /// <param name="aasService">Service for accessing Asset Administration Shells.</param>
     /// <param name="submodelService">Service for accessing Submodels.</param>
     /// <exception cref="ArgumentNullException">
     /// Thrown when any of the required services (logger, aasService, submodelService) are null.
     /// </exception>
-    public GenerateSerializationService(IAppLogger<GenerateSerializationService> logger, IDbRequestHandlerService dbRequestHandlerService, ISubmodelService submodelService, IConceptDescriptionService cdService)
+    public GenerateSerializationService(IDbRequestHandlerService dbRequestHandlerService, ISubmodelService submodelService, IConceptDescriptionService cdService)
     {
-        _logger          = logger ?? throw new ArgumentNullException(nameof(logger));
         _dbRequestHandlerService = dbRequestHandlerService ?? throw new ArgumentNullException(nameof(dbRequestHandlerService));
-        _submodelService = submodelService ?? throw new ArgumentNullException(nameof(submodelService));
         _cdService = cdService ?? throw new ArgumentNullException(nameof(cdService));
     }
 
@@ -129,22 +123,22 @@ public class GenerateSerializationService : IGenerateSerializationService
         }
 
         //Fetch Submodels for the requested submodelIds
-        var submodelList = _submodelService.GetAllSubmodels();
+        //var submodelList = _submodelService.GetAllSubmodels();
         //Using is null or empty, as the query parameter in controll currently receives empty list (not null, but count = 0)
-        if (!submodelIds.IsNullOrEmpty())
-        {
-            foreach (var foundSubmodel in submodelIds.Select(submodelId => submodelList.Where(s => s.Id != null && s.Id.Equals(submodelId, StringComparison.Ordinal)))
-                                                 .Where(foundSubmodel => foundSubmodel.Any()))
-            {
-                outputEnv.Submodels ??= new List<ISubmodel>();
-                outputEnv.Submodels.Add(foundSubmodel.First());
-            }
-        }
-        else
-        {
-            outputEnv.Submodels ??= new List<ISubmodel>();
-            outputEnv.Submodels.AddRange(submodelList);
-        }
+        //if (!submodelIds.IsNullOrEmpty())
+        //{
+        //    foreach (var foundSubmodel in submodelIds.Select(submodelId => submodelList.Where(s => s.Id != null && s.Id.Equals(submodelId, StringComparison.Ordinal)))
+        //                                         .Where(foundSubmodel => foundSubmodel.Any()))
+        //    {
+        //        outputEnv.Submodels ??= new List<ISubmodel>();
+        //        outputEnv.Submodels.Add(foundSubmodel.First());
+        //    }
+        //}
+        //else
+        //{
+        //    outputEnv.Submodels ??= new List<ISubmodel>();
+        //    outputEnv.Submodels.AddRange(submodelList);
+        //}
 
         
 
