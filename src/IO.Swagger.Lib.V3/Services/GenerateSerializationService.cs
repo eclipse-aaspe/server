@@ -11,6 +11,7 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
+using AasxServerDB;
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
 using AdminShellNS.Extensions;
@@ -53,17 +54,65 @@ public class GenerateSerializationService : IGenerateSerializationService
     /// <inheritdoc />
     public Environment GenerateSerializationByIds(List<string?>? aasIds = null, List<string?>? submodelIds = null, bool? includeCD = false)
     {
-        List<IAssetAdministrationShell> aas = null;
-        List<ISubmodel> submodels = null;
-        List<IConceptDescription> conceptDescriptions = null;
+        List<IAssetAdministrationShell>? aas = null;
+        List<ISubmodel>? submodels = null;
+        List<IConceptDescription>? conceptDescriptions = null;
         var outputEnv = new Environment(aas, submodels, conceptDescriptions);
+
+        using (var db = new AasContext())
+        {
+            if (aasIds != null)
+            {
+                foreach (var aasId in aasIds)
+                {
+                    if (aasId != null)
+                    {
+                        var a = Converter.GetAssetAdministrationShell(aasIdentifier: aasId);
+                        if (a != null)
+                        {
+                            aas ??= [];
+                            aas.Add(a);
+                        }
+                    }
+                }
+            }
+            if (submodelIds != null)
+            {
+                foreach (var submodelId in submodelIds)
+                {
+                    if (submodelId != null)
+                    {
+                        var s = Converter.GetSubmodel(submodelIdentifier: submodelId);
+                        if (s != null)
+                        {
+                            submodels ??= [];
+                            submodels.Add(s);
+                        }
+                    }
+                }
+            }
+            if (includeCD is not null and true)
+            {
+                foreach (var cd in db.CDSets)
+                {
+                    var c = Converter.GetConceptDescription(cd);
+                    if (c != null)
+                    {
+                        conceptDescriptions ??= [];
+                        conceptDescriptions.Add(c);
+                    }
+                }
+            }
+        }
+
+        return outputEnv;
 
         //Fetch AASs for the requested aasIds
         //ToDo: Remove pseudo-pagimation
-        var pagination = new PaginationParameters("null",100);
+        var pagination = new PaginationParameters("0", 1000);
 
         //ToDo: Fix no security
-        var aasList = _dbRequestHandlerService.ReadPagedAssetAdministrationShells(pagination, null, new List<ISpecificAssetId>(),null).Result;
+        var aasList = _dbRequestHandlerService.ReadPagedAssetAdministrationShells(pagination, null, new List<ISpecificAssetId>(), null).Result;
         //Using is null or empty, as the query parameter in controll currently receives empty list (not null, but count = 0)
         if (!aasIds.IsNullOrEmpty())
         {

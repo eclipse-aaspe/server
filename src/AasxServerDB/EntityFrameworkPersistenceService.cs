@@ -364,6 +364,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         var output = Converter.GetPagedAssetAdministrationShells(paginationParameters, assetIds, idShort);
 
+        return output;
+
         //Apply filters
         // GlobalAssetId is done during DB access
         // SpecificAssetIds is serialized as JSON and can not be handled by DB currently
@@ -648,6 +650,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                         byteArray = result.ToByteArray();
                         fileSize = byteArray.Length;
+                        result.Close();
                     }
                     else
                     {
@@ -1242,11 +1245,11 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         return submodel.FindSubmodelElementByIdShort(idShortPath) != null;
     }
 
-    private bool InitSecurity(ISecurityConfig securityConfig, out string securityConditionSM, out string securityConditionSME)
+    private bool InitSecurity(ISecurityConfig? securityConfig, out string securityConditionSM, out string securityConditionSME)
     {
         securityConditionSM = "";
         securityConditionSME = "";
-        if (!securityConfig.NoSecurity)
+        if (securityConfig != null && !securityConfig.NoSecurity)
         {
             securityConditionSM = _contractSecurityRules.GetConditionSM();
             securityConditionSME = _contractSecurityRules.GetConditionSME();
