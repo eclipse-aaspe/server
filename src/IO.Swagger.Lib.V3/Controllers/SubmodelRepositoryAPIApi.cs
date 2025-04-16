@@ -2626,7 +2626,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
-        await _dbRequestHandlerService.ReplaceFileByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath, fileName, contentType, stream);
+        var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
+        await _dbRequestHandlerService.ReplaceFileByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPathElements, fileName, contentType, stream);
 
         return NoContent();
     }

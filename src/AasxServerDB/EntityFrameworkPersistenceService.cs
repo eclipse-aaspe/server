@@ -24,6 +24,7 @@ using System.Linq.Dynamic.Core;
 using System.IO.Compression;
 using AasxServerStandardBib.Exceptions;
 using AasxServerDB.Entities;
+using System.Collections;
 
 public class EntityFrameworkPersistenceService : IPersistenceService
 {
@@ -284,7 +285,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 ReplaceFileByPath(dbRequest.Context.SecurityConfig,
                     dbRequest.Context.Params.AssetAdministrationShellIdentifier,
                     dbRequest.Context.Params.SubmodelIdentifier,
-                    dbRequest.Context.Params.IdShort,
+                    dbRequest.Context.Params.IdShortElements,
                     dbRequest.Context.Params.FileRequest.File,
                     dbRequest.Context.Params.FileRequest.ContentType,
                     dbRequest.Context.Params.FileRequest.Stream);
@@ -798,7 +799,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                     if (fileElement is AasCore.Aas3_0.File file)
                     {
-
                         if (!string.IsNullOrEmpty(file.Value))
                         {
                             //check if it is external location
@@ -1000,8 +1000,22 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             {
                 if (aas.AssetInformation.DefaultThumbnail != null && !string.IsNullOrEmpty(aas.AssetInformation.DefaultThumbnail.Path))
                 {
-                    //ToDo: How to delete or reset thumbnail?
-                    //_packageEnvService.DeleteAssetInformationThumbnail(packageIndex, aas.AssetInformation.DefaultThumbnail);
+                    var fileName = aas.AssetInformation.DefaultThumbnail.Path;
+
+                    var envFileName = string.Empty;
+                    var found = Converter.IsPackageEnvPresent(aasIdentifier, null, false, out envFileName, out AdminShellPackageEnv packageEnv);
+
+                    if (found)
+                    {
+                        string fcopy = Path.GetFileName(envFileName) + "__thumbnail";
+                        fcopy = fcopy.Replace("/", "_");
+                        fcopy = fcopy.Replace(".", "_");
+                        System.IO.File.Delete(AasContext.DataPath + "/files/" + fcopy + ".dat");
+                    }
+                    else
+                    {
+                        throw new NotFoundException($"Package for aas id {aasIdentifier} not found");
+                    }
                 }
                 else
                 {
@@ -1119,33 +1133,188 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    public void ReplaceAssetInformation(ISecurityConfig securityConfig, string aasIdentifier, IAssetInformation newAssetInformation)
-    {
-        //_verificationService.VerifyRequestBody(body);
-        //var aas = _packageEnvService.GetAssetAdministrationShellById(aasIdentifier, out _);
-        //if (aas != null)
-        //{
-        //    aas.AssetInformation = body;
-        //    Program.signalNewData(0);
-
-        //    _logger.LogDebug($"AssetInformation from AAS with id {aasIdentifier} updated successfully.");
-        //}
-    }
-
     public void ReplaceAssetAdministrationShellById(ISecurityConfig securityConfig, string aasIdentifier, IAssetAdministrationShell newAas)
     {
-        ////Verify the body first
-        //_verificationService.VerifyRequestBody(body);
+        var found = IsAssetAdministrationShellPresent(aasIdentifier, false, out _);
 
-        //_packageEnvService.UpdateAssetAdministrationShellById(body, aasIdentifier);
+        if (found)
+        {
+            var cuurentDataTime = DateTime.UtcNow;
+            using (var db = new AasContext())
+            {
+                var aasDB = db.AASSets
+                .FirstOrDefault(aas => aas.Identifier == aasIdentifier);
+
+                aasDB.IdShort = newAas.IdShort;
+                aasDB.DisplayName = Serializer.SerializeList(newAas.DisplayName);
+                aasDB.Category = newAas.Category;
+                aasDB.Description = Serializer.SerializeList(newAas.Description);
+                aasDB.Extensions = Serializer.SerializeList(newAas.Extensions);
+                aasDB.Identifier = newAas.Id;
+                aasDB.EmbeddedDataSpecifications = Serializer.SerializeList(newAas.EmbeddedDataSpecifications);
+                aasDB.DerivedFrom = Serializer.SerializeElement(newAas.DerivedFrom);
+                aasDB.Version = newAas.Administration?.Version;
+                aasDB.Revision = newAas.Administration?.Revision;
+                aasDB.Creator = Serializer.SerializeElement(newAas.Administration?.Creator);
+                aasDB.TemplateId = newAas.Administration?.TemplateId;
+                aasDB.AEmbeddedDataSpecifications = Serializer.SerializeList(newAas.Administration?.EmbeddedDataSpecifications);
+                aasDB.AssetKind = Serializer.SerializeElement(newAas.AssetInformation?.AssetKind);
+                aasDB.SpecificAssetIds = Serializer.SerializeList(newAas.AssetInformation?.SpecificAssetIds);
+                aasDB.GlobalAssetId = newAas.AssetInformation?.GlobalAssetId;
+                aasDB.AssetType = newAas.AssetInformation?.AssetType;
+                aasDB.DefaultThumbnailPath = newAas.AssetInformation?.DefaultThumbnail?.Path;
+                aasDB.DefaultThumbnailContentType = newAas.AssetInformation?.DefaultThumbnail?.ContentType;
+
+                aasDB.TimeStampCreate = newAas.TimeStampCreate == default ? cuurentDataTime : newAas.TimeStampCreate;
+                aasDB.TimeStamp = newAas.TimeStamp == default ? cuurentDataTime : newAas.TimeStamp;
+                aasDB.TimeStampTree = newAas.TimeStampTree == default ? cuurentDataTime : newAas.TimeStampTree;
+                aasDB.TimeStampDelete = newAas.TimeStampDelete;
+
+                db.SaveChanges();
+
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                    scopedLogger.LogDebug($"AssetInformation from AAS with id {aasIdentifier} updated successfully.");
+                }
+            }
+
+            //    Program.signalNewData(0);
+        }
+        else
+        {
+            throw new NotFoundException($"Asset Administration Shell with id {aasIdentifier} not found.");
+        }
     }
 
-    public void ReplaceFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream) => throw new NotImplementedException();
 
+    public void ReplaceAssetInformation(ISecurityConfig securityConfig, string aasIdentifier, IAssetInformation newAssetInformation)
+    {
+        var found = IsAssetAdministrationShellPresent(aasIdentifier, false, out _);
+
+        if (found)
+        {
+            var cuurentDataTime = DateTime.UtcNow;
+
+            using (var db = new AasContext())
+            {
+                var aasDB = db.AASSets
+                .FirstOrDefault(aas => aas.Identifier == aasIdentifier);
+
+                aasDB.AssetKind = Serializer.SerializeElement(newAssetInformation.AssetKind);
+                aasDB.SpecificAssetIds = Serializer.SerializeList(newAssetInformation.SpecificAssetIds);
+                aasDB.GlobalAssetId = newAssetInformation.GlobalAssetId;
+                aasDB.AssetType = newAssetInformation.AssetType;
+                aasDB.DefaultThumbnailPath = newAssetInformation.DefaultThumbnail?.Path;
+                aasDB.DefaultThumbnailContentType = newAssetInformation.DefaultThumbnail?.ContentType;
+                aasDB.TimeStamp = cuurentDataTime;
+                aasDB.TimeStampTree = cuurentDataTime;
+
+                db.SaveChanges();
+
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                    scopedLogger.LogDebug($"AssetInformation from AAS with id {aasIdentifier} updated successfully.");
+                }
+            }
+
+            //    Program.signalNewData(0);
+        }
+        else
+        {
+            throw new NotFoundException($"Asset Administration Shell with id {aasIdentifier} not found.");
+        }
+
+    }
+
+    public void ReplaceFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, List<object> idShortPath, string fileName, string contentType, MemoryStream stream)
+    {
+        //string securityConditionSM, securityConditionSME;
+        //InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
+
+        //if (IsSubmodelPresent(securityConditionSM, aasIdentifier, submodelIdentifier, false, out _))
+        //{
+        //    SMESet sME = null;
+        //    var fileElement = Converter.GetSubmodelElementByPath(securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier, idShortPath, out sME);
+
+        //    var found = fileElement != null;
+        //    if (found)
+        //    {
+        //        using (var scope = _serviceProvider.CreateScope())
+        //        {
+        //            var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+        //            scopedLogger.LogDebug($"Asset Administration Shell with id {aasIdentifier} found.");
+
+
+        //            if (fileElement is AasCore.Aas3_0.File file)
+        //            {
+        //                if (!string.IsNullOrEmpty(file.Value))
+        //                {
+        //                    //check if it is external location
+        //                    if (file.Value.StartsWith("http") || file.Value.StartsWith("https"))
+        //                    {
+        //                        scopedLogger.LogWarning($"Value of the Submodel-Element File with IdShort {file.IdShort} is an external link.");
+        //                        throw new NotImplementedException($"File location for {file.IdShort} is external {file.Value}. Currently this fuctionality is not supported.");
+        //                    }
+        //                    //Check if a directory
+        //                    else if (file.Value.StartsWith('/') || file.Value.StartsWith('\\'))
+        //                    {
+        //                        scopedLogger.LogInformation($"Value of the Submodel-Element File with IdShort {file.IdShort} is a File-Path.");
+
+        //                        var envFileName = string.Empty;
+
+        //                        var packageEnvFound = Converter.IsPackageEnvPresent(aasIdentifier, submodelIdentifier, false, out envFileName, out AdminShellPackageEnv packageEnv);
+
+        //                        if (packageEnvFound)
+        //                        {
+        //                            using (var fileStream = new FileStream(AasContext.DataPath + "/files/" + Path.GetFileName(envFileName) + ".zip", FileMode.Open))
+        //                            {
+        //                                using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Update))
+        //                                {
+        //                                    var entry = archive.GetEntry(file.Value);
+        //                                    entry?.Delete();
+        //                                    archive.CreateEntryFromFile(, file.Value);
+        //                                }
+        //                            }
+
+        //                            Edit.DeleteSubmodelElement(sME);
+        //                        }
+
+        //                        file.Value = string.Empty;
+
+        //                        //ToDo: Do notification
+        //                        //Program.signalNewData(1);
+        //                        //scopedLogger.LogDebug($"Deleted the file at {idShortPath} from submodel with Id {submodelIdentifier}");
+        //                    }
+        //                    // incorrect value
+        //                    else
+        //                    {
+        //                        scopedLogger.LogError($"Incorrect value {file.Value} of the Submodel-Element File with IdShort {file.IdShort}");
+        //                        throw new OperationNotSupported($"Incorrect value {file.Value} of the File with IdShort {file.IdShort}.");
+        //                    }
+        //                }
+        //            }
+        //            else
+        //            {
+        //                //throw new OperationNotSupported($"Cannot delete the file. SubmodelElement {idShortPath} does not have a file attached.");
+        //            }
+        //        }
+        //    }
+        //    else
+        //    {
+        //        //throw new OperationNotSupported($"SubmodelElement found at {idShortPath} is not of type File");
+        //    }
+        //}
+        //else
+        //{
+        //    throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+        //}
+
+    }
     public void ReplaceThumbnail(ISecurityConfig securityConfig, string aasIdentifier, string fileName, string contentType, MemoryStream stream) => throw new NotImplementedException();
 
     public void UpdateSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodel newSubmodel) => throw new NotImplementedException();
-
 
     public void UpdateSubmodelElementByPath(ISecurityConfig security, string aasIdentifier, string submodelIdentifier, string idShortPath, ISubmodelElement body) => throw new NotImplementedException();
 
@@ -1359,7 +1528,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                         if (output != null)
                         {
-
                             var smDBList = db.SMSets.Where(sm => sm.AASId != null && sm.AASId == aasDB.Id).ToList();
 
                             foreach (var sm in smDBList)

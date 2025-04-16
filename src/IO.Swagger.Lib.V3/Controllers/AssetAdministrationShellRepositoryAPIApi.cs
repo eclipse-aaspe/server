@@ -2739,7 +2739,9 @@ namespace IO.Swagger.Controllers
             }
 
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
-            await _dbRequestHandlerService.ReplaceFileByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath, fileName, contentType, stream);
+
+            var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
+            await _dbRequestHandlerService.ReplaceFileByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPathElements, fileName, contentType, stream);
 
             return NoContent();
         }
