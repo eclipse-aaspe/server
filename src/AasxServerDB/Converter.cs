@@ -391,7 +391,7 @@ namespace AasxServerDB
             return output;
         }
 
-        private static ConceptDescription? GetConceptDescription(CDSet? cdDB = null, string cdIdentifier = "")
+        public static ConceptDescription? GetConceptDescription(CDSet? cdDB = null, string cdIdentifier = "")
         {
             var db = new AasContext();
             if (!cdIdentifier.IsNullOrEmpty())

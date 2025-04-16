@@ -196,6 +196,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
     {
         var parameters = new DbRequestParams()
         {
+            PaginationParameters = paginationParameters,
             AssetAdministrationShellIdentifier = aasIdentifier,
             SubmodelIdentifier = submodelIdentifier,
         };
