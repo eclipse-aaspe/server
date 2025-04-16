@@ -206,7 +206,6 @@ namespace IO.Swagger.Controllers
                 }
             }
 
-            //ToDo: Probably we will need only one db request here
             await _dbRequestHandlerService.DeleteFileByPath(securityConfig, decodedAasIdentifier, decodedSmIdentifier, idShortPath);
 
             return NoContent();
@@ -2327,14 +2326,8 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public async virtual Task<IActionResult> PostAssetAdministrationShell([FromBody] AssetAdministrationShell body)
-        { 
-            if (body == null)
-            {
-                return BadRequest($"Could not proceed, as {nameof(body)} is null.");
-            }
-
-            //Verify the body first
-            _verificationService.VerifyRequestBody(body);
+        {
+            ProcessBody(body);
 
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
@@ -2402,13 +2395,7 @@ namespace IO.Swagger.Controllers
                 }
             }
 
-            if (body == null)
-            {
-                return BadRequest($"Could not proceed, as {nameof(body)} is null.");
-            }
-
-            //Verify the body first
-            _verificationService.VerifyRequestBody(body);
+            ProcessBody(body);
 
             var output = await _dbRequestHandlerService.CreateSubmodelElement(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, body, null, first);
 
@@ -2475,10 +2462,7 @@ namespace IO.Swagger.Controllers
                 }
             }
 
-            if (body == null)
-            {
-                return BadRequest($"Could not proceed, as {nameof(body)} is null.");
-            }
+            ProcessBody(body);
 
             var output = _dbRequestHandlerService.CreateSubmodelElement(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, body, idShortPath, first);
 
@@ -2520,10 +2504,8 @@ namespace IO.Swagger.Controllers
 
             _logger.LogInformation($"Received request to create a submodel reference in the AAS with id {decodedAasIdentifier}");
 
-            if (body == null)
-            {
-                return BadRequest($"Could not proceed, as {nameof(body)} is null.");
-            }
+            ProcessBody(body);
+
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
             var output = _dbRequestHandlerService.CreateSubmodelReferenceInAAS(securityConfig, body, decodedAasIdentifier);
@@ -2554,7 +2536,9 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public async virtual Task<IActionResult> PutAssetAdministrationShellById([FromBody]AssetAdministrationShell body, [FromRoute][Required]string aasIdentifier)
-        { 
+        {
+            ProcessBody(body);
+
             var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
             if (decodedAasIdentifier == null)
             {
@@ -2562,10 +2546,7 @@ namespace IO.Swagger.Controllers
             }
 
             _logger.LogInformation($"Received request to replace the AAS with id {decodedAasIdentifier}");
-            if (body == null)
-            {
-                return BadRequest($"Could not proceed, as {nameof(body)} is null.");
-            }
+
 
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
             await _dbRequestHandlerService.ReplaceAssetAdministrationShellById(securityConfig, decodedAasIdentifier, body);
@@ -2604,10 +2585,7 @@ namespace IO.Swagger.Controllers
             }
 
             _logger.LogInformation($"Received request to replace the asset information of the AAS with id {decodedAasIdentifier}");
-            if (body == null)
-            {
-                return BadRequest($"Could not proceed, as {nameof(body)} is null.");
-            }
+            ProcessBody(body);
 
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
             await _dbRequestHandlerService.ReplaceAssetInformation(securityConfig, decodedAasIdentifier, body);
@@ -2655,10 +2633,7 @@ namespace IO.Swagger.Controllers
             }
 
             _logger.LogInformation($"Received request to replace a a submodel {decodedSubmodelIdentifier} from the AAS {decodedAasIdentifier}");
-            if (body == null)
-            {
-                return BadRequest($"Could not proceed, as {nameof(body)} is null.");
-            }
+            ProcessBody(body);
 
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
             await _dbRequestHandlerService.ReplaceSubmodelById(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, body);
@@ -2706,10 +2681,7 @@ namespace IO.Swagger.Controllers
             }
 
             _logger.LogInformation($"Received request to replace a submodel element at {idShortPath} dom the submodel with id {decodedSubmodelIdentifier} from the AAS {decodedAasIdentifier}");
-            if (body == null)
-            {
-                return BadRequest($"Could not proceed, as {nameof(body)} is null.");
-            }
+            ProcessBody(body);
 
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
             await _dbRequestHandlerService.ReplaceSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath, body);
@@ -2815,5 +2787,14 @@ namespace IO.Swagger.Controllers
             return NoContent();
         }
 
+        private void ProcessBody(IClass body)
+        {
+            if (body == null)
+            {
+                throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
+            }
+            //Verify the body first
+            _verificationService.VerifyRequestBody(body);
+        }
     }
 }
