@@ -147,10 +147,21 @@ namespace AasxServerDB
                 env.AasEnv.AssetAdministrationShells?.Add(aas);
 
                 // sm
+                /*
                 var smAASDBList = db.SMSets.Where(sm => sm.EnvId == envId && sm.AASId == aasDB.Id).ToList();
                 foreach (var sm in smAASDBList.Select(selector: smDB => GetSubmodel(smDB: smDB)))
                 {
                     aas.Submodels?.Add(sm.GetReference());
+                }
+                */
+                var smAASDBList = db.SMRefSets.Where(sm => sm.AASId == aasDB.Id).ToList();
+                foreach (var smRef in smAASDBList)
+                {
+                    if (smRef.Identifier != null)
+                    {
+                        var sm = GetSubmodel(submodelIdentifier: smRef.Identifier);
+                        aas.Submodels?.Add(sm.GetReference());
+                    }
                 }
             }
 
