@@ -56,6 +56,7 @@ namespace AasxServerDB
         public DbSet<CDSet> CDSets { get; set; }
         public DbSet<AASSet> AASSets { get; set; }
         public DbSet<SMSet> SMSets { get; set; }
+        public DbSet<SMRefSet> SMRefSets { get; set; }
         public DbSet<SMESet> SMESets { get; set; }
         public DbSet<SValueSet> SValueSets { get; set; }
         public DbSet<IValueSet> IValueSets { get; set; }

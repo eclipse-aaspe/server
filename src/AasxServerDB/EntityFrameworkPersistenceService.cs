@@ -691,7 +691,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         {
             throw new NotAllowed($"NOT ALLOWED: AAS with id {aasIdentifier}");
         }
-        bool found = IsSubmodelPresent(securityConditionSM, aasIdentifier, newSubmodel.Id, false, out ISubmodel subdmodel);
+        bool found = IsSubmodelPresent(securityConditionSM, aasIdentifier, newSubmodel.Id, false, out _);
 
         if (found)
         {
@@ -708,7 +708,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         //string securityConditionSM, securityConditionSME;
         //bool isAllowed = InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
 
-        var found = IsAssetAdministrationShellPresent(body.Id, false, out IAssetAdministrationShell output);
+        var found = IsAssetAdministrationShellPresent(body.Id, false, out _);
         if (found)
         {
             using (var scope = _serviceProvider.CreateScope())
@@ -719,7 +719,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             throw new DuplicateException($"AssetAdministrationShell with id {body.Id} already exists.");
         }
 
-        output = Converter.CreateAas(body);
+        var output = Converter.CreateAas(body);
 
         return output;
     }
@@ -766,7 +766,20 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     public IReference CreateSubmodelReferenceInAAS(IReference body, string aasIdentifier)
     {
-        throw new NotImplementedException();
+        using (AasContext db = new AasContext())
+        {
+            var aasDB = db.AASSets
+                .Include(aas => aas.SMRefSets)
+                .FirstOrDefault(aas => aas.Identifier == aasIdentifier);
+            var identifier = body.GetAsIdentifier();
+            if (aasDB != null && identifier != null)
+            {
+                aasDB.SMRefSets.Add(new SMRefSet { Identifier = identifier });
+            }
+        }
+
+        // TODO: read reference from DB
+        return body;
     }
 
     public void DeleteAssetAdministrationShellById(ISecurityConfig securityConfig, string aasIdentifier)
@@ -987,8 +1000,21 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     public void DeleteSubmodelReferenceById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
     {
-        //ToDo: Database currently does not support references
-        throw new NotImplementedException();
+        using (AasContext db = new AasContext())
+        {
+            var aasDB = db.AASSets
+                .Include(aas => aas.SMRefSets)
+                .FirstOrDefault(aas => aas.Identifier == aasIdentifier);
+            if (aasDB != null)
+            {
+                var smRefDB = aasDB.SMRefSets.FirstOrDefault(s => s.Identifier == submodelIdentifier);
+                if (smRefDB != null)
+                {
+                    aasDB.SMRefSets.Remove(smRefDB);
+                    db.SaveChanges();
+                }
+            }
+        }
     }
 
     public void DeleteThumbnail(ISecurityConfig securityConfig, string aasIdentifier)
@@ -1139,46 +1165,26 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         if (found)
         {
-            var cuurentDataTime = DateTime.UtcNow;
             using (var db = new AasContext())
             {
                 var aasDB = db.AASSets
-                .FirstOrDefault(aas => aas.Identifier == aasIdentifier);
+                    .Include(aas => aas.SMRefSets)
+                    .FirstOrDefault(aas => aas.Identifier == aasIdentifier);
 
-                aasDB.IdShort = newAas.IdShort;
-                aasDB.DisplayName = Serializer.SerializeList(newAas.DisplayName);
-                aasDB.Category = newAas.Category;
-                aasDB.Description = Serializer.SerializeList(newAas.Description);
-                aasDB.Extensions = Serializer.SerializeList(newAas.Extensions);
-                aasDB.Identifier = newAas.Id;
-                aasDB.EmbeddedDataSpecifications = Serializer.SerializeList(newAas.EmbeddedDataSpecifications);
-                aasDB.DerivedFrom = Serializer.SerializeElement(newAas.DerivedFrom);
-                aasDB.Version = newAas.Administration?.Version;
-                aasDB.Revision = newAas.Administration?.Revision;
-                aasDB.Creator = Serializer.SerializeElement(newAas.Administration?.Creator);
-                aasDB.TemplateId = newAas.Administration?.TemplateId;
-                aasDB.AEmbeddedDataSpecifications = Serializer.SerializeList(newAas.Administration?.EmbeddedDataSpecifications);
-                aasDB.AssetKind = Serializer.SerializeElement(newAas.AssetInformation?.AssetKind);
-                aasDB.SpecificAssetIds = Serializer.SerializeList(newAas.AssetInformation?.SpecificAssetIds);
-                aasDB.GlobalAssetId = newAas.AssetInformation?.GlobalAssetId;
-                aasDB.AssetType = newAas.AssetInformation?.AssetType;
-                aasDB.DefaultThumbnailPath = newAas.AssetInformation?.DefaultThumbnail?.Path;
-                aasDB.DefaultThumbnailContentType = newAas.AssetInformation?.DefaultThumbnail?.ContentType;
-
-                aasDB.TimeStampCreate = newAas.TimeStampCreate == default ? cuurentDataTime : newAas.TimeStampCreate;
-                aasDB.TimeStamp = newAas.TimeStamp == default ? cuurentDataTime : newAas.TimeStamp;
-                aasDB.TimeStampTree = newAas.TimeStampTree == default ? cuurentDataTime : newAas.TimeStampTree;
-                aasDB.TimeStampDelete = newAas.TimeStampDelete;
-
-                db.SaveChanges();
-
-                using (var scope = _serviceProvider.CreateScope())
+                if (aasDB != null)
                 {
-                    var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
-                    scopedLogger.LogDebug($"AssetInformation from AAS with id {aasIdentifier} updated successfully.");
+                    db.SMRefSets.RemoveRange(aasDB.SMRefSets);
+
+                    Converter.SetAas(aasDB, newAas);
+                    db.SaveChanges();
+
+                    using (var scope = _serviceProvider.CreateScope())
+                    {
+                        var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                        scopedLogger.LogDebug($"AssetInformation from AAS with id {aasIdentifier} updated successfully.");
+                    }
                 }
             }
-
             //    Program.signalNewData(0);
         }
         else
@@ -1515,6 +1521,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             if (!aasIdentifier.IsNullOrEmpty())
             {
                 var aasDB = db.AASSets
+                    .Include(aas => aas.SMRefSets)
                     .FirstOrDefault(aas => aas.Identifier == aasIdentifier);
                 if (aasDB == null)
                 {
@@ -1528,7 +1535,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                         if (output != null)
                         {
-                            var smDBList = db.SMSets.Where(sm => sm.AASId != null && sm.AASId == aasDB.Id).ToList();
+                            var smDBList = aasDB.SMRefSets.ToList();
 
                             foreach (var sm in smDBList)
                             {
