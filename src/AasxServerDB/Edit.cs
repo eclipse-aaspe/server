@@ -65,13 +65,25 @@ namespace AasxServerDB
 
             }
         }
+
         public static void DeleteSubmodel(string submodelIdentifier)
         {
             using (AasContext db = new AasContext())
             {
                 // Deletes automatically from DB
+                //ToDo: Test what about submodel elements
                 db.SMSets.Where(sm => sm.Identifier == submodelIdentifier).ExecuteDelete();
 
+                //ToDo: Delete submodel references (currently not existing in Db)
+            }
+        }
+
+        public static void DeleteSubmodelElement(SMESet sME)
+        {
+            using (AasContext db = new AasContext())
+            {
+                //ToDo: Test what about tree of sME
+                db.SMESets.Where(sme => sme.Id == sME.Id).ExecuteDelete();
             }
         }
     }

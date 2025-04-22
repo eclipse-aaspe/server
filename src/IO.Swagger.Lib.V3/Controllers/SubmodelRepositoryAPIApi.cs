@@ -357,8 +357,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
-
-        await _dbRequestHandlerService.DeleteFileByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
+        var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
+        await _dbRequestHandlerService.DeleteFileByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPathElements);
 
         return NoContent();
     }
@@ -491,24 +491,24 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var extentEnum = _validateModifierService.ValidateExtent(extent);
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
-	    if (decodedSubmodelIdentifier == null)
-	    {
-	        throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
-	    }
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
+        }
 
-	    _logger.LogInformation($"Received a request to get all the submodel elements from submodel with id {decodedSubmodelIdentifier}");
+        _logger.LogInformation($"Received a request to get all the submodel elements from submodel with id {decodedSubmodelIdentifier}");
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-     //   if (!Program.noSecurity)
-	    //{
-	    //    var submodel   = _persistenceService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-	    //    var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-	    //    if (!authResult.Succeeded)
-	    //    {
-	    //        throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
-	    //    }
-	    //}
+        //   if (!Program.noSecurity)
+        //{
+        //    var submodel   = _persistenceService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+        //    var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
+        //    if (!authResult.Succeeded)
+        //    {
+        //        throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
+        //    }
+        //}
 
         var paginationParameters = new PaginationParameters(cursor, limit);
         var submodelElements = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, null, decodedSubmodelIdentifier);
@@ -530,12 +530,14 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
         }
         else
+        {
             filtered = submodelElements;
+        }
 
-	    var smePaginatedList = _paginationService.GetPaginatedResult(filtered, paginationParameters);
-	    var smeLevelList     = _levelExtentModifierService.ApplyLevelExtent(smePaginatedList.result, levelEnum, extentEnum);
-	    var output           = new PagedResult {result = smeLevelList, paging_metadata = smePaginatedList.paging_metadata};
-	    return new ObjectResult(output);
+        var smePaginatedList = _paginationService.GetPaginatedResult(filtered, paginationParameters);
+        var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePaginatedList.result, levelEnum, extentEnum);
+        var output = new PagedResult { result = smeLevelList, paging_metadata = smePaginatedList.paging_metadata };
+        return new ObjectResult(output);
     }
 
     List<ISubmodelElement?> filterSubmodelElements(List<ISubmodelElement?> submodelElements, DateTime diff)
@@ -2035,10 +2037,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual async Task<IActionResult> PatchSubmodelById([FromBody]Submodel? body, [FromRoute][Required] string submodelIdentifier, [FromQuery] string? level)
     {
-        if (body == null)
-        {
-            throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
-        }
+        ProcessBody(body);
 
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -2234,10 +2233,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     public async virtual Task<IActionResult> PatchSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement? body, [FromRoute][Required] string submodelIdentifier,
     [FromRoute][Required] string idShortPath, [FromQuery] string? level)
     {
-        if (body == null)
-        {
-            throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
-        }
+        ProcessBody(body);
 
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
         if (decodedSubmodelIdentifier == null)
@@ -2331,10 +2327,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     // public async virtual Task<IActionResult> PostSubmodel([FromBody]Submodel body, [FromQuery] string aasIdentifier)
     public async virtual Task<IActionResult> PostSubmodel([FromBody] Submodel body)
     {
-        if (body == null)
-        {
-            throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
-        }
+        ProcessBody(body);
 
         _logger.LogInformation($"Received request to create a submodel.");
 
@@ -2345,9 +2338,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             throw new NotAllowed($"Cannot proceed as {nameof(decodedAasIdentifier)} is null");
         }
         */
-
-        //Verify the body first
-        _verificationService.VerifyRequestBody(body);
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
@@ -2363,7 +2353,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     /// <param name="body">Requested submodel element</param>
     /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
     /// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
-	/// <param name="first">Create element as first one in list</param>
+    /// <param name="first">Create element as first one in list</param>
     /// <response code="201">Submodel element created successfully</response>
     /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
     /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
@@ -2386,10 +2376,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public async virtual Task<IActionResult> PostSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement? body, [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath)
     {
-        if (body == null)
-        {
-            throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
-        }
+        ProcessBody(body);
 
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
         if (decodedSubmodelIdentifier == null)
@@ -2458,10 +2445,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                                                                  [FromRoute][Required] string submodelIdentifier,
                                                                  bool first)
     {
-        if (body == null)
-        {
-            throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
-        }
+        ProcessBody(body);
 
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
         _logger.LogInformation($"Received request to create a new submodel element in the submodel with id {decodedSubmodelIdentifier}");
@@ -2484,9 +2468,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
-
-        //Verify the body first
-        _verificationService.VerifyRequestBody(body);
 
 
         var output = await _dbRequestHandlerService.CreateSubmodelElement(securityConfig, null, decodedSubmodelIdentifier, body, null, first);
@@ -2526,10 +2507,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
     public virtual async Task<IActionResult> PutSubmodelById([FromBody] Submodel? body, [FromRoute][Required] string submodelIdentifier)
     {
-        if (body == null)
-        {
-            throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
-        }
+        ProcessBody(body);
 
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -2573,10 +2551,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath,
     [FromQuery] string? level)
     {
-        if (body == null)
-        {
-            throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
-        }
+        ProcessBody(body);
 
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -2651,8 +2626,19 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
-        await _dbRequestHandlerService.ReplaceFileByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath, fileName, contentType, stream);
+        var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
+        await _dbRequestHandlerService.ReplaceFileByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPathElements, fileName, contentType, stream);
 
         return NoContent();
+    }
+
+    private void ProcessBody(IClass body)
+    {
+        if (body == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
+        }
+        //Verify the body first
+        _verificationService.VerifyRequestBody(body);
     }
 }

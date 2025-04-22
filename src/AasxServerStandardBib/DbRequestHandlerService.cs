@@ -628,13 +628,13 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs;
     }
 
-    public async Task<DbRequestResult> ReplaceFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream)
+    public async Task<DbRequestResult> ReplaceFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, List<object> idShortPath, string fileName, string contentType, MemoryStream stream)
     {
         var parameters = new DbRequestParams()
         {
             AssetAdministrationShellIdentifier = aasIdentifier,
             SubmodelIdentifier = submodelIdentifier,
-            IdShort = idShortPath,
+            IdShortElements = idShortPath,
             FileRequest = new DbFileRequestResult()
             {
                 Stream = stream,
@@ -708,13 +708,13 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs;
     }
 
-    public async Task<DbRequestResult> DeleteFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath)
+    public async Task<DbRequestResult> DeleteFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, List<object> idShortPathElements)
     {
         var parameters = new DbRequestParams()
         {
             AssetAdministrationShellIdentifier = aasIdentifier,
             SubmodelIdentifier = submodelIdentifier,
-            IdShort = idShortPath
+            IdShortElements = idShortPathElements
         };
 
         var dbRequestContext = new DbRequestContext()

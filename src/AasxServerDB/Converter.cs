@@ -278,8 +278,9 @@ namespace AasxServerDB
             }
         }
 
-        public static ISubmodelElement? GetSubmodelElementByPath(string securityConditionSM, string securityConditionSME, string aasIdentifier, string submodelIdentifier, List<object> idShortPathElements)
+        public static ISubmodelElement? GetSubmodelElementByPath(string securityConditionSM, string securityConditionSME, string aasIdentifier, string submodelIdentifier, List<object> idShortPathElements, out SMESet smeEntity)
         {
+            smeEntity = null;
             bool result = false;
 
             using (var db = new AasContext())
@@ -338,6 +339,8 @@ namespace AasxServerDB
 
                 var smeFoundTree = Converter.GetTree(db, smDB[0], smeFound);
                 var smeFoundMerged = Converter.GetSmeMerged(db, smeFoundTree);
+
+                smeEntity = smeFound[0];
 
                 var sme = Converter.GetSubmodelElement(smeFound[0], smeFoundMerged);
 
