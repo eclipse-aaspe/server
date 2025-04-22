@@ -2,8 +2,8 @@
 @page "/db-chunked/env";
 @page "/db-chunked/cd";
 @page "/db-chunked/aas";
+@page "/db-chunked/smref";
 @page "/db-chunked/sm";
-@page "/db-chunked/smjson";
 @page "/db-chunked/sme";
 @page "/db-chunked/svalue";
 @page "/db-chunked/ivalue";
@@ -177,7 +177,7 @@
 
             using (AasContext db = new AasContext())
             {
-                if (!(url.EndsWith("/env") || url.EndsWith("/cd") || url.EndsWith("/aas") || url.EndsWith("/sm") || url.EndsWith("/smjson")
+                if (!(url.EndsWith("/env") || url.EndsWith("/cd") || url.EndsWith("/aas") || url.EndsWith("/sm") || url.EndsWith("/smref")
                     || url.EndsWith("/sme") || url.EndsWith("/svalue") || url.EndsWith("/ivalue") || url.EndsWith("/dvalue") || url.EndsWith("/ovalue")))
                 {
                     if (AasContext.IsPostgres)
@@ -232,6 +232,17 @@
                                 </td>
                                 <td>
                                     <a href="@($"{url}/aas")" target="_blank">aas</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span>SMREF#:</span>
+                                </td>
+                                <td>
+                                    <span>@db.SMRefSets.Select(x => x.Id).Count()</span>
+                                </td>
+                                <td>
+                                    <a href="@($"{url}/smref")" target="_blank">smref</a>
                                 </td>
                             </tr>
                             <tr>
@@ -550,6 +561,7 @@
                                         </td>
                                         <td style="word-break:keep-all;border-color:blue;">
                                             <a href="@($"{shorturl}/env?envid={AASSet?.EnvId}")" target="_blank">env </a>
+                                            <a href="@($"{shorturl}/smref?aasid={AASSet?.Id}")" target="_blank">smref</a>
                                             <a href="@($"{shorturl}/sm?aasid={AASSet?.Id}")" target="_blank">sm</a>
                                             <a href="@($"{Program.externalBlazor}?aas={AASSet?.Identifier}")" target="_blank">tree </a>
                                         </td>
@@ -558,6 +570,76 @@
                                             {
                                                 <a href="@link" target="_blank">api</a>
                                             }
+                                        </td>
+                                    </tr>
+                                </Virtualize>
+                            </tbody>
+                        </table>
+                    </div>
+                }
+
+                if (url.EndsWith("/smref"))
+                {
+                    if (totalCount == 0)
+                    {
+                        totalCount = db.SMRefSets.Select(x => x.Id).Count();
+                    }
+                    CheckTotalCountAndUpdate();
+                    if (update)
+                    {
+                        update = false;
+                        loadedItems = null;
+                        if (SMRefSetContainer != null)
+                        {
+                            SMRefSetContainer.RefreshDataAsync();
+                            this.StateHasChanged();
+                        }
+                    }
+
+                    <span>
+                        &nbsp&nbsp@($"SMREF#: {totalCount} size={size} offset={offset} search={search} details={details}")
+                    </span>
+                    <br />
+
+                    <div style="width: 100%; height: 80vh; overflow-x: hidden; padding: 10px;">
+                        <table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;border-color:blue;">
+                            <thead>
+                                <tr style="border-color:blue;">
+                                    <th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">AAS#</th>
+                                    <th style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">SMREF#</th>
+                                    <th style="width:10%;word-break:break-all;font-size:x-small;border-color:blue;">Identifier</th>
+                                    <th style="width:4%;word-break:break-all;font-size:x-small;border-color:blue;">Links</th>
+                                    <th style="width:4%;word-break:break-all;font-size:x-small;border-color:blue;">API</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    var cell = "cell-content";
+                                    var withDetails = details == "true";
+                                    if (withDetails)
+                                    {
+                                        cell = "cell-details";
+                                    }
+                                }
+                                <Virtualize Context="SMRefSetVirtualize" @ref="SMRefSetContainer" ItemsProvider="LoadSMRefSetItems">
+                                    @{
+                                        var aasDBID = SMRefSetVirtualize.smRefSet.AASId;
+                                        var smDBID = SMRefSetVirtualize.smDBId;
+                                        var submodel64 = Base64UrlEncoder.Encode(SMRefSetVirtualize.smRefSet.Identifier);
+                                        var link = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}";
+                                    }
+                                    <tr style="height:auto;border-color:blue;">
+                                        <td style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">@SMRefSetVirtualize.smRefSet?.AASId</td>
+                                        <td style="width:3%;font-size:x-small;word-break: break-all;border-color:blue;">
+                                            <b>@SMRefSetVirtualize.smRefSet?.Id</b>
+                                        </td>
+                                        <td style="width:10%;border-color:blue;">@SMRefSetVirtualize.smRefSet?.Identifier</td>
+                                        <td style="width:4%;font-size:small;word-break:keep-all;border-color:blue;">
+                                            <a href="@($"{shorturl}/aas?aasid={aasDBID}")" target="_blank;border-color:blue;">aas </a>
+                                            <a href="@($"{shorturl}/sm?smid={smDBID}")" target="_blank;border-color:blue;">sm </a>
+                                        </td>
+                                        <td style="width:4%;font-size:small;word-break:keep-all;border-color:blue;">
+                                            <a href="@link" target="_blank">api</a>
                                         </td>
                                     </tr>
                                 </Virtualize>
@@ -1341,6 +1423,52 @@
     }
 
     private Virtualize<SMVirtualize> SMSetContainer { get; set; }
+
+    private class SMRefSetVirtualize
+    {
+        public int smDBId;
+        public SMRefSet smRefSet;
+    }
+
+    private async ValueTask<ItemsProviderResult<SMRefSetVirtualize>> LoadSMRefSetItems(ItemsProviderRequest request)
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        watch.Start();
+
+        List<SMRefSetVirtualize> result = [];
+
+        using (AasContext db = new AasContext())
+        {
+            IQueryable<SMRefSet> qSMRef = db.SMRefSets;
+            if (aasid != 0)
+            {
+                qSMRef = qSMRef.Where(sm => sm.AASId == aasid);
+            }
+            totalCount = qSMRef.Count();
+            CheckTotalCountAndUpdate();
+
+            var result1 = qSMRef
+                .OrderBy(sm => sm.Id)
+                .Skip(offset + request.StartIndex)
+                .Take(request.Count)
+                .ToList();
+
+            foreach (var r in result1)
+            {
+                var smDBId = db.SMSets.FirstOrDefault(sm => sm.Identifier == r.Identifier);
+                result.Add(new SMRefSetVirtualize { smDBId = smDBId.Id, smRefSet = r });
+            }
+        }
+
+        watch.Stop();
+        elapsedTime = watch.ElapsedMilliseconds;
+
+        Console.WriteLine($"LoadItems SM: StartIndex {request.StartIndex}, Count {request.Count}, offset {offset} size {size} totalCount {totalCount}");
+
+        return new ItemsProviderResult<SMRefSetVirtualize>(result, size);
+    }
+
+    private Virtualize<SMRefSetVirtualize> SMRefSetContainer { get; set; }
 
     private async ValueTask<ItemsProviderResult<SValueSet>> LoadSValueSetItems(ItemsProviderRequest request)
     {

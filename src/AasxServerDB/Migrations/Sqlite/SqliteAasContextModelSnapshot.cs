@@ -379,6 +379,30 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.ToTable("SMESets");
                 });
 
+            modelBuilder.Entity("AasxServerDB.Entities.SMRefSet", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("AASId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Identifier")
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AASId");
+
+                    b.HasIndex("Id");
+
+                    b.HasIndex("Identifier");
+
+                    b.ToTable("SMRefSets");
+                });
+
             modelBuilder.Entity("AasxServerDB.Entities.SMSet", b =>
                 {
                     b.Property<int>("Id")
@@ -580,6 +604,15 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Navigation("SMSet");
                 });
 
+            modelBuilder.Entity("AasxServerDB.Entities.SMRefSet", b =>
+                {
+                    b.HasOne("AasxServerDB.Entities.AASSet", "AASSet")
+                        .WithMany("SMRefSets")
+                        .HasForeignKey("AASId");
+
+                    b.Navigation("AASSet");
+                });
+
             modelBuilder.Entity("AasxServerDB.Entities.SMSet", b =>
                 {
                     b.HasOne("AasxServerDB.Entities.AASSet", "AASSet")
@@ -608,6 +641,8 @@ namespace AasxServerDB.Migrations.Sqlite
 
             modelBuilder.Entity("AasxServerDB.Entities.AASSet", b =>
                 {
+                    b.Navigation("SMRefSets");
+
                     b.Navigation("SMSets");
                 });
 

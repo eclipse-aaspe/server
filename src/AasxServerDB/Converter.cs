@@ -147,10 +147,21 @@ namespace AasxServerDB
                 env.AasEnv.AssetAdministrationShells?.Add(aas);
 
                 // sm
+                /*
                 var smAASDBList = db.SMSets.Where(sm => sm.EnvId == envId && sm.AASId == aasDB.Id).ToList();
                 foreach (var sm in smAASDBList.Select(selector: smDB => GetSubmodel(smDB: smDB)))
                 {
                     aas.Submodels?.Add(sm.GetReference());
+                }
+                */
+                var smAASDBList = db.SMRefSets.Where(sm => sm.AASId == aasDB.Id).ToList();
+                foreach (var smRef in smAASDBList)
+                {
+                    if (smRef.Identifier != null)
+                    {
+                        var sm = GetSubmodel(submodelIdentifier: smRef.Identifier);
+                        aas.Submodels?.Add(sm.GetReference());
+                    }
                 }
             }
 
@@ -198,7 +209,7 @@ namespace AasxServerDB
                     .ToList();
 
                 var aasIDs = aasDBList.Select(aas => aas.Id).ToList();
-                var smDBList = db.SMSets.Where(sm => sm.AASId != null && aasIDs.Contains((int)sm.AASId)).ToList();
+                var smDBList = db.SMRefSets.Where(sm => sm.AASId != null && aasIDs.Contains((int)sm.AASId)).ToList();
 
                 foreach (var aasDB in aasDBList)
                 {
@@ -477,10 +488,11 @@ namespace AasxServerDB
                         specificAssetIds: Serializer.DeserializeList<ISpecificAssetId>(aasDB.SpecificAssetIds),
                         globalAssetId: aasDB.GlobalAssetId,
                         assetType: aasDB.AssetType,
-                        defaultThumbnail: new Resource(
+                        defaultThumbnail: aasDB.DefaultThumbnailPath != null ?
+                            new Resource(
                             path: aasDB.DefaultThumbnailPath,
                             contentType: aasDB.DefaultThumbnailContentType
-                        )
+                            ) : null
                     )
                 )
                 {
@@ -608,46 +620,9 @@ namespace AasxServerDB
 
             using (var db = new AasContext())
             {
-                //var visitor = new VisitorAASX();
-                var currentDataTime = DateTime.UtcNow;
+                var aasDB = new AASSet();
+                SetAas(aasDB, newAas);
 
-                /*
-                var smDB = new SMSet();
-                smDB.Identifier =  "1";
-                Converter.setTimeStamp(smDB, currentDataTime);
-                db.Add(smDB);
-                db.SaveChanges();
-                */
-
-                var aasDB = new AASSet()
-                {
-                    IdShort = newAas.IdShort,
-                    DisplayName = Serializer.SerializeList(newAas.DisplayName),
-                    Category = newAas.Category,
-                    Description = Serializer.SerializeList(newAas.Description),
-                    Extensions = Serializer.SerializeList(newAas.Extensions),
-                    Identifier = newAas.Id,
-                    EmbeddedDataSpecifications = Serializer.SerializeList(newAas.EmbeddedDataSpecifications),
-                    DerivedFrom = Serializer.SerializeElement(newAas.DerivedFrom),
-                    Version = newAas.Administration?.Version,
-                    Revision = newAas.Administration?.Revision,
-                    Creator = Serializer.SerializeElement(newAas.Administration?.Creator),
-                    TemplateId = newAas.Administration?.TemplateId,
-                    AEmbeddedDataSpecifications = Serializer.SerializeList(newAas.Administration?.EmbeddedDataSpecifications),
-                    AssetKind = Serializer.SerializeElement(newAas.AssetInformation?.AssetKind),
-                    SpecificAssetIds = Serializer.SerializeList(newAas.AssetInformation?.SpecificAssetIds),
-                    GlobalAssetId = newAas.AssetInformation?.GlobalAssetId,
-                    AssetType = newAas.AssetInformation?.AssetType,
-                    DefaultThumbnailPath = newAas.AssetInformation?.DefaultThumbnail?.Path,
-                    DefaultThumbnailContentType = newAas.AssetInformation?.DefaultThumbnail?.ContentType,
-
-                    TimeStampCreate = newAas.TimeStampCreate == default ? currentDataTime : newAas.TimeStampCreate,
-                    TimeStamp = newAas.TimeStamp == default ? currentDataTime : newAas.TimeStamp,
-                    TimeStampTree = newAas.TimeStampTree == default ? currentDataTime : newAas.TimeStampTree,
-                    TimeStampDelete = newAas.TimeStampDelete
-                };
-                //ToDo: For EventService
-                //visitor.currentDataTime = dt;
                 var aasDBQuery = db.Add(aasDB);
                 db.SaveChanges();
 
@@ -657,6 +632,47 @@ namespace AasxServerDB
             return aas;
         }
 
+        public static void SetAas(AASSet aasDB, IAssetAdministrationShell newAas)
+        {
+            var currentDataTime = DateTime.UtcNow;
+
+            aasDB.IdShort = newAas.IdShort;
+            aasDB.DisplayName = Serializer.SerializeList(newAas.DisplayName);
+            aasDB.Category = newAas.Category;
+            aasDB.Description = Serializer.SerializeList(newAas.Description);
+            aasDB.Extensions = Serializer.SerializeList(newAas.Extensions);
+            aasDB.Identifier = newAas.Id;
+            aasDB.EmbeddedDataSpecifications = Serializer.SerializeList(newAas.EmbeddedDataSpecifications);
+            aasDB.DerivedFrom = Serializer.SerializeElement(newAas.DerivedFrom);
+            aasDB.Version = newAas.Administration?.Version;
+            aasDB.Revision = newAas.Administration?.Revision;
+            aasDB.Creator = Serializer.SerializeElement(newAas.Administration?.Creator);
+            aasDB.TemplateId = newAas.Administration?.TemplateId;
+            aasDB.AEmbeddedDataSpecifications = Serializer.SerializeList(newAas.Administration?.EmbeddedDataSpecifications);
+            aasDB.AssetKind = Serializer.SerializeElement(newAas.AssetInformation?.AssetKind);
+            aasDB.SpecificAssetIds = Serializer.SerializeList(newAas.AssetInformation?.SpecificAssetIds);
+            aasDB.GlobalAssetId = newAas.AssetInformation?.GlobalAssetId;
+            aasDB.AssetType = newAas.AssetInformation?.AssetType;
+            aasDB.DefaultThumbnailPath = newAas.AssetInformation?.DefaultThumbnail?.Path;
+            aasDB.DefaultThumbnailContentType = newAas.AssetInformation?.DefaultThumbnail?.ContentType;
+
+            aasDB.TimeStampCreate = newAas.TimeStampCreate == default ? currentDataTime : newAas.TimeStampCreate;
+            aasDB.TimeStamp = newAas.TimeStamp == default ? currentDataTime : newAas.TimeStamp;
+            aasDB.TimeStampTree = newAas.TimeStampTree == default ? currentDataTime : newAas.TimeStampTree;
+            aasDB.TimeStampDelete = newAas.TimeStampDelete;
+
+            if (newAas.Submodels != null)
+            {
+                foreach (var sm in newAas.Submodels)
+                {
+                    var identifier = sm.GetAsIdentifier();
+                    if (identifier != null)
+                    {
+                        aasDB.SMRefSets.Add(new SMRefSet { Identifier = identifier });
+                    }
+                }
+            }
+        }
 
         public static ISubmodelElement? CreateSubmodelElement(string aasIdentifier, string submodelIdentifier, ISubmodelElement newSubmodelElement, string idShortPath, bool first)
         {

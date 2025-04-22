@@ -71,5 +71,6 @@ namespace AasxServerDB.Entities
 
         // sm
         public virtual ICollection<SMSet> SMSets { get; } = new List<SMSet>();
+        public virtual ICollection<SMRefSet> SMRefSets { get; } = new List<SMRefSet>();
     }
 }

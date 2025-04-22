@@ -17,6 +17,7 @@ namespace AasxServerDB
     using AdminShellNS;
     using Microsoft.EntityFrameworkCore;
     using AasxServerDB.Entities;
+    using System.Runtime.Intrinsics.X86;
 
     public class Edit
     {
@@ -61,8 +62,11 @@ namespace AasxServerDB
             using (AasContext db = new AasContext())
             {
                 // Deletes automatically from DB
-                db.AASSets.Where(aas => aas.Identifier == aasIdentifier).ExecuteDelete();
+                db.AASSets
+                    .Include(aas => aas.SMRefSets)
+                    .Where(aas => aas.Identifier == aasIdentifier).ExecuteDelete();
 
+                db.SaveChanges();
             }
         }
 
@@ -70,11 +74,30 @@ namespace AasxServerDB
         {
             using (AasContext db = new AasContext())
             {
-                // Deletes automatically from DB
-                //ToDo: Test what about submodel elements
-                db.SMSets.Where(sm => sm.Identifier == submodelIdentifier).ExecuteDelete();
+                using (var transaction = db.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        var smDB = db.SMSets.Where(sm => sm.Identifier == submodelIdentifier);
+                        var smDBID = smDB.FirstOrDefault().Id;
+                        var smeDB = db.SMESets.Where(sme => sme.SMId == smDBID);
+                        var smeDBIDList = smeDB.Select(sme => sme.Id).ToList();
 
-                //ToDo: Delete submodel references (currently not existing in Db)
+                        db.SValueSets.Where(s => smeDBIDList.Contains(s.SMEId)).ExecuteDelete();
+                        db.IValueSets.Where(i => smeDBIDList.Contains(i.SMEId)).ExecuteDelete();
+                        db.DValueSets.Where(d => smeDBIDList.Contains(d.SMEId)).ExecuteDelete();
+                        db.OValueSets.Where(o => smeDBIDList.Contains(o.SMEId)).ExecuteDelete();
+                        smeDB.ExecuteDelete();
+                        smDB.ExecuteDelete();
+
+                        db.SaveChanges();
+                        transaction.Commit();
+                    }
+                    catch (Exception)
+                    {
+                        transaction.Rollback();
+                    }
+                }
             }
         }
 
@@ -82,8 +105,24 @@ namespace AasxServerDB
         {
             using (AasContext db = new AasContext())
             {
-                //ToDo: Test what about tree of sME
-                db.SMESets.Where(sme => sme.Id == sME.Id).ExecuteDelete();
+                using (var transaction = db.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        db.SValueSets.Where(s => s.SMEId == sME.Id).ExecuteDelete();
+                        db.IValueSets.Where(i => i.SMEId == sME.Id).ExecuteDelete();
+                        db.DValueSets.Where(d => d.SMEId == sME.Id).ExecuteDelete();
+                        db.OValueSets.Where(o => o.SMEId == sME.Id).ExecuteDelete();
+                        db.SMESets.Where(sme => sme.Id == sME.Id).ExecuteDelete();
+
+                        db.SaveChanges();
+                        transaction.Commit();
+                    }
+                    catch (Exception)
+                    {
+                        transaction.Rollback();
+                    }
+                }
             }
         }
     }

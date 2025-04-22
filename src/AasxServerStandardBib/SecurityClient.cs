@@ -3061,6 +3061,12 @@ namespace AasxServer
             int envi = 0;
             while (envi < env.Length)
             {
+                if (env[envi] == null)
+                {
+                    envi++;
+                    continue;
+                }
+
                 if (!Program.withDb)
                 {
                     string fn = env[envi].Filename;
