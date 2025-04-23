@@ -18,6 +18,6 @@ namespace Contracts
                       IClass? aasResource = null, string? policy = null);
 
         public void ClearSecurityRules();
-        public void AddSecurityRule(string name, string acccess, string right, string objectType, string semanticId);
+        public void AddSecurityRule(string name, string acccess, string right, string objectType, string semanticId, string route);
     }
 }

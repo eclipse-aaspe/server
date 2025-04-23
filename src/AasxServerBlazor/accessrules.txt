@@ -1,0 +1,51 @@
+	{
+	  "AllAccessPermissionRules": {
+	    "rules": [
+	      {
+	        "ACL": {
+	          "ATTRIBUTES": [
+	            {
+	              "GLOBAL": "ANONYMOUS"
+	            }
+	          ],
+	          "RIGHTS": [
+	            "READ"
+	          ],
+	          "ACCESS": "ALLOW"
+	        },
+	        "OBJECTS": [
+	          {
+	            "ROUTE": "/submodels/*"
+	          },
+	          {
+	            "ROUTE": "/shells/aHR0cHM6Ly96dmVpLm9yZy9kZW1vL2Fhcy9Db250cm9sQ2FiaW5ldA"
+	          }
+	        ],
+	        "FORMULA": {
+	          "$or": [
+	            {
+	              "$eq": [
+	                {
+	                  "$field": "$sm#idShort"
+	                },
+	                {
+	                  "$strVal": "Nameplate"
+	                }
+	              ]
+	            },
+	            {
+	              "$eq": [
+	                {
+	                  "$field": "$sm#idShort"
+	                },
+	                {
+	                  "$strVal": "TechnicalData"
+	                }
+	              ]
+	            }
+	          ]
+	        }
+	      }
+	    ]
+	  }
+}

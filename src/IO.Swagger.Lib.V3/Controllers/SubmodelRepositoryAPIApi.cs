@@ -1372,6 +1372,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
 
+        /*
         var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
         if (!authResult.Succeeded)
         {
@@ -1383,6 +1384,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
             throw new NotAllowed("Policy incorrect!");
         }
+        */
 
         var output = _levelExtentModifierService.ApplyLevelExtent(submodel, levelEnum, extentEnum);
 

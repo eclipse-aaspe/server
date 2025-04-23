@@ -31,15 +31,65 @@ using System.Text;
 using System.Web;
 using File = AasCore.Aas3_0.File;
 using Contracts;
+using System.Linq.Expressions;
+using Irony.Parsing;
 
 namespace AasSecurity
 {
     public class SecurityService : ISecurityService, IContractSecurityRules
     {
+        string expression = "";
+        string conditionSM = "";
+        string conditionSME = "";
+        public void parseAccessRuleFile()
+        {
+            var grammar = new QueryGrammarJSON(this);
+            var parser = new Parser(grammar);
+            parser.Context.TracingEnabled = true;
+            var filePath = "accessrules.txt";
+            if (System.IO.File.Exists(filePath))
+            {
+                // if (expression == "")
+                if (true)
+                {
+                    expression = System.IO.File.ReadAllText(filePath);
+                    var parseTree = parser.Parse(expression);
+
+                    if (parseTree.HasErrors())
+                    {
+                        var pos = parser.Context.CurrentToken.Location.Position;
+                        var text2 = expression.Substring(0, pos) + "$$$" + expression.Substring(pos);
+                        text2 = string.Join("\n", parseTree.ParserMessages) + "\nSee $$$: " + text2;
+                        Console.WriteLine(text2);
+                        expression = "";
+                    }
+                    else
+                    {
+                        if (parseTree.Root.ChildNodes[0].Term.Name == "all_access_permission_rules")
+                        {
+                            ClearSecurityRules();
+                            grammar.ParseAccessRules(parseTree.Root);
+                            Console.WriteLine("Access Rules parsed: " + QueryGrammarJSON.accessRuleExpression);
+                            conditionSM = QueryGrammarJSON.accessRuleExpression.Replace("sm.", "");
+                            if (GlobalSecurityVariables.ConditionSM != null)
+                            {
+                                GlobalSecurityVariables.ConditionSM.Value = conditionSM;
+                            }
+                        }
+                    }
+                }
+            }
+        }
         public string GetConditionSM()
         {
+            parseAccessRuleFile();
+            return conditionSM;
             if (GlobalSecurityVariables.ConditionSM != null)
             {
+                if (GlobalSecurityVariables.ConditionSM.Value != "")
+                {
+                    Console.WriteLine("ConditionSM: " + GlobalSecurityVariables.ConditionSM.Value);
+                }
                 return GlobalSecurityVariables.ConditionSM.Value;
             }
             return "";
@@ -48,6 +98,10 @@ namespace AasSecurity
         {
             if (GlobalSecurityVariables.ConditionSME != null)
             {
+                if (GlobalSecurityVariables.ConditionSME.Value != "")
+                {
+                    Console.WriteLine("ConditionSME: " + GlobalSecurityVariables.ConditionSME.Value);
+                }
                 return GlobalSecurityVariables.ConditionSME.Value;
             }
             return "";
@@ -57,7 +111,7 @@ namespace AasSecurity
             GlobalSecurityVariables.SecurityRoles.Clear();
         }
 
-        public void AddSecurityRule(string name, string access, string right, string objectType, string semanticId)
+        public void AddSecurityRule(string name, string access, string right, string objectType, string semanticId, string route)
         {
             SecurityRole role = new SecurityRole();
 
@@ -72,8 +126,8 @@ namespace AasSecurity
                 return;
             }
             role.Permission = AccessRights.READ;
-            role.ObjectType = "semanticid";
-            role.ApiOperation = "";
+            role.ObjectType = objectType;
+            role.ApiOperation = route;
             role.SemanticId = semanticId;
             role.RulePath = "";
 

@@ -1082,6 +1082,7 @@ public class QueryGrammarJSON : Grammar
     static List<string> Names = new List<string>();
     static string access = "";
     static string right = "";
+    static bool route = false;
     void ParseAccessRule(ParseTreeNode node)
     {
         switch (node.Term.Name)
@@ -1091,6 +1092,13 @@ public class QueryGrammarJSON : Grammar
                 accessRuleNode = tn;
                 int count = 0;
                 accessRuleExpression = ParseTreeToExpression(tn, "", ref count);
+                break;
+            case "\"ROUTE\":":
+                route = true;
+                break;
+            case "StringLiteral":
+                route = false;
+                mySecurityRules.AddSecurityRule("isNotAuthenticated", "ALLOW", "READ", "api", "", (string)node.Token.Value);
                 break;
             default:
                 foreach (var c in node.ChildNodes)
@@ -1157,7 +1165,7 @@ public class QueryGrammarJSON : Grammar
                             role.SemanticId = semanticId;
                             role.RulePath = "";
 
-                            mySecurityRules.AddSecurityRule(n, access, right, "semanticid", semanticId);
+                            mySecurityRules.AddSecurityRule(n, access, right, "semanticid", semanticId, "");
                         }
                     }
                 }
