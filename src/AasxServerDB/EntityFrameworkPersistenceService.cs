@@ -1571,6 +1571,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 smDBQuery = smDBQuery.Where(sm => sm.Identifier == submodelIdentifier);
             }
 
+            /*
             if (!string.IsNullOrEmpty(aasIdentifier))
             {
                 var aasDB = db.AASSets.FirstOrDefault(aas => aas.Identifier == aasIdentifier);
@@ -1580,6 +1581,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 }
                 smDBQuery = smDBQuery.Where(sm => sm.AASId == aasDB.Id);
             }
+            */
 
             if (!string.IsNullOrEmpty(securityConditionSM))
             {
