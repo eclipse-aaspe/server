@@ -33,14 +33,18 @@ using File = AasCore.Aas3_0.File;
 using Contracts;
 using System.Linq.Expressions;
 using Irony.Parsing;
+using System.Linq.Dynamic.Core;
 
 namespace AasSecurity
 {
     public class SecurityService : ISecurityService, IContractSecurityRules
     {
-        string expression = "";
-        string conditionSM = "";
-        string conditionSME = "";
+        static string conditionSM = "";
+        static string conditionSME = "";
+        public SecurityService()
+        {
+            parseAccessRuleFile();
+        }
         public void parseAccessRuleFile()
         {
             var grammar = new QueryGrammarJSON(this);
@@ -52,7 +56,7 @@ namespace AasSecurity
                 // if (expression == "")
                 if (true)
                 {
-                    expression = System.IO.File.ReadAllText(filePath);
+                    var expression = System.IO.File.ReadAllText(filePath);
                     var parseTree = parser.Parse(expression);
 
                     if (parseTree.HasErrors())
@@ -82,7 +86,10 @@ namespace AasSecurity
         }
         public string GetConditionSM()
         {
-            parseAccessRuleFile();
+            if (conditionSM == "")
+            {
+                parseAccessRuleFile();
+            }
             return conditionSM;
             if (GlobalSecurityVariables.ConditionSM != null)
             {
@@ -761,6 +768,19 @@ namespace AasSecurity
             var          deepestAllow     = "";
             SecurityRole deepestAllowRole = null;
             getPolicy = "";
+
+            if (conditionSM != "" && aasResource is Submodel s)
+            {
+                List<Submodel> submodels = new List<Submodel>();
+                submodels.Add(s);
+                var c = conditionSM;
+                var x = submodels.AsQueryable().Where(c);
+                if (x.Any())
+                {
+                    return true;
+                }
+            }
+
             foreach (var securityRole in GlobalSecurityVariables.SecurityRoles.Where(securityRole => securityRole.Name.Equals(currentRole)))
             {
                 if (securityRole.ObjectType.Equals("semanticid", StringComparison.OrdinalIgnoreCase))
