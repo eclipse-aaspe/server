@@ -1718,7 +1718,7 @@ namespace AasxServerDB
                         condition["AccessRules"] = "Access Rules parsed!";
                         return condition;
                     }
-                    if (QueryGrammarJSON.accessRuleExpression != "")
+                    if (QueryGrammarJSON.accessRuleExpression["all"] != "")
                     {
                         messages.Add("Access Rules: " + QueryGrammarJSON.accessRuleExpression);
                     }

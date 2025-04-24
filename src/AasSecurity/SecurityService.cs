@@ -73,8 +73,9 @@ namespace AasSecurity
                         {
                             ClearSecurityRules();
                             grammar.ParseAccessRules(parseTree.Root);
-                            Console.WriteLine("Access Rules parsed: " + QueryGrammarJSON.accessRuleExpression);
-                            conditionSM = QueryGrammarJSON.accessRuleExpression.Replace("sm.", "");
+                            Console.WriteLine("Access Rules parsed: " + QueryGrammarJSON.accessRuleExpression["all"]);
+                            conditionSM = QueryGrammarJSON.accessRuleExpression["sm."].Replace("sm.", "");
+                            conditionSME = QueryGrammarJSON.accessRuleExpression["sme."].Replace("sme.", "");
                             if (GlobalSecurityVariables.ConditionSM != null)
                             {
                                 GlobalSecurityVariables.ConditionSM.Value = conditionSM;
@@ -103,6 +104,7 @@ namespace AasSecurity
         }
         public string GetConditionSME()
         {
+            return conditionSME;
             if (GlobalSecurityVariables.ConditionSME != null)
             {
                 if (GlobalSecurityVariables.ConditionSME.Value != "")
@@ -769,7 +771,7 @@ namespace AasSecurity
             SecurityRole deepestAllowRole = null;
             getPolicy = "";
 
-            if (conditionSM != "" && aasResource is Submodel s)
+            if (conditionSM != "" && !objPath.Contains('.') && aasResource is Submodel s)
             {
                 List<Submodel> submodels = new List<Submodel>();
                 submodels.Add(s);
@@ -778,6 +780,42 @@ namespace AasSecurity
                 if (x.Any())
                 {
                     return true;
+                }
+            }
+            if (conditionSME != "" && objPath.Contains('.') && aasResource is Submodel s2 && s2.SubmodelElements != null)
+            {
+                var submodelElements = s2.SubmodelElements;
+                var path = objPath.Split('.');
+                int i = 1;
+                while (i < path.Length)
+                {
+                    var idShort = path[i];
+                    var found = submodelElements.FindIndex(x => x.IdShort == idShort);
+                    if (found == -1)
+                    {
+                        break;
+                    }
+                    if (i == path.Length - 1)
+                    {
+                        List<ISubmodelElement> list = new List<ISubmodelElement>();
+                        list.Add(submodelElements[found]);
+                        var c = conditionSME;
+                        var x = list.AsQueryable().Where(c);
+                        if (x.Any())
+                        {
+                            return true;
+                        }
+                    }
+                    switch (submodelElements[found])
+                    {
+                        case SubmodelElementCollection smc:
+                            submodelElements = smc.Value;
+                            break;
+                        case SubmodelElementList sml:
+                            submodelElements = sml.Value;
+                            break;
+                    }
+                    i++;
                 }
             }
 

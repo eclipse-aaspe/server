@@ -66,6 +66,9 @@ namespace AasxServer
 
     public static class Program
     {
+        public static string conditionSM = "";
+        public static string conditionSME = "";
+
         public static IConfiguration con { get; set; }
 
         /*

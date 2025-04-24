@@ -491,7 +491,7 @@ public class QueryGrammarJSON : Grammar
     {
         var result = ParseTreeToExpression(node, typePrefix, ref upperCountTypePrefix, parentType);
 
-        if (accessRuleNode == null && accessRuleExpression != "")
+        if (accessRuleNode == null && accessRuleExpression["all"] != "")
         {
             switch (typePrefix)
             {
@@ -500,7 +500,7 @@ public class QueryGrammarJSON : Grammar
                     break;
                 case "sm.":
                     result = result.Replace("$SKIP", "true");
-                    var accessSubmodel = accessRuleExpression.Replace("sm.", "");
+                    var accessSubmodel = accessRuleExpression["all"].Replace("sm.", "");
                     result = $"({accessSubmodel})&&({result})";
                     break;
             }
@@ -1068,7 +1068,7 @@ public class QueryGrammarJSON : Grammar
         return " $NOT_IMPLEMENTED ";
     }
 
-    public static string accessRuleExpression = "";
+    public static new Dictionary<string, string> accessRuleExpression = [];
     // public static string accessRuleExpression = "((sm.idShort==\"Nameplate\")||(sm.idShort==\"TechnicalData\"))";
     // public static string accessRuleExpression = "(sm.idShort==\"Nameplate\")";
     public static treeNode accessRuleNode = null;
@@ -1091,7 +1091,9 @@ public class QueryGrammarJSON : Grammar
                 var tn = simplifyTree(node);
                 accessRuleNode = tn;
                 int count = 0;
-                accessRuleExpression = ParseTreeToExpression(tn, "", ref count);
+                accessRuleExpression["all"] = ParseTreeToExpression(tn, "", ref count);
+                accessRuleExpression["sm."] = ParseTreeToExpression(tn, "sm.", ref count);
+                accessRuleExpression["sme."] = ParseTreeToExpression(tn, "sme.", ref count);
                 break;
             case "\"ROUTE\":":
                 route = true;
