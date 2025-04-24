@@ -11,7 +11,7 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-namespace AasxServerDB.Result
+namespace Contracts.QueryResult
 {
     public class SMEResult
     {

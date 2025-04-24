@@ -31,23 +31,98 @@ using System.Text;
 using System.Web;
 using File = AasCore.Aas3_0.File;
 using Contracts;
+using System.Linq.Expressions;
+using Irony.Parsing;
+using System.Linq.Dynamic.Core;
 
 namespace AasSecurity
 {
     public class SecurityService : ISecurityService, IContractSecurityRules
     {
+        static string conditionSM = "";
+        static string conditionSME = "";
+        private QueryGrammarJSON _queryGrammarJSON;
+
+        public SecurityService()
+        {
+            parseAccessRuleFile();
+        }
+        public void parseAccessRuleFile()
+        {
+            var grammar = new QueryGrammarJSON(this);
+            var parser = new Parser(grammar);
+            parser.Context.TracingEnabled = true;
+            var filePath = "accessrules.txt";
+            if (System.IO.File.Exists(filePath))
+            {
+                // if (expression == "")
+                if (true)
+                {
+                    var expression = System.IO.File.ReadAllText(filePath);
+                    var parseTree = parser.Parse(expression);
+
+                    if (parseTree.HasErrors())
+                    {
+                        var pos = parser.Context.CurrentToken.Location.Position;
+                        var text2 = expression.Substring(0, pos) + "$$$" + expression.Substring(pos);
+                        text2 = string.Join("\n", parseTree.ParserMessages) + "\nSee $$$: " + text2;
+                        Console.WriteLine(text2);
+                        expression = "";
+                    }
+                    else
+                    {
+                        if (parseTree.Root.ChildNodes[0].Term.Name == "all_access_permission_rules")
+                        {
+                            ClearSecurityRules();
+                            grammar.ParseAccessRules(parseTree.Root);
+                            Console.WriteLine("Access Rules parsed: " + QueryGrammarJSON.accessRuleExpression["all"]);
+                            conditionSM = QueryGrammarJSON.accessRuleExpression["sm."].Replace("sm.", "");
+                            conditionSME = QueryGrammarJSON.accessRuleExpression["sme."].Replace("sme.", "");
+                            if (GlobalSecurityVariables.ConditionSM != null)
+                            {
+                                GlobalSecurityVariables.ConditionSM.Value = conditionSM;
+                            }
+                        }
+                    }
+                }
+            }
+
+            //ToDo: Need to make sure that this always happens early
+            _queryGrammarJSON = grammar;
+        }
+
+        public QueryGrammarJSON GetGrammarJSON()
+        {
+            return _queryGrammarJSON;
+        }
+
+
         public string GetConditionSM()
         {
+            if (conditionSM == "")
+            {
+                parseAccessRuleFile();
+            }
+            return conditionSM;
             if (GlobalSecurityVariables.ConditionSM != null)
             {
+                if (GlobalSecurityVariables.ConditionSM.Value != "")
+                {
+                    Console.WriteLine("ConditionSM: " + GlobalSecurityVariables.ConditionSM.Value);
+                }
                 return GlobalSecurityVariables.ConditionSM.Value;
             }
             return "";
         }
         public string GetConditionSME()
         {
+            return conditionSME;
             if (GlobalSecurityVariables.ConditionSME != null)
             {
+                if (GlobalSecurityVariables.ConditionSME.Value != "")
+                {
+                    Console.WriteLine("ConditionSME: " + GlobalSecurityVariables.ConditionSME.Value);
+                }
                 return GlobalSecurityVariables.ConditionSME.Value;
             }
             return "";
@@ -57,7 +132,7 @@ namespace AasSecurity
             GlobalSecurityVariables.SecurityRoles.Clear();
         }
 
-        public void AddSecurityRule(string name, string access, string right, string objectType, string semanticId)
+        public void AddSecurityRule(string name, string access, string right, string objectType, string semanticId, string route)
         {
             SecurityRole role = new SecurityRole();
 
@@ -72,8 +147,8 @@ namespace AasSecurity
                 return;
             }
             role.Permission = AccessRights.READ;
-            role.ObjectType = "semanticid";
-            role.ApiOperation = "";
+            role.ObjectType = objectType;
+            role.ApiOperation = route;
             role.SemanticId = semanticId;
             role.RulePath = "";
 
@@ -707,6 +782,55 @@ namespace AasSecurity
             var          deepestAllow     = "";
             SecurityRole deepestAllowRole = null;
             getPolicy = "";
+
+            if (conditionSM != "" && !objPath.Contains('.') && aasResource is Submodel s)
+            {
+                List<Submodel> submodels = new List<Submodel>();
+                submodels.Add(s);
+                var c = conditionSM;
+                var x = submodels.AsQueryable().Where(c);
+                if (x.Any())
+                {
+                    return true;
+                }
+            }
+            if (conditionSME != "" && objPath.Contains('.') && aasResource is Submodel s2 && s2.SubmodelElements != null)
+            {
+                var submodelElements = s2.SubmodelElements;
+                var path = objPath.Split('.');
+                int i = 1;
+                while (i < path.Length)
+                {
+                    var idShort = path[i];
+                    var found = submodelElements.FindIndex(x => x.IdShort == idShort);
+                    if (found == -1)
+                    {
+                        break;
+                    }
+                    if (i == path.Length - 1)
+                    {
+                        List<ISubmodelElement> list = new List<ISubmodelElement>();
+                        list.Add(submodelElements[found]);
+                        var c = conditionSME;
+                        var x = list.AsQueryable().Where(c);
+                        if (x.Any())
+                        {
+                            return true;
+                        }
+                    }
+                    switch (submodelElements[found])
+                    {
+                        case SubmodelElementCollection smc:
+                            submodelElements = smc.Value;
+                            break;
+                        case SubmodelElementList sml:
+                            submodelElements = sml.Value;
+                            break;
+                    }
+                    i++;
+                }
+            }
+
             foreach (var securityRole in GlobalSecurityVariables.SecurityRoles.Where(securityRole => securityRole.Name.Equals(currentRole)))
             {
                 if (securityRole.ObjectType.Equals("semanticid", StringComparison.OrdinalIgnoreCase))

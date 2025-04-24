@@ -346,6 +346,13 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 DeleteThumbnail(dbRequest.Context.SecurityConfig,
                     dbRequest.Context.Params.AssetAdministrationShellIdentifier);
                 break;
+            case DbRequestOp.QuerySearchSMs:
+                var queryRequest = dbRequest.Context.Params.QueryRequest;
+                var grammar = this._contractSecurityRules.GetGrammarJSON();
+                var query = new Query(grammar);
+                var qresult = query.SearchSMs(queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SemanticId, queryRequest.Identifier, queryRequest.Diff, queryRequest.Expression);
+                result.QueryResult = qresult;
+                break;
             default:
                 dbRequest.TaskCompletionSource.SetException(new Exception("Unknown Operation"));
                 break;
@@ -414,7 +421,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             throw new NotAllowed($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
         }
 
-        bool found = IsSubmodelPresent(securityConditionSM, aasIdentifier, submodelIdentifier, true, out ISubmodel output);
+        bool found = IsSubmodelPresent(securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier, true, out ISubmodel output);
 
         if (found)
         {
@@ -691,7 +698,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         {
             throw new NotAllowed($"NOT ALLOWED: AAS with id {aasIdentifier}");
         }
-        bool found = IsSubmodelPresent(securityConditionSM, aasIdentifier, newSubmodel.Id, false, out _);
+        bool found = IsSubmodelPresent(securityConditionSM, securityConditionSME, aasIdentifier, newSubmodel.Id, false, out _);
 
         if (found)
         {
@@ -734,7 +741,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             throw new NotAllowed($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
         }
 
-        var smFound = IsSubmodelPresent(securityConditionSM, aasIdentifier, submodelIdentifier, false, out ISubmodel output);
+        var smFound = IsSubmodelPresent(securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier, false, out ISubmodel output);
         if (smFound)
         {
             using (var scope = _serviceProvider.CreateScope())
@@ -795,7 +802,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         string securityConditionSM, securityConditionSME;
         InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
 
-        if (IsSubmodelPresent(securityConditionSM, aasIdentifier, submodelIdentifier, false, out _))
+        if (IsSubmodelPresent(securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier, false, out _))
         {
             SMESet sME = null;
             var fileElement = Converter.GetSubmodelElementByPath(securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier, idShortPathElements, out sME);
@@ -880,7 +887,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         string securityConditionSM, securityConditionSME;
         InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
 
-        if (IsSubmodelPresent(securityConditionSM, aasIdentifier, submodelIdentifier, false, out _))
+        if (IsSubmodelPresent(securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier, false, out _))
         {
             using (var scope = _serviceProvider.CreateScope())
             {
@@ -901,7 +908,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         string securityConditionSM, securityConditionSME;
         InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
 
-        if (IsSubmodelPresent(null, aasIdentifier, submodelIdentifier, false, out _))
+        if (IsSubmodelPresent(securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier, false, out _))
         {
             using (var db = new AasContext())
             {
@@ -1056,7 +1063,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         string securityConditionSM, securityConditionSME;
         InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
 
-        var found = IsSubmodelPresent(null, aasIdentifier, submodelIdentifier, false, out _);
+        var found = IsSubmodelPresent(securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier, false, out _);
         if (found)
         {
             using (var db = new AasContext())
@@ -1091,7 +1098,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             throw new NotAllowed($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
         }
 
-        var found = IsSubmodelPresent(securityConditionSM, aasIdentifier, submodelIdentifier, false, out _);
+        var found = IsSubmodelPresent(securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier, false, out _);
         if (found)
         {
             using (var db = new AasContext())
@@ -1555,7 +1562,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         return false;
     }
 
-    private bool IsSubmodelPresent(string securityConditionSM, string aasIdentifier, string submodelIdentifier, bool loadIntoMemory, out ISubmodel output)
+    private bool IsSubmodelPresent(string securityConditionSM, string securityConditionSME, string aasIdentifier, string submodelIdentifier, bool loadIntoMemory, out ISubmodel output)
     {
         output = null;
 

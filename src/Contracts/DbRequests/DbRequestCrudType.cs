@@ -10,5 +10,5 @@ public enum DbRequestCrudType
     Create,
     Read,
     Update,
-    Delete
+    Delete,
 }

@@ -65,7 +65,6 @@ public static class DependencyRegistry
         services.AddTransient<IPaginationService, PaginationService>();
         services.AddTransient<IPathModifierService, PathModifierService>();
         services.AddTransient<IReferenceModifierService, ReferenceModifierService>();
-        services.AddTransient<ISecurityService, SecurityService>();
         services.AddTransient<IServiceDescription, ServiceDescription>();
         services.AddTransient<ISubmodelPropertyExtractionService, SubmodelPropertyExtractionService>();
         services.AddTransient<ISubmodelService, SubmodelService>();
@@ -75,7 +74,10 @@ public static class DependencyRegistry
         services.AddSingleton<IDbRequestHandlerService, DbRequestHandlerService>();
         services.AddSingleton<IEventService, EventService>();
 
-        services.AddTransient<IContractSecurityRules, SecurityService>();
+        services.AddSingleton<ISecurityService, SecurityService>();
+
+        //ToDo: Should this be transient?
+        services.AddSingleton<IContractSecurityRules, SecurityService>();
         services.AddTransient<QueryGrammarJSON>();
     }
 }

@@ -37,4 +37,6 @@ public class DbRequestParams
     public bool First { get; set; }
 
     public DbEventRequest EventRequest { get; set; }
+
+    public DbQueryRequest QueryRequest { get; set; }
 }

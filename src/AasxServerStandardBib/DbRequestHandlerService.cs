@@ -10,6 +10,7 @@ using AasxServerStandardBib.Logging;
 using Contracts;
 using Contracts.DbRequests;
 using Contracts.Pagination;
+using Contracts.QueryResult;
 using Microsoft.Extensions.DependencyInjection;
 
 public class DbRequestHandlerService : IDbRequestHandlerService
@@ -822,5 +823,35 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
         var tcs = await taskCompletionSource.Task;
         return tcs;
+    }
+
+    public async Task<QResult> QuerySearchSMs(bool withTotalCount, bool withLastId, string semanticId, string identifier, string diff, string expression)
+    {
+        var parameters = new DbRequestParams()
+        {
+            QueryRequest = new DbQueryRequest()
+            {
+               WithTotalCount = withTotalCount,
+               WithLastId = withLastId,
+               SemanticId = semanticId,
+               Identifier = identifier,
+               Diff = diff,
+               Expression = expression
+            }
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            //SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.QuerySearchSMs, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.QueryResult;
     }
 }

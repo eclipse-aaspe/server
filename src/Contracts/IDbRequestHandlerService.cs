@@ -10,6 +10,7 @@ using AasCore.Aas3_0;
 using AdminShellNS;
 using Contracts.DbRequests;
 using Contracts.Pagination;
+using Contracts.QueryResult;
 
 public interface IDbRequestHandlerService
 {
@@ -60,4 +61,8 @@ public interface IDbRequestHandlerService
     Task<DbRequestResult> DeleteSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath);
     Task<DbRequestResult> DeleteSubmodelReferenceById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier);
     Task<DbRequestResult> DeleteThumbnail(ISecurityConfig securityConfig, string aasIdentifier);
+
+    Task<QResult> QuerySearchSMs(bool withTotalCount, bool withLastId, string semanticId, string identifier, string diff, string expression);
+
+
 }

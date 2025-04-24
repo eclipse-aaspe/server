@@ -1,5 +1,6 @@
 namespace Contracts
 {
+    using System.Diagnostics.Contracts;
     using AasCore.Aas3_0;
     using AasSecurity.Models;
 
@@ -7,6 +8,8 @@ namespace Contracts
     {
         public string GetConditionSM();
         public string GetConditionSME();
+        public QueryGrammarJSON GetGrammarJSON();
+
         bool AuthorizeRequest(string accessRole,
                       string httpRoute,
                       AccessRights neededRights,
@@ -18,6 +21,6 @@ namespace Contracts
                       IClass? aasResource = null, string? policy = null);
 
         public void ClearSecurityRules();
-        public void AddSecurityRule(string name, string acccess, string right, string objectType, string semanticId);
+        public void AddSecurityRule(string name, string acccess, string right, string objectType, string semanticId, string route);
     }
 }

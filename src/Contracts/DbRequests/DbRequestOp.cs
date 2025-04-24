@@ -36,5 +36,6 @@ public enum DbRequestOp
     DeleteSubmodelById,
     DeleteSubmodelElementByPath,
     DeleteSubmodelReferenceById,
-    DeleteThumbnail
+    DeleteThumbnail,
+    QuerySearchSMs
 }

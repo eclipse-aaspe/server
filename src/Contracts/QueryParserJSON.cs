@@ -1,17 +1,6 @@
-using System;
-using System.Data;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Security;
-using System.Text.RegularExpressions;
-using System.Xml.Linq;
 using AasSecurity.Models;
 using Irony.Parsing;
-using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
-using Microsoft.Extensions.DependencyInjection;
 using Contracts;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using System.Linq.Expressions;
 
 public class QueryGrammarJSON : Grammar
 {
@@ -491,7 +480,7 @@ public class QueryGrammarJSON : Grammar
     {
         var result = ParseTreeToExpression(node, typePrefix, ref upperCountTypePrefix, parentType);
 
-        if (accessRuleNode == null && accessRuleExpression != "")
+        if (accessRuleNode == null && accessRuleExpression["all"] != "")
         {
             switch (typePrefix)
             {
@@ -500,7 +489,7 @@ public class QueryGrammarJSON : Grammar
                     break;
                 case "sm.":
                     result = result.Replace("$SKIP", "true");
-                    var accessSubmodel = accessRuleExpression.Replace("sm.", "");
+                    var accessSubmodel = accessRuleExpression["all"].Replace("sm.", "");
                     result = $"({accessSubmodel})&&({result})";
                     break;
             }
@@ -1068,7 +1057,7 @@ public class QueryGrammarJSON : Grammar
         return " $NOT_IMPLEMENTED ";
     }
 
-    public static string accessRuleExpression = "";
+    public static new Dictionary<string, string> accessRuleExpression = [];
     // public static string accessRuleExpression = "((sm.idShort==\"Nameplate\")||(sm.idShort==\"TechnicalData\"))";
     // public static string accessRuleExpression = "(sm.idShort==\"Nameplate\")";
     public static treeNode accessRuleNode = null;
@@ -1082,6 +1071,7 @@ public class QueryGrammarJSON : Grammar
     static List<string> Names = new List<string>();
     static string access = "";
     static string right = "";
+    static bool route = false;
     void ParseAccessRule(ParseTreeNode node)
     {
         switch (node.Term.Name)
@@ -1090,7 +1080,16 @@ public class QueryGrammarJSON : Grammar
                 var tn = simplifyTree(node);
                 accessRuleNode = tn;
                 int count = 0;
-                accessRuleExpression = ParseTreeToExpression(tn, "", ref count);
+                accessRuleExpression["all"] = ParseTreeToExpression(tn, "", ref count);
+                accessRuleExpression["sm."] = ParseTreeToExpression(tn, "sm.", ref count);
+                accessRuleExpression["sme."] = ParseTreeToExpression(tn, "sme.", ref count);
+                break;
+            case "\"ROUTE\":":
+                route = true;
+                break;
+            case "StringLiteral":
+                route = false;
+                mySecurityRules.AddSecurityRule("isNotAuthenticated", "ALLOW", "READ", "api", "", (string)node.Token.Value);
                 break;
             default:
                 foreach (var c in node.ChildNodes)
@@ -1157,7 +1156,7 @@ public class QueryGrammarJSON : Grammar
                             role.SemanticId = semanticId;
                             role.RulePath = "";
 
-                            mySecurityRules.AddSecurityRule(n, access, right, "semanticid", semanticId);
+                            mySecurityRules.AddSecurityRule(n, access, right, "semanticid", semanticId, "");
                         }
                     }
                 }
