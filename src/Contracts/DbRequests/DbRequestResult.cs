@@ -27,4 +27,6 @@ public class DbRequestResult
     public Events.EventPayload EventPayload { get; set; }
 
     public QResult QueryResult { get; set; }
+
+    public int Count { get; set; }
 }

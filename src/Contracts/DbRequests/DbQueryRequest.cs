@@ -12,4 +12,12 @@ public class DbQueryRequest
     public string Diff { get; set; }
 
     public string Expression { get; set; }
+
+    //Submodel Element Request
+    public string Requested { get; set; }
+    public string SmSemanticId { get; set; }
+    public string Contains { get; set; }
+    public string Equal { get; set; }
+    public string Lower { get; set; }
+    public string Upper { get; set; }
 }

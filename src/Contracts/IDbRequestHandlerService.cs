@@ -63,6 +63,7 @@ public interface IDbRequestHandlerService
     Task<DbRequestResult> DeleteThumbnail(ISecurityConfig securityConfig, string aasIdentifier);
 
     Task<QResult> QuerySearchSMs(bool withTotalCount, bool withLastId, string semanticId, string identifier, string diff, string expression);
-
-
+    Task<int> CountSMs(string semanticId, string identifier, string diff, string expression);
+    Task<QResult> QuerySearchSMEs(string requested, bool withTotalCount, bool withLastId, string smSemanticId, string smIdentifier, string semanticId, string diff, string contains, string equal, string lower, string upper, string expression);
+    Task<int> CountSMEs(string smSemanticId, string smIdentifier, string semanticId, string diff, string contains, string equal, string lower, string upper, string expression);
 }
