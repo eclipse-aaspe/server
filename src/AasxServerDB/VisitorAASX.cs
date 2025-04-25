@@ -282,7 +282,7 @@ namespace AasxServerDB
                 {
                     var smeSmList = db.SMESets.Where(sme => sme.SMId == _smDB.Id).ToList();
                     Converter.CreateIdShortPath(db, smeSmList);
-                    smSmeMerged = Converter.GetSmeMerged(db, smeSmList);
+                    smSmeMerged = Converter.GetSmeMerged(db, smeSmList, _smDB);
                 }
             }
             _smDB ??= new SMSet();

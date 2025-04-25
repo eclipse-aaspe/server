@@ -1152,7 +1152,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 var smDBId = smDB.Id;
                 var smeSmList = db.SMESets.Where(sme => sme.SMId == smDBId).ToList();
                 Converter.CreateIdShortPath(db, smeSmList);
-                var smeSmMerged = Converter.GetSmeMerged(db, smeSmList);
+                var smeSmMerged = Converter.GetSmeMerged(db, smeSmList, null);
                 visitor.smSmeMerged = smeSmMerged;
                 visitor.idShortPath = idShortPath;
                 visitor.update = true;

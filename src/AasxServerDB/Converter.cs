@@ -275,7 +275,7 @@ namespace AasxServerDB
                 var smeSmTop = smeSmTopQuery
                     .OrderBy(sme => sme.Id).Skip(paginationParameters.Cursor).Take(paginationParameters.Limit).ToList();
                 var smeSmTopTree = Converter.GetTree(db, smDB[0], smeSmTop);
-                var smeSmTopMerged = Converter.GetSmeMerged(db, smeSmTopTree);
+                var smeSmTopMerged = Converter.GetSmeMerged(db, smeSmTopTree, smDB[0]);
 
                 foreach (var smeDB in smeSmTop)
                 {
@@ -349,7 +349,7 @@ namespace AasxServerDB
                 }
 
                 var smeFoundTree = Converter.GetTree(db, smDB[0], smeFound);
-                var smeFoundMerged = Converter.GetSmeMerged(db, smeFoundTree);
+                var smeFoundMerged = Converter.GetSmeMerged(db, smeFoundTree, smDB[0]);
 
                 smeEntity = smeFound[0];
 
@@ -533,7 +533,8 @@ namespace AasxServerDB
                     .OrderBy(sme => sme.Id)
                     .Where(sme => sme.SMId == smDB.Id);
 
-                if (securityCondition != null)
+                // if (securityCondition != null)
+                if (securityCondition?["sme."] != null)
                 {
                     SMEQuery = SMEQuery.Where(securityCondition["sme."]);
                 }
@@ -561,7 +562,7 @@ namespace AasxServerDB
                 );
 
                 // LoadSME(submodel, null, null, SMEList);
-                var smeMerged = Converter.GetSmeMerged(db, SMEQuery);
+                var smeMerged = Converter.GetSmeMerged(db, SMEQuery, smDB);
                 var SMEList = SMEQuery.ToList();
                 LoadSME(submodel, null, null, SMEList, smeMerged);
 
@@ -699,7 +700,7 @@ namespace AasxServerDB
                 var smDBId = smDB.Id;
                 var smeSmList = db.SMESets.Where(sme => sme.SMId == smDBId).ToList();
                 Converter.CreateIdShortPath(db, smeSmList);
-                var smeSmMerged = Converter.GetSmeMerged(db, smeSmList);
+                var smeSmMerged = Converter.GetSmeMerged(db, smeSmList, smDB);
                 visitor.smSmeMerged = smeSmMerged;
 
                 if (!String.IsNullOrEmpty(idShortPath))
@@ -876,6 +877,7 @@ namespace AasxServerDB
 
         public class SmeMerged
         {
+            public SMSet? smSet;
             public SMESet smeSet;
             public SValueSet? sValueSet;
             public IValueSet? iValueSet;
@@ -883,7 +885,7 @@ namespace AasxServerDB
             public OValueSet? oValueSet;
         }
 
-        public static List<SmeMerged> GetSmeMerged(AasContext db, List<SMESet>? listSME)
+        public static List<SmeMerged> GetSmeMerged(AasContext db, List<SMESet>? listSME, SMSet? smSet)
         {
             if (listSME == null)
             {
@@ -893,9 +895,9 @@ namespace AasxServerDB
             var smeIdList = listSME.Select(sme => sme.Id).ToList();
             var querySME = db.SMESets.Where(sme => smeIdList.Contains(sme.Id));
 
-            return GetSmeMerged(db, querySME);
+            return GetSmeMerged(db, querySME, smSet);
         }
-        private static List<SmeMerged> GetSmeMerged(AasContext db, IQueryable<SMESet>? querySME)
+        private static List<SmeMerged> GetSmeMerged(AasContext db, IQueryable<SMESet>? querySME, SMSet? smSet)
         {
             if (querySME == null)
                 return null;
@@ -904,28 +906,28 @@ namespace AasxServerDB
                 db.SValueSets,
                 sme => sme.Id,
                 sv => sv.SMEId,
-                (sme, sv) => new SmeMerged { smeSet = sme, sValueSet = sv, iValueSet = null, dValueSet = null, oValueSet = null })
+                (sme, sv) => new SmeMerged { smSet = smSet, smeSet = sme, sValueSet = sv, iValueSet = null, dValueSet = null, oValueSet = null })
                 .ToList();
 
             var joinIValue = querySME.Join(
                 db.IValueSets,
                 sme => sme.Id,
                 sv => sv.SMEId,
-                (sme, sv) => new SmeMerged { smeSet = sme, sValueSet = null, iValueSet = sv, dValueSet = null, oValueSet = null })
+                (sme, sv) => new SmeMerged { smSet = smSet, smeSet = sme, sValueSet = null, iValueSet = sv, dValueSet = null, oValueSet = null })
                 .ToList();
 
             var joinDValue = querySME.Join(
                 db.DValueSets,
                 sme => sme.Id,
                 sv => sv.SMEId,
-                (sme, sv) => new SmeMerged { smeSet = sme, sValueSet = null, iValueSet = null, dValueSet = sv, oValueSet = null })
+                (sme, sv) => new SmeMerged { smSet = smSet, smeSet = sme, sValueSet = null, iValueSet = null, dValueSet = sv, oValueSet = null })
                 .ToList();
 
             var joinOValue = querySME.Join(
                 db.OValueSets,
                 sme => sme.Id,
                 sv => sv.SMEId,
-                (sme, sv) => new SmeMerged { smeSet = sme, sValueSet = null, iValueSet = null, dValueSet = null, oValueSet = sv })
+                (sme, sv) => new SmeMerged { smSet = smSet, smeSet = sme, sValueSet = null, iValueSet = null, dValueSet = null, oValueSet = sv })
                 .ToList();
 
             var result = joinSValue;
@@ -935,7 +937,7 @@ namespace AasxServerDB
 
             var smeIdList = result.Select(sme => sme.smeSet.Id).ToList();
             var noValue = querySME.Where(sme => !smeIdList.Contains(sme.Id))
-                .Select(sme => new SmeMerged { smeSet = sme, sValueSet = null, iValueSet = null, dValueSet = null, oValueSet = null })
+                .Select(sme => new SmeMerged { smSet = smSet, smeSet = sme, sValueSet = null, iValueSet = null, dValueSet = null, oValueSet = null })
                 .ToList();
             result.AddRange(noValue);
 
