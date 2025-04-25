@@ -563,6 +563,20 @@ namespace AasxServerDB
 
                 // LoadSME(submodel, null, null, SMEList);
                 var smeMerged = Converter.GetSmeMerged(db, SMEQuery, smDB);
+
+                if (securityCondition?["all"] != null)
+                {
+                    var mergeForCondition = smeMerged.Select(sme => new {
+                        sm = sme.smSet,
+                        sme = sme.smeSet,
+                        svalue = (sme.smeSet.TValue == "S") ? sme.sValueSet.Value : "",
+                        mvalue = (sme.smeSet.TValue == "I") ? sme.iValueSet.Value : (sme.smeSet.TValue == "D") ? sme.dValueSet.Value : 0
+                    }).Distinct();
+                    var resultCondition = mergeForCondition.AsQueryable().Where(securityCondition["all"]);
+                    var resultConditionIDs = resultCondition.Select(s => s.sme.Id);
+                    smeMerged = smeMerged.Where(m => resultConditionIDs.Contains(m.smeSet.Id)).ToList();
+                }
+
                 var SMEList = SMEQuery.ToList();
                 LoadSME(submodel, null, null, SMEList, smeMerged);
 

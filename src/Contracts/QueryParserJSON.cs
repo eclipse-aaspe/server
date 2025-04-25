@@ -264,7 +264,7 @@ public class QueryGrammarJSON : Grammar
 
     static List<string> skip = new List<string>() { "?", "\"Query\":", "\"$condition\":" };
     static List<string> startsWith = new List<string>() { "Unnamed", "__", "query" };
-    static List<string> keep1 = new List<string>() { "\"$and\":", "\"$or\":" };
+    static List<string> keep1 = new List<string>() { "\"$and\":", "\"$or\":", "\"$not\":" };
 
     private void setParent(treeNode parent, List<treeNode> Children)
     {
@@ -515,6 +515,13 @@ public class QueryGrammarJSON : Grammar
 
         var expression = ParseTreeToExpression(combinedTree, typePrefix, ref upperCountTypePrefix, parentType);
 
+        return expression;
+    }
+
+    public string ParseTreeToExpression(treeNode node, string typePrefix, ref int upperCountTypePrefix, string parentType = "")
+    {
+        var expression = ParseTreeToExpressionRaw(node, typePrefix, ref upperCountTypePrefix, parentType);
+
         expression = expression.Replace("$TRUE", "true");
         expression = expression.Replace("$FALSE", "false");
         while (expression.Contains("true&&true") || expression.Contains("true||true") || expression.Contains("(true)")
@@ -539,8 +546,7 @@ public class QueryGrammarJSON : Grammar
         }
         return expression;
     }
-
-    public string ParseTreeToExpression(treeNode node, string typePrefix, ref int upperCountTypePrefix, string parentType = "")
+    public string ParseTreeToExpressionRaw(treeNode node, string typePrefix, ref int upperCountTypePrefix, string parentType = "")
     {
         upperCountTypePrefix = 0;
         var countTypePrefix1 = 0;
@@ -759,7 +765,7 @@ public class QueryGrammarJSON : Grammar
                 {
                     if (countTypePrefix1 != 0 || countTypePrefix2 != 0)
                     {
-                        return "true";
+                        // return "true";
                     }
                     return "$SKIP";
                 }

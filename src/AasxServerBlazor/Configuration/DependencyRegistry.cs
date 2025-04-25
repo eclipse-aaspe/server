@@ -74,10 +74,18 @@ public static class DependencyRegistry
         services.AddSingleton<IDbRequestHandlerService, DbRequestHandlerService>();
         services.AddSingleton<IEventService, EventService>();
 
+        /*
         services.AddSingleton<ISecurityService, SecurityService>();
 
         //ToDo: Should this be transient?
         services.AddSingleton<IContractSecurityRules, SecurityService>();
+        */
+
+        services.AddSingleton<SecurityService>();
+        services.AddSingleton<ISecurityService>(provider => provider.GetRequiredService<SecurityService>());
+        services.AddSingleton<IContractSecurityRules>(provider => provider.GetRequiredService<SecurityService>());
+
+
         services.AddTransient<QueryGrammarJSON>();
     }
 }
