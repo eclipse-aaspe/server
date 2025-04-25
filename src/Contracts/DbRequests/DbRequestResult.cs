@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AasCore.Aas3_0;
 using AdminShellNS;
+using Contracts.QueryResult;
 
 public class DbRequestResult
 {
@@ -24,4 +25,8 @@ public class DbRequestResult
     public IAssetInformation AssetInformation { get; set; }
 
     public Events.EventPayload EventPayload { get; set; }
+
+    public QResult QueryResult { get; set; }
+
+    public int Count { get; set; }
 }

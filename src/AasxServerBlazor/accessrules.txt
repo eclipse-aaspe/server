@@ -1,0 +1,65 @@
+{
+  "AllAccessPermissionRules": {
+    "rules": [
+      {
+        "ACL": {
+          "ATTRIBUTES": [
+            {
+              "GLOBAL": "ANONYMOUS"
+            }
+          ],
+          "RIGHTS": [
+            "READ"
+          ],
+          "ACCESS": "ALLOW"
+        },
+        "OBJECTS": [
+          {
+            "ROUTE": "/submodels/*"
+          },
+          {
+            "ROUTE": "/shells/aHR0cHM6Ly96dmVpLm9yZy9kZW1vL2Fhcy9Db250cm9sQ2FiaW5ldA"
+          }
+        ],
+        "FORMULA": {
+          "$or": [
+            {
+              "$and": [
+                {
+                  "$eq": [
+                    {
+                      "$field": "$sm#idShort"
+                    },
+                    {
+                      "$strVal": "Nameplate"
+                    }
+                  ]
+                },
+                {
+                  "$starts_with": [
+                    {
+                      "$field": "$sme#idShort"
+                    },
+                    {
+                      "$strVal": "Manufacturer"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "$eq": [
+                {
+                  "$field": "$sm#idShort"
+                },
+                {
+                  "$strVal": "TechnicalData"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

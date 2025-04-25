@@ -10,7 +10,9 @@ using AasxServerStandardBib.Logging;
 using Contracts;
 using Contracts.DbRequests;
 using Contracts.Pagination;
+using Contracts.QueryResult;
 using Microsoft.Extensions.DependencyInjection;
+using Org.BouncyCastle.Asn1.Ocsp;
 
 public class DbRequestHandlerService : IDbRequestHandlerService
 {
@@ -822,5 +824,134 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
         var tcs = await taskCompletionSource.Task;
         return tcs;
+    }
+
+    public async Task<QResult> QuerySearchSMs(bool withTotalCount, bool withLastId, string semanticId, string identifier, string diff, string expression)
+    {
+        var parameters = new DbRequestParams()
+        {
+            QueryRequest = new DbQueryRequest()
+            {
+               WithTotalCount = withTotalCount,
+               WithLastId = withLastId,
+               SemanticId = semanticId,
+               Identifier = identifier,
+               Diff = diff,
+               Expression = expression
+            }
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            //SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.QuerySearchSMs, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.QueryResult;
+    }
+
+    public async Task<int> CountSMs(string semanticId, string identifier, string diff, string expression)
+    {
+        var parameters = new DbRequestParams()
+        {
+            QueryRequest = new DbQueryRequest()
+            {
+                SemanticId = semanticId,
+                Identifier = identifier,
+                Diff = diff,
+                Expression = expression
+            }
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            //SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.QueryCountSMs, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.Count;
+    }
+
+    public async Task<QResult> QuerySearchSMEs(string requested, bool withTotalCount, bool withLastId, string smSemanticId, string smIdentifier, string semanticId, string diff, string contains, string equal, string lower, string upper, string expression)
+    {
+        var parameters = new DbRequestParams()
+        {
+            QueryRequest = new DbQueryRequest()
+            {
+                Requested = requested,
+                WithTotalCount = withTotalCount,
+                WithLastId = withLastId,
+                SmSemanticId = smSemanticId,
+                Identifier = smIdentifier,
+                SemanticId = semanticId,
+                Diff = diff,
+                Contains = contains,
+                Equal = equal,
+                Lower = lower,
+                Upper = upper,
+                Expression = expression
+            }
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            //SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.QuerySearchSMEs, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.QueryResult;
+    }
+
+    public async Task<int> CountSMEs(string smSemanticId, string smIdentifier, string semanticId, string diff, string contains,
+        string equal, string lower, string upper, string expression)
+    {
+        var parameters = new DbRequestParams()
+        {
+            QueryRequest = new DbQueryRequest()
+            {
+                SmSemanticId = smSemanticId,
+                Identifier = smIdentifier,
+                SemanticId = semanticId,
+                Diff = diff,
+                Contains = contains,
+                Equal = equal,
+                Lower = lower,
+                Upper = upper,
+                Expression = expression
+            }
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            //SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.QueryCountSMEs, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.Count;
+
     }
 }

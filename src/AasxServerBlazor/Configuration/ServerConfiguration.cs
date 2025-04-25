@@ -15,7 +15,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using AasSecurity;
-using AasxServerDB;
 using AasxServerStandardBib.ServiceExtensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -37,7 +36,9 @@ namespace AasxServerBlazor.Configuration;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AasxServerStandardBib.GraphQL;
 using AdminShellNS;
+using Contracts;
 
 public static class ServerConfiguration
 {
@@ -67,7 +68,7 @@ public static class ServerConfiguration
         services.AddLazyResolution();
 
         services.AddGraphQLServer()
-            .AddQueryType<Query>()
+            .AddQueryType<QueryAPI>()
             .UseField<ParameterNamesMiddleware>()
             .SetRequestOptions(_ =>
                 new HotChocolate.Execution.Options.RequestExecutorOptions {

@@ -1,6 +1,4 @@
-using AasxServerDB.Result;
-
-namespace AasxServerDB
+namespace Contracts.QueryResult
 {
     public class QResult
     {
