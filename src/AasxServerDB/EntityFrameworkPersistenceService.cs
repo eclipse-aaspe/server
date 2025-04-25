@@ -1627,7 +1627,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
             if (loadIntoMemory)
             {
-                output = Converter.GetSubmodel(smDB[0]);
+                output = Converter.GetSubmodel(smDB[0], securityConditionSME: securityConditionSME);
             }
 
             result = true;
