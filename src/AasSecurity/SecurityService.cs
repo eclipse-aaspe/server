@@ -39,8 +39,8 @@ namespace AasSecurity
 {
     public class SecurityService : ISecurityService, IContractSecurityRules
     {
-        static string conditionSM = "";
-        static string conditionSME = "";
+        public static Dictionary<string, string>? _condition;
+
         private QueryGrammarJSON _queryGrammarJSON;
 
         public SecurityService()
@@ -75,13 +75,8 @@ namespace AasSecurity
                         {
                             ClearSecurityRules();
                             grammar.ParseAccessRules(parseTree.Root);
-                            Console.WriteLine("Access Rules parsed: " + QueryGrammarJSON.accessRuleExpression["all"]);
-                            conditionSM = QueryGrammarJSON.accessRuleExpression["sm."].Replace("sm.", "");
-                            conditionSME = QueryGrammarJSON.accessRuleExpression["sme."].Replace("sme.", "");
-                            if (GlobalSecurityVariables.ConditionSM != null)
-                            {
-                                GlobalSecurityVariables.ConditionSM.Value = conditionSM;
-                            }
+                            _condition = QueryGrammarJSON.accessRuleExpression;
+                            Console.WriteLine("Access Rules parsed: " + _condition["all"]);
                         }
                     }
                 }
@@ -97,35 +92,9 @@ namespace AasSecurity
         }
 
 
-        public string GetConditionSM()
+        public Dictionary<string, string>? GetCondition()
         {
-            if (conditionSM == "")
-            {
-                parseAccessRuleFile();
-            }
-            return conditionSM;
-            if (GlobalSecurityVariables.ConditionSM != null)
-            {
-                if (GlobalSecurityVariables.ConditionSM.Value != "")
-                {
-                    Console.WriteLine("ConditionSM: " + GlobalSecurityVariables.ConditionSM.Value);
-                }
-                return GlobalSecurityVariables.ConditionSM.Value;
-            }
-            return "";
-        }
-        public string GetConditionSME()
-        {
-            return conditionSME;
-            if (GlobalSecurityVariables.ConditionSME != null)
-            {
-                if (GlobalSecurityVariables.ConditionSME.Value != "")
-                {
-                    Console.WriteLine("ConditionSME: " + GlobalSecurityVariables.ConditionSME.Value);
-                }
-                return GlobalSecurityVariables.ConditionSME.Value;
-            }
-            return "";
+            return _condition;
         }
         public void ClearSecurityRules()
         {
@@ -783,6 +752,7 @@ namespace AasSecurity
             SecurityRole deepestAllowRole = null;
             getPolicy = "";
 
+            var conditionSM = _condition["sm."];
             if (conditionSM != "" && !objPath.Contains('.') && aasResource is Submodel s)
             {
                 List<Submodel> submodels = new List<Submodel>();
@@ -794,6 +764,7 @@ namespace AasSecurity
                     return true;
                 }
             }
+            var conditionSME = _condition["sme."];
             if (conditionSME != "" && objPath.Contains('.') && aasResource is Submodel s2 && s2.SubmodelElements != null)
             {
                 var submodelElements = s2.SubmodelElements;
