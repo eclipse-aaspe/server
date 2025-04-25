@@ -36,14 +36,16 @@
                   ]
                 },
                 {
-                  "$starts_with": [
-                    {
-                      "$field": "$sme#idShort"
-                    },
-                    {
-                      "$strVal": "Manufacturer"
-                    }
-                  ]
+                  "$not": {
+                      "$starts_with": [
+                        {
+                          "$field": "$sme#idShort"
+                        },
+                        {
+                          "$strVal": "Manufacturer"
+                        }
+                      ]
+                  }
                 }
               ]
             },

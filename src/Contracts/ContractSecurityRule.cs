@@ -6,8 +6,7 @@ namespace Contracts
 
     public interface IContractSecurityRules
     {
-        public string GetConditionSM();
-        public string GetConditionSME();
+        public Dictionary<string, string> GetCondition();
         public QueryGrammarJSON GetGrammarJSON();
 
         bool AuthorizeRequest(string accessRole,

@@ -380,7 +380,7 @@ public class EventService : IEventService
                         {
                             // smeSearchTimeStamp = smeSearchSM.Where(sme => sme.ParentSMEId == null).ToList();
                             var tree = Converter.GetTree(db, sm, smeSearchTimeStamp);
-                            var treeMerged = Converter.GetSmeMerged(db, tree);
+                            var treeMerged = Converter.GetSmeMerged(db, tree, sm);
                             // var lookupChildren = treeMerged?.ToLookup(m => m.smeSet.ParentSMEId);
 
                             completeSM = false;
@@ -791,7 +791,7 @@ public class EventService : IEventService
                                 var smDBId = smDB.Id;
                                 var smeSmList = db.SMESets.Where(sme => sme.SMId == smDBId).ToList();
                                 Converter.CreateIdShortPath(db, smeSmList);
-                                var smeSmMerged = Converter.GetSmeMerged(db, smeSmList);
+                                var smeSmMerged = Converter.GetSmeMerged(db, smeSmList, smDB);
                                 visitor.smSmeMerged = smeSmMerged;
 
                                 foreach (var e in entriesSubmodel)

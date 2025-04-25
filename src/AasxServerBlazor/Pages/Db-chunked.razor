@@ -1690,7 +1690,7 @@
                 .ToList();
 
             CreateIdShortPath(db, smeList);
-            var merged = Converter.GetSmeMerged(db, smeList);
+            var merged = Converter.GetSmeMerged(db, smeList, null);
             var smIdList = smeList.Select(sme => sme.SMId).Distinct();
             var smList = db.SMSets.Where(sm => smIdList.Contains(sm.Id)).ToList();
             foreach (var sme in smeList)

@@ -386,8 +386,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     private List<IAssetAdministrationShell> ReadPagedAssetAdministrationShells(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, List<ISpecificAssetId> assetIds, string idShort)
     {
-        string securityConditionSM, securityConditionSME;
-        InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
+        Dictionary<string, string>? securityCondition = null;
+        InitSecurity(securityConfig, out securityCondition);
 
         var output = Converter.GetPagedAssetAdministrationShells(paginationParameters, assetIds, idShort);
 
@@ -436,15 +436,15 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     private ISubmodel ReadSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
     {
-        string securityConditionSM, securityConditionSME;
-        bool isAllowed = InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
+        Dictionary<string, string>? securityCondition = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
 
         if (!isAllowed)
         {
             throw new NotAllowed($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
         }
 
-        bool found = IsSubmodelPresent(securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier, true, out ISubmodel output);
+        bool found = IsSubmodelPresent(securityCondition, aasIdentifier, submodelIdentifier, true, out ISubmodel output);
 
         if (found)
         {
@@ -463,14 +463,14 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     private List<ISubmodelElement> ReadPagedSubmodelElements(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
     {
-        string securityConditionSM, securityConditionSME;
-        bool isAllowed = InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
+        Dictionary<string, string>? securityCondition = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
         if (!isAllowed)
         {
             throw new NotAllowed($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
         }
 
-        var output = Converter.GetPagedSubmodelElements(paginationParameters, securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier);
+        var output = Converter.GetPagedSubmodelElements(paginationParameters, securityCondition, aasIdentifier, submodelIdentifier);
         if (output == null)
         {
             throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
@@ -480,14 +480,14 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     private ISubmodelElement ReadSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, List<object> idShortPathElements)
     {
-        string securityConditionSM, securityConditionSME;
-        bool isAllowed = InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
+        Dictionary<string, string>? securityCondition = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
         if (!isAllowed)
         {
             throw new NotAllowed($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
         }
 
-        var output = Converter.GetSubmodelElementByPath(securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier, idShortPathElements, out SMESet smE);
+        var output = Converter.GetSubmodelElementByPath(securityCondition, aasIdentifier, submodelIdentifier, idShortPathElements, out SMESet smE);
         if (output == null)
         {
             throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
@@ -497,10 +497,10 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     private List<ISubmodel> ReadPagedSubmodels(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, IReference reqSemanticId, string idShort)
     {
-        string securityConditionSM, securityConditionSME;
-        bool isAllowed = InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
+        Dictionary<string, string>? securityCondition = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
 
-        var output = Converter.GetSubmodels(paginationParameters, securityConditionSM, securityConditionSME, reqSemanticId, idShort);
+        var output = Converter.GetSubmodels(paginationParameters, securityCondition, reqSemanticId, idShort);
 
         if (reqSemanticId != null)
         {
@@ -522,8 +522,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     private IAssetAdministrationShell ReadAssetAdministrationShellById(ISecurityConfig securityConfig, string aasIdentifier)
     {
-        string securityConditionSM, securityConditionSME;
-        bool isAllowed = InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
+        Dictionary<string, string>? securityCondition = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
 
         if (!isAllowed)
         {
@@ -549,8 +549,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     private string ReadFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, List<object> idShortPathElements, out byte[] content, out long fileSize)
     {
-        string securityConditionSM, securityConditionSME;
-        bool isAllowed = InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
+        Dictionary<string, string>? securityCondition = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
 
         if (!isAllowed)
         {
@@ -560,7 +560,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         content = null;
         fileSize = 0;
 
-        var fileElement = Converter.GetSubmodelElementByPath(securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier, idShortPathElements, out SMESet smE);
+        var fileElement = Converter.GetSubmodelElementByPath(securityCondition, aasIdentifier, submodelIdentifier, idShortPathElements, out SMESet smE);
 
         var found = fileElement != null;
         if (found)
@@ -714,14 +714,14 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     private ISubmodel CreateSubmodel(ISecurityConfig securityConfig, ISubmodel newSubmodel, string aasIdentifier)
     {
-        string securityConditionSM, securityConditionSME;
-        bool isAllowed = InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
+        Dictionary<string, string>? securityCondition = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
 
         if (!isAllowed)
         {
             throw new NotAllowed($"NOT ALLOWED: AAS with id {aasIdentifier}");
         }
-        bool found = IsSubmodelPresent(securityConditionSM, securityConditionSME, aasIdentifier, newSubmodel.Id, false, out _);
+        bool found = IsSubmodelPresent(securityCondition, aasIdentifier, newSubmodel.Id, false, out _);
 
         if (found)
         {
@@ -756,15 +756,15 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     public ISubmodelElement CreateSubmodelElement(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodelElement newSubmodelElement, string idShortPath, bool first = true)
     {
-        string securityConditionSM, securityConditionSME;
-        bool isAllowed = InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
+        Dictionary<string, string>? securityCondition = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
 
         if (!isAllowed)
         {
             throw new NotAllowed($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
         }
 
-        var smFound = IsSubmodelPresent(securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier, false, out ISubmodel output);
+        var smFound = IsSubmodelPresent(securityCondition, aasIdentifier, submodelIdentifier, false, out ISubmodel output);
         if (smFound)
         {
             using (var scope = _serviceProvider.CreateScope())
@@ -822,13 +822,13 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     public void DeleteFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, List<object> idShortPathElements)
     {
-        string securityConditionSM, securityConditionSME;
-        InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
+        Dictionary<string, string>? securityCondition = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
 
-        if (IsSubmodelPresent(securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier, false, out _))
+        if (IsSubmodelPresent(securityCondition, aasIdentifier, submodelIdentifier, false, out _))
         {
             SMESet sME = null;
-            var fileElement = Converter.GetSubmodelElementByPath(securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier, idShortPathElements, out sME);
+            var fileElement = Converter.GetSubmodelElementByPath(securityCondition, aasIdentifier, submodelIdentifier, idShortPathElements, out sME);
 
             var found = fileElement != null;
             if (found)
@@ -907,10 +907,10 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     public void DeleteSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
     {
-        string securityConditionSM, securityConditionSME;
-        InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
+        Dictionary<string, string>? securityCondition = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
 
-        if (IsSubmodelPresent(securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier, false, out _))
+        if (IsSubmodelPresent(securityCondition, aasIdentifier, submodelIdentifier, false, out _))
         {
             using (var scope = _serviceProvider.CreateScope())
             {
@@ -928,10 +928,10 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     public void DeleteSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath)
     {
-        string securityConditionSM, securityConditionSME;
-        InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
+        Dictionary<string, string>? securityCondition = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
 
-        if (IsSubmodelPresent(securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier, false, out _))
+        if (IsSubmodelPresent(securityCondition, aasIdentifier, submodelIdentifier, false, out _))
         {
             using (var db = new AasContext())
             {
@@ -949,9 +949,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     smDBQuery = smDBQuery.Where(sm => sm.AASId == aasDBId);
                 }
 
-                if (!securityConditionSM.IsNullOrEmpty())
+                if (securityCondition != null)
                 {
-                    smDBQuery = smDBQuery.Where(securityConditionSM);
+                    smDBQuery = smDBQuery.Where(securityCondition["sm."]);
                 }
                 var smDB = smDBQuery.ToList();
                 if (smDB == null || smDB.Count != 1)
@@ -1083,10 +1083,10 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     public void ReplaceSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodel newSubmodel)
     {
-        string securityConditionSM, securityConditionSME;
-        InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
+        Dictionary<string, string>? securityCondition = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
 
-        var found = IsSubmodelPresent(securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier, false, out _);
+        var found = IsSubmodelPresent(securityCondition, aasIdentifier, submodelIdentifier, false, out _);
         if (found)
         {
             using (var db = new AasContext())
@@ -1114,14 +1114,14 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     public void ReplaceSubmodelElementByPath(ISecurityConfig securityConfig,string aasIdentifier, string submodelIdentifier, string idShortPath, ISubmodelElement body)
     {
-        string securityConditionSM, securityConditionSME;
-        bool isAllowed = InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
+        Dictionary<string, string>? securityCondition = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
         if (!isAllowed)
         {
             throw new NotAllowed($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
         }
 
-        var found = IsSubmodelPresent(securityConditionSM, securityConditionSME, aasIdentifier, submodelIdentifier, false, out _);
+        var found = IsSubmodelPresent(securityCondition, aasIdentifier, submodelIdentifier, false, out _);
         if (found)
         {
             using (var db = new AasContext())
@@ -1140,9 +1140,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     smDBQuery = smDBQuery.Where(sm => sm.AASId == aasDBId);
                 }
 
-                if (!securityConditionSM.IsNullOrEmpty())
+                if (securityCondition != null)
                 {
-                    smDBQuery = smDBQuery.Where(securityConditionSM);
+                    smDBQuery = smDBQuery.Where(securityCondition["sm."]);
                 }
 
                 var smDB = smDBQuery.FirstOrDefault();
@@ -1152,7 +1152,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 var smDBId = smDB.Id;
                 var smeSmList = db.SMESets.Where(sme => sme.SMId == smDBId).ToList();
                 Converter.CreateIdShortPath(db, smeSmList);
-                var smeSmMerged = Converter.GetSmeMerged(db, smeSmList);
+                var smeSmMerged = Converter.GetSmeMerged(db, smeSmList, null);
                 visitor.smSmeMerged = smeSmMerged;
                 visitor.idShortPath = idShortPath;
                 visitor.update = true;
@@ -1585,7 +1585,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         return false;
     }
 
-    private bool IsSubmodelPresent(string securityConditionSM, string securityConditionSME, string aasIdentifier, string submodelIdentifier, bool loadIntoMemory, out ISubmodel output)
+    private bool IsSubmodelPresent(Dictionary<string, string>? securityCondition, string aasIdentifier, string submodelIdentifier, bool loadIntoMemory, out ISubmodel output)
     {
         output = null;
 
@@ -1601,6 +1601,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 smDBQuery = smDBQuery.Where(sm => sm.Identifier == submodelIdentifier);
             }
 
+            /*
             if (!string.IsNullOrEmpty(aasIdentifier))
             {
                 var aasDB = db.AASSets.FirstOrDefault(aas => aas.Identifier == aasIdentifier);
@@ -1610,10 +1611,11 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 }
                 smDBQuery = smDBQuery.Where(sm => sm.AASId == aasDB.Id);
             }
+            */
 
-            if (!string.IsNullOrEmpty(securityConditionSM))
+            if (securityCondition != null)
             {
-                smDBQuery = smDBQuery.Where(securityConditionSM);
+                smDBQuery = smDBQuery.Where(securityCondition["sm."]);
             }
 
             var smDB = smDBQuery.ToList();
@@ -1625,7 +1627,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
             if (loadIntoMemory)
             {
-                output = Converter.GetSubmodel(smDB[0]);
+                output = Converter.GetSubmodel(smDB[0], securityCondition: securityCondition);
             }
 
             result = true;
@@ -1696,14 +1698,12 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
 
     //ToDo: Move into security
-    private bool InitSecurity(ISecurityConfig? securityConfig, out string securityConditionSM, out string securityConditionSME)
+    private bool InitSecurity(ISecurityConfig? securityConfig, out Dictionary<string, string>? securityCondition)
     {
-        securityConditionSM = "";
-        securityConditionSME = "";
+        securityCondition = null;
         if (securityConfig != null && !securityConfig.NoSecurity)
         {
-            securityConditionSM = _contractSecurityRules.GetConditionSM();
-            securityConditionSME = _contractSecurityRules.GetConditionSME();
+            securityCondition = _contractSecurityRules.GetCondition();
             // Get claims
             var authResult = false;
             var accessRole = securityConfig.Principal.FindAll(ClaimTypes.Role).Select(c => c.Value).FirstOrDefault();
