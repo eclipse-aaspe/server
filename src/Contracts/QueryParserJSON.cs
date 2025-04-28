@@ -1150,7 +1150,7 @@ public class QueryGrammarJSON : Grammar
                 else
                 {
                     route = false;
-                    mySecurityRules.AddSecurityRule("isNotAuthenticated", "ALLOW", "READ", "api", "", (string)node.Token.Value);
+                    mySecurityRules.AddSecurityRule(claim, "ALLOW", "READ", "api", "", (string)node.Token.Value);
                 }
                 break;
             case "global_enum":
