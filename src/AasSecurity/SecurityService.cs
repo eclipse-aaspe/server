@@ -41,8 +41,6 @@ namespace AasSecurity
     {
         public static List<Dictionary<string, string>>? _condition;
 
-        private QueryGrammarJSON _queryGrammarJSON;
-
         public SecurityService()
         {
             parseAccessRuleFile();
@@ -81,16 +79,7 @@ namespace AasSecurity
                     }
                 }
             }
-
-            //ToDo: Need to make sure that this always happens early
-            _queryGrammarJSON = grammar;
         }
-
-        public QueryGrammarJSON GetGrammarJSON()
-        {
-            return _queryGrammarJSON;
-        }
-
 
         public Dictionary<string, string>? GetCondition(string accessRole, string neededRightsClaim)
         {

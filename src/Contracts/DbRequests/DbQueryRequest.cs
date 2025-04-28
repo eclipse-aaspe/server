@@ -1,6 +1,8 @@
 namespace Contracts.DbRequests;
 public class DbQueryRequest
 {
+    public QueryGrammarJSON Grammar { get; set; }
+
     public bool WithTotalCount { get; set; }
 
     public bool WithLastId { get; set; }

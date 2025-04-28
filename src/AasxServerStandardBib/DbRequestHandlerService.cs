@@ -826,7 +826,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs;
     }
 
-    public async Task<QResult> QuerySearchSMs(bool withTotalCount, bool withLastId, string semanticId, string identifier, string diff, string expression)
+    public async Task<QResult> QuerySearchSMs(QueryGrammarJSON grammar, bool withTotalCount, bool withLastId, string semanticId, string identifier, string diff, string expression)
     {
         var parameters = new DbRequestParams()
         {
@@ -856,7 +856,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.QueryResult;
     }
 
-    public async Task<int> CountSMs(string semanticId, string identifier, string diff, string expression)
+    public async Task<int> QueryCountSMs(QueryGrammarJSON grammar, string semanticId, string identifier, string diff, string expression)
     {
         var parameters = new DbRequestParams()
         {
@@ -884,7 +884,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.Count;
     }
 
-    public async Task<QResult> QuerySearchSMEs(string requested, bool withTotalCount, bool withLastId, string smSemanticId, string smIdentifier, string semanticId, string diff, string contains, string equal, string lower, string upper, string expression)
+    public async Task<QResult> QuerySearchSMEs(QueryGrammarJSON grammar, string requested, bool withTotalCount, bool withLastId, string smSemanticId, string smIdentifier, string semanticId, string diff, string contains, string equal, string lower, string upper, string expression)
     {
         var parameters = new DbRequestParams()
         {
@@ -920,7 +920,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.QueryResult;
     }
 
-    public async Task<int> CountSMEs(string smSemanticId, string smIdentifier, string semanticId, string diff, string contains,
+    public async Task<int> QueryCountSMEs(QueryGrammarJSON grammar, string smSemanticId, string smIdentifier, string semanticId, string diff, string contains,
         string equal, string lower, string upper, string expression)
     {
         var parameters = new DbRequestParams()

@@ -348,21 +348,21 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 break;
             case DbRequestOp.QuerySearchSMs:
                 var queryRequest = dbRequest.Context.Params.QueryRequest;
-                var grammar = this._contractSecurityRules.GetGrammarJSON();
+                var grammar = queryRequest.Grammar;
                 var query = new Query(grammar);
                 var qresult = query.SearchSMs(queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SemanticId, queryRequest.Identifier, queryRequest.Diff, queryRequest.Expression);
                 result.QueryResult = qresult;
                 break;
             case DbRequestOp.QueryCountSMs:
                 queryRequest = dbRequest.Context.Params.QueryRequest;
-                grammar = this._contractSecurityRules.GetGrammarJSON();
+                grammar = queryRequest.Grammar;
                 query = new Query(grammar);
                 var count = query.CountSMs(queryRequest.SemanticId, queryRequest.Identifier, queryRequest.Diff, queryRequest.Expression);
                 result.Count = count;
                 break;
             case DbRequestOp.QuerySearchSMEs:
                 queryRequest = dbRequest.Context.Params.QueryRequest;
-                grammar = this._contractSecurityRules.GetGrammarJSON();
+                grammar = queryRequest.Grammar;
                 query = new Query(grammar);
                 qresult = query.SearchSMEs(queryRequest.Requested, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
                     queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.Expression);
@@ -370,7 +370,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 break;
             case DbRequestOp.QueryCountSMEs:
                 queryRequest = dbRequest.Context.Params.QueryRequest;
-                grammar = this._contractSecurityRules.GetGrammarJSON();
+                grammar = queryRequest.Grammar;
                 query = new Query(grammar);
                 count = query.CountSMEs(queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
                     queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.Expression);
