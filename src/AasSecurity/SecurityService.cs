@@ -381,7 +381,7 @@ namespace AasSecurity
                                             }
                                         }
 
-                                        string username = CheckUserPW(split[ 1 ]);
+                                        var username = CheckUserPW(split[1], out var userName, out var passWord);
                                         if (username != null)
                                         {
                                             user = username;
@@ -461,15 +461,22 @@ namespace AasSecurity
                     }
                     case "_up":
                     {
-                        var token = queries[ key ];
+                        var token = queries[key];
                         if (token != null)
                         {
                             _logger.LogDebug("Received token of type username-password {Sanitize}", LogSanitizer.Sanitize(token));
-                            var username = CheckUserPW(token);
+                            var username = CheckUserPW(token, out var userName, out var passWord);
                             if (username != null)
                             {
                                 user = username;
                                 _logger.LogDebug("Received username+password query string = {Sanitize}", LogSanitizer.Sanitize(user));
+                            }
+                            else
+                            {
+                                if (userName != "" && passWord != "")
+                                {
+                                    accessRights = $"__{userName}__{passWord}";
+                                }
                             }
                         }
 
@@ -481,13 +488,17 @@ namespace AasSecurity
             return null;
         }
 
-        private string CheckUserPW(string userPW64)
+        private string CheckUserPW(string userPW64, out string userName, out string passWord)
         {
+            userName = "";
+            passWord = "";
             var      credentialBytes = Convert.FromBase64String(userPW64);
             string[] credentials     = Encoding.UTF8.GetString(credentialBytes).Split(new[] {':'}, 2);
             var      username        = credentials[ 0 ];
             var   password        = credentials[ 1 ];
 
+            userName = username;
+            passWord = password;
             var found = GlobalSecurityVariables.SecurityUsernamePassword.TryGetValue(username, out string? storedPassword);
             return found ? password != null && password.Equals(storedPassword) ? username : null : null;
         }

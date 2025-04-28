@@ -5,7 +5,7 @@
         "ACL": {
           "ATTRIBUTES": [
             {
-              "CLAIM": "isAuthenticated"
+              "CLAIM": "__Albert__Alb"
             }
           ],
           "RIGHTS": [

@@ -368,7 +368,7 @@ namespace AasxServerDB
                     {
                         return null;
                     }
-                    if (securityCondition?["filter"] != null)
+                    if (securityCondition.TryGetValue("filter", out _))
                     {
                         resultCondition = mergeForCondition.AsQueryable().Where(securityCondition["filter"]);
                         var resultConditionIDs = resultCondition.Select(s => s.sme.Id).Distinct().ToList();
@@ -608,7 +608,7 @@ namespace AasxServerDB
                     {
                         return submodel;
                     }
-                    if (securityCondition?["filter"] != null)
+                    if (securityCondition.TryGetValue("filter", out _))
                     {
                         resultCondition = mergeForCondition.AsQueryable().Where(securityCondition["filter"]);
                         var resultConditionIDs = resultCondition.Select(s => s.sme.Id).Distinct().ToList();
