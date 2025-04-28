@@ -269,6 +269,7 @@ namespace AasxServerDB
         {
             keepSme = [];
             deleteSme = [];
+            idShortPath = "";
             var create = false;
             if (!update)
             {
@@ -415,6 +416,11 @@ namespace AasxServerDB
             smeDB.ParentSME = _parSME;
             smeDB.SMEType = ShortSMEType(sme);
             smeDB.IdShort = sme.IdShort;
+            smeDB.IdShortPath = sme.IdShort;
+            if (_parSME != null)
+            {
+                smeDB.IdShortPath = _parSME.IdShortPath + "." + sme.IdShort;
+            }
             smeDB.DisplayName = Serializer.SerializeList(sme.DisplayName);
             smeDB.Category = sme.Category;
             smeDB.Description = Serializer.SerializeList(sme.Description);
