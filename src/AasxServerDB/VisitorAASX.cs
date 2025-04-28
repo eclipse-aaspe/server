@@ -33,6 +33,7 @@ namespace AasxServerDB
         private EnvSet? _envDB;
         public SMSet? _smDB;
         private SMESet? _parSME;
+        private int _index = 0;
         private SMESet? _resultSME;
         public List<Converter.SmeMerged> smSmeMerged = null;
         public List<int> keepSme = new List<int>();
@@ -415,7 +416,14 @@ namespace AasxServerDB
             smeDB ??= new SMESet();
             smeDB.ParentSME = _parSME;
             smeDB.SMEType = ShortSMEType(sme);
-            smeDB.IdShort = sme.IdShort;
+            if (_parSME != null && _parSME.SMEType == "SML")
+            {
+                smeDB.IdShort = $"[{_index++}]";
+            }
+            else
+            {
+                smeDB.IdShort = sme.IdShort;
+            }
             smeDB.IdShortPath = sme.IdShort;
             if (_parSME != null)
             {
@@ -740,9 +748,12 @@ namespace AasxServerDB
         public override void VisitSubmodelElementList(ISubmodelElementList that)
         {
             var smeSet = CreateOrUpdateSMESet(that);
+            var index = _index;
             _parSME = smeSet;
+            _index = 0;
             base.VisitSubmodelElementList(that);
             _parSME = smeSet.ParentSME;
+            _index = index;
         }
         public override void VisitSubmodelElementCollection(ISubmodelElementCollection that)
         {
