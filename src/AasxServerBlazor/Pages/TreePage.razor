@@ -1057,10 +1057,12 @@
         }
         else
         {
-            // env = new AdminShellNS.AdminShellPackageEnv[] { DbReqService.ReadPackageEnv(aasID, smID).Result.PackageEnv };
+            env = new AdminShellNS.AdminShellPackageEnv[] { DbReqService.ReadPackageEnv(aasID, smID).Result.PackageEnv };
+            /*
             svg = false;
             url = false;
             return string.Empty;
+            */
         }
 
         svg = false;

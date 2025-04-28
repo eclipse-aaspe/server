@@ -1,12 +1,13 @@
 namespace Contracts
 {
     using System.Diagnostics.Contracts;
+    using System.Security.AccessControl;
     using AasCore.Aas3_0;
     using AasSecurity.Models;
 
     public interface IContractSecurityRules
     {
-        public Dictionary<string, string> GetCondition();
+        public Dictionary<string, string> GetCondition(string accessRole, string neededRightsClaim);
         public QueryGrammarJSON GetGrammarJSON();
 
         bool AuthorizeRequest(string accessRole,
