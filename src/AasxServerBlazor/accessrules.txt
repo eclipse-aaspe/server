@@ -5,7 +5,31 @@
         "ACL": {
           "ATTRIBUTES": [
             {
-              "GLOBAL": "ANONYMOUS"
+              "CLAIM": "isAuthenticated"
+            }
+          ],
+          "RIGHTS": [
+            "READ"
+          ],
+          "ACCESS": "ALLOW"
+        },
+        "OBJECTS": [
+          {
+            "ROUTE": "/submodels/*"
+          },
+          {
+            "ROUTE": "/shells/aHR0cHM6Ly96dmVpLm9yZy9kZW1vL2Fhcy9Db250cm9sQ2FiaW5ldA"
+          }
+        ],
+        "FORMULA": {
+          "$boolean": true
+        }
+      },
+      {
+        "ACL": {
+          "ATTRIBUTES": [
+            {
+              "CLAIM": "isNotAuthenticated"
             }
           ],
           "RIGHTS": [
@@ -36,16 +60,24 @@
                   ]
                 },
                 {
-                  "$not": {
-                      "$starts_with": [
-                        {
-                          "$field": "$sme#idShort"
-                        },
-                        {
-                          "$strVal": "Manufacturer"
-                        }
-                      ]
-                  }
+                  "$starts_with": [
+                    {
+                      "$field": "$sme#idShort"
+                    },
+                    {
+                      "$strVal": "Manufacturer"
+                    }
+                  ]
+                },
+                {
+                  "$starts_with": [
+                    {
+                      "$field": "$sme#value"
+                    },
+                    {
+                      "$strVal": "Phoenix"
+                    }
+                  ]
                 }
               ]
             },
@@ -56,6 +88,31 @@
                 },
                 {
                   "$strVal": "TechnicalData"
+                }
+              ]
+            }
+          ]
+        },
+        "FRAGMENT": "sme#",
+        "FILTER": {
+          "$or": [
+            {
+              "$starts_with": [
+                {
+                  "$field": "$sme#idShort"
+                },
+                {
+                  "$strVal": "Manufacturer"
+                }
+              ]
+            },
+            {
+              "$starts_with": [
+                {
+                  "$field": "$sme#idShort"
+                },
+                {
+                  "$strVal": "General"
                 }
               ]
             }

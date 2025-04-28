@@ -26,6 +26,7 @@ namespace AasxServerDB
     using Extensions;
     using Microsoft.EntityFrameworkCore;
     using Microsoft.IdentityModel.Tokens;
+    using static AasxServerDB.Converter;
 
 
     public class Converter
@@ -349,17 +350,41 @@ namespace AasxServerDB
                 }
 
                 var smeFoundTree = Converter.GetTree(db, smDB[0], smeFound);
-                var smeFoundMerged = Converter.GetSmeMerged(db, smeFoundTree, smDB[0]);
+                var smeMerged = Converter.GetSmeMerged(db, smeFoundTree, smDB[0]);
+
+                if (smeMerged != null && smeMerged.Count != 0 && securityCondition?["all"] != null)
+                {
+                    // at least 1 exists
+                    var mergeForCondition = smeMerged.Select(sme => new {
+                        sm = sme.smSet,
+                        sme = sme.smeSet,
+                        svalue = (sme.smeSet.TValue == "S" && sme.sValueSet != null && sme.sValueSet.Value != null) ? sme.sValueSet.Value : "",
+                        mvalue = (sme.smeSet.TValue == "I" && sme.iValueSet != null && sme.iValueSet.Value != null) ? sme.iValueSet.Value :
+                            (sme.smeSet.TValue == "D" && sme.dValueSet != null && sme.dValueSet.Value != null) ? sme.dValueSet.Value : 0
+                    }).Distinct();
+                    // at least 1 must exist to approve security condition
+                    var resultCondition = mergeForCondition.AsQueryable().Where(securityCondition["all"]);
+                    if (!resultCondition.Any())
+                    {
+                        return null;
+                    }
+                    if (securityCondition?["filter"] != null)
+                    {
+                        resultCondition = mergeForCondition.AsQueryable().Where(securityCondition["filter"]);
+                        var resultConditionIDs = resultCondition.Select(s => s.sme.Id).Distinct().ToList();
+                        smeMerged = smeMerged.Where(m => resultConditionIDs.Contains(m.smeSet.Id)).ToList();
+                    }
+                }
 
                 smeEntity = smeFound[0];
 
-                var sme = Converter.GetSubmodelElement(smeFound[0], smeFoundMerged);
+                var sme = Converter.GetSubmodelElement(smeFound[0], smeMerged);
 
                 return sme;
             }
         }
 
-        public static List<ISubmodel> GetSubmodels(IPaginationParameters paginationParameters, Dictionary<string, string>? securityCondition, IReference reqSemanticId, string idShort)
+        public static List<ISubmodel> GetPagedSubmodels(IPaginationParameters paginationParameters, Dictionary<string, string>? securityCondition, IReference reqSemanticId, string idShort)
         {
             List<ISubmodel> output = new List<ISubmodel>();
 
@@ -374,9 +399,11 @@ namespace AasxServerDB
             }
 
             var securityConditionSM = "";
-            if (securityCondition != null && (securityCondition["sm."] == "" || securityCondition["sm."] == "*"))
+            if (securityCondition != null && securityCondition["sm."] != null)
             {
-                securityConditionSM = "true";
+                securityConditionSM = securityCondition["sm."];
+                if (securityConditionSM == "" || securityConditionSM == "*")
+                    securityConditionSM = "true";
             }
 
             using (var db = new AasContext())
@@ -533,11 +560,12 @@ namespace AasxServerDB
                     .OrderBy(sme => sme.Id)
                     .Where(sme => sme.SMId == smDB.Id);
 
-                // if (securityCondition != null)
+                /* Bug in algorithm for .sme: skip for the moment
                 if (securityCondition?["sme."] != null)
                 {
                     SMEQuery = SMEQuery.Where(securityCondition["sme."]);
                 }
+                */
 
                 var submodel = new Submodel(
                     idShort: smDB.IdShort,
@@ -564,17 +592,28 @@ namespace AasxServerDB
                 // LoadSME(submodel, null, null, SMEList);
                 var smeMerged = Converter.GetSmeMerged(db, SMEQuery, smDB);
 
-                if (securityCondition?["all"] != null)
+                if (smeMerged != null && smeMerged.Count != 0 && securityCondition?["all"] != null)
                 {
+                    // at least 1 exists
                     var mergeForCondition = smeMerged.Select(sme => new {
                         sm = sme.smSet,
                         sme = sme.smeSet,
-                        svalue = (sme.smeSet.TValue == "S") ? sme.sValueSet.Value : "",
-                        mvalue = (sme.smeSet.TValue == "I") ? sme.iValueSet.Value : (sme.smeSet.TValue == "D") ? sme.dValueSet.Value : 0
+                        svalue = (sme.smeSet.TValue == "S" && sme.sValueSet != null && sme.sValueSet.Value != null) ? sme.sValueSet.Value : "",
+                        mvalue = (sme.smeSet.TValue == "I" && sme.iValueSet != null && sme.iValueSet.Value != null) ? sme.iValueSet.Value :
+                            (sme.smeSet.TValue == "D" && sme.dValueSet != null && sme.dValueSet.Value != null) ? sme.dValueSet.Value : 0
                     }).Distinct();
+                    // at least 1 must exist to approve security condition
                     var resultCondition = mergeForCondition.AsQueryable().Where(securityCondition["all"]);
-                    var resultConditionIDs = resultCondition.Select(s => s.sme.Id);
-                    smeMerged = smeMerged.Where(m => resultConditionIDs.Contains(m.smeSet.Id)).ToList();
+                    if (!resultCondition.Any())
+                    {
+                        return submodel;
+                    }
+                    if (securityCondition?["filter"] != null)
+                    {
+                        resultCondition = mergeForCondition.AsQueryable().Where(securityCondition["filter"]);
+                        var resultConditionIDs = resultCondition.Select(s => s.sme.Id).Distinct().ToList();
+                        smeMerged = smeMerged.Where(m => resultConditionIDs.Contains(m.smeSet.Id)).ToList();
+                    }
                 }
 
                 var SMEList = SMEQuery.ToList();

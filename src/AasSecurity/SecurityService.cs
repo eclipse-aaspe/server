@@ -39,7 +39,7 @@ namespace AasSecurity
 {
     public class SecurityService : ISecurityService, IContractSecurityRules
     {
-        public static Dictionary<string, string>? _condition;
+        public static List<Dictionary<string, string>>? _condition;
 
         private QueryGrammarJSON _queryGrammarJSON;
 
@@ -75,8 +75,8 @@ namespace AasSecurity
                         {
                             ClearSecurityRules();
                             grammar.ParseAccessRules(parseTree.Root);
-                            _condition = QueryGrammarJSON.accessRuleExpression;
-                            Console.WriteLine("Access Rules parsed: " + _condition["all"]);
+                            _condition = QueryGrammarJSON.allAccessRuleExpressions;
+                            // Console.WriteLine("Access Rules parsed: " + _condition["all"]);
                         }
                     }
                 }
@@ -92,9 +92,18 @@ namespace AasSecurity
         }
 
 
-        public Dictionary<string, string>? GetCondition()
+        public Dictionary<string, string>? GetCondition(string accessRole, string neededRightsClaim)
         {
-            return _condition;
+            foreach (var c in _condition)
+            {
+                var a = c["claim"];
+                var n = c["right"];
+                if (a == accessRole && n == "\"" + neededRightsClaim + "\"")
+                {
+                    return c;
+                }
+            }
+            return null;
         }
         public void ClearSecurityRules()
         {
@@ -752,7 +761,20 @@ namespace AasSecurity
             SecurityRole deepestAllowRole = null;
             getPolicy = "";
 
-            var conditionSM = _condition["sm."];
+            var conditionSM = "";
+            var conditionSME = "";
+            // TODO find all correct entries: copied from GetCondition()
+            foreach (var c in _condition)
+            {
+                var a = c["claim"];
+                var n = c["right"];
+                if (a == currentRole && n == "\"" + neededRights.ToString() + "\"")
+                {
+                    conditionSM = c["sm."];
+                    conditionSME = c["sme."];
+                }
+            }
+
             if (conditionSM != "" && !objPath.Contains('.') && aasResource is Submodel s)
             {
                 List<Submodel> submodels = new List<Submodel>();
@@ -764,7 +786,6 @@ namespace AasSecurity
                     return true;
                 }
             }
-            var conditionSME = _condition["sme."];
             if (conditionSME != "" && objPath.Contains('.') && aasResource is Submodel s2 && s2.SubmodelElements != null)
             {
                 var submodelElements = s2.SubmodelElements;

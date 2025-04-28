@@ -1063,6 +1063,7 @@ public class QueryGrammarJSON : Grammar
         return " $NOT_IMPLEMENTED ";
     }
 
+    public static new List<Dictionary<string, string>> allAccessRuleExpressions = [];
     public static new Dictionary<string, string> accessRuleExpression = [];
     // public static string accessRuleExpression = "((sm.idShort==\"Nameplate\")||(sm.idShort==\"TechnicalData\"))";
     // public static string accessRuleExpression = "(sm.idShort==\"Nameplate\")";
@@ -1070,32 +1071,93 @@ public class QueryGrammarJSON : Grammar
     public void ParseAccessRules(ParseTreeNode node)
     {
         // mySecurityRules.ClearSecurityRules();
+        allAccessRuleExpressions = new List<Dictionary<string, string>>();
+        accessRuleExpression = new Dictionary<string, string>();
 
         ParseAccessRule(node);
+        if (accessRuleExpression.Count != 0)
+        {
+            allAccessRuleExpressions.Add(accessRuleExpression);
+        }
     }
 
     static List<string> Names = new List<string>();
     static string access = "";
     static string right = "";
+    static string global = "";
+    static bool isClaim = false;
+    static string claim = "";
+    static bool filter = false;
     static bool route = false;
     void ParseAccessRule(ParseTreeNode node)
     {
         switch (node.Term.Name)
         {
+            case "access_permission_rule":
+                if (accessRuleExpression.Count != 0)
+                {
+                    allAccessRuleExpressions.Add(accessRuleExpression);
+                }
+                accessRuleExpression = new Dictionary<string, string>();
+                access = "";
+                right = "";
+                global = "";
+                isClaim = false;
+                claim = "";
+                filter = false;
+                route = false;
+
+                foreach (var c in node.ChildNodes)
+                {
+                    ParseAccessRule(c);
+                }
+                break;
             case "logical_expression":
                 var tn = simplifyTree(node);
                 accessRuleNode = tn;
-                int count = 0;
-                accessRuleExpression["all"] = ParseTreeToExpression(tn, "", ref count);
-                accessRuleExpression["sm."] = ParseTreeToExpression(tn, "sm.", ref count);
-                accessRuleExpression["sme."] = ParseTreeToExpression(tn, "sme.", ref count);
+                var count = 0;
+                if (!filter)
+                {
+                    accessRuleExpression["all"] = ParseTreeToExpression(tn, "", ref count);
+                    accessRuleExpression["sm."] = ParseTreeToExpression(tn, "sm.", ref count);
+                    accessRuleExpression["sme."] = ParseTreeToExpression(tn, "sme.", ref count);
+                    accessRuleExpression["claim"] = claim;
+                    accessRuleExpression["right"] = right;
+                }
+                else
+                {
+                    accessRuleExpression["filter"] = ParseTreeToExpression(tn, "", ref count);
+                }
+                break;
+            case "\"FOMRULA\":":
+                filter = false;
+                break;
+            case "\"FILTER\":":
+                filter = true;
                 break;
             case "\"ROUTE\":":
                 route = true;
                 break;
+            case "\"CLAIM\":":
+                isClaim = true;
+                break;
             case "StringLiteral":
-                route = false;
-                mySecurityRules.AddSecurityRule("isNotAuthenticated", "ALLOW", "READ", "api", "", (string)node.Token.Value);
+                if (isClaim)
+                {
+                    claim = (string)node.Token.Value;
+                    isClaim = false;
+                }
+                else
+                {
+                    route = false;
+                    mySecurityRules.AddSecurityRule("isNotAuthenticated", "ALLOW", "READ", "api", "", (string)node.Token.Value);
+                }
+                break;
+            case "global_enum":
+                global = node.ChildNodes[0].Term.Name;
+                break;
+            case "rights_enum":
+                right = node.ChildNodes[0].Term.Name;
                 break;
             default:
                 foreach (var c in node.ChildNodes)
