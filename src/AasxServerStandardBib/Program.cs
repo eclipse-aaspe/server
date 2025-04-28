@@ -66,10 +66,6 @@ namespace AasxServer
 
     public static class Program
     {
-        //ToDo: Delete?
-        public static string conditionSM = "";
-        public static string conditionSME = "";
-
         public static IConfiguration con { get; set; }
 
         /*
