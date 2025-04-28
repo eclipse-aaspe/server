@@ -68,16 +68,6 @@
                       "$strVal": "Manufacturer"
                     }
                   ]
-                },
-                {
-                  "$starts_with": [
-                    {
-                      "$field": "$sme#value"
-                    },
-                    {
-                      "$strVal": "Phoenix"
-                    }
-                  ]
                 }
               ]
             },
