@@ -62,8 +62,8 @@ public interface IDbRequestHandlerService
     Task<DbRequestResult> DeleteSubmodelReferenceById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier);
     Task<DbRequestResult> DeleteThumbnail(ISecurityConfig securityConfig, string aasIdentifier);
 
-    Task<QResult> QuerySearchSMs(bool withTotalCount, bool withLastId, string semanticId, string identifier, string diff, string expression);
-    Task<int> CountSMs(string semanticId, string identifier, string diff, string expression);
-    Task<QResult> QuerySearchSMEs(string requested, bool withTotalCount, bool withLastId, string smSemanticId, string smIdentifier, string semanticId, string diff, string contains, string equal, string lower, string upper, string expression);
-    Task<int> CountSMEs(string smSemanticId, string smIdentifier, string semanticId, string diff, string contains, string equal, string lower, string upper, string expression);
+    Task<QResult> QuerySearchSMs(QueryGrammarJSON grammar, bool withTotalCount, bool withLastId, string semanticId, string identifier, string diff, string expression);
+    Task<int> QueryCountSMs(QueryGrammarJSON grammar, string semanticId, string identifier, string diff, string expression);
+    Task<QResult> QuerySearchSMEs(QueryGrammarJSON grammar, string requested, bool withTotalCount, bool withLastId, string smSemanticId, string smIdentifier, string semanticId, string diff, string contains, string equal, string lower, string upper, string expression);
+    Task<int> QueryCountSMEs(QueryGrammarJSON grammar, string smSemanticId, string smIdentifier, string semanticId, string diff, string contains, string equal, string lower, string upper, string expression);
 }
