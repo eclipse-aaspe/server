@@ -480,7 +480,7 @@ public class QueryGrammarJSON : Grammar
     {
         var result = ParseTreeToExpression(node, typePrefix, ref upperCountTypePrefix, parentType);
 
-        if (accessRuleNode == null && accessRuleExpression["all"] != "")
+        if (accessRuleNode == null && accessRuleExpression.TryGetValue("all", out _))
         {
             switch (typePrefix)
             {

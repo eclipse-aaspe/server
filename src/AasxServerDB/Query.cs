@@ -1661,7 +1661,7 @@ public partial class Query
                     condition["AccessRules"] = "Access Rules parsed!";
                     return condition;
                 }
-                if (QueryGrammarJSON.accessRuleExpression["all"] != "")
+                if (QueryGrammarJSON.accessRuleExpression.TryGetValue("all", out _))
                 {
                     messages.Add("Access Rules: " + QueryGrammarJSON.accessRuleExpression);
                 }
