@@ -832,12 +832,13 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         {
             QueryRequest = new DbQueryRequest()
             {
-               WithTotalCount = withTotalCount,
-               WithLastId = withLastId,
-               SemanticId = semanticId,
-               Identifier = identifier,
-               Diff = diff,
-               Expression = expression
+                Grammar = grammar,
+                WithTotalCount = withTotalCount,
+                WithLastId = withLastId,
+                SemanticId = semanticId,
+                Identifier = identifier,
+                Diff = diff,
+                Expression = expression
             }
         };
 
