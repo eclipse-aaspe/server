@@ -206,7 +206,7 @@ namespace IO.Swagger.Controllers
                 }
             }
             var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
-            await _dbRequestHandlerService.DeleteFileByPath(securityConfig, decodedAasIdentifier, decodedSmIdentifier, idShortPathElements);
+            await _dbRequestHandlerService.DeleteFileByPath(securityConfig, decodedAasIdentifier, decodedSmIdentifier, idShortPath);
 
             return NoContent();
         }
@@ -1071,7 +1071,7 @@ namespace IO.Swagger.Controllers
             }
             var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
 
-            var fileResult = await _dbRequestHandlerService.ReadFileByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPathElements);
+            var fileResult = await _dbRequestHandlerService.ReadFileByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath);
 
             var fileName = fileResult.File;
             var content = fileResult.Content;
@@ -1545,7 +1545,7 @@ namespace IO.Swagger.Controllers
 
             var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
 
-            var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPathElements);
+            var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath);
 
             if (!Program.noSecurity && submodelElement != null)
             {
@@ -1606,7 +1606,7 @@ namespace IO.Swagger.Controllers
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
             var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
 
-            var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPathElements);
+            var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath);
             if (!Program.noSecurity && submodelElement != null)
             {
                 var authResult = _authorizationService.AuthorizeAsync(securityConfig.Principal, submodelElement.Parent, "SecurityPolicy").Result;
@@ -1668,7 +1668,7 @@ namespace IO.Swagger.Controllers
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
             var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
 
-            var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPathElements);
+            var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath);
             if (!Program.noSecurity && submodelElement != null)
             {
                 var authResult = _authorizationService.AuthorizeAsync(securityConfig.Principal, submodelElement.Parent, "SecurityPolicy").Result;
@@ -1718,7 +1718,7 @@ namespace IO.Swagger.Controllers
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
             var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
 
-            var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPathElements);
+            var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath);
             if (!Program.noSecurity)
             {
                 var authResult = _authorizationService.AuthorizeAsync(securityConfig.Principal, submodelElement, "SecurityPolicy").Result;
@@ -1786,7 +1786,7 @@ namespace IO.Swagger.Controllers
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
             var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
 
-            var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPathElements);
+            var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath);
             if (!Program.noSecurity)
             {
                 var authResult = _authorizationService.AuthorizeAsync(securityConfig.Principal, submodelElement, "SecurityPolicy").Result;
@@ -2741,7 +2741,7 @@ namespace IO.Swagger.Controllers
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
             var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
-            await _dbRequestHandlerService.ReplaceFileByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPathElements, fileName, contentType, stream);
+            await _dbRequestHandlerService.ReplaceFileByPath(securityConfig, decodedAasIdentifier, decodedSubmodelIdentifier, idShortPath, fileName, contentType, stream);
 
             return NoContent();
         }

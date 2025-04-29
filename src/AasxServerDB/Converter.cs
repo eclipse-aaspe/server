@@ -290,7 +290,7 @@ namespace AasxServerDB
             }
         }
 
-        public static ISubmodelElement? GetSubmodelElementByPath(Dictionary<string, string>? securityCondition, string aasIdentifier, string submodelIdentifier, List<object> idShortPathElements, out SMESet smeEntity)
+        public static ISubmodelElement? GetSubmodelElementByPath(Dictionary<string, string>? securityCondition, string aasIdentifier, string submodelIdentifier, string idShortPath, out SMESet smeEntity)
         {
             smeEntity = null;
             bool result = false;
@@ -323,31 +323,26 @@ namespace AasxServerDB
                 var smDBId = smDB[0].Id;
 
 
-                if (idShortPathElements.Count == 0)
+                if (String.IsNullOrEmpty(idShortPath))
                 {
                     return null;
                 }
-                var idShort = idShortPathElements[0];
-                var smeParent = db.SMESets.Where(sme => sme.SMId == smDBId && sme.ParentSMEId == null && sme.IdShort == idShort).ToList();
-                if (smeParent == null || smeParent.Count != 1)
-                {
-                    return null;
-                }
-                var parentId = smeParent[0].Id;
-                var smeFound = smeParent;
 
-                for (int i = 1; i < idShortPathElements.Count; i++)
-                {
-                    idShort = idShortPathElements[i];
-                    //ToDo SubmodelElementList with index (type: int) must be implemented
-                    var smeFoundDB = db.SMESets.Where(sme => sme.SMId == smDBId && sme.ParentSMEId == parentId && sme.IdShort == idShort);
-                    smeFound = smeFoundDB.ToList();
-                    if (smeFound == null || smeFound.Count != 1)
-                    {
-                        return null;
-                    }
-                    parentId = smeFound[0].Id;
-                }
+                var smeFoundDB = db.SMESets.Where(sme => sme.SMId == smDBId && sme.IdShortPath == idShortPath);
+                var smeFound = smeFoundDB.ToList();
+
+                //for (int i = 1; i < idShortPathElements.Count; i++)
+                //{
+                //    idShort = idShortPathElements[i];
+                //    //ToDo SubmodelElementList with index (type: int) must be implemented
+                //    var smeFoundDB = db.SMESets.Where(sme => sme.SMId == smDBId && sme.ParentSMEId == parentId && sme.IdShort == idShort);
+                //    smeFound = smeFoundDB.ToList();
+                //    if (smeFound == null || smeFound.Count != 1)
+                //    {
+                //        return null;
+                //    }
+                //    parentId = smeFound[0].Id;
+                //}
 
                 var smeFoundTree = Converter.GetTree(db, smDB[0], smeFound);
                 var smeMerged = Converter.GetSmeMerged(db, smeFoundTree, smDB[0]);

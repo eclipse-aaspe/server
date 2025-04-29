@@ -240,13 +240,13 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.AssetAdministrationShells[0];
     }
 
-    public async Task<ISubmodelElement> ReadSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, List<object> idShortPathElements)
+    public async Task<ISubmodelElement> ReadSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath)
     {
         var parameters = new DbRequestParams()
         {
             AssetAdministrationShellIdentifier = aasIdentifier,
             SubmodelIdentifier = submodelIdentifier,
-            IdShortElements = idShortPathElements
+            IdShort = idShortPath
         };
 
         var dbRequestContext = new DbRequestContext()
@@ -264,13 +264,13 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.SubmodelElements[0];
     }
 
-    public async Task<DbFileRequestResult> ReadFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, List<object> idShortPathElements)
+    public async Task<DbFileRequestResult> ReadFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath)
     {
         var parameters = new DbRequestParams()
         {
             AssetAdministrationShellIdentifier = aasIdentifier,
             SubmodelIdentifier = submodelIdentifier,
-            IdShortElements = idShortPathElements
+            IdShort = idShortPath
         };
 
         var dbRequestContext = new DbRequestContext()
@@ -630,13 +630,13 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs;
     }
 
-    public async Task<DbRequestResult> ReplaceFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, List<object> idShortPath, string fileName, string contentType, MemoryStream stream)
+    public async Task<DbRequestResult> ReplaceFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream)
     {
         var parameters = new DbRequestParams()
         {
             AssetAdministrationShellIdentifier = aasIdentifier,
             SubmodelIdentifier = submodelIdentifier,
-            IdShortElements = idShortPath,
+            IdShort = idShortPath,
             FileRequest = new DbFileRequestResult()
             {
                 Stream = stream,
@@ -710,13 +710,13 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs;
     }
 
-    public async Task<DbRequestResult> DeleteFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, List<object> idShortPathElements)
+    public async Task<DbRequestResult> DeleteFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath)
     {
         var parameters = new DbRequestParams()
         {
             AssetAdministrationShellIdentifier = aasIdentifier,
             SubmodelIdentifier = submodelIdentifier,
-            IdShortElements = idShortPathElements
+            IdShort = idShortPath
         };
 
         var dbRequestContext = new DbRequestContext()

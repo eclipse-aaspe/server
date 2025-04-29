@@ -141,7 +141,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     dbRequest.Context.SecurityConfig,
                     dbRequest.Context.Params.AssetAdministrationShellIdentifier,
                     dbRequest.Context.Params.SubmodelIdentifier,
-                    dbRequest.Context.Params.IdShortElements);
+                    dbRequest.Context.Params.IdShort);
 
                 result.SubmodelElements = new List<ISubmodelElement>
                 {
@@ -172,7 +172,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     dbRequest.Context.SecurityConfig,
                     dbRequest.Context.Params.AssetAdministrationShellIdentifier,
                     dbRequest.Context.Params.SubmodelIdentifier,
-                    dbRequest.Context.Params.IdShortElements, out content, out fileSize);
+                    dbRequest.Context.Params.IdShort, out content, out fileSize);
                 result.FileRequestResult = new DbFileRequestResult()
                 {
                     Content = content,
@@ -285,7 +285,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 ReplaceFileByPath(dbRequest.Context.SecurityConfig,
                     dbRequest.Context.Params.AssetAdministrationShellIdentifier,
                     dbRequest.Context.Params.SubmodelIdentifier,
-                    dbRequest.Context.Params.IdShortElements,
+                    dbRequest.Context.Params.IdShort,
                     dbRequest.Context.Params.FileRequest.File,
                     dbRequest.Context.Params.FileRequest.ContentType,
                     dbRequest.Context.Params.FileRequest.Stream);
@@ -324,7 +324,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 DeleteFileByPath(dbRequest.Context.SecurityConfig,
                     dbRequest.Context.Params.AssetAdministrationShellIdentifier,
                     dbRequest.Context.Params.SubmodelIdentifier,
-                    dbRequest.Context.Params.IdShortElements);
+                    dbRequest.Context.Params.IdShort);
                 break;
             case DbRequestOp.DeleteSubmodelById:
                 DeleteSubmodelById(dbRequest.Context.SecurityConfig,
@@ -483,7 +483,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         return output;
     }
 
-    private ISubmodelElement ReadSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, List<object> idShortPathElements)
+    private ISubmodelElement ReadSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath)
     {
         Dictionary<string, string>? securityCondition = null;
         bool isAllowed = InitSecurity(securityConfig, out securityCondition);
@@ -492,7 +492,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             throw new NotAllowed($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
         }
 
-        var output = Converter.GetSubmodelElementByPath(securityCondition, aasIdentifier, submodelIdentifier, idShortPathElements, out SMESet smE);
+        var output = Converter.GetSubmodelElementByPath(securityCondition, aasIdentifier, submodelIdentifier, idShortPath, out SMESet smE);
         if (output == null)
         {
             throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
@@ -552,7 +552,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    private string ReadFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, List<object> idShortPathElements, out byte[] content, out long fileSize)
+    private string ReadFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath, out byte[] content, out long fileSize)
     {
         Dictionary<string, string>? securityCondition = null;
         bool isAllowed = InitSecurity(securityConfig, out securityCondition);
@@ -565,7 +565,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         content = null;
         fileSize = 0;
 
-        var fileElement = Converter.GetSubmodelElementByPath(securityCondition, aasIdentifier, submodelIdentifier, idShortPathElements, out SMESet smE);
+        var fileElement = Converter.GetSubmodelElementByPath(securityCondition, aasIdentifier, submodelIdentifier, idShortPath, out SMESet smE);
 
         var found = fileElement != null;
         if (found)
@@ -825,7 +825,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    public void DeleteFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, List<object> idShortPathElements)
+    public void DeleteFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath)
     {
         Dictionary<string, string>? securityCondition = null;
         bool isAllowed = InitSecurity(securityConfig, out securityCondition);
@@ -833,7 +833,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         if (IsSubmodelPresent(securityCondition, aasIdentifier, submodelIdentifier, false, out _))
         {
             SMESet sME = null;
-            var fileElement = Converter.GetSubmodelElementByPath(securityCondition, aasIdentifier, submodelIdentifier, idShortPathElements, out sME);
+            var fileElement = Converter.GetSubmodelElementByPath(securityCondition, aasIdentifier, submodelIdentifier, idShortPath, out sME);
 
             var found = fileElement != null;
             if (found)
@@ -1269,7 +1269,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     }
 
-    public void ReplaceFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, List<object> idShortPath, string fileName, string contentType, MemoryStream stream)
+    public void ReplaceFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream)
     {
         //string securityConditionSM, securityConditionSME;
         //InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
@@ -1702,7 +1702,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
     }
 
 
-    //ToDo: Move into security
+    //ToDo: Move into security?
     private bool InitSecurity(ISecurityConfig? securityConfig, out Dictionary<string, string>? securityCondition)
     {
         securityCondition = null;

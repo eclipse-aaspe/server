@@ -416,9 +416,14 @@ namespace AasxServerDB
             smeDB ??= new SMESet();
             smeDB.ParentSME = _parSME;
             smeDB.SMEType = ShortSMEType(sme);
+
+            var smeIdShort = sme.IdShort;
+
             if (_parSME != null && _parSME.SMEType == "SML")
             {
-                smeDB.IdShort = $"[{_index++}]";
+                var index = $"[{_index++}]";
+                smeDB.IdShort = index;
+                smeIdShort = index;
             }
             else
             {
@@ -427,7 +432,7 @@ namespace AasxServerDB
             smeDB.IdShortPath = sme.IdShort;
             if (_parSME != null)
             {
-                smeDB.IdShortPath = _parSME.IdShortPath + "." + sme.IdShort;
+                smeDB.IdShortPath = _parSME.IdShortPath + "." + smeIdShort;
             }
             smeDB.DisplayName = Serializer.SerializeList(sme.DisplayName);
             smeDB.Category = sme.Category;

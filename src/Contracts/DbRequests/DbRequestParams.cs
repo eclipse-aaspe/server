@@ -15,8 +15,6 @@ public class DbRequestParams
 
     public string IdShort { get; set; }
 
-    public List<object> IdShortElements { get; set; }
-
     public string AssetAdministrationShellIdentifier { get; set; }
 
     public string SubmodelIdentifier { get; set; }
