@@ -387,7 +387,12 @@ public class EntityFrameworkPersistenceService : IPersistenceService
     private List<IAssetAdministrationShell> ReadPagedAssetAdministrationShells(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, List<ISpecificAssetId> assetIds, string idShort)
     {
         Dictionary<string, string>? securityCondition = null;
-        InitSecurity(securityConfig, out securityCondition);
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
+
+        if (!isAllowed)
+        {
+            throw new NotAllowed($"NOT ALLOWED: API route");
+        }
 
         var output = Converter.GetPagedAssetAdministrationShells(paginationParameters, assetIds, idShort);
 

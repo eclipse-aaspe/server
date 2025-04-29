@@ -15,10 +15,7 @@
         },
         "OBJECTS": [
           {
-            "ROUTE": "/submodels/*"
-          },
-          {
-            "ROUTE": "/shells/aHR0cHM6Ly96dmVpLm9yZy9kZW1vL2Fhcy9Db250cm9sQ2FiaW5ldA"
+            "ROUTE": "*"
           }
         ],
         "FORMULA": {

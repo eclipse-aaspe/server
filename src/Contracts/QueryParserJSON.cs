@@ -1149,8 +1149,11 @@ public class QueryGrammarJSON : Grammar
                 }
                 else
                 {
-                    route = false;
-                    mySecurityRules.AddSecurityRule(claim, "ALLOW", "READ", "api", "", (string)node.Token.Value);
+                    if (route)
+                    {
+                        route = false;
+                        mySecurityRules.AddSecurityRule(claim, "ALLOW", "READ", "api", "", (string)node.Token.Value);
+                    }
                 }
                 break;
             case "global_enum":

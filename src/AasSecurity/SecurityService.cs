@@ -969,7 +969,7 @@ namespace AasSecurity
             var opSplit = operation.Split('/');
 
             var i = 0;
-            while (i < apiOpSplit.Length)
+            while (i < apiOpSplit.Length && i < opSplit.Length)
             {
                 if (apiOpSplit[i] == "*")
                 {
@@ -981,7 +981,7 @@ namespace AasSecurity
                 }
                 i++;
             }
-            if (opSplit.Length > i)
+            if (apiOpSplit.Length > i)
             {
                 return false;
             }
