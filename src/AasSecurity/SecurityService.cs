@@ -87,7 +87,7 @@ namespace AasSecurity
             {
                 var a = c["claim"];
                 var n = c["right"];
-                if (a == accessRole && n == "\"" + neededRightsClaim + "\"")
+                if (a == accessRole && n.Contains(neededRightsClaim))
                 {
                     return c;
                 }
@@ -109,11 +109,23 @@ namespace AasSecurity
                 return;
             }
             role.Kind = KindOfPermissionEnum.Allow;
-            if (right != "READ")
+            switch (right)
             {
-                return;
+                case "READ":
+                    role.Permission = AccessRights.READ;
+                    break;
+                case "CREATE":
+                    role.Permission = AccessRights.CREATE;
+                    break;
+                case "UPDATE":
+                    role.Permission = AccessRights.UPDATE;
+                    break;
+                case "DELETE":
+                    role.Permission = AccessRights.DELETE;
+                    break;
+                default:
+                    return;
             }
-            role.Permission = AccessRights.READ;
             role.ObjectType = objectType;
             role.ApiOperation = route;
             role.SemanticId = semanticId;
@@ -768,7 +780,7 @@ namespace AasSecurity
             {
                 var a = c["claim"];
                 var n = c["right"];
-                if (a == currentRole && n == "\"" + neededRights.ToString() + "\"")
+                if (a == currentRole && n.Contains(neededRights.ToString()))
                 {
                     conditionSM = c["sm."];
                     conditionSME = c["sme."];
