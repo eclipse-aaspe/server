@@ -161,6 +161,10 @@ namespace AasxServerDB
                     if (smRef.Identifier != null)
                     {
                         var sm = GetSubmodel(submodelIdentifier: smRef.Identifier);
+                        if (sm == null)
+                        {
+                            return null;
+                        }
                         aas.Submodels?.Add(sm.GetReference());
                     }
                 }

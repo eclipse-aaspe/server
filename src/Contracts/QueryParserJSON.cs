@@ -176,7 +176,7 @@ public class QueryGrammarJSON : Grammar
                                      ("\"GLOBAL\":" + globalEnum) |
                                      ("\"REFERENCE\":" + stringLiteral)) + ToTerm("}");
         stringArray.Rule = "[" + stringLiteral + (ToTerm(",") + stringLiteral).Q() + "]";
-        rightsArray.Rule = "[" + rightsEnum + (ToTerm(",") + rightsEnum).Q() + "]";
+        rightsArray.Rule = "[" + rightsEnum + (ToTerm(",") + rightsEnum).Q() + (ToTerm(",") + rightsEnum).Q() + (ToTerm(",") + rightsEnum).Q() + "]";
         objectArray.Rule = "[" + object_ + (ToTerm(",") + object_).Q() + "]";
         object_.Rule = ToTerm("{") + (("\"ROUTE\":" + stringLiteral) |
                                   ("\"IDENTIFIABLE\":" + stringLiteral) |
@@ -1083,7 +1083,7 @@ public class QueryGrammarJSON : Grammar
 
     static List<string> Names = new List<string>();
     static string access = "";
-    static string right = "";
+    static string rights = "";
     static string global = "";
     static bool isClaim = false;
     static string claim = "";
@@ -1100,7 +1100,7 @@ public class QueryGrammarJSON : Grammar
                 }
                 accessRuleExpression = new Dictionary<string, string>();
                 access = "";
-                right = "";
+                rights = "";
                 global = "";
                 isClaim = false;
                 claim = "";
@@ -1122,7 +1122,7 @@ public class QueryGrammarJSON : Grammar
                     accessRuleExpression["sm."] = ParseTreeToExpression(tn, "sm.", ref count);
                     accessRuleExpression["sme."] = ParseTreeToExpression(tn, "sme.", ref count);
                     accessRuleExpression["claim"] = claim;
-                    accessRuleExpression["right"] = right;
+                    accessRuleExpression["right"] = rights;
                 }
                 else
                 {
@@ -1152,7 +1152,14 @@ public class QueryGrammarJSON : Grammar
                     if (route)
                     {
                         route = false;
-                        mySecurityRules.AddSecurityRule(claim, "ALLOW", "READ", "api", "", (string)node.Token.Value);
+                        var split = rights.Split(' ');
+                        foreach (var s in split)
+                        {
+                            if (s != "")
+                            {
+                                mySecurityRules.AddSecurityRule(claim, "ALLOW", s, "api", "", (string)node.Token.Value);
+                            }
+                        }
                     }
                 }
                 break;
@@ -1160,77 +1167,9 @@ public class QueryGrammarJSON : Grammar
                 global = node.ChildNodes[0].Term.Name;
                 break;
             case "rights_enum":
-                right = node.ChildNodes[0].Term.Name;
-                break;
-            default:
-                foreach (var c in node.ChildNodes)
-                {
-                    ParseAccessRule(c);
-                }
-                break;
-        }
-    }
-
-    void ParseAccessRuleOld(ParseTreeNode node)
-    {
-        switch (node.Term.Name)
-        {
-            case "logical_expression":
-                break;
-            case "AccessRule":
-                Names = new List<string>();
-                access = "";
-                right = "";
-                foreach (var c in node.ChildNodes)
-                {
-                    ParseAccessRule(c);
-                }
-                break;
-            case "Access":
-                access = node.ChildNodes[0].Term.Name;
-                break;
-            case "Right":
-                right = node.ChildNodes[0].Term.Name;
-                break;
-            case "stringComparison":
-                if (node.ChildNodes[0].Term.Name == "SingleAttribute")
-                {
-                    var claim = node.ChildNodes[0].ChildNodes[0];
-                    if (claim.ChildNodes[1].Token.Value.ToString() == "ROLE")
-                    {
-                        Names.Add(node.ChildNodes[2].Token.Value.ToString());
-                    }
-
-                }
-                else
-                {
-                    string semanticId = node.ChildNodes[2].Token.Value.ToString();
-                    if (semanticId != "$DELETE")
-                    {
-                        foreach (var n in Names)
-                        {
-                            SecurityRole role = new SecurityRole();
-
-                            role.Name = n;
-                            if (access != "ALLOW")
-                            {
-                                continue;
-                            }
-                            role.Kind = KindOfPermissionEnum.Allow;
-                            if (right != "READ")
-                            {
-                                continue;
-                            }
-                            role.Permission = AccessRights.READ;
-                            role.ObjectType = "semanticid";
-                            role.ApiOperation = "";
-                            role.SemanticId = semanticId;
-                            role.RulePath = "";
-
-                            mySecurityRules.AddSecurityRule(n, access, right, "semanticid", semanticId, "");
-                        }
-                    }
-                }
+                var r = node.ChildNodes[0].Term.Name;
+                r = r.Replace("\"", "");
+                rights += r + " ";
                 break;
             default:
                 foreach (var c in node.ChildNodes)
