@@ -157,7 +157,7 @@ public class EventService : IEventService
         return count;
     }
 
-    public EventPayload CollectPayload(string changes, int depth, SubmodelElementCollection statusData,
+    public EventPayload CollectPayload(Dictionary<string, string> securityCondition, string changes, int depth, SubmodelElementCollection statusData,
         ReferenceElement reference, IReferable referable, AasCore.Aas3_0.Property conditionSM, AasCore.Aas3_0.Property conditionSME,
         string diff, List<String> diffEntry, bool withPayload, int limitSm, int limitSme, int offsetSm, int offsetSme)
     {
@@ -310,10 +310,18 @@ public class EventService : IEventService
                 if (conditionSM != null && conditionSM.Value != null)
                 {
                     searchSM = conditionSM.Value;
+                    if (securityCondition != null && securityCondition.TryGetValue("sm.", out _))
+                    {
+                        searchSM = $"({securityCondition["sm."]})&&({searchSM})";
+                    }
                 }
                 if (conditionSME != null && conditionSME.Value != null)
                 {
                     searchSME = conditionSME.Value;
+                    if (securityCondition != null && securityCondition.TryGetValue("sme.", out _))
+                    {
+                        searchSME = $"({securityCondition["sme."]})&&({searchSME})";
+                    }
                 }
 
                 using AasContext db = new();

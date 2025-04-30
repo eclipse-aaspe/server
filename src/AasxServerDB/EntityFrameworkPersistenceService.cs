@@ -211,7 +211,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 };
                 break;
             case DbRequestOp.ReadEventMessages:
-                var eventPayload = ReadEventMessages(dbRequest.Context.Params.EventRequest);
+                var eventPayload = ReadEventMessages(dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.EventRequest);
                 result.EventPayload = eventPayload;
 
                 break;
@@ -1359,8 +1360,15 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     public void UpdateSubmodelElementByPath(ISecurityConfig security, string aasIdentifier, string submodelIdentifier, string idShortPath, ISubmodelElement body) => throw new NotImplementedException();
 
-    private Contracts.Events.EventPayload ReadEventMessages(DbEventRequest dbEventRequest)
+    private Contracts.Events.EventPayload ReadEventMessages(ISecurityConfig securityConfig, DbEventRequest dbEventRequest)
     {
+        Dictionary<string, string>? securityCondition = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
+        if (!isAllowed)
+        {
+            throw new NotAllowed($"NOT ALLOWED: Read Event Messages");
+        }
+
         var op = _eventService.FindEvent(dbEventRequest.Submodel, dbEventRequest.EventName);
         var eventData = _eventService.ParseData(op, dbEventRequest.Env[dbEventRequest.PackageIndex]);
 
@@ -1418,13 +1426,13 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 depth = 1;
             }
 
-            eventPayload = _eventService.CollectPayload(changes, depth,
+            eventPayload = _eventService.CollectPayload(securityCondition, changes, depth,
             eventData.StatusData, eventData.DataReference, data, eventData.ConditionSM, eventData.ConditionSME,
             diff, diffEntry, wp, limSm, offSm, limSme, offSme);
         }
         else // database
         {
-            eventPayload = _eventService.CollectPayload(changes, 0,
+            eventPayload = _eventService.CollectPayload(securityCondition, changes, 0,
             eventData.StatusData, eventData.DataReference, null, eventData.ConditionSM, eventData.ConditionSME,
             diff, diffEntry, wp, limSm, limSme, offSm, offSme);
         }

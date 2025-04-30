@@ -205,7 +205,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 OffsetSme = offSme,
             };
 
-            var eventPayload = await _dbRequestHandlerService.ReadEventMessages(eventRequest);
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+            var eventPayload = await _dbRequestHandlerService.ReadEventMessages(securityConfig, eventRequest);
 
             Program.signalNewData(2);
 

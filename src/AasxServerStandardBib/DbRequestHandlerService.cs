@@ -355,7 +355,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.PackageEnv;
     }
 
-    public async Task<Contracts.Events.EventPayload> ReadEventMessages(DbEventRequest dbEventRequest)
+    public async Task<Contracts.Events.EventPayload> ReadEventMessages(ISecurityConfig securityConfig, DbEventRequest dbEventRequest)
     {
         var parameters = new DbRequestParams()
         {
@@ -364,7 +364,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
         var dbRequestContext = new DbRequestContext()
         {
-            //SecurityConfig = securityConfig,
+            SecurityConfig = securityConfig,
             Params = parameters
         };
         var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();

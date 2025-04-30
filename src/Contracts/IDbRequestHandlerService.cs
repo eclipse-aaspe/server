@@ -34,7 +34,7 @@ public interface IDbRequestHandlerService
 
     Task<DbRequestPackageEnvResult> ReadPackageEnv(string aasIdentifier, string submodelIdentifier);
 
-    Task<Events.EventPayload> ReadEventMessages(DbEventRequest dbEventRequest);
+    Task<Events.EventPayload> ReadEventMessages(ISecurityConfig securityConfig, DbEventRequest dbEventRequest);
 
     Task<ISubmodel> CreateSubmodel(ISecurityConfig securityConfig, ISubmodel newSubmodel, string aasIdentifier);
 
