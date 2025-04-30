@@ -571,6 +571,7 @@ namespace AasxServer
                 AasxHttpContextHelper.DataPath = a.DataPath;
             }
 
+            //toDo: read alternatively from appsettings.json
             Program.runOPC     = a.Opc;
             Program.noSecurity = a.NoSecurity;
             Program.edit       = a.Edit;

@@ -32,11 +32,11 @@ namespace AasxServerDB.Entities
     {
         // sm
         [ForeignKey("SMSet")]
-        public         int    SMId  { get; set; }
+        public int SMId { get; set; }
         public virtual SMSet? SMSet { get; set; }
 
         // parent sme
-        public         int?    ParentSMEId       { get; set; }
+        public int? ParentSMEId { get; set; }
         public virtual SMESet? ParentSME { get; set; }
 
         // id
@@ -49,16 +49,17 @@ namespace AasxServerDB.Entities
 
         // submodel element
         [StringLength(128)]
-        public string? IdShort                    { get; set; }
-        public string? DisplayName                { get; set; }
+        public string? IdShort { get; set; }
+        public int? SMLIndex { get; set; }
+        public string? DisplayName { get; set; }
         [StringLength(128)]
-        public string? Category                   { get; set; }
-        public string? Description                { get; set; }
-        public string? Extensions                 { get; set; }
+        public string? Category { get; set; }
+        public string? Description { get; set; }
+        public string? Extensions { get; set; }
         [MaxLength(2000)]
-        public string? SemanticId                 { get; set; } // change to save the rest of the reference
-        public string? SupplementalSemanticIds    { get; set; }
-        public string? Qualifiers                 { get; set; }
+        public string? SemanticId { get; set; } // change to save the rest of the reference
+        public string? SupplementalSemanticIds { get; set; }
+        public string? Qualifiers { get; set; }
         public string? EmbeddedDataSpecifications { get; set; }
 
         // value
@@ -109,8 +110,8 @@ namespace AasxServerDB.Entities
 
         // time stamp
         public DateTime TimeStampCreate { get; set; }
-        public DateTime TimeStamp       { get; set; }
-        public DateTime TimeStampTree   { get; set; }
+        public DateTime TimeStamp { get; set; }
+        public DateTime TimeStampTree { get; set; }
         public DateTime TimeStampDelete { get; set; }
         public string? IdShortPath { get; set; }
     }
