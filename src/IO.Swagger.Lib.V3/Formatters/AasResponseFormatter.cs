@@ -127,6 +127,11 @@ namespace IO.Swagger.Lib.V3.Formatters
             {
                 return base.CanWriteResult(context);
             }
+
+            if (typeof(SubmodelListResult).IsAssignableFrom(context.ObjectType))
+            {
+                return base.CanWriteResult(context);
+            }
             else
                 return false;
         }
@@ -351,6 +356,25 @@ namespace IO.Swagger.Lib.V3.Formatters
                 jsonNode.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();
                 writer.Dispose();
+            }
+
+            else if (typeof(SubmodelListResult).IsAssignableFrom(context.ObjectType))
+            {
+                var jsonArray = new JsonArray();
+                string cursor = null;
+                if (context.Object is SubmodelListResult submodelList)
+                {
+                    foreach (var item in submodelList.submodels)
+                    {
+                        var json = Jsonization.Serialize.ToJsonObject(item);
+                        jsonArray.Add(json);
+                    }
+                }
+                JsonObject jsonNode = new JsonObject();
+                jsonNode["submodels"] = jsonArray;
+                var writer = new Utf8JsonWriter(response.Body);
+                jsonNode.WriteTo(writer);
+                writer.FlushAsync().GetAwaiter().GetResult();
             }
 
             return Task.FromResult(response);

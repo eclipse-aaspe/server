@@ -73,6 +73,10 @@ namespace IO.Swagger.Lib.V3.Formatters
             {
                 result = Jsonization.Deserialize.SubmodelFrom(node);
             }
+            else if (type == typeof(SubmodelListResult))
+            {
+                result = Jsonization.Deserialize.AssetAdministrationShellFrom(node);
+            }
             else if (type == typeof(AssetAdministrationShell))
             {
                 result = Jsonization.Deserialize.AssetAdministrationShellFrom(node);

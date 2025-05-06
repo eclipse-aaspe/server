@@ -30,13 +30,15 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 {
     private readonly IContractSecurityRules _contractSecurityRules;
     private readonly IEventService _eventService;
+    private readonly QueryGrammarJSON _grammar;
     private readonly IServiceProvider _serviceProvider;
 
-    public EntityFrameworkPersistenceService(IServiceProvider serviceProvider, IContractSecurityRules contractSecurityRules, IEventService eventService)
+    public EntityFrameworkPersistenceService(IServiceProvider serviceProvider, IContractSecurityRules contractSecurityRules, IEventService eventService, QueryGrammarJSON grammar)
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _contractSecurityRules = contractSecurityRules ?? throw new ArgumentNullException(nameof(contractSecurityRules));
         _eventService = eventService ?? throw new ArgumentNullException(nameof(eventService));
+        _grammar = grammar ?? throw new ArgumentNullException(nameof(grammar));
     }
 
     public void InitDB(bool reloadDB, string dataPath)
@@ -349,30 +351,26 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 break;
             case DbRequestOp.QuerySearchSMs:
                 var queryRequest = dbRequest.Context.Params.QueryRequest;
-                var grammar = queryRequest.Grammar;
-                var query = new Query(grammar);
+                var query = new Query(_grammar);
                 var qresult = query.SearchSMs(queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SemanticId, queryRequest.Identifier, queryRequest.Diff, queryRequest.Expression);
                 result.QueryResult = qresult;
                 break;
             case DbRequestOp.QueryCountSMs:
                 queryRequest = dbRequest.Context.Params.QueryRequest;
-                grammar = queryRequest.Grammar;
-                query = new Query(grammar);
+                query = new Query(_grammar);
                 var count = query.CountSMs(queryRequest.SemanticId, queryRequest.Identifier, queryRequest.Diff, queryRequest.Expression);
                 result.Count = count;
                 break;
             case DbRequestOp.QuerySearchSMEs:
                 queryRequest = dbRequest.Context.Params.QueryRequest;
-                grammar = queryRequest.Grammar;
-                query = new Query(grammar);
+                query = new Query(_grammar);
                 qresult = query.SearchSMEs(queryRequest.Requested, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
                     queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.Expression);
                 result.QueryResult = qresult;
                 break;
             case DbRequestOp.QueryCountSMEs:
                 queryRequest = dbRequest.Context.Params.QueryRequest;
-                grammar = queryRequest.Grammar;
-                query = new Query(grammar);
+                query = new Query(_grammar);
                 count = query.CountSMEs(queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
                     queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.Expression);
                 result.Count = count;

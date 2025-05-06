@@ -47,13 +47,11 @@ public class QueryAPI
     private readonly QueryGrammar grammar;
     */
 
-    public QueryAPI(QueryGrammarJSON queryGrammar, [Service] IDbRequestHandlerService dbRequestHandlerService)
+    public QueryAPI([Service] IDbRequestHandlerService dbRequestHandlerService)
     {
-        _queryGrammar = queryGrammar;
         _dbRequestHandlerService = dbRequestHandlerService;
     }
 
-    private readonly QueryGrammarJSON _queryGrammar;
     private readonly IDbRequestHandlerService _dbRequestHandlerService;
 
     // --------------- API ---------------
@@ -66,14 +64,14 @@ public class QueryAPI
 
         var withLastId = parameterNames.Contains("lastID");
 
-        var qresult = await _dbRequestHandlerService.QuerySearchSMs(_queryGrammar, withTotalCount, withLastId, semanticId, identifier, diff, expression);
+        var qresult = await _dbRequestHandlerService.QuerySearchSMs(withTotalCount, withLastId, semanticId, identifier, diff, expression);
 
         return qresult;
     }
 
     public async Task<int> CountSMs(string semanticId = "", string identifier = "", string diff = "", string expression = "")
     {
-        var result = await _dbRequestHandlerService.QueryCountSMs(_queryGrammar, semanticId, identifier, diff, expression);
+        var result = await _dbRequestHandlerService.QueryCountSMs(semanticId, identifier, diff, expression);
         return result;
     }
 
@@ -100,7 +98,7 @@ public class QueryAPI
                 requested += " " + field.ToString();
             }
         }
-        var qresult = await _dbRequestHandlerService.QuerySearchSMEs(_queryGrammar, requested, withTotalCount, withLastId,
+        var qresult = await _dbRequestHandlerService.QuerySearchSMEs(requested, withTotalCount, withLastId,
         smSemanticId, smIdentifier, semanticId, diff,
         contains, equal, lower, upper, expression);
 
@@ -111,7 +109,7 @@ public class QueryAPI
         string smSemanticId = "", string smIdentifier = "", string semanticId = "", string diff = "",
         string contains = "", string equal = "", string lower = "", string upper = "", string expression = "")
     {
-        var result = await _dbRequestHandlerService.QueryCountSMEs(_queryGrammar, smSemanticId, smIdentifier, semanticId,
+        var result = await _dbRequestHandlerService.QueryCountSMEs(smSemanticId, smIdentifier, semanticId,
             diff, contains, equal, lower, upper, expression);
         return result;
     }
