@@ -88,10 +88,10 @@ public class QueryRepositoryAPIApiController : ControllerBase
             }
 
             var submodels = JsonSerializer.Deserialize<List<Submodel>>(body);
-            // var output = await _dbRequestHandlerService.CreateSubmodel(securityConfig, body, decodedAasIdentifier);
 
             foreach (var submodel in submodels)
             {
+                //ToDo: What to do when it fails?
                 var createdSubmodel = await _dbRequestHandlerService.CreateSubmodel(securityConfig, submodel, null);
 
                 output.submodels.Add(createdSubmodel);
