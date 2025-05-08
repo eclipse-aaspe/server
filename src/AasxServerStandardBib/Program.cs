@@ -779,7 +779,7 @@ namespace AasxServer
             if (Directory.Exists(AasxHttpContextHelper.DataPath))
             {
                 var filesPath = AasxHttpContextHelper.DataPath + "/files";
-                Directory.Delete(filesPath);
+                Directory.Delete(filesPath, true);
 
                 if (!Directory.Exists(AasxHttpContextHelper.DataPath + "/xml"))
                     Directory.CreateDirectory(AasxHttpContextHelper.DataPath + "/xml");
