@@ -17,6 +17,7 @@ public class DbRequestResult
     public List<ISubmodel> Submodels { get; set; }
     public List<ISubmodelElement> SubmodelElements { get; set; }
     public List<IConceptDescription> ConceptDescriptions { get; set; }
+    public AasCore.Aas3_0.Environment Environment { get; set; }
 
     public DbFileRequestResult FileRequestResult { get; set; }
 

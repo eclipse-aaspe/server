@@ -22,9 +22,9 @@ namespace AasxServerStandardBib.Services
 {
     public class IdShortPathParserService : IIdShortPathParserService
     {
-        private IAppLogger<SubmodelService> _logger;
+        private IAppLogger<IdShortPathParserService> _logger;
 
-        public IdShortPathParserService(IAppLogger<SubmodelService> logger)
+        public IdShortPathParserService(IAppLogger<IdShortPathParserService> logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }

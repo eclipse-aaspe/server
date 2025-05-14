@@ -51,6 +51,8 @@ public enum DbRequestOp
     ReplaceConceptDescriptionById,
     DeleteConceptDescriptionById,
 
+    GenerateSerializationByIds,
+
     QuerySearchSMs,
     QueryCountSMs,
     QuerySearchSMEs,

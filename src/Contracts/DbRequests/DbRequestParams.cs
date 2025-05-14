@@ -17,6 +17,9 @@ public class DbRequestParams
     public string IdShort { get; set; }
     public List<ISpecificAssetId> AssetIds { get; set; }
 
+    public List<string> AasIds { get; set; }
+    public List<string> SubmodelIds { get; set; }
+
     //Bodies for Create and Replace
     public IAssetAdministrationShell AasBody { get; set; }
     public ISubmodel SubmodelBody { get; set; }
@@ -28,6 +31,8 @@ public class DbRequestParams
     //Metadata
     public IPaginationParameters PaginationParameters { get; set; }
     public bool First { get; set; }
+    public bool? IncludeCD { get; set; }
+
 
     public IReference IsCaseOf { get; set; }
     public IReference DataSpecificationRef { get; set; }

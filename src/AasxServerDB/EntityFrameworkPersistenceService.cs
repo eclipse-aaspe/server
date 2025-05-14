@@ -410,6 +410,13 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     dbRequest.Context.Params.ConceptDescriptionIdentifier);
                 break;
                 break;
+            case DbRequestOp.GenerateSerializationByIds:
+                var environment = GenerateSerializationByIds(dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.AasIds,
+                    dbRequest.Context.Params.SubmodelIds,
+                    dbRequest.Context.Params.IncludeCD);
+                result.Environment = environment;
+                break;
             default:
                 dbRequest.TaskCompletionSource.SetException(new Exception("Unknown Operation"));
                 break;
@@ -417,8 +424,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         return result;
     }
-
-
 
     private AdminShellPackageEnv ReadPackageEnv(string aasID, string smID, out string envFileName)
     {
@@ -1760,6 +1765,63 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
 
     }
+
+    private AasCore.Aas3_0.Environment GenerateSerializationByIds(ISecurityConfig securityConfig, List<string> aasIds, List<string> submodelIds, bool? includeCD)
+    {
+        List<IAssetAdministrationShell>? aas = null;
+        List<ISubmodel>? submodels = null;
+        List<IConceptDescription>? conceptDescriptions = null;
+        var outputEnv = new AasCore.Aas3_0.Environment(aas, submodels, conceptDescriptions);
+
+        using (var db = new AasContext())
+        {
+            if (aasIds != null)
+            {
+                foreach (var aasId in aasIds)
+                {
+                    if (aasId != null)
+                    {
+                        var a = Converter.GetAssetAdministrationShell(aasIdentifier: aasId);
+                        if (a != null)
+                        {
+                            aas ??= [];
+                            aas.Add(a);
+                        }
+                    }
+                }
+            }
+            if (submodelIds != null)
+            {
+                foreach (var submodelId in submodelIds)
+                {
+                    if (submodelId != null)
+                    {
+                        var s = Converter.GetSubmodel(submodelIdentifier: submodelId);
+                        if (s != null)
+                        {
+                            submodels ??= [];
+                            submodels.Add(s);
+                        }
+                    }
+                }
+            }
+            if (includeCD is not null and true)
+            {
+                foreach (var cd in db.CDSets)
+                {
+                    var c = Converter.GetConceptDescription(cd);
+                    if (c != null)
+                    {
+                        conceptDescriptions ??= [];
+                        conceptDescriptions.Add(c);
+                    }
+                }
+            }
+        }
+
+        return outputEnv;
+    }
+
 
     private bool IsAssetAdministrationShellPresent(string aasIdentifier, bool loadIntoMemory, out IAssetAdministrationShell output)
     {

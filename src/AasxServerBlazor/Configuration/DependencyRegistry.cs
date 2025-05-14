@@ -55,7 +55,6 @@ public static class DependencyRegistry
         services.AddTransient<IAasxFileServerInterfaceService, AasxFileServerInterfaceService>();
         services.AddTransient<IAdminShellPackageEnvironmentService, AdminShellPackageEnvironmentService>();
         services.AddTransient<IBase64UrlDecoderService, Base64UrlDecoderService>();
-        services.AddTransient<IGenerateSerializationService, GenerateSerializationService>();
         services.AddTransient<IIdShortPathParserService, IdShortPathParserService>();
         services.AddTransient<IJsonQueryDeserializer, JsonQueryDeserializer>();
         services.AddTransient<ILevelExtentModifierService, LevelExtentModifierService>();
