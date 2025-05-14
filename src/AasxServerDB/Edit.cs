@@ -125,5 +125,26 @@ namespace AasxServerDB
                 }
             }
         }
+
+        public static void DeleteConceptDescription(string conceptDescriptionId)
+        {
+            using (AasContext db = new AasContext())
+            {
+                using (var transaction = db.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        db.CDSets.Where(cd => cd.Identifier == conceptDescriptionId).ExecuteDelete();
+
+                        db.SaveChanges();
+                        transaction.Commit();
+                    }
+                    catch (Exception)
+                    {
+                        transaction.Rollback();
+                    }
+                }
+            }
+        }
     }
 }

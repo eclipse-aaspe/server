@@ -57,7 +57,7 @@ namespace AasxServerDB
             envFileName = ";";
             packageEnv = null;
 
-            int envId = -1; 
+            int envId = -1;
 
             if (!smId.IsNullOrEmpty())
             {
@@ -354,7 +354,8 @@ namespace AasxServerDB
                 if (smeMerged != null && smeMerged.Count != 0 && securityCondition?["all"] != null)
                 {
                     // at least 1 exists
-                    var mergeForCondition = smeMerged.Select(sme => new {
+                    var mergeForCondition = smeMerged.Select(sme => new
+                    {
                         sm = sme.smSet,
                         sme = sme.smeSet,
                         svalue = (sme.smeSet.TValue == "S" && sme.sValueSet != null && sme.sValueSet.Value != null) ? sme.sValueSet.Value : "",
@@ -594,7 +595,8 @@ namespace AasxServerDB
                 if (smeMerged != null && smeMerged.Count != 0 && securityCondition?["all"] != null)
                 {
                     // at least 1 exists
-                    var mergeForCondition = smeMerged.Select(sme => new {
+                    var mergeForCondition = smeMerged.Select(sme => new
+                    {
                         sm = sme.smSet,
                         sme = sme.smeSet,
                         svalue = (sme.smeSet.TValue == "S" && sme.sValueSet != null && sme.sValueSet.Value != null) ? sme.sValueSet.Value : "",
@@ -714,18 +716,6 @@ namespace AasxServerDB
             aasDB.TimeStamp = newAas.TimeStamp == default ? currentDataTime : newAas.TimeStamp;
             aasDB.TimeStampTree = newAas.TimeStampTree == default ? currentDataTime : newAas.TimeStampTree;
             aasDB.TimeStampDelete = newAas.TimeStampDelete;
-
-            if (newAas.Submodels != null)
-            {
-                foreach (var sm in newAas.Submodels)
-                {
-                    var identifier = sm.GetAsIdentifier();
-                    if (identifier != null)
-                    {
-                        aasDB.SMRefSets.Add(new SMRefSet { Identifier = identifier });
-                    }
-                }
-            }
         }
 
         public static ISubmodelElement? CreateSubmodelElement(string aasIdentifier, string submodelIdentifier, ISubmodelElement newSubmodelElement, string idShortPath, bool first)
@@ -1350,6 +1340,79 @@ namespace AasxServerDB
 
             var path = db.EnvSets.Where(e => e.Id == envId).Select(e => e.Path).FirstOrDefault();
             return path ?? string.Empty;
+        }
+
+        internal static List<IConceptDescription> GetPagedConceptDescriptions(IPaginationParameters paginationParameters, string idShort, IReference isCaseOf, IReference dataSpecificationRef)
+        {
+            var output = new List<IConceptDescription>();
+
+            using (var db = new AasContext())
+            {
+                var timeStamp = DateTime.UtcNow;
+
+                var cdDBList = db.CDSets
+                    .Where(cd => idShort == null || cd.IdShort == idShort)
+                    .OrderBy(cd => cd.Id)
+                    .Skip(paginationParameters.Cursor)
+                    .Take(paginationParameters.Limit)
+                    .ToList();
+
+                foreach (var cdDB in cdDBList)
+                {
+                    var cd = GetConceptDescription(cdDB: cdDB);
+                    if (cd?.TimeStamp == DateTime.MinValue)
+                    {
+                        cd.TimeStampCreate = timeStamp;
+                        cd.SetTimeStamp(timeStamp);
+                    }
+
+                    output.Add(cd);
+                }
+            }
+            return output;
+        }
+
+        internal static IConceptDescription CreateConceptDescription(IConceptDescription newCd)
+        {
+            IConceptDescription cd = null;
+
+            using (var db = new AasContext())
+            {
+                var cdDB = new CDSet();
+                SetConceptDescription(cdDB, newCd);
+
+                var cdDBQuery = db.Add(cdDB);
+                db.SaveChanges();
+
+                cd = GetConceptDescription(cdDBQuery.Entity);
+            }
+
+            return cd;
+        }
+
+        internal static void SetConceptDescription(CDSet cdDB, IConceptDescription newCd)
+        {
+            var currentDataTime = DateTime.UtcNow;
+
+            cdDB.IdShort = newCd.IdShort;
+            cdDB.DisplayName = Serializer.SerializeList(newCd.DisplayName);
+            cdDB.Category = newCd.Category;
+            cdDB.Description = Serializer.SerializeList(newCd.Description);
+            cdDB.Extensions = Serializer.SerializeList(newCd.Extensions);
+            cdDB.Identifier = newCd.Id;
+            cdDB.EmbeddedDataSpecifications = Serializer.SerializeList(newCd.EmbeddedDataSpecifications);
+            cdDB.IsCaseOf = Serializer.SerializeList(newCd.IsCaseOf);
+
+            cdDB.Version = newCd.Administration?.Version;
+            cdDB.Revision = newCd.Administration?.Revision;
+            cdDB.Creator = Serializer.SerializeElement(newCd.Administration?.Creator);
+            cdDB.TemplateId = newCd.Administration?.TemplateId;
+            cdDB.AEmbeddedDataSpecifications = Serializer.SerializeList(newCd.Administration?.EmbeddedDataSpecifications);
+
+            cdDB.TimeStampCreate = newCd.TimeStampCreate == default ? currentDataTime : newCd.TimeStampCreate;
+            cdDB.TimeStamp = newCd.TimeStamp == default ? currentDataTime : newCd.TimeStamp;
+            cdDB.TimeStampTree = newCd.TimeStampTree == default ? currentDataTime : newCd.TimeStampTree;
+            cdDB.TimeStampDelete = newCd.TimeStampDelete;
         }
     }
 }

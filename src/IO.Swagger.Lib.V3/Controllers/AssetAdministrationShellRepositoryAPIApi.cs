@@ -83,7 +83,6 @@ namespace IO.Swagger.Controllers
         /// 
         /// </summary>
         /// <param name="logger"></param>
-        /// <param name="persistenceService"></param>
         /// <param name="decoderService"></param>
         /// <param name="referenceModifierService"></param>
         /// <param name="mappingService"></param>

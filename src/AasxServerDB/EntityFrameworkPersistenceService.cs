@@ -111,7 +111,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         switch (dbRequest.Operation)
         {
-            case DbRequestOp.ReadAllAssetAdministrationShells:
+            case DbRequestOp.ReadPagedAssetAdministrationShells:
                 var assetAdministrationShells = ReadPagedAssetAdministrationShells(dbRequest.Context.Params.PaginationParameters,
                         dbRequest.Context.SecurityConfig,
                         dbRequest.Context.Params.AssetIds,
@@ -375,6 +375,41 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.Expression);
                 result.Count = count;
                 break;
+            case DbRequestOp.ReadPagedConceptDescriptions:
+                var conceptDescriptions = ReadPagedConceptDescriptions(
+                    dbRequest.Context.Params.PaginationParameters,
+                    dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.IdShort,
+                    dbRequest.Context.Params.IsCaseOf,
+                    dbRequest.Context.Params.DataSpecificationRef);
+                result.ConceptDescriptions = conceptDescriptions;
+                break;
+            case DbRequestOp.ReadConceptDescriptionById:
+                var conceptDescription = ReadConceptDescription(dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.ConceptDescriptionIdentifier);
+                result.ConceptDescriptions = new List<IConceptDescription>
+                {
+                    conceptDescription
+                };
+                break;
+            case DbRequestOp.CreateConceptDescription:
+                conceptDescription = CreateConceptDescription(dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.ConceptDescriptionBody);
+                result.ConceptDescriptions = new List<IConceptDescription>
+                {
+                    conceptDescription
+                };
+                break;
+            case DbRequestOp.ReplaceConceptDescriptionById:
+                ReplaceConceptDescription(dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.ConceptDescriptionBody,
+                    dbRequest.Context.Params.ConceptDescriptionIdentifier);
+                break;
+            case DbRequestOp.DeleteConceptDescriptionById:
+                DeleteConceptDescription(dbRequest.Context.SecurityConfig,
+                    dbRequest.Context.Params.ConceptDescriptionIdentifier);
+                break;
+                break;
             default:
                 dbRequest.TaskCompletionSource.SetException(new Exception("Unknown Operation"));
                 break;
@@ -382,6 +417,15 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         return result;
     }
+
+
+
+    private AdminShellPackageEnv ReadPackageEnv(string aasID, string smID, out string envFileName)
+    {
+        Converter.IsPackageEnvPresent(aasID, smID, true, out envFileName, out AdminShellPackageEnv packageEnv);
+        return packageEnv;
+    }
+
 
     private List<IAssetAdministrationShell> ReadPagedAssetAdministrationShells(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, List<ISpecificAssetId> assetIds, string idShort)
     {
@@ -437,93 +481,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
         return output;
     }
-
-    private ISubmodel ReadSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
-    {
-        Dictionary<string, string>? securityCondition = null;
-        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
-
-        if (!isAllowed)
-        {
-            throw new NotAllowed($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
-        }
-
-        bool found = IsSubmodelPresent(securityCondition, aasIdentifier, submodelIdentifier, true, out ISubmodel output);
-
-        if (found)
-        {
-            using (var scope = _serviceProvider.CreateScope())
-            {
-                var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
-                scopedLogger.LogDebug($"Submodel wit id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} found.");
-            }
-            return output;
-        }
-        else
-        {
-            throw new NotFoundException($"Submodel wit id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} not found.");
-        }
-    }
-
-    private List<ISubmodelElement> ReadPagedSubmodelElements(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
-    {
-        Dictionary<string, string>? securityCondition = null;
-        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
-        if (!isAllowed)
-        {
-            throw new NotAllowed($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
-        }
-
-        var output = Converter.GetPagedSubmodelElements(paginationParameters, securityCondition, aasIdentifier, submodelIdentifier);
-        if (output == null)
-        {
-            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
-        }
-        return output;
-    }
-
-    private ISubmodelElement ReadSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath)
-    {
-        Dictionary<string, string>? securityCondition = null;
-        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
-        if (!isAllowed)
-        {
-            throw new NotAllowed($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
-        }
-
-        var output = Converter.GetSubmodelElementByPath(securityCondition, aasIdentifier, submodelIdentifier, idShortPath, out SMESet smE);
-        if (output == null)
-        {
-            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
-        }
-        return output;
-    }
-
-    private List<ISubmodel> ReadPagedSubmodels(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, IReference reqSemanticId, string idShort)
-    {
-        Dictionary<string, string>? securityCondition = null;
-        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
-
-        var output = Converter.GetPagedSubmodels(paginationParameters, securityCondition, reqSemanticId, idShort);
-
-        if (reqSemanticId != null)
-        {
-            using (var scope = _serviceProvider.CreateScope())
-            {
-                var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
-                scopedLogger.LogDebug($"Filtering Submodels with requested Semnatic Id.");
-                output = output.Where(s => s.SemanticId != null && s.SemanticId.Matches(reqSemanticId)).ToList();
-                if (output.IsNullOrEmpty())
-                {
-                    scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
-                    scopedLogger.LogInformation($"No Submodels with requested semanticId found.");
-                }
-            }
-        }
-
-        return output;
-    }
-
     private IAssetAdministrationShell ReadAssetAdministrationShellById(ISecurityConfig securityConfig, string aasIdentifier)
     {
         Dictionary<string, string>? securityCondition = null;
@@ -550,8 +507,142 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             throw new NotFoundException($"Asset Administration Shell with id {aasIdentifier} not found.");
         }
     }
+    private IAssetAdministrationShell CreateAssetAdministrationShell(ISecurityConfig securityConfig, IAssetAdministrationShell body)
+    {
+        //string securityConditionSM, securityConditionSME;
+        //bool isAllowed = InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
 
-    private string ReadFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath, out byte[] content, out long fileSize)
+        var found = IsAssetAdministrationShellPresent(body.Id, false, out _);
+        if (found)
+        {
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                scopedLogger.LogDebug($"Cannot create requested AAS !!");
+            }
+            throw new DuplicateException($"AssetAdministrationShell with id {body.Id} already exists.");
+        }
+
+        var output = Converter.CreateAas(body);
+
+        return output;
+    }
+    private void ReplaceAssetAdministrationShellById(ISecurityConfig securityConfig, string aasIdentifier, IAssetAdministrationShell newAas)
+    {
+        var found = IsAssetAdministrationShellPresent(aasIdentifier, false, out _);
+
+        if (found)
+        {
+            using (var db = new AasContext())
+            {
+                var aasDB = db.AASSets
+                    .Include(aas => aas.SMRefSets)
+                    .FirstOrDefault(aas => aas.Identifier == aasIdentifier);
+
+                if (aasDB != null)
+                {
+                    db.SMRefSets.RemoveRange(aasDB.SMRefSets);
+
+                    Converter.SetAas(aasDB, newAas);
+                    db.SaveChanges();
+
+                    using (var scope = _serviceProvider.CreateScope())
+                    {
+                        var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                        scopedLogger.LogDebug($"AssetInformation from AAS with id {aasIdentifier} updated successfully.");
+                    }
+                }
+            }
+            //    Program.signalNewData(0);
+        }
+        else
+        {
+            throw new NotFoundException($"Asset Administration Shell with id {aasIdentifier} not found.");
+        }
+    }
+    private void DeleteAssetAdministrationShellById(ISecurityConfig securityConfig, string aasIdentifier)
+    {
+        Dictionary<string, string>? securityCondition = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
+
+        if (IsAssetAdministrationShellPresent(aasIdentifier, false, out _))
+        {
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                scopedLogger.LogDebug($"Found aas with id {aasIdentifier}");
+            }
+
+            Edit.DeleteAAS(aasIdentifier);
+        }
+        else
+        {
+            throw new NotFoundException($"AAS with id {aasIdentifier} NOT found");
+        }
+    }
+
+
+    private IReference CreateSubmodelReferenceInAAS(IReference body, string aasIdentifier)
+    {
+        using (AasContext db = new AasContext())
+        {
+            var aasDB = db.AASSets
+                .Include(aas => aas.SMRefSets)
+                .FirstOrDefault(aas => aas.Identifier == aasIdentifier);
+            var identifier = body.GetAsIdentifier();
+            if (aasDB != null && identifier != null)
+            {
+                aasDB.SMRefSets.Add(new SMRefSet { Identifier = identifier });
+            }
+        }
+
+        // TODO: read reference from DB
+        return body;
+    }
+    private void DeleteSubmodelReferenceById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
+    {
+        using (AasContext db = new AasContext())
+        {
+            var aasDB = db.AASSets
+                .Include(aas => aas.SMRefSets)
+                .FirstOrDefault(aas => aas.Identifier == aasIdentifier);
+            if (aasDB != null)
+            {
+                var smRefDB = aasDB.SMRefSets.FirstOrDefault(s => s.Identifier == submodelIdentifier);
+                if (smRefDB != null)
+                {
+                    aasDB.SMRefSets.Remove(smRefDB);
+                    db.SaveChanges();
+                }
+            }
+        }
+    }
+
+    private List<ISubmodel> ReadPagedSubmodels(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, IReference reqSemanticId, string idShort)
+    {
+        Dictionary<string, string>? securityCondition = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
+
+        var output = Converter.GetPagedSubmodels(paginationParameters, securityCondition, reqSemanticId, idShort);
+
+        if (reqSemanticId != null)
+        {
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                scopedLogger.LogDebug($"Filtering Submodels with requested Semnatic Id.");
+                output = output.Where(s => s.SemanticId != null && s.SemanticId.Matches(reqSemanticId)).ToList();
+                if (output.IsNullOrEmpty())
+                {
+                    scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                    scopedLogger.LogInformation($"No Submodels with requested semanticId found.");
+                }
+            }
+        }
+
+        return output;
+    }
+    private ISubmodel ReadSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
     {
         Dictionary<string, string>? securityCondition = null;
         bool isAllowed = InitSecurity(securityConfig, out securityCondition);
@@ -561,161 +652,22 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             throw new NotAllowed($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
         }
 
-        content = null;
-        fileSize = 0;
+        bool found = IsSubmodelPresent(securityCondition, aasIdentifier, submodelIdentifier, true, out ISubmodel output);
 
-        var fileElement = Converter.GetSubmodelElementByPath(securityCondition, aasIdentifier, submodelIdentifier, idShortPath, out SMESet smE);
-
-        var found = fileElement != null;
         if (found)
         {
             using (var scope = _serviceProvider.CreateScope())
             {
                 var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
-                scopedLogger.LogDebug($"Asset Administration Shell with id {aasIdentifier} found.");
-
-                string fileName = null;
-
-                if (fileElement is AasCore.Aas3_0.File file)
-                {
-                    fileName = file.Value;
-
-                    if (string.IsNullOrEmpty(fileName))
-                    {
-                        scopedLogger.LogError($"File name is empty. Cannot fetch the file.");
-                        throw new UnprocessableEntityException($"File value Null!!");
-                    }
-
-                    //check if it is external location
-                    if (file.Value.StartsWith("http") || file.Value.StartsWith("https"))
-                    {
-                        scopedLogger.LogWarning($"Value of the Submodel-Element File with IdShort {file.IdShort} is an external link.");
-                        throw new NotImplementedException($"File location for {file.IdShort} is external {file.Value}. Currently this fuctionality is not supported.");
-                    }
-                    //Check if a directory
-                    else if (file.Value.StartsWith('/') || file.Value.StartsWith('\\'))
-                    {
-                        scopedLogger.LogInformation($"Value of the Submodel-Element File with IdShort {file.IdShort} is a File-Path.");
-                        var envFileName = string.Empty;
-
-                        var packageEnvFound = Converter.IsPackageEnvPresent(aasIdentifier, submodelIdentifier, false, out envFileName, out AdminShellPackageEnv packageEnv);
-
-                        if (packageEnvFound != null)
-                        {
-                            using (var fileStream = new FileStream(AasContext.DataPath + "/files/" + Path.GetFileName(envFileName) + ".zip", FileMode.Open))
-                            {
-                                using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
-                                {
-                                    var archiveFile = archive.GetEntry(file.Value);
-                                    var tempStream = archiveFile.Open();
-                                    var ms = new MemoryStream();
-                                    tempStream.CopyTo(ms);
-                                    ms.Position = 0;
-                                    content = ms.ToByteArray();
-                                }
-                            }
-
-                            // var stream = packageEnv.GetLocalStreamFromPackage(fileName);
-                            fileSize = content.Length;
-                        }
-                        else
-                        {
-                            throw new NotFoundException($"Package for aas id {aasIdentifier} and submodel id {submodelIdentifier} not found");
-                        }
-                    }
-                    // incorrect value
-                    else
-                    {
-                        scopedLogger.LogError($"Incorrect value {file.Value} of the Submodel-Element File with IdShort {file.IdShort}");
-                        throw new UnprocessableEntityException($"Incorrect value {file.Value} of the File with IdShort {file.IdShort}.");
-                    }
-                }
-                else
-                {
-                    throw new NotFoundException($"Submodel element {fileElement.IdShort} is not of type File.");
-                }
-
-                return fileName;
+                scopedLogger.LogDebug($"Submodel wit id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} found.");
             }
+            return output;
         }
         else
         {
             throw new NotFoundException($"Submodel wit id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} not found.");
         }
     }
-
-    private IAssetInformation ReadAssetInformation(ISecurityConfig securityConfig, string aasIdentifier)
-    {
-        var aas = ReadAssetAdministrationShellById(securityConfig, aasIdentifier);
-        return aas.AssetInformation;
-    }
-
-    private string ReadThumbnail(ISecurityConfig securityConfig, string aasIdentifier, out byte[] byteArray, out long fileSize)
-    {
-        string fileName = null;
-        byteArray = null;
-        fileSize = 0;
-        var aas = ReadAssetAdministrationShellById(securityConfig, aasIdentifier);
-        if (aas != null)
-        {
-            if (aas.AssetInformation != null)
-            {
-                if (aas.AssetInformation.DefaultThumbnail != null && !string.IsNullOrEmpty(aas.AssetInformation.DefaultThumbnail.Path))
-                {
-                    fileName = aas.AssetInformation.DefaultThumbnail.Path;
-
-                    var envFileName = string.Empty;
-                    var found = Converter.IsPackageEnvPresent(aasIdentifier, null, false, out envFileName, out AdminShellPackageEnv packageEnv);
-
-                    if (found)
-                    {
-                        string fcopy = Path.GetFileName(envFileName) + "__thumbnail";
-                        fcopy = fcopy.Replace("/", "_");
-                        fcopy = fcopy.Replace(".", "_");
-                        var result = System.IO.File.Open(AasContext.DataPath + "/files/" + fcopy + ".dat", FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-
-                        // Post-condition
-                        if (!(result == null || result.CanRead))
-                        {
-                            // throw new InvalidOperationException("Unexpected unreadable result stream");
-                            return null;
-                        }
-
-                        byteArray = result.ToByteArray();
-                        fileSize = byteArray.Length;
-                        result.Close();
-                    }
-                    else
-                    {
-                        throw new NotFoundException($"Package for aas id {aasIdentifier} not found");
-                    }
-
-                    using (var scope = _serviceProvider.CreateScope())
-                    {
-                        var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
-                        scopedLogger.LogDebug($"Updated the thumbnail in AAS with Id {aasIdentifier}");
-                    }
-                }
-                else
-                {
-                    throw new NotFoundException($"No default thumbnail embedded in the AssetInformation of the requested AAS.");
-                }
-            }
-            else
-            {
-                throw new NotFoundException($"AssetInformation is NULL in requested AAS with id {aasIdentifier}");
-            }
-        }
-
-        return fileName;
-    }
-
-    private AdminShellPackageEnv ReadPackageEnv(string aasID, string smID, out string envFileName)
-    {
-        Converter.IsPackageEnvPresent(aasID, smID, true, out envFileName, out AdminShellPackageEnv packageEnv);
-        return packageEnv;
-    }
-
     private ISubmodel CreateSubmodel(ISecurityConfig securityConfig, ISubmodel newSubmodel, string aasIdentifier)
     {
         Dictionary<string, string>? securityCondition = null;
@@ -736,28 +688,92 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         return submodel;
     }
-
-    public IAssetAdministrationShell CreateAssetAdministrationShell(ISecurityConfig securityConfig, IAssetAdministrationShell body)
+    public void ReplaceSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodel newSubmodel)
     {
-        //string securityConditionSM, securityConditionSME;
-        //bool isAllowed = InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
+        Dictionary<string, string>? securityCondition = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
 
-        var found = IsAssetAdministrationShellPresent(body.Id, false, out _);
+        var found = IsSubmodelPresent(securityCondition, aasIdentifier, submodelIdentifier, false, out _);
         if (found)
+        {
+            using (var db = new AasContext())
+            {
+                var visitor = new VisitorAASX(db);
+                visitor.update = true;
+                visitor.currentDataTime = DateTime.UtcNow;
+                visitor.VisitSubmodel(newSubmodel);
+                // Delete no more exisiting SMEs in SM
+                var smDB = visitor._smDB;
+                db.SMESets.Where(sme => sme.SMId == smDB.Id && !visitor.keepSme.Contains(sme.Id)).ExecuteDeleteAsync();
+                db.SaveChanges();
+            }
+        }
+        else
+        {
+            var message = $"Submodel with id {submodelIdentifier} NOT found";
+            if (!String.IsNullOrEmpty(aasIdentifier))
+            {
+                message += $" in AAS with id {aasIdentifier}";
+            }
+            throw new NotFoundException(message);
+        }
+    }
+    public void UpdateSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodel newSubmodel) => throw new NotImplementedException();
+    public void DeleteSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
+    {
+        Dictionary<string, string>? securityCondition = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
+
+        if (IsSubmodelPresent(securityCondition, aasIdentifier, submodelIdentifier, false, out _))
         {
             using (var scope = _serviceProvider.CreateScope())
             {
                 var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
-                scopedLogger.LogDebug($"Cannot create requested AAS !!");
+                scopedLogger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
             }
-            throw new DuplicateException($"AssetAdministrationShell with id {body.Id} already exists.");
+
+            Edit.DeleteSubmodel(submodelIdentifier);
         }
-
-        var output = Converter.CreateAas(body);
-
-        return output;
+        else
+        {
+            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+        }
     }
 
+
+
+    private List<ISubmodelElement> ReadPagedSubmodelElements(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
+    {
+        Dictionary<string, string>? securityCondition = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
+        if (!isAllowed)
+        {
+            throw new NotAllowed($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
+        }
+
+        var output = Converter.GetPagedSubmodelElements(paginationParameters, securityCondition, aasIdentifier, submodelIdentifier);
+        if (output == null)
+        {
+            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+        }
+        return output;
+    }
+    private ISubmodelElement ReadSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath)
+    {
+        Dictionary<string, string>? securityCondition = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
+        if (!isAllowed)
+        {
+            throw new NotAllowed($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
+        }
+
+        var output = Converter.GetSubmodelElementByPath(securityCondition, aasIdentifier, submodelIdentifier, idShortPath, out SMESet smE);
+        if (output == null)
+        {
+            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+        }
+        return output;
+    }
     public ISubmodelElement CreateSubmodelElement(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodelElement newSubmodelElement, string idShortPath, bool first = true)
     {
         Dictionary<string, string>? securityCondition = null;
@@ -797,110 +813,75 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
         }
     }
-
-    public IReference CreateSubmodelReferenceInAAS(IReference body, string aasIdentifier)
-    {
-        using (AasContext db = new AasContext())
-        {
-            var aasDB = db.AASSets
-                .Include(aas => aas.SMRefSets)
-                .FirstOrDefault(aas => aas.Identifier == aasIdentifier);
-            var identifier = body.GetAsIdentifier();
-            if (aasDB != null && identifier != null)
-            {
-                aasDB.SMRefSets.Add(new SMRefSet { Identifier = identifier });
-            }
-        }
-
-        // TODO: read reference from DB
-        return body;
-    }
-
-    public void DeleteAssetAdministrationShellById(ISecurityConfig securityConfig, string aasIdentifier)
-    {
-        if (IsAssetAdministrationShellPresent(aasIdentifier, false, out _))
-        {
-            Edit.DeleteAAS(aasIdentifier);
-        }
-    }
-
-    public void DeleteFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath)
+    public void ReplaceSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath, ISubmodelElement body)
     {
         Dictionary<string, string>? securityCondition = null;
         bool isAllowed = InitSecurity(securityConfig, out securityCondition);
-
-        if (IsSubmodelPresent(securityCondition, aasIdentifier, submodelIdentifier, false, out _))
+        if (!isAllowed)
         {
-            SMESet sME = null;
-            var fileElement = Converter.GetSubmodelElementByPath(securityCondition, aasIdentifier, submodelIdentifier, idShortPath, out sME);
+            throw new NotAllowed($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
+        }
 
-            var found = fileElement != null;
-            if (found)
+        var found = IsSubmodelPresent(securityCondition, aasIdentifier, submodelIdentifier, false, out _);
+        if (found)
+        {
+            using (var db = new AasContext())
             {
-                using (var scope = _serviceProvider.CreateScope())
+                var smDBQuery = db.SMSets.Where(sm => sm.Identifier == submodelIdentifier);
+
+                if (!aasIdentifier.IsNullOrEmpty())
                 {
-                    var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
-                    scopedLogger.LogDebug($"Asset Administration Shell with id {aasIdentifier} found.");
-
-                    string fileName = null;
-
-                    if (fileElement is AasCore.Aas3_0.File file)
+                    var aasDB = db.AASSets
+                        .Where(aas => aas.Identifier == aasIdentifier).ToList();
+                    if (aasDB == null || aasDB.Count != 1)
                     {
-                        if (!string.IsNullOrEmpty(file.Value))
-                        {
-                            //check if it is external location
-                            if (file.Value.StartsWith("http") || file.Value.StartsWith("https"))
-                            {
-                                scopedLogger.LogWarning($"Value of the Submodel-Element File with IdShort {file.IdShort} is an external link.");
-                                throw new NotImplementedException($"File location for {file.IdShort} is external {file.Value}. Currently this fuctionality is not supported.");
-                            }
-                            //Check if a directory
-                            else if (file.Value.StartsWith('/') || file.Value.StartsWith('\\'))
-                            {
-                                scopedLogger.LogInformation($"Value of the Submodel-Element File with IdShort {file.IdShort} is a File-Path.");
-
-                                var envFileName = string.Empty;
-
-                                var packageEnvFound = Converter.IsPackageEnvPresent(aasIdentifier, submodelIdentifier, false, out envFileName, out AdminShellPackageEnv packageEnv);
-
-                                if (packageEnvFound)
-                                {
-                                    using (var fileStream = new FileStream(AasContext.DataPath + "/files/" + Path.GetFileName(envFileName) + ".zip", FileMode.Open))
-                                    {
-                                        using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Update))
-                                        {
-                                            var entry = archive.GetEntry(file.Value);
-
-                                            entry?.Delete();
-                                        }
-                                    }
-
-                                    Edit.DeleteSubmodelElement(sME);
-                                }
-
-                                file.Value = string.Empty;
-
-                                //ToDo: Do notification
-                                //Program.signalNewData(1);
-                                //scopedLogger.LogDebug($"Deleted the file at {idShortPath} from submodel with Id {submodelIdentifier}");
-                            }
-                            // incorrect value
-                            else
-                            {
-                                scopedLogger.LogError($"Incorrect value {file.Value} of the Submodel-Element File with IdShort {file.IdShort}");
-                                throw new OperationNotSupported($"Incorrect value {file.Value} of the File with IdShort {file.IdShort}.");
-                            }
-                        }
+                        return;
                     }
-                    else
-                    {
-                        //throw new OperationNotSupported($"Cannot delete the file. SubmodelElement {idShortPath} does not have a file attached.");
-                    }
+                    var aasDBId = aasDB[0].Id;
+                    smDBQuery = smDBQuery.Where(sm => sm.AASId == aasDBId);
                 }
-            }
-            else
-            {
-                //throw new OperationNotSupported($"SubmodelElement found at {idShortPath} is not of type File");
+
+                if (securityCondition != null)
+                {
+                    smDBQuery = smDBQuery.Where(securityCondition["sm."]);
+                }
+
+                var smDB = smDBQuery.FirstOrDefault();
+                var visitor = new VisitorAASX(db);
+                visitor._smDB = smDB;
+                visitor.currentDataTime = DateTime.UtcNow;
+                var smDBId = smDB.Id;
+                var smeSmList = db.SMESets.Where(sme => sme.SMId == smDBId).ToList();
+                Converter.CreateIdShortPath(db, smeSmList);
+                var smeSmMerged = Converter.GetSmeMerged(db, smeSmList, null);
+                visitor.smSmeMerged = smeSmMerged;
+                visitor.idShortPath = idShortPath;
+                visitor.update = true;
+                var receiveSmeDB = visitor.VisitSMESet(body);
+                receiveSmeDB.SMId = smDBId;
+                Converter.setTimeStampTree(db, smDB, receiveSmeDB, receiveSmeDB.TimeStamp);
+                try
+                {
+                    // db.SMESets.Add(receiveSmeDB);
+                    db.SaveChanges();
+                }
+                catch (Exception ex)
+                {
+                }
+                var smeDB = smeSmMerged.Where(sme =>
+                        !visitor.keepSme.Contains(sme.smeSet.Id) &&
+                        visitor.deleteSme.Contains(sme.smeSet.Id)
+                    ).ToList();
+                var smeDelete = smeDB.Select(sme => sme.smeSet.Id).Distinct().ToList();
+
+                if (smeDelete.Count > 0)
+                {
+                    db.SMESets.Where(sme => smeDelete.Contains(sme.Id)).ExecuteDeleteAsync().Wait();
+                    db.SaveChanges();
+                }
+                //_logger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
+                //ToDo submodel service solution, do we really need a different solution for replace and update?
+                //_submodelService.UpdateSubmodelElementByPath(submodelIdentifier, idShortPath, newSme);
             }
         }
         else
@@ -908,27 +889,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
         }
     }
-
-    public void DeleteSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
-    {
-        Dictionary<string, string>? securityCondition = null;
-        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
-
-        if (IsSubmodelPresent(securityCondition, aasIdentifier, submodelIdentifier, false, out _))
-        {
-            using (var scope = _serviceProvider.CreateScope())
-            {
-                var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
-                scopedLogger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
-            }
-
-            Edit.DeleteSubmodel(submodelIdentifier);
-        }
-        else
-        {
-            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
-        }
-    }
+    public void UpdateSubmodelElementByPath(ISecurityConfig security, string aasIdentifier, string submodelIdentifier, string idShortPath, ISubmodelElement body) => throw new NotImplementedException();
 
     public void DeleteSubmodelElementByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath)
     {
@@ -1032,202 +993,11 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    public void DeleteSubmodelReferenceById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier)
+    private IAssetInformation ReadAssetInformation(ISecurityConfig securityConfig, string aasIdentifier)
     {
-        using (AasContext db = new AasContext())
-        {
-            var aasDB = db.AASSets
-                .Include(aas => aas.SMRefSets)
-                .FirstOrDefault(aas => aas.Identifier == aasIdentifier);
-            if (aasDB != null)
-            {
-                var smRefDB = aasDB.SMRefSets.FirstOrDefault(s => s.Identifier == submodelIdentifier);
-                if (smRefDB != null)
-                {
-                    aasDB.SMRefSets.Remove(smRefDB);
-                    db.SaveChanges();
-                }
-            }
-        }
+        var aas = ReadAssetAdministrationShellById(securityConfig, aasIdentifier);
+        return aas.AssetInformation;
     }
-
-    public void DeleteThumbnail(ISecurityConfig securityConfig, string aasIdentifier)
-    {
-        var aas = this.ReadAssetAdministrationShellById(null, aasIdentifier);
-        if (aas != null)
-        {
-            if (aas.AssetInformation != null)
-            {
-                if (aas.AssetInformation.DefaultThumbnail != null && !string.IsNullOrEmpty(aas.AssetInformation.DefaultThumbnail.Path))
-                {
-                    var fileName = aas.AssetInformation.DefaultThumbnail.Path;
-
-                    var envFileName = string.Empty;
-                    var found = Converter.IsPackageEnvPresent(aasIdentifier, null, false, out envFileName, out AdminShellPackageEnv packageEnv);
-
-                    if (found)
-                    {
-                        string fcopy = Path.GetFileName(envFileName) + "__thumbnail";
-                        fcopy = fcopy.Replace("/", "_");
-                        fcopy = fcopy.Replace(".", "_");
-                        System.IO.File.Delete(AasContext.DataPath + "/files/" + fcopy + ".dat");
-                    }
-                    else
-                    {
-                        throw new NotFoundException($"Package for aas id {aasIdentifier} not found");
-                    }
-                }
-                else
-                {
-                    throw new NotFoundException($"No default thumbnail embedded in the AssetInformation of the requested AAS.");
-                }
-            }
-        }
-    }
-
-    public void ReplaceSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodel newSubmodel)
-    {
-        Dictionary<string, string>? securityCondition = null;
-        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
-
-        var found = IsSubmodelPresent(securityCondition, aasIdentifier, submodelIdentifier, false, out _);
-        if (found)
-        {
-            using (var db = new AasContext())
-            {
-                var visitor = new VisitorAASX(db);
-                visitor.update = true;
-                visitor.currentDataTime = DateTime.UtcNow;
-                visitor.VisitSubmodel(newSubmodel);
-                // Delete no more exisiting SMEs in SM
-                var smDB = visitor._smDB;
-                db.SMESets.Where(sme => sme.SMId == smDB.Id && !visitor.keepSme.Contains(sme.Id)).ExecuteDeleteAsync();
-                db.SaveChanges();
-            }
-        }
-        else
-        {
-            var message = $"Submodel with id {submodelIdentifier} NOT found";
-            if (!String.IsNullOrEmpty(aasIdentifier))
-            {
-                message += $" in AAS with id {aasIdentifier}";
-            }
-            throw new NotFoundException(message);
-        }
-    }
-
-    public void ReplaceSubmodelElementByPath(ISecurityConfig securityConfig,string aasIdentifier, string submodelIdentifier, string idShortPath, ISubmodelElement body)
-    {
-        Dictionary<string, string>? securityCondition = null;
-        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
-        if (!isAllowed)
-        {
-            throw new NotAllowed($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
-        }
-
-        var found = IsSubmodelPresent(securityCondition, aasIdentifier, submodelIdentifier, false, out _);
-        if (found)
-        {
-            using (var db = new AasContext())
-            {
-                var smDBQuery = db.SMSets.Where(sm => sm.Identifier == submodelIdentifier);
-
-                if (!aasIdentifier.IsNullOrEmpty())
-                {
-                    var aasDB = db.AASSets
-                        .Where(aas => aas.Identifier == aasIdentifier).ToList();
-                    if (aasDB == null || aasDB.Count != 1)
-                    {
-                        return;
-                    }
-                    var aasDBId = aasDB[0].Id;
-                    smDBQuery = smDBQuery.Where(sm => sm.AASId == aasDBId);
-                }
-
-                if (securityCondition != null)
-                {
-                    smDBQuery = smDBQuery.Where(securityCondition["sm."]);
-                }
-
-                var smDB = smDBQuery.FirstOrDefault();
-                var visitor = new VisitorAASX(db);
-                visitor._smDB = smDB;
-                visitor.currentDataTime = DateTime.UtcNow;
-                var smDBId = smDB.Id;
-                var smeSmList = db.SMESets.Where(sme => sme.SMId == smDBId).ToList();
-                Converter.CreateIdShortPath(db, smeSmList);
-                var smeSmMerged = Converter.GetSmeMerged(db, smeSmList, null);
-                visitor.smSmeMerged = smeSmMerged;
-                visitor.idShortPath = idShortPath;
-                visitor.update = true;
-                var receiveSmeDB = visitor.VisitSMESet(body);
-                receiveSmeDB.SMId = smDBId;
-                Converter.setTimeStampTree(db, smDB, receiveSmeDB, receiveSmeDB.TimeStamp);
-                try
-                {
-                    // db.SMESets.Add(receiveSmeDB);
-                    db.SaveChanges();
-                }
-                catch (Exception ex)
-                {
-                }
-                var smeDB = smeSmMerged.Where(sme =>
-                        !visitor.keepSme.Contains(sme.smeSet.Id) &&
-                        visitor.deleteSme.Contains(sme.smeSet.Id)
-                    ).ToList();
-                var smeDelete = smeDB.Select(sme => sme.smeSet.Id).Distinct().ToList();
-
-                if (smeDelete.Count > 0)
-                {
-                    db.SMESets.Where(sme => smeDelete.Contains(sme.Id)).ExecuteDeleteAsync().Wait();
-                    db.SaveChanges();
-                }
-                //_logger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
-                //ToDo submodel service solution, do we really need a different solution for replace and update?
-                //_submodelService.UpdateSubmodelElementByPath(submodelIdentifier, idShortPath, newSme);
-            }
-        }
-        else
-        {
-            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
-        }
-    }
-
-    public void ReplaceAssetAdministrationShellById(ISecurityConfig securityConfig, string aasIdentifier, IAssetAdministrationShell newAas)
-    {
-        var found = IsAssetAdministrationShellPresent(aasIdentifier, false, out _);
-
-        if (found)
-        {
-            using (var db = new AasContext())
-            {
-                var aasDB = db.AASSets
-                    .Include(aas => aas.SMRefSets)
-                    .FirstOrDefault(aas => aas.Identifier == aasIdentifier);
-
-                if (aasDB != null)
-                {
-                    db.SMRefSets.RemoveRange(aasDB.SMRefSets);
-
-                    Converter.SetAas(aasDB, newAas);
-                    db.SaveChanges();
-
-                    using (var scope = _serviceProvider.CreateScope())
-                    {
-                        var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
-                        scopedLogger.LogDebug($"AssetInformation from AAS with id {aasIdentifier} updated successfully.");
-                    }
-                }
-            }
-            //    Program.signalNewData(0);
-        }
-        else
-        {
-            throw new NotFoundException($"Asset Administration Shell with id {aasIdentifier} not found.");
-        }
-    }
-
-
     public void ReplaceAssetInformation(ISecurityConfig securityConfig, string aasIdentifier, IAssetInformation newAssetInformation)
     {
         var found = IsAssetAdministrationShellPresent(aasIdentifier, false, out _);
@@ -1265,9 +1035,100 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         {
             throw new NotFoundException($"Asset Administration Shell with id {aasIdentifier} not found.");
         }
-
     }
 
+    private string ReadFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath, out byte[] content, out long fileSize)
+    {
+        Dictionary<string, string>? securityCondition = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
+
+        if (!isAllowed)
+        {
+            throw new NotAllowed($"NOT ALLOWED: Submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
+        }
+
+        content = null;
+        fileSize = 0;
+
+        var fileElement = Converter.GetSubmodelElementByPath(securityCondition, aasIdentifier, submodelIdentifier, idShortPath, out SMESet smE);
+
+        var found = fileElement != null;
+        if (found)
+        {
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                scopedLogger.LogDebug($"Asset Administration Shell with id {aasIdentifier} found.");
+
+                string fileName = null;
+
+                if (fileElement is AasCore.Aas3_0.File file)
+                {
+                    fileName = file.Value;
+
+                    if (string.IsNullOrEmpty(fileName))
+                    {
+                        scopedLogger.LogError($"File name is empty. Cannot fetch the file.");
+                        throw new UnprocessableEntityException($"File value Null!!");
+                    }
+
+                    //check if it is external location
+                    if (file.Value.StartsWith("http") || file.Value.StartsWith("https"))
+                    {
+                        scopedLogger.LogWarning($"Value of the Submodel-Element File with IdShort {file.IdShort} is an external link.");
+                        throw new NotImplementedException($"File location for {file.IdShort} is external {file.Value}. Currently this fuctionality is not supported.");
+                    }
+                    //Check if a directory
+                    else if (file.Value.StartsWith('/') || file.Value.StartsWith('\\'))
+                    {
+                        scopedLogger.LogInformation($"Value of the Submodel-Element File with IdShort {file.IdShort} is a File-Path.");
+                        var envFileName = string.Empty;
+
+                        var packageEnvFound = Converter.IsPackageEnvPresent(aasIdentifier, submodelIdentifier, false, out envFileName, out AdminShellPackageEnv packageEnv);
+
+                        if (packageEnvFound != null)
+                        {
+                            using (var fileStream = new FileStream(AasContext.DataPath + "/files/" + Path.GetFileName(envFileName) + ".zip", FileMode.Open))
+                            {
+                                using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
+                                {
+                                    var archiveFile = archive.GetEntry(file.Value);
+                                    var tempStream = archiveFile.Open();
+                                    var ms = new MemoryStream();
+                                    tempStream.CopyTo(ms);
+                                    ms.Position = 0;
+                                    content = ms.ToByteArray();
+                                }
+                            }
+
+                            // var stream = packageEnv.GetLocalStreamFromPackage(fileName);
+                            fileSize = content.Length;
+                        }
+                        else
+                        {
+                            throw new NotFoundException($"Package for aas id {aasIdentifier} and submodel id {submodelIdentifier} not found");
+                        }
+                    }
+                    // incorrect value
+                    else
+                    {
+                        scopedLogger.LogError($"Incorrect value {file.Value} of the Submodel-Element File with IdShort {file.IdShort}");
+                        throw new UnprocessableEntityException($"Incorrect value {file.Value} of the File with IdShort {file.IdShort}.");
+                    }
+                }
+                else
+                {
+                    throw new NotFoundException($"Submodel element {fileElement.IdShort} is not of type File.");
+                }
+
+                return fileName;
+            }
+        }
+        else
+        {
+            throw new NotFoundException($"Submodel wit id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} not found.");
+        }
+    }
     public void ReplaceFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream)
     {
         //string securityConditionSM, securityConditionSME;
@@ -1350,13 +1211,185 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         //{
         //    throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
         //}
+    }
+    public void DeleteFileByPath(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, string idShortPath)
+    {
+        Dictionary<string, string>? securityCondition = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
 
+        if (IsSubmodelPresent(securityCondition, aasIdentifier, submodelIdentifier, false, out _))
+        {
+            SMESet sME = null;
+            var fileElement = Converter.GetSubmodelElementByPath(securityCondition, aasIdentifier, submodelIdentifier, idShortPath, out sME);
+
+            var found = fileElement != null;
+            if (found)
+            {
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                    scopedLogger.LogDebug($"Asset Administration Shell with id {aasIdentifier} found.");
+
+                    string fileName = null;
+
+                    if (fileElement is AasCore.Aas3_0.File file)
+                    {
+                        if (!string.IsNullOrEmpty(file.Value))
+                        {
+                            //check if it is external location
+                            if (file.Value.StartsWith("http") || file.Value.StartsWith("https"))
+                            {
+                                scopedLogger.LogWarning($"Value of the Submodel-Element File with IdShort {file.IdShort} is an external link.");
+                                throw new NotImplementedException($"File location for {file.IdShort} is external {file.Value}. Currently this fuctionality is not supported.");
+                            }
+                            //Check if a directory
+                            else if (file.Value.StartsWith('/') || file.Value.StartsWith('\\'))
+                            {
+                                scopedLogger.LogInformation($"Value of the Submodel-Element File with IdShort {file.IdShort} is a File-Path.");
+
+                                var envFileName = string.Empty;
+
+                                var packageEnvFound = Converter.IsPackageEnvPresent(aasIdentifier, submodelIdentifier, false, out envFileName, out AdminShellPackageEnv packageEnv);
+
+                                if (packageEnvFound)
+                                {
+                                    using (var fileStream = new FileStream(AasContext.DataPath + "/files/" + Path.GetFileName(envFileName) + ".zip", FileMode.Open))
+                                    {
+                                        using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Update))
+                                        {
+                                            var entry = archive.GetEntry(file.Value);
+
+                                            entry?.Delete();
+                                        }
+                                    }
+
+                                    Edit.DeleteSubmodelElement(sME);
+                                }
+
+                                file.Value = string.Empty;
+
+                                //ToDo: Do notification
+                                //Program.signalNewData(1);
+                                //scopedLogger.LogDebug($"Deleted the file at {idShortPath} from submodel with Id {submodelIdentifier}");
+                            }
+                            // incorrect value
+                            else
+                            {
+                                scopedLogger.LogError($"Incorrect value {file.Value} of the Submodel-Element File with IdShort {file.IdShort}");
+                                throw new OperationNotSupported($"Incorrect value {file.Value} of the File with IdShort {file.IdShort}.");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        //throw new OperationNotSupported($"Cannot delete the file. SubmodelElement {idShortPath} does not have a file attached.");
+                    }
+                }
+            }
+            else
+            {
+                //throw new OperationNotSupported($"SubmodelElement found at {idShortPath} is not of type File");
+            }
+        }
+        else
+        {
+            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+        }
+    }
+
+    private string ReadThumbnail(ISecurityConfig securityConfig, string aasIdentifier, out byte[] byteArray, out long fileSize)
+    {
+        string fileName = null;
+        byteArray = null;
+        fileSize = 0;
+        var aas = ReadAssetAdministrationShellById(securityConfig, aasIdentifier);
+        if (aas != null)
+        {
+            if (aas.AssetInformation != null)
+            {
+                if (aas.AssetInformation.DefaultThumbnail != null && !string.IsNullOrEmpty(aas.AssetInformation.DefaultThumbnail.Path))
+                {
+                    fileName = aas.AssetInformation.DefaultThumbnail.Path;
+
+                    var envFileName = string.Empty;
+                    var found = Converter.IsPackageEnvPresent(aasIdentifier, null, false, out envFileName, out AdminShellPackageEnv packageEnv);
+
+                    if (found)
+                    {
+                        string fcopy = Path.GetFileName(envFileName) + "__thumbnail";
+                        fcopy = fcopy.Replace("/", "_");
+                        fcopy = fcopy.Replace(".", "_");
+                        var result = System.IO.File.Open(AasContext.DataPath + "/files/" + fcopy + ".dat", FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+
+                        // Post-condition
+                        if (!(result == null || result.CanRead))
+                        {
+                            // throw new InvalidOperationException("Unexpected unreadable result stream");
+                            return null;
+                        }
+
+                        byteArray = result.ToByteArray();
+                        fileSize = byteArray.Length;
+                        result.Close();
+                    }
+                    else
+                    {
+                        throw new NotFoundException($"Package for aas id {aasIdentifier} not found");
+                    }
+
+                    using (var scope = _serviceProvider.CreateScope())
+                    {
+                        var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                        scopedLogger.LogDebug($"Updated the thumbnail in AAS with Id {aasIdentifier}");
+                    }
+                }
+                else
+                {
+                    throw new NotFoundException($"No default thumbnail embedded in the AssetInformation of the requested AAS.");
+                }
+            }
+            else
+            {
+                throw new NotFoundException($"AssetInformation is NULL in requested AAS with id {aasIdentifier}");
+            }
+        }
+
+        return fileName;
     }
     public void ReplaceThumbnail(ISecurityConfig securityConfig, string aasIdentifier, string fileName, string contentType, MemoryStream stream) => throw new NotImplementedException();
+    public void DeleteThumbnail(ISecurityConfig securityConfig, string aasIdentifier)
+    {
+        var aas = this.ReadAssetAdministrationShellById(null, aasIdentifier);
+        if (aas != null)
+        {
+            if (aas.AssetInformation != null)
+            {
+                if (aas.AssetInformation.DefaultThumbnail != null && !string.IsNullOrEmpty(aas.AssetInformation.DefaultThumbnail.Path))
+                {
+                    var fileName = aas.AssetInformation.DefaultThumbnail.Path;
 
-    public void UpdateSubmodelById(ISecurityConfig securityConfig, string aasIdentifier, string submodelIdentifier, ISubmodel newSubmodel) => throw new NotImplementedException();
+                    var envFileName = string.Empty;
+                    var found = Converter.IsPackageEnvPresent(aasIdentifier, null, false, out envFileName, out AdminShellPackageEnv packageEnv);
 
-    public void UpdateSubmodelElementByPath(ISecurityConfig security, string aasIdentifier, string submodelIdentifier, string idShortPath, ISubmodelElement body) => throw new NotImplementedException();
+                    if (found)
+                    {
+                        string fcopy = Path.GetFileName(envFileName) + "__thumbnail";
+                        fcopy = fcopy.Replace("/", "_");
+                        fcopy = fcopy.Replace(".", "_");
+                        System.IO.File.Delete(AasContext.DataPath + "/files/" + fcopy + ".dat");
+                    }
+                    else
+                    {
+                        throw new NotFoundException($"Package for aas id {aasIdentifier} not found");
+                    }
+                }
+                else
+                {
+                    throw new NotFoundException($"No default thumbnail embedded in the AssetInformation of the requested AAS.");
+                }
+            }
+        }
+    }
 
     private Contracts.Events.EventPayload ReadEventMessages(ISecurityConfig securityConfig, DbEventRequest dbEventRequest)
     {
@@ -1403,15 +1436,15 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     }
                 }
                 */
-        /*
-        if (eventData.direction != null && eventData.direction.Value == "IN" && eventData.mode != null && (eventData.mode.Value == "PUSH" || eventData.mode.Value == "PUT"))
-        {
-            if (eventData.dataCollection.Value != null && eventData.dataCollection.Value.Count == 1 && eventData.dataCollection.Value[0] is SubmodelElementCollection)
-            {
-                data = eventData.dataCollection.Value[0];
-            }
-        }
-        */
+                /*
+                if (eventData.direction != null && eventData.direction.Value == "IN" && eventData.mode != null && (eventData.mode.Value == "PUSH" || eventData.mode.Value == "PUT"))
+                {
+                    if (eventData.dataCollection.Value != null && eventData.dataCollection.Value.Count == 1 && eventData.dataCollection.Value[0] is SubmodelElementCollection)
+                    {
+                        data = eventData.dataCollection.Value[0];
+                    }
+                }
+                */
             }
             // if (data == null)
             if (data == null || (data is SubmodelElementCollection smc && (smc.Value == null || smc.Value.Count == 0)))
@@ -1553,6 +1586,181 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
+    private List<IConceptDescription> ReadPagedConceptDescriptions(IPaginationParameters paginationParameters, ISecurityConfig securityConfig, string idShort, IReference isCaseOf, IReference dataSpecificationRef)
+    {
+        //Get All Concept descriptions
+        Dictionary<string, string>? securityCondition = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
+
+        if (!isAllowed)
+        {
+            throw new NotAllowed($"NOT ALLOWED: API route");
+        }
+
+        //ToDo: Filter on IsCaseOf and DataSpecificationRef
+        var output = Converter.GetPagedConceptDescriptions(paginationParameters, idShort, isCaseOf, dataSpecificationRef);
+
+        return output;
+
+        if (output.Any())
+        {
+            //Filter based on IsCaseOf
+            if (isCaseOf != null)
+            {
+                var cdList = new List<IConceptDescription>();
+                foreach (var conceptDescription in output)
+                {
+                    if (!conceptDescription.IsCaseOf.IsNullOrEmpty())
+                    {
+                        foreach (var reference in conceptDescription.IsCaseOf)
+                        {
+                            if (reference != null && reference.Matches(isCaseOf))
+                            {
+                                cdList.Add(conceptDescription);
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (cdList.IsNullOrEmpty())
+                {
+                    //_logger.LogDebug($"No Concept Description with requested IsCaseOf found.");
+                }
+                else
+                {
+                    output = cdList;
+                }
+
+            }
+
+            //Filter based on DataSpecificationRef
+            if (dataSpecificationRef != null)
+            {
+                var cdList = new List<IConceptDescription>();
+                foreach (var conceptDescription in output)
+                {
+                    if (!conceptDescription.EmbeddedDataSpecifications.IsNullOrEmpty())
+                    {
+                        foreach (var reference in conceptDescription.EmbeddedDataSpecifications)
+                        {
+                            if (reference != null && reference.DataSpecification.Matches(dataSpecificationRef))
+                            {
+                                cdList.Add(conceptDescription);
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (cdList.IsNullOrEmpty())
+                {
+                    //_logger.LogDebug($"No Concept Description with requested DataSpecificationReference found.");
+                }
+                else
+                {
+                    output = cdList;
+                }
+            }
+        }
+
+        return output;
+    }
+    private IConceptDescription ReadConceptDescription(ISecurityConfig securityConfig, string conceptDescriptionIdentifier)
+    {
+        Dictionary<string, string>? securityCondition = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
+
+        if (!isAllowed)
+        {
+            throw new NotAllowed($"NOT ALLOWED: concept description with id {conceptDescriptionIdentifier}");
+        }
+
+        bool found = IsConceptDescriptionPresent(conceptDescriptionIdentifier, true, out IConceptDescription output);
+        if (found)
+        {
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                scopedLogger.LogDebug($"Concept Description with id {conceptDescriptionIdentifier} found.");
+            }
+
+            return output;
+        }
+        else
+        {
+            throw new NotFoundException($"Concept Description with id {conceptDescriptionIdentifier} not found.");
+        }
+    }
+    private IConceptDescription CreateConceptDescription(ISecurityConfig securityConfig, IConceptDescription conceptDescriptionBody)
+    {
+        //string securityConditionSM, securityConditionSME;
+        //bool isAllowed = InitSecurity(securityConfig, out securityConditionSM, out securityConditionSME);
+
+        var found = IsConceptDescriptionPresent(conceptDescriptionBody.Id, false, out _);
+        if (found)
+        {
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                scopedLogger.LogDebug($"Cannot create requested CD !!");
+            }
+            throw new DuplicateException($"Concept description with id {conceptDescriptionBody.Id} already exists.");
+        }
+
+        var output = Converter.CreateConceptDescription(conceptDescriptionBody);
+
+        return output;
+    }
+    private void ReplaceConceptDescription(ISecurityConfig securityConfig, IConceptDescription conceptDescriptionBody, string conceptDescriptionIdentifier)
+    {
+        var found = IsConceptDescriptionPresent(conceptDescriptionIdentifier, false, out _);
+
+        if (found)
+        {
+            var cuurentDataTime = DateTime.UtcNow;
+
+            using (var db = new AasContext())
+            {
+                var cdDB = db.CDSets
+                .FirstOrDefault(cd => cd.Identifier == conceptDescriptionIdentifier);
+
+                Converter.SetConceptDescription(cdDB, conceptDescriptionBody);
+
+                db.SaveChanges();
+
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                    scopedLogger.LogDebug($"Concept description with id {conceptDescriptionIdentifier} updated successfully.");
+                }
+            }
+        }
+        else
+        {
+            throw new NotFoundException($"Concept description with id {conceptDescriptionIdentifier} not found.");
+        }
+    }
+    private void DeleteConceptDescription(ISecurityConfig securityConfig, string conceptDescriptionIdentifier)
+    {
+        Dictionary<string, string>? securityCondition = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
+
+        if (IsConceptDescriptionPresent(conceptDescriptionIdentifier, false, out _))
+        {
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                scopedLogger.LogDebug($"Found concept description with id {conceptDescriptionIdentifier}");
+            }
+
+            Edit.DeleteConceptDescription(conceptDescriptionIdentifier);
+        }
+        else
+        {
+            throw new NotFoundException($"Concept description with id {conceptDescriptionIdentifier} NOT found");
+        }
+
+    }
+
     private bool IsAssetAdministrationShellPresent(string aasIdentifier, bool loadIntoMemory, out IAssetAdministrationShell output)
     {
         output = null;
@@ -1612,21 +1820,30 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 smDBQuery = smDBQuery.Where(sm => sm.Identifier == submodelIdentifier);
             }
 
-            /*
             if (!string.IsNullOrEmpty(aasIdentifier))
             {
-                var aasDB = db.AASSets.FirstOrDefault(aas => aas.Identifier == aasIdentifier);
-                if (aasDB == null)
+                var aasDB = db.AASSets
+                    .Include(aas => aas.SMRefSets)
+                    .FirstOrDefault(aas => aas.Identifier == aasIdentifier);
+
+                if (aasDB != null)
                 {
-                    return false;
+                    var smRefDB = aasDB.SMRefSets.FirstOrDefault(s => s.Identifier == submodelIdentifier);
+                    if (smRefDB == null)
+                    {
+                        return false;
+                    }
                 }
-                smDBQuery = smDBQuery.Where(sm => sm.AASId == aasDB.Id);
             }
-            */
 
             if (securityCondition != null)
-            {
+            {   
                 smDBQuery = smDBQuery.Where(securityCondition["sm."]);
+
+                if (!string.IsNullOrEmpty(aasIdentifier))
+                {
+                    //ToDo: Add aas securityCondition
+                }
             }
 
             var smDB = smDBQuery.ToList();
@@ -1707,6 +1924,31 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         return result;
     }
 
+    private bool IsConceptDescriptionPresent(string cdIdentifier, bool loadIntoMemory, out IConceptDescription output)
+    {
+        output = null;
+        using (var db = new AasContext())
+        {
+            if (!cdIdentifier.IsNullOrEmpty())
+            {
+                var cdDB = db.CDSets
+                    .FirstOrDefault(cd => cd.Identifier == cdIdentifier);
+                if (cdDB == null)
+                {
+                    return false;
+                }
+                else
+                {
+                    if (loadIntoMemory)
+                    {
+                        output = Converter.GetConceptDescription(cdDB);
+                    }
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
     //ToDo: Move into security?
     private bool InitSecurity(ISecurityConfig? securityConfig, out Dictionary<string, string>? securityCondition)

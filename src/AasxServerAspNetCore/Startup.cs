@@ -94,7 +94,6 @@ internal class Startup
         services.AddTransient<IAasxFileServerInterfaceService, AasxFileServerInterfaceService>();
         services.AddTransient<IAdminShellPackageEnvironmentService, AdminShellPackageEnvironmentService>();
         services.AddTransient<IBase64UrlDecoderService, Base64UrlDecoderService>();
-        services.AddTransient<IConceptDescriptionService, ConceptDescriptionService>();
         services.AddTransient<IGenerateSerializationService, GenerateSerializationService>();
         services.AddTransient<IIdShortPathParserService, IdShortPathParserService>();
         services.AddTransient<IJsonQueryDeserializer, JsonQueryDeserializer>();

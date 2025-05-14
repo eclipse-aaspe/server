@@ -30,7 +30,6 @@ using Environment = AasCore.Aas3_0.Environment;
 public class GenerateSerializationService : IGenerateSerializationService
 {
     private readonly IDbRequestHandlerService _dbRequestHandlerService;
-    private readonly IConceptDescriptionService _cdService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GenerateSerializationService"/> class.
@@ -39,10 +38,9 @@ public class GenerateSerializationService : IGenerateSerializationService
     /// <exception cref="ArgumentNullException">
     /// Thrown when any of the required services (logger, aasService, submodelService) are null.
     /// </exception>
-    public GenerateSerializationService(IDbRequestHandlerService dbRequestHandlerService, ISubmodelService submodelService, IConceptDescriptionService cdService)
+    public GenerateSerializationService(IDbRequestHandlerService dbRequestHandlerService, ISubmodelService submodelService)
     {
         _dbRequestHandlerService = dbRequestHandlerService ?? throw new ArgumentNullException(nameof(dbRequestHandlerService));
-        _cdService = cdService ?? throw new ArgumentNullException(nameof(cdService));
     }
 
     /// <inheritdoc />
@@ -101,53 +99,53 @@ public class GenerateSerializationService : IGenerateSerializationService
 
         return outputEnv;
 
-        //Fetch AASs for the requested aasIds
-        //ToDo: Remove pseudo-pagimation
-        var pagination = new PaginationParameters("0", 1000);
+        ////Fetch AASs for the requested aasIds
+        ////ToDo: Remove pseudo-pagimation
+        //var pagination = new PaginationParameters("0", 1000);
 
-        //ToDo: Fix no security
-        var aasList = _dbRequestHandlerService.ReadPagedAssetAdministrationShells(pagination, null, new List<ISpecificAssetId>(), null).Result;
-        //Using is null or empty, as the query parameter in controll currently receives empty list (not null, but count = 0)
-        if (!aasIds.IsNullOrEmpty())
-        {
-            foreach (var foundAas in aasIds.Select(aasId => aasList.Where(a => a.Id != null && a.Id.Equals(aasId, StringComparison.Ordinal))).Where(foundAas => foundAas.Any()))
-            {
-                outputEnv.AssetAdministrationShells ??= new List<IAssetAdministrationShell>();
-                outputEnv.AssetAdministrationShells.Add(foundAas.First());
-            }
-        }
-        else
-        {
-            outputEnv.AssetAdministrationShells ??= new List<IAssetAdministrationShell>();
-            outputEnv.AssetAdministrationShells.AddRange(aasList);
-        }
-
-        //Fetch Submodels for the requested submodelIds
-        //var submodelList = _submodelService.GetAllSubmodels();
-        //Using is null or empty, as the query parameter in controll currently receives empty list (not null, but count = 0)
-        //if (!submodelIds.IsNullOrEmpty())
+        ////ToDo: Fix no security
+        //var aasList = _dbRequestHandlerService.ReadPagedAssetAdministrationShells(pagination, null, new List<ISpecificAssetId>(), null).Result;
+        ////Using is null or empty, as the query parameter in controll currently receives empty list (not null, but count = 0)
+        //if (!aasIds.IsNullOrEmpty())
         //{
-        //    foreach (var foundSubmodel in submodelIds.Select(submodelId => submodelList.Where(s => s.Id != null && s.Id.Equals(submodelId, StringComparison.Ordinal)))
-        //                                         .Where(foundSubmodel => foundSubmodel.Any()))
+        //    foreach (var foundAas in aasIds.Select(aasId => aasList.Where(a => a.Id != null && a.Id.Equals(aasId, StringComparison.Ordinal))).Where(foundAas => foundAas.Any()))
         //    {
-        //        outputEnv.Submodels ??= new List<ISubmodel>();
-        //        outputEnv.Submodels.Add(foundSubmodel.First());
+        //        outputEnv.AssetAdministrationShells ??= new List<IAssetAdministrationShell>();
+        //        outputEnv.AssetAdministrationShells.Add(foundAas.First());
         //    }
         //}
         //else
         //{
-        //    outputEnv.Submodels ??= new List<ISubmodel>();
-        //    outputEnv.Submodels.AddRange(submodelList);
+        //    outputEnv.AssetAdministrationShells ??= new List<IAssetAdministrationShell>();
+        //    outputEnv.AssetAdministrationShells.AddRange(aasList);
         //}
+
+        ////Fetch Submodels for the requested submodelIds
+        ////var submodelList = _submodelService.GetAllSubmodels();
+        ////Using is null or empty, as the query parameter in controll currently receives empty list (not null, but count = 0)
+        ////if (!submodelIds.IsNullOrEmpty())
+        ////{
+        ////    foreach (var foundSubmodel in submodelIds.Select(submodelId => submodelList.Where(s => s.Id != null && s.Id.Equals(submodelId, StringComparison.Ordinal)))
+        ////                                         .Where(foundSubmodel => foundSubmodel.Any()))
+        ////    {
+        ////        outputEnv.Submodels ??= new List<ISubmodel>();
+        ////        outputEnv.Submodels.Add(foundSubmodel.First());
+        ////    }
+        ////}
+        ////else
+        ////{
+        ////    outputEnv.Submodels ??= new List<ISubmodel>();
+        ////    outputEnv.Submodels.AddRange(submodelList);
+        ////}
 
         
 
-        if((bool)includeCD)
-        {
-            outputEnv.ConceptDescriptions ??= new List<IConceptDescription>();
-            outputEnv.ConceptDescriptions.AddRange(_cdService.GetAllConceptDescriptions());
-        }
+        //if((bool)includeCD)
+        //{
+        //    outputEnv.ConceptDescriptions ??= new List<IConceptDescription>();
+        //    outputEnv.ConceptDescriptions.AddRange(_cdService.GetAllConceptDescriptions());
+        //}
 
-        return outputEnv;
+        //return outputEnv;
     }
 }
