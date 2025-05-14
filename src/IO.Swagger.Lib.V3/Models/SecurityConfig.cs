@@ -16,7 +16,11 @@ public class SecurityConfig : ISecurityConfig
     public SecurityConfig(bool noSecurity, ControllerBase controllerBase)
     {
         this.NoSecurity = noSecurity;
-        this.Principal = controllerBase.User;
+
+        if (!noSecurity)
+        {
+            this.Principal = controllerBase.User;
+        }
     }
 
     //private bool InitSecurity(ISecurityConfig? securityConfig, out string securityConditionSM, out string securityConditionSME)

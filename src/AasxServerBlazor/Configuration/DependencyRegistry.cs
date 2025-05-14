@@ -53,7 +53,6 @@ public static class DependencyRegistry
         services.AddTransient<IAasRegistryService, AasRegistryService>();
         services.AddTransient<IAasRepositoryApiHelperService, AasRepositoryApiHelperService>();
         services.AddTransient<IAasxFileServerInterfaceService, AasxFileServerInterfaceService>();
-        services.AddTransient<IAdminShellPackageEnvironmentService, AdminShellPackageEnvironmentService>();
         services.AddTransient<IBase64UrlDecoderService, Base64UrlDecoderService>();
         services.AddTransient<IIdShortPathParserService, IdShortPathParserService>();
         services.AddTransient<IJsonQueryDeserializer, JsonQueryDeserializer>();
@@ -65,7 +64,6 @@ public static class DependencyRegistry
         services.AddTransient<IReferenceModifierService, ReferenceModifierService>();
         services.AddTransient<IServiceDescription, ServiceDescription>();
         services.AddTransient<ISubmodelPropertyExtractionService, SubmodelPropertyExtractionService>();
-        services.AddTransient<ISubmodelService, SubmodelService>();
         services.AddTransient<IValueOnlyJsonDeserializer, ValueOnlyJsonDeserializer>();
         services.AddTransient<IValidateSerializationModifierService, ValidateSerializationModifierService>();
         services.AddTransient<IPersistenceService, EntityFrameworkPersistenceService>();
