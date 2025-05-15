@@ -1361,7 +1361,64 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         return fileName;
     }
-    public void ReplaceThumbnail(ISecurityConfig securityConfig, string aasIdentifier, string fileName, string contentType, MemoryStream stream) => throw new NotImplementedException();
+
+    public void ReplaceThumbnail(ISecurityConfig securityConfig, string aasIdentifier, string fileName, string contentType, MemoryStream stream)
+    {
+        var aas = this.ReadAssetAdministrationShellById(null, aasIdentifier);
+        if (aas != null)
+        {
+            if (aas.AssetInformation != null)
+            {
+                if (string.IsNullOrEmpty(contentType))
+                {
+                    contentType = "application/octet-stream";
+                }
+
+                if (aas.AssetInformation.DefaultThumbnail == null)
+                {
+                    //If thumbnail is not set, set to default path 
+                    aas.AssetInformation.DefaultThumbnail ??= new Resource(Path.Combine("/aasx/files", fileName).Replace('/', Path.DirectorySeparatorChar), contentType);
+                }
+                else
+                {
+                    aas.AssetInformation.DefaultThumbnail.Path = aas.AssetInformation.DefaultThumbnail.Path.Replace('/', Path.DirectorySeparatorChar);
+                }
+
+                var envFileName = string.Empty;
+                var found = Converter.IsPackageEnvPresent(aasIdentifier, null, false, out envFileName, out AdminShellPackageEnv packageEnv);
+
+                if (found)
+                {
+                    string fcopy = Path.GetFileName(envFileName) + "__thumbnail";
+                    fcopy = fcopy.Replace("/", "_");
+                    fcopy = fcopy.Replace(".", "_");
+
+                    var result = System.IO.File.Open(AasContext.DataPath + "/files/" + fcopy + ".dat", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
+
+                    // Post-condition
+                    if (!(result == null || result.CanRead))
+                    {
+                        // throw new InvalidOperationException("Unexpected unreadable result stream");
+                        return;
+                    }
+
+                    //Write to the part
+                    stream.Position = 0;
+                    using (Stream dest = result)
+                    {
+                        stream.CopyTo(dest);
+                    }
+
+                    result.Close();
+                }
+                else
+                {
+                    throw new NotFoundException($"Package for aas id {aasIdentifier} not found");
+                }
+            }
+        }
+    }
+
     public void DeleteThumbnail(ISecurityConfig securityConfig, string aasIdentifier)
     {
         var aas = this.ReadAssetAdministrationShellById(null, aasIdentifier);
