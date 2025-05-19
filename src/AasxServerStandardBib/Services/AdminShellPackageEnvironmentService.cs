@@ -394,6 +394,9 @@ namespace AasxServerStandardBib.Services
             if (conceptDescription != null && packageIndex != -1)
             {
                 var cdIndex = _packages[packageIndex].AasEnv.ConceptDescriptions.IndexOf(conceptDescription);
+                // MICHA: added
+                if (cdIndex < 0)
+                    return;
                 _packages[packageIndex].AasEnv.ConceptDescriptions.Remove(conceptDescription);
                 _packages[packageIndex].AasEnv.ConceptDescriptions.Insert(cdIndex, body);
                 var timeStamp = DateTime.UtcNow;

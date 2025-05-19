@@ -13,6 +13,7 @@
 
 
 using AasxServer;
+using AasxServerDB;
 using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
@@ -210,7 +211,7 @@ namespace AasxServerStandardBib.Services
                     output = output.Where(a => a.IdShort.Equals(idShort)).ToList();
                     if (output.IsNullOrEmpty())
                     {
-                        _logger.LogInformation($"No AAS with idShhort {idShort} found.");
+                        _logger.LogInformation($"No AAS with idShort {idShort} found.");
                     }
                 }
 
@@ -309,7 +310,26 @@ namespace AasxServerStandardBib.Services
                 {
                     if (aas.AssetInformation.DefaultThumbnail != null && !string.IsNullOrEmpty(aas.AssetInformation.DefaultThumbnail.Path))
                     {
-                        _packageEnvService.DeleteAssetInformationThumbnail(packageIndex, aas.AssetInformation.DefaultThumbnail);
+                        // MICHA: Assume this is a DB approach?
+                        if (Program.withDbFiles)
+                        {
+                            // build a filename
+                            var path = BuildPathOfThumbnail(aasIdentifier);
+
+                            try
+                            {
+                                System.IO.File.Delete(path);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning($"Deleting thumbnail for AAS {aasIdentifier} to path {path} not successful: {ex.Message}");
+                            }
+                        }
+                        else
+                        {
+                            // old code
+                            _packageEnvService.DeleteAssetInformationThumbnail(packageIndex, aas.AssetInformation.DefaultThumbnail);
+                        }
                     }
                     else
                     {
@@ -333,9 +353,30 @@ namespace AasxServerStandardBib.Services
                     {
                         fileName = aas.AssetInformation.DefaultThumbnail.Path;
 
-                        Stream stream = _packageEnvService.GetAssetInformationThumbnail(packageIndex);
-                        byteArray = stream.ToByteArray();
-                        fileSize = byteArray.Length;
+                        // MICHA: Assume this is a DB approach?
+                        if (Program.withDbFiles)
+                        {
+                            // build a filename
+                            var path = BuildPathOfThumbnail(aasIdentifier);
+
+                            try
+                            {
+                                byteArray = System.IO.File.ReadAllBytes(path);
+                                fileSize = byteArray.Length;
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning($"Reading thumbnail for AAS {aasIdentifier} to path {path} not successful: {ex.Message}");
+                                throw new UnprocessableEntityException($"No thumbnail available for AAS {aasIdentifier}.");
+                            }
+                        }
+                        else
+                        {
+                            // old code
+                            Stream stream = _packageEnvService.GetAssetInformationThumbnail(packageIndex);
+                            byteArray = stream.ToByteArray();
+                            fileSize = byteArray.Length;
+                        }
 
                         _logger.LogDebug($"Updated the thumbnail in AAS with Id {aasIdentifier}");
                     }
@@ -375,7 +416,7 @@ namespace AasxServerStandardBib.Services
             }
         }
 
-        public void UpdateThumbnail(string aasIdentifier, string fileName, string contentType, Stream fileContent)
+        public void UpdateThumbnail(string aasIdentifier, string fileName, string contentType, MemoryStream fileContent)
         {
             var aas = _packageEnvService.GetAssetAdministrationShellById(aasIdentifier, out int packageIndex);
             if (aas != null)
@@ -399,15 +440,41 @@ namespace AasxServerStandardBib.Services
                         asset.DefaultThumbnail.Path = asset.DefaultThumbnail.Path.Replace('/', Path.DirectorySeparatorChar);
                     }
 
-                    _packageEnvService.UpdateAssetInformationThumbnail(asset.DefaultThumbnail, fileContent, packageIndex);
+                    // MICHA: Assume this is a DB approach?
+                    if (Program.withDbFiles)
+                    {
+                        // build a filename
+                        var path = BuildPathOfThumbnail(aasIdentifier);
 
-
+                        try
+                        {
+                            System.IO.File.WriteAllBytes(path, fileContent.ToArray());
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning($"Writing thumbnail for AAS {aasIdentifier} to path {path} not successful: {ex.Message}");
+                        }
+                    }
+                    else
+                    {
+                        // MICHA: existing code (aims at replacing files in AASX packages)
+                        _packageEnvService.UpdateAssetInformationThumbnail(asset.DefaultThumbnail, fileContent, packageIndex);
+                    }
                 }
                 else
                 {
                     throw new NotFoundException($"AssetInformation is NULL in requested AAS with id {aasIdentifier}");
                 }
             }
+        }
+
+        protected string BuildPathOfThumbnail(string aasIdentifier)
+        {
+            var fn = "THUMBNAIL_" + Base64UrlEncoder.Encode(aasIdentifier) + ".dat";
+
+            var path = Path.Combine(Path.Combine("" + AasContext._dataPath, "files"), fn);
+
+            return path;
         }
 
         #region PrivateMethods

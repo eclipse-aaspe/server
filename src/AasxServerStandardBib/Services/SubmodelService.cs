@@ -12,13 +12,17 @@
 ********************************************************************************/
 
 using AasxServer;
+using AasxServerDB;
 using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Interfaces;
 using AasxServerStandardBib.Logging;
 using AasxServerStandardBib.Transformers;
 using AdminShellNS.Extensions;
 using Extensions;
+using Microsoft.IdentityModel.Tokens;
+using MimeKit;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -280,12 +284,33 @@ namespace AasxServerStandardBib.Services
                         {
                             _logger.LogInformation($"Value of the Submodel-Element File with IdShort {file.IdShort} is a File-Path.");
 
-                            _packageEnvService.DeleteSupplementaryFileInPackage(submodelIdentifier, file.Value);
+                            // MICHA: Assume this is a DB approach?
+                            if (Program.withDbFiles)
+                            {
+                                // build a filename
+                                var path = BuildPathOfAttachment(submodelIdentifier, idShortPath, file.Value);
 
-                            file.Value = string.Empty;
+                                try
+                                {
+                                    System.IO.File.Delete(path);
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogWarning($"Deleting attachment for Submodel {submodelIdentifier} and FileElement {idShortPath} to path {path} not successful: {ex.Message}");
+                                }
+                            }
+                            else
+                            {
 
-                            if (_packageEnvService.IsSubmodelPresent(submodelIdentifier, out _, out int packageIndex))
-                                _packageEnvService.setWrite(packageIndex, true);
+                                _packageEnvService.DeleteSupplementaryFileInPackage(submodelIdentifier, file.Value);
+
+                                file.Value = string.Empty;
+
+                                if (_packageEnvService.IsSubmodelPresent(submodelIdentifier, out _, out int packageIndex))
+                                    _packageEnvService.setWrite(packageIndex, true);
+                            }
+
+                            // final
                             Program.signalNewData(1);
                             _logger.LogDebug($"Deleted the file at {idShortPath} from submodel with Id {submodelIdentifier}");
                         }
@@ -342,9 +367,29 @@ namespace AasxServerStandardBib.Services
                     else if (file.Value.StartsWith('/') || file.Value.StartsWith('\\'))
                     {
                         _logger.LogInformation($"Value of the Submodel-Element File with IdShort {file.IdShort} is a File-Path.");
-                        Stream stream = _packageEnvService.GetFileFromPackage(submodelIdentifier, fileName);
-                        byteArray = stream.ToByteArray();
-                        fileSize = byteArray.Length;
+                        // MICHA: Assume this is a DB approach?
+                        if (Program.withDbFiles)
+                        {
+                            // build a filename
+                            var path = BuildPathOfAttachment(submodelIdentifier, idShortPath, fileName);
+
+                            try
+                            {
+                                byteArray = System.IO.File.ReadAllBytes(path);
+                                fileSize = byteArray.Length;
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning($"Reading attachment for Submodel {submodelIdentifier} and FileElement {idShortPath} to path {path} not successful: {ex.Message}");
+                                throw new UnprocessableEntityException($"No attachment available for file {file.Value} of the File element with IdShort {file.IdShort}.");
+                            }
+                        }
+                        else
+                        {
+                            var stream = _packageEnvService.GetFileFromPackage(submodelIdentifier, fileName);
+                            byteArray = stream.ToByteArray();
+                            fileSize = byteArray.Length;
+                        }
                     }
                     // incorrect value
                     else
@@ -570,6 +615,17 @@ namespace AasxServerStandardBib.Services
             }
         }
 
+        protected string BuildPathOfAttachment(string submodelIdentifier, string idShortPath, string fileName)
+        {
+            var fn = "ATTACHMENT_" + Base64UrlEncoder.Encode(submodelIdentifier) +
+                                         "_" + Base64UrlEncoder.Encode(idShortPath) +
+                                         ".dat";
+
+            var path = Path.Combine(Path.Combine("" + AasContext._dataPath, "files"), fn);
+
+            return path;
+        }
+
         public void ReplaceFileByPath(string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream fileContent)
         {
             var fileElement = GetSubmodelElementByPath(submodelIdentifier, idShortPath);
@@ -590,24 +646,45 @@ namespace AasxServerStandardBib.Services
                         //Check if a directory
                         else if (file.Value.StartsWith('/') || file.Value.StartsWith('\\'))
                         {
-                            _logger.LogInformation($"Value of the Submodel-Element File with IdShort {file.IdShort} is a File-Path.");
-                            //check if the value consists file extension
-                            string sourcePath;
-                            if (Path.HasExtension(file.Value))
+                            // MICHA: Assume this is a DB approach?
+                            if (Program.withDbFiles)
                             {
-                                sourcePath = Path.GetDirectoryName(file.Value); //This should get platform specific path, without file name
+                                // build a filename
+                                var path = BuildPathOfAttachment(submodelIdentifier, idShortPath, fileName);
+
+                                try
+                                {
+                                    System.IO.File.WriteAllBytes(path, fileContent.ToArray());
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogWarning($"Writing attachment for Submodel {submodelIdentifier} and FileElement {idShortPath} to path {path} not successful: {ex.Message}");
+                                }
                             }
                             else
                             {
-                                sourcePath = Path.Combine(file.Value);
+                                // MICHA: existing code (aims at replacing files in AASX packages)
+                                _logger.LogInformation($"Value of the Submodel-Element File with IdShort {file.IdShort} is a File-Path.");
+                                //check if the value consists file extension
+                                string sourcePath;
+                                if (Path.HasExtension(file.Value))
+                                {
+                                    sourcePath = Path.GetDirectoryName(file.Value); //This should get platform specific path, without file name
+                                }
+                                else
+                                {
+                                    sourcePath = Path.Combine(file.Value);
+                                }
+
+                                var targetFile = Path.Combine(sourcePath, fileName);
+                                targetFile = targetFile.Replace('/', Path.DirectorySeparatorChar); //TODO:jtikekar: better way to handle
+                                Task task = _packageEnvService.ReplaceSupplementaryFileInPackage(submodelIdentifier, file.Value, targetFile, contentType, fileContent);
+                                file.Value = FormatFileName(targetFile);
+                                if (_packageEnvService.IsSubmodelPresent(submodelIdentifier, out _, out int packageIndex))
+                                    _packageEnvService.setWrite(packageIndex, true);
+
                             }
 
-                            var targetFile = Path.Combine(sourcePath, fileName);
-                            targetFile = targetFile.Replace('/', Path.DirectorySeparatorChar); //TODO:jtikekar: better way to handle
-                            Task task = _packageEnvService.ReplaceSupplementaryFileInPackage(submodelIdentifier, file.Value, targetFile, contentType, fileContent);
-                            file.Value = FormatFileName(targetFile);
-                            if (_packageEnvService.IsSubmodelPresent(submodelIdentifier, out _, out int packageIndex))
-                                _packageEnvService.setWrite(packageIndex, true);
                             Program.signalNewData(2);
                         }
                         // incorrect value

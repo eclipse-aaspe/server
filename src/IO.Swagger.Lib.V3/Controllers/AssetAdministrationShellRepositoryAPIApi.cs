@@ -1775,15 +1775,23 @@ namespace IO.Swagger.Controllers
 
             _logger.LogInformation($"Received request to get the thumbnail of the AAS with Id {aasIdentifier}");
 
-            var fileName = _aasService.GetThumbnail(decodedAasIdentifier, out var content, out var fileSize);
+            // MICHA
+            try
+            {
+                var fileName = _aasService.GetThumbnail(decodedAasIdentifier, out var content, out var fileSize);
 
-            //content-disposition so that the aasx file can be downloaded from the web browser.
-            ContentDisposition contentDisposition = new() { FileName = fileName };
+                //content-disposition so that the aasx file can be downloaded from the web browser.
+                ContentDisposition contentDisposition = new() { FileName = fileName };
 
-            HttpContext.Response.Headers.Append("Content-Disposition", contentDisposition.ToString());
-            HttpContext.Response.ContentLength = fileSize;
-            HttpContext.Response.Body.WriteAsync(content);
-            return new EmptyResult();
+                HttpContext.Response.Headers.Append("Content-Disposition", contentDisposition.ToString());
+                HttpContext.Response.ContentLength = fileSize;
+                HttpContext.Response.Body.WriteAsync(content);
+                return new EmptyResult();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
         }
 
         /// <summary>
@@ -2660,6 +2668,7 @@ namespace IO.Swagger.Controllers
                 throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
             }
 
+            // MICHA: This could be a bug! According to the internet, 204 No Content is a successfull status code!
             var stream = new MemoryStream();
             if (file == null)
             {

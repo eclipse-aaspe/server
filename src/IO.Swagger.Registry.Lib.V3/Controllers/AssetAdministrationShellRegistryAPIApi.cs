@@ -562,13 +562,20 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
     [SwaggerOperation("GetAllAssetAdministrationShellIdsByAssetLink")]
     [SwaggerResponse(statusCode: 200, type: typeof(List<string>), description: "Requested Asset Administration Shell ids")]
     public virtual IActionResult GetAllAssetAdministrationShellIdsByAssetLink(
-        [FromQuery] List<SpecificAssetId>? assetIds,
+        [FromQuery] string? assetIds,
         [FromQuery] string? assetId)
     {
         try
         {
             //collect assetIds from list
-            var assetList = (from kv in assetIds where kv.Value != "" select _decoderService.Decode("assetId", kv.Value)).ToList();
+            // var assetList = (from kv in assetIdsList where kv.Value != "" select _decoderService.Decode("assetId", kv.Value)).ToList();
+
+            // MICHA MIHO: Unsure how the query string look like, therefore manually splitting by ','
+            var assetList = new List<string?>();
+            foreach (var x in (assetIds + "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                assetList.Add(_decoderService.Decode("assetId", x));
+            }
 
             // single assetId
             if (assetId != null && assetId != "")
@@ -603,7 +610,26 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
                 // from database
                 using var db = new AasContext();
                 var withoutAssetId = assetList.Count == 0;
+                var test = from aasDB in db.AASSets where true select aasDB.GlobalAssetId;
                 aasList.AddRange(from aasDB in db.AASSets where withoutAssetId || assetList.Contains(aasDB.GlobalAssetId) select aasDB.Identifier);
+
+                // MIHO MICHA
+                // I know it sounds completely wrong, but the access to the AAS DB seems to fail exactly for NEWLY added
+                // AAS. But, weirdly, these are in the _packages / environment lists ..
+                foreach (var localAAS in _aasService?.GetAllAssetAdministrationShells())
+                {
+                    var locAssId = localAAS?.AssetInformation?.GlobalAssetId?.Trim();
+                    if (locAssId == null || localAAS.Id == null || localAAS.Id.Trim().Length < 1)
+                        continue;
+
+                    if (!assetList.Contains(locAssId))
+                        continue;
+
+                    if (aasList.Contains(localAAS.Id))
+                        continue;
+
+                    aasList.Add(localAAS.Id);
+                }
             }
 
             return new ObjectResult(aasList);
