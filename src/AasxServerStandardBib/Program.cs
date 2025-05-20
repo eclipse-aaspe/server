@@ -187,7 +187,7 @@ namespace AasxServer
             lock (changeAasxFile)
             {
                 // get filename
-                envFileName[i] = Converter.GetAASXPath(cdId: cdIdentifier, aasId: aasIdentifier, smId: smIdentifier);
+                envFileName[i] = CrudOperator.GetAASXPath(cdId: cdIdentifier, aasId: aasIdentifier, smId: smIdentifier);
                 if (envFileName[i].IsNullOrEmpty())
                 {
                     return output;
@@ -287,7 +287,7 @@ namespace AasxServer
                     }
 
                     // create package env
-                    env[i] = Converter.GetPackageEnv(envId);
+                    env[i] = CrudOperator.GetPackageEnv(envId);
                     if (env[i] == null || env[i].AasEnv == null)
                     {
                         return output;
@@ -779,10 +779,15 @@ namespace AasxServer
             if (Directory.Exists(AasxHttpContextHelper.DataPath))
             {
                 var filesPath = AasxHttpContextHelper.DataPath + "/files";
-                Directory.Delete(filesPath, true);
+
+                if (startIndex == 0)
+                {
+                    Directory.Delete(filesPath, true);
+                }
 
                 if (!Directory.Exists(AasxHttpContextHelper.DataPath + "/xml"))
                     Directory.CreateDirectory(AasxHttpContextHelper.DataPath + "/xml");
+
                 if (!Directory.Exists(filesPath))
                     Directory.CreateDirectory(filesPath);
 

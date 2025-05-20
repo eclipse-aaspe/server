@@ -853,7 +853,7 @@
 
 										string submodel64 = Base64UrlEncoder.Encode(SMEVirtualize.smSet.Identifier);
 										string link = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}/submodel-elements/{SMEVirtualize.smeSet.IdShortPath}";
-										var value = Converter.GetValue(SMEVirtualize.smeSet, SMEVirtualize.sValueList, SMEVirtualize.iValueList, SMEVirtualize.dValueList);
+										var value = CrudOperator.GetValue(SMEVirtualize.smeSet, SMEVirtualize.sValueList, SMEVirtualize.iValueList, SMEVirtualize.dValueList);
 									}
 									<tr style="height: 80px;">
 										<td style="width:3%;font-size:small;word-break: break-all;border-color:blue;">@SMEVirtualize?.smeSet.SMId</td>
@@ -954,7 +954,7 @@
 												if (sme.propertyValue == " ")
 													sme.propertyValue = string.Empty;
 
-												Converter.setTimeStampValue(sme.smSet.Id, sme.smeSet.Id, DateTime.UtcNow, sme.propertyValue);
+												CrudOperator.setTimeStampValue(sme.smSet.Id, sme.smeSet.Id, DateTime.UtcNow, sme.propertyValue);
 												reload();
 												SMESetContainer.RefreshDataAsync();
 												StateHasChanged();
@@ -984,7 +984,7 @@
 											@code {
                                                 private async Task SetTimeStamp(int smSetId, int smeSetId)
                                                 {
-									Converter.setTimeStampValue(smSetId, smeSetId, DateTime.UtcNow);
+									CrudOperator.setTimeStampValue(smSetId, smeSetId, DateTime.UtcNow);
 									reload();
 									await SMESetContainer.RefreshDataAsync();
 									StateHasChanged();
@@ -1697,7 +1697,7 @@
                 .ToList();
 
             CreateIdShortPath(db, smeList);
-            var merged = Converter.GetSmeMerged(db, smeList, null);
+            var merged = CrudOperator.GetSmeMerged(db, smeList, null);
             var smIdList = smeList.Select(sme => sme.SMId).Distinct();
             var smList = db.SMSets.Where(sm => smIdList.Contains(sm.Id)).ToList();
             foreach (var sme in smeList)

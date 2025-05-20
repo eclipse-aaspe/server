@@ -23,7 +23,7 @@ namespace AasxServerDB
     using System.Text;
     using System.Collections.Generic;
     using HotChocolate.Language;
-    using static AasxServerDB.Converter;
+    using static AasxServerDB.CrudOperator;
     using Microsoft.EntityFrameworkCore;
 
     public class VisitorAASX : VisitorThrough
@@ -35,7 +35,7 @@ namespace AasxServerDB
         private SMESet? _parSME;
         private int _index = 0;
         private SMESet? _resultSME;
-        public List<Converter.SmeMerged> smSmeMerged = null;
+        public List<CrudOperator.SmeMerged> smSmeMerged = null;
         public List<int> keepSme = new List<int>();
         public List<int> deleteSme = new List<int>();
         public string idShortPath = "";
@@ -283,8 +283,8 @@ namespace AasxServerDB
                 if (_smDB != null && smSmeMerged == null)
                 {
                     var smeSmList = db.SMESets.Where(sme => sme.SMId == _smDB.Id).ToList();
-                    Converter.CreateIdShortPath(db, smeSmList);
-                    smSmeMerged = Converter.GetSmeMerged(db, smeSmList, _smDB);
+                    CrudOperator.CreateIdShortPath(db, smeSmList);
+                    smSmeMerged = CrudOperator.GetSmeMerged(db, smeSmList, _smDB);
                 }
             }
             _smDB ??= new SMSet();
@@ -398,7 +398,7 @@ namespace AasxServerDB
             SMESet? smeDB = null;
             if (update)
             {
-                Converter.SmeMerged? s = null;
+                CrudOperator.SmeMerged? s = null;
                 if (_parSME == null)
                 {
                     s = smSmeMerged.FirstOrDefault(s => s.smeSet.IdShort == sme.IdShort);
