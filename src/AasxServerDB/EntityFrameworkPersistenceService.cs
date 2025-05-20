@@ -117,265 +117,240 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         var idShort = dbRequest.Context.Params.IdShort;
 
-        //ToDo (Debug) Log all Requests
-
-        using (var db = new AasContext())
+        using (var scope = _serviceProvider.CreateScope())
         {
+            var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
 
-            switch (dbRequest.Operation)
+            scopedLogger.LogDebug($"Starting operation in database service: {dbRequest.Operation}");
+
+            using (var db = new AasContext())
             {
-                case DbRequestOp.ReadPackageEnv:
-                    var envFile = "";
 
-                    if (IsPackageEnvPresent(db, aasIdentifier, submodelIdentifier, true, out envFile, out AdminShellPackageEnv packageEnv))
-                    {
-                        result.PackageEnv = new DbRequestPackageEnvResult()
-                        {
-                            PackageEnv = packageEnv,
-                            EnvFileName = envFile
-                        };
-                    }
-                    break;
+                switch (dbRequest.Operation)
+                {
+                    case DbRequestOp.ReadPackageEnv:
+                        var envFile = "";
 
-                case DbRequestOp.ReadPagedAssetAdministrationShells:
-                    // SpecificAssetIds is serialized as JSON and can not be handled by DB currently
-                    var assetAdministrationShells =
-                        CrudOperator.ReadPagedAssetAdministrationShells(
-                            db,
-                            dbRequest.Context.Params.PaginationParameters,
-                            dbRequest.Context.Params.AssetIds,
-                            dbRequest.Context.Params.IdShort);
-                    result.AssetAdministrationShells = assetAdministrationShells;
-                    break;
-                case DbRequestOp.ReadAssetAdministrationShellById:
-                    var found = IsAssetAdministrationShellPresent(db, aasIdentifier, true, out _, out IAssetAdministrationShell aas);
-                    if (found)
-                    {
-                        using (var scope = _serviceProvider.CreateScope())
+                        if (IsPackageEnvPresent(db, aasIdentifier, submodelIdentifier, true, out envFile, out AdminShellPackageEnv packageEnv))
                         {
-                            var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                            result.PackageEnv = new DbRequestPackageEnvResult()
+                            {
+                                PackageEnv = packageEnv,
+                                EnvFileName = envFile
+                            };
+                        }
+                        break;
+
+                    case DbRequestOp.ReadPagedAssetAdministrationShells:
+                        // SpecificAssetIds is serialized as JSON and can not be handled by DB currently
+                        var assetAdministrationShells =
+                            CrudOperator.ReadPagedAssetAdministrationShells(
+                                db,
+                                dbRequest.Context.Params.PaginationParameters,
+                                dbRequest.Context.Params.AssetIds,
+                                dbRequest.Context.Params.IdShort);
+                        result.AssetAdministrationShells = assetAdministrationShells;
+                        break;
+                    case DbRequestOp.ReadAssetAdministrationShellById:
+                        var found = IsAssetAdministrationShellPresent(db, aasIdentifier, true, out _, out IAssetAdministrationShell aas);
+                        if (found)
+                        {
                             scopedLogger.LogDebug($"Asset Administration Shell with id {aasIdentifier} found.");
                         }
-                    }
-                    else
-                    {
-                        throw new NotFoundException($"Asset Administration Shell with id {aasIdentifier} not found.");
-                    }
-
-                    result.AssetAdministrationShells = new List<IAssetAdministrationShell>
-                    {
-                        aas
-                    };
-                    break;
-                case DbRequestOp.CreateAssetAdministrationShell:
-                    var body = dbRequest.Context.Params.AasBody;
-                    found = IsAssetAdministrationShellPresent(db, body.Id, false, out _, out _);
-                    if (found)
-                    {
-                        using (var scope = _serviceProvider.CreateScope())
+                        else
                         {
-                            var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                            throw new NotFoundException($"Asset Administration Shell with id {aasIdentifier} not found.");
+                        }
+
+                        result.AssetAdministrationShells = new List<IAssetAdministrationShell>
+                        {
+                            aas
+                        };
+                        break;
+                    case DbRequestOp.CreateAssetAdministrationShell:
+                        var body = dbRequest.Context.Params.AasBody;
+                        found = IsAssetAdministrationShellPresent(db, body.Id, false, out _, out _);
+                        if (found)
+                        {
                             scopedLogger.LogDebug($"Cannot create requested AAS !!");
+                            throw new DuplicateException($"AssetAdministrationShell with id {body.Id} already exists.");
                         }
-                        throw new DuplicateException($"AssetAdministrationShell with id {body.Id} already exists.");
-                    }
 
-                    var addedInDb = CrudOperator.CreateAas(db, body);
+                        var addedInDb = CrudOperator.CreateAas(db, body);
 
-                    result.AssetAdministrationShells = new List<IAssetAdministrationShell>
-                    {
-                        addedInDb
-                    };
-                    break;
-                case DbRequestOp.ReplaceAssetAdministrationShellById:
-                    found = IsAssetAdministrationShellPresent(db, aasIdentifier, false, out AASSet aasDb, out IAssetAdministrationShell _);
-
-                    if (found)
-                    {
-                        CrudOperator.ReplaceAssetAdministrationShellById(db, aasDb, dbRequest.Context.Params.AasBody);
-                    }
-                    else
-                    {
-                        throw new NotFoundException($"Asset Administration Shell with id {aasIdentifier} not found.");
-                    }
-                    break;
-                case DbRequestOp.DeleteAssetAdministrationShellById:
-                    if (IsAssetAdministrationShellPresent(db, aasIdentifier, false, out aasDb, out _))
-                    {
-                        using (var scope = _serviceProvider.CreateScope())
+                        result.AssetAdministrationShells = new List<IAssetAdministrationShell>
                         {
-                            var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                            addedInDb
+                        };
+                        break;
+                    case DbRequestOp.ReplaceAssetAdministrationShellById:
+                        found = IsAssetAdministrationShellPresent(db, aasIdentifier, false, out AASSet aasDb, out IAssetAdministrationShell _);
+
+                        if (found)
+                        {
+                            CrudOperator.ReplaceAssetAdministrationShellById(db, aasDb, dbRequest.Context.Params.AasBody);
+                        }
+                        else
+                        {
+                            throw new NotFoundException($"Asset Administration Shell with id {aasIdentifier} not found.");
+                        }
+                        break;
+                    case DbRequestOp.DeleteAssetAdministrationShellById:
+                        if (IsAssetAdministrationShellPresent(db, aasIdentifier, false, out aasDb, out _))
+                        {
                             scopedLogger.LogDebug($"Found aas with id {aasIdentifier}");
+
+                            CrudOperator.DeleteAAS(db, aasIdentifier);
+                        }
+                        else
+                        {
+                            throw new NotFoundException($"AAS with id {aasIdentifier} NOT found");
+                        }
+                        break;
+
+
+                    case DbRequestOp.CreateSubmodelReference:
+                        IReference createdSubmodelReference = null;
+                        found = IsAssetAdministrationShellPresent(db, aasIdentifier, false, out _, out _);
+                        if (found)
+                        {
+                            createdSubmodelReference = CrudOperator.CreateSubmodelReferenceInAAS(db, dbRequest.Context.Params.Reference,
+                            dbRequest.Context.Params.AssetAdministrationShellIdentifier);
+                        }
+                        else
+                        {
+                            throw new NotFoundException($"Asset Administration Shell with id {aasIdentifier} not found.");
                         }
 
-                        CrudOperator.DeleteAAS(db, aasIdentifier);
-                    }
-                    else
-                    {
-                        throw new NotFoundException($"AAS with id {aasIdentifier} NOT found");
-                    }
-                    break;
-
-
-                case DbRequestOp.CreateSubmodelReference:
-                    IReference createdSubmodelReference = null;
-                    found = IsAssetAdministrationShellPresent(db, aasIdentifier, false, out _, out _);
-                    if (found)
-                    {
-                        createdSubmodelReference = CrudOperator.CreateSubmodelReferenceInAAS(db, dbRequest.Context.Params.Reference,
-                        dbRequest.Context.Params.AssetAdministrationShellIdentifier);
-                    }
-                    else
-                    {
-                        throw new NotFoundException($"Asset Administration Shell with id {aasIdentifier} not found.");
-                    }
-
-                    result.References = new List<IReference>
+                        result.References = new List<IReference>
                     {
                         createdSubmodelReference
                     };
-                    break;
-                case DbRequestOp.DeleteSubmodelReferenceById:
-                    found = IsAssetAdministrationShellPresent(db, aasIdentifier, false, out _, out _);
-                    if (found)
-                    {
-                        createdSubmodelReference = CrudOperator.CreateSubmodelReferenceInAAS(db, dbRequest.Context.Params.Reference,
-                        dbRequest.Context.Params.AssetAdministrationShellIdentifier);
-                    }
-                    else
-                    {
-                        throw new NotFoundException($"Asset Administration Shell with id {aasIdentifier} not found.");
-                    }
-                    break;
-
-                case DbRequestOp.ReadPagedSubmodels:
-                    var reqSemanticId = dbRequest.Context.Params.Reference;
-
-                    var output = CrudOperator.ReadPagedSubmodels(db, dbRequest.Context.Params.PaginationParameters, securityCondition, reqSemanticId, dbRequest.Context.Params.IdShort);
-
-                    if (dbRequest.Context.Params.Reference != null)
-                    {
-                        using (var scope = _serviceProvider.CreateScope())
+                        break;
+                    case DbRequestOp.DeleteSubmodelReferenceById:
+                        found = IsAssetAdministrationShellPresent(db, aasIdentifier, false, out _, out _);
+                        if (found)
                         {
-                            var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                            createdSubmodelReference = CrudOperator.CreateSubmodelReferenceInAAS(db, dbRequest.Context.Params.Reference,
+                            dbRequest.Context.Params.AssetAdministrationShellIdentifier);
+                        }
+                        else
+                        {
+                            throw new NotFoundException($"Asset Administration Shell with id {aasIdentifier} not found.");
+                        }
+                        break;
+
+                    case DbRequestOp.ReadPagedSubmodels:
+                        var reqSemanticId = dbRequest.Context.Params.Reference;
+
+                        var output = CrudOperator.ReadPagedSubmodels(db, dbRequest.Context.Params.PaginationParameters, securityCondition, reqSemanticId, dbRequest.Context.Params.IdShort);
+
+                        if (dbRequest.Context.Params.Reference != null)
+                        {
                             scopedLogger.LogDebug($"Filtering Submodels with requested Semnatic Id.");
                             output = output.Where(s => s.SemanticId != null && s.SemanticId.Matches(reqSemanticId)).ToList();
                             if (output.IsNullOrEmpty())
                             {
-                                scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
                                 scopedLogger.LogInformation($"No Submodels with requested semanticId found.");
                             }
                         }
-                    }
-                    result.Submodels = output;
-                    break;
-                case DbRequestOp.ReadSubmodelById:
-                    found = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, true, out ISubmodel submodel);
+                        result.Submodels = output;
+                        break;
+                    case DbRequestOp.ReadSubmodelById:
+                        found = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, true, out ISubmodel submodel);
 
-                    if (found)
-                    {
-                        using (var scope = _serviceProvider.CreateScope())
+                        if (found)
                         {
-                            var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
                             scopedLogger.LogDebug($"Submodel wit id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} found.");
                         }
-                    }
-                    else
-                    {
-                        throw new NotFoundException($"Submodel wit id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} not found.");
-                    }
+                        else
+                        {
+                            throw new NotFoundException($"Submodel wit id {submodelIdentifier} in Asset Administration Shell with id {aasIdentifier} not found.");
+                        }
 
-                    result.Submodels = new List<ISubmodel>
+                        result.Submodels = new List<ISubmodel>
                     {
                         submodel
                     };
-                    break;
-                case DbRequestOp.CreateSubmodel:
-                    var newSubmodel = dbRequest.Context.Params.SubmodelBody;
-                    found = IsSubmodelPresent(db, securityCondition, aasIdentifier, newSubmodel.Id, false, out _);
+                        break;
+                    case DbRequestOp.CreateSubmodel:
+                        var newSubmodel = dbRequest.Context.Params.SubmodelBody;
+                        found = IsSubmodelPresent(db, securityCondition, aasIdentifier, newSubmodel.Id, false, out _);
 
-                    if (found)
-                    {
-                        throw new DuplicateException($"Submodel with id {newSubmodel.Id} already exists.");
-                    }
+                        if (found)
+                        {
+                            throw new DuplicateException($"Submodel with id {newSubmodel.Id} already exists.");
+                        }
 
-                    var createdSubmodel = CrudOperator.CreateSubmodel(db, newSubmodel, aasIdentifier);
+                        var createdSubmodel = CrudOperator.CreateSubmodel(db, newSubmodel, aasIdentifier);
 
-                    result.Submodels = new List<ISubmodel>
+                        result.Submodels = new List<ISubmodel>
                     {
                         createdSubmodel
                     };
-                    break;
-                case DbRequestOp.UpdateSubmodelById:
-                    throw new NotImplementedException();
-                case DbRequestOp.ReplaceSubmodelById:
-                    found = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, out _);
+                        break;
+                    case DbRequestOp.UpdateSubmodelById:
+                        throw new NotImplementedException();
+                    case DbRequestOp.ReplaceSubmodelById:
+                        found = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, out _);
 
-                    if (found)
-                    {
-                        CrudOperator.ReplaceSubmodelById(db, aasIdentifier,submodelIdentifier,dbRequest.Context.Params.SubmodelBody);
-                    }
-                    else
-                    {
-                        var message = $"Submodel with id {submodelIdentifier} NOT found";
-                        if (!String.IsNullOrEmpty(aasIdentifier))
+                        if (found)
                         {
-                            message += $" in AAS with id {aasIdentifier}";
+                            CrudOperator.ReplaceSubmodelById(db, aasIdentifier, submodelIdentifier, dbRequest.Context.Params.SubmodelBody);
                         }
-                        throw new NotFoundException(message);
-                    }
-                    break;
-                case DbRequestOp.DeleteSubmodelById:
-                    if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, out _))
-                    {
-                        using (var scope = _serviceProvider.CreateScope())
+                        else
                         {
-                            var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                            var message = $"Submodel with id {submodelIdentifier} NOT found";
+                            if (!String.IsNullOrEmpty(aasIdentifier))
+                            {
+                                message += $" in AAS with id {aasIdentifier}";
+                            }
+                            throw new NotFoundException(message);
+                        }
+                        break;
+                    case DbRequestOp.DeleteSubmodelById:
+                        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, out _))
+                        {
                             scopedLogger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
+                            CrudOperator.DeleteSubmodel(db, submodelIdentifier);
+                        }
+                        else
+                        {
+                            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
                         }
 
-                        CrudOperator.DeleteSubmodel(db, submodelIdentifier);
-                    }
-                    else
-                    {
-                        throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
-                    }
+                        break;
 
-                    break;
-
-                case DbRequestOp.ReadPagedSubmodelElements:
-                    var submodelElements = CrudOperator.ReadPagedSubmodelElements(db, dbRequest.Context.Params.PaginationParameters,
-                        securityCondition, aasIdentifier, submodelIdentifier);
-                    if (submodelElements == null)
-                    {
-                        throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
-                    }
-
-                    result.SubmodelElements = submodelElements;
-                    break;
-                case DbRequestOp.ReadSubmodelElementByPath:
-                    var submodelElement = CrudOperator.ReadSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShort, out SMESet smE);
-                    if (submodelElement == null)
-                    {
-                        throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
-                    }
-
-                    result.SubmodelElements = new List<ISubmodelElement>
-                    {
-                        submodelElement
-                    };
-                    break;
-                case DbRequestOp.CreateSubmodelElement:
-                    ISubmodelElement createdSubmodelElement = null;
-
-                    var newSubmodelElement = dbRequest.Context.Params.SubmodelElementBody;
-
-                    var smFound = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, out _);
-                    if (smFound)
-                    {
-                        using (var scope = _serviceProvider.CreateScope())
+                    case DbRequestOp.ReadPagedSubmodelElements:
+                        var submodelElements = CrudOperator.ReadPagedSubmodelElements(db, dbRequest.Context.Params.PaginationParameters,
+                            securityCondition, aasIdentifier, submodelIdentifier);
+                        if (submodelElements == null)
                         {
-                            var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+                        }
+
+                        result.SubmodelElements = submodelElements;
+                        break;
+                    case DbRequestOp.ReadSubmodelElementByPath:
+                        var submodelElement = CrudOperator.ReadSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShort, out SMESet smE);
+                        if (submodelElement == null)
+                        {
+                            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+                        }
+
+                        result.SubmodelElements = new List<ISubmodelElement>
+                        {
+                            submodelElement
+                        };
+                        break;
+                    case DbRequestOp.CreateSubmodelElement:
+                        ISubmodelElement createdSubmodelElement = null;
+
+                        var newSubmodelElement = dbRequest.Context.Params.SubmodelElementBody;
+
+                        var smFound = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, out _);
+                        if (smFound)
+                        {
                             scopedLogger.LogDebug($"Found submodel with id {submodelIdentifier} in AAS with id {aasIdentifier}");
 
                             //ToDo: Do not use in-memory submodel for check
@@ -393,353 +368,329 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                             */
                             createdSubmodelElement = CrudOperator.CreateSubmodelElement(db, aasIdentifier, submodelIdentifier, newSubmodelElement, idShort, dbRequest.Context.Params.First);
                         }
-                    }
-                    else
-                    {
-                        throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
-                    }
+                        else
+                        {
+                            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+                        }
 
-                    result.SubmodelElements = new List<ISubmodelElement>
+                        result.SubmodelElements = new List<ISubmodelElement>
                     {
                         createdSubmodelElement
                     };
-                    break;
-                case DbRequestOp.ReplaceSubmodelElementByPath:
-                    found = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, out _);
-                    if (found)
-                    {
-                        CrudOperator.ReplaceSubmodelElementByPath(
-                            db,
-                            securityCondition,
-                            aasIdentifier,
-                            submodelIdentifier,
-                            idShort,
-                            dbRequest.Context.Params.SubmodelElementBody);
-                    }
-                    else
-                    {
-                        throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
-                    }
-                    break;
-                case DbRequestOp.UpdateSubmodelElementByPath:
-                    throw new NotImplementedException();
-
-                case DbRequestOp.DeleteSubmodelElementByPath:
-                    if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, out _))
-                    {
-                        CrudOperator.DeleteSubmodelElement(
-                            db,
-                            securityCondition,
-                            aasIdentifier,
-                            submodelIdentifier,
-                            idShort);
-                    }
-                    else
-                    {
-                        throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
-                    }
-                    break;
-                case DbRequestOp.ReadFileByPath:
-                    byte[] content;
-                    long fileSize;
-                    var file = ReadFileByPath(
-                        db,
-                        securityCondition,
-                        dbRequest.Context.Params.AssetAdministrationShellIdentifier,
-                        dbRequest.Context.Params.SubmodelIdentifier,
-                        dbRequest.Context.Params.IdShort, out content, out fileSize);
-                    result.FileRequestResult = new DbFileRequestResult()
-                    {
-                        Content = content,
-                        File = file,
-                        FileSize = fileSize
-                    };
-                    break;
-                case DbRequestOp.ReplaceFileByPath:
-                    ReplaceFileByPath(
-                        db,
-                        securityCondition,
-                        dbRequest.Context.Params.AssetAdministrationShellIdentifier,
-                        dbRequest.Context.Params.SubmodelIdentifier,
-                        dbRequest.Context.Params.IdShort,
-                        dbRequest.Context.Params.FileRequest.File,
-                        dbRequest.Context.Params.FileRequest.ContentType,
-                        dbRequest.Context.Params.FileRequest.Stream);
-                    break;
-                case DbRequestOp.DeleteFileByPath:
-                    DeleteFileByPath(
-                        db,
-                        securityCondition,
-                        dbRequest.Context.Params.AssetAdministrationShellIdentifier,
-                        dbRequest.Context.Params.SubmodelIdentifier,
-                        dbRequest.Context.Params.IdShort);
-                    break;
-
-                case DbRequestOp.ReadAssetInformation:
-                    IAssetInformation assetInformation = null;
-
-                    found = IsAssetAdministrationShellPresent(db, aasIdentifier, true, out _, out aas);
-                    if (found)
-                    {
-                        assetInformation = aas.AssetInformation;
-                        using (var scope = _serviceProvider.CreateScope())
+                        break;
+                    case DbRequestOp.ReplaceSubmodelElementByPath:
+                        found = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, out _);
+                        if (found)
                         {
-                            var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                            CrudOperator.ReplaceSubmodelElementByPath(
+                                db,
+                                securityCondition,
+                                aasIdentifier,
+                                submodelIdentifier,
+                                idShort,
+                                dbRequest.Context.Params.SubmodelElementBody);
+                        }
+                        else
+                        {
+                            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+                        }
+                        break;
+                    case DbRequestOp.UpdateSubmodelElementByPath:
+                        throw new NotImplementedException();
+
+                    case DbRequestOp.DeleteSubmodelElementByPath:
+                        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, out _))
+                        {
+                            CrudOperator.DeleteSubmodelElement(
+                                db,
+                                securityCondition,
+                                aasIdentifier,
+                                submodelIdentifier,
+                                idShort);
+                        }
+                        else
+                        {
+                            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
+                        }
+                        break;
+                    case DbRequestOp.ReadFileByPath:
+                        byte[] content;
+                        long fileSize;
+                        var file = ReadFileByPath(
+                            db,
+                            securityCondition,
+                            dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                            dbRequest.Context.Params.SubmodelIdentifier,
+                            dbRequest.Context.Params.IdShort, out content, out fileSize);
+                        result.FileRequestResult = new DbFileRequestResult()
+                        {
+                            Content = content,
+                            File = file,
+                            FileSize = fileSize
+                        };
+                        break;
+                    case DbRequestOp.ReplaceFileByPath:
+                        ReplaceFileByPath(
+                            db,
+                            securityCondition,
+                            dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                            dbRequest.Context.Params.SubmodelIdentifier,
+                            dbRequest.Context.Params.IdShort,
+                            dbRequest.Context.Params.FileRequest.File,
+                            dbRequest.Context.Params.FileRequest.ContentType,
+                            dbRequest.Context.Params.FileRequest.Stream);
+                        break;
+                    case DbRequestOp.DeleteFileByPath:
+                        DeleteFileByPath(
+                            db,
+                            securityCondition,
+                            dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                            dbRequest.Context.Params.SubmodelIdentifier,
+                            dbRequest.Context.Params.IdShort);
+                        break;
+
+                    case DbRequestOp.ReadAssetInformation:
+                        IAssetInformation assetInformation = null;
+
+                        found = IsAssetAdministrationShellPresent(db, aasIdentifier, true, out _, out aas);
+                        if (found)
+                        {
+                            assetInformation = aas.AssetInformation;
                             scopedLogger.LogDebug($"Asset Administration Shell with id {aasIdentifier} found.");
                         }
-                    }
-                    else
-                    {
-                        throw new NotFoundException($"Asset Administration Shell with id {aasIdentifier} not found.");
-                    }
-
-                    result.AssetInformation = assetInformation;
-                    break;
-                case DbRequestOp.ReplaceAssetInformation:
-                    found = IsAssetAdministrationShellPresent(db, aasIdentifier, false, out AASSet aasdb, out _);
-
-                    if (found)
-                    {
-                        CrudOperator.ReplaceAssetInformation(db, aasdb, dbRequest.Context.Params.AssetInformation);
-
-                        using (var scope = _serviceProvider.CreateScope())
+                        else
                         {
-                            var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                            throw new NotFoundException($"Asset Administration Shell with id {aasIdentifier} not found.");
+                        }
+
+                        result.AssetInformation = assetInformation;
+                        break;
+                    case DbRequestOp.ReplaceAssetInformation:
+                        found = IsAssetAdministrationShellPresent(db, aasIdentifier, false, out AASSet aasdb, out _);
+
+                        if (found)
+                        {
+                            CrudOperator.ReplaceAssetInformation(db, aasdb, dbRequest.Context.Params.AssetInformation);
+
                             scopedLogger.LogDebug($"AssetInformation from AAS with id {aasIdentifier} updated successfully.");
                         }
-                    }
-                    else
-                    {
-                        throw new NotFoundException($"Asset Administration Shell with id {aasIdentifier} not found.");
-                    }
-                    break;
-
-                case DbRequestOp.ReadThumbnail:
-                    var thumbnail = ReadThumbnail(
-                        db,
-                        securityCondition,
-                        dbRequest.Context.Params.AssetAdministrationShellIdentifier,
-                        out content, out fileSize);
-
-                    result.FileRequestResult = new DbFileRequestResult()
-                    {
-                        Content = content,
-                        File = thumbnail,
-                        FileSize = fileSize
-                    };
-                    break;
-                case DbRequestOp.ReplaceThumbnail:
-                    ReplaceThumbnail(
-                        db,
-                        securityCondition,
-                        dbRequest.Context.Params.AssetAdministrationShellIdentifier,
-                        dbRequest.Context.Params.FileRequest.File,
-                        dbRequest.Context.Params.FileRequest.ContentType,
-                        dbRequest.Context.Params.FileRequest.Stream);
-                    break;
-                case DbRequestOp.DeleteThumbnail:
-                    DeleteThumbnail(
-                        db,
-                        dbRequest.Context.Params.AssetAdministrationShellIdentifier);
-                    break;
-                case DbRequestOp.ReadEventMessages:
-                    var eventPayload = ReadEventMessages(securityCondition,
-                        dbRequest.Context.Params.EventRequest);
-                    result.EventPayload = eventPayload;
-                    break;
-                case DbRequestOp.UpdateEventMessages:
-                    UpdateEventMessages(db, securityCondition,
-                        dbRequest.Context.Params.EventRequest);
-                    break;
-
-                case DbRequestOp.QuerySearchSMs:
-                    var queryRequest = dbRequest.Context.Params.QueryRequest;
-                    var query = new Query(_grammar);
-                    var qresult = query.SearchSMs(queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SemanticId, queryRequest.Identifier, queryRequest.Diff, queryRequest.Expression);
-                    result.QueryResult = qresult;
-                    break;
-                case DbRequestOp.QueryCountSMs:
-                    queryRequest = dbRequest.Context.Params.QueryRequest;
-                    query = new Query(_grammar);
-                    var count = query.CountSMs(queryRequest.SemanticId, queryRequest.Identifier, queryRequest.Diff, queryRequest.Expression);
-                    result.Count = count;
-                    break;
-                case DbRequestOp.QuerySearchSMEs:
-                    queryRequest = dbRequest.Context.Params.QueryRequest;
-                    query = new Query(_grammar);
-                    qresult = query.SearchSMEs(queryRequest.Requested, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
-                        queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.Expression);
-                    result.QueryResult = qresult;
-                    break;
-                case DbRequestOp.QueryCountSMEs:
-                    queryRequest = dbRequest.Context.Params.QueryRequest;
-                    query = new Query(_grammar);
-                    count = query.CountSMEs(queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
-                        queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.Expression);
-                    result.Count = count;
-                    break;
-                case DbRequestOp.ReadPagedConceptDescriptions:
-                    //ToDo: Filter on IsCaseOf and DataSpecificationRef
-                    var conceptDescriptions = CrudOperator.GetPagedConceptDescriptions(
-                        db,
-                        dbRequest.Context.Params.PaginationParameters,
-                        idShort,
-                        dbRequest.Context.Params.IsCaseOf,
-                        dbRequest.Context.Params.DataSpecificationRef);
-
-                    //if (output.Any())
-                    //{
-                    //    //Filter based on IsCaseOf
-                    //    if (isCaseOf != null)
-                    //    {
-                    //        var cdList = new List<IConceptDescription>();
-                    //        foreach (var conceptDescription in output)
-                    //        {
-                    //            if (!conceptDescription.IsCaseOf.IsNullOrEmpty())
-                    //            {
-                    //                foreach (var reference in conceptDescription.IsCaseOf)
-                    //                {
-                    //                    if (reference != null && reference.Matches(isCaseOf))
-                    //                    {
-                    //                        cdList.Add(conceptDescription);
-                    //                        break;
-                    //                    }
-                    //                }
-                    //            }
-                    //        }
-                    //        if (cdList.IsNullOrEmpty())
-                    //        {
-                    //            //_logger.LogDebug($"No Concept Description with requested IsCaseOf found.");
-                    //        }
-                    //        else
-                    //        {
-                    //            output = cdList;
-                    //        }
-
-                    //    }
-
-                    //    //Filter based on DataSpecificationRef
-                    //    if (dataSpecificationRef != null)
-                    //    {
-                    //        var cdList = new List<IConceptDescription>();
-                    //        foreach (var conceptDescription in output)
-                    //        {
-                    //            if (!conceptDescription.EmbeddedDataSpecifications.IsNullOrEmpty())
-                    //            {
-                    //                foreach (var reference in conceptDescription.EmbeddedDataSpecifications)
-                    //                {
-                    //                    if (reference != null && reference.DataSpecification.Matches(dataSpecificationRef))
-                    //                    {
-                    //                        cdList.Add(conceptDescription);
-                    //                        break;
-                    //                    }
-                    //                }
-                    //            }
-                    //        }
-                    //        if (cdList.IsNullOrEmpty())
-                    //        {
-                    //            //_logger.LogDebug($"No Concept Description with requested DataSpecificationReference found.");
-                    //        }
-                    //        else
-                    //        {
-                    //            output = cdList;
-                    //        }
-                    //    }
-                    //}
-                    result.ConceptDescriptions = conceptDescriptions;
-                    break;
-                case DbRequestOp.ReadConceptDescriptionById:
-                    found = IsConceptDescriptionPresent(
-                        db,
-                        conceptDescriptionIdentifier,
-                        true,
-                        out IConceptDescription conceptDescription);
-                    if (found)
-                    {
-                        using (var scope = _serviceProvider.CreateScope())
+                        else
                         {
-                            var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
-                            scopedLogger.LogDebug($"Concept Description with id {conceptDescriptionIdentifier} found.");
+                            throw new NotFoundException($"Asset Administration Shell with id {aasIdentifier} not found.");
                         }
-                    }
-                    else
-                    {
-                        throw new NotFoundException($"Concept Description with id {conceptDescriptionIdentifier} not found.");
-                    }
-                    result.ConceptDescriptions = new List<IConceptDescription>
-                    {
-                        conceptDescription
-                    };
-                    break;
-                case DbRequestOp.CreateConceptDescription:
-                    var conceptDescriptionBody = dbRequest.Context.Params.ConceptDescriptionBody;
-                    found = IsConceptDescriptionPresent(db, conceptDescriptionBody.Id, false, out _);
-                    if (found)
-                    {
-                        using (var scope = _serviceProvider.CreateScope())
+                        break;
+
+                    case DbRequestOp.ReadThumbnail:
+                        var thumbnail = ReadThumbnail(
+                            db,
+                            securityCondition,
+                            dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                            out content, out fileSize);
+
+                        result.FileRequestResult = new DbFileRequestResult()
                         {
-                            var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
-                            scopedLogger.LogDebug($"Cannot create requested CD !!");
-                        }
-                        throw new DuplicateException($"Concept description with id {conceptDescriptionBody.Id} already exists.");
-                    }
+                            Content = content,
+                            File = thumbnail,
+                            FileSize = fileSize
+                        };
+                        break;
+                    case DbRequestOp.ReplaceThumbnail:
+                        ReplaceThumbnail(
+                            db,
+                            securityCondition,
+                            dbRequest.Context.Params.AssetAdministrationShellIdentifier,
+                            dbRequest.Context.Params.FileRequest.File,
+                            dbRequest.Context.Params.FileRequest.ContentType,
+                            dbRequest.Context.Params.FileRequest.Stream);
+                        break;
+                    case DbRequestOp.DeleteThumbnail:
+                        DeleteThumbnail(
+                            db,
+                            dbRequest.Context.Params.AssetAdministrationShellIdentifier);
+                        break;
+                    case DbRequestOp.ReadEventMessages:
+                        var eventPayload = ReadEventMessages(securityCondition,
+                            dbRequest.Context.Params.EventRequest);
+                        result.EventPayload = eventPayload;
+                        break;
+                    case DbRequestOp.UpdateEventMessages:
+                        UpdateEventMessages(db, securityCondition,
+                            dbRequest.Context.Params.EventRequest);
+                        break;
 
-                    conceptDescription = CrudOperator.CreateConceptDescription(db, conceptDescriptionBody);
+                    case DbRequestOp.QuerySearchSMs:
+                        var queryRequest = dbRequest.Context.Params.QueryRequest;
+                        var query = new Query(_grammar);
+                        var qresult = query.SearchSMs(queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SemanticId, queryRequest.Identifier, queryRequest.Diff, queryRequest.Expression);
+                        result.QueryResult = qresult;
+                        break;
+                    case DbRequestOp.QueryCountSMs:
+                        queryRequest = dbRequest.Context.Params.QueryRequest;
+                        query = new Query(_grammar);
+                        var count = query.CountSMs(queryRequest.SemanticId, queryRequest.Identifier, queryRequest.Diff, queryRequest.Expression);
+                        result.Count = count;
+                        break;
+                    case DbRequestOp.QuerySearchSMEs:
+                        queryRequest = dbRequest.Context.Params.QueryRequest;
+                        query = new Query(_grammar);
+                        qresult = query.SearchSMEs(queryRequest.Requested, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
+                            queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.Expression);
+                        result.QueryResult = qresult;
+                        break;
+                    case DbRequestOp.QueryCountSMEs:
+                        queryRequest = dbRequest.Context.Params.QueryRequest;
+                        query = new Query(_grammar);
+                        count = query.CountSMEs(queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
+                            queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.Expression);
+                        result.Count = count;
+                        break;
+                    case DbRequestOp.ReadPagedConceptDescriptions:
+                        //ToDo: Filter on IsCaseOf and DataSpecificationRef
+                        var conceptDescriptions = CrudOperator.GetPagedConceptDescriptions(
+                            db,
+                            dbRequest.Context.Params.PaginationParameters,
+                            idShort,
+                            dbRequest.Context.Params.IsCaseOf,
+                            dbRequest.Context.Params.DataSpecificationRef);
 
-                    result.ConceptDescriptions = new List<IConceptDescription>
-                    {
-                        conceptDescription
-                    };
-                    break;
-                case DbRequestOp.ReplaceConceptDescriptionById:
-                    found = IsConceptDescriptionPresent(db, conceptDescriptionIdentifier, false, out _);
-                    conceptDescriptionBody = dbRequest.Context.Params.ConceptDescriptionBody;
+                        //if (output.Any())
+                        //{
+                        //    //Filter based on IsCaseOf
+                        //    if (isCaseOf != null)
+                        //    {
+                        //        var cdList = new List<IConceptDescription>();
+                        //        foreach (var conceptDescription in output)
+                        //        {
+                        //            if (!conceptDescription.IsCaseOf.IsNullOrEmpty())
+                        //            {
+                        //                foreach (var reference in conceptDescription.IsCaseOf)
+                        //                {
+                        //                    if (reference != null && reference.Matches(isCaseOf))
+                        //                    {
+                        //                        cdList.Add(conceptDescription);
+                        //                        break;
+                        //                    }
+                        //                }
+                        //            }
+                        //        }
+                        //        if (cdList.IsNullOrEmpty())
+                        //        {
+                        //            //_logger.LogDebug($"No Concept Description with requested IsCaseOf found.");
+                        //        }
+                        //        else
+                        //        {
+                        //            output = cdList;
+                        //        }
 
-                    if (found)
-                    {
-                        CrudOperator.ReplaceConceptdescription(
+                        //    }
+
+                        //    //Filter based on DataSpecificationRef
+                        //    if (dataSpecificationRef != null)
+                        //    {
+                        //        var cdList = new List<IConceptDescription>();
+                        //        foreach (var conceptDescription in output)
+                        //        {
+                        //            if (!conceptDescription.EmbeddedDataSpecifications.IsNullOrEmpty())
+                        //            {
+                        //                foreach (var reference in conceptDescription.EmbeddedDataSpecifications)
+                        //                {
+                        //                    if (reference != null && reference.DataSpecification.Matches(dataSpecificationRef))
+                        //                    {
+                        //                        cdList.Add(conceptDescription);
+                        //                        break;
+                        //                    }
+                        //                }
+                        //            }
+                        //        }
+                        //        if (cdList.IsNullOrEmpty())
+                        //        {
+                        //            //_logger.LogDebug($"No Concept Description with requested DataSpecificationReference found.");
+                        //        }
+                        //        else
+                        //        {
+                        //            output = cdList;
+                        //        }
+                        //    }
+                        //}
+                        result.ConceptDescriptions = conceptDescriptions;
+                        break;
+                    case DbRequestOp.ReadConceptDescriptionById:
+                        found = IsConceptDescriptionPresent(
                             db,
                             conceptDescriptionIdentifier,
-                            conceptDescriptionBody);
-
-                        using (var scope = _serviceProvider.CreateScope())
+                            true,
+                            out IConceptDescription conceptDescription);
+                        if (found)
                         {
-                            var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                            scopedLogger.LogDebug($"Concept Description with id {conceptDescriptionIdentifier} found.");
+                        }
+                        else
+                        {
+                            throw new NotFoundException($"Concept Description with id {conceptDescriptionIdentifier} not found.");
+                        }
+                        result.ConceptDescriptions = new List<IConceptDescription>
+                    {
+                        conceptDescription
+                    };
+                        break;
+                    case DbRequestOp.CreateConceptDescription:
+                        var conceptDescriptionBody = dbRequest.Context.Params.ConceptDescriptionBody;
+                        found = IsConceptDescriptionPresent(db, conceptDescriptionBody.Id, false, out _);
+                        if (found)
+                        {
+                            scopedLogger.LogDebug($"Cannot create requested CD !!");
+                            throw new DuplicateException($"Concept description with id {conceptDescriptionBody.Id} already exists.");
+                        }
+
+                        conceptDescription = CrudOperator.CreateConceptDescription(db, conceptDescriptionBody);
+
+                        result.ConceptDescriptions = new List<IConceptDescription>
+                    {
+                        conceptDescription
+                    };
+                        break;
+                    case DbRequestOp.ReplaceConceptDescriptionById:
+                        found = IsConceptDescriptionPresent(db, conceptDescriptionIdentifier, false, out _);
+                        conceptDescriptionBody = dbRequest.Context.Params.ConceptDescriptionBody;
+
+                        if (found)
+                        {
+                            CrudOperator.ReplaceConceptdescription(
+                                db,
+                                conceptDescriptionIdentifier,
+                                conceptDescriptionBody);
+
                             scopedLogger.LogDebug($"Concept description with id {conceptDescriptionIdentifier} updated successfully.");
                         }
-                    }
-                    else
-                    {
-                        throw new NotFoundException($"Concept description with id {conceptDescriptionIdentifier} not found.");
-                    }
-                    break;
-                case DbRequestOp.DeleteConceptDescriptionById:
-                    if (IsConceptDescriptionPresent(db, conceptDescriptionIdentifier, false, out _))
-                    {
-                        using (var scope = _serviceProvider.CreateScope())
+                        else
                         {
-                            var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
-                            scopedLogger.LogDebug($"Found concept description with id {conceptDescriptionIdentifier}");
+                            throw new NotFoundException($"Concept description with id {conceptDescriptionIdentifier} not found.");
                         }
+                        break;
+                    case DbRequestOp.DeleteConceptDescriptionById:
+                        if (IsConceptDescriptionPresent(db, conceptDescriptionIdentifier, false, out _))
+                        {
+                            scopedLogger.LogDebug($"Found concept description with id {conceptDescriptionIdentifier}");
 
-                        CrudOperator.DeleteConceptDescription(db, conceptDescriptionIdentifier);
-                    }
-                    else
-                    {
-                        throw new NotFoundException($"Concept description with id {conceptDescriptionIdentifier} NOT found");
-                    }
-                    break;
-                case DbRequestOp.GenerateSerializationByIds:
-                    var environment =  CrudOperator.GenerateSerializationByIds(
-                        db,
-                        dbRequest.Context.Params.AasIds,
-                        dbRequest.Context.Params.SubmodelIds,
-                        dbRequest.Context.Params.IncludeCD);
-                    result.Environment = environment;
-                    break;
-                default:
-                    dbRequest.TaskCompletionSource.SetException(new Exception("Unknown Operation"));
-                    break;
+                            CrudOperator.DeleteConceptDescription(db, conceptDescriptionIdentifier);
+                        }
+                        else
+                        {
+                            throw new NotFoundException($"Concept description with id {conceptDescriptionIdentifier} NOT found");
+                        }
+                        break;
+                    case DbRequestOp.GenerateSerializationByIds:
+                        var environment = CrudOperator.GenerateSerializationByIds(
+                            db,
+                            dbRequest.Context.Params.AasIds,
+                            dbRequest.Context.Params.SubmodelIds,
+                            dbRequest.Context.Params.IncludeCD);
+                        result.Environment = environment;
+                        break;
+                    default:
+                        dbRequest.TaskCompletionSource.SetException(new Exception("Unknown Operation"));
+                        break;
+                }
             }
         }
         return result;
@@ -1219,14 +1170,14 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         return true;
     }
 
-    private bool IsAssetAdministrationShellPresent(AasContext db, string aasIdentifier, bool loadIntoMemory, out AASSet aasDb, out IAssetAdministrationShell output)
+    private bool IsAssetAdministrationShellPresent(AasContext db, string aasIdentifier, bool loadIntoMemory, out AASSet aasDB, out IAssetAdministrationShell output)
     {
         output = null;
-        aasDb = null;
+        aasDB = null;
 
         if (!aasIdentifier.IsNullOrEmpty())
         {
-            var aasDB = db.AASSets
+            aasDB = db.AASSets
                 .Include(aas => aas.SMRefSets)
                 .FirstOrDefault(aas => aas.Identifier == aasIdentifier);
             if (aasDB == null)
@@ -1237,7 +1188,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             {
                 if (loadIntoMemory)
                 {
-                    output = CrudOperator.ReadAssetAdministrationShell(db, ref aasDb);
+                    output = CrudOperator.ReadAssetAdministrationShell(db, ref aasDB);
 
                     if (output != null)
                     {
