@@ -271,9 +271,12 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
         List<SubmodelDescriptor> submodelDescriptors = [];
         foreach (var ad in aasDescriptors)
         {
-            foreach (var sd in ad.SubmodelDescriptors)
+            if (ad != null && ad.SubmodelDescriptors != null)
             {
-                submodelDescriptors.Add(sd);
+                foreach (var sd in ad.SubmodelDescriptors)
+                {
+                    submodelDescriptors.Add(sd);
+                }
             }
         }
 
