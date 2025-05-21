@@ -3,6 +3,7 @@ namespace IO.Swagger.Lib.V3.Models;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Claims;
 using System.Security.Principal;
@@ -21,6 +22,8 @@ public class SecurityConfig : ISecurityConfig
         {
             this.Principal = controllerBase.User;
         }
+
+        PrintMemoryUsage();
     }
 
     //private bool InitSecurity(ISecurityConfig? securityConfig, out string securityConditionSM, out string securityConditionSME)
@@ -59,4 +62,12 @@ public class SecurityConfig : ISecurityConfig
     //    var principal = new System.Security.Principal.GenericPrincipal(identity, null);
     //    this.Principal = principal;
     //}
+
+    private void PrintMemoryUsage()
+    {
+        var currentProc = Process.GetCurrentProcess();
+        currentProc.Refresh();
+        var bytesInUse = currentProc.PrivateMemorySize64;
+        Console.WriteLine("bytesInUse: " + bytesInUse);
+    }
 }
