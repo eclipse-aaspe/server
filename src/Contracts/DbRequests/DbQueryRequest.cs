@@ -11,6 +11,9 @@ public class DbQueryRequest
 
     public string Diff { get; set; }
 
+    public int PageFrom { get; set; }
+    public int PageSize { get; set; }
+
     public string Expression { get; set; }
 
     //Submodel Element Request

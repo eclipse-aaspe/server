@@ -44,6 +44,7 @@ using System.Threading.Tasks;
 using AasxServer;
 using IO.Swagger.Lib.V3.Models;
 using NJsonSchema.Validation;
+using Contracts.Pagination;
 
 namespace IO.Swagger.Controllers
 {

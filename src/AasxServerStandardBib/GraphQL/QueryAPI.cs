@@ -27,6 +27,10 @@ using Contracts.QueryResult;
 using HotChocolate;
 using Contracts;
 using System.Threading.Tasks;
+using System.Drawing.Printing;
+using Microsoft.AspNetCore.Authorization;
+using Contracts.Pagination;
+using ScottPlot;
 
 //public class SMEResultRaw
 //{
@@ -54,8 +58,12 @@ public class QueryAPI
 
     private readonly IDbRequestHandlerService _dbRequestHandlerService;
 
+    //ToDo: Agree on max value, also in pagination parameters
+    private const int MAX_PAGE_SIZE = 500;
+
     // --------------- API ---------------
-    public async Task<QResult> SearchSMs(IResolverContext context, string semanticId = "", string identifier = "", string diff = "", string expression = "")
+    public async Task<QResult> SearchSMs(IResolverContext context, string semanticId = "", string identifier = "", string diff = "",
+        string pageFrom = "", string pageSize = "", string expression = "")
     {
         var parameterNames = context.ContextData.ContainsKey("ParameterNames")
             ? (List<string>)context.ContextData["ParameterNames"]
@@ -64,21 +72,30 @@ public class QueryAPI
 
         var withLastId = parameterNames.Contains("lastID");
 
-        var qresult = await _dbRequestHandlerService.QuerySearchSMs(withTotalCount, withLastId, semanticId, identifier, diff, expression);
+        var pageSizeParam = string.IsNullOrEmpty(pageSize)
+                || !int.TryParse(pageSize, out var parsedPageSize) ? MAX_PAGE_SIZE : parsedPageSize;
+
+        var paginationParameters = new PaginationParameters(pageFrom, pageSizeParam);
+
+        var qresult = await _dbRequestHandlerService.QuerySearchSMs(withTotalCount, withLastId, semanticId, identifier, diff,
+            paginationParameters, expression);
 
         return qresult;
     }
 
-    public async Task<int> CountSMs(string semanticId = "", string identifier = "", string diff = "", string expression = "")
+    public async Task<int> CountSMs(string semanticId = "", string identifier = "", string diff = "", string pageFrom = "", string expression = "")
     {
-        var result = await _dbRequestHandlerService.QueryCountSMs(semanticId, identifier, diff, expression);
+        var paginationParameters = new PaginationParameters(pageFrom, MAX_PAGE_SIZE);
+
+        var result = await _dbRequestHandlerService.QueryCountSMs(semanticId, identifier, diff, paginationParameters, expression);
         return result;
     }
 
     public async Task<QResult> SearchSMEs(
         IResolverContext context,
         string smSemanticId = "", string smIdentifier = "", string semanticId = "", string diff = "",
-        string contains = "", string equal = "", string lower = "", string upper = "", string expression = "")
+        string pageFrom = "", string pageSize = "", string contains = "", string equal = "", string lower = "",
+        string upper = "", string expression = "")
     {
         // Get parameter names
         var parameterNames = context.ContextData.ContainsKey("ParameterNames")
@@ -98,19 +115,27 @@ public class QueryAPI
                 requested += " " + field.ToString();
             }
         }
+
+        var pageSizeParam = string.IsNullOrEmpty(pageSize)
+                || !int.TryParse(pageSize, out var parsedPageSize) ? MAX_PAGE_SIZE : parsedPageSize;
+
+        var paginationParameters = new PaginationParameters(pageFrom, pageSizeParam);
         var qresult = await _dbRequestHandlerService.QuerySearchSMEs(requested, withTotalCount, withLastId,
         smSemanticId, smIdentifier, semanticId, diff,
-        contains, equal, lower, upper, expression);
+        contains, equal, lower, upper, paginationParameters, expression);
 
         return qresult;
     }
 
     public async Task<int> CountSMEs(
         string smSemanticId = "", string smIdentifier = "", string semanticId = "", string diff = "",
-        string contains = "", string equal = "", string lower = "", string upper = "", string expression = "")
+        string pageFrom = "", string contains = "", string equal = "",
+        string lower = "", string upper = "", string expression = "")
     {
+        var paginationParameters = new PaginationParameters(pageFrom, MAX_PAGE_SIZE);
+
         var result = await _dbRequestHandlerService.QueryCountSMEs(smSemanticId, smIdentifier, semanticId,
-            diff, contains, equal, lower, upper, expression);
+            diff, contains, equal, lower, upper, paginationParameters, expression);
         return result;
     }
 }

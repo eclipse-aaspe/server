@@ -12,7 +12,6 @@ using Contracts.DbRequests;
 using Contracts.Pagination;
 using Contracts.QueryResult;
 using Microsoft.Extensions.DependencyInjection;
-using Org.BouncyCastle.Asn1.Ocsp;
 
 public class DbRequestHandlerService : IDbRequestHandlerService
 {
@@ -953,7 +952,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.Environment;
     }
 
-    public async Task<QResult> QuerySearchSMs(bool withTotalCount, bool withLastId, string semanticId, string identifier, string diff, string expression)
+    public async Task<QResult> QuerySearchSMs(bool withTotalCount, bool withLastId, string semanticId, string identifier, string diff, IPaginationParameters paginationParameters, string expression)
     {
         var parameters = new DbRequestParams()
         {
@@ -964,6 +963,8 @@ public class DbRequestHandlerService : IDbRequestHandlerService
                 SemanticId = semanticId,
                 Identifier = identifier,
                 Diff = diff,
+                PageFrom = paginationParameters.Cursor,
+                PageSize = paginationParameters.Limit,
                 Expression = expression
             }
         };
@@ -983,12 +984,14 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.QueryResult;
     }
 
-    public async Task<int> QueryCountSMs(string semanticId, string identifier, string diff, string expression)
+    public async Task<int> QueryCountSMs(string semanticId, string identifier, string diff, IPaginationParameters paginationParameters, string expression)
     {
         var parameters = new DbRequestParams()
         {
             QueryRequest = new DbQueryRequest()
             {
+                PageFrom = paginationParameters.Cursor,
+                PageSize = paginationParameters.Limit,
                 SemanticId = semanticId,
                 Identifier = identifier,
                 Diff = diff,
@@ -1011,7 +1014,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.Count;
     }
 
-    public async Task<QResult> QuerySearchSMEs(string requested, bool withTotalCount, bool withLastId, string smSemanticId, string smIdentifier, string semanticId, string diff, string contains, string equal, string lower, string upper, string expression)
+    public async Task<QResult> QuerySearchSMEs(string requested, bool withTotalCount, bool withLastId, string smSemanticId, string smIdentifier, string semanticId, string diff, string contains, string equal, string lower, string upper, IPaginationParameters paginationParameters, string expression)
     {
         var parameters = new DbRequestParams()
         {
@@ -1020,6 +1023,8 @@ public class DbRequestHandlerService : IDbRequestHandlerService
                 Requested = requested,
                 WithTotalCount = withTotalCount,
                 WithLastId = withLastId,
+                PageFrom = paginationParameters.Cursor,
+                PageSize = paginationParameters.Limit,
                 SmSemanticId = smSemanticId,
                 Identifier = smIdentifier,
                 SemanticId = semanticId,
@@ -1048,12 +1053,14 @@ public class DbRequestHandlerService : IDbRequestHandlerService
     }
 
     public async Task<int> QueryCountSMEs(string smSemanticId, string smIdentifier, string semanticId, string diff, string contains,
-        string equal, string lower, string upper, string expression)
+        string equal, string lower, string upper,  IPaginationParameters paginationParameters, string expression)
     {
         var parameters = new DbRequestParams()
         {
             QueryRequest = new DbQueryRequest()
             {
+                PageFrom = paginationParameters.Cursor,
+                PageSize = paginationParameters.Limit,
                 SmSemanticId = smSemanticId,
                 Identifier = smIdentifier,
                 SemanticId = semanticId,
@@ -1079,8 +1086,35 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
         var tcs = await taskCompletionSource.Task;
         return tcs.Count;
-
     }
+
+    public async Task<List<ISubmodel>> QueryGetSMs(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, string expression)
+    {
+        var parameters = new DbRequestParams()
+        {
+            QueryRequest = new DbQueryRequest()
+            {
+                PageFrom = paginationParameters.Cursor,
+                PageSize = paginationParameters.Limit,
+                Expression = expression
+            }
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.QueryGetSMs, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.Submodels;
+    }
+
 
     private void IncrementCounter()
     {
@@ -1091,4 +1125,5 @@ public class DbRequestHandlerService : IDbRequestHandlerService
     {
         Interlocked.Decrement(ref ActiveReadOperations);
     }
+
 }

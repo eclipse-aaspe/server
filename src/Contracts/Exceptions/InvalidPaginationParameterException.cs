@@ -13,7 +13,7 @@
 
 using System;
 
-namespace IO.Swagger.Lib.V3.Exceptions
+namespace Contracts.Exceptions
 {
     public class InvalidPaginationParameterException : Exception
     {

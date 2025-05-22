@@ -28,6 +28,7 @@ using AasxServerDB.Entities;
 using Microsoft.EntityFrameworkCore;
 using HotChocolate;
 using Contracts;
+using AasCore.Aas3_0;
 
 public class CombinedValue
 {
@@ -61,7 +62,8 @@ public partial class Query
     private readonly QueryGrammar grammar;
     */
 
-    public QResult SearchSMs(bool withTotalCount, bool withLastId, string semanticId, string identifier, string diff, string expression)
+    public QResult SearchSMs(AasContext db, bool withTotalCount, bool withLastId, string semanticId,
+        string identifier, string diff, int pageFrom, int pageSize, string expression)
     {
         var qResult = new QResult()
         {
@@ -79,11 +81,10 @@ public partial class Query
         var text = string.Empty;
 
         var watch = Stopwatch.StartNew();
-        using AasContext db = new();
         Console.WriteLine("\nSearchSMs");
 
         watch.Restart();
-        var query = GetSMs(qResult, watch, db, false, withTotalCount, semanticId, identifier, diff, expression);
+        var query = GetSMs(qResult, watch, db, false, withTotalCount, semanticId, identifier, diff, pageFrom, pageSize, expression);
         if (query == null)
         {
             text = "No query is generated.";
@@ -123,14 +124,13 @@ public partial class Query
         return qResult;
     }
 
-    public int CountSMs(string semanticId, string identifier, string diff, string expression)
+    public int CountSMs(AasContext db, string semanticId, string identifier, string diff, int pageFrom, int pageSize, string expression)
     {
         var watch = Stopwatch.StartNew();
-        using AasContext db = new();
         Console.WriteLine("\nCountSMs");
 
         watch.Restart();
-        var query = GetSMs(new QResult(), watch, db, true, false, semanticId, identifier, diff, expression);
+        var query = GetSMs(new QResult(), watch, db, true, false, semanticId, identifier, diff, pageFrom, pageSize, expression);
         if (query == null)
         {
             Console.WriteLine("No query is generated.");
@@ -145,9 +145,9 @@ public partial class Query
         return result;
     }
 
-    public QResult SearchSMEs(string requested, bool withTotalCount, bool withLastId,
-        string smSemanticId, string smIdentifier, string semanticId, string diff,
-        string contains, string equal, string lower, string upper, string expression)
+    public QResult SearchSMEs(AasContext db, string requested, bool withTotalCount, bool withLastId,
+        string smSemanticId, string smIdentifier, string semanticId, string diff, string contains,
+        string equal, string lower, string upper, int pageFrom, int pageSize, string expression)
     {
 
         var qResult = new QResult()
@@ -166,11 +166,11 @@ public partial class Query
         var text = string.Empty;
 
         var watch = Stopwatch.StartNew();
-        using AasContext db = new();
         Console.WriteLine("\nSearchSMEs");
 
         watch.Restart();
-        var query = GetSMEs(qResult, watch, requested, db, false, withTotalCount, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
+        var query = GetSMEs(qResult, watch, requested, db, false, withTotalCount,
+            smSemanticId, smIdentifier, semanticId, diff, pageFrom, pageSize, contains, equal, lower, upper, expression);
         if (query == null)
         {
             text = "No query is generated.";
@@ -211,16 +211,15 @@ public partial class Query
         return qResult;
     }
 
-    public int CountSMEs(
+    public int CountSMEs(AasContext db,
         string smSemanticId, string smIdentifier, string semanticId, string diff,
-        string contains, string equal, string lower, string upper, string expression)
+        string contains, string equal, string lower, string upper, int pageFrom, int pageSize, string expression)
     {
         var watch = Stopwatch.StartNew();
-        using AasContext db = new();
         Console.WriteLine("\nCountSMEs");
 
         watch.Restart();
-        var query = GetSMEs(new QResult(), watch, "", db, true, false, smSemanticId, smIdentifier, semanticId, diff, contains, equal, lower, upper, expression);
+        var query = GetSMEs(new QResult(), watch, "", db, true, false, smSemanticId, smIdentifier, semanticId, diff, -1, -1, contains, equal, lower, upper, expression);
         if (query == null)
         {
             Console.WriteLine("No query is generated due to incorrect parameter combination.");
@@ -235,9 +234,83 @@ public partial class Query
         return result;
     }
 
+    internal List<ISubmodel> GetSubmodelList(AasContext db, Dictionary<string, string>? securityCondition,  int pageFrom, int pageSize, string expression)
+    {
+        var qResult = new QResult()
+        {
+            Count = 0,
+            TotalCount = 0,
+            PageFrom = 0,
+            PageSize = QResult.DefaultPageSize,
+            LastID = 0,
+            Messages = new List<string>(),
+            SMResults = new List<SMResult>(),
+            SMEResults = new List<SMEResult>(),
+            SQL = new List<string>()
+        };
+
+        var text = string.Empty;
+
+        var watch = Stopwatch.StartNew();
+        Console.WriteLine("\nSearchSMs");
+
+        watch.Restart();
+
+        var query = GetSMs(qResult, watch, db, false, false, "", "", "", pageFrom, pageSize, expression);
+        if (query == null)
+        {
+            text = "No query is generated.";
+            Console.WriteLine(text);
+            return null;
+        }
+        else
+        {
+            text = "Generate query in " + watch.ElapsedMilliseconds + " ms";
+            Console.WriteLine(text);
+
+            watch.Restart();
+            int lastId = 0;
+            var result = GetSMResult(qResult, (IQueryable<CombinedSMResult>)query, false, out lastId);
+            text = "Collect results in " + watch.ElapsedMilliseconds + " ms";
+            Console.WriteLine(text);
+            text = "SMs found ";
+            text += "/" + db.SMSets.Count() + ": " + qResult.Count + " queried";
+            Console.WriteLine(text);
+
+            var smIdList = result.Select(sm => sm.smId).Distinct();
+
+            var securityConditionSM = "";
+            if (securityCondition != null && securityCondition["sm."] != null)
+            {
+                securityConditionSM = securityCondition["sm."];
+                if (securityConditionSM == "" || securityConditionSM == "*")
+                    securityConditionSM = "true";
+            }
+
+            var smList = db.SMSets.Where(sm => smIdList.Contains(sm.Identifier)).ToList();
+
+            List<ISubmodel> output = new List<ISubmodel>();
+
+            var timeStamp = DateTime.UtcNow;
+
+            foreach (var sm in smList.Select(selector: submodelDB =>
+                CrudOperator.ReadSubmodel(db, smDB: submodelDB, "", securityCondition)))
+            {
+                if (sm.TimeStamp == DateTime.MinValue)
+                {
+                    sm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp, DateTime.MinValue);
+                    sm.SetTimeStamp(timeStamp);
+                }
+                output.Add(sm);
+            }
+
+            return output;
+        }
+    }
+
     // --------------- SM Methods ---------------
     private IQueryable? GetSMs(QResult qResult, Stopwatch watch, AasContext db, bool withCount = false, bool withTotalCount = false,
-        string semanticId = "", string identifier = "", string diffString = "", string expression = "")
+        string semanticId = "", string identifier = "", string diffString = "", int pageFrom = -1, int pageSize = -1, string expression = "")
     {
         // parameter
         var messages = qResult.Messages ?? [];
@@ -272,37 +345,8 @@ public partial class Query
         expression = expression.Replace("$BOTTOMUP", string.Empty);
         expression = expression.Replace("$MIDDLEOUT", string.Empty);
 
-        var pageFrom = -1;
-        var pageSize = -1;
         var lastID = -1;
         var orderBy = false;
-        if (expression.Contains("$PAGEFROM="))
-        {
-            var index1 = expression.IndexOf("$PAGEFROM");
-            var index2 = expression.IndexOf("=", index1);
-            var index3 = expression.IndexOf(";", index1);
-            var s = expression.Substring(index2 + 1, index3 - index2 - 1);
-            var s2 = expression.Substring(index1, index3 - index1 + 1);
-            if (s.StartsWith("+"))
-            {
-                orderBy = true;
-                s = s.Substring(1);
-            }
-            pageFrom = int.Parse(s);
-            pageSize = 1000;
-            expression = expression.Replace(s2, "");
-            messages.Add("$PAGEFROM=" + pageFrom);
-        }
-        if (expression.Contains("$PAGESIZE="))
-        {
-            var index1 = expression.IndexOf("$PAGESIZE");
-            var index2 = expression.IndexOf("=", index1);
-            var index3 = expression.IndexOf(";", index1);
-            var s = expression.Substring(index2 + 1, index3 - index2 - 1);
-            pageSize = int.Parse(s);
-            expression = expression.Replace("$PAGESIZE=" + s + ";", "");
-            messages.Add("$PAGESIZE=" + pageSize);
-        }
         if (expression.Contains("$LASTID="))
         {
             var index1 = expression.IndexOf("$LASTID");
@@ -703,8 +747,8 @@ public partial class Query
     }
 
     private IQueryable? GetSMEs(QResult qResult, Stopwatch watch, string requested, AasContext db, bool withCount = false, bool withTotalCount = false,
-        string smSemanticId = "", string smIdentifier = "", string semanticId = "",
-        string diffString = "", string contains = "", string equal = "", string lower = "", string upper = "", string expression = "")
+        string smSemanticId = "", string smIdentifier = "", string semanticId = "", string diffString = "", int pageFrom = -1, int pageSize = -1,
+        string contains = "", string equal = "", string lower = "", string upper = "", string expression = "")
     {
         // parameter
         var messages = qResult.Messages ?? [];
@@ -759,34 +803,6 @@ public partial class Query
         expression = expression.Replace("$MIDDLEOUT", string.Empty);
 
         var orderBy = false;
-        var pageFrom = -1;
-        if (expression.Contains("$PAGEFROM="))
-        {
-            var index1 = expression.IndexOf("$PAGEFROM");
-            var index2 = expression.IndexOf("=", index1);
-            var index3 = expression.IndexOf(";", index1);
-            var s = expression.Substring(index2 + 1, index3 - index2 - 1);
-            var s2 = expression.Substring(index1, index3 - index1 + 1);
-            if (s.StartsWith("+"))
-            {
-                orderBy = true;
-                s = s.Substring(1);
-            }
-            pageFrom = int.Parse(s);
-            expression = expression.Replace(s2, "");
-        }
-        messages.Add("$PAGEFROM=" + pageFrom);
-        var pageSize = 1000;
-        if (expression.Contains("$PAGESIZE="))
-        {
-            var index1 = expression.IndexOf("$PAGESIZE");
-            var index2 = expression.IndexOf("=", index1);
-            var index3 = expression.IndexOf(";", index1);
-            var s = expression.Substring(index2 + 1, index3 - index2 - 1);
-            pageSize = int.Parse(s);
-            expression = expression.Replace("$PAGESIZE=" + s + ";", "");
-        }
-        messages.Add("$PAGESIZE=" + pageSize);
         var lastID = -1;
         if (expression.Contains("$LASTID="))
         {

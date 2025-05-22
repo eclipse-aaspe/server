@@ -905,7 +905,7 @@ namespace AasxServerDB
             return sme;
         }
 
-        private static void LoadSME(Submodel submodel, ISubmodelElement? sme, SMESet? smeSet, List<SMESet> SMEList, List<SmeMerged> tree = null)
+        internal static void LoadSME(Submodel submodel, ISubmodelElement? sme, SMESet? smeSet, List<SMESet> SMEList, List<SmeMerged> tree = null)
         {
             var smeSets = SMEList;
             if (tree != null)

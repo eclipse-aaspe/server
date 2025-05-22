@@ -125,7 +125,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
             using (var db = new AasContext())
             {
-
                 switch (dbRequest.Operation)
                 {
                     case DbRequestOp.ReadPackageEnv:
@@ -269,9 +268,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         }
 
                         result.Submodels = new List<ISubmodel>
-                    {
-                        submodel
-                    };
+                        {
+                            submodel
+                        };
                         break;
                     case DbRequestOp.CreateSubmodel:
                         var newSubmodel = dbRequest.Context.Params.SubmodelBody;
@@ -285,9 +284,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         var createdSubmodel = CrudOperator.CreateSubmodel(db, newSubmodel, aasIdentifier);
 
                         result.Submodels = new List<ISubmodel>
-                    {
-                        createdSubmodel
-                    };
+                        {
+                            createdSubmodel
+                        };
                         break;
                     case DbRequestOp.UpdateSubmodelById:
                         throw new NotImplementedException();
@@ -320,7 +319,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         }
 
                         break;
-
                     case DbRequestOp.ReadPagedSubmodelElements:
                         var submodelElements = CrudOperator.ReadPagedSubmodelElements(db, dbRequest.Context.Params.PaginationParameters,
                             securityCondition, aasIdentifier, submodelIdentifier);
@@ -374,9 +372,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         }
 
                         result.SubmodelElements = new List<ISubmodelElement>
-                    {
-                        createdSubmodelElement
-                    };
+                        {
+                            createdSubmodelElement
+                        };
                         break;
                     case DbRequestOp.ReplaceSubmodelElementByPath:
                         found = IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, out _);
@@ -521,28 +519,36 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     case DbRequestOp.QuerySearchSMs:
                         var queryRequest = dbRequest.Context.Params.QueryRequest;
                         var query = new Query(_grammar);
-                        var qresult = query.SearchSMs(queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SemanticId, queryRequest.Identifier, queryRequest.Diff, queryRequest.Expression);
+                        var qresult = query.SearchSMs(db, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SemanticId,
+                            queryRequest.Identifier, queryRequest.Diff, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                         result.QueryResult = qresult;
                         break;
                     case DbRequestOp.QueryCountSMs:
                         queryRequest = dbRequest.Context.Params.QueryRequest;
                         query = new Query(_grammar);
-                        var count = query.CountSMs(queryRequest.SemanticId, queryRequest.Identifier, queryRequest.Diff, queryRequest.Expression);
+                        var count = query.CountSMs(db, queryRequest.SemanticId, queryRequest.Identifier, queryRequest.Diff,
+                            queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                         result.Count = count;
                         break;
                     case DbRequestOp.QuerySearchSMEs:
                         queryRequest = dbRequest.Context.Params.QueryRequest;
                         query = new Query(_grammar);
-                        qresult = query.SearchSMEs(queryRequest.Requested, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
-                            queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.Expression);
+                        qresult = query.SearchSMEs(db, queryRequest.Requested, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
+                            queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                         result.QueryResult = qresult;
                         break;
                     case DbRequestOp.QueryCountSMEs:
                         queryRequest = dbRequest.Context.Params.QueryRequest;
                         query = new Query(_grammar);
-                        count = query.CountSMEs(queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
-                            queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.Expression);
+                        count = query.CountSMEs(db, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
+                            queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                         result.Count = count;
+                        break;
+                    case DbRequestOp.QueryGetSMs:
+                        queryRequest = dbRequest.Context.Params.QueryRequest;
+                        query = new Query(_grammar);
+                        var submodels = query.GetSubmodelList(db, securityCondition, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
+                        result.Submodels = submodels;
                         break;
                     case DbRequestOp.ReadPagedConceptDescriptions:
                         //ToDo: Filter on IsCaseOf and DataSpecificationRef
@@ -629,9 +635,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                             throw new NotFoundException($"Concept Description with id {conceptDescriptionIdentifier} not found.");
                         }
                         result.ConceptDescriptions = new List<IConceptDescription>
-                    {
-                        conceptDescription
-                    };
+                        {
+                            conceptDescription
+                        };
                         break;
                     case DbRequestOp.CreateConceptDescription:
                         var conceptDescriptionBody = dbRequest.Context.Params.ConceptDescriptionBody;
@@ -645,9 +651,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         conceptDescription = CrudOperator.CreateConceptDescription(db, conceptDescriptionBody);
 
                         result.ConceptDescriptions = new List<IConceptDescription>
-                    {
-                        conceptDescription
-                    };
+                        {
+                            conceptDescription
+                        };
                         break;
                     case DbRequestOp.ReplaceConceptDescriptionById:
                         found = IsConceptDescriptionPresent(db, conceptDescriptionIdentifier, false, out _);
@@ -695,7 +701,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
         return result;
     }
-    
+
     private string ReadFileByPath(AasContext db, Dictionary<string, string>? securityCondition, string aasIdentifier, string submodelIdentifier, string idShortPath, out byte[] content, out long fileSize)
     {
         var fileElement = CrudOperator.ReadSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShortPath, out SMESet smE);
