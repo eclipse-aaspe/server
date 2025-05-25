@@ -70,6 +70,26 @@ namespace AasxServerDB
                 options.UseSqlite(connectionString);
         }
 
+        public static void PrintSection(IConfiguration section, string parentPath = "")
+        {
+            foreach (var child in section.GetChildren())
+            {
+                // build the “path” to this value
+                var currentPath = string.IsNullOrEmpty(parentPath)
+                                  ? child.Key
+                                  : $"{parentPath}:{child.Key}";
+    
+                if (child.Value != null)
+                {
+                    // Leaf node with a value
+                    Console.WriteLine($"{currentPath} = {child.Value}");
+                }
+    
+                // Recurse into any nested children
+                PrintSection(child, currentPath);
+            }
+        }
+
         public static string GetConnectionString()
         {
             // Get configuration
@@ -80,6 +100,8 @@ namespace AasxServerDB
                     .Build();
             if (Config == null)
                 throw new Exception("No configuration");
+
+            PrintSection(config);
 
             // Get connection string
             var connectionString = Config["DatabaseConnection:ConnectionString"];
