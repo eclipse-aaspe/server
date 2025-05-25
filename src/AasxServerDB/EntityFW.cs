@@ -101,7 +101,7 @@ namespace AasxServerDB
             if (Config == null)
                 throw new Exception("No configuration");
 
-            PrintSection(config);
+            PrintSection(Config);
 
             // Get connection string
             var connectionString = Config["DatabaseConnection:ConnectionString"];
