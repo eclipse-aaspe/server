@@ -68,7 +68,7 @@ public static class ServerConfiguration
         services.AddLazyResolution();
 
         services.AddGraphQLServer()
-            .AddQueryType<QueryAPI>()
+            .AddQueryType<GraphQLAPI>()
             .UseField<ParameterNamesMiddleware>()
             .SetRequestOptions(_ =>
                 new HotChocolate.Execution.Options.RequestExecutorOptions {

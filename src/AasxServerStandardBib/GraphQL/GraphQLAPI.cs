@@ -41,7 +41,7 @@ using ScottPlot;
 //    public double? MValue { get; set; }
 //}
 
-public class QueryAPI
+public class GraphQLAPI
 {
     /*
     public Query(QueryGrammar queryGrammar)
@@ -51,7 +51,7 @@ public class QueryAPI
     private readonly QueryGrammar grammar;
     */
 
-    public QueryAPI([Service] IDbRequestHandlerService dbRequestHandlerService)
+    public GraphQLAPI([Service] IDbRequestHandlerService dbRequestHandlerService)
     {
         _dbRequestHandlerService = dbRequestHandlerService;
     }
