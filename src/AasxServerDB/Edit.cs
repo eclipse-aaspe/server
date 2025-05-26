@@ -23,7 +23,7 @@ namespace AasxServerDB
     {
         static public void Update(AdminShellPackageEnv env)
         {
-            using (AasContext db = new AasContext())
+            using (var db = new AasContext())
             {
                 // Deletes manually from DB
                 var deleteEnvList = db.EnvSets.Where(e => e.Path == env.Filename);

@@ -36,24 +36,24 @@ namespace AasxServerDB
         public static List<string> GetFilteredPackages(string filterPath, List<AdminShellPackageEnv> list)
         {
             var paths = new List<string>();
-            var db = new AasContext();
-
-            var envList = db.EnvSets.Where(e => e.Path.Contains(filterPath));
-
-            foreach (var env in envList)
+            using (var db = new AasContext())
             {
-                var p = GetPackageEnv(env.Id);
-                if (p != null)
+                var envList = db.EnvSets.Where(e => e.Path.Contains(filterPath));
+
+                foreach (var env in envList)
                 {
-                    list.Add(p);
-                    paths.Add(env.Path);
+                    var p = GetPackageEnv(db, env.Id);
+                    if (p != null)
+                    {
+                        list.Add(p);
+                        paths.Add(env.Path);
+                    }
                 }
             }
-
             return paths;
         }
 
-        public static AdminShellPackageEnv? GetPackageEnv(int envId, string smId = "")
+        public static AdminShellPackageEnv? GetPackageEnv(AasContext db, int envId, string smId = "")
         {
             var timeStamp = DateTime.UtcNow;
 
@@ -62,8 +62,6 @@ namespace AasxServerDB
             env.AasEnv.ConceptDescriptions = new List<IConceptDescription>();
             env.AasEnv.AssetAdministrationShells = new List<IAssetAdministrationShell>();
             env.AasEnv.Submodels = new List<ISubmodel>();
-
-            var db = new AasContext();
 
             // path
             if (envId != -1)
@@ -1627,33 +1625,35 @@ namespace AasxServerDB
 
         public static string GetAASXPath(int? envId = null, string cdId = "", string aasId = "", string smId = "")
         {
-            using var db = new AasContext();
-            if (!cdId.IsNullOrEmpty())
+            using (var db = new AasContext())
             {
-                var cdDBList = db.CDSets.Where(cd => cd.Identifier == cdId).Join(db.EnvCDSets, cd => cd.Id, envcd => envcd.CDId, (cd, envcd) => envcd);
-                if (cdDBList.Any())
-                    envId = cdDBList.First().EnvId;
+                if (!cdId.IsNullOrEmpty())
+                {
+                    var cdDBList = db.CDSets.Where(cd => cd.Identifier == cdId).Join(db.EnvCDSets, cd => cd.Id, envcd => envcd.CDId, (cd, envcd) => envcd);
+                    if (cdDBList.Any())
+                        envId = cdDBList.First().EnvId;
+                }
+
+                if (!smId.IsNullOrEmpty())
+                {
+                    var smDBList = db.SMSets.Where(s => s.Identifier == smId);
+                    if (smDBList.Any())
+                        envId = smDBList.First().EnvId;
+                }
+
+                if (!aasId.IsNullOrEmpty())
+                {
+                    var aasDBList = db.AASSets.Where(a => a.Identifier == aasId);
+                    if (aasDBList.Any())
+                        envId = aasDBList.First().EnvId;
+                }
+
+                if (envId == null)
+                    return string.Empty;
+
+                var path = db.EnvSets.Where(e => e.Id == envId).Select(e => e.Path).FirstOrDefault();
+                return path ?? string.Empty;
             }
-
-            if (!smId.IsNullOrEmpty())
-            {
-                var smDBList = db.SMSets.Where(s => s.Identifier == smId);
-                if (smDBList.Any())
-                    envId = smDBList.First().EnvId;
-            }
-
-            if (!aasId.IsNullOrEmpty())
-            {
-                var aasDBList = db.AASSets.Where(a => a.Identifier == aasId);
-                if (aasDBList.Any())
-                    envId = aasDBList.First().EnvId;
-            }
-
-            if (envId == null)
-                return string.Empty;
-
-            var path = db.EnvSets.Where(e => e.Id == envId).Select(e => e.Path).FirstOrDefault();
-            return path ?? string.Empty;
         }
     }
 }

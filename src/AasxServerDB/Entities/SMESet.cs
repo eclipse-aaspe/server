@@ -73,25 +73,29 @@ namespace AasxServerDB.Entities
             if (TValue == null)
                 return [[string.Empty, string.Empty]];
 
-            var list = new List<string[]>();
-            switch (TValue)
+            using (AasContext db = new AasContext())
             {
-                case "S":
-                    list = new AasContext().SValueSets.Where(s => s.SMEId == Id).ToList()
-                        .ConvertAll<string[]>(valueDB => [valueDB.Value ?? string.Empty, valueDB.Annotation ?? string.Empty]);
-                    break;
-                case "I":
-                    list = new AasContext().IValueSets.Where(s => s.SMEId == Id).ToList()
-                        .ConvertAll<string[]>(valueDB => [valueDB.Value == null ? string.Empty : valueDB.Value.ToString(), valueDB.Annotation ?? string.Empty]);
-                    break;
-                case "D":
-                    list = new AasContext().DValueSets.Where(s => s.SMEId == Id).ToList()
-                        .ConvertAll<string[]>(valueDB => [valueDB.Value == null ? string.Empty : valueDB.Value.ToString(), valueDB.Annotation ?? string.Empty]);
-                    break;
-            }
+                var list = new List<string[]>();
+                switch (TValue)
+                {
+                    case "S":
+                        list = db.SValueSets.Where(s => s.SMEId == Id).ToList()
+                            .ConvertAll<string[]>(valueDB => [valueDB.Value ?? string.Empty, valueDB.Annotation ?? string.Empty]);
+                        break;
+                    case "I":
+                        list = db.IValueSets.Where(s => s.SMEId == Id).ToList()
+                            .ConvertAll<string[]>(valueDB => [valueDB.Value == null ? string.Empty : valueDB.Value.ToString(), valueDB.Annotation ?? string.Empty]);
+                        break;
+                    case "D":
+                        list = db.DValueSets.Where(s => s.SMEId == Id).ToList()
+                            .ConvertAll<string[]>(valueDB => [valueDB.Value == null ? string.Empty : valueDB.Value.ToString(), valueDB.Annotation ?? string.Empty]);
+                        break;
+                }
 
-            if (list.Count > 0 || (!SMEType.IsNullOrEmpty() && SMEType.Equals("MLP")))
-                return list;
+
+                if (list.Count > 0 || (!SMEType.IsNullOrEmpty() && SMEType.Equals("MLP")))
+                    return list;
+            }
 
             return [[string.Empty, string.Empty]];
         }
@@ -100,11 +104,16 @@ namespace AasxServerDB.Entities
         public virtual ICollection<OValueSet> OValueSets { get; } = new List<OValueSet>();
         public Dictionary<string, string> GetOValue()
         {
-            var dic = new AasContext().OValueSets.Where(s => s.SMEId == Id).ToList().ToDictionary(valueDB => valueDB.Attribute, valueDB => valueDB.Value);
-            if (dic != null)
+            using (var db = new AasContext())
             {
-                return dic;
+                var dic = db.OValueSets.Where(s => s.SMEId == Id).ToList().
+                    ToDictionary(valueDB => valueDB.Attribute, valueDB => valueDB.Value);
+                if (dic != null)
+                {
+                    return dic;
+                }
             }
+
             return new Dictionary<string, string>();
         }
 

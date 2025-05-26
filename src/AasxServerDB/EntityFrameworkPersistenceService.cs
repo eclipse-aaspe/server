@@ -42,50 +42,93 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         AasContext.DataPath = dataPath;
 
         //Provoke OnConfiguring so that IsPostgres is set
-        var db = new AasContext();
-
-        bool isPostgres = AasContext.IsPostgres;
-
-        // Get database
-        Console.WriteLine($"Use {(isPostgres ? "POSTGRES" : "SQLITE")}");
-
-        db = isPostgres ? new PostgreAasContext() : new SqliteAasContext();
-
-        // Get path
-        var connectionString = db.Database.GetConnectionString();
-        Console.WriteLine($"Database connection string: {connectionString}");
-        if (connectionString.IsNullOrEmpty())
+        using (var db = new AasContext())
         {
-            throw new Exception("Database connection string is empty.");
-        }
-        if (!isPostgres && !Directory.Exists(Path.GetDirectoryName(connectionString.Replace("Data Source=", string.Empty))))
-        {
-            throw new Exception($"Directory to the database does not exist. Check appsettings.json. Connection string: {connectionString}");
-        }
+            bool isPostgres = AasContext.IsPostgres;
+        
+            // Get database
+            Console.WriteLine($"Use {(isPostgres ? "POSTGRES" : "SQLITE")}");
 
-        // Check if db exists
-        var canConnect = db.Database.CanConnect();
-        if (!canConnect)
-        {
-            Console.WriteLine($"Unable to connect to the database.");
-        }
+            if (isPostgres)
+            {
+                using (var postgredDb = new PostgreAasContext())
+                {
+                    // Get path
+                    var connectionString = postgredDb.Database.GetConnectionString();
+                    Console.WriteLine($"Database connection string: {connectionString}");
+                    if (connectionString.IsNullOrEmpty())
+                    {
+                        throw new Exception("Database connection string is empty.");
+                    }
 
-        // Delete database
-        if (canConnect && reloadDB)
-        {
-            Console.WriteLine("Clear database.");
-            db.Database.EnsureDeleted();
-        }
+                    // Check if db exists
+                    var canConnect = postgredDb.Database.CanConnect();
+                    if (!canConnect)
+                    {
+                        Console.WriteLine($"Unable to connect to the database.");
+                    }
 
-        // Create the database if it does not exist
-        // Applies any pending migrations
-        try
-        {
-            db.Database.Migrate();
-        }
-        catch (Exception ex)
-        {
-            throw new Exception($"Migration failed: {ex.Message}\nTry deleting the database.");
+                    // Delete database
+                    if (canConnect && reloadDB)
+                    {
+                        Console.WriteLine("Clear database.");
+                        postgredDb.Database.EnsureDeleted();
+                    }
+
+                    // Create the database if it does not exist
+                    // Applies any pending migrations
+                    try
+                    {
+                        postgredDb.Database.Migrate();
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception($"Migration failed: {ex.Message}\nTry deleting the database.");
+                    }
+                }
+            }
+            else
+            {
+                using (var sqliteDb = new SqliteAasContext())
+                {
+                    // Get path
+                    var connectionString = sqliteDb.Database.GetConnectionString();
+                    Console.WriteLine($"Database connection string: {connectionString}");
+                    if (connectionString.IsNullOrEmpty())
+                    {
+                        throw new Exception("Database connection string is empty.");
+                    }
+                    if (!isPostgres && !Directory.Exists(Path.GetDirectoryName(connectionString.Replace("Data Source=", string.Empty))))
+                    {
+                        throw new Exception($"Directory to the database does not exist. Check appsettings.json. Connection string: {connectionString}");
+                    }
+
+                    // Check if db exists
+                    var canConnect = sqliteDb.Database.CanConnect();
+                    if (!canConnect)
+                    {
+                        Console.WriteLine($"Unable to connect to the database.");
+                    }
+
+                    // Delete database
+                    if (canConnect && reloadDB)
+                    {
+                        Console.WriteLine("Clear database.");
+                        sqliteDb.Database.EnsureDeleted();
+                    }
+
+                    // Create the database if it does not exist
+                    // Applies any pending migrations
+                    try
+                    {
+                        sqliteDb.Database.Migrate();
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception($"Migration failed: {ex.Message}\nTry deleting the database.");
+                    }
+                }
+            }
         }
     }
 
@@ -1170,7 +1213,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         if (loadInMemory)
         {
-            packageEnv = CrudOperator.GetPackageEnv(envId, smId);
+            packageEnv = CrudOperator.GetPackageEnv(db, envId, smId);
         }
 
         return true;

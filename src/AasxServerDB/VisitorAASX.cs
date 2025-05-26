@@ -72,13 +72,15 @@ namespace AasxServerDB
                     var envDB = new EnvSet() { Path = filePath };
                     ImportAASIntoDB(asp, envDB);
 
-                    var db = new AasContext();
-                    db.Add(envDB);
-                    db.SaveChanges();
+                    using (var db = new AasContext())
+                    {
+                        db.Add(envDB);
+                        db.SaveChanges();
 
-                    // CD
-                    foreach (var envcdSet in envDB.EnvCDSets.Where(envcdSet => envcdSet.CDSet != null))
-                        _cdDBId.TryAdd(envcdSet.CDSet.Identifier, envcdSet.CDSet.Id);
+                        // CD
+                        foreach (var envcdSet in envDB.EnvCDSets.Where(envcdSet => envcdSet.CDSet != null))
+                            _cdDBId.TryAdd(envcdSet.CDSet.Identifier, envcdSet.CDSet.Id);
+                    }
                 }
 
                 if (withDbFiles)
