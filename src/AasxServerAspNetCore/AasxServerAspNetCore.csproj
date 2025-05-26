@@ -18,8 +18,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\IO.Swagger.Lib.V3\IO.Swagger.Lib.V3.csproj"/>
-        <ProjectReference Include="..\IO.Swagger.Registry.Lib.V3\IO.Swagger.Registry.Lib.V3.csproj"/>
+        <ProjectReference Include="..\IO.Swagger.Lib.V3\IO.Swagger.Lib.V3.csproj" />
     </ItemGroup>
 
     <ItemGroup>

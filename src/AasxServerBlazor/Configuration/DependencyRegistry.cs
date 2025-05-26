@@ -20,14 +20,16 @@ using IO.Swagger.Lib.V3.Interfaces;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers;
 using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers;
 using IO.Swagger.Lib.V3.Services;
-using IO.Swagger.Registry.Lib.V3.Interfaces;
-using IO.Swagger.Registry.Lib.V3.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AasxServerBlazor.Configuration;
 
+using AasRegistryDiscovery.WebApi.Interfaces;
+using AasRegistryDiscovery.WebApi.Services.InMemory;
+using AasxServerBlazor.Interfaces;
+using AasxServerBlazor.Services;
 using Contracts;
 using IO.Swagger.Models;
 
@@ -44,15 +46,11 @@ public static class DependencyRegistry
         services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
         services.AddSingleton<IAuthorizationHandler, AasSecurityAuthorizationHandler>();
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-        services.AddSingleton<IRegistryInitializerService, RegistryInitializerService>();
-        services.AddTransient<IAasDescriptorPaginationService, AasDescriptorPaginationService>();
-        services.AddTransient<IAasDescriptorWritingService, AasDescriptorWritingService>();
-        services.AddTransient<IAasRegistryService, AasRegistryService>();
         services.AddTransient<IAasRepositoryApiHelperService, AasRepositoryApiHelperService>();
         services.AddTransient<IAasxFileServerInterfaceService, AasxFileServerInterfaceService>();
         services.AddTransient<IAdminShellPackageEnvironmentService, AdminShellPackageEnvironmentService>();
         services.AddTransient<IAssetAdministrationShellService, AssetAdministrationShellService>();
-        services.AddTransient<IBase64UrlDecoderService, Base64UrlDecoderService>();
+        services.AddTransient<IO.Swagger.Lib.V3.Interfaces.IBase64UrlDecoderService, IO.Swagger.Lib.V3.Services.Base64UrlDecoderService>();
         services.AddTransient<IConceptDescriptionService, ConceptDescriptionService>();
         services.AddTransient<IGenerateSerializationService, GenerateSerializationService>();
         services.AddTransient<IIdShortPathParserService, IdShortPathParserService>();
@@ -65,12 +63,19 @@ public static class DependencyRegistry
         services.AddTransient<IReferenceModifierService, ReferenceModifierService>();
         services.AddTransient<ISecurityService, SecurityService>();
         services.AddTransient<IServiceDescription, ServiceDescription>();
-        services.AddTransient<ISubmodelPropertyExtractionService, SubmodelPropertyExtractionService>();
         services.AddTransient<ISubmodelService, SubmodelService>();
         services.AddTransient<IValueOnlyJsonDeserializer, ValueOnlyJsonDeserializer>();
         services.AddTransient<IValidateSerializationModifierService, ValidateSerializationModifierService>();
 
         services.AddTransient<IContractSecurityRules, SecurityService>();
         services.AddTransient<QueryGrammar>();
+        services.AddTransient<IAasDescriptorWritingService, AasDescriptorWritingService>();
+        services.AddTransient<ISubmodelPropertyExtractionService, SubmodelPropertyExtractionService>();
+        services.AddSingleton<IRegistryInitializerService, RegistryInitializerService>();
+
+        //Registry
+        services.AddTransient<IPersistenceService, InMemoryPersistenceService>();
+        services.AddTransient<IDescriptorPaginationService, DescriptorPaginationService>();
+        services.AddTransient<AasRegistryDiscovery.WebApi.Interfaces.IBase64UrlDecoderService, AasRegistryDiscovery.WebApi.Services.Common.Base64UrlDecoderService>();
     }
 }

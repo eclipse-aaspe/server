@@ -11,6 +11,7 @@ using AasRegistryDiscovery.WebApi.Interfaces;
 using AasRegistryDiscovery.WebApi.Models;
 using AasRegistryDiscovery.WebApi.Persistence.InMemory;
 using Microsoft.Extensions.Logging;
+using AdminShellNS.Extensions;
 
 public class InMemoryPersistenceService : IPersistenceService
 {
@@ -223,5 +224,95 @@ public class InMemoryPersistenceService : IPersistenceService
             PersistenceInMemory.AddSubmodelDescriptor(newSmDescriptor);
         }
     }
+
+    #endregion
+
+    #region Discovery
+
+    public GetAllAssetAdministrationShellIdsResult GetAllAssetAdministrationShellIdsByAssetLink(List<ISpecificAssetId>? assetIds = null, int? limit = null, string cursor = null)
+    {
+        List<string> aasIds = new List<string>();
+        var discoveries = PersistenceInMemory.DiscoveryEntities;
+        if (discoveries != null && discoveries.Count > 0)
+        {
+            if (assetIds != null && assetIds.Count > 0)
+            {
+                //filter w.r.t. requested assetIds
+                foreach (var assetId in assetIds)
+                {
+                    var discovery = discoveries.Find(d => d.AssetLinks.ContainsSpecificAssetId(assetId));
+                    if (discovery != null)
+                    {
+                        aasIds.Add(discovery.AasIdentifier);
+                    }
+                } 
+            }
+            else
+            {
+                foreach(var discovery in discoveries)
+                {
+                    aasIds.Add(discovery.AasIdentifier);
+                }
+            }
+        }
+
+        var output = _paginationService.GetPaginatedList(aasIds, new PaginationParameters(cursor, limit));
+        return output;
+    }
+
+    public List<ISpecificAssetId> GetAllAssetLinksById(string aasIdentifier)
+    {
+        List<ISpecificAssetId> output = null;
+        var discoveries = PersistenceInMemory.DiscoveryEntities;
+        if (discoveries != null &&  discoveries.Count > 0)
+        {
+            var discovery = discoveries.Find(d => d.AasIdentifier.Equals(aasIdentifier));
+            if (discovery != null)
+            {
+                output = discovery.AssetLinks;
+            }
+        }
+
+        if(output == null)
+        {
+            throw new NotFoundException($"AssetLinks corresponding to aasIdentifier {aasIdentifier} NOT found.");
+        }
+
+        return output;
+    }
+
+    public void DeleteAllAssetLinksById(string aasIdentifier)
+    {
+        var discoveries = PersistenceInMemory.DiscoveryEntities;
+        if (discoveries != null && discoveries.Count > 0)
+        {
+            var discovery = discoveries.Find(d => d.AasIdentifier.Equals(aasIdentifier));
+            if(discovery == null)
+            {
+                throw new NotFoundException($"AssetLinks corresponding to aasIdentifier {aasIdentifier} NOT found.");
+            }
+
+            discoveries.Remove(discovery);
+        }
+    }
+
+    public List<ISpecificAssetId> AddAllAsetLinkById(string aasIdentifier, List<ISpecificAssetId> newAssetLinks)
+    {
+        var discoveries = PersistenceInMemory.DiscoveryEntities;
+        if (discoveries != null && discoveries.Count > 0)
+        {
+            var discovery = discoveries.Find(d => d.AasIdentifier.Equals(aasIdentifier));
+            if (discovery == null)
+            {
+                throw new NotFoundException($"AssetLinks corresponding to aasIdentifier {aasIdentifier} NOT found.");
+            }
+
+            discovery.AssetLinks ??= new List<ISpecificAssetId>();
+            discovery.AssetLinks.AddRange(newAssetLinks);
+        }
+
+        return newAssetLinks;
+    }
+
     #endregion
 }

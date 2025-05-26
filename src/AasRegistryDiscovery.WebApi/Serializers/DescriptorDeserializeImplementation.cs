@@ -43,7 +43,7 @@ namespace AasRegistryDiscovery.WebApi.Serializers
             string? globalAssetId = null;
             string? idShort = null;
             string? id = null;
-            List<SpecificAssetId> specificAssetIds = null;
+            List<ISpecificAssetId> specificAssetIds = null;
             List<SubmodelDescriptor>  submodelDescriptors = null;
 
             foreach (var keyValue in obj)
@@ -270,7 +270,7 @@ namespace AasRegistryDiscovery.WebApi.Serializers
                             return null;
                         }
 
-                        specificAssetIds = new List<SpecificAssetId>(arraySpecificAssetIds.Count);
+                        specificAssetIds = new List<ISpecificAssetId>(arraySpecificAssetIds.Count);
                         int indexSpecificAssetId = 0;
                         foreach (JsonNode item in arraySpecificAssetIds)
                         {
@@ -842,7 +842,8 @@ namespace AasRegistryDiscovery.WebApi.Serializers
                 {
                     case "type":
                     {
-                        //Enum.TryParse(typeof(SecurityAttributeObject.TypeEnum), out type);
+                        var enumValue = StringFrom(keyValue.Value, out error);
+                        Enum.TryParse<SecurityAttributeObject.TypeEnum>(enumValue, out type);
                         break;
                     }
                     case "key":
@@ -857,7 +858,7 @@ namespace AasRegistryDiscovery.WebApi.Serializers
                     }
                     case "value":
                     {
-                        key = StringFrom(keyValue.Value, out error);
+                        value = StringFrom(keyValue.Value, out error);
                         if (error != null)
                         {
                             error.PrependSegment(new Reporting.NameSegment("value"));

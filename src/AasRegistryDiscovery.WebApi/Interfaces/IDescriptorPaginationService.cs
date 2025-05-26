@@ -20,5 +20,7 @@ namespace AasRegistryDiscovery.WebApi.Interfaces
     {
         AasDescriptorPagedResult GetPaginatedList(List<AssetAdministrationShellDescriptor> sourceList, PaginationParameters paginationParameters);
         SubmodelDescriptorPagedResult GetPaginatedList(List<SubmodelDescriptor> sourceList, PaginationParameters paginationParameters);
+
+        GetAllAssetAdministrationShellIdsResult GetPaginatedList(List<string> sourceList, PaginationParameters paginationParameters);
     }
 }

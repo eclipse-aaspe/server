@@ -37,31 +37,31 @@
         {
             var query = System.Web.HttpUtility.ParseQueryString(splitUrl[ 1 ]);
             var list  = query.Get("size");
-            if (!list.IsNullOrEmpty())
+            if (!string.IsNullOrEmpty(list))
                 size = Convert.ToInt32(list);
             list = query.Get("search");
-            if (!list.IsNullOrEmpty())
+            if (!string.IsNullOrEmpty(list))
                 search = list;
             list = query.Get("envid");
-            if (!list.IsNullOrEmpty())
+            if (!string.IsNullOrEmpty(list))
                 envid = Convert.ToInt32(list);
             list = query.Get("cdid");
-            if (!list.IsNullOrEmpty())
+            if (!string.IsNullOrEmpty(list))
                 cdid = Convert.ToInt32(list);
             list = query.Get("aasid");
-            if (!list.IsNullOrEmpty())
+            if (!string.IsNullOrEmpty(list))
                 aasid = Convert.ToInt32(list);
             list = query.Get("smid");
-            if (!list.IsNullOrEmpty())
+            if (!string.IsNullOrEmpty(list))
                 smid = Convert.ToInt32(list);
             list = query.Get("smeid");
-            if (!list.IsNullOrEmpty())
+            if (!string.IsNullOrEmpty(list))
                 smeid = Convert.ToInt32(list);
             list = query.Get("parid");
-            if (!list.IsNullOrEmpty())
+            if (!string.IsNullOrEmpty(list))
                 parid = Convert.ToInt32(list);
             list = query.Get("smidentifier");
-            if (!list.IsNullOrEmpty())
+            if (!string.IsNullOrEmpty(list))
                 smidentifier = list;
         }
 
@@ -73,7 +73,7 @@
             @code {
                 private string CurrentValue { get; set; }
             }
-            if (!CurrentValue.IsNullOrEmpty())
+            if (!string.IsNullOrEmpty(CurrentValue))
             {
                 var splitCur = CurrentValue.Split("=");
                 if (splitCur.Count() == 2)
@@ -82,7 +82,7 @@
                     {
                         case "size":
                             size = 1000;
-                            if (!splitCur[ 1 ].IsNullOrEmpty())
+                            if (!string.IsNullOrEmpty(splitCur[1]))
                                 size = Convert.ToInt32(splitCur[ 1 ]);
                             break;
                         case "search":
@@ -90,32 +90,32 @@
                             break;
                         case "envid":
                             envid = 0;
-                            if (!splitCur[ 1 ].IsNullOrEmpty())
-                                    envid = Convert.ToInt32(splitCur[1]);
+                            if (!string.IsNullOrEmpty(splitCur[1]))
+                                envid = Convert.ToInt32(splitCur[1]);
                             break;
                         case "cdid":
                             cdid = 0;
-                            if (!splitCur[ 1 ].IsNullOrEmpty())
-                                    cdid = Convert.ToInt32(splitCur[1]);
+                            if (!string.IsNullOrEmpty(splitCur[1]))
+                                cdid = Convert.ToInt32(splitCur[1]);
                             break;
                         case "aasid":
                             aasid = 0;
-                            if (!splitCur[ 1 ].IsNullOrEmpty())
+                            if (!string.IsNullOrEmpty(splitCur[1]))
                                 aasid = Convert.ToInt32(splitCur[ 1 ]);
                             break;
                         case "smid":
                             smid = 0;
-                            if (!splitCur[ 1 ].IsNullOrEmpty())
+                            if (!string.IsNullOrEmpty(splitCur[1]))
                                 smid = Convert.ToInt32(splitCur[ 1 ]);
                             break;
                         case "smeid":
                             smeid = 0;
-                            if (!splitCur[ 1 ].IsNullOrEmpty())
+                            if (!string.IsNullOrEmpty(splitCur[1]))
                                 smeid = Convert.ToInt32(splitCur[ 1 ]);
                             break;
                         case "parid":
                             parid = 0;
-                            if (!splitCur[ 1 ].IsNullOrEmpty())
+                            if (!string.IsNullOrEmpty(splitCur[1]))
                                 parid = Convert.ToInt32(splitCur[ 1 ]);
                             break;
                     }
@@ -414,7 +414,7 @@
                                     }
                                 </td>
                                 <td style="word-break:keep-all">
-                                    @if (!cdDB.Identifier.IsNullOrEmpty())
+                                    @if (!string.IsNullOrEmpty(cdDB.Identifier))
                                     {
                                         <a href="@link" target="_blank">api</a>
                                     }
@@ -478,7 +478,7 @@
                             <a href="@($"{shorturl}/env?cdid={cdDB.Id}&envid={envid}")" target="_blank">givenEnv </a>
                         }
                         <span style="background-color:blue;">&nbsp</span>
-                        @if (!cdDB.Identifier.IsNullOrEmpty())
+                        @if (!string.IsNullOrEmpty(cdDB.Identifier))
                         {
                             <a href="@link" target="_blank">api</a>
                         }
@@ -579,7 +579,7 @@
                                 <a href="@($"{shorturl}/sm?aasid={aasDB.Id}")" target="_blank">sm</a>
                             </td>
                             <td style="word-break:keep-all">
-                                @if (!aasDB.Identifier.IsNullOrEmpty())
+                                @if (!string.IsNullOrEmpty(aasDB.Identifier))
                                 {
                                     <a href="@link" target="_blank">api</a>
                                 }
@@ -654,7 +654,7 @@
                         <a href="@($"{shorturl}/env?envid={aasDB.EnvId}")" target="_blank">env </a>
                         <a href="@($"{shorturl}/sm?aasid={aasDB.Id}")" target="_blank">sm</a>
                         <span style="background-color:blue;">&nbsp</span>
-                            @if (!aasDB.Identifier.IsNullOrEmpty())
+                            @if (!string.IsNullOrEmpty(aasDB.Identifier))
                         {
                             <a href="@link" target="_blank">api</a>
                         }
@@ -754,7 +754,7 @@
                                 <a href="@($"{shorturl}/sme?smid={smDB.Id}")" target="_blank">sme:@(smeCount)</a>
                             </td>
                             <td style="word-break:keep-all">
-                                @if (!smDB.Identifier.IsNullOrEmpty())
+                                @if (!string.IsNullOrEmpty(smDB.Identifier))
                                 {
                                     <a href="@link" target="_blank">api</a>
                                 }
@@ -826,7 +826,7 @@
                         <a href="@($"{shorturl}/aas?aasid={smDB.AASId}")" target="_blank">aas </a>
                         <a href="@($"{shorturl}/sme?smid={smDB.Id}")" target="_blank">sme:@(smeCount)</a>
                         <span style="background-color:blue;">&nbsp</span>
-                        @if (!smDB.Identifier.IsNullOrEmpty())
+                        @if (!string.IsNullOrEmpty(smDB.Identifier))
                         {
                             <a href="@link" target="_blank">api</a>
                         }
@@ -841,7 +841,7 @@
                 <br/>
             }
 
-            if (url.EndsWith("/smjson") && !smidentifier.IsNullOrEmpty())
+            if (url.EndsWith("/smjson") && !string.IsNullOrEmpty(smidentifier))
             {
                 var smDBList = db.SMSets.Where(s => s.Identifier.Equals(smidentifier)).ToList();
                 if (smDBList.Any())
@@ -905,13 +905,13 @@
                     @for (int i = 0; i < data.Count && i < 1000; i++)
                     {
                         var smeDB = data[i];
-                        var pathSuccess = !smeDB.IdShort.IsNullOrEmpty();
+                        var pathSuccess = !string.IsNullOrEmpty(smeDB.IdShort);
                         string path = smeDB.IdShort;
                         int? pId = smeDB.ParentSMEId;
                         while (pId != null && pathSuccess)
                         {
                             var smeDBP = db.SMESets.Where(s => s.Id == pId).First();
-                            if (smeDBP.IdShort.IsNullOrEmpty())
+                            if (string.IsNullOrEmpty(smeDBP.IdShort))
                             {
                                 pathSuccess = false;
                                 break;
@@ -920,7 +920,7 @@
                             pId = smeDBP.ParentSMEId;
                         }
 
-                        var split = !smeDB.SMEType.IsNullOrEmpty() ? smeDB.SMEType.Split(VisitorAASX.OPERATION_SPLIT) : [string.Empty];
+                        var split = !string.IsNullOrEmpty(smeDB.SMEType) ? smeDB.SMEType.Split(VisitorAASX.OPERATION_SPLIT) : [string.Empty];
                         var smeTypeWithoutOperation = split.Length == 2 ? split[1] : split[0];
 
                         var smDB = db.SMSets.Where(s => s.Id == smeDB.SMId).First();
@@ -962,7 +962,7 @@
                                     <ul>
                                         @{
                                             var valueType = db.OValueSets.Where(ovalue => ovalue.SMEId == smeDB.Id && ovalue.Attribute.Equals("ValueType")).Select(ovalue => ovalue.Value).FirstOrDefault();
-                                            if (!valueType.IsNullOrEmpty())
+                                            if (!string.IsNullOrEmpty(valueType))
                                             {
                                                 <li>
                                                     (@valueType)
@@ -1061,13 +1061,13 @@
                     {
 
                         var smeDB = data[i];
-                        var pathSuccess = !smeDB.IdShort.IsNullOrEmpty();
+                        var pathSuccess = !string.IsNullOrEmpty(smeDB.IdShort);
                         string path = smeDB.IdShort;
                         int? pId = smeDB.ParentSMEId;
                         while (pId != null && pathSuccess)
                         {
                             var smeDBP = db.SMESets.Where(s => s.Id == pId).First();
-                            if (smeDBP.IdShort.IsNullOrEmpty())
+                            if (string.IsNullOrEmpty(smeDBP.IdShort))
                             {
                                 pathSuccess = false;
                                 break;
@@ -1076,7 +1076,7 @@
                             pId = smeDBP.ParentSMEId;
                         }
 
-                        var split = !smeDB.SMEType.IsNullOrEmpty() ? smeDB.SMEType.Split(VisitorAASX.OPERATION_SPLIT) : [string.Empty];
+                        var split = !string.IsNullOrEmpty(smeDB.SMEType) ? smeDB.SMEType.Split(VisitorAASX.OPERATION_SPLIT) : [string.Empty];
                         var smeTypeWithoutOperation = split.Length == 2 ? split[1] : split[0];
 
                         var smDB = db.SMSets.Where(s => s.Id == smeDB.SMId).First();
@@ -1127,7 +1127,7 @@
                             else if (smeTypeWithoutOperation != null && smeTypeWithoutOperation.Equals("Range"))
                             {
                                 var valueType = db.OValueSets.Where(ovalue => ovalue.SMEId == smeDB.Id && ovalue.Attribute.Equals("ValueType")).Select(ovalue => ovalue.Value).FirstOrDefault();
-                                if (!valueType.IsNullOrEmpty())
+                                if (!string.IsNullOrEmpty(valueType))
                                 {
                                     <span>
                                         (@valueType)

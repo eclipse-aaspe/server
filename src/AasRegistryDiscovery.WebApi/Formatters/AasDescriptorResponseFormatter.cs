@@ -41,6 +41,14 @@ namespace AasRegistryDiscovery.WebApi.Formatters
                     (typeof(AssetAdministrationShellDescriptor).IsAssignableFrom(oType.GetGenericArguments()[ 0 ])));
         }
 
+        public static bool IsGenericListOfIClass(object o)
+        {
+            var oType = o.GetType();
+            return oType.IsGenericType &&
+                   (oType.GetGenericTypeDefinition() == typeof(List<>) &&
+                    (typeof(IClass).IsAssignableFrom(oType.GetGenericArguments()[ 0 ])));
+        }
+
         public override bool CanWriteResult(OutputFormatterCanWriteContext context)
         {
             if (typeof(AssetAdministrationShellDescriptor).IsAssignableFrom(context.ObjectType))
@@ -56,6 +64,10 @@ namespace AasRegistryDiscovery.WebApi.Formatters
                 //return base.CanWriteResult(context);
                 return true;
             }
+            if (IsGenericListOfIClass(context.Object))
+            {
+                return base.CanWriteResult(context);
+            }
             else if (typeof(AasDescriptorPagedResult).IsAssignableFrom(context.ObjectType))
             {
                 return base.CanWriteResult(context);
@@ -64,7 +76,15 @@ namespace AasRegistryDiscovery.WebApi.Formatters
             {
                 return base.CanWriteResult(context);
             }
-            else if(typeof(ServiceDescription).IsAssignableFrom(context.ObjectType))
+            else if(typeof(GetAllAssetAdministrationShellIdsResult).IsAssignableFrom(context.ObjectType))
+            {
+                return base.CanWriteResult(context);
+            }
+            else if (typeof(ServiceDescription).IsAssignableFrom(context.ObjectType))
+            {
+                return true;
+            }
+            else if(typeof(ValidationProblemDetails).IsAssignableFrom(context.ObjectType))
             {
                 return true;
             }
@@ -164,6 +184,52 @@ namespace AasRegistryDiscovery.WebApi.Formatters
                 jsonArray.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();
             }
+            else if (IsGenericListOfIClass(context.Object))
+            {
+
+                var jsonArray = new JsonArray();
+                IList genericList = (IList)context.Object;
+                List<IClass?> contextObjectType = new List<IClass?>();
+                foreach (var generic in genericList)
+                {
+                    contextObjectType.Add((IClass)generic);
+                }
+
+                foreach (var item in contextObjectType)
+                {
+                    var json = Jsonization.Serialize.ToJsonObject(item);
+                    jsonArray.Add(json);
+                }
+                var writer = new Utf8JsonWriter(response.Body);
+                jsonArray.WriteTo(writer);
+                writer.FlushAsync().GetAwaiter().GetResult();
+            }
+            else if (typeof(GetAllAssetAdministrationShellIdsResult).IsAssignableFrom(context.ObjectType))
+            {
+                var jsonArray = new JsonArray();
+                string cursor = null;
+                if (context.Object is GetAllAssetAdministrationShellIdsResult pagedResult)
+                {
+                    cursor = pagedResult.paging_metadata.Cursor;
+                    foreach (var item in pagedResult.result)
+                    {
+                        jsonArray.Add(item);
+                    }
+                }
+
+                JsonObject jsonNode = new JsonObject();
+                jsonNode["result"] = jsonArray;
+                var pagingMetadata = new JsonObject();
+                if (cursor != null)
+                {
+                    pagingMetadata["cursor"] = cursor;
+                }
+
+                jsonNode["paging_metadata"] = pagingMetadata;
+                var writer = new Utf8JsonWriter(response.Body);
+                jsonNode.WriteTo(writer);
+                writer.FlushAsync().GetAwaiter().GetResult();
+            }
             else if (typeof(ServiceDescription).IsAssignableFrom(context.ObjectType))
             {
                 if (context.Object is ServiceDescription serviceDescription)
@@ -174,6 +240,10 @@ namespace AasRegistryDiscovery.WebApi.Formatters
                     jsonObject.WriteTo(writer);
                     writer.FlushAsync().GetAwaiter().GetResult(); 
                 }
+            }
+            else if(typeof(ValidationProblemDetails).IsAssignableFrom(context.ObjectType))
+            {
+                var problem = context.Object;
             }
             else
             {

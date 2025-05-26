@@ -12,6 +12,7 @@
 ********************************************************************************/
 
 using AasxServer;
+using AdminShellNS.Extensions;
 using Extensions;
 using Microsoft.IdentityModel.Tokens;
 using System;

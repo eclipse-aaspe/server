@@ -28,5 +28,14 @@ public interface IPersistenceService
     void DeleteSubmodeldescriptorById(string smIdentifier);
     SubmodelDescriptorPagedResult GetAllSubmodelDescriptors(int? limit, string? cursor);
     void UpdateSubmodelDescriptorById(string smIdentifier, SubmodelDescriptor newSmDescriptor);
+
+    #endregion
+
+    #region Discovery
+
+    GetAllAssetAdministrationShellIdsResult GetAllAssetAdministrationShellIdsByAssetLink(List<ISpecificAssetId>? reqAssetIds, int? limit, string cursor);
+    List<ISpecificAssetId> GetAllAssetLinksById(string aasIdentifier);
+    void DeleteAllAssetLinksById(string aasIdentifier);
+    List<ISpecificAssetId> AddAllAsetLinkById(string aasIdentifier, List<ISpecificAssetId> newAssetLinks);
     #endregion
 }

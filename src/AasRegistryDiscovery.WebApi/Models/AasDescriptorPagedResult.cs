@@ -26,3 +26,11 @@ public class SubmodelDescriptorPagedResult
     public List<SubmodelDescriptor>? result { get; set; }
     public PagedResultPagingMetadata? paging_metadata { get; set; }
 }
+
+public class GetAllAssetAdministrationShellIdsResult
+{
+    public List<string> result { get; set; }
+
+    public PagedResultPagingMetadata? paging_metadata { get; set; }
+
+}

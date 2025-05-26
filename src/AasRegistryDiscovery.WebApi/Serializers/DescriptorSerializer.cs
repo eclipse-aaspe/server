@@ -309,7 +309,8 @@ namespace AasRegistryDiscovery.WebApi.Serializers
             var result = new JsonObject();
             if (that.Type != null)
             {
-                result[ "type" ] = that.Type.ToString();
+                //result[ "type" ] = that.Type.Value.ToString();
+                result["type"] = Enum.GetName(that.Type.Value);
             }
 
             if (that.Key != null)

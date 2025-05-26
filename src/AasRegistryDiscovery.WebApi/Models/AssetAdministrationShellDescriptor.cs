@@ -37,7 +37,7 @@ namespace AasRegistryDiscovery.WebApi.Models
             List<Extension>? extensions = null,
             string? globalAssetId = null,
             string? idShort = null,
-            List<SpecificAssetId>? specificAssetIds = null,
+            List<ISpecificAssetId>? specificAssetIds = null,
             List<SubmodelDescriptor>? submodelDescriptors = null)
         {
             Id = id;
@@ -106,7 +106,7 @@ namespace AasRegistryDiscovery.WebApi.Models
         /// Gets or Sets SpecificAssetIds
         /// </summary>
 
-        public List<SpecificAssetId>? SpecificAssetIds { get; set; }
+        public List<ISpecificAssetId>? SpecificAssetIds { get; set; }
 
         /// <summary>
         /// Gets or Sets SubmodelDescriptors

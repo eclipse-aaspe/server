@@ -27,7 +27,11 @@ namespace AdminShellNS.Extensions
             //check mandatory parameters first
             if (specificAssetId.Name != other.Name) return false;
             if (specificAssetId.Value != other.Value) return false;
-            if (!specificAssetId.ExternalSubjectId.Matches(other.ExternalSubjectId)) return false;
+            if (specificAssetId.ExternalSubjectId != null && other.ExternalSubjectId != null)
+            {
+                if (!specificAssetId.ExternalSubjectId.Matches(other.ExternalSubjectId))
+                    return false; 
+            }
 
             // TODO (jtikekar, 2023-09-04): Check optional parameter i.e., Semantic Id and supplementatry semantic id
 

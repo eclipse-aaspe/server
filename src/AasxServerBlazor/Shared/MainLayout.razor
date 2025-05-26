@@ -1,10 +1,10 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 @inject NavigationManager           NavMan
 @inject Data.AASService             SubmodelService
 @using AasCore.Aas3_0;
 @using AasxServer
-@inject IRegistryInitializerService AasRegistryService
-@using IO.Swagger.Registry.Lib.V3.Interfaces;
+@inject AasxServerBlazor.Interfaces.IRegistryInitializerService AasRegistryService
+@using AasRegistryDiscovery.WebApi.Interfaces;
 @using Microsoft.IdentityModel.Tokens;
 
 <style>

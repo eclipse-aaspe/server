@@ -82,6 +82,33 @@ namespace AasRegistryDiscovery.WebApi.Services.InMemory
             return paginationResult;
         }
 
+        public GetAllAssetAdministrationShellIdsResult GetPaginatedList(List<string> sourceList, PaginationParameters paginationParameters)
+        {
+            if (sourceList == null)
+            {
+                return null;
+            }
+
+            var startIndex = paginationParameters.Cursor;
+            var endIndex = startIndex + paginationParameters.Limit - 1;
+            var outputList = GetPaginationList(sourceList, startIndex, endIndex);
+
+            //Creating pagination result
+            var pagingMetadata = new PagedResultPagingMetadata();
+            if (endIndex < sourceList.Count - 1)
+            {
+                pagingMetadata.Cursor = Convert.ToString(endIndex + 1);
+            }
+
+            var paginationResult = new GetAllAssetAdministrationShellIdsResult()
+            {
+                result = outputList,
+                paging_metadata = pagingMetadata
+            };
+
+            return paginationResult;
+        }
+
         private List<T> GetPaginationList<T>(List<T> sourceList, int startIndex, int endIndex)
         {
             if(sourceList == null)

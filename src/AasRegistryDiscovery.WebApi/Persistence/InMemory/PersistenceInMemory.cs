@@ -12,6 +12,7 @@ internal static class PersistenceInMemory
     internal static List<AssetAdministrationShellDescriptor> AssetAdministrationShellDescriptors { get; private set; }
 
     internal static List<SubmodelDescriptor> SubmodelDescriptors { get; private set; }
+    internal static List<DiscoveryEntity> DiscoveryEntities { get; private set; }
 
     internal static void AddAasDescriptor(AssetAdministrationShellDescriptor aasDescriptor)
     {
@@ -24,8 +25,28 @@ internal static class PersistenceInMemory
         }
         AssetAdministrationShellDescriptors ??= new();
         AssetAdministrationShellDescriptors.Add(aasDescriptor);
+
+        //add to discovery
+        AddDiscoveryEntity(aasDescriptor);
     }
 
+    private static void AddDiscoveryEntity(AssetAdministrationShellDescriptor aasDescriptor)
+    {
+        //Create AssetLinks
+        List<ISpecificAssetId> assetLinks = new List<ISpecificAssetId>();
+        if (!string.IsNullOrEmpty(aasDescriptor.GlobalAssetId))
+        {
+            assetLinks.Add(new SpecificAssetId("globalAssetId", aasDescriptor.GlobalAssetId));
+        }
+
+        if (aasDescriptor.SpecificAssetIds != null && aasDescriptor.SpecificAssetIds.Count > 0)
+        {
+            assetLinks.AddRange(aasDescriptor.SpecificAssetIds);
+        }
+
+        DiscoveryEntities ??= new();
+        DiscoveryEntities.Add(new DiscoveryEntity(aasDescriptor.Id, assetLinks));
+    }
     private static bool IsAasDescriptorPresent(AssetAdministrationShellDescriptor aasDescriptor) => AssetAdministrationShellDescriptors.Exists(a => a.Id.Equals(aasDescriptor.Id));
 
     internal static void RemoveAasDescriptor(AssetAdministrationShellDescriptor aasDescriptor)

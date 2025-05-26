@@ -27,7 +27,7 @@ namespace AasxServerStandardBib.Interfaces
         void DeleteSubmodelById(string aasIdentifier, string submodelIdentifier);
         void DeleteSubmodelElementByPath(string aasIdentifier, string submodelIdentifier, string idShortPath);
         void DeleteSubmodelReferenceById(string aasIdentifier, string submodelIdentifier);
-        void DeleteThumbnail(string aasIdentifier);
+        void DeleteThumbnail(string aasIdentifier); 
         List<IAssetAdministrationShell> GetAllAssetAdministrationShells(List<ISpecificAssetId>? assetIds = null, string? idShort = null);
         List<ISubmodelElement> GetAllSubmodelElements(string aasIdentifier, string submodelIdentifier);
         List<IReference> GetAllSubmodelReferencesFromAas(string aasIdentifier);

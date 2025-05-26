@@ -1400,10 +1400,10 @@
             case AssetAdministrationShell tag:
                 {
                     ret = tag.IdShort;
-                    if (tag.Administration != null && !tag.Administration.Version.IsNullOrEmpty())
+                    if (tag.Administration != null && !string.IsNullOrEmpty(tag.Administration.Version))
                     {
                         ret += " V" + tag.Administration.Version;
-                        if (!tag.Administration.Revision.IsNullOrEmpty())
+                        if (!string.IsNullOrEmpty(tag.Administration.Revision))
                         {
                             ret += "." + tag.Administration.Revision;
                         }
@@ -1416,10 +1416,10 @@
                     if (tag.Kind is ModellingKind.Template)
                         ret += "<T> ";
                     ret += tag.IdShort;
-                    if (tag.Administration != null && !tag.Administration.Version.IsNullOrEmpty())
+                    if (tag.Administration != null && !string.IsNullOrEmpty(tag.Administration.Version))
                     {
                         ret += " V" + tag.Administration.Version;
-                        if (!tag.Administration.Revision.IsNullOrEmpty())
+                        if (!string.IsNullOrEmpty(tag.Administration.Revision))
                         {
                             ret += "." + tag.Administration.Revision;
                         }

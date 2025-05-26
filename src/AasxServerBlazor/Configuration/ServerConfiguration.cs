@@ -29,7 +29,7 @@ using Microsoft.OpenApi.Models;
 using IO.Swagger.Controllers;
 using IO.Swagger.Lib.V3.Formatters;
 using IO.Swagger.Lib.V3.Middleware;
-using IO.Swagger.Registry.Lib.V3.Formatters;
+using AasRegistryDiscovery.WebApi.Formatters;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging;
 

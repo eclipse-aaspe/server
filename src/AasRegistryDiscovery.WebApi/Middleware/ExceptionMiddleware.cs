@@ -59,6 +59,7 @@ public class ExceptionMiddleware
                 message.MessageType = MessageTypeEnum.ErrorEnum;
                 break;
             }
+            case InvalidPaginationParameterException:
             case Jsonization.Exception:
             case NoIdentifierException:
             case ArgumentNullException:
