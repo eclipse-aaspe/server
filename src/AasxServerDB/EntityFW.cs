@@ -101,7 +101,8 @@ namespace AasxServerDB
             if (Config == null)
                 throw new Exception("No configuration");
 
-            PrintSection(Config);
+            // For problems with appsettings.json
+            // PrintSection(Config);
 
             // Get connection string
             var connectionString = Config["DatabaseConnection:ConnectionString"];
