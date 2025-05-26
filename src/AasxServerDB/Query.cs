@@ -256,6 +256,8 @@ public partial class Query
 
         watch.Restart();
 
+        expression = "$JSONGRAMMAR " + expression;
+
         var query = GetSMs(qResult, watch, db, false, false, "", "", "", pageFrom, pageSize, expression);
         if (query == null)
         {

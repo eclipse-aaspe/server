@@ -27,6 +27,7 @@ using System.Reflection.Emit;
 using System.Xml.Linq;
 using ScottPlot;
 using Contracts.QueryResult;
+using AdminShellNS.Extensions;
 
 /// <summary>
 /// 
@@ -103,6 +104,11 @@ public class QueryRepositoryAPIApiController : ControllerBase
             }
 
             submodelList = await _dbRequestHandlerService.QueryGetSMs(securityConfig, paginationParameters, expression);
+
+            if (submodelList.IsNullOrEmpty())
+            {
+                throw new NotFoundException("Queried submodels could not be found!");
+            }
         }
         var submodelsPagedList = _paginationService.GetPaginatedResult(submodelList, paginationParameters);
 
