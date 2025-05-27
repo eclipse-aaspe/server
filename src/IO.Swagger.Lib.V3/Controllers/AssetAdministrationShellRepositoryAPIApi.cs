@@ -366,7 +366,7 @@ namespace IO.Swagger.Controllers
         /// 
         /// </summary>
         /// <param name="aasIdentifier">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
-        /// <response code="200">Thumbnail deletion successful</response>
+        /// <response code="204">Thumbnail deletion successful</response>
         /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
         /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
         /// <response code="403">Forbidden</response>
@@ -377,6 +377,7 @@ namespace IO.Swagger.Controllers
         [Route("shells/{aasIdentifier}/asset-information/thumbnail")]
         [ValidateModelState]
         [SwaggerOperation("DeleteThumbnailAasRepository")]
+        [SwaggerResponse(statusCode: 204, type: typeof(Result), description: "Thumbnail deletion successful.")]
         [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
         [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]

@@ -73,7 +73,7 @@ namespace AasxServerDB.Entities
             if (TValue == null)
                 return [[string.Empty, string.Empty]];
 
-            using (AasContext db = new AasContext())
+            using (var db = new AasContext())
             {
                 var list = new List<string[]>();
                 switch (TValue)

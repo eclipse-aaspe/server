@@ -21,6 +21,7 @@ using System.Threading.Tasks;
 
 using System.Linq.Dynamic.Core;
 using AasxServerDB.Entities;
+using System.Net.Mime;
 
 public class EntityFrameworkPersistenceService : IPersistenceService
 {
@@ -889,7 +890,10 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             {
                 if (aas.AssetInformation != null)
                 {
-                    thumbnail = FileService.ReadFromThumbnail(envFileName, out byteArray, out fileSize, aas.AssetInformation);
+                    if (FileService.ReadFromThumbnail(aas.AssetInformation, envFileName, out byteArray, out fileSize))
+                    {
+                        thumbnail = aas.AssetInformation.DefaultThumbnail.Path;
+                    }
                 }
                 else
                 {
@@ -914,16 +918,24 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     public void ReplaceThumbnail(AasContext db, Dictionary<string, string>? securityCondition, string aasIdentifier, string fileName, string contentType, MemoryStream stream)
     {
-        if (IsAssetAdministrationShellPresent(db, aasIdentifier, true, out _, out IAssetAdministrationShell aas))
+        if (IsAssetAdministrationShellPresent(db, aasIdentifier, true, out AASSet aasDB, out IAssetAdministrationShell aas))
         {
+            var assetInformation = aas.AssetInformation;
             var envFileName = string.Empty;
             var found = IsPackageEnvPresent(db, aasIdentifier, null, false, out envFileName, out AdminShellPackageEnv packageEnv);
 
             if (found)
             {
-                if (aas.AssetInformation != null)
+                if (assetInformation != null)
                 {
-                    FileService.ReplaceThumbnail(aas.AssetInformation, fileName, contentType, stream);
+                    if (FileService.ReplaceThumbnail(ref assetInformation, envFileName, fileName, contentType, stream))
+                    {
+                        CrudOperator.ReplaceAssetInformation(db, aasDB, assetInformation);
+                    }
+                    else
+                    {
+                        throw new Exception($"Could not save thumbnail with {fileName}");
+                    }
                 }
                 else
                 {
@@ -945,16 +957,26 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     public void DeleteThumbnail(AasContext db, string aasIdentifier)
     {
-        if (IsAssetAdministrationShellPresent(db, aasIdentifier, true, out _, out IAssetAdministrationShell aas))
+        if (IsAssetAdministrationShellPresent(db, aasIdentifier, true, out AASSet aasDB, out IAssetAdministrationShell aas))
         {
             var envFileName = string.Empty;
             var found = IsPackageEnvPresent(db, aasIdentifier, null, false, out envFileName, out AdminShellPackageEnv packageEnv);
 
             if (found)
             {
-                if (aas.AssetInformation != null)
+                var assetInformation = aas.AssetInformation;
+
+                if (assetInformation != null)
                 {
-                    FileService.DeleteThumbnail(aas.AssetInformation);
+                    if (FileService.DeleteThumbnail(ref assetInformation, envFileName))
+                    {
+                        CrudOperator.ReplaceAssetInformation(db, aasDB,
+                            assetInformation);
+                    }
+                    else
+                    {
+                        throw new Exception($"Could not delete thumbnail");
+                    }
                 }
                 else
                 {
@@ -964,7 +986,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 using (var scope = _serviceProvider.CreateScope())
                 {
                     var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
-                    scopedLogger.LogDebug($"Updated the thumbnail in AAS with Id {aasIdentifier}");
+                    scopedLogger.LogDebug($"Deleted the thumbnail in AAS with Id {aasIdentifier}");
                 }
             }
             else

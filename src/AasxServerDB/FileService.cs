@@ -161,98 +161,128 @@ public class FileService
         }
     }
 
-    internal static string ReadFromThumbnail(string envFileName, out byte[] byteArray, out long fileSize, IAssetInformation assetInformation)
+    internal static bool ReadFromThumbnail(IAssetInformation assetInformation, string envFileName, out byte[] byteArray, out long fileSize)
     {
-        string thumbnail = null;
+        bool isFileOperationSuceeded = false;
+
         byteArray = null;
         fileSize = 0;
 
         if (assetInformation.DefaultThumbnail != null && !string.IsNullOrEmpty(assetInformation.DefaultThumbnail.Path))
         {
+            try
+            {
+                string fcopy = Path.GetFileName(envFileName) + "__thumbnail";
+                fcopy = fcopy.Replace("/", "_");
+                fcopy = fcopy.Replace(".", "_");
+                var result = System.IO.File.Open(AasContext.DataPath + "/files/" + fcopy + ".dat", FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
-            thumbnail = assetInformation.DefaultThumbnail.Path;
+                // Post-condition
+                if (!(result == null || result.CanRead))
+                {
+                    // throw new InvalidOperationException("Unexpected unreadable result stream");
+                    return isFileOperationSuceeded;
+                }
 
-            string fcopy = Path.GetFileName(envFileName) + "__thumbnail";
-            fcopy = fcopy.Replace("/", "_");
-            fcopy = fcopy.Replace(".", "_");
-            var result = System.IO.File.Open(AasContext.DataPath + "/files/" + fcopy + ".dat", FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                byteArray = result.ToByteArray();
+                fileSize = byteArray.Length;
+                result.Close();
+                isFileOperationSuceeded = true;
+            }
+            catch (Exception)
+            {
+                return isFileOperationSuceeded;
+            }
+        }
+        else
+        {
+            throw new NotFoundException($"No default thumbnail embedded in the AssetInformation of the requested AAS.");
+        }
+
+        return isFileOperationSuceeded;
+    }
+
+    internal static bool ReplaceThumbnail(ref IAssetInformation assetInformation, string envFileName, string fileName, string contentType, MemoryStream stream)
+    {
+        bool isFileOperationSuceeded = false;
+
+        //ToDo: Use content type
+        //if (string.IsNullOrEmpty(contentType))
+        //{
+        //    contentType = "application/octet-stream";
+        //}
+
+        if (assetInformation.DefaultThumbnail == null)
+        {
+            assetInformation.DefaultThumbnail = new Resource(fileName);
+        }
+        else
+        {
+            assetInformation.DefaultThumbnail.Path = fileName;
+        }
+
+        string fcopy = Path.GetFileName(envFileName) + "__thumbnail";
+        fcopy = fcopy.Replace("/", "_");
+        fcopy = fcopy.Replace(".", "_");
+
+        try
+        {
+            var result = System.IO.File.Open(AasContext.DataPath + "/files/" + fcopy + ".dat", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
 
             // Post-condition
             if (!(result == null || result.CanRead))
             {
                 // throw new InvalidOperationException("Unexpected unreadable result stream");
-                return null;
+                return isFileOperationSuceeded;
             }
 
-            byteArray = result.ToByteArray();
-            fileSize = byteArray.Length;
+            //Write to the part
+            stream.Position = 0;
+            using (Stream dest = result)
+            {
+                stream.CopyTo(dest);
+            }
+
             result.Close();
-        }
-        else
-        {
-            throw new NotFoundException($"No default thumbnail embedded in the AssetInformation of the requested AAS.");
-        }
 
-        return thumbnail;
+            isFileOperationSuceeded = true;
+
+            return isFileOperationSuceeded;
+        }
+        catch (Exception)
+        {
+            return isFileOperationSuceeded;
+        }
     }
 
-    internal static void ReplaceThumbnail(IAssetInformation assetInformation, string fileName, string contentType, MemoryStream stream)
+    internal static bool DeleteThumbnail(ref IAssetInformation assetInformation, string envFileName)
     {
-        if (string.IsNullOrEmpty(contentType))
-        {
-            contentType = "application/octet-stream";
-        }
+        bool isFileOperationSuceeded = false;
 
-        if (assetInformation.DefaultThumbnail == null)
-        {
-            //If thumbnail is not set, set to default path 
-            assetInformation.DefaultThumbnail ??= new Resource(Path.Combine("/aasx/files", fileName).Replace('/', Path.DirectorySeparatorChar), contentType);
-        }
-        else
-        {
-            assetInformation.DefaultThumbnail.Path = assetInformation.DefaultThumbnail.Path.Replace('/', Path.DirectorySeparatorChar);
-        }
-
-        var envFileName = string.Empty;
-        string fcopy = Path.GetFileName(envFileName) + "__thumbnail";
-        fcopy = fcopy.Replace("/", "_");
-        fcopy = fcopy.Replace(".", "_");
-
-        var result = System.IO.File.Open(AasContext.DataPath + "/files/" + fcopy + ".dat", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
-
-        // Post-condition
-        if (!(result == null || result.CanRead))
-        {
-            // throw new InvalidOperationException("Unexpected unreadable result stream");
-            return;
-        }
-
-        //Write to the part
-        stream.Position = 0;
-        using (Stream dest = result)
-        {
-            stream.CopyTo(dest);
-        }
-
-        result.Close();
-    }
-
-    internal static void DeleteThumbnail(IAssetInformation assetInformation)
-    {
         if (assetInformation.DefaultThumbnail != null && !string.IsNullOrEmpty(assetInformation.DefaultThumbnail.Path))
         {
-            var fileName = assetInformation.DefaultThumbnail.Path;
-
-            var envFileName = string.Empty;
-
             string fcopy = Path.GetFileName(envFileName) + "__thumbnail";
             fcopy = fcopy.Replace("/", "_");
             fcopy = fcopy.Replace(".", "_");
-            System.IO.File.Delete(AasContext.DataPath + "/files/" + fcopy + ".dat");
+
+            try
+            {
+                System.IO.File.Delete(AasContext.DataPath + "/files/" + fcopy + ".dat");
+
+                assetInformation.DefaultThumbnail = null;
+
+                isFileOperationSuceeded = true;
+            }
+            catch (Exception)
+            {
+                isFileOperationSuceeded = false;
+            }
         }
         else
         {
             throw new NotFoundException($"No default thumbnail embedded in the AssetInformation of the requested AAS.");
         }
+
+        return isFileOperationSuceeded;
     }
 }
