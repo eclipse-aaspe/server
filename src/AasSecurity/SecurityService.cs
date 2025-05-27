@@ -39,7 +39,7 @@ namespace AasSecurity
 {
     public class SecurityService : ISecurityService, IContractSecurityRules
     {
-        public static List<Dictionary<string, string>>? _condition;
+        public static List<Dictionary<string, string>>? _condition = new List<Dictionary<string, string>>();
 
         public SecurityService()
         {
