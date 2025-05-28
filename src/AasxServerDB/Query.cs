@@ -285,9 +285,10 @@ public partial class Query
             if (securityCondition != null && securityCondition["sm."] != null)
             {
                 securityConditionSM = securityCondition["sm."];
-                if (securityConditionSM == "" || securityConditionSM == "*")
-                    securityConditionSM = "true";
             }
+
+            if (securityConditionSM == "" || securityConditionSM == "*")
+                securityConditionSM = "true";
 
             var smList = db.SMSets.Where(sm => smIdList.Contains(sm.Identifier)).ToList();
 

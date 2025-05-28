@@ -370,8 +370,11 @@ namespace AasxServerDB
             if (securityCondition != null && securityCondition["sm."] != null)
             {
                 securityConditionSM = securityCondition["sm."];
-                if (securityConditionSM == "" || securityConditionSM == "*")
-                    securityConditionSM = "true";
+            }
+
+            if (securityConditionSM == "" || securityConditionSM == "*")
+            {
+                securityConditionSM = "true";
             }
 
             var timeStamp = DateTime.UtcNow;
