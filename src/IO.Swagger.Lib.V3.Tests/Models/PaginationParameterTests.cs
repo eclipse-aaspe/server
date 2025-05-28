@@ -13,6 +13,8 @@
 
 namespace IO.Swagger.Models.Tests;
 
+using Contracts.Pagination;
+
 public class PaginationParametersTests
 {
     [Fact]

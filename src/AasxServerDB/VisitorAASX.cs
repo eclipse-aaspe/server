@@ -23,7 +23,7 @@ namespace AasxServerDB
     using System.Text;
     using System.Collections.Generic;
     using HotChocolate.Language;
-    using static AasxServerDB.Converter;
+    using static AasxServerDB.CrudOperator;
     using Microsoft.EntityFrameworkCore;
 
     public class VisitorAASX : VisitorThrough
@@ -35,7 +35,7 @@ namespace AasxServerDB
         private SMESet? _parSME;
         private int _index = 0;
         private SMESet? _resultSME;
-        public List<Converter.SmeMerged> smSmeMerged = null;
+        public List<CrudOperator.SmeMerged> smSmeMerged = null;
         public List<int> keepSme = new List<int>();
         public List<int> deleteSme = new List<int>();
         public string idShortPath = "";
@@ -72,13 +72,15 @@ namespace AasxServerDB
                     var envDB = new EnvSet() { Path = filePath };
                     ImportAASIntoDB(asp, envDB);
 
-                    var db = new AasContext();
-                    db.Add(envDB);
-                    db.SaveChanges();
+                    using (var db = new AasContext())
+                    {
+                        db.Add(envDB);
+                        db.SaveChanges();
 
-                    // CD
-                    foreach (var envcdSet in envDB.EnvCDSets.Where(envcdSet => envcdSet.CDSet != null))
-                        _cdDBId.TryAdd(envcdSet.CDSet.Identifier, envcdSet.CDSet.Id);
+                        // CD
+                        foreach (var envcdSet in envDB.EnvCDSets.Where(envcdSet => envcdSet.CDSet != null))
+                            _cdDBId.TryAdd(envcdSet.CDSet.Identifier, envcdSet.CDSet.Id);
+                    }
                 }
 
                 if (withDbFiles)
@@ -283,8 +285,8 @@ namespace AasxServerDB
                 if (_smDB != null && smSmeMerged == null)
                 {
                     var smeSmList = db.SMESets.Where(sme => sme.SMId == _smDB.Id).ToList();
-                    Converter.CreateIdShortPath(db, smeSmList);
-                    smSmeMerged = Converter.GetSmeMerged(db, smeSmList, _smDB);
+                    CrudOperator.CreateIdShortPath(db, smeSmList);
+                    smSmeMerged = CrudOperator.GetSmeMerged(db, smeSmList, _smDB);
                 }
             }
             _smDB ??= new SMSet();
@@ -398,7 +400,7 @@ namespace AasxServerDB
             SMESet? smeDB = null;
             if (update)
             {
-                Converter.SmeMerged? s = null;
+                CrudOperator.SmeMerged? s = null;
                 if (_parSME == null)
                 {
                     s = smSmeMerged.FirstOrDefault(s => s.smeSet.IdShort == sme.IdShort);
@@ -416,9 +418,14 @@ namespace AasxServerDB
             smeDB ??= new SMESet();
             smeDB.ParentSME = _parSME;
             smeDB.SMEType = ShortSMEType(sme);
+
+            var smeIdShort = "." + sme.IdShort;
+
             if (_parSME != null && _parSME.SMEType == "SML")
             {
-                smeDB.IdShort = $"[{_index++}]";
+                var index = $"[{_index++}]";
+                smeDB.SMLIndex = _index;
+                smeIdShort = index;
             }
             else
             {
@@ -427,7 +434,7 @@ namespace AasxServerDB
             smeDB.IdShortPath = sme.IdShort;
             if (_parSME != null)
             {
-                smeDB.IdShortPath = _parSME.IdShortPath + "." + sme.IdShort;
+                smeDB.IdShortPath = _parSME.IdShortPath + smeIdShort;
             }
             smeDB.DisplayName = Serializer.SerializeList(sme.DisplayName);
             smeDB.Category = sme.Category;

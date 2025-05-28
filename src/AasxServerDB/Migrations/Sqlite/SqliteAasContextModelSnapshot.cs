@@ -340,6 +340,9 @@ namespace AasxServerDB.Migrations.Sqlite
                     b.Property<int>("SMId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("SMLIndex")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("SemanticId")
                         .HasMaxLength(2000)
                         .HasColumnType("TEXT");

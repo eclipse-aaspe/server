@@ -855,7 +855,7 @@
                 if (smDBList.Any())
                 {
                     var smDB     = smDBList.First();
-                    var submodel = Converter.GetSubmodel(smDB: smDB);
+                    var submodel = CrudOperator.ReadSubmodel(db, smDB: smDB);
 
                     string json = string.Empty;
                     if (submodel != null)
@@ -872,8 +872,8 @@
             if (url.EndsWith("/sme"))
             {
                 List<SMESet> data = PageRetriever.GetPageSMEData(size, offset, TimeStamp.StringToDateTime(searchLower), searchLower, smid, smeid, parid);
-                var merged = Converter.GetSmeMerged(db, data, null);
-                Converter.CreateIdShortPath(db, data);
+                var merged = CrudOperator.GetSmeMerged(db, data, null);
+                CrudOperator.CreateIdShortPath(db, data);
 
                 <span>
                 &nbsp&nbsp@($"SME#: {data.Count}/{db.SMESets.Select(x => x.Id).Count()} size={size} offset={offset} search={search} smid={smid} smeid={smeid} parid={parid}")
@@ -942,7 +942,7 @@
                         string submodel64 = Base64UrlEncoder.Encode(smDB.Identifier);
                         string link = $"{AasxServer.Program.externalBlazor}/submodels/{submodel64}/submodel-elements/{path}";
                         // var value = smeDB.GetValue();
-                        var value = Converter.GetValue(smeDB, merged);
+                        var value = CrudOperator.GetValue(smeDB, merged);
 
                         <tr>
                             <td style="word-break:keep-all">@smeDB.SMId</td>
@@ -1012,7 +1012,7 @@
                                 @if (merged.Where(value => value.oValueSet != null && value.oValueSet.SMEId == smeDB.Id).Any())
                                 {
                                     // var dic = smeDB.GetOValue();
-                                    var dic = Converter.GetOValue(smeDB, merged);
+                                    var dic = CrudOperator.GetOValue(smeDB, merged);
                                     <ul>
                                         @foreach(KeyValuePair<string, string> dicValue in dic)
                                         {

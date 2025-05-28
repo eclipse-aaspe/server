@@ -1980,7 +1980,8 @@ namespace AasxServer
                     {
                         c = eventData.Changes.Value;
                     }
-                    var e = _eventService.CollectPayload(c, 0, eventData.StatusData,
+                    //ToDo: Add security condition
+                    var e = _eventService.CollectPayload(null, c, 0, eventData.StatusData,
                         eventData.DataReference, source, eventData.ConditionSM, eventData.ConditionSME,
                         d, diffEntry, !np, 1000, 1000, 0, 0);
                     foreach (var diff in diffEntry)
@@ -3027,7 +3028,7 @@ namespace AasxServer
 
         public static void setTimeStampValue(string submodelId, string path, DateTime timeStamp, string value = null)
         {
-            Converter.setTimeStampValue(submodelId, path, timeStamp, value);
+            CrudOperator.setTimeStampValue(submodelId, path, timeStamp, value);
         }
         //public static AdminShellPackageEnv getEnv(string aasID)
         //{

@@ -13,7 +13,7 @@ public interface IEventService
     public int CollectSubmodelElements(List<ISubmodelElement> submodelElements, DateTime diffTime, string entryType,
     string submodelId, string idShortPath, List<EventPayloadEntry> entries, List<String> diffEntry, bool withPayload);
 
-    public Events.EventPayload CollectPayload(string changes, int depth, SubmodelElementCollection statusData,
+    public Events.EventPayload CollectPayload(Dictionary<string, string> securityCondition, string changes, int depth, SubmodelElementCollection statusData,
         ReferenceElement reference, IReferable referable, AasCore.Aas3_0.Property conditionSM, AasCore.Aas3_0.Property conditionSME,
         string diff, List<String> diffEntry, bool withPayload, int limitSm, int limitSme, int offsetSm, int offsetSme);
 

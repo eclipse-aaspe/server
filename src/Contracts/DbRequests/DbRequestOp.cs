@@ -7,38 +7,56 @@ using System.Threading.Tasks;
 
 public enum DbRequestOp
 {
-    ReadAllAssetAdministrationShells,
+    ReadPackageEnv,
+    ReadPagedAssetAdministrationShells,
+    ReadAssetAdministrationShellById,
+    CreateAssetAdministrationShell,
+    ReplaceAssetAdministrationShellById,
+    DeleteAssetAdministrationShellById,
+
+    CreateSubmodelReference,
+    DeleteSubmodelReferenceById,
+
+    ReadPagedSubmodels,
     ReadSubmodelById,
+    CreateSubmodel,
+    UpdateSubmodelById,
+    ReplaceSubmodelById,
+    DeleteSubmodelById,
+
     ReadPagedSubmodelElements,
     ReadSubmodelElementByPath,
-    ReadPagedSubmodels,
-    ReadAssetAdministrationShellById,
-    ReadFileByPath,
-    ReadAssetInformation,
-    ReadThumbnail,
-    ReadPackageEnv,
-    ReadEventMessages,
-    CreateSubmodel,
-    CreateAssetAdministrationShell,
     CreateSubmodelElement,
-    CreateSubmodelReference,
-    UpdateSubmodelById,
     UpdateSubmodelElementByPath,
-    UpdateEventMessages,
-    ReplaceAssetInformation,
-    ReplaceAssetAdministrationShellById,
-    ReplaceSubmodelById,
     ReplaceSubmodelElementByPath,
-    ReplaceFileByPath,
-    ReplaceThumbnail,
-    DeleteAssetAdministrationShellById,
-    DeleteFileByPath,
-    DeleteSubmodelById,
     DeleteSubmodelElementByPath,
-    DeleteSubmodelReferenceById,
+
+    ReadAssetInformation,
+    ReplaceAssetInformation,
+
+    ReadFileByPath,
+    ReplaceFileByPath,
+    DeleteFileByPath,
+
+    ReadThumbnail,
+    ReplaceThumbnail,
     DeleteThumbnail,
+
+    ReadEventMessages,
+    UpdateEventMessages,
+
+    ReadPagedConceptDescriptions,
+    ReadConceptDescriptionById,
+    CreateConceptDescription,
+    ReplaceConceptDescriptionById,
+    DeleteConceptDescriptionById,
+
+    GenerateSerializationByIds,
+
     QuerySearchSMs,
     QueryCountSMs,
     QuerySearchSMEs,
-    QueryCountSMEs
+    QueryCountSMEs,
+
+    QueryGetSMs
 }

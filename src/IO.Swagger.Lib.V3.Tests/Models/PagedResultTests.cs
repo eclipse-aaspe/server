@@ -16,6 +16,7 @@ using IO.Swagger.Models;
 namespace AasxServerBlazorTests.Models;
 
 using AasCore.Aas3_0;
+using Contracts.Pagination;
 using JetBrains.Annotations;
 
 [TestSubject(typeof(PagedResult))]

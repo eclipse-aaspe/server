@@ -12,6 +12,7 @@
 ********************************************************************************/
 
 using AdminShellNS.Models;
+using Contracts.Pagination;
 using IO.Swagger.Lib.V3.Models;
 using IO.Swagger.Models;
 using System.Collections.Generic;

@@ -11,13 +11,13 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-namespace IO.Swagger.Models;
+namespace Contracts.Pagination;
 
-using Contracts.Pagination;
-using IO.Swagger.Lib.V3.Exceptions;
+using Contracts.Exceptions;
 
 public class PaginationParameters : IPaginationParameters
 {
+    //ToDo: Agree on max value, also in query api
     private const int MaxResultSize = 500;
 
     private int _cursor;
