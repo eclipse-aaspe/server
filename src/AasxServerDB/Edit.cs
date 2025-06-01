@@ -23,15 +23,29 @@ namespace AasxServerDB
     {
         static public void Update(AdminShellPackageEnv env)
         {
-            using (AasContext db = new AasContext())
+            using (var db = new AasContext())
             {
-                // Deletes manually from DB
                 var deleteEnvList = db.EnvSets.Where(e => e.Path == env.Filename);
                 var deleteEnv = deleteEnvList.FirstOrDefault();
                 var deleteAasList = db.AASSets.Where(a => a.EnvId == deleteEnv.Id);
-                var deletSmList = db.SMSets.Where(s => s.EnvId == deleteEnv.Id);
-                deletSmList.ExecuteDeleteAsync().Wait();
-                deleteAasList.ExecuteDeleteAsync().Wait();
+                var deleteSmList = db.SMSets.Where(s => s.EnvId == deleteEnv.Id);
+                var deleteCDList = db.EnvCDSets.Where(s => s.EnvId == deleteEnv.Id);
+
+                foreach (var s in deleteSmList)
+                {
+                    if (s.Identifier != null)
+                    {
+                        DeleteSubmodel(s.Identifier, db);
+                    }
+                }
+                foreach (var a in deleteAasList)
+                {
+                    if (a.Identifier != null)
+                    {
+                        DeleteAAS(a.Identifier, db);
+                    }
+                }
+                deleteCDList.ExecuteDeleteAsync().Wait();
                 deleteEnvList.ExecuteDeleteAsync().Wait();
 
                 // Load Everything back in
@@ -49,7 +63,8 @@ namespace AasxServerDB
                 {
                     Console.WriteLine(ex.ToString());
                 }
-                finally { 
+                finally
+                {
                     db.Dispose();
                 }
             }
@@ -59,48 +74,70 @@ namespace AasxServerDB
 
         public static void DeleteAAS(string aasIdentifier)
         {
-            using (AasContext db = new AasContext())
+            using (var db = new AasContext())
+            {
+                DeleteAAS(aasIdentifier, db);
+            }
+        }
+        public static void DeleteAAS(string aasIdentifier, AasContext db)
+        {
+            try
             {
                 // Deletes automatically from DB
-                db.AASSets
+                var aas = db.AASSets
                     .Include(aas => aas.SMRefSets)
-                    .Where(aas => aas.Identifier == aasIdentifier).ExecuteDelete();
+                    .FirstOrDefault(aas => aas.Identifier == aasIdentifier);
 
-                db.SaveChanges();
+                if (aas != null)
+                {
+                    aas?.SMRefSets.Clear();
+                    db.AASSets.Remove(aas);
+
+                    db.SaveChanges();
+                }
+            }
+            catch (Microsoft.Data.Sqlite.SqliteException ex)
+            {
+                Console.WriteLine($"SQLite Error: {ex.Message}");
+                Console.WriteLine($"Foreign Key Constraint: {ex.SqliteErrorCode}");
             }
         }
 
         public static void DeleteSubmodel(string submodelIdentifier)
         {
-            using (AasContext db = new AasContext())
+            using (var db = new AasContext())
             {
-                using (var transaction = db.Database.BeginTransaction())
-                {
-                    try
-                    {
-                        var smDB = db.SMSets.Where(sm => sm.Identifier == submodelIdentifier);
-                        var smDBID = smDB.FirstOrDefault().Id;
-                        var smeDB = db.SMESets.Where(sme => sme.SMId == smDBID);
-                        var smeDBIDList = smeDB.Select(sme => sme.Id).ToList();
-
-                        db.SValueSets.Where(s => smeDBIDList.Contains(s.SMEId)).ExecuteDelete();
-                        db.IValueSets.Where(i => smeDBIDList.Contains(i.SMEId)).ExecuteDelete();
-                        db.DValueSets.Where(d => smeDBIDList.Contains(d.SMEId)).ExecuteDelete();
-                        db.OValueSets.Where(o => smeDBIDList.Contains(o.SMEId)).ExecuteDelete();
-                        smeDB.ExecuteDelete();
-                        smDB.ExecuteDelete();
-
-                        db.SaveChanges();
-                        transaction.Commit();
-                    }
-                    catch (Exception)
-                    {
-                        transaction.Rollback();
-                    }
-                }
+                DeleteSubmodel(submodelIdentifier, db);
             }
         }
 
+        public static void DeleteSubmodel(string submodelIdentifier, AasContext db)
+        {
+            using (var transaction = db.Database.BeginTransaction())
+            {
+                try
+                {
+                    var smDB = db.SMSets.Where(sm => sm.Identifier == submodelIdentifier);
+                    var smDBID = smDB.FirstOrDefault().Id;
+                    var smeDB = db.SMESets.Where(sme => sme.SMId == smDBID);
+                    var smeDBIDList = smeDB.Select(sme => sme.Id).ToList();
+
+                    db.SValueSets.Where(s => smeDBIDList.Contains(s.SMEId)).ExecuteDelete();
+                    db.IValueSets.Where(i => smeDBIDList.Contains(i.SMEId)).ExecuteDelete();
+                    db.DValueSets.Where(d => smeDBIDList.Contains(d.SMEId)).ExecuteDelete();
+                    db.OValueSets.Where(o => smeDBIDList.Contains(o.SMEId)).ExecuteDelete();
+                    smeDB.ExecuteDelete();
+                    smDB.ExecuteDelete();
+
+                    db.SaveChanges();
+                    transaction.Commit();
+                }
+                catch (Exception)
+                {
+                    transaction.Rollback();
+                }
+            }
+        }
         public static void DeleteSubmodelElement(SMESet sME)
         {
             using (AasContext db = new AasContext())

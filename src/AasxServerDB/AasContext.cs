@@ -70,7 +70,10 @@ namespace AasxServerDB
             if (IsPostgres) // PostgreSQL
                 options.UseNpgsql(connectionString);
             else // SQLite
-                options.UseSqlite(connectionString);
+                options.UseSqlite(connectionString)
+                .EnableSensitiveDataLogging()
+                .LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information)
+;
         }
 
         protected static string GetConnectionString()
