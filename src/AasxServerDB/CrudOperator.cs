@@ -14,18 +14,12 @@
 namespace AasxServerDB
 {
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Linq;
     using System.Linq.Dynamic.Core;
     using System.Text;
-    using System.Text.RegularExpressions;
-    using System.Xml.Serialization;
     using AasCore.Aas3_0;
     using AasxServerDB.Entities;
-    using AasxServerStandardBib.Logging;
     using AdminShellNS;
-    using Contracts.DbRequests;
-    using Contracts.Exceptions;
     using Contracts.Pagination;
     using Extensions;
     using Microsoft.EntityFrameworkCore;
@@ -77,6 +71,7 @@ namespace AasxServerDB
             }
 
             // aas
+            var loadedSMs = new List<String>();
             var aasDBList = db.AASSets.Where(cd => cd.EnvId == envId).ToList();
             foreach (var aasDB in aasDBList)
             {
@@ -107,7 +102,9 @@ namespace AasxServerDB
                         {
                             return null;
                         }
+                        loadedSMs.Add(sm.Id);
                         aas.Submodels?.Add(sm.GetReference());
+                        env.AasEnv.Submodels?.Add(sm);
                     }
                 }
             }
@@ -125,14 +122,22 @@ namespace AasxServerDB
                     smDBList = db.SMSets.Where(cd => cd.Identifier == smId).ToList();
                 }
             }
-            foreach (var sm in smDBList.Select(selector: submodelDB => ReadSubmodel(db, smDB: submodelDB)))
+            // foreach (var sm in smDBList.Select(selector: submodelDB => ReadSubmodel(db, smDB: submodelDB)))
+            foreach (var smDB in smDBList)
             {
-                if (sm.TimeStamp == DateTime.MinValue)
+                if (smDB.Identifier != null && !loadedSMs.Contains(smDB.Identifier))
                 {
-                    sm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp, DateTime.MinValue);
-                    sm.SetTimeStamp(timeStamp);
+                    var sm = ReadSubmodel(db, smDB: smDB);
+                    if (sm != null)
+                    {
+                        if (sm.TimeStamp == DateTime.MinValue)
+                        {
+                            sm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp, DateTime.MinValue);
+                            sm.SetTimeStamp(timeStamp);
+                        }
+                        env.AasEnv.Submodels?.Add(sm);
+                    }
                 }
-                env.AasEnv.Submodels?.Add(sm);
             }
             return env;
         }
@@ -954,6 +959,8 @@ namespace AasxServerDB
                                 (sme as Operation).OutputVariables.Add(new OperationVariable(nextSME));
                             else if (oprPrefix.Equals(VisitorAASX.OPERATION_INOUTPUT))
                                 (sme as Operation).InoutputVariables.Add(new OperationVariable(nextSME));
+                            else
+                                Console.WriteLine("Prefix missing");
                             break;
                     }
                 }
@@ -1204,8 +1211,26 @@ namespace AasxServerDB
                 }
             }
         }
-        public static void setTimeStampValue(string submodelId, string path, DateTime timeStamp, string value = null)
+        public static void setTimeStampValue(string submodelId, string idShortPath, DateTime timeStamp, string value = null)
         {
+            using (var db = new AasContext())
+            {
+                var smDB = db.SMSets.Where(sm => sm.Identifier == submodelId).FirstOrDefault();
+                if (smDB == null)
+                {
+                    return;
+                };
+
+                var smeFound = db.SMESets.Where(sme => sme.SMId == smDB.Id && sme.IdShortPath == idShortPath).FirstOrDefault();
+                if (smeFound == null)
+                {
+                    return;
+                }
+
+                setTimeStampValue(smeFound.SMId, smeFound.Id, timeStamp, value);
+            };
+
+            /*
             var idShortPathElements = path.Split('.');
             using (var db = new AasContext())
             {
@@ -1237,6 +1262,7 @@ namespace AasxServerDB
 
                 setTimeStampValue(smeFound.SMId, smeFound.Id, timeStamp, value);
             };
+            */
         }
 
         public static List<string[]>? GetValue(SMESet smeSet, List<SValueSet> sValueList, List<IValueSet> iValueList, List<DValueSet> dValueList)

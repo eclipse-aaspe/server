@@ -6,7 +6,6 @@ using System.Linq;
 using System.Linq.Dynamic.Core;
 using System.Text;
 using System.Text.Json.Nodes;
-using System.Threading.Tasks;
 using AasxServerDB.Entities;
 using AasxServerDB;
 using AdminShellNS;
@@ -445,6 +444,13 @@ public class EventService : IEventService
                                     }
                                 }
                                 var parentId = sme.ParentSMEId;
+                                var idShortPath = sme.IdShortPath;
+
+                                if (sme.TimeStampTree > timeStampMax)
+                                {
+                                    timeStampMax = sme.TimeStampTree;
+                                }
+                                /*
                                 var idShortPath = sme.IdShort;
                                 while (parentId != null && parentId != 0)
                                 {
@@ -452,11 +458,7 @@ public class EventService : IEventService
                                     idShortPath = parentSME.IdShort + "." + idShortPath;
                                     parentId = parentSME.ParentSMEId;
                                 }
-
-                                if (sme.TimeStampTree > timeStampMax)
-                                {
-                                    timeStampMax = sme.TimeStampTree;
-                                }
+                                */
 
                                 var entry = new EventPayloadEntry();
                                 entry.entryType = entryType;

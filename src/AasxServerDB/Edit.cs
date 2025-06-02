@@ -17,7 +17,6 @@ namespace AasxServerDB
     using AdminShellNS;
     using Microsoft.EntityFrameworkCore;
     using AasxServerDB.Entities;
-    using System.Runtime.Intrinsics.X86;
 
     public class Edit
     {
@@ -25,13 +24,27 @@ namespace AasxServerDB
         {
             using (var db = new AasContext())
             {
-                // Deletes manually from DB
                 var deleteEnvList = db.EnvSets.Where(e => e.Path == env.Filename);
                 var deleteEnv = deleteEnvList.FirstOrDefault();
                 var deleteAasList = db.AASSets.Where(a => a.EnvId == deleteEnv.Id);
-                var deletSmList = db.SMSets.Where(s => s.EnvId == deleteEnv.Id);
-                deletSmList.ExecuteDeleteAsync().Wait();
-                deleteAasList.ExecuteDeleteAsync().Wait();
+                var deleteSmList = db.SMSets.Where(s => s.EnvId == deleteEnv.Id);
+                var deleteCDList = db.EnvCDSets.Where(s => s.EnvId == deleteEnv.Id);
+
+                foreach (var s in deleteSmList)
+                {
+                    if (s.Identifier != null)
+                    {
+                        CrudOperator.DeleteSubmodel(db,s.Identifier);
+                    }
+                }
+                foreach (var a in deleteAasList)
+                {
+                    if (a.Identifier != null)
+                    {
+                        CrudOperator.DeleteAAS(db, a.Identifier);
+                    }
+                }
+                deleteCDList.ExecuteDeleteAsync().Wait();
                 deleteEnvList.ExecuteDeleteAsync().Wait();
 
                 // Load Everything back in
@@ -49,12 +62,14 @@ namespace AasxServerDB
                 {
                     Console.WriteLine(ex.ToString());
                 }
-                finally { 
+                finally
+                {
                     db.Dispose();
                 }
             }
             env.setWrite(false);
             Console.WriteLine("SAVE AASX TO DB: " + env.Filename);
         }
+
     }
 }

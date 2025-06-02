@@ -670,7 +670,6 @@
 						&nbsp&nbsp@($"SM#: {totalCount} size={size} offset={offset} search={search} details={details}")
 					</span>
 					<br />
-
 					<div style="width: 100%; height: 80vh; overflow-x: hidden; padding: 10px;">
 						<table class="table table-bordered table-sm" style="width:100%;word-wrap:break-word;word-break:break-all;border-color:blue;">
 							<thead>
@@ -745,8 +744,32 @@
 										<td style="width:3%;font-size:small;word-break:keep-all;border-color:blue;">@SMVirtualize?.smSet?.Kind</td>
 										<td style="width:10%;word-break: break-all;border-color:blue;">@SMVirtualize?.smSet?.SemanticId</td>
 										<td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.SupplementalSemanticIds</td>
-										<td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.Qualifiers</td>
-										<td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.EmbeddedDataSpecifications</td>
+                                        <td style="width:3%;font-size:small;border-color:blue;">
+                                            <div class="@cell">
+                                                @if (withDetails)
+
+                                                {
+                                                    <span>@SMVirtualize?.smSet?.Qualifiers</span>
+                                                }
+
+                                                else
+
+                                                {
+
+                                                    var text = SMVirtualize?.smSet?.Qualifiers;
+
+                                                    if (text?.Length > 27)
+
+                                                    {
+
+                                                        text = text.Substring(0, 27) + " ..";
+
+                                                    }
+                                                    <span>@text</span>
+                                                }
+                                            </div>
+                                        </td>
+                                        <td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.EmbeddedDataSpecifications</td>
 										<td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.Version</td>
 										<td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.Revision</td>
 										<td style="width:3%;font-size:small;border-color:blue;">@SMVirtualize?.smSet?.Creator</td>

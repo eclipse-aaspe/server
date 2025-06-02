@@ -32,22 +32,17 @@
 namespace AasxServerDB
 {
     using System;
-    using System.Text.Json.Nodes;
     using AasxServerDB.Entities;
     using Microsoft.EntityFrameworkCore;
     using Microsoft.Extensions.Configuration;
     using Microsoft.IdentityModel.Tokens;
-    using AasCore.Aas3_0;
-    using AasxServerDB.Context;
-    using System.Collections.Generic;
     using System.IO;
-    using System.Threading.Tasks;
 
     public class AasContext : DbContext
     {
         public static IConfiguration? Config { get; set; }
 
-        public static string? DataPath{ get; set; }
+        public static string? DataPath { get; set; }
 
         public static bool IsPostgres { get; set; }
 
@@ -70,7 +65,10 @@ namespace AasxServerDB
             if (IsPostgres) // PostgreSQL
                 options.UseNpgsql(connectionString);
             else // SQLite
-                options.UseSqlite(connectionString);
+                options.UseSqlite(connectionString)
+                // .EnableSensitiveDataLogging()
+                // .LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information)
+                ;
         }
 
         protected static string GetConnectionString()
