@@ -72,13 +72,14 @@ public class QueryRepositoryAPIApiController : ControllerBase
     [Route("query/submodels")]
     [ValidateModelState]
     [SwaggerOperation("PostSubmodels")]
+    [Consumes("text/plain")]
     [SwaggerResponse(statusCode: 200, type: typeof(PagedResult), description: "Submodels created successfully")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
     [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
     [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public async virtual Task<IActionResult> PostSubmodels([FromQuery] int? limit, [FromQuery] string? cursor)
+    public async virtual Task<IActionResult> PostSubmodels([FromQuery] int? limit, [FromQuery] string? cursor, [FromBody] string? expression)
     {
         //Validate level and extent
         //var levelEnum = _validateModifierService.ValidateLevel(level);
@@ -90,25 +91,21 @@ public class QueryRepositoryAPIApiController : ControllerBase
         var submodelList = new List<ISubmodel>();
         var paginationParameters = new PaginationParameters(cursor, limit);
 
-        using (var reader = new StreamReader(HttpContext.Request.Body))
+
+        if (!Program.noSecurity)
         {
-            var expression = reader.ReadToEndAsync().Result;
-
-            if (!Program.noSecurity)
+            var authResult = _authorizationService.AuthorizeAsync(User, "SecurityPolicy").Result;
+            if (!authResult.Succeeded)
             {
-                var authResult = _authorizationService.AuthorizeAsync(User, "SecurityPolicy").Result;
-                if (!authResult.Succeeded)
-                {
-                    throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
-                }
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
+        }
 
-            submodelList = await _dbRequestHandlerService.QueryGetSMs(securityConfig, paginationParameters, expression);
+        submodelList = await _dbRequestHandlerService.QueryGetSMs(securityConfig, paginationParameters, expression);
 
-            if (submodelList.IsNullOrEmpty())
-            {
-                throw new NotFoundException("Queried submodels could not be found!");
-            }
+        if (submodelList.IsNullOrEmpty())
+        {
+            throw new NotFoundException("Queried submodels could not be found!");
         }
         var submodelsPagedList = _paginationService.GetPaginatedResult(submodelList, paginationParameters);
 

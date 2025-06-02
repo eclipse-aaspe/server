@@ -29,6 +29,7 @@ using System.Threading.Tasks;
 
 namespace IO.Swagger.Lib.V3.Formatters
 {
+    using System.Text;
     using System.Text.Json;
     using System.Text.Json.Serialization;
     using AdminShellNS;
@@ -55,6 +56,10 @@ namespace IO.Swagger.Lib.V3.Formatters
             {
                 return true;
             }
+            else if (typeof(String).IsAssignableFrom(context.ModelType))
+            {
+                return true;
+            }
             else
             {
                 return false;
@@ -66,6 +71,14 @@ namespace IO.Swagger.Lib.V3.Formatters
             Type    type    = context.ModelType;
             var     request = context.HttpContext.Request;
             object? result  = null;
+
+            if (request.ContentType == "text/plain")
+            {
+                using var reader = context.ReaderFactory(request.Body, Encoding.UTF8);
+                var content = reader.ReadToEndAsync().Result;
+
+                return InputFormatterResult.SuccessAsync(content);
+            }
 
             JsonNode node = System.Text.Json.JsonSerializer.DeserializeAsync<JsonNode>(request.Body).Result;
 
