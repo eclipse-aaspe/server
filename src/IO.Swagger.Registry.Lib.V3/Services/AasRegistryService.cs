@@ -51,7 +51,7 @@ namespace IO.Swagger.Registry.Lib.V3.Services
             //string asset = aas.assetRef?[0].Value;
             var globalAssetId = aasDB.GlobalAssetId;
 
-            using (AasContext db = new AasContext())
+            using (var db = new AasContext())
             {
                 // ad.Administration.Version = aas.administration.version;
                 // ad.Administration.Revision = aas.administration.revision;

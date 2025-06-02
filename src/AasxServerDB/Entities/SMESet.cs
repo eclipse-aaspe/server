@@ -32,11 +32,11 @@ namespace AasxServerDB.Entities
     {
         // sm
         [ForeignKey("SMSet")]
-        public         int    SMId  { get; set; }
+        public int SMId { get; set; }
         public virtual SMSet? SMSet { get; set; }
 
         // parent sme
-        public         int?    ParentSMEId       { get; set; }
+        public int? ParentSMEId { get; set; }
         public virtual SMESet? ParentSME { get; set; }
 
         // id
@@ -49,16 +49,17 @@ namespace AasxServerDB.Entities
 
         // submodel element
         [StringLength(128)]
-        public string? IdShort                    { get; set; }
-        public string? DisplayName                { get; set; }
+        public string? IdShort { get; set; }
+        public int? SMLIndex { get; set; }
+        public string? DisplayName { get; set; }
         [StringLength(128)]
-        public string? Category                   { get; set; }
-        public string? Description                { get; set; }
-        public string? Extensions                 { get; set; }
+        public string? Category { get; set; }
+        public string? Description { get; set; }
+        public string? Extensions { get; set; }
         [MaxLength(2000)]
-        public string? SemanticId                 { get; set; } // change to save the rest of the reference
-        public string? SupplementalSemanticIds    { get; set; }
-        public string? Qualifiers                 { get; set; }
+        public string? SemanticId { get; set; } // change to save the rest of the reference
+        public string? SupplementalSemanticIds { get; set; }
+        public string? Qualifiers { get; set; }
         public string? EmbeddedDataSpecifications { get; set; }
 
         // value
@@ -72,25 +73,29 @@ namespace AasxServerDB.Entities
             if (TValue == null)
                 return [[string.Empty, string.Empty]];
 
-            var list = new List<string[]>();
-            switch (TValue)
+            using (var db = new AasContext())
             {
-                case "S":
-                    list = new AasContext().SValueSets.Where(s => s.SMEId == Id).ToList()
-                        .ConvertAll<string[]>(valueDB => [valueDB.Value ?? string.Empty, valueDB.Annotation ?? string.Empty]);
-                    break;
-                case "I":
-                    list = new AasContext().IValueSets.Where(s => s.SMEId == Id).ToList()
-                        .ConvertAll<string[]>(valueDB => [valueDB.Value == null ? string.Empty : valueDB.Value.ToString(), valueDB.Annotation ?? string.Empty]);
-                    break;
-                case "D":
-                    list = new AasContext().DValueSets.Where(s => s.SMEId == Id).ToList()
-                        .ConvertAll<string[]>(valueDB => [valueDB.Value == null ? string.Empty : valueDB.Value.ToString(), valueDB.Annotation ?? string.Empty]);
-                    break;
-            }
+                var list = new List<string[]>();
+                switch (TValue)
+                {
+                    case "S":
+                        list = db.SValueSets.Where(s => s.SMEId == Id).ToList()
+                            .ConvertAll<string[]>(valueDB => [valueDB.Value ?? string.Empty, valueDB.Annotation ?? string.Empty]);
+                        break;
+                    case "I":
+                        list = db.IValueSets.Where(s => s.SMEId == Id).ToList()
+                            .ConvertAll<string[]>(valueDB => [valueDB.Value == null ? string.Empty : valueDB.Value.ToString(), valueDB.Annotation ?? string.Empty]);
+                        break;
+                    case "D":
+                        list = db.DValueSets.Where(s => s.SMEId == Id).ToList()
+                            .ConvertAll<string[]>(valueDB => [valueDB.Value == null ? string.Empty : valueDB.Value.ToString(), valueDB.Annotation ?? string.Empty]);
+                        break;
+                }
 
-            if (list.Count > 0 || (!SMEType.IsNullOrEmpty() && SMEType.Equals("MLP")))
-                return list;
+
+                if (list.Count > 0 || (!SMEType.IsNullOrEmpty() && SMEType.Equals("MLP")))
+                    return list;
+            }
 
             return [[string.Empty, string.Empty]];
         }
@@ -99,18 +104,23 @@ namespace AasxServerDB.Entities
         public virtual ICollection<OValueSet> OValueSets { get; } = new List<OValueSet>();
         public Dictionary<string, string> GetOValue()
         {
-            var dic = new AasContext().OValueSets.Where(s => s.SMEId == Id).ToList().ToDictionary(valueDB => valueDB.Attribute, valueDB => valueDB.Value);
-            if (dic != null)
+            using (var db = new AasContext())
             {
-                return dic;
+                var dic = db.OValueSets.Where(s => s.SMEId == Id).ToList().
+                    ToDictionary(valueDB => valueDB.Attribute, valueDB => valueDB.Value);
+                if (dic != null)
+                {
+                    return dic;
+                }
             }
+
             return new Dictionary<string, string>();
         }
 
         // time stamp
         public DateTime TimeStampCreate { get; set; }
-        public DateTime TimeStamp       { get; set; }
-        public DateTime TimeStampTree   { get; set; }
+        public DateTime TimeStamp { get; set; }
+        public DateTime TimeStampTree { get; set; }
         public DateTime TimeStampDelete { get; set; }
         public string? IdShortPath { get; set; }
     }

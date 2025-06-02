@@ -40,6 +40,11 @@ using Microsoft.AspNetCore.Authorization;
 using IO.Swagger.Models;
 using Contracts;
 using Contracts.Exceptions;
+using System.Threading.Tasks;
+using AasxServer;
+using IO.Swagger.Lib.V3.Models;
+using NJsonSchema.Validation;
+using Contracts.Pagination;
 
 namespace IO.Swagger.Controllers
 {
@@ -52,22 +57,26 @@ namespace IO.Swagger.Controllers
     {
         private readonly IAppLogger<ConceptDescriptionRepositoryAPIApiController> _logger;
         private readonly IBase64UrlDecoderService _decoderService;
-        private readonly IConceptDescriptionService _cdService;
         private readonly IJsonQueryDeserializer _jsonQueryDeserializer;
         private readonly IPaginationService _paginationService;
         private readonly IAuthorizationService _authorizationService;
+        private readonly IMetamodelVerificationService _verificationService;
+        private readonly IDbRequestHandlerService _dbRequestHandlerService;
 
         public ConceptDescriptionRepositoryAPIApiController(IAppLogger<ConceptDescriptionRepositoryAPIApiController> logger, IBase64UrlDecoderService decoderService,
-                                                            IConceptDescriptionService cdService, IJsonQueryDeserializer jsonQueryDeserializer,
-                                                            IPaginationService paginationService, IAuthorizationService authorizationService)
+                                                            IJsonQueryDeserializer jsonQueryDeserializer, IPaginationService paginationService,
+                                                            IAuthorizationService authorizationService, IMetamodelVerificationService verificationService,
+                                                            IDbRequestHandlerService dbRequestHandlerService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _decoderService = decoderService ?? throw new ArgumentNullException(nameof(decoderService));
-            _cdService = cdService ?? throw new ArgumentNullException(nameof(cdService));
             _jsonQueryDeserializer = jsonQueryDeserializer ?? throw new ArgumentNullException(nameof(jsonQueryDeserializer));
             _paginationService = paginationService ?? throw new ArgumentNullException(nameof(paginationService));
             _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
+            _verificationService = verificationService ?? throw new ArgumentNullException(nameof(verificationService));
+            _dbRequestHandlerService = dbRequestHandlerService ?? throw new ArgumentNullException(nameof(dbRequestHandlerService));
         }
+
         /// <summary>
         /// Deletes a Concept Description
         /// </summary>
@@ -87,7 +96,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult DeleteConceptDescriptionById([FromRoute][Required] string cdIdentifier)
+        public async virtual Task<IActionResult> DeleteConceptDescriptionById([FromRoute][Required] string cdIdentifier)
         {
             var decodedCdIdentifier = _decoderService.Decode("cdIdentifier", cdIdentifier);
             if (decodedCdIdentifier == null)
@@ -96,7 +105,9 @@ namespace IO.Swagger.Controllers
             }
             _logger.LogInformation($"Received request to delete concept description with id {decodedCdIdentifier}");
 
-            _cdService.DeleteConceptDescriptionById(decodedCdIdentifier);
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+            await _dbRequestHandlerService.DeleteConceptDescriptionById(securityConfig, decodedCdIdentifier);
 
             return NoContent();
         }
@@ -123,14 +134,18 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetAllConceptDescriptions([FromQuery] string? idShort, [FromQuery] string? isCaseOf, [FromQuery] string? dataSpecificationRef, [FromQuery] int? limit, [FromQuery] string? cursor)
+        public async virtual Task<IActionResult> GetAllConceptDescriptions([FromQuery] string? idShort, [FromQuery] string? isCaseOf, [FromQuery] string? dataSpecificationRef, [FromQuery] int? limit, [FromQuery] string? cursor)
         {
             _logger.LogInformation($"Received request to get all the concept descriptions.");
             var reqIsCaseOf = _jsonQueryDeserializer.DeserializeReference("isCaseOf", isCaseOf);
             var reqDataSpecificationRef = _jsonQueryDeserializer.DeserializeReference("dataSpecificationRef", dataSpecificationRef);
 
             var cdList = new List<IConceptDescription>();
-            cdList = _cdService.GetAllConceptDescriptions(idShort, reqIsCaseOf, reqDataSpecificationRef);
+
+            var paginationParameters = new PaginationParameters(cursor, limit);
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+            cdList = await _dbRequestHandlerService.ReadPagedConceptDescriptions(paginationParameters, securityConfig, idShort, reqIsCaseOf, reqDataSpecificationRef);
 
             var authResult = _authorizationService.AuthorizeAsync(User, cdList, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
@@ -166,13 +181,14 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GetConceptDescriptionById([FromRoute][Required] string cdIdentifier)
+        public async virtual Task<IActionResult> GetConceptDescriptionById([FromRoute][Required] string cdIdentifier)
         {
             var decodedCdIdentifier = _decoderService.Decode("cdIdentifier", cdIdentifier);
 
             _logger.LogInformation($"Received request to get concept description with id {decodedCdIdentifier}");
 
-            var output = _cdService.GetConceptDescriptionById(decodedCdIdentifier);
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            var output = await _dbRequestHandlerService.ReadConceptDescriptionById(securityConfig, decodedCdIdentifier);
 
             var authResult = _authorizationService.AuthorizeAsync(User, output, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
@@ -207,10 +223,14 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 409, type: typeof(Result), description: "Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PostConceptDescription([FromBody] ConceptDescription? body)
+        public async virtual Task<IActionResult> PostConceptDescription([FromBody] ConceptDescription? body)
         {
+            ProcessBody(body);
+
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
             //TODO: Uncomment the next line to return response 201 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-            var output = _cdService.CreateConceptDescription(body);
+            var output = await _dbRequestHandlerService.CreateConceptDescription(securityConfig, body);
 
             return CreatedAtAction(nameof(PostConceptDescription), output);
         }
@@ -235,13 +255,26 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult PutConceptDescriptionById([FromBody] ConceptDescription? body, [FromRoute][Required] string cdIdentifier)
+        public async virtual Task<IActionResult> PutConceptDescriptionById([FromBody] ConceptDescription? body, [FromRoute][Required] string cdIdentifier)
         {
-            var decodedCdId = _decoderService.Decode("cdIdentifier", cdIdentifier);
+            ProcessBody(body);
 
-            _cdService.UpdateConceptDescriptionById(body, decodedCdId);
+            var decodedCdId = _decoderService.Decode("cdIdentifier", cdIdentifier);
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+            await _dbRequestHandlerService.ReplaceConceptDescriptionById(securityConfig, body, decodedCdId);
 
             return NoContent();
+        }
+
+        private void ProcessBody(IClass body)
+        {
+            if (body == null)
+            {
+                throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
+            }
+            //Verify the body first
+            _verificationService.VerifyRequestBody(body);
         }
     }
 }

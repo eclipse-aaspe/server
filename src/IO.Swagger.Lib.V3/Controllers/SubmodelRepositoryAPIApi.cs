@@ -59,6 +59,7 @@ using Contracts.Exceptions;
 using Contracts.Events;
 using Org.BouncyCastle.Pqc.Crypto.Lms;
 using ScottPlot.Drawing.Colormaps;
+using Contracts.Pagination;
 
 /// <summary>
 /// 
@@ -69,7 +70,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 {
     private readonly IAppLogger<SubmodelRepositoryAPIApiController> _logger;
     private readonly IBase64UrlDecoderService _decoderService;
-    private readonly IPersistenceService _persistenceService;
     private readonly IReferenceModifierService _referenceModifierService;
     private readonly IJsonQueryDeserializer _jsonQueryDeserializer;
     private readonly IMappingService _mappingService;
@@ -78,20 +78,18 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     private readonly IPaginationService _paginationService;
     private readonly IAuthorizationService _authorizationService;
     private readonly IValidateSerializationModifierService _validateModifierService;
-    private readonly IIdShortPathParserService _idShortPathParserService;
     private readonly IDbRequestHandlerService _dbRequestHandlerService;
     private readonly IMetamodelVerificationService _verificationService;
 
-    public SubmodelRepositoryAPIApiController(IAppLogger<SubmodelRepositoryAPIApiController> logger, IBase64UrlDecoderService decoderService, IPersistenceService persistenceService,
+    public SubmodelRepositoryAPIApiController(IAppLogger<SubmodelRepositoryAPIApiController> logger, IBase64UrlDecoderService decoderService,
                                               IReferenceModifierService referenceModifierService, IJsonQueryDeserializer jsonQueryDeserializer, IMappingService mappingService,
                                               IPathModifierService pathModifierService, ILevelExtentModifierService levelExtentModifierService,
                                               IPaginationService paginationService, IAuthorizationService authorizationService,
-                                              IValidateSerializationModifierService validateModifierService, IIdShortPathParserService idShortPathParserService,
-                                              IDbRequestHandlerService dbRequestHandlerService, IMetamodelVerificationService verificationService)
+                                              IValidateSerializationModifierService validateModifierService, IDbRequestHandlerService dbRequestHandlerService,
+                                              IMetamodelVerificationService verificationService)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _decoderService = decoderService ?? throw new ArgumentNullException(nameof(decoderService));
-        _persistenceService = persistenceService ?? throw new ArgumentNullException(nameof(persistenceService));
         _referenceModifierService = referenceModifierService ?? throw new ArgumentNullException(nameof(referenceModifierService));
         _jsonQueryDeserializer = jsonQueryDeserializer ?? throw new ArgumentNullException(nameof(jsonQueryDeserializer));
         _mappingService = mappingService ?? throw new ArgumentNullException(nameof(mappingService));
@@ -100,7 +98,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         _paginationService = paginationService ?? throw new ArgumentNullException(nameof(paginationService));
         _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
         _validateModifierService = validateModifierService ?? throw new ArgumentNullException(nameof(authorizationService));
-        _idShortPathParserService = idShortPathParserService ?? throw new ArgumentNullException(nameof(idShortPathParserService));
         _dbRequestHandlerService = dbRequestHandlerService ?? throw new ArgumentNullException(nameof(dbRequestHandlerService));
         _verificationService = verificationService ?? throw new ArgumentNullException(nameof(verificationService));
     }
@@ -209,7 +206,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 OffsetSme = offSme,
             };
 
-            var eventPayload = await _dbRequestHandlerService.ReadEventMessages(eventRequest);
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+            var eventPayload = await _dbRequestHandlerService.ReadEventMessages(securityConfig, eventRequest);
 
             Program.signalNewData(2);
 
@@ -332,7 +331,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public async virtual Task<IActionResult> DeleteFileByPathSubmodelRepo([FromRoute] [Required] string submodelIdentifier, [FromRoute] [Required] string idShortPath)
+    public async virtual Task<IActionResult> DeleteFileByPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -348,17 +347,16 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         {
             var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
             User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
-            var claimsList = new List<Claim>(User.Claims) {new("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
-            var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
-            var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
+            var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
+            var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
+            var principal = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
                 throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
         }
-        var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
-        await _dbRequestHandlerService.DeleteFileByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPathElements);
+        await _dbRequestHandlerService.DeleteFileByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
 
         return NoContent();
     }
@@ -564,7 +562,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                                                                     supplementalSemanticIds: smc.SupplementalSemanticIds,
                                                                     qualifiers: smc.Qualifiers,
                                                                     embeddedDataSpecifications: smc.EmbeddedDataSpecifications,
-                                                                    value: smeDiff) {Parent = smc.Parent};
+                                                                    value: smeDiff)
+                        { Parent = smc.Parent };
                         output.Add(smcDiff);
                     }
                     else if ((smc.TimeStamp - diff).TotalMilliseconds > 1)
@@ -590,7 +589,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                                                               supplementalSemanticIds: sml.SupplementalSemanticIds,
                                                               qualifiers: sml.Qualifiers,
                                                               embeddedDataSpecifications: sml.EmbeddedDataSpecifications,
-                                                              value: smeDiff) {Parent = sml.Parent};
+                                                              value: smeDiff)
+                        { Parent = sml.Parent };
                         output.Add(smlDiff);
                     }
                     else if ((sml.TimeStamp - diff).TotalMilliseconds > 1)
@@ -635,7 +635,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public async virtual Task<IActionResult> GetAllSubmodelElementsMetadataSubmodelRepo([FromRoute] [Required] string submodelIdentifier,
+    public async virtual Task<IActionResult> GetAllSubmodelElementsMetadataSubmodelRepo([FromRoute][Required] string submodelIdentifier,
                                                                             [FromQuery] int? limit, [FromQuery] string? cursor,
                                                                             [FromQuery] string? diff)
     {
@@ -652,7 +652,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         if (!Program.noSecurity)
         {
-            var submodel   = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
             var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
@@ -661,7 +661,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         var paginationParameters = new PaginationParameters(cursor, limit);
-        var smeList = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig,null, decodedSubmodelIdentifier);
+        var smeList = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, null, decodedSubmodelIdentifier);
 
         var filtered = new List<ISubmodelElement>();
         if (!diff.IsNullOrEmpty())
@@ -679,9 +679,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         else
             filtered = smeList;
 
-        var smePagedList    = _paginationService.GetPaginatedResult(filtered, paginationParameters);
+        var smePagedList = _paginationService.GetPaginatedResult(filtered, paginationParameters);
         var smeMetadataList = _mappingService.Map(smePagedList.result, "metadata");
-        var output          = new MetadataPagedResult() {result = smeMetadataList.ConvertAll(sme => (IMetadataDTO)sme), paging_metadata = smePagedList.paging_metadata};
+        var output = new MetadataPagedResult() { result = smeMetadataList.ConvertAll(sme => (IMetadataDTO)sme), paging_metadata = smePagedList.paging_metadata };
         return new ObjectResult(output);
     }
 
@@ -711,27 +711,27 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public async virtual Task<IActionResult> GetAllSubmodelElementsPathSubmodelRepo([FromRoute][Required]string submodelIdentifier, 
-	[FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]string? level, [FromQuery] string? diff)
+    public async virtual Task<IActionResult> GetAllSubmodelElementsPathSubmodelRepo([FromRoute][Required] string submodelIdentifier,
+    [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] string? level, [FromQuery] string? diff)
     {
         //Validate level and extent
         var levelEnum = _validateModifierService.ValidateLevel(level);
 
         var decodedSubmodelIdentifier = _decoderService.Decode($"submodelIdentifier", submodelIdentifier);
 
-	    _logger.LogDebug($"Received request to get all the submodel elements from the submodel with id {decodedSubmodelIdentifier}");
+        _logger.LogDebug($"Received request to get all the submodel elements from the submodel with id {decodedSubmodelIdentifier}");
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
         if (!Program.noSecurity)
-	    {
-	        var submodel   = await _dbRequestHandlerService.ReadSubmodelById(securityConfig,null, decodedSubmodelIdentifier);
-	        var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-	        if (!authResult.Succeeded)
-	        {
-	            throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
-	        }
-	    }
+        {
+            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+            var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
+            if (!authResult.Succeeded)
+            {
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
+            }
+        }
 
 
         var paginationParameters = new PaginationParameters(cursor, limit);
@@ -785,8 +785,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public async virtual Task<IActionResult> GetAllSubmodelElementsReferenceSubmodelRepo([FromRoute][Required]string submodelIdentifier, [FromQuery]int? limit, 
-	[FromQuery]string? cursor, [FromQuery]string? level)
+    public async virtual Task<IActionResult> GetAllSubmodelElementsReferenceSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromQuery] int? limit,
+    [FromQuery] string? cursor, [FromQuery] string? level)
     {
         //Validate level and extent
         var levelEnum = _validateModifierService.ValidateLevel(level);
@@ -803,7 +803,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         _logger.LogInformation($"Received a request to get all the submodel elements from submodel with id {decodedSubmodelIdentifier}");
         if (!Program.noSecurity)
         {
-            var submodel   = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
             var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
@@ -813,7 +813,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var paginationParameters = new PaginationParameters(cursor, limit);
         var smeList = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, null, decodedSubmodelIdentifier);
 
-        var smePagedList  = _paginationService.GetPaginatedResult(smeList, paginationParameters);
+        var smePagedList = _paginationService.GetPaginatedResult(smeList, paginationParameters);
         var smeLevelList = _levelExtentModifierService.ApplyLevelExtent(smePagedList.result ?? [], levelEnum);
         var smeReferences = _referenceModifierService.GetReferenceResult(smeLevelList.ConvertAll(sme => (IReferable)sme));
         var output = new ReferencePagedResult(smeReferences, smePagedList.paging_metadata);
@@ -847,33 +847,33 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public async virtual Task<IActionResult> GetAllSubmodelElementsValueOnlySubmodelRepo([FromRoute][Required]string submodelIdentifier, 
-	[FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]string? level, 
-    [FromQuery]string? extent, [FromQuery] string? diff)
+    public async virtual Task<IActionResult> GetAllSubmodelElementsValueOnlySubmodelRepo([FromRoute][Required] string submodelIdentifier,
+    [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] string? level,
+    [FromQuery] string? extent, [FromQuery] string? diff)
     {
         //Validate level and extent
         var levelEnum = _validateModifierService.ValidateLevel(level);
         var extentEnum = _validateModifierService.ValidateExtent(extent);
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
-	    if (decodedSubmodelIdentifier == null)
-	    {
-	        throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
-	    }
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
+        }
 
-	    _logger.LogInformation($"Received request to get value of all the submodel elements from the submodel with id {decodedSubmodelIdentifier}");
+        _logger.LogInformation($"Received request to get value of all the submodel elements from the submodel with id {decodedSubmodelIdentifier}");
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
         if (!Program.noSecurity)
-	    {
-	        var submodel   = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-	        var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-	        if (!authResult.Succeeded)
-	        {
-	            throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
-	        }
-	    }
+        {
+            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+            var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
+            if (!authResult.Succeeded)
+            {
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
+            }
+        }
 
         var paginationParameters = new PaginationParameters(cursor, limit);
         var submodelElements = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, null, decodedSubmodelIdentifier);
@@ -894,10 +894,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         else
             filtered = submodelElements;
 
-        var smePagedList   = _paginationService.GetPaginatedResult(filtered, paginationParameters);
+        var smePagedList = _paginationService.GetPaginatedResult(filtered, paginationParameters);
         var smeLevelExtent = _levelExtentModifierService.ApplyLevelExtent(smePagedList.result ?? [], levelEnum, extentEnum);
-        var smeValues      = _mappingService.Map(smeLevelExtent, "value");
-        var output         = new ValueOnlyPagedResult() {result = smeValues.ConvertAll(sme => (IValueDTO)sme), paging_metadata = smePagedList.paging_metadata};
+        var smeValues = _mappingService.Map(smeLevelExtent, "value");
+        var output = new ValueOnlyPagedResult() { result = smeValues.ConvertAll(sme => (IValueDTO)sme), paging_metadata = smePagedList.paging_metadata };
         return new ObjectResult(output);
     }
 
@@ -926,7 +926,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public async virtual Task<IActionResult> GetAllSubmodels([FromQuery][StringLength(3072, MinimumLength=1)] string? semanticId, [FromQuery]string? idShort, [FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]string? level, [FromQuery]string? extent)
+    public async virtual Task<IActionResult> GetAllSubmodels([FromQuery][StringLength(3072, MinimumLength = 1)] string? semanticId, [FromQuery] string? idShort, [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] string? level, [FromQuery] string? extent)
     {
         //Validate level and extent
         var levelEnum = _validateModifierService.ValidateLevel(level);
@@ -941,10 +941,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var submodelList = await _dbRequestHandlerService.ReadPagedSubmodels(paginationParameters, securityConfig, reqSemanticId, idShort);
 
         var submodelsPagedList = _paginationService.GetPaginatedResult(submodelList, paginationParameters);
-        var smLevelList        = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result, levelEnum, extentEnum);
-        var output             = new PagedResult {result = smLevelList, paging_metadata = submodelsPagedList.paging_metadata};
+        var smLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result, levelEnum, extentEnum);
+        var output = new PagedResult { result = smLevelList, paging_metadata = submodelsPagedList.paging_metadata };
         return new ObjectResult(output);
-}
+    }
 
     /// <summary>
     /// Returns the metadata attributes of all Submodels
@@ -970,7 +970,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public async virtual Task<IActionResult> GetAllSubmodelsMetadata([FromQuery][StringLength(3072, MinimumLength=1)]string? semanticId, [FromQuery]string? idShort, [FromQuery]int? limit, [FromQuery]string? cursor)
+    public async virtual Task<IActionResult> GetAllSubmodelsMetadata([FromQuery][StringLength(3072, MinimumLength = 1)] string? semanticId, [FromQuery] string? idShort, [FromQuery] int? limit, [FromQuery] string? cursor)
     {
         _logger.LogInformation($"Received request to get the metadata of all the submodels.");
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
@@ -981,8 +981,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var submodelList = await _dbRequestHandlerService.ReadPagedSubmodels(paginationParameters, securityConfig, reqSemanticId, idShort);
 
         var submodelPagedList = _paginationService.GetPaginatedResult(submodelList, paginationParameters);
-        var smMetadataList    = _mappingService.Map(submodelPagedList.result, "metadata");
-        var output            = new MetadataPagedResult() {result = smMetadataList.ConvertAll(sme => (IMetadataDTO)sme), paging_metadata = submodelPagedList.paging_metadata};
+        var smMetadataList = _mappingService.Map(submodelPagedList.result, "metadata");
+        var output = new MetadataPagedResult() { result = smMetadataList.ConvertAll(sme => (IMetadataDTO)sme), paging_metadata = submodelPagedList.paging_metadata };
         return new ObjectResult(output);
     }
 
@@ -1010,7 +1010,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public async virtual Task<IActionResult> GetAllSubmodelsPath([FromQuery][StringLength(3072, MinimumLength=1)]string? semanticId, [FromQuery]string? idShort, [FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]string? level)
+    public async virtual Task<IActionResult> GetAllSubmodelsPath([FromQuery][StringLength(3072, MinimumLength = 1)] string? semanticId, [FromQuery] string? idShort, [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] string? level)
     {
         //Validate level and extent
         var levelEnum = _validateModifierService.ValidateLevel(level);
@@ -1025,7 +1025,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var submodelPagedList = _paginationService.GetPaginatedResult(submodelList, paginationParameters);
         var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelPagedList.result, levelEnum);
         var submodelsPath = _pathModifierService.ToIdShortPath(submodelLevelList.ConvertAll(sm => (ISubmodel)sm));
-        var output        = new PathPagedResult() {result = submodelsPath, paging_metadata = submodelPagedList.paging_metadata};
+        var output = new PathPagedResult() { result = submodelsPath, paging_metadata = submodelPagedList.paging_metadata };
         return new ObjectResult(output);
     }
 
@@ -1053,8 +1053,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public async virtual Task<IActionResult> GetAllSubmodelsReference([FromQuery][StringLength(3072, MinimumLength=1)]string? semanticId, [FromQuery]string? idShort, [FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]string? level)
-    { 
+    public async virtual Task<IActionResult> GetAllSubmodelsReference([FromQuery][StringLength(3072, MinimumLength = 1)] string? semanticId, [FromQuery] string? idShort, [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] string? level)
+    {
         _logger.LogInformation($"Received a request to get all the submodels.");
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
@@ -1067,7 +1067,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var submodelsPagedList = _paginationService.GetPaginatedResult(submodelList, paginationParameters);
         var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result, levelEnum);
-        var smReferences       = _referenceModifierService.GetReferenceResult(submodelLevelList.ConvertAll(sm => (IReferable)sm));
+        var smReferences = _referenceModifierService.GetReferenceResult(submodelLevelList.ConvertAll(sm => (IReferable)sm));
         var output = new ReferencePagedResult(smReferences, submodelsPagedList.paging_metadata);
         return new ObjectResult(output);
     }
@@ -1099,7 +1099,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public async virtual Task<IActionResult> GetAllSubmodelsValueOnly([FromQuery][StringLength(3072, MinimumLength=1)]string? semanticId, [FromQuery]string? idShort, [FromQuery]int? limit, [FromQuery]string? cursor, [FromQuery]string? level, [FromQuery]string? extent)
+    public async virtual Task<IActionResult> GetAllSubmodelsValueOnly([FromQuery][StringLength(3072, MinimumLength = 1)] string? semanticId, [FromQuery] string? idShort, [FromQuery] int? limit, [FromQuery] string? cursor, [FromQuery] string? level, [FromQuery] string? extent)
     {
         //Validate level and extent
         var levelEnum = _validateModifierService.ValidateLevel(level);
@@ -1113,9 +1113,9 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var submodelList = await _dbRequestHandlerService.ReadPagedSubmodels(paginationParameters, securityConfig, reqSemanticId, idShort);
 
         var submodelsPagedList = _paginationService.GetPaginatedResult(submodelList, paginationParameters);
-        var submodelLevelList  = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result, levelEnum, extentEnum);
-        var submodelsValue     = _mappingService.Map(submodelLevelList, "value");
-        var output             = new ValueOnlyPagedResult {result = submodelsValue.ConvertAll(sme => (IValueDTO)sme), paging_metadata = submodelsPagedList.paging_metadata};
+        var submodelLevelList = _levelExtentModifierService.ApplyLevelExtent(submodelsPagedList.result, levelEnum, extentEnum);
+        var submodelsValue = _mappingService.Map(submodelLevelList, "value");
+        var output = new ValueOnlyPagedResult { result = submodelsValue.ConvertAll(sme => (IValueDTO)sme), paging_metadata = submodelsPagedList.paging_metadata };
         return new ObjectResult(output);
     }
 
@@ -1144,8 +1144,8 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 405, type: typeof(Result), description: "Method not allowed - Download only valid for File submodel element")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public async virtual Task<IActionResult> GetFileByPathSubmodelRepo([FromRoute][Required]string submodelIdentifier, [FromRoute][Required]string idShortPath)
-    { 
+    public async virtual Task<IActionResult> GetFileByPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath)
+    {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
         _logger.LogInformation($"Received a request to get file at {idShortPath} from submodel with id {decodedSubmodelIdentifier}");
@@ -1158,11 +1158,11 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         if (!Program.noSecurity)
         {
-            var submodel =  await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
             User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
-            var claimsList = new List<Claim>(User.Claims) {new Claim("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
-            var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
-            var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
+            var claimsList = new List<Claim>(User.Claims) { new Claim("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
+            var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
+            var principal = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
@@ -1170,9 +1170,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             }
         }
 
-        var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
-
-        var dbFileRequestResult = await _dbRequestHandlerService.ReadFileByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPathElements);
+        var dbFileRequestResult = await _dbRequestHandlerService.ReadFileByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
 
         var fileName = dbFileRequestResult.File;
         var fileSize = dbFileRequestResult.FileSize;
@@ -1182,7 +1180,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         ContentDisposition contentDisposition = new()
         {
             FileName = fileName ?? throw new NullValueException(nameof(fileName)),
-            Inline   = fileName.EndsWith(".pdf", StringComparison.InvariantCulture)
+            Inline = fileName.EndsWith(".pdf", StringComparison.InvariantCulture)
         };
 
         HttpContext.Response.Headers.Append("Content-Disposition", contentDisposition.ToString());
@@ -1306,7 +1304,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public async virtual Task<IActionResult> GetSubmodelPolicyHeader([FromRoute] [Required] string submodelIdentifier)
+    public async virtual Task<IActionResult> GetSubmodelPolicyHeader([FromRoute][Required] string submodelIdentifier)
     {
         var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
@@ -1393,953 +1391,950 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         return new ObjectResult(output);
     }
 
-/// <summary>
-/// Returns the metadata attributes of a specific Submodel
-/// </summary>
-/// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
-/// <response code="200">Requested Submodel in the metadata representation</response>
-/// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
-/// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
-/// <response code="403">Forbidden</response>
-/// <response code="404">Not Found</response>
-/// <response code="500">Internal Server Error</response>
-/// <response code="0">Default error handling for unmentioned status codes</response>
-[HttpGet]
-[Route("submodels/{submodelIdentifier}/$metadata")]
-[ValidateModelState]
-[SwaggerOperation("GetSubmodelByIdMetadata")]
-[SwaggerResponse(statusCode: 200, type: typeof(SubmodelMetadata), description: "Requested Submodel in the metadata representation")]
-[SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-[SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
-[SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-[SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
-[SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-[SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-public async virtual Task<IActionResult> GetSubmodelByIdMetadata([FromRoute][Required] string submodelIdentifier)
-{
-var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
-_logger.LogInformation($"Received request to get the metadata of the submodel with id {decodedSubmodelIdentifier}");
-if (decodedSubmodelIdentifier == null)
-{
-    throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
-}
-
-var securityConfig = new SecurityConfig(Program.noSecurity, this);
-
-var submodel   = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-if (!authResult.Succeeded)
-{
-    var failedReason = authResult.Failure.FailureReasons.First();
-    if (failedReason != null)
+    /// <summary>
+    /// Returns the metadata attributes of a specific Submodel
+    /// </summary>
+    /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+    /// <response code="200">Requested Submodel in the metadata representation</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not Found</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpGet]
+    [Route("submodels/{submodelIdentifier}/$metadata")]
+    [ValidateModelState]
+    [SwaggerOperation("GetSubmodelByIdMetadata")]
+    [SwaggerResponse(statusCode: 200, type: typeof(SubmodelMetadata), description: "Requested Submodel in the metadata representation")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public async virtual Task<IActionResult> GetSubmodelByIdMetadata([FromRoute][Required] string submodelIdentifier)
     {
-        throw new NotAllowed(failedReason.Message);
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+        _logger.LogInformation($"Received request to get the metadata of the submodel with id {decodedSubmodelIdentifier}");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+        var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+        var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
+        if (!authResult.Succeeded)
+        {
+            var failedReason = authResult.Failure.FailureReasons.First();
+            if (failedReason != null)
+            {
+                throw new NotAllowed(failedReason.Message);
+            }
+        }
+
+        var output = _mappingService.Map(submodel, "metadata");
+        return new ObjectResult(output);
     }
-}
 
-var output = _mappingService.Map(submodel, "metadata");
-return new ObjectResult(output);
-}
-
-/// <summary>
-/// Returns a specific Submodel in the Path notation
-/// </summary>
-/// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
-/// <param name="level">Determines the structural depth of the respective resource content</param>
-/// <response code="200">Requested Submodel</response>
-/// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
-/// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
-/// <response code="403">Forbidden</response>
-/// <response code="404">Not Found</response>
-/// <response code="500">Internal Server Error</response>
-/// <response code="0">Default error handling for unmentioned status codes</response>
-[HttpGet]
-[Route("submodels/{submodelIdentifier}/$path")]
-[ValidateModelState]
-[SwaggerOperation("GetSubmodelByIdPath")]
-[SwaggerResponse(statusCode: 200, type: typeof(List<string>), description: "Requested Submodel")]
-[SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-[SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
-[SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-[SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
-[SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-[SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-public async virtual Task<IActionResult> GetSubmodelByIdPath([FromRoute][Required] string submodelIdentifier, [FromQuery] string? level)
-{
-//Validate level and extent
-var levelEnum = _validateModifierService.ValidateLevel(level);
-
-var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
-_logger.LogInformation($"Received request to get the idShortPath of the submodel with id {decodedSubmodelIdentifier}");
-if (decodedSubmodelIdentifier == null)
-{
-    throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
-}
-
-var securityConfig = new SecurityConfig(Program.noSecurity, this);
-
-var submodel   = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-if (!authResult.Succeeded)
-{
-    var failedReason = authResult.Failure.FailureReasons.First();
-    if (failedReason != null)
+    /// <summary>
+    /// Returns a specific Submodel in the Path notation
+    /// </summary>
+    /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+    /// <param name="level">Determines the structural depth of the respective resource content</param>
+    /// <response code="200">Requested Submodel</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not Found</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpGet]
+    [Route("submodels/{submodelIdentifier}/$path")]
+    [ValidateModelState]
+    [SwaggerOperation("GetSubmodelByIdPath")]
+    [SwaggerResponse(statusCode: 200, type: typeof(List<string>), description: "Requested Submodel")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public async virtual Task<IActionResult> GetSubmodelByIdPath([FromRoute][Required] string submodelIdentifier, [FromQuery] string? level)
     {
-        throw new NotAllowed(failedReason.Message);
+        //Validate level and extent
+        var levelEnum = _validateModifierService.ValidateLevel(level);
+
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+        _logger.LogInformation($"Received request to get the idShortPath of the submodel with id {decodedSubmodelIdentifier}");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+        var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+        var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
+        if (!authResult.Succeeded)
+        {
+            var failedReason = authResult.Failure.FailureReasons.First();
+            if (failedReason != null)
+            {
+                throw new NotAllowed(failedReason.Message);
+            }
+        }
+
+        var submodelLevel = _levelExtentModifierService.ApplyLevelExtent(submodel, levelEnum);
+        var output = _pathModifierService.ToIdShortPath(submodelLevel);
+        return new ObjectResult(output);
     }
-}
 
-var submodelLevel = _levelExtentModifierService.ApplyLevelExtent(submodel, levelEnum);
-var output = _pathModifierService.ToIdShortPath(submodelLevel);
-return new ObjectResult(output);
-}
-
-/// <summary>
-/// Returns the Reference of a specific Submodel
-/// </summary>
-/// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
-/// <response code="200">Requested Submodel</response>
-/// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
-/// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
-/// <response code="403">Forbidden</response>
-/// <response code="404">Not Found</response>
-/// <response code="500">Internal Server Error</response>
-/// <response code="0">Default error handling for unmentioned status codes</response>
-[HttpGet]
-[Route("submodels/{submodelIdentifier}/$reference")]
-[ValidateModelState]
-[SwaggerOperation("GetSubmodelByIdReference")]
-[SwaggerResponse(statusCode: 200, type: typeof(Reference), description: "Requested Submodel")]
-[SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-[SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
-[SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-[SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
-[SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-[SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-public async virtual Task<IActionResult> GetSubmodelByIdReference([FromRoute][Required] string submodelIdentifier)
-{
-var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
-
-_logger.LogInformation($"Received request to get the submodel with id {decodedSubmodelIdentifier}");
-if (decodedSubmodelIdentifier == null)
-{
-    throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
-}
-
-var securityConfig = new SecurityConfig(Program.noSecurity, this);
-
-var submodel   = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-if (!authResult.Succeeded)
-{
-    var failedReason = authResult.Failure.FailureReasons.First();
-    if (failedReason != null)
+    /// <summary>
+    /// Returns the Reference of a specific Submodel
+    /// </summary>
+    /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+    /// <response code="200">Requested Submodel</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not Found</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpGet]
+    [Route("submodels/{submodelIdentifier}/$reference")]
+    [ValidateModelState]
+    [SwaggerOperation("GetSubmodelByIdReference")]
+    [SwaggerResponse(statusCode: 200, type: typeof(Reference), description: "Requested Submodel")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public async virtual Task<IActionResult> GetSubmodelByIdReference([FromRoute][Required] string submodelIdentifier)
     {
-        throw new NotAllowed(failedReason.Message);
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+
+        _logger.LogInformation($"Received request to get the submodel with id {decodedSubmodelIdentifier}");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+        var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+        var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
+        if (!authResult.Succeeded)
+        {
+            var failedReason = authResult.Failure.FailureReasons.First();
+            if (failedReason != null)
+            {
+                throw new NotAllowed(failedReason.Message);
+            }
+        }
+
+        var output = _referenceModifierService.GetReferenceResult(submodel);
+        return new ObjectResult(output);
     }
-}
 
-var output = _referenceModifierService.GetReferenceResult(submodel);
-return new ObjectResult(output);
-}
-
-/// <summary>
-/// Returns a specific Submodel in the ValueOnly representation
-/// </summary>
-/// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
-/// <param name="level">Determines the structural depth of the respective resource content</param>
-/// <param name="extent">Determines to which extent the resource is being serialized</param>
-/// <response code="200">Requested Submodel</response>
-/// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
-/// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
-/// <response code="403">Forbidden</response>
-/// <response code="404">Not Found</response>
-/// <response code="500">Internal Server Error</response>
-/// <response code="0">Default error handling for unmentioned status codes</response>
-[HttpGet]
-[Route("submodels/{submodelIdentifier}/$value")]
-[ValidateModelState]
-[SwaggerOperation("GetSubmodelByIdValueOnly")]
-[SwaggerResponse(statusCode: 200, type: typeof(SubmodelValue), description: "Requested Submodel")]
-[SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-[SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
-[SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-[SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
-[SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-[SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-public async virtual Task<IActionResult> GetSubmodelByIdValueOnly([FromRoute][Required] string submodelIdentifier, [FromQuery] string? level, [FromQuery] string? extent)
-{
-//Validate level and extent
-var levelEnum = _validateModifierService.ValidateLevel(level);
-var extentEnum = _validateModifierService.ValidateExtent(extent);
-
-var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
-_logger.LogInformation($"Received request to get value of submodel with id {decodedSubmodelIdentifier}");
-if (decodedSubmodelIdentifier == null)
-{
-    throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
-}
-
-var securityConfig = new SecurityConfig(Program.noSecurity, this);
-
-var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-if (!authResult.Succeeded)
-{
-    var failedReason = authResult.Failure.FailureReasons.First();
-    if (failedReason != null)
+    /// <summary>
+    /// Returns a specific Submodel in the ValueOnly representation
+    /// </summary>
+    /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+    /// <param name="level">Determines the structural depth of the respective resource content</param>
+    /// <param name="extent">Determines to which extent the resource is being serialized</param>
+    /// <response code="200">Requested Submodel</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not Found</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpGet]
+    [Route("submodels/{submodelIdentifier}/$value")]
+    [ValidateModelState]
+    [SwaggerOperation("GetSubmodelByIdValueOnly")]
+    [SwaggerResponse(statusCode: 200, type: typeof(SubmodelValue), description: "Requested Submodel")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public async virtual Task<IActionResult> GetSubmodelByIdValueOnly([FromRoute][Required] string submodelIdentifier, [FromQuery] string? level, [FromQuery] string? extent)
     {
-        throw new NotAllowed(failedReason.Message);
+        //Validate level and extent
+        var levelEnum = _validateModifierService.ValidateLevel(level);
+        var extentEnum = _validateModifierService.ValidateExtent(extent);
+
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+        _logger.LogInformation($"Received request to get value of submodel with id {decodedSubmodelIdentifier}");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+        var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+        var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
+        if (!authResult.Succeeded)
+        {
+            var failedReason = authResult.Failure.FailureReasons.First();
+            if (failedReason != null)
+            {
+                throw new NotAllowed(failedReason.Message);
+            }
+        }
+
+        var submodelLevel = _levelExtentModifierService.ApplyLevelExtent(submodel, levelEnum, extentEnum);
+        var output = _mappingService.Map(submodelLevel, "value");
+        return new ObjectResult(output);
     }
-}
 
-var submodelLevel = _levelExtentModifierService.ApplyLevelExtent(submodel, levelEnum, extentEnum);
-var output = _mappingService.Map(submodelLevel, "value");
-return new ObjectResult(output);
-}
-
-/// <summary>
-/// Returns the matadata attributes of a specific submodel element from the Submodel at a specified path
-/// </summary>
-/// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
-/// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
-/// <response code="200">Metadata attributes of the requested submodel element</response>
-/// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
-/// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
-/// <response code="403">Forbidden</response>
-/// <response code="404">Not Found</response>
-/// <response code="500">Internal Server Error</response>
-/// <response code="0">Default error handling for unmentioned status codes</response>
-[HttpGet]
-[Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$metadata")]
-[ValidateModelState]
-[SwaggerOperation("GetSubmodelElementByPathMetadataSubmodelRepo")]
-[SwaggerResponse(statusCode: 200, type: typeof(ISubmodelElementMetadata), description: "Metadata attributes of the requested submodel element")]
-[SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-[SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
-[SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-[SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
-[SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-[SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-public async virtual Task<IActionResult> GetSubmodelElementByPathMetadataSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath)
-{
-var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
-_logger.LogInformation($"Received request to get metadata of submodel element at {idShortPath} from the submodel with id {decodedSubmodelIdentifier}");
-if (decodedSubmodelIdentifier == null)
-{
-    throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
-}
-
-var securityConfig = new SecurityConfig(Program.noSecurity, this);
-var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
-
-var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPathElements);
-if (!Program.noSecurity)
-{
-    var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-    User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
-    var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
-    var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
-    var principal = new System.Security.Principal.GenericPrincipal(identity, null);
-    var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
-    if (!authResult.Succeeded)
+    /// <summary>
+    /// Returns the matadata attributes of a specific submodel element from the Submodel at a specified path
+    /// </summary>
+    /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+    /// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
+    /// <response code="200">Metadata attributes of the requested submodel element</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not Found</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpGet]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$metadata")]
+    [ValidateModelState]
+    [SwaggerOperation("GetSubmodelElementByPathMetadataSubmodelRepo")]
+    [SwaggerResponse(statusCode: 200, type: typeof(ISubmodelElementMetadata), description: "Metadata attributes of the requested submodel element")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public async virtual Task<IActionResult> GetSubmodelElementByPathMetadataSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath)
     {
-        throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+        _logger.LogInformation($"Received request to get metadata of submodel element at {idShortPath} from the submodel with id {decodedSubmodelIdentifier}");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+        var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
+        if (!Program.noSecurity)
+        {
+            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+            var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
+            var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
+            var principal = new System.Security.Principal.GenericPrincipal(identity, null);
+            var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
+            if (!authResult.Succeeded)
+            {
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
+            }
+        }
+
+        var output = _mappingService.Map(submodelElement, "metadata");
+
+        return new ObjectResult(output);
     }
-}
 
-var output = _mappingService.Map(submodelElement, "metadata");
-
-return new ObjectResult(output);
-}
-
-/// <summary>
-/// Returns a specific submodel element from the Submodel at a specified path in the Path notation
-/// </summary>
-/// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
-/// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
-/// <param name="level">Determines the structural depth of the respective resource content</param>
-/// <response code="200">Submodel elements in path notation</response>
-/// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
-/// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
-/// <response code="403">Forbidden</response>
-/// <response code="404">Not Found</response>
-/// <response code="500">Internal Server Error</response>
-/// <response code="0">Default error handling for unmentioned status codes</response>
-[HttpGet]
-[Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$path")]
-[ValidateModelState]
-[SwaggerOperation("GetSubmodelElementByPathPathSubmodelRepo")]
-[SwaggerResponse(statusCode: 200, type: typeof(List<string>), description: "Submodel elements in path notation")]
-[SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-[SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
-[SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-[SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
-[SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-[SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-public async virtual Task<IActionResult> GetSubmodelElementByPathPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string? level)
-{
-//Validate level and extent
-var levelEnum = _validateModifierService.ValidateLevel(level);
-
-var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
-_logger.LogInformation($"Received request to path of the submodel element at {idShortPath} from a submodel with id {decodedSubmodelIdentifier}");
-if (decodedSubmodelIdentifier == null)
-{
-    throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
-}
-
-var securityConfig = new SecurityConfig(Program.noSecurity, this);
-var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
-
-var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPathElements);
-if (!Program.noSecurity)
-{
-    var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-    User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
-    var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
-    var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
-    var principal = new System.Security.Principal.GenericPrincipal(identity, null);
-    var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
-    if (!authResult.Succeeded)
+    /// <summary>
+    /// Returns a specific submodel element from the Submodel at a specified path in the Path notation
+    /// </summary>
+    /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+    /// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
+    /// <param name="level">Determines the structural depth of the respective resource content</param>
+    /// <response code="200">Submodel elements in path notation</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not Found</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpGet]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$path")]
+    [ValidateModelState]
+    [SwaggerOperation("GetSubmodelElementByPathPathSubmodelRepo")]
+    [SwaggerResponse(statusCode: 200, type: typeof(List<string>), description: "Submodel elements in path notation")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public async virtual Task<IActionResult> GetSubmodelElementByPathPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, [FromQuery] string? level)
     {
-        throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
+        //Validate level and extent
+        var levelEnum = _validateModifierService.ValidateLevel(level);
+
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+        _logger.LogInformation($"Received request to path of the submodel element at {idShortPath} from a submodel with id {decodedSubmodelIdentifier}");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+        //var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
+
+        var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
+        if (!Program.noSecurity)
+        {
+            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+            var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
+            var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
+            var principal = new System.Security.Principal.GenericPrincipal(identity, null);
+            var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
+            if (!authResult.Succeeded)
+            {
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
+            }
+        }
+
+        var submodelElementLevel = _levelExtentModifierService.ApplyLevelExtent(submodelElement, levelEnum);
+        var output = _pathModifierService.ToIdShortPath(submodelElementLevel);
+        return new ObjectResult(output);
     }
-}
 
-var submodelElementLevel = _levelExtentModifierService.ApplyLevelExtent(submodelElement, levelEnum);
-var output = _pathModifierService.ToIdShortPath(submodelElementLevel);
-return new ObjectResult(output);
-}
-
-/// <summary>
-/// Returns the Referene of a specific submodel element from the Submodel at a specified path
-/// </summary>
-/// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
-/// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
-/// <response code="200">Requested submodel element</response>
-/// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
-/// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
-/// <response code="403">Forbidden</response>
-/// <response code="404">Not Found</response>
-/// <response code="500">Internal Server Error</response>
-/// <response code="0">Default error handling for unmentioned status codes</response>
-[HttpGet]
-[Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$reference")]
-[ValidateModelState]
-[SwaggerOperation("GetSubmodelElementByPathReferenceSubmodelRepo")]
-[SwaggerResponse(statusCode: 200, type: typeof(Reference), description: "Requested submodel element")]
-[SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-[SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
-[SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-[SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
-[SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-[SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-public async virtual Task<IActionResult> GetSubmodelElementByPathReferenceSubmodelRepo([FromRoute][Required] string submodelIdentifier, 
-[FromRoute][Required] string idShortPath)
-{
-var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
-
-_logger.LogInformation($"Received request to get reference of the submodel element atv{idShortPath} from the submodel with id {decodedSubmodelIdentifier}");
-
-if (decodedSubmodelIdentifier == null)
-{
-    throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
-}
-
-var securityConfig = new SecurityConfig(Program.noSecurity, this);
-
-if (!Program.noSecurity)
-{
-    var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-    User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
-    var claimsList = new List<Claim>(User.Claims) {new("IdShortPath", $"{submodel.IdShort}.{idShortPath}")};
-    var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
-    var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
-    var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
-    if (!authResult.Succeeded)
+    /// <summary>
+    /// Returns the Referene of a specific submodel element from the Submodel at a specified path
+    /// </summary>
+    /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+    /// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
+    /// <response code="200">Requested submodel element</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not Found</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpGet]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$reference")]
+    [ValidateModelState]
+    [SwaggerOperation("GetSubmodelElementByPathReferenceSubmodelRepo")]
+    [SwaggerResponse(statusCode: 200, type: typeof(Reference), description: "Requested submodel element")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public async virtual Task<IActionResult> GetSubmodelElementByPathReferenceSubmodelRepo([FromRoute][Required] string submodelIdentifier,
+    [FromRoute][Required] string idShortPath)
     {
-        throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+
+        _logger.LogInformation($"Received request to get reference of the submodel element atv{idShortPath} from the submodel with id {decodedSubmodelIdentifier}");
+
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+        if (!Program.noSecurity)
+        {
+            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+            var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
+            var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
+            var principal = new System.Security.Principal.GenericPrincipal(identity, null);
+            var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
+            if (!authResult.Succeeded)
+            {
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
+            }
+        }
+
+        //var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
+
+        var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
+
+        var output = _referenceModifierService.GetReferenceResult(submodelElement);
+        return new ObjectResult(output);
     }
-}
 
-var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
-
-
-var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPathElements);
-
-var output = _referenceModifierService.GetReferenceResult(submodelElement);
-return new ObjectResult(output);
-}
-
-/// <summary>
-/// Returns a specific submodel element from the Submodel at a specified path
-/// </summary>
-/// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
-/// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
-/// <param name="level">Determines the structural depth of the respective resource content</param>
-/// <param name="extent">Determines to which extent the resource is being serialized</param>
-/// <response code="200">Requested submodel element</response>
-/// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
-/// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
-/// <response code="403">Forbidden</response>
-/// <response code="404">Not Found</response>
-/// <response code="500">Internal Server Error</response>
-/// <response code="0">Default error handling for unmentioned status codes</response>
-[HttpGet]
-[Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
-[ValidateModelState]
-[SwaggerOperation("GetSubmodelElementByPathSubmodelRepo")]
-[SwaggerResponse(statusCode: 200, type: typeof(ISubmodelElement), description: "Requested submodel element")]
-[SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-[SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
-[SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-[SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
-[SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-[SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-public virtual async Task<IActionResult> GetSubmodelElementByPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath, 
-[FromQuery] string? level, [FromQuery] string? extent)
-{
-//Validate level and extent
-var levelEnum = _validateModifierService.ValidateLevel(level);
-var extentEnum = _validateModifierService.ValidateExtent(extent);
-
-var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
-
-_logger.LogInformation($"Received request to get the submodel element at {idShortPath} from the submodel with id {decodedSubmodelIdentifier}");
-
-if (decodedSubmodelIdentifier == null)
-{
-    throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
-}
-
-var securityConfig = new SecurityConfig(Program.noSecurity, this);
-
-//if (!Program.noSecurity)
-//{
-//    var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-//    User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
-//    var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
-//    var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
-//    var principal = new System.Security.Principal.GenericPrincipal(identity, null);
-//    var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
-//    if (!authResult.Succeeded)
-//    {
-//        throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
-//    }
-//}
-var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
-
-var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPathElements);
-
-var output = _levelExtentModifierService.ApplyLevelExtent(submodelElement, levelEnum, extentEnum);
-return new ObjectResult(output);
-}
-
-/// <summary>
-/// Returns a specific submodel element from the Submodel at a specified path in the ValueOnly representation
-/// </summary>
-/// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
-/// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
-/// <param name="level">Determines the structural depth of the respective resource content</param>
-/// <param name="extent">Determines to which extent the resource is being serialized</param>
-/// <response code="200">Requested submodel element</response>
-/// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
-/// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
-/// <response code="403">Forbidden</response>
-/// <response code="404">Not Found</response>
-/// <response code="500">Internal Server Error</response>
-/// <response code="0">Default error handling for unmentioned status codes</response>
-[HttpGet]
-[Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$value")]
-[ValidateModelState]
-[SwaggerOperation("GetSubmodelElementByPathValueOnlySubmodelRepo")]
-[SwaggerResponse(statusCode: 200, type: typeof(ISubmodelElementValue), description: "Requested submodel element")]
-[SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-[SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
-[SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-[SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
-[SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-[SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-public async virtual Task<IActionResult> GetSubmodelElementByPathValueOnlySubmodelRepo([FromRoute][Required] string submodelIdentifier,
-[FromRoute][Required] string idShortPath, [FromQuery] string? level, [FromQuery] string? extent)
-{
-//Validate level and extent
-var levelEnum = _validateModifierService.ValidateLevel(level);
-var extentEnum = _validateModifierService.ValidateExtent(extent);
-
-var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
-_logger.LogInformation($"Received request to get the value of the submodel element at {idShortPath} from the submodel with id {decodedSubmodelIdentifier}");
-if (decodedSubmodelIdentifier == null)
-{
-    throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
-}
-
-var securityConfig = new SecurityConfig(Program.noSecurity, this);
-
-if (!Program.noSecurity)
-{
-    var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-    User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
-    var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
-    var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
-    var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
-    var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
-    if (!authResult.Succeeded)
+    /// <summary>
+    /// Returns a specific submodel element from the Submodel at a specified path
+    /// </summary>
+    /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+    /// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
+    /// <param name="level">Determines the structural depth of the respective resource content</param>
+    /// <param name="extent">Determines to which extent the resource is being serialized</param>
+    /// <response code="200">Requested submodel element</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not Found</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpGet]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
+    [ValidateModelState]
+    [SwaggerOperation("GetSubmodelElementByPathSubmodelRepo")]
+    [SwaggerResponse(statusCode: 200, type: typeof(ISubmodelElement), description: "Requested submodel element")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public virtual async Task<IActionResult> GetSubmodelElementByPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath,
+    [FromQuery] string? level, [FromQuery] string? extent)
     {
-        throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
+        //Validate level and extent
+        var levelEnum = _validateModifierService.ValidateLevel(level);
+        var extentEnum = _validateModifierService.ValidateExtent(extent);
+
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+
+        _logger.LogInformation($"Received request to get the submodel element at {idShortPath} from the submodel with id {decodedSubmodelIdentifier}");
+
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+        //if (!Program.noSecurity)
+        //{
+        //    var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+        //    User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+        //    var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
+        //    var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
+        //    var principal = new System.Security.Principal.GenericPrincipal(identity, null);
+        //    var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
+        //    if (!authResult.Succeeded)
+        //    {
+        //        throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
+        //    }
+        //}
+        //var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
+
+        var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
+
+        var output = _levelExtentModifierService.ApplyLevelExtent(submodelElement, levelEnum, extentEnum);
+        return new ObjectResult(output);
     }
-}
-var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
 
-var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPathElements);
+    /// <summary>
+    /// Returns a specific submodel element from the Submodel at a specified path in the ValueOnly representation
+    /// </summary>
+    /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+    /// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
+    /// <param name="level">Determines the structural depth of the respective resource content</param>
+    /// <param name="extent">Determines to which extent the resource is being serialized</param>
+    /// <response code="200">Requested submodel element</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not Found</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpGet]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$value")]
+    [ValidateModelState]
+    [SwaggerOperation("GetSubmodelElementByPathValueOnlySubmodelRepo")]
+    [SwaggerResponse(statusCode: 200, type: typeof(ISubmodelElementValue), description: "Requested submodel element")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public async virtual Task<IActionResult> GetSubmodelElementByPathValueOnlySubmodelRepo([FromRoute][Required] string submodelIdentifier,
+    [FromRoute][Required] string idShortPath, [FromQuery] string? level, [FromQuery] string? extent)
+    {
+        //Validate level and extent
+        var levelEnum = _validateModifierService.ValidateLevel(level);
+        var extentEnum = _validateModifierService.ValidateExtent(extent);
 
-var submodelElementLevel = _levelExtentModifierService.ApplyLevelExtent(submodelElement, levelEnum, extentEnum);
-var output = _mappingService.Map(submodelElementLevel, "value");
-return new ObjectResult(output);
-}
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+        _logger.LogInformation($"Received request to get the value of the submodel element at {idShortPath} from the submodel with id {decodedSubmodelIdentifier}");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
 
-/// <summary>
-/// Asynchronously invokes an Operation at a specified path
-/// </summary>
-/// <param name="body">Operation request object</param>
-/// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
-/// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
-/// <response code="202">The server has accepted the request.</response>
-/// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
-/// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
-/// <response code="403">Forbidden</response>
-/// <response code="404">Not Found</response>
-/// <response code="405">Method not allowed - Invoke only valid for Operation submodel element</response>
-/// <response code="500">Internal Server Error</response>
-/// <response code="0">Default error handling for unmentioned status codes</response>
-[HttpPost]
-[Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/invoke-async")]
-[ValidateModelState]
-[SwaggerOperation("InvokeOperationAsync")]
-[SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-[SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
-[SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-[SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
-[SwaggerResponse(statusCode: 405, type: typeof(Result), description: "Method not allowed - Invoke only valid for Operation submodel element")]
-[SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-[SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-public virtual IActionResult InvokeOperationAsync([FromBody] OperationRequest? body, [FromRoute][Required] string submodelIdentifier,
-[FromRoute][Required] string idShortPath) => throw new NotImplementedException();
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-/// <summary>
-/// Asynchronously invokes an Operation at a specified path
-/// </summary>
-/// <param name="body">Operation request object</param>
-/// <param name="aasIdentifier">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
-/// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
-/// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
-/// <response code="202">The server has accepted the request.</response>
-/// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
-/// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
-/// <response code="403">Forbidden</response>
-/// <response code="404">Not Found</response>
-/// <response code="500">Internal Server Error</response>
-/// <response code="0">Default error handling for unmentioned status codes</response>
-[HttpPost]
-[Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/invoke-async/$value")]
-[ValidateModelState]
-[SwaggerOperation("InvokeOperationAsyncValueOnly")]
-[SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-[SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
-[SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-[SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
-[SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-[SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-public virtual IActionResult InvokeOperationAsyncValueOnly([FromBody] OperationRequestValueOnly body, [FromRoute][Required] string aasIdentifier,
-[FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath) => throw new NotImplementedException();
+        if (!Program.noSecurity)
+        {
+            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
+            var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
+            var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
+            var principal = new System.Security.Principal.GenericPrincipal(identity, null);
+            var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
+            if (!authResult.Succeeded)
+            {
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
+            }
+        }
+        //var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
 
-/// <summary>
-/// Synchronously or asynchronously invokes an Operation at a specified path
-/// </summary>
-/// <param name="body">Operation request object</param>
-/// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
-/// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
-/// <param name="_async">Determines whether an operation invocation is performed asynchronously or synchronously</param>
-/// <response code="200">Operation result object</response>
-/// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
-/// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
-/// <response code="403">Forbidden</response>
-/// <response code="404">Not Found</response>
-/// <response code="405">Method not allowed - Invoke only valid for Operation submodel element</response>
-/// <response code="500">Internal Server Error</response>
-/// <response code="0">Default error handling for unmentioned status codes</response>
-[HttpPost]
-[Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/invoke")]
-[ValidateModelState]
-[SwaggerOperation("InvokeOperationSubmodelRepo")]
-[SwaggerResponse(statusCode: 200, type: typeof(OperationResult), description: "Operation result object")]
-[SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-[SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
-[SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-[SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
-[SwaggerResponse(statusCode: 405, type: typeof(Result), description: "Method not allowed - Invoke only valid for Operation submodel element")]
-[SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-[SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-public virtual IActionResult InvokeOperationSubmodelRepo([FromBody] OperationRequest body, [FromRoute][Required] string submodelIdentifier,
-[FromRoute][Required] string idShortPath, [FromQuery] bool? _async) => throw new NotImplementedException();
+        var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
 
-/// <summary>
-/// Synchronously or asynchronously invokes an Operation at a specified path
-/// </summary>
-/// <param name="body">Operation request object</param>
-/// <param name="aasIdentifier">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
-/// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
-/// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
-/// <param name="_async">Determines whether an operation invocation is performed asynchronously or synchronously</param>
-/// <response code="200">Operation result object</response>
-/// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
-/// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
-/// <response code="403">Forbidden</response>
-/// <response code="404">Not Found</response>
-/// <response code="500">Internal Server Error</response>
-/// <response code="0">Default error handling for unmentioned status codes</response>
-[HttpPost]
-[Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/invoke/$value")]
-[ValidateModelState]
-[SwaggerOperation("InvokeOperationValueOnly")]
-[SwaggerResponse(statusCode: 200, type: typeof(IValueDTO), description: "Operation result object")]
-[SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-[SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
-[SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-[SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
-[SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-[SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-public virtual IActionResult InvokeOperationValueOnly([FromBody] OperationRequestValueOnly body, [FromRoute][Required] string aasIdentifier,
-[FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath,
-[FromQuery] bool? _async) => throw new NotImplementedException();
+        var submodelElementLevel = _levelExtentModifierService.ApplyLevelExtent(submodelElement, levelEnum, extentEnum);
+        var output = _mappingService.Map(submodelElementLevel, "value");
+        return new ObjectResult(output);
+    }
 
-/// <summary>
-/// Updates an existing Submodel
-/// </summary>
-/// <param name="body">Submodel object</param>
-/// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
-/// <param name="level">Determines the structural depth of the respective resource content</param>
-/// <response code="204">Submodel updated successfully</response>
-/// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
-/// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
-/// <response code="403">Forbidden</response>
-/// <response code="404">Not Found</response>
-/// <response code="500">Internal Server Error</response>
-/// <response code="0">Default error handling for unmentioned status codes</response>
-[HttpPatch]
-[Route("submodels/{submodelIdentifier}")]
-[ValidateModelState]
-[SwaggerOperation("PatchSubmodelById")]
-[SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-[SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
-[SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-[SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
-[SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-[SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-public virtual async Task<IActionResult> PatchSubmodelById([FromBody]Submodel? body, [FromRoute][Required] string submodelIdentifier, [FromQuery] string? level)
-{
-ProcessBody(body);
+    /// <summary>
+    /// Asynchronously invokes an Operation at a specified path
+    /// </summary>
+    /// <param name="body">Operation request object</param>
+    /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+    /// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
+    /// <response code="202">The server has accepted the request.</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not Found</response>
+    /// <response code="405">Method not allowed - Invoke only valid for Operation submodel element</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpPost]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/invoke-async")]
+    [ValidateModelState]
+    [SwaggerOperation("InvokeOperationAsync")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+    [SwaggerResponse(statusCode: 405, type: typeof(Result), description: "Method not allowed - Invoke only valid for Operation submodel element")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public virtual IActionResult InvokeOperationAsync([FromBody] OperationRequest? body, [FromRoute][Required] string submodelIdentifier,
+    [FromRoute][Required] string idShortPath) => throw new NotImplementedException();
 
-var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+    /// <summary>
+    /// Asynchronously invokes an Operation at a specified path
+    /// </summary>
+    /// <param name="body">Operation request object</param>
+    /// <param name="aasIdentifier">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
+    /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+    /// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
+    /// <response code="202">The server has accepted the request.</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not Found</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpPost]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/invoke-async/$value")]
+    [ValidateModelState]
+    [SwaggerOperation("InvokeOperationAsyncValueOnly")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public virtual IActionResult InvokeOperationAsyncValueOnly([FromBody] OperationRequestValueOnly body, [FromRoute][Required] string aasIdentifier,
+    [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath) => throw new NotImplementedException();
 
-_logger.LogInformation($"Received request to update the submodel with id {decodedSubmodelIdentifier}.");
-if (decodedSubmodelIdentifier == null)
-{
-    throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
-}
+    /// <summary>
+    /// Synchronously or asynchronously invokes an Operation at a specified path
+    /// </summary>
+    /// <param name="body">Operation request object</param>
+    /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+    /// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
+    /// <param name="_async">Determines whether an operation invocation is performed asynchronously or synchronously</param>
+    /// <response code="200">Operation result object</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not Found</response>
+    /// <response code="405">Method not allowed - Invoke only valid for Operation submodel element</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpPost]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/invoke")]
+    [ValidateModelState]
+    [SwaggerOperation("InvokeOperationSubmodelRepo")]
+    [SwaggerResponse(statusCode: 200, type: typeof(OperationResult), description: "Operation result object")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+    [SwaggerResponse(statusCode: 405, type: typeof(Result), description: "Method not allowed - Invoke only valid for Operation submodel element")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public virtual IActionResult InvokeOperationSubmodelRepo([FromBody] OperationRequest body, [FromRoute][Required] string submodelIdentifier,
+    [FromRoute][Required] string idShortPath, [FromQuery] bool? _async) => throw new NotImplementedException();
 
-var securityConfig = new SecurityConfig(Program.noSecurity, this);
-await _dbRequestHandlerService.UpdateSubmodelById(securityConfig, null, decodedSubmodelIdentifier, body);
+    /// <summary>
+    /// Synchronously or asynchronously invokes an Operation at a specified path
+    /// </summary>
+    /// <param name="body">Operation request object</param>
+    /// <param name="aasIdentifier">The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)</param>
+    /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+    /// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
+    /// <param name="_async">Determines whether an operation invocation is performed asynchronously or synchronously</param>
+    /// <response code="200">Operation result object</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not Found</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpPost]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/invoke/$value")]
+    [ValidateModelState]
+    [SwaggerOperation("InvokeOperationValueOnly")]
+    [SwaggerResponse(statusCode: 200, type: typeof(IValueDTO), description: "Operation result object")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public virtual IActionResult InvokeOperationValueOnly([FromBody] OperationRequestValueOnly body, [FromRoute][Required] string aasIdentifier,
+    [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath,
+    [FromQuery] bool? _async) => throw new NotImplementedException();
 
-return NoContent();
-}
+    /// <summary>
+    /// Updates an existing Submodel
+    /// </summary>
+    /// <param name="body">Submodel object</param>
+    /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+    /// <param name="level">Determines the structural depth of the respective resource content</param>
+    /// <response code="204">Submodel updated successfully</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not Found</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpPatch]
+    [Route("submodels/{submodelIdentifier}")]
+    [ValidateModelState]
+    [SwaggerOperation("PatchSubmodelById")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public virtual async Task<IActionResult> PatchSubmodelById([FromBody] Submodel? body, [FromRoute][Required] string submodelIdentifier, [FromQuery] string? level)
+    {
+        ProcessBody(body);
 
-/// <summary>
-/// Updates the metadata attributes of an existing Submodel
-/// </summary>
-/// <param name="body">The metadata attributes of the Submodel object</param>
-/// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
-/// <response code="204">Submodel updated successfully</response>
-/// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
-/// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
-/// <response code="403">Forbidden</response>
-/// <response code="404">Not Found</response>
-/// <response code="500">Internal Server Error</response>
-/// <response code="0">Default error handling for unmentioned status codes</response>
-[HttpPatch]
-[Route("submodels/{submodelIdentifier}/$metadata")]
-[ValidateModelState]
-[SwaggerOperation("PatchSubmodelByIdMetadata")]
-[SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-[SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
-[SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-[SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
-[SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-[SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-public async virtual Task<IActionResult> PatchSubmodelByIdMetadata([FromBody]SubmodelMetadata? body, [FromRoute][Required] string? submodelIdentifier)
-{
-if (body == null)
-{
-    throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
-}
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
 
-var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
-_logger.LogInformation($"Received Patch Request for submodel with id {decodedSubmodelIdentifier}");
-if (decodedSubmodelIdentifier == null)
-{
-    throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
-}
+        _logger.LogInformation($"Received request to update the submodel with id {decodedSubmodelIdentifier}.");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
 
-var submodel = _mappingService.Map(body, "metadata") as ISubmodel;
-if (submodel == null)
-{
-    throw new NotAllowed($"Cannot proceed as {nameof(submodel)} is null");
-}
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+        await _dbRequestHandlerService.UpdateSubmodelById(securityConfig, null, decodedSubmodelIdentifier, body);
 
+        return NoContent();
+    }
 
-var securityConfig = new SecurityConfig(Program.noSecurity, this);
-//Update
-await _dbRequestHandlerService.UpdateSubmodelById(securityConfig, null, decodedSubmodelIdentifier, submodel);
+    /// <summary>
+    /// Updates the metadata attributes of an existing Submodel
+    /// </summary>
+    /// <param name="body">The metadata attributes of the Submodel object</param>
+    /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+    /// <response code="204">Submodel updated successfully</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not Found</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpPatch]
+    [Route("submodels/{submodelIdentifier}/$metadata")]
+    [ValidateModelState]
+    [SwaggerOperation("PatchSubmodelByIdMetadata")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public async virtual Task<IActionResult> PatchSubmodelByIdMetadata([FromBody] SubmodelMetadata? body, [FromRoute][Required] string? submodelIdentifier)
+    {
+        if (body == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
+        }
 
-return NoContent();
-}
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+        _logger.LogInformation($"Received Patch Request for submodel with id {decodedSubmodelIdentifier}");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
 
-/// <summary>
-/// Updates the values of an existing Submodel
-/// </summary>
-/// <param name="body">Submodel object in its ValueOnly representation</param>
-/// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
-/// <param name="level">Determines the structural depth of the respective resource content</param>
-/// <response code="204">Submodel updated successfully</response>
-/// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
-/// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
-/// <response code="403">Forbidden</response>
-/// <response code="404">Not Found</response>
-/// <response code="500">Internal Server Error</response>
-/// <response code="0">Default error handling for unmentioned status codes</response>
-[HttpPatch]
-[Route("submodels/{submodelIdentifier}/$value")]
-[ValidateModelState]
-[SwaggerOperation("PatchSubmodelByIdValueOnly")]
-[SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-[SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
-[SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-[SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
-[SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-[SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-public virtual async Task<IActionResult> PatchSubmodelByIdValueOnly([FromBody]SubmodelValue? body, [FromRoute][Required]string submodelIdentifier, 
-[FromQuery]string? level)
-{
-if (body == null)
-{
-    throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
-}
-
-var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
-if (decodedSubmodelIdentifier == null)
-{
-    throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
-}
-
-_logger.LogInformation($"Received request to update the submodel with id {decodedSubmodelIdentifier} by value.");
-
-var submodel = _mappingService.Map(body, "value") as Submodel;
-if (submodel == null)
-{
-    throw new NotAllowed($"Cannot proceed as {nameof(submodel)} is null");
-}
-var securityConfig = new SecurityConfig(Program.noSecurity, this);
-await _dbRequestHandlerService.UpdateSubmodelById(securityConfig, null, decodedSubmodelIdentifier, submodel);
-
-return NoContent();
-}
-
-/// <summary>
-/// Updates the metadata attributes an existing SubmodelElement
-/// </summary>
-/// <param name="body">Metadata attributes of the SubmodelElement</param>
-/// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
-/// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
-/// <response code="204">SubmodelElement updated successfully</response>
-/// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
-/// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
-/// <response code="403">Forbidden</response>
-/// <response code="404">Not Found</response>
-/// <response code="500">Internal Server Error</response>
-/// <response code="0">Default error handling for unmentioned status codes</response>
-[HttpPatch]
-[Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$metadata")]
-[ValidateModelState]
-[SwaggerOperation("PatchSubmodelElementByPathMetadataSubmodelRepo")]
-[SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-[SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
-[SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-[SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
-[SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-[SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-public virtual async Task<IActionResult> PatchSubmodelElementByPathMetadataSubmodelRepo([FromBody] ISubmodelElementMetadata? body,
-[FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath)
-{
-if (body == null)
-{
-    throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
-}
-
-var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
-_logger.LogInformation($"Received request to update the submodel element at {idShortPath} in the submodel with id {decodedSubmodelIdentifier}");
-if (decodedSubmodelIdentifier == null)
-{
-    throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
-}
-
-//Reverse mapping from Metadata to submodel element
-var submodelElement = _mappingService.Map(body, "metadata") as ISubmodelElement;
-if (submodelElement == null)
-{
-    throw new NotAllowed($"Cannot proceed as {nameof(submodelElement)} is null");
-}
+        var submodel = _mappingService.Map(body, "metadata") as ISubmodel;
+        if (submodel == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(submodel)} is null");
+        }
 
 
-var securityConfig = new SecurityConfig(Program.noSecurity, this);
-//Update
-await _dbRequestHandlerService.UpdateSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath, submodelElement);
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+        //Update
+        await _dbRequestHandlerService.UpdateSubmodelById(securityConfig, null, decodedSubmodelIdentifier, submodel);
 
-return NoContent();
-}
+        return NoContent();
+    }
 
-/// <summary>
-/// Updates an existing SubmodelElement
-/// </summary>
-/// <param name="body">SubmodelElement object</param>
-/// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
-/// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
-/// <param name="level">Determines the structural depth of the respective resource content</param>
-/// <response code="204">SubmodelElement updated successfully</response>
-/// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
-/// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
-/// <response code="403">Forbidden</response>
-/// <response code="404">Not Found</response>
-/// <response code="500">Internal Server Error</response>
-/// <response code="0">Default error handling for unmentioned status codes</response>
-[HttpPatch]
-[Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
-[ValidateModelState]
-[SwaggerOperation("PatchSubmodelElementByPathSubmodelRepo")]
-[SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-[SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
-[SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-[SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
-[SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-[SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-public async virtual Task<IActionResult> PatchSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement? body, [FromRoute][Required] string submodelIdentifier,
-[FromRoute][Required] string idShortPath, [FromQuery] string? level)
-{
-ProcessBody(body);
+    /// <summary>
+    /// Updates the values of an existing Submodel
+    /// </summary>
+    /// <param name="body">Submodel object in its ValueOnly representation</param>
+    /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+    /// <param name="level">Determines the structural depth of the respective resource content</param>
+    /// <response code="204">Submodel updated successfully</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not Found</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpPatch]
+    [Route("submodels/{submodelIdentifier}/$value")]
+    [ValidateModelState]
+    [SwaggerOperation("PatchSubmodelByIdValueOnly")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public virtual async Task<IActionResult> PatchSubmodelByIdValueOnly([FromBody] SubmodelValue? body, [FromRoute][Required] string submodelIdentifier,
+    [FromQuery] string? level)
+    {
+        if (body == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
+        }
 
-var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
-if (decodedSubmodelIdentifier == null)
-{
-    throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
-}
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
 
-_logger.LogInformation($"Received request to update the submodel element at {idShortPath} from submodel with id {decodedSubmodelIdentifier}.");
+        _logger.LogInformation($"Received request to update the submodel with id {decodedSubmodelIdentifier} by value.");
 
-var securityConfig = new SecurityConfig(Program.noSecurity, this);
-await _dbRequestHandlerService.UpdateSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath, body);
+        var submodel = _mappingService.Map(body, "value") as Submodel;
+        if (submodel == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(submodel)} is null");
+        }
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+        await _dbRequestHandlerService.UpdateSubmodelById(securityConfig, null, decodedSubmodelIdentifier, submodel);
 
-return NoContent();
-}
+        return NoContent();
+    }
 
-/// <summary>
-/// Updates the value of an existing SubmodelElement
-/// </summary>
-/// <param name="body">The SubmodelElement in its ValueOnly representation</param>
-/// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
-/// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
-/// <param name="level">Determines the structural depth of the respective resource content</param>
-/// <response code="204">Submodel updated successfully</response>
-/// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
-/// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
-/// <response code="403">Forbidden</response>
-/// <response code="404">Not Found</response>
-/// <response code="500">Internal Server Error</response>
-/// <response code="0">Default error handling for unmentioned status codes</response>
-[HttpPatch]
-[Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$value")]
-[ValidateModelState]
-[SwaggerOperation("PatchSubmodelElementByPathValueOnlySubmodelRepo")]
-[SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-[SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
-[SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-[SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
-[SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-[SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-public virtual async Task<IActionResult> PatchSubmodelElementByPathValueOnlySubmodelRepo([FromBody] ISubmodelElementValue? body,
-[FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath,
-[FromQuery] string? level)
-{
-if (body == null)
-{
-    throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
-}
+    /// <summary>
+    /// Updates the metadata attributes an existing SubmodelElement
+    /// </summary>
+    /// <param name="body">Metadata attributes of the SubmodelElement</param>
+    /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+    /// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
+    /// <response code="204">SubmodelElement updated successfully</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not Found</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpPatch]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$metadata")]
+    [ValidateModelState]
+    [SwaggerOperation("PatchSubmodelElementByPathMetadataSubmodelRepo")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public virtual async Task<IActionResult> PatchSubmodelElementByPathMetadataSubmodelRepo([FromBody] ISubmodelElementMetadata? body,
+    [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath)
+    {
+        if (body == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
+        }
 
-var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
-_logger.LogInformation($"Received an update request for a submodel element at {idShortPath} in the submodel with id {decodedSubmodelIdentifier}.");
-if (decodedSubmodelIdentifier == null)
-{
-    throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
-}
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+        _logger.LogInformation($"Received request to update the submodel element at {idShortPath} in the submodel with id {decodedSubmodelIdentifier}");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
 
-if (_mappingService.Map(body, "value") is not ISubmodelElement submodelElement)
-{
-    throw new NotAllowed($"Cannot proceed as {nameof(submodelElement)} is null");
-}
+        //Reverse mapping from Metadata to submodel element
+        var submodelElement = _mappingService.Map(body, "metadata") as ISubmodelElement;
+        if (submodelElement == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(submodelElement)} is null");
+        }
 
-var securityConfig = new SecurityConfig(Program.noSecurity, this);
-//Update
-await _dbRequestHandlerService.UpdateSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath, submodelElement);
 
-return NoContent();
-}
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+        //Update
+        await _dbRequestHandlerService.UpdateSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath, submodelElement);
 
-/// <summary>
-/// Creates a new Submodel
-/// </summary>
-/// <param name="body">Submodel object</param>
-/// <param name="aasIdentifier">The AAS’s unique id (UTF8-BASE64-URL-encoded)</param>
-/// <response code="201">Submodel created successfully</response>
-/// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
-/// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
-/// <response code="403">Forbidden</response>
-/// <response code="409">Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.</response>
-/// <response code="500">Internal Server Error</response>
-/// <response code="0">Default error handling for unmentioned status codes</response>
-[HttpPost]
-[Route("submodels")]
-[ValidateModelState]
-[SwaggerOperation("PostSubmodel")]
-[SwaggerResponse(statusCode: 201, type: typeof(Submodel), description: "Submodel created successfully")]
-[SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-[SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
-[SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
-[SwaggerResponse(statusCode: 409, type: typeof(Result), description: "Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.")]
-[SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
-[SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-// public async virtual Task<IActionResult> PostSubmodel([FromBody]Submodel body, [FromQuery] string aasIdentifier)
-public async virtual Task<IActionResult> PostSubmodel([FromBody] Submodel body)
-{
-ProcessBody(body);
+        return NoContent();
+    }
 
-_logger.LogInformation($"Received request to create a submodel.");
+    /// <summary>
+    /// Updates an existing SubmodelElement
+    /// </summary>
+    /// <param name="body">SubmodelElement object</param>
+    /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+    /// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
+    /// <param name="level">Determines the structural depth of the respective resource content</param>
+    /// <response code="204">SubmodelElement updated successfully</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not Found</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpPatch]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}")]
+    [ValidateModelState]
+    [SwaggerOperation("PatchSubmodelElementByPathSubmodelRepo")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public async virtual Task<IActionResult> PatchSubmodelElementByPathSubmodelRepo([FromBody] ISubmodelElement? body, [FromRoute][Required] string submodelIdentifier,
+    [FromRoute][Required] string idShortPath, [FromQuery] string? level)
+    {
+        ProcessBody(body);
 
-/*
-var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
-if (decodedAasIdentifier == null)
-{
-    throw new NotAllowed($"Cannot proceed as {nameof(decodedAasIdentifier)} is null");
-}
-*/
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
+
+        _logger.LogInformation($"Received request to update the submodel element at {idShortPath} from submodel with id {decodedSubmodelIdentifier}.");
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+        await _dbRequestHandlerService.UpdateSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath, body);
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Updates the value of an existing SubmodelElement
+    /// </summary>
+    /// <param name="body">The SubmodelElement in its ValueOnly representation</param>
+    /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
+    /// <param name="idShortPath">IdShort path to the submodel element (dot-separated)</param>
+    /// <param name="level">Determines the structural depth of the respective resource content</param>
+    /// <response code="204">Submodel updated successfully</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="404">Not Found</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpPatch]
+    [Route("submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/$value")]
+    [ValidateModelState]
+    [SwaggerOperation("PatchSubmodelElementByPathValueOnlySubmodelRepo")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    public virtual async Task<IActionResult> PatchSubmodelElementByPathValueOnlySubmodelRepo([FromBody] ISubmodelElementValue? body,
+    [FromRoute][Required] string submodelIdentifier, [FromRoute][Required] string idShortPath,
+    [FromQuery] string? level)
+    {
+        if (body == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(body)} is null");
+        }
+
+        var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", submodelIdentifier);
+        _logger.LogInformation($"Received an update request for a submodel element at {idShortPath} in the submodel with id {decodedSubmodelIdentifier}.");
+        if (decodedSubmodelIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedSubmodelIdentifier)} is null");
+        }
+
+        if (_mappingService.Map(body, "value") is not ISubmodelElement submodelElement)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(submodelElement)} is null");
+        }
+
+        var securityConfig = new SecurityConfig(Program.noSecurity, this);
+        //Update
+        await _dbRequestHandlerService.UpdateSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath, submodelElement);
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Creates a new Submodel
+    /// </summary>
+    /// <param name="body">Submodel object</param>
+    /// <response code="201">Submodel created successfully</response>
+    /// <response code="400">Bad Request, e.g. the request parameters of the format of the request body is wrong.</response>
+    /// <response code="401">Unauthorized, e.g. the server refused the authorization attempt.</response>
+    /// <response code="403">Forbidden</response>
+    /// <response code="409">Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.</response>
+    /// <response code="500">Internal Server Error</response>
+    /// <response code="0">Default error handling for unmentioned status codes</response>
+    [HttpPost]
+    [Route("submodels")]
+    [ValidateModelState]
+    [SwaggerOperation("PostSubmodel")]
+    [SwaggerResponse(statusCode: 201, type: typeof(Submodel), description: "Submodel created successfully")]
+    [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
+    [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
+    [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
+    [SwaggerResponse(statusCode: 409, type: typeof(Result), description: "Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
+    [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+    // public async virtual Task<IActionResult> PostSubmodel([FromBody]Submodel body, [FromQuery] string aasIdentifier)
+    public async virtual Task<IActionResult> PostSubmodel([FromBody] Submodel body)
+    {
+        ProcessBody(body);
+
+        _logger.LogInformation($"Received request to create a submodel.");
+
+        /*
+        var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+        if (decodedAasIdentifier == null)
+        {
+            throw new NotAllowed($"Cannot proceed as {nameof(decodedAasIdentifier)} is null");
+        }
+        */
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
@@ -2391,11 +2386,11 @@ if (decodedAasIdentifier == null)
         _logger.LogInformation($"Received request to create a new submodel element at {idShortPath} in the submodel with id {decodedSubmodelIdentifier}");
         if (!Program.noSecurity)
         {
-            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig,null, decodedSubmodelIdentifier);
+            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
             User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
             var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
-            var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
-            var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
+            var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
+            var principal = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
@@ -2460,7 +2455,7 @@ if (decodedAasIdentifier == null)
 
         if (!Program.noSecurity)
         {
-            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig,null, decodedSubmodelIdentifier);
+            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
             var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{body.IdShort}") };
             var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
             var principal = new System.Security.Principal.GenericPrincipal(identity, null);
@@ -2567,10 +2562,10 @@ if (decodedAasIdentifier == null)
 
         if (!Program.noSecurity)
         {
-            var submodel   = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
+            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
             var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{body.IdShort}") };
-            var identity   = new ClaimsIdentity(claimsList, "AasSecurityAuth");
-            var principal  = new System.Security.Principal.GenericPrincipal(identity, null);
+            var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
+            var principal = new System.Security.Principal.GenericPrincipal(identity, null);
             var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
             if (!authResult.Succeeded)
             {
@@ -2582,7 +2577,7 @@ if (decodedAasIdentifier == null)
         return NoContent();
     }
 
-/// <summary>
+    /// <summary>
     /// Uploads file content to an existing submodel element at a specified path within submodel elements hierarchy
     /// </summary>
     /// <param name="submodelIdentifier">The Submodel’s unique id (UTF8-BASE64-URL-encoded)</param>
@@ -2600,7 +2595,7 @@ if (decodedAasIdentifier == null)
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request")]
     [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
     [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-    public virtual async Task<IActionResult> PutFileByPathSubmodelRepo([FromRoute] [Required] string submodelIdentifier, [FromRoute] string? idShortPath, IFormFile? file)
+    public virtual async Task<IActionResult> PutFileByPathSubmodelRepo([FromRoute][Required] string submodelIdentifier, [FromRoute] string? idShortPath, IFormFile? file)
     {
         if (idShortPath == null)
         {
@@ -2615,7 +2610,7 @@ if (decodedAasIdentifier == null)
 
         var stream = new MemoryStream();
         file?.CopyTo(stream);
-        var fileName    = file?.FileName;
+        var fileName = file?.FileName;
         var contentType = file?.ContentType;
         if (fileName == null)
         {
@@ -2628,8 +2623,8 @@ if (decodedAasIdentifier == null)
         }
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
-        var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
-        await _dbRequestHandlerService.ReplaceFileByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPathElements, fileName, contentType, stream);
+        //var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
+        await _dbRequestHandlerService.ReplaceFileByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath, fileName, contentType, stream);
 
         return NoContent();
     }

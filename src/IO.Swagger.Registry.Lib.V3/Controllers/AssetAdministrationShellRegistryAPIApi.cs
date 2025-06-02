@@ -40,6 +40,7 @@ namespace IO.Swagger.Controllers;
 using AasSecurity.Exceptions;
 using Contracts;
 using Contracts.Exceptions;
+using Contracts.Pagination;
 
 /// <summary>
 /// 
@@ -190,7 +191,7 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
                                     select _aasRegistryService.CreateAasDescriptorFromDB(aasDB));
         }
 
-        var output = _paginationService.GetPaginatedList(aasDescriptors, new Models.PaginationParameters(cursor, limit));
+        var output = _paginationService.GetPaginatedList(aasDescriptors, new PaginationParameters(cursor, limit));
         return new ObjectResult(output);
     }
 

@@ -6,7 +6,6 @@ using System.Linq;
 using System.Linq.Dynamic.Core;
 using System.Text;
 using System.Text.Json.Nodes;
-using System.Threading.Tasks;
 using AasxServerDB.Entities;
 using AasxServerDB;
 using AdminShellNS;
@@ -157,7 +156,7 @@ public class EventService : IEventService
         return count;
     }
 
-    public EventPayload CollectPayload(string changes, int depth, SubmodelElementCollection statusData,
+    public EventPayload CollectPayload(Dictionary<string, string> securityCondition, string changes, int depth, SubmodelElementCollection statusData,
         ReferenceElement reference, IReferable referable, AasCore.Aas3_0.Property conditionSM, AasCore.Aas3_0.Property conditionSME,
         string diff, List<String> diffEntry, bool withPayload, int limitSm, int limitSme, int offsetSm, int offsetSme)
     {
@@ -310,10 +309,18 @@ public class EventService : IEventService
                 if (conditionSM != null && conditionSM.Value != null)
                 {
                     searchSM = conditionSM.Value;
+                    if (securityCondition != null && securityCondition.TryGetValue("sm.", out _))
+                    {
+                        searchSM = $"({securityCondition["sm."]})&&({searchSM})";
+                    }
                 }
                 if (conditionSME != null && conditionSME.Value != null)
                 {
                     searchSME = conditionSME.Value;
+                    if (securityCondition != null && securityCondition.TryGetValue("sme.", out _))
+                    {
+                        searchSME = $"({securityCondition["sme."]})&&({searchSME})";
+                    }
                 }
 
                 using AasContext db = new();
@@ -379,8 +386,8 @@ public class EventService : IEventService
                         if (smeSearchTimeStamp.Count != 0)
                         {
                             // smeSearchTimeStamp = smeSearchSM.Where(sme => sme.ParentSMEId == null).ToList();
-                            var tree = Converter.GetTree(db, sm, smeSearchTimeStamp);
-                            var treeMerged = Converter.GetSmeMerged(db, tree, sm);
+                            var tree = CrudOperator.GetTree(db, sm, smeSearchTimeStamp);
+                            var treeMerged = CrudOperator.GetSmeMerged(db, tree, sm);
                             // var lookupChildren = treeMerged?.ToLookup(m => m.smeSet.ParentSMEId);
 
                             completeSM = false;
@@ -437,6 +444,13 @@ public class EventService : IEventService
                                     }
                                 }
                                 var parentId = sme.ParentSMEId;
+                                var idShortPath = sme.IdShortPath;
+
+                                if (sme.TimeStampTree > timeStampMax)
+                                {
+                                    timeStampMax = sme.TimeStampTree;
+                                }
+                                /*
                                 var idShortPath = sme.IdShort;
                                 while (parentId != null && parentId != 0)
                                 {
@@ -444,11 +458,7 @@ public class EventService : IEventService
                                     idShortPath = parentSME.IdShort + "." + idShortPath;
                                     parentId = parentSME.ParentSMEId;
                                 }
-
-                                if (sme.TimeStampTree > timeStampMax)
-                                {
-                                    timeStampMax = sme.TimeStampTree;
-                                }
+                                */
 
                                 var entry = new EventPayloadEntry();
                                 entry.entryType = entryType;
@@ -461,7 +471,7 @@ public class EventService : IEventService
                                 if (entryType != "DELETE" && withPayload)
                                 {
                                     // var s = Converter.GetSubmodelElement(sme);
-                                    var s = Converter.GetSubmodelElement(sme, treeMerged);
+                                    var s = CrudOperator.ReadSubmodelElement(sme, treeMerged);
                                     if (s != null)
                                     {
                                         var j = Jsonization.Serialize.ToJsonObject(s);
@@ -497,7 +507,7 @@ public class EventService : IEventService
 
                         if (withPayload)
                         {
-                            var s = Converter.GetSubmodel(sm);
+                            var s = CrudOperator.ReadSubmodel(db, sm);
                             if (s != null)
                             {
                                 var j = Jsonization.Serialize.ToJsonObject(s);
@@ -779,7 +789,7 @@ public class EventService : IEventService
                                 var idShort = Regex.Replace(submodelIdentifier, @"[^\w\d]", "_");
                                 smDB.IdShort = idShort;
                                 smDB.Kind = ModellingKind.Instance.ToString();
-                                Converter.setTimeStamp(smDB, dt);
+                                CrudOperator.setTimeStamp(smDB, dt);
                                 db.Add(smDB);
                                 db.SaveChanges();
                             }
@@ -790,8 +800,8 @@ public class EventService : IEventService
                                 visitor.currentDataTime = dt;
                                 var smDBId = smDB.Id;
                                 var smeSmList = db.SMESets.Where(sme => sme.SMId == smDBId).ToList();
-                                Converter.CreateIdShortPath(db, smeSmList);
-                                var smeSmMerged = Converter.GetSmeMerged(db, smeSmList, smDB);
+                                CrudOperator.CreateIdShortPath(db, smeSmList);
+                                var smeSmMerged = CrudOperator.GetSmeMerged(db, smeSmList, smDB);
                                 visitor.smSmeMerged = smeSmMerged;
 
                                 foreach (var e in entriesSubmodel)
@@ -842,7 +852,7 @@ public class EventService : IEventService
                                                     }
                                                     if (change)
                                                     {
-                                                        Converter.setTimeStampTree(db, smDB, receiveSmeDB, receiveSmeDB.TimeStamp);
+                                                        CrudOperator.setTimeStampTree(db, smDB, receiveSmeDB, receiveSmeDB.TimeStamp);
                                                         try
                                                         {
                                                             db.SMESets.Add(receiveSmeDB);

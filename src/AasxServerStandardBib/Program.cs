@@ -106,10 +106,14 @@ namespace AasxServer
                 return;
 
             Program.isLoadingDB = true;
-            var aasIDDBList = new AasContext().AASSets.Select(aas => aas.Identifier).ToList();
 
-            foreach (var aasIDDB in aasIDDBList)
-                LoadPackage<IAssetAdministrationShell>(success: out _, packageIndex: out _, aasIdentifier: aasIDDB);
+            using (var db = new AasContext())
+            {
+                var aasIDDBList = db.AASSets.Select(aas => aas.Identifier).ToList();
+
+                foreach (var aasIDDB in aasIDDBList)
+                    LoadPackage<IAssetAdministrationShell>(success: out _, packageIndex: out _, aasIdentifier: aasIDDB);
+            }
 
             isLoaded            = true;
             Program.isLoadingDB = false;
@@ -187,7 +191,7 @@ namespace AasxServer
             lock (changeAasxFile)
             {
                 // get filename
-                envFileName[i] = Converter.GetAASXPath(cdId: cdIdentifier, aasId: aasIdentifier, smId: smIdentifier);
+                envFileName[i] = CrudOperator.GetAASXPath(cdId: cdIdentifier, aasId: aasIdentifier, smId: smIdentifier);
                 if (envFileName[i].IsNullOrEmpty())
                 {
                     return output;
@@ -263,34 +267,36 @@ namespace AasxServer
                     Console.WriteLine("LOAD: " + cdIdentifier + aasIdentifier + smIdentifier);
 
                     // get envId
-                    var db = new AasContext();
-                    var envId = 0;
-                    if (!cdIdentifier.IsNullOrEmpty())
+                    using (var db = new AasContext())
                     {
-                        envId = db.CDSets.Where(cd => cd.Identifier == cdIdentifier).Join(db.EnvCDSets, cd => cd.Id, envcd => envcd.CDId, (cd, envcd) => envcd.EnvId).FirstOrDefault();
-                    }
-                    else if (!aasIdentifier.IsNullOrEmpty())
-                    {
-                        envId = db.AASSets.Where(aas => aas.Identifier == aasIdentifier).Select(aas => aas.EnvId.Value).FirstOrDefault();
-                    }
-                    else if (!smIdentifier.IsNullOrEmpty())
-                    {
-                        var e = db.SMSets.Where(sm => sm.Identifier == smIdentifier).Select(sm => sm.EnvId).FirstOrDefault();
-                        if (e != null)
+                        var envId = 0;
+                        if (!cdIdentifier.IsNullOrEmpty())
                         {
-                            envId = (int)e;
+                            envId = db.CDSets.Where(cd => cd.Identifier == cdIdentifier).Join(db.EnvCDSets, cd => cd.Id, envcd => envcd.CDId, (cd, envcd) => envcd.EnvId).FirstOrDefault();
                         }
-                    }
-                    if (envId == 0)
-                    {
-                        return output;
-                    }
+                        else if (!aasIdentifier.IsNullOrEmpty())
+                        {
+                            envId = db.AASSets.Where(aas => aas.Identifier == aasIdentifier).Select(aas => aas.EnvId.Value).FirstOrDefault();
+                        }
+                        else if (!smIdentifier.IsNullOrEmpty())
+                        {
+                            var e = db.SMSets.Where(sm => sm.Identifier == smIdentifier).Select(sm => sm.EnvId).FirstOrDefault();
+                            if (e != null)
+                            {
+                                envId = (int)e;
+                            }
+                        }
+                        if (envId == 0)
+                        {
+                            return output;
+                        }
 
-                    // create package env
-                    env[i] = Converter.GetPackageEnv(envId);
-                    if (env[i] == null || env[i].AasEnv == null)
-                    {
-                        return output;
+                        // create package env
+                        env[i] = CrudOperator.GetPackageEnv(db, envId);
+                        if (env[i] == null || env[i].AasEnv == null)
+                        {
+                            return output;
+                        }
                     }
 
                     // set output
@@ -571,6 +577,7 @@ namespace AasxServer
                 AasxHttpContextHelper.DataPath = a.DataPath;
             }
 
+            //toDo: read alternatively from appsettings.json
             Program.runOPC     = a.Opc;
             Program.noSecurity = a.NoSecurity;
             Program.edit       = a.Edit;
@@ -777,10 +784,18 @@ namespace AasxServer
             string[] fileNames = null;
             if (Directory.Exists(AasxHttpContextHelper.DataPath))
             {
+                var filesPath = AasxHttpContextHelper.DataPath + "/files";
+
+                if (startIndex == 0)
+                {
+                    Directory.Delete(filesPath, true);
+                }
+
                 if (!Directory.Exists(AasxHttpContextHelper.DataPath + "/xml"))
                     Directory.CreateDirectory(AasxHttpContextHelper.DataPath + "/xml");
-                if (!Directory.Exists(AasxHttpContextHelper.DataPath + "/files"))
-                    Directory.CreateDirectory(AasxHttpContextHelper.DataPath + "/files");
+
+                if (!Directory.Exists(filesPath))
+                    Directory.CreateDirectory(filesPath);
 
                 var watch = System.Diagnostics.Stopwatch.StartNew();
                 fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx");

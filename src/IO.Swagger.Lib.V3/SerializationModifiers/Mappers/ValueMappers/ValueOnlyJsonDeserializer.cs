@@ -23,6 +23,8 @@ using System.Text.Json.Nodes;
 namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 {
     using System.Text.Json;
+    using Contracts;
+    using IO.Swagger.Lib.V3.Models;
 
     public interface IValueOnlyJsonDeserializer
     {
@@ -32,12 +34,12 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
 
     public class ValueOnlyJsonDeserializer : IValueOnlyJsonDeserializer
     {
-        private readonly ISubmodelService _submodelService;
+        private readonly IDbRequestHandlerService _dbRequestHandlerService;
         private readonly IBase64UrlDecoderService _decoderService;
 
-        public ValueOnlyJsonDeserializer(ISubmodelService submodelService, IBase64UrlDecoderService decoderService)
+        public ValueOnlyJsonDeserializer(IDbRequestHandlerService dbRequestHandlerService, IBase64UrlDecoderService decoderService)
         {
-            _submodelService = submodelService ?? throw new ArgumentNullException(nameof(submodelService));
+            _dbRequestHandlerService = dbRequestHandlerService ?? throw new ArgumentNullException(nameof(dbRequestHandlerService));
             _decoderService  = decoderService ?? throw new ArgumentNullException(nameof(decoderService));
         }
 
@@ -95,7 +97,10 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
         {
             //This is Multilingual Property or SMEList
             var decodedSubmodelId = _decoderService.Decode("submodelId", encodedSubmodelIdentifier);
-            var element           = _submodelService.GetSubmodelElementByPath(decodedSubmodelId, idShortPath);
+
+            //ToDo: Clarify, is this really needed. If yes, what is about security?
+            var securityConfig = new SecurityConfig(true,null); 
+            var element           = _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelId, idShortPath).Result;
             if (element != null)
             {
                 if (element is MultiLanguageProperty)
@@ -169,7 +174,11 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.ValueMappers
                 var decodedSubmodelIdentifier = _decoderService.Decode("submodelIdentifier", encodedSubmodelIdentifier);
                 if (idShortPath == null)
                     idShortPath = idShort;
-                var submodelElement = _submodelService.GetSubmodelElementByPath(decodedSubmodelIdentifier, idShortPath);
+
+                //ToDo: Clarify, is this really needed. If yes, what is about security?
+                var securityConfig = new SecurityConfig(true, null);
+                var submodelElement = _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath).Result;
+
                 if (submodelElement != null)
                 {
                     if (submodelElement is File)

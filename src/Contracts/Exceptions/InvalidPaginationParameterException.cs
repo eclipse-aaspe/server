@@ -11,17 +11,15 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
+using System;
 
-using System.Collections.Generic;
-
-namespace AasxServerStandardBib.Interfaces
+namespace Contracts.Exceptions
 {
-    public interface IConceptDescriptionService
+    public class InvalidPaginationParameterException : Exception
     {
-        IConceptDescription CreateConceptDescription(IConceptDescription body);
-        void DeleteConceptDescriptionById(string cdIdentifier);
-        List<IConceptDescription> GetAllConceptDescriptions(string idShort = null, Reference isCaseOf = null, Reference dataSpecificationRef = null);
-        IConceptDescription GetConceptDescriptionById(string cdIdentifier);
-        void UpdateConceptDescriptionById(ConceptDescription body, string cdIdentifier);
+        public InvalidPaginationParameterException(string paramName, int? value) : base($"Invalid pagination parameter {paramName} value = {value}.")
+        {
+
+        }
     }
 }

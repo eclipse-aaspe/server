@@ -13,6 +13,10 @@
 
 namespace AasxServerDB
 {
+    using System;
+    using System.Collections.Generic;
+    using AasCore.Aas3_0;
+
     public partial class Query
     {
         private class CombinedSMResult

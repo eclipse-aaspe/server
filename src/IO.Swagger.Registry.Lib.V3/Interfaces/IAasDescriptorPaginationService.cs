@@ -11,6 +11,7 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
+using Contracts.Pagination;
 using IO.Swagger.Lib.V3.Models;
 using IO.Swagger.Models;
 using IO.Swagger.Registry.Lib.V3.Models;

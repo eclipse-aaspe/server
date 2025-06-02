@@ -34,8 +34,12 @@ using System.Xml;
 namespace IO.Swagger.Controllers
 {
     using System.Linq;
+    using System.Threading.Tasks;
     using AasSecurity.Exceptions;
+    using AasxServer;
+    using AasxServerStandardBib;
     using Contracts;
+    using IO.Swagger.Lib.V3.Models;
 
     /// <summary>
     /// 
@@ -45,14 +49,14 @@ namespace IO.Swagger.Controllers
     {
         private readonly IAppLogger<SerializationAPIApiController> _logger;
         private readonly IBase64UrlDecoderService _decoderService;
-        private readonly IGenerateSerializationService _serializationService;
+        private readonly IDbRequestHandlerService _dbRequestHandlerService;
 
         public SerializationAPIApiController(IAppLogger<SerializationAPIApiController> logger, IBase64UrlDecoderService decoderService,
-                                             IGenerateSerializationService serializationService)
+                                             IDbRequestHandlerService dbRequestHandlerService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _decoderService = decoderService ?? throw new ArgumentNullException(nameof(decoderService));
-            _serializationService = serializationService ?? throw new ArgumentNullException(nameof(serializationService));
+            _dbRequestHandlerService = dbRequestHandlerService ?? throw new ArgumentNullException(nameof(dbRequestHandlerService));
         }
         /// <summary>
         /// Returns an appropriate serialization based on the specified format (see SerializationFormat)
@@ -76,16 +80,17 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
-        public virtual IActionResult GenerateSerializationByIds([FromQuery] List<string>? aasIds, [FromQuery] List<string>? submodelIds,
+        public virtual async Task<IActionResult> GenerateSerializationByIds([FromQuery] List<string>? aasIds, [FromQuery] List<string>? submodelIds,
         [FromQuery] bool? includeConceptDescriptions = false)
         {
             _logger.LogDebug($"Received a request an appropriate serialization");
 
             var decodedAasIds = aasIds.Select(aasId => _decoderService.Decode("aasIdentifier", aasId)).ToList();
-
             var decodedSubmodelIds = submodelIds.Select(submodelId => _decoderService.Decode("submodelIdentifier", submodelId)).ToList();
 
-            var environment = _serializationService.GenerateSerializationByIds(decodedAasIds, decodedSubmodelIds, includeConceptDescriptions);
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+
+            var environment = await _dbRequestHandlerService.GenerateSerializationByIds(securityConfig, decodedAasIds, decodedSubmodelIds, includeConceptDescriptions);
 
             HttpContext.Request.Headers.TryGetValue("Content-Type", out var contentType);
             if (!contentType.Equals("application/xml"))

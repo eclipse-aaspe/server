@@ -17,7 +17,6 @@ namespace AasxServerDB
     using AdminShellNS;
     using Microsoft.EntityFrameworkCore;
     using AasxServerDB.Entities;
-    using System.Runtime.Intrinsics.X86;
 
     public class Edit
     {
@@ -35,14 +34,14 @@ namespace AasxServerDB
                 {
                     if (s.Identifier != null)
                     {
-                        DeleteSubmodel(s.Identifier, db);
+                        CrudOperator.DeleteSubmodel(db,s.Identifier);
                     }
                 }
                 foreach (var a in deleteAasList)
                 {
                     if (a.Identifier != null)
                     {
-                        DeleteAAS(a.Identifier, db);
+                        CrudOperator.DeleteAAS(db, a.Identifier);
                     }
                 }
                 deleteCDList.ExecuteDeleteAsync().Wait();
@@ -72,95 +71,5 @@ namespace AasxServerDB
             Console.WriteLine("SAVE AASX TO DB: " + env.Filename);
         }
 
-        public static void DeleteAAS(string aasIdentifier)
-        {
-            using (var db = new AasContext())
-            {
-                DeleteAAS(aasIdentifier, db);
-            }
-        }
-        public static void DeleteAAS(string aasIdentifier, AasContext db)
-        {
-            try
-            {
-                // Deletes automatically from DB
-                var aas = db.AASSets
-                    .Include(aas => aas.SMRefSets)
-                    .FirstOrDefault(aas => aas.Identifier == aasIdentifier);
-
-                if (aas != null)
-                {
-                    aas?.SMRefSets.Clear();
-                    db.AASSets.Remove(aas);
-
-                    db.SaveChanges();
-                }
-            }
-            catch (Microsoft.Data.Sqlite.SqliteException ex)
-            {
-                Console.WriteLine($"SQLite Error: {ex.Message}");
-                Console.WriteLine($"Foreign Key Constraint: {ex.SqliteErrorCode}");
-            }
-        }
-
-        public static void DeleteSubmodel(string submodelIdentifier)
-        {
-            using (var db = new AasContext())
-            {
-                DeleteSubmodel(submodelIdentifier, db);
-            }
-        }
-
-        public static void DeleteSubmodel(string submodelIdentifier, AasContext db)
-        {
-            using (var transaction = db.Database.BeginTransaction())
-            {
-                try
-                {
-                    var smDB = db.SMSets.Where(sm => sm.Identifier == submodelIdentifier);
-                    var smDBID = smDB.FirstOrDefault().Id;
-                    var smeDB = db.SMESets.Where(sme => sme.SMId == smDBID);
-                    var smeDBIDList = smeDB.Select(sme => sme.Id).ToList();
-
-                    db.SValueSets.Where(s => smeDBIDList.Contains(s.SMEId)).ExecuteDelete();
-                    db.IValueSets.Where(i => smeDBIDList.Contains(i.SMEId)).ExecuteDelete();
-                    db.DValueSets.Where(d => smeDBIDList.Contains(d.SMEId)).ExecuteDelete();
-                    db.OValueSets.Where(o => smeDBIDList.Contains(o.SMEId)).ExecuteDelete();
-                    smeDB.ExecuteDelete();
-                    smDB.ExecuteDelete();
-
-                    db.SaveChanges();
-                    transaction.Commit();
-                }
-                catch (Exception)
-                {
-                    transaction.Rollback();
-                }
-            }
-        }
-        public static void DeleteSubmodelElement(SMESet sME)
-        {
-            using (AasContext db = new AasContext())
-            {
-                using (var transaction = db.Database.BeginTransaction())
-                {
-                    try
-                    {
-                        db.SValueSets.Where(s => s.SMEId == sME.Id).ExecuteDelete();
-                        db.IValueSets.Where(i => i.SMEId == sME.Id).ExecuteDelete();
-                        db.DValueSets.Where(d => d.SMEId == sME.Id).ExecuteDelete();
-                        db.OValueSets.Where(o => o.SMEId == sME.Id).ExecuteDelete();
-                        db.SMESets.Where(sme => sme.Id == sME.Id).ExecuteDelete();
-
-                        db.SaveChanges();
-                        transaction.Commit();
-                    }
-                    catch (Exception)
-                    {
-                        transaction.Rollback();
-                    }
-                }
-            }
-        }
     }
 }
