@@ -1423,7 +1423,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         return false;
     }
 
-    //ToDo: Move into security?
+    //ToDo: Move into security? Currently this is also in SubmodelRepositoryAPIApiController (for events)
     private bool InitSecurity(ISecurityConfig? securityConfig, out Dictionary<string, string>? securityCondition)
     {
         securityCondition = null;
