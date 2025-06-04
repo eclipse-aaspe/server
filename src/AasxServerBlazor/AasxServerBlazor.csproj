@@ -90,6 +90,9 @@
     </ItemGroup>
 
     <ItemGroup>
+        <None Update="accessrules.txt">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
         <None Update="LICENSE.TXT">
           <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
           <CopyToPublishDirectory>Never</CopyToPublishDirectory>
