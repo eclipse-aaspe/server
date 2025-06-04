@@ -145,9 +145,10 @@ public class EntityFrameworkPersistenceService : IPersistenceService
     public async Task<DbRequestResult> DoDbOperation(DbRequest dbRequest)
     {
         var result = new DbRequestResult();
+        var securityConfig = dbRequest.Context.SecurityConfig;
 
         Dictionary<string, string>? securityCondition = null;
-        bool isAllowed = InitSecurity(dbRequest.Context.SecurityConfig, out securityCondition);
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
 
         if (!isAllowed)
         {
@@ -562,35 +563,35 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     case DbRequestOp.QuerySearchSMs:
                         var queryRequest = dbRequest.Context.Params.QueryRequest;
                         var query = new Query(_grammar);
-                        var qresult = query.SearchSMs(db, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SemanticId,
+                        var qresult = query.SearchSMs(securityConfig, db, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SemanticId,
                             queryRequest.Identifier, queryRequest.Diff, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                         result.QueryResult = qresult;
                         break;
                     case DbRequestOp.QueryCountSMs:
                         queryRequest = dbRequest.Context.Params.QueryRequest;
                         query = new Query(_grammar);
-                        var count = query.CountSMs(db, queryRequest.SemanticId, queryRequest.Identifier, queryRequest.Diff,
+                        var count = query.CountSMs(securityConfig, db, queryRequest.SemanticId, queryRequest.Identifier, queryRequest.Diff,
                             queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                         result.Count = count;
                         break;
                     case DbRequestOp.QuerySearchSMEs:
                         queryRequest = dbRequest.Context.Params.QueryRequest;
                         query = new Query(_grammar);
-                        qresult = query.SearchSMEs(db, queryRequest.Requested, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
+                        qresult = query.SearchSMEs(securityConfig, db, queryRequest.Requested, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
                             queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                         result.QueryResult = qresult;
                         break;
                     case DbRequestOp.QueryCountSMEs:
                         queryRequest = dbRequest.Context.Params.QueryRequest;
                         query = new Query(_grammar);
-                        count = query.CountSMEs(db, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
+                        count = query.CountSMEs(securityConfig, db, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
                             queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                         result.Count = count;
                         break;
                     case DbRequestOp.QueryGetSMs:
                         queryRequest = dbRequest.Context.Params.QueryRequest;
                         query = new Query(_grammar);
-                        var submodels = query.GetSubmodelList(db, securityCondition, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
+                        var submodels = query.GetSubmodelList(securityConfig.NoSecurity, db, securityCondition, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                         result.Submodels = submodels;
                         break;
                     case DbRequestOp.ReadPagedConceptDescriptions:

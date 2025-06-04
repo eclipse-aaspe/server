@@ -952,7 +952,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.Environment;
     }
 
-    public async Task<QResult> QuerySearchSMs(bool withTotalCount, bool withLastId, string semanticId, string identifier, string diff, IPaginationParameters paginationParameters, string expression)
+    public async Task<QResult> QuerySearchSMs(ISecurityConfig securityConfig, bool withTotalCount, bool withLastId, string semanticId, string identifier, string diff, IPaginationParameters paginationParameters, string expression)
     {
         var parameters = new DbRequestParams()
         {
@@ -971,7 +971,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
         var dbRequestContext = new DbRequestContext()
         {
-            //SecurityConfig = securityConfig,
+            SecurityConfig = securityConfig,
             Params = parameters
         };
         var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
@@ -984,7 +984,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.QueryResult;
     }
 
-    public async Task<int> QueryCountSMs(string semanticId, string identifier, string diff, IPaginationParameters paginationParameters, string expression)
+    public async Task<int> QueryCountSMs(ISecurityConfig securityConfig, string semanticId, string identifier, string diff, IPaginationParameters paginationParameters, string expression)
     {
         var parameters = new DbRequestParams()
         {
@@ -1001,7 +1001,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
         var dbRequestContext = new DbRequestContext()
         {
-            //SecurityConfig = securityConfig,
+            SecurityConfig = securityConfig,
             Params = parameters
         };
         var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
@@ -1014,7 +1014,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.Count;
     }
 
-    public async Task<QResult> QuerySearchSMEs(string requested, bool withTotalCount, bool withLastId, string smSemanticId, string smIdentifier, string semanticId, string diff, string contains, string equal, string lower, string upper, IPaginationParameters paginationParameters, string expression)
+    public async Task<QResult> QuerySearchSMEs(ISecurityConfig securityConfig, string requested, bool withTotalCount, bool withLastId, string smSemanticId, string smIdentifier, string semanticId, string diff, string contains, string equal, string lower, string upper, IPaginationParameters paginationParameters, string expression)
     {
         var parameters = new DbRequestParams()
         {
@@ -1039,7 +1039,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
         var dbRequestContext = new DbRequestContext()
         {
-            //SecurityConfig = securityConfig,
+            SecurityConfig = securityConfig,
             Params = parameters
         };
         var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
@@ -1052,7 +1052,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.QueryResult;
     }
 
-    public async Task<int> QueryCountSMEs(string smSemanticId, string smIdentifier, string semanticId, string diff, string contains,
+    public async Task<int> QueryCountSMEs(ISecurityConfig securityConfig, string smSemanticId, string smIdentifier, string semanticId, string diff, string contains,
         string equal, string lower, string upper,  IPaginationParameters paginationParameters, string expression)
     {
         var parameters = new DbRequestParams()
@@ -1075,7 +1075,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
         var dbRequestContext = new DbRequestContext()
         {
-            //SecurityConfig = securityConfig,
+            SecurityConfig = securityConfig,
             Params = parameters
         };
         var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
@@ -1114,7 +1114,6 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         var tcs = await taskCompletionSource.Task;
         return tcs.Submodels;
     }
-
 
     private void IncrementCounter()
     {

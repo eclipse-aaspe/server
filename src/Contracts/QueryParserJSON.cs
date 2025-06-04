@@ -206,7 +206,7 @@ public class QueryGrammarJSON : Grammar
 
     public string idShortPath = "";
 
-    static void PrintParseTree(ParseTreeNode node, int indent, StringWriter sw)
+    void PrintParseTree(ParseTreeNode node, int indent, StringWriter sw)
     {
         if (node == null)
             return;
@@ -263,9 +263,9 @@ public class QueryGrammarJSON : Grammar
         public string idShortPath = "";
     }
 
-    static List<string> skip = new List<string>() { "?", "\"Query\":", "\"$condition\":" };
-    static List<string> startsWith = new List<string>() { "Unnamed", "__", "query" };
-    static List<string> keep1 = new List<string>() { "\"$and\":", "\"$or\":", "\"$not\":" };
+    List<string> skip = new List<string>() { "?", "\"Query\":", "\"$condition\":" };
+    List<string> startsWith = new List<string>() { "Unnamed", "__", "query" };
+    List<string> keep1 = new List<string>() { "\"$and\":", "\"$or\":", "\"$not\":" };
 
     private void setParent(treeNode parent, List<treeNode> Children)
     {
@@ -477,11 +477,11 @@ public class QueryGrammarJSON : Grammar
 
         return tn;
     }
-    public string ParseTreeToExpressionWithAccessRules(ParseTreeNode node, string typePrefix, ref int upperCountTypePrefix, string parentType = "")
+    public string ParseTreeToExpressionWithAccessRules(bool noSecurity, ParseTreeNode node, string typePrefix, ref int upperCountTypePrefix, string parentType = "")
     {
         var result = ParseTreeToExpression(node, typePrefix, ref upperCountTypePrefix, parentType);
 
-        if (accessRuleNode == null && accessRuleExpression.TryGetValue("all", out _))
+        if (!noSecurity && accessRuleNode == null && accessRuleExpression.TryGetValue("all", out _))
         {
             switch (typePrefix)
             {
@@ -1068,7 +1068,7 @@ public class QueryGrammarJSON : Grammar
     public static new Dictionary<string, string> accessRuleExpression = [];
     // public static string accessRuleExpression = "((sm.idShort==\"Nameplate\")||(sm.idShort==\"TechnicalData\"))";
     // public static string accessRuleExpression = "(sm.idShort==\"Nameplate\")";
-    public static treeNode accessRuleNode = null;
+    public treeNode accessRuleNode = null;
     public void ParseAccessRules(ParseTreeNode node)
     {
         // mySecurityRules.ClearSecurityRules();
@@ -1082,14 +1082,14 @@ public class QueryGrammarJSON : Grammar
         }
     }
 
-    static List<string> Names = new List<string>();
-    static string access = "";
-    static string rights = "";
-    static string global = "";
-    static bool isClaim = false;
-    static string claim = "";
-    static bool filter = false;
-    static bool route = false;
+    List<string> Names = new List<string>();
+    string access = "";
+    string rights = "";
+    string global = "";
+    bool isClaim = false;
+    string claim = "";
+    bool filter = false;
+    bool route = false;
     void ParseAccessRule(ParseTreeNode node)
     {
         switch (node.Term.Name)

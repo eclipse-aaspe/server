@@ -20,7 +20,14 @@ public class SecurityConfig : ISecurityConfig
 
         if (!noSecurity)
         {
-            this.Principal = controllerBase.User;
+            if (controllerBase != null)
+            {
+                this.Principal = controllerBase.User;
+            }
+            else
+            {
+                this.Principal = null;
+            }
         }
 
         PrintMemoryUsage();
