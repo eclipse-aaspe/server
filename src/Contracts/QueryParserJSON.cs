@@ -1,6 +1,7 @@
 using AasSecurity.Models;
 using Irony.Parsing;
 using Contracts;
+using System.Linq.Expressions;
 
 public class QueryGrammarJSON : Grammar
 {
@@ -1118,9 +1119,20 @@ public class QueryGrammarJSON : Grammar
                 var count = 0;
                 if (!filter)
                 {
+                    var expression = "";
                     accessRuleExpression["all"] = ParseTreeToExpression(tn, "", ref count);
-                    accessRuleExpression["sm."] = ParseTreeToExpression(tn, "sm.", ref count);
-                    accessRuleExpression["sme."] = ParseTreeToExpression(tn, "sme.", ref count);
+                    expression = ParseTreeToExpression(tn, "sm.", ref count);
+                    if (expression == "$SKIP")
+                    {
+                        expression = "";
+                    }
+                    accessRuleExpression["sm."] = expression;
+                    expression = ParseTreeToExpression(tn, "sme.", ref count);
+                    if (expression == "$SKIP")
+                    {
+                        expression = "";
+                    }
+                    accessRuleExpression["sme."] = expression;
                     accessRuleExpression["claim"] = claim;
                     accessRuleExpression["right"] = rights;
                 }

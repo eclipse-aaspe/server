@@ -5,27 +5,6 @@
         "ACL": {
           "ATTRIBUTES": [
             {
-              "CLAIM": "__Albert__Alb"
-            }
-          ],
-          "RIGHTS": [
-            "READ", "CREATE", "UPDATE", "DELETE"
-          ],
-          "ACCESS": "ALLOW"
-        },
-        "OBJECTS": [
-          {
-            "ROUTE": "*"
-          }
-        ],
-        "FORMULA": {
-          "$boolean": true
-        }
-      },
-      {
-        "ACL": {
-          "ATTRIBUTES": [
-            {
               "CLAIM": "isNotAuthenticated"
             }
           ],
@@ -37,9 +16,6 @@
         "OBJECTS": [
           {
             "ROUTE": "/submodels/*"
-          },
-          {
-            "ROUTE": "/shells/aHR0cHM6Ly96dmVpLm9yZy9kZW1vL2Fhcy9Db250cm9sQ2FiaW5ldA"
           }
         ],
         "FORMULA": {
@@ -55,16 +31,6 @@
                       "$strVal": "Nameplate"
                     }
                   ]
-                },
-                {
-                  "$starts_with": [
-                    {
-                      "$field": "$sme#idShort"
-                    },
-                    {
-                      "$strVal": "Manufacturer"
-                    }
-                  ]
                 }
               ]
             },
@@ -74,32 +40,17 @@
                   "$field": "$sm#idShort"
                 },
                 {
-                  "$strVal": "TechnicalData"
-                }
-              ]
-            }
-          ]
-        },
-        "FRAGMENT": "sme#",
-        "FILTER": {
-          "$or": [
-            {
-              "$starts_with": [
-                {
-                  "$field": "$sme#idShort"
-                },
-                {
-                  "$strVal": "Manufacturer"
+                  "$strVal": "ProductChangeNotifications"
                 }
               ]
             },
             {
-              "$starts_with": [
+              "$eq": [
                 {
-                  "$field": "$sme#idShort"
+                  "$field": "$sm#idShort"
                 },
                 {
-                  "$strVal": "General"
+                  "$strVal": "DB"
                 }
               ]
             }

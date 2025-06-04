@@ -10,7 +10,7 @@
     },
     "AasxServerBlazor": {
       "commandName": "Project",
-      "commandLineArgs": "--no-security --with-db --start-index 0 --save-temp 30 --secret-string-api 1234 --aasx-in-memory 1000 --data-path \"C:\\Users\\ee924l\\Documents\\aas\\aasxs-repository\" --edit --external-blazor http://localhost:5001",
+      "commandLineArgs": "--with-db --start-index 1000 --save-temp 30 --secret-string-api 1234 --aasx-in-memory 1000 --data-path \"C:/Development/p3\" --edit --external-blazor http://localhost:5001",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",

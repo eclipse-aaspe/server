@@ -21,7 +21,6 @@ using System.Threading.Tasks;
 
 using System.Linq.Dynamic.Core;
 using AasxServerDB.Entities;
-using System.Net.Mime;
 
 public class EntityFrameworkPersistenceService : IPersistenceService
 {
@@ -1068,10 +1067,12 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         if (diff == "status")
         {
+            /*
             if (eventData.LastUpdate != null && eventData.LastUpdate.Value != null && eventData.LastUpdate.Value != "")
             {
                 eventPayload.status.lastUpdate = eventData.LastUpdate.Value;
             }
+            */
         }
         else
         {

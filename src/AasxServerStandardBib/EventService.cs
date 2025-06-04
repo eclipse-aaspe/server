@@ -314,10 +314,32 @@ public class EventService : IEventService
                         searchSM = $"({securityCondition["sm."]})&&({searchSM})";
                     }
                 }
+                if (securityCondition != null && securityCondition.TryGetValue("sm.", out _))
+                {
+                    if (searchSM == string.Empty)
+                    {
+                        searchSM = securityCondition["sm."];
+                    }
+                    else
+                    {
+                        searchSM = $"({securityCondition["sm."]})&&({searchSM})";
+                    }
+                }
                 if (conditionSME != null && conditionSME.Value != null)
                 {
                     searchSME = conditionSME.Value;
                     if (securityCondition != null && securityCondition.TryGetValue("sme.", out _))
+                    {
+                        searchSME = $"({securityCondition["sme."]})&&({searchSME})";
+                    }
+                }
+                if (securityCondition != null && securityCondition.TryGetValue("sme.", out _))
+                {
+                    if (searchSME == string.Empty)
+                    {
+                        searchSME = securityCondition["sme."];
+                    }
+                    else
                     {
                         searchSME = $"({securityCondition["sme."]})&&({searchSME})";
                     }
@@ -343,6 +365,7 @@ public class EventService : IEventService
                         {
                             timeStampMax = s.Max();
                         }
+
                     }
                     e.status.lastUpdate = TimeStamp.TimeStamp.DateTimeToString(timeStampMax);
                     return e;
