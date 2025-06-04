@@ -230,9 +230,10 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     [Route("/submodels/{submodelIdentifier}/events/{eventName}")]
     [ValidateModelState]
     [SwaggerOperation("PutEventMessages")]
+    [Consumes("text/plain")]
     [SwaggerResponse(statusCode: 200, type: typeof(String), description: "List of Text")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
-    public async virtual Task<IActionResult> PutEventMessages([FromRoute][Required] string submodelIdentifier, [Required] string eventName)
+    public async virtual Task<IActionResult> PutEventMessages([FromRoute][Required] string submodelIdentifier, [Required] string eventName, [FromBody][Required] string body)
     {
         if (debug)
         {
@@ -269,35 +270,30 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             packageIndex++;
         }
 
-        using (var reader = new StreamReader(HttpContext.Request.Body))
+        if (!Program.noSecurity)
         {
-            var body = reader.ReadToEndAsync().Result;
-
-            if (!Program.noSecurity)
+            var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
+            if (!authResult.Succeeded)
             {
-                var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-                if (!authResult.Succeeded)
-                {
-                    isRunning = false;
-                    throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
-                }
+                isRunning = false;
+                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
             }
-
-            // Now you can use jsonBody as needed
-
-            var eventRequest = new DbEventRequest()
-            {
-                Env = Program.env,
-                PackageIndex = packageIndex,
-                EventName = eventName,
-                Submodel = submodel,
-                Body = body,
-            };
-
-            await _dbRequestHandlerService.UpdateEventMessages(securityConfig, eventRequest);
-
-            Program.signalNewData(2);
         }
+
+        // Now you can use jsonBody as needed
+
+        var eventRequest = new DbEventRequest()
+        {
+            Env = Program.env,
+            PackageIndex = packageIndex,
+            EventName = eventName,
+            Submodel = submodel,
+            Body = body,
+        };
+
+        await _dbRequestHandlerService.UpdateEventMessages(securityConfig, eventRequest);
+
+        Program.signalNewData(2);
 
         if (debug)
         {
