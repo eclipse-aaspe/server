@@ -206,21 +206,20 @@
 									</tbody>
 								</table>
                                 <br />
-                                <span>Internal conditions:</span>
-                                foreach (var cList in condition)
+                                <span><b>Internal conditions:</b></span>
+                                <br />
+                                @foreach (var dict in condition)
                                 {
-                                    foreach (var c in cList)
+    								<table class="table table-bordered table-sm">
+                                    @foreach (var kvp in dict)
                                     {
-                                        <span></span>
+                                        <tr>
+                                            <td>@kvp.Key</td>
+                                            <td>@kvp.Value</td>
+                                        </tr>
                                     }
-                                }
-
-                                foreach (var dict in condition)
-                                {
-                                    foreach (var kvp in dict)
-                                    {
-                                        <span>@kvp.Key : @kvp.Value</span>
-                                    }
+                                    </table>
+                                    <br />
                                 }
                             }
 							else
