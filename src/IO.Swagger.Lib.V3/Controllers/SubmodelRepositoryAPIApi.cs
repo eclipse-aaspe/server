@@ -71,7 +71,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
     private readonly IPathModifierService _pathModifierService;
     private readonly ILevelExtentModifierService _levelExtentModifierService;
     private readonly IPaginationService _paginationService;
-    private readonly IAuthorizationService _authorizationService;
     private readonly IValidateSerializationModifierService _validateModifierService;
     private readonly IDbRequestHandlerService _dbRequestHandlerService;
     private readonly IMetamodelVerificationService _verificationService;
@@ -92,7 +91,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         _pathModifierService = pathModifierService ?? throw new ArgumentNullException(nameof(pathModifierService));
         _levelExtentModifierService = levelExtentModifierService ?? throw new ArgumentNullException(nameof(levelExtentModifierService));
         _paginationService = paginationService ?? throw new ArgumentNullException(nameof(paginationService));
-        _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
         _validateModifierService = validateModifierService ?? throw new ArgumentNullException(nameof(validateModifierService));
         _dbRequestHandlerService = dbRequestHandlerService ?? throw new ArgumentNullException(nameof(dbRequestHandlerService));
         _verificationService = verificationService ?? throw new ArgumentNullException(nameof(verificationService));
@@ -115,19 +113,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         {
             throw new NotAllowed($"Decoding {submodelIdentifier} returned null");
         }
-
-        /*
-        var securityConfig = new SecurityConfig(Program.noSecurity, this);
-        var submodel = _persistenceService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-        if (!Program.noSecurity)
-        {
-            var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-            if (!authResult.Succeeded)
-            {
-                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
-            }
-        }
-        */
 
         Submodel submodel = null;
         int packageIndex = 0;
@@ -153,12 +138,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
                 if (!isAllowed)
                 {
                     throw new NotAllowed($"NOT ALLOWED: API route");
-                }
-
-                var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-                if (!authResult.Succeeded)
-                {
-                    throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
                 }
             }
 
@@ -280,13 +259,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
             {
                 throw new NotAllowed($"NOT ALLOWED: API route");
             }
-
-            var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-            if (!authResult.Succeeded)
-            {
-                isRunning = false;
-                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
-            }
         }
 
         // Now you can use jsonBody as needed
@@ -348,19 +320,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
         _logger.LogInformation($"Received a request to delete a file at {idShortPath} from the submodel {decodedSubmodelIdentifier}");
-        if (!Program.noSecurity)
-        {
-            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
-            var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
-            var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
-            var principal = new System.Security.Principal.GenericPrincipal(identity, null);
-            var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
-            if (!authResult.Succeeded)
-            {
-                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
-            }
-        }
         await _dbRequestHandlerService.DeleteFileByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
 
         return NoContent();
@@ -437,20 +396,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-        if (!Program.noSecurity)
-        {
-            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
-            var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
-            var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
-            var principal = new System.Security.Principal.GenericPrincipal(identity, null);
-            var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
-            if (!authResult.Succeeded)
-            {
-                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
-            }
-        }
-
         _logger.LogInformation($"Received a request to delete a submodel element at {idShortPath} from submodel with id {decodedSubmodelIdentifier}");
         // return StatusCode(500, default(Result));
 
@@ -502,16 +447,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         _logger.LogInformation($"Received a request to get all the submodel elements from submodel with id {decodedSubmodelIdentifier}");
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
-
-        //   if (!Program.noSecurity)
-        //{
-        //    var submodel   = _persistenceService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-        //    var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-        //    if (!authResult.Succeeded)
-        //    {
-        //        throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
-        //    }
-        //}
 
         var paginationParameters = new PaginationParameters(cursor, limit);
         var submodelElements = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, null, decodedSubmodelIdentifier);
@@ -655,16 +590,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-        if (!Program.noSecurity)
-        {
-            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-            var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-            if (!authResult.Succeeded)
-            {
-                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
-            }
-        }
-
         var paginationParameters = new PaginationParameters(cursor, limit);
         var smeList = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, null, decodedSubmodelIdentifier);
 
@@ -727,17 +652,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         _logger.LogDebug($"Received request to get all the submodel elements from the submodel with id {decodedSubmodelIdentifier}");
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
-
-        if (!Program.noSecurity)
-        {
-            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-            var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-            if (!authResult.Succeeded)
-            {
-                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
-            }
-        }
-
 
         var paginationParameters = new PaginationParameters(cursor, limit);
         var submodelElementList = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, null, decodedSubmodelIdentifier);
@@ -806,15 +720,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
         _logger.LogInformation($"Received a request to get all the submodel elements from submodel with id {decodedSubmodelIdentifier}");
-        if (!Program.noSecurity)
-        {
-            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-            var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-            if (!authResult.Succeeded)
-            {
-                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
-            }
-        }
         var paginationParameters = new PaginationParameters(cursor, limit);
         var smeList = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, null, decodedSubmodelIdentifier);
 
@@ -869,16 +774,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         _logger.LogInformation($"Received request to get value of all the submodel elements from the submodel with id {decodedSubmodelIdentifier}");
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
-
-        if (!Program.noSecurity)
-        {
-            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-            var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-            if (!authResult.Succeeded)
-            {
-                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
-            }
-        }
 
         var paginationParameters = new PaginationParameters(cursor, limit);
         var submodelElements = await _dbRequestHandlerService.ReadPagedSubmodelElements(paginationParameters, securityConfig, null, decodedSubmodelIdentifier);
@@ -1161,20 +1056,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-        if (!Program.noSecurity)
-        {
-            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
-            var claimsList = new List<Claim>(User.Claims) { new Claim("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
-            var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
-            var principal = new System.Security.Principal.GenericPrincipal(identity, null);
-            var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
-            if (!authResult.Succeeded)
-            {
-                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
-            }
-        }
-
         var dbFileRequestResult = await _dbRequestHandlerService.ReadFileByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
 
         var fileName = dbFileRequestResult.File;
@@ -1322,8 +1203,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
 
-        var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-
         // JUIJUI
         // with HEAD the needed policy shall be returned
         // access must be checked, but no given policy is ok
@@ -1375,20 +1254,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
 
-        /*
-        var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-        if (!authResult.Succeeded)
-        {
-            var failedReason = authResult.Failure.FailureReasons.First();
-            if (failedReason.Message != "")
-            {
-                throw new NotAllowed(failedReason.Message);
-            }
-
-            throw new NotAllowed("Policy incorrect!");
-        }
-        */
-
         var output = _levelExtentModifierService.ApplyLevelExtent(submodel, levelEnum, extentEnum);
 
         //TODO:jtikekar @Andreas, in earlier API policy set as getPolicy
@@ -1430,15 +1295,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
         var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-        var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-        if (!authResult.Succeeded)
-        {
-            var failedReason = authResult.Failure.FailureReasons.First();
-            if (failedReason != null)
-            {
-                throw new NotAllowed(failedReason.Message);
-            }
-        }
 
         var output = _mappingService.Map(submodel, "metadata");
         return new ObjectResult(output);
@@ -1482,15 +1338,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
         var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-        var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-        if (!authResult.Succeeded)
-        {
-            var failedReason = authResult.Failure.FailureReasons.First();
-            if (failedReason != null)
-            {
-                throw new NotAllowed(failedReason.Message);
-            }
-        }
 
         var submodelLevel = _levelExtentModifierService.ApplyLevelExtent(submodel, levelEnum);
         var output = _pathModifierService.ToIdShortPath(submodelLevel);
@@ -1532,15 +1379,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
         var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-        var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-        if (!authResult.Succeeded)
-        {
-            var failedReason = authResult.Failure.FailureReasons.First();
-            if (failedReason != null)
-            {
-                throw new NotAllowed(failedReason.Message);
-            }
-        }
 
         var output = _referenceModifierService.GetReferenceResult(submodel);
         return new ObjectResult(output);
@@ -1586,15 +1424,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
         var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-        var authResult = _authorizationService.AuthorizeAsync(User, submodel, "SecurityPolicy").Result;
-        if (!authResult.Succeeded)
-        {
-            var failedReason = authResult.Failure.FailureReasons.First();
-            if (failedReason != null)
-            {
-                throw new NotAllowed(failedReason.Message);
-            }
-        }
 
         var submodelLevel = _levelExtentModifierService.ApplyLevelExtent(submodel, levelEnum, extentEnum);
         var output = _mappingService.Map(submodelLevel, "value");
@@ -1636,20 +1465,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
         var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
-        if (!Program.noSecurity)
-        {
-            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
-            var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
-            var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
-            var principal = new System.Security.Principal.GenericPrincipal(identity, null);
-            var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
-            if (!authResult.Succeeded)
-            {
-                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
-            }
-        }
-
         var output = _mappingService.Map(submodelElement, "metadata");
 
         return new ObjectResult(output);
@@ -1695,19 +1510,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         //var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
 
         var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
-        if (!Program.noSecurity)
-        {
-            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
-            var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
-            var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
-            var principal = new System.Security.Principal.GenericPrincipal(identity, null);
-            var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
-            if (!authResult.Succeeded)
-            {
-                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
-            }
-        }
 
         var submodelElementLevel = _levelExtentModifierService.ApplyLevelExtent(submodelElement, levelEnum);
         var output = _pathModifierService.ToIdShortPath(submodelElementLevel);
@@ -1750,22 +1552,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
-
-        if (!Program.noSecurity)
-        {
-            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
-            var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
-            var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
-            var principal = new System.Security.Principal.GenericPrincipal(identity, null);
-            var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
-            if (!authResult.Succeeded)
-            {
-                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
-            }
-        }
-
-        //var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
 
         var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
 
@@ -1877,21 +1663,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
-
-        if (!Program.noSecurity)
-        {
-            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
-            var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
-            var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
-            var principal = new System.Security.Principal.GenericPrincipal(identity, null);
-            var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
-            if (!authResult.Succeeded)
-            {
-                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
-            }
-        }
-        //var idShortPathElements = _idShortPathParserService.ParseIdShortPath(idShortPath);
 
         var submodelElement = await _dbRequestHandlerService.ReadSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath);
 
@@ -2389,19 +2160,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
         _logger.LogInformation($"Received request to create a new submodel element at {idShortPath} in the submodel with id {decodedSubmodelIdentifier}");
-        if (!Program.noSecurity)
-        {
-            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-            User.Claims.ToList().Add(new Claim("idShortPath", $"{submodel.IdShort}.{idShortPath}"));
-            var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{idShortPath}") };
-            var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
-            var principal = new System.Security.Principal.GenericPrincipal(identity, null);
-            var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
-            if (!authResult.Succeeded)
-            {
-                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
-            }
-        }
 
         var output = _dbRequestHandlerService.CreateSubmodelElement(securityConfig, null, decodedSubmodelIdentifier, body, idShortPath);
 
@@ -2457,20 +2215,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         }
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
-
-        if (!Program.noSecurity)
-        {
-            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-            var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{body.IdShort}") };
-            var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
-            var principal = new System.Security.Principal.GenericPrincipal(identity, null);
-            var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
-            if (!authResult.Succeeded)
-            {
-                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
-            }
-        }
-
 
         var output = await _dbRequestHandlerService.CreateSubmodelElement(securityConfig, null, decodedSubmodelIdentifier, body, null, first);
 
@@ -2565,18 +2309,6 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-        if (!Program.noSecurity)
-        {
-            var submodel = await _dbRequestHandlerService.ReadSubmodelById(securityConfig, null, decodedSubmodelIdentifier);
-            var claimsList = new List<Claim>(User.Claims) { new("IdShortPath", $"{submodel.IdShort}.{body.IdShort}") };
-            var identity = new ClaimsIdentity(claimsList, "AasSecurityAuth");
-            var principal = new System.Security.Principal.GenericPrincipal(identity, null);
-            var authResult = _authorizationService.AuthorizeAsync(principal, submodel, "SecurityPolicy").Result;
-            if (!authResult.Succeeded)
-            {
-                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
-            }
-        }
         await _dbRequestHandlerService.ReplaceSubmodelElementByPath(securityConfig, null, decodedSubmodelIdentifier, idShortPath, body);
 
         return NoContent();
