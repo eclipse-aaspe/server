@@ -167,7 +167,9 @@
                             {
                                 List<Dictionary<string, string>> condition = [];
                                 var accessRules = SecService.GetSecurityRules(out condition);
-								<table class="table table-bordered table-sm">
+                                <span><b>AAS API</b></span>
+                                <br />
+                                <table class="table table-bordered table-sm">
 									<thead>
 										<tr>
 											<th>Name</th>
@@ -206,7 +208,7 @@
 									</tbody>
 								</table>
                                 <br />
-                                <span><b>Internal conditions:</b></span>
+                                <span><b>AAS Data</b></span>
                                 <br />
                                 @foreach (var dict in condition)
                                 {
