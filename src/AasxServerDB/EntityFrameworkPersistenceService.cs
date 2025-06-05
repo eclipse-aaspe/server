@@ -1427,7 +1427,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
     private bool InitSecurity(ISecurityConfig? securityConfig, out Dictionary<string, string>? securityCondition)
     {
         securityCondition = null;
-        if (securityConfig != null && !securityConfig.NoSecurity)
+        if (securityConfig != null && securityConfig.Principal != null && !securityConfig.NoSecurity)
         {
             // Get claims
             var authResult = false;

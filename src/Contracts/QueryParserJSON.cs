@@ -486,7 +486,7 @@ public class QueryGrammarJSON : Grammar
             switch (typePrefix)
             {
                 case "":
-                    result = $"({accessRuleExpression})&&({result})";
+                    result = $"({accessRuleExpression["all"]})&&({result})";
                     break;
                 case "sm.":
                     result = result.Replace("$SKIP", "true");
