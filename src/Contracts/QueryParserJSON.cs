@@ -157,7 +157,18 @@ public class QueryGrammarJSON : Grammar
                                                                                          ("\"USEOBJECTS\":" + useobjectsArray)) + ToTerm("}");
         defformulasArray.Rule = "[" + defformulas + (ToTerm(",") + defformulas).Q() + "]";
         defformulas.Rule = ToTerm("{") + "\"name\":" + stringLiteral + ToTerm(",") + "\"formula\":" + logicalExpression + ToTerm("}");
-        accessPermissionRuleArray.Rule = ToTerm("[") + accessPermissionRule + (ToTerm(",") + accessPermissionRule).Q() + "]";
+        accessPermissionRuleArray.Rule = ToTerm("[")
+            + accessPermissionRule
+            + (ToTerm(",") + accessPermissionRule).Q()
+            + (ToTerm(",") + accessPermissionRule).Q()
+            + (ToTerm(",") + accessPermissionRule).Q()
+            + (ToTerm(",") + accessPermissionRule).Q()
+            + (ToTerm(",") + accessPermissionRule).Q()
+            + (ToTerm(",") + accessPermissionRule).Q()
+            + (ToTerm(",") + accessPermissionRule).Q()
+            + (ToTerm(",") + accessPermissionRule).Q()
+            + (ToTerm(",") + accessPermissionRule).Q()
+            + "]";
         accessPermissionRule.Rule = ToTerm("{") + (("\"ACL\":" + acl) |
                                                 ("\"USEACL\":" + stringLiteral)) +
                                     ((ToTerm(",") + "\"OBJECTS\":" + objectArray) |
