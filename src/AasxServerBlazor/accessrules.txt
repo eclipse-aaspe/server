@@ -5,6 +5,54 @@
         "ACL": {
           "ATTRIBUTES": [
             {
+              "CLAIM": "__Albert__Alb"
+            }
+          ],
+          "RIGHTS": [
+            "READ",
+            "CREATE",
+            "UPDATE",
+            "DELETE"
+          ],
+          "ACCESS": "ALLOW"
+        },
+        "OBJECTS": [
+          {
+            "ROUTE": "*"
+          }
+        ],
+        "FORMULA": {
+          "$boolean": true
+        }
+      },
+      {
+        "ACL": {
+          "ATTRIBUTES": [
+            {
+              "CLAIM": "isSuperDuperUser"
+            }
+          ],
+          "RIGHTS": [
+            "READ",
+            "CREATE",
+            "UPDATE",
+            "DELETE"
+          ],
+          "ACCESS": "ALLOW"
+        },
+        "OBJECTS": [
+          {
+            "ROUTE": "*"
+          }
+        ],
+        "FORMULA": {
+          "$boolean": true
+        }
+      },
+      {
+        "ACL": {
+          "ATTRIBUTES": [
+            {
               "CLAIM": "isNotAuthenticated"
             }
           ],
@@ -21,16 +69,12 @@
         "FORMULA": {
           "$or": [
             {
-              "$and": [
+              "$eq": [
                 {
-                  "$eq": [
-                    {
-                      "$field": "$sm#idShort"
-                    },
-                    {
-                      "$strVal": "Nameplate"
-                    }
-                  ]
+                  "$field": "$sm#idShort"
+                },
+                {
+                  "$strVal": "Nameplate"
                 }
               ]
             },
