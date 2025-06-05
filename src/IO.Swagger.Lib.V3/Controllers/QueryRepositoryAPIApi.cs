@@ -91,16 +91,6 @@ public class QueryRepositoryAPIApiController : ControllerBase
         var submodelList = new List<ISubmodel>();
         var paginationParameters = new PaginationParameters(cursor, limit);
 
-
-        if (!Program.noSecurity)
-        {
-            var authResult = _authorizationService.AuthorizeAsync(User, "SecurityPolicy").Result;
-            if (!authResult.Succeeded)
-            {
-                throw new NotAllowed(authResult.Failure.FailureReasons.FirstOrDefault()?.Message ?? string.Empty);
-            }
-        }
-
         submodelList = await _dbRequestHandlerService.QueryGetSMs(securityConfig, paginationParameters, expression);
 
         if (submodelList.IsNullOrEmpty())
