@@ -14,6 +14,7 @@ public class MqttClientService
     public MqttClientService(ILogger<MqttClientService> logger)
     {
         _logger = logger;
+        Console.WriteLine("MqttClientService");
 
         var factory = new MqttClientFactory();
         _mqttClient = factory.CreateMqttClient();
@@ -40,6 +41,7 @@ public class MqttClientService
         {
             await _mqttClient.ConnectAsync(_options);
             _logger.LogInformation("MQTT connected.");
+            Console.WriteLine("MQTT connected.");
         }
     }
 
@@ -48,6 +50,7 @@ public class MqttClientService
         if (_mqttClient.IsConnected)
         {
             _logger.LogInformation("MQTT disconnected.");
+            Console.WriteLine("MQTT disconnected.");
         }
     }
 
@@ -69,6 +72,7 @@ public class MqttClientService
 
             await _mqttClient.PublishAsync(message);
             _logger.LogInformation("MQTT message sent.");
+            Console.WriteLine("MQTT message sent.");
         }
     }
 }
@@ -92,6 +96,7 @@ public class SubmodelPublisherService : BackgroundService
         enable = envValue == "1";
 
         _logger.LogInformation($"SubmodelPublisherService enabled: {enable}");
+        Console.WriteLine("SubmodelPublisherService");
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
