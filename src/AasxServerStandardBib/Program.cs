@@ -1009,6 +1009,7 @@ namespace AasxServer
             //// ProductChange.pcn.pcnInit();
 
             isLoading = false;
+            Running.SetRunning();
 
             /*
             if (a.Mqtt)
