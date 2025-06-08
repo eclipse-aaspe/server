@@ -57,13 +57,16 @@
             }
           ],
           "RIGHTS": [
-            "READ"
+            "READ", "CREATE"
           ],
           "ACCESS": "ALLOW"
         },
         "OBJECTS": [
           {
-            "ROUTE": "/submodels/*"
+            "ROUTE": "/submodels"
+          },
+          {
+            "ROUTE": "/query/submodels"
           }
         ],
         "FORMULA": {

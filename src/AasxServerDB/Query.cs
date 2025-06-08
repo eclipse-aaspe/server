@@ -293,6 +293,7 @@ public partial class Query
 
             var timeStamp = DateTime.UtcNow;
 
+            // TODO Wadim: withSelect == true -> only return Submodel ID list
             foreach (var sm in smList.Select(selector: submodelDB =>
                 CrudOperator.ReadSubmodel(db, smDB: submodelDB, "", securityCondition)))
             {
@@ -369,6 +370,11 @@ public partial class Query
         if (conditionsExpression == null)
         {
             return null;
+        }
+
+        if (conditionsExpression.ContainsKey("select"))
+        {
+            qResult.withSelect = true;
         }
 
         if (conditionsExpression.ContainsKey("AccessRules"))
@@ -1671,6 +1677,10 @@ public partial class Query
 
                 int countTypePrefix = 0;
                 condition["all"] = grammar.ParseTreeToExpressionWithAccessRules(noSecurity, parseTree.Root, "", ref countTypePrefix);
+                if (grammar.withSelect)
+                {
+                    condition["select"] = "true";
+                }
                 if (condition["all"].Contains("$$path$$"))
                 {
                     messages.Add("PATH SEARCH");

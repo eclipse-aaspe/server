@@ -29,6 +29,7 @@ public class QueryGrammarJSON : Grammar
         // Define non-terminals
         var json = new NonTerminal("json");
         var query = new NonTerminal("query");
+        var selectLiteral = ToTerm("\"id\"");
         var logicalExpression = new NonTerminal("logical_expression");
         var matchExpression = new NonTerminal("match_expression");
         var comparisonItems = new NonTerminal("comparison_items");
@@ -65,7 +66,13 @@ public class QueryGrammarJSON : Grammar
         json.Rule = (query | allAccessPermissionRules);
         // json.Rule = (allAccessPermissionRules);
         // query.Rule = ToTerm("{") + "\"Query\":" + ToTerm("{") + "\"$condition\":" + logicalExpression + (ToTerm(",") + "\"$select\":" + "id").Q() + ToTerm("}") + ToTerm("}");
-        query.Rule = ToTerm("{") + "\"Query\":" + ToTerm("{") + "\"$condition\":" + logicalExpression + ToTerm("}") + ToTerm("}");
+        // query.Rule = ToTerm("{") + "\"Query\":" + ToTerm("{") + "\"$condition\":" + logicalExpression + ToTerm("}") + ToTerm("}");
+
+        query.Rule = ToTerm("{") + "\"Query\":" + ToTerm("{") +
+            (ToTerm("\"$select\":") + selectLiteral + ToTerm(",")).Q() +
+            "\"$condition\":" + logicalExpression +
+            ToTerm("}") + ToTerm("}");
+
         logicalExpression.Rule = ToTerm("{") + (("\"$and\":" + logicalExpressionArray) |
                                             ("\"$or\":" + logicalExpressionArray) |
                                             ("\"$not\":" + logicalExpression) |
@@ -216,6 +223,7 @@ public class QueryGrammarJSON : Grammar
     private IContractSecurityRules mySecurityRules;
 
     public string idShortPath = "";
+    public bool withSelect;
 
     void PrintParseTree(ParseTreeNode node, int indent, StringWriter sw)
     {
@@ -311,7 +319,19 @@ public class QueryGrammarJSON : Grammar
         foreach (var c in node.ChildNodes)
         {
             if (skip.Contains(c.Term.Name))
+            {
+                if (c.Term.Name == "?")
+                {
+                    if (c.ChildNodes.Count == 2)
+                    {
+                        if (c.ChildNodes[0].Term.Name == "\"$select\":")
+                        {
+                            withSelect = true;
+                        }
+                    }
+                }
                 continue;
+            }
 
             var tc = simplifyTree(c);
             if (tc != null)
@@ -466,6 +486,9 @@ public class QueryGrammarJSON : Grammar
             case "\"$field\":":
                 tn.Type = "field";
                 break;
+            case "\"$select\":":
+                withSelect = true;
+                break;
             default:
                 break;
         }
@@ -575,6 +598,9 @@ public class QueryGrammarJSON : Grammar
 
         switch (name)
         {
+            case "\"$select\":":
+                withSelect = true;
+                break;
             case "\"$and\":":
                 op = "&&";
                 pattern = "andor";
