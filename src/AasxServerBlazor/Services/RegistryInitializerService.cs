@@ -24,6 +24,7 @@ using System;
 using AasxServerBlazor.Interfaces;
 using Extensions;
 using IdentityModel.Client;
+using IO.Swagger.Lib.V3.Middleware;
 
 public class RegistryInitializerService : IRegistryInitializerService
 {
@@ -769,7 +770,7 @@ public class RegistryInitializerService : IRegistryInitializerService
             //
             var extSubjId = new Reference(ReferenceTypes.ExternalReference, new List<IKey> { new Key(KeyTypes.GlobalReference, "assetKind") });
             var specificAssetId = new SpecificAssetId("assetKind", aas?.AssetInformation?.AssetKind.ToString(CultureInfo.InvariantCulture), externalSubjectId: extSubjId);
-            ad.SpecificAssetIds = new List<SpecificAssetId> { specificAssetId };
+            ad.SpecificAssetIds = new List<ISpecificAssetId> { specificAssetId };
 
             // Submodels
             if (aas?.Submodels != null && aas.Submodels.Count > 0)

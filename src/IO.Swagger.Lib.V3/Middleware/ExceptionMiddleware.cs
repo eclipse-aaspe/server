@@ -153,7 +153,7 @@ namespace IO.Swagger.Lib.V3.Middleware
             }
 
             result.Messages = new List<Message>() { message };
-            await context.Response.WriteAsync(result.ToJson());
+            await context.Response.WriteAsync(ExceptionResultSerializer.ToJsonObject(result)!.ToString());
         }
     }
 }

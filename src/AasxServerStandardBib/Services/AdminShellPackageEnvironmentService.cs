@@ -11,7 +11,6 @@ using AasxServerStandardBib.Logging;
 using AdminShellNS;
 using Extensions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Org.BouncyCastle.Asn1.Smime;
 using System;
 using System.Collections.Generic;
@@ -540,7 +539,7 @@ namespace AasxServerStandardBib.Services
             }
 
             var submodels = output.Where(s => s.SemanticId.Matches(reqSemanticId)).ToList();
-            if (submodels.IsNullOrEmpty())
+            if (submodels == null || submodels.Count == 0)
             {
                 _logger.LogInformation("Submodels with requested SemanticId not found.");
             }
@@ -559,7 +558,7 @@ namespace AasxServerStandardBib.Services
             }
 
             var submodels = output.Where(s => s.IdShort != null && s.IdShort.Equals(idShort, StringComparison.Ordinal)).ToList();
-            if (submodels.IsNullOrEmpty())
+            if (submodels == null || submodels.Count == 0)
             {
                 _logger.LogInformation($"Submodels with IdShort {idShort} not found.");
             }
@@ -605,7 +604,7 @@ namespace AasxServerStandardBib.Services
         //Following method has complexities due to the current structure of List<Environment>
         public ISubmodel CreateSubmodel(ISubmodel newSubmodel)
         {
-            bool found = true;
+            bool found = false;
 
             //check if submodel is already referenced in any of the shells
             var foundPackages = new Dictionary<int, List<IAssetAdministrationShell>>();
@@ -622,12 +621,12 @@ namespace AasxServerStandardBib.Services
                     {
                         found = true;
                     }
-                    if (env != null && !env.AssetAdministrationShells.IsNullOrEmpty() && !isSmAlreadyPresent)
+                    if (env != null && !(env.AssetAdministrationShells == null || env.AssetAdministrationShells.Count == 0) && !isSmAlreadyPresent)
                     {
                         var foundAAS = new List<IAssetAdministrationShell>();
                         foreach (var aas in env.AssetAdministrationShells!)
                         {
-                            if (aas != null && !aas.Submodels.IsNullOrEmpty())
+                            if (aas != null && !(aas.Submodels == null || aas.Submodels.Count == 0))
                             {
                                 var smFound = aas.Submodels.Exists(s => s.GetAsIdentifier().Equals(newSubmodel.Id));
                                 if(smFound)
@@ -669,7 +668,7 @@ namespace AasxServerStandardBib.Services
 
             //No linked AAS found and No package found where submodel is present
             //add the submodel to empty AAS
-            if (foundPackages.IsNullOrEmpty() && !found)
+            if ((foundPackages == null || foundPackages.Count == 0) && !found)
             {
                 if (EmptyPackageAvailable(out int emptyPackageIndex))
                 {

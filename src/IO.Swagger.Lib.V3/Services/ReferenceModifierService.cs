@@ -14,7 +14,6 @@
 using AasxServerStandardBib.Logging;
 using Extensions;
 using IO.Swagger.Lib.V3.Interfaces;
-using Microsoft.IdentityModel.Tokens;
 using System.Collections.Generic;
 
 namespace IO.Swagger.Lib.V3.Services
@@ -34,7 +33,7 @@ namespace IO.Swagger.Lib.V3.Services
         {
             var output = new List<IReference>();
 
-            if (!referables.IsNullOrEmpty())
+            if (referables != null && referables.Count > 0)
             {
                 output.AddRange(referables.Select(referable => referable.GetReference()).Cast<IReference>());
             }

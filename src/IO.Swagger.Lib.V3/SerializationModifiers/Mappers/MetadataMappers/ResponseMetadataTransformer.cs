@@ -69,7 +69,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
         internal List<EmbeddedDataSpecificationDTO> TransformEmbeddedDataSpecList(List<IEmbeddedDataSpecification> that)
         {
             List<EmbeddedDataSpecificationDTO> output = null;
-            if (!that.IsNullOrEmpty())
+            if (that != null && that.Count > 0)
             {
                 output = new List<EmbeddedDataSpecificationDTO>();
                 foreach (var item in that)
@@ -203,7 +203,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
         {
             if (that == null) return null;
             List<IMetadataDTO> inputVarMetadataList = null;
-            if (!that.InputVariables.IsNullOrEmpty())
+            if (that.InputVariables != null && that.InputVariables.Count > 0)
             {
                 inputVarMetadataList = new List<IMetadataDTO>();
                 foreach (var submodelElement in that.InputVariables)
@@ -213,7 +213,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
             }
 
             List<IMetadataDTO> outputVarMetadataList = null;
-            if (!that.OutputVariables.IsNullOrEmpty())
+            if (that.OutputVariables != null && that.OutputVariables.Count > 0)
             {
                 outputVarMetadataList = new List<IMetadataDTO>();
                 foreach (var submodelElement in that.OutputVariables)
@@ -223,7 +223,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
             }
 
             List<IMetadataDTO> inOutVarMetadataList = null;
-            if (!that.InoutputVariables.IsNullOrEmpty())
+            if (that.InoutputVariables != null && that.InoutputVariables.Count > 0)
             {
                 inOutVarMetadataList = new List<IMetadataDTO>();
                 foreach (var submodelElement in that.InoutputVariables)
@@ -247,7 +247,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
         internal List<QualifierDTO> TransformQualifierList(List<IQualifier> qualifierList)
         {
             List<QualifierDTO> output = null;
-            if (!qualifierList.IsNullOrEmpty())
+            if (qualifierList != null && qualifierList.Count > 0)
             {
                 output = new List<QualifierDTO>();
                 foreach (var qualifier in qualifierList)
@@ -276,7 +276,7 @@ namespace IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers
         internal List<ReferenceDTO> TransformReferenceList(List<IReference> that)
         {
             List<ReferenceDTO> output = null;
-            if (!that.IsNullOrEmpty())
+            if (that != null && that.Count > 0)
             {
                 output = new List<ReferenceDTO>();
                 foreach (var reference in that)

@@ -552,7 +552,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 	    var submodelElements = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
         var filtered = new List<ISubmodelElement>();
-        if (!diff.IsNullOrEmpty())
+        if (!string.IsNullOrEmpty(diff))
         {
             try
             {
@@ -696,7 +696,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
         var smeList = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
         var filtered = new List<ISubmodelElement>();
-        if (!diff.IsNullOrEmpty())
+        if (!string.IsNullOrEmpty(diff))
         {
             try
             {
@@ -765,7 +765,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 	    var submodelElementList = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
         var filtered = new List<ISubmodelElement?>();
-        if (!diff.IsNullOrEmpty())
+        if (!string.IsNullOrEmpty(diff))
         {
             try
             {
@@ -900,7 +900,7 @@ public class SubmodelRepositoryAPIApiController : ControllerBase
 	    var submodelElements = _submodelService.GetAllSubmodelElements(decodedSubmodelIdentifier);
 
         var filtered = new List<ISubmodelElement>();
-        if (!diff.IsNullOrEmpty())
+        if (!string.IsNullOrEmpty(diff))
         {
             try
             {

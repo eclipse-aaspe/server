@@ -22,6 +22,7 @@ using AasRegistryDiscovery.WebApi.Models;
 using AasRegistryDiscovery.WebApi.Serializers;
 using AasxServerBlazor.Interfaces;
 using Extensions;
+using IO.Swagger.Lib.V3.Middleware;
 
 public class AasDescriptorWritingService : IAasDescriptorWritingService
 {
