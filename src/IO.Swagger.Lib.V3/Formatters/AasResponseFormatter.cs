@@ -111,6 +111,10 @@ namespace IO.Swagger.Lib.V3.Formatters
             {
                 return base.CanWriteResult(context);
             }
+            if (typeof(QueryResult).IsAssignableFrom(context.ObjectType))
+            {
+                return base.CanWriteResult(context);
+            }
             if (typeof(IMetadataDTO).IsAssignableFrom(context.ObjectType))
             {
                 return base.CanWriteResult(context);
@@ -330,6 +334,47 @@ namespace IO.Swagger.Lib.V3.Formatters
                 {
                     pagingMetadata["cursor"] = cursor;
                 }
+                jsonNode["paging_metadata"] = pagingMetadata;
+                var writer = new Utf8JsonWriter(response.Body);
+                jsonNode.WriteTo(writer);
+                writer.FlushAsync().GetAwaiter().GetResult();
+            }
+            else if (typeof(QueryResult).IsAssignableFrom(context.ObjectType))
+            {
+                var jsonArray = new JsonArray();
+                string cursor = null;
+                string resultType = null;
+                if (context.Object is QueryResult queryResult)
+                {
+                    cursor = queryResult.paging_metadata.cursor;
+                    resultType = queryResult.paging_metadata.resultType;
+
+                    foreach (var item in queryResult.result)
+                    {
+                        if (resultType == ResultType.Submodel.ToString())
+                        {
+                            var json = Jsonization.Serialize.ToJsonObject(item as IClass);
+                            jsonArray.Add(json);
+                        }
+                        else
+                        {
+                            jsonArray.Add(item as string);
+
+                        }
+                    }
+                }
+                JsonObject jsonNode = new JsonObject();
+                jsonNode["result"] = jsonArray;
+                var pagingMetadata = new JsonObject();
+                if (cursor != null)
+                {
+                    pagingMetadata["cursor"] = cursor;
+                }
+                if (resultType != null)
+                {
+                    pagingMetadata["resultType"] = resultType;
+                }
+
                 jsonNode["paging_metadata"] = pagingMetadata;
                 var writer = new Utf8JsonWriter(response.Body);
                 jsonNode.WriteTo(writer);

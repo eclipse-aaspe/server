@@ -20,6 +20,7 @@ using IO.Swagger.Lib.V3.Models;
 using IO.Swagger.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace IO.Swagger.Lib.V3.Services
 {
@@ -56,6 +57,37 @@ namespace IO.Swagger.Lib.V3.Services
             return paginationResult;
         }
 
+        public QueryResult GetPaginatedQueryResult<T>(List<T> paginatedList, PaginationParameters paginationParameters)
+        {
+            //Creating pagination result
+            var pagingMetadata = new QueryResultPagingMetadata();
+
+            pagingMetadata.resultType = ResultType.Identifier.ToString();
+
+            if (paginatedList.Count != 0)
+            {
+                if (paginatedList.First() is ISubmodel)
+                {
+                    pagingMetadata.resultType = ResultType.Submodel.ToString();
+                }
+            }
+
+            if (paginatedList.Count < paginationParameters.Limit)
+            {
+                _logger.LogInformation($"There are less elements in the retrieved list than requested for pagination - (cursor: {paginationParameters.Cursor}, size:{paginationParameters.Limit})");
+                pagingMetadata.cursor = String.Empty;
+            }
+            else
+            {
+                pagingMetadata.cursor = Convert.ToString(paginationParameters.Cursor + paginatedList.Count);
+            }
+
+            var paginationResult = new QueryResult() { paging_metadata = pagingMetadata, result = paginatedList.ConvertAll(r => r as object) };
+
+            return paginationResult;
+        }
+
+
         public PackageDescriptionPagedResult GetPaginatedPackageDescriptionList(List<PackageDescription> sourceList, PaginationParameters paginationParameters)
         {
             var startIndex = paginationParameters.Cursor;
@@ -75,7 +107,6 @@ namespace IO.Swagger.Lib.V3.Services
                 paging_metadata = pagingMetadata
             };
 
-            //return paginationResult;
             return paginationResult;
         }
 

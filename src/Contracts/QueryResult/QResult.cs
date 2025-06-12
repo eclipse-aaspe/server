@@ -12,6 +12,6 @@ namespace Contracts.QueryResult
         public List<SMResult> SMResults { get; set; }
         public List<SMEResult> SMEResults { get; set; }
         public List<string> SQL { get; set; }
-        public bool withSelect;
+        public bool WithSelect;
     }
 }

@@ -28,6 +28,8 @@ using System.Xml.Linq;
 using ScottPlot;
 using Contracts.QueryResult;
 using AdminShellNS.Extensions;
+using System.Security.Claims;
+using Contracts.Security;
 
 /// <summary>
 /// 
@@ -73,7 +75,7 @@ public class QueryRepositoryAPIApiController : ControllerBase
     [ValidateModelState]
     [SwaggerOperation("PostSubmodels")]
     [Consumes("text/plain")]
-    [SwaggerResponse(statusCode: 200, type: typeof(PagedResult), description: "Submodels created successfully")]
+    [SwaggerResponse(statusCode: 200, type: typeof(QueryResult), description: "Submodels created successfully")]
     [SwaggerResponse(statusCode: 400, type: typeof(Result), description: "Bad Request, e.g. the request parameters of the format of the request body is wrong.")]
     [SwaggerResponse(statusCode: 401, type: typeof(Result), description: "Unauthorized, e.g. the server refused the authorization attempt.")]
     [SwaggerResponse(statusCode: 403, type: typeof(Result), description: "Forbidden")]
@@ -87,17 +89,16 @@ public class QueryRepositoryAPIApiController : ControllerBase
 
         _logger.LogInformation($"Received request to query submodels.");
 
-        var securityConfig = new SecurityConfig(Program.noSecurity, this);
-        var submodelList = new List<ISubmodel>();
+        var securityConfig = new SecurityConfig(Program.noSecurity, this, NeededRights.Read);
         var paginationParameters = new PaginationParameters(cursor, limit);
 
-        submodelList = await _dbRequestHandlerService.QueryGetSMs(securityConfig, paginationParameters, expression);
+        var list = await _dbRequestHandlerService.QueryGetSMs(securityConfig, paginationParameters, expression);
 
-        if (submodelList.IsNullOrEmpty())
+        if (list.IsNullOrEmpty())
         {
             throw new NotFoundException("Queried submodels could not be found!");
         }
-        var submodelsPagedList = _paginationService.GetPaginatedResult(submodelList, paginationParameters);
+        var submodelsPagedList = _paginationService.GetPaginatedQueryResult(list, paginationParameters);
 
         return new ObjectResult(submodelsPagedList);
     }

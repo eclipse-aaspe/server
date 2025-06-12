@@ -21,6 +21,7 @@ using System.Threading.Tasks;
 
 using System.Linq.Dynamic.Core;
 using AasxServerDB.Entities;
+using Contracts.Security;
 
 public class EntityFrameworkPersistenceService : IPersistenceService
 {
@@ -591,8 +592,16 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     case DbRequestOp.QueryGetSMs:
                         queryRequest = dbRequest.Context.Params.QueryRequest;
                         query = new Query(_grammar);
-                        var submodels = query.GetSubmodelList(securityConfig.NoSecurity, db, securityCondition, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
-                        result.Submodels = submodels;
+                        var queryResult = query.GetSubmodelList(securityConfig.NoSecurity, db, securityCondition, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
+
+                        if (queryResult.Submodels != null)
+                        {
+                            result.Submodels = queryResult.Submodels;
+                        }
+                        else
+                        {
+                            result.Ids = queryResult.Ids;
+                        }
                         break;
                     case DbRequestOp.ReadPagedConceptDescriptions:
                         //ToDo: Filter on IsCaseOf and DataSpecificationRef
@@ -1433,9 +1442,38 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             var authResult = false;
             var accessRole = securityConfig.Principal.FindAll(ClaimTypes.Role).Select(c => c.Value).FirstOrDefault();
             var httpRoute = securityConfig.Principal.FindFirst("Route")?.Value;
-            var neededRightsClaim = securityConfig.Principal.FindFirst("NeededRights")?.Value;
-            securityCondition = _contractSecurityRules.GetCondition(accessRole, neededRightsClaim);
-            if (accessRole != null && httpRoute != null && Enum.TryParse(neededRightsClaim, out AasSecurity.Models.AccessRights neededRights))
+
+            AasSecurity.Models.AccessRights neededRights = AasSecurity.Models.AccessRights.READ;
+
+            switch (securityConfig.NeededRightsClaim)
+            {
+                case NeededRights.TakeFromPrincipal:
+                    var neededRightsClaim = securityConfig.Principal.FindFirst("NeededRights")?.Value;
+                    Enum.TryParse(neededRightsClaim, out neededRights);
+
+                    break;
+                case NeededRights.Create:
+                    neededRights = AasSecurity.Models.AccessRights.CREATE;
+                    break;
+                case NeededRights.Read:
+                    neededRights = AasSecurity.Models.AccessRights.READ;
+                    break;
+                case NeededRights.Update:
+                    neededRights = AasSecurity.Models.AccessRights.UPDATE;
+                    break;
+                case NeededRights.Delete:
+                    neededRights = AasSecurity.Models.AccessRights.DELETE;
+                    break;
+                case NeededRights.Execute:
+                    neededRights = AasSecurity.Models.AccessRights.EXECUTE;
+                    break;
+                default:
+                    break;
+            }
+
+            securityCondition = _contractSecurityRules.GetCondition(accessRole, neededRights.ToString());
+
+            if (accessRole != null && httpRoute != null)
             {
                 authResult = _contractSecurityRules.AuthorizeRequest(accessRole, httpRoute, neededRights, out _, out _, out _);
             }

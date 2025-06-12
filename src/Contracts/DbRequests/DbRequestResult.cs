@@ -15,6 +15,8 @@ public class DbRequestResult
     public List<IAssetAdministrationShell> AssetAdministrationShells { get; set; }
     public List<IReference> References { get; set; }
     public List<ISubmodel> Submodels { get; set; }
+    public List<string> Ids { get; set; }
+
     public List<ISubmodelElement> SubmodelElements { get; set; }
     public List<IConceptDescription> ConceptDescriptions { get; set; }
     public AasCore.Aas3_0.Environment Environment { get; set; }

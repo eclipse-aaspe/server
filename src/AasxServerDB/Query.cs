@@ -25,7 +25,7 @@ using Contracts.QueryResult;
 using AasxServerDB.Entities;
 using Microsoft.EntityFrameworkCore;
 using AasCore.Aas3_0;
-using Contracts.DbRequests;
+using Contracts.Security;
 
 public class CombinedValue
 {
@@ -33,6 +33,7 @@ public class CombinedValue
     public string? SValue { get; set; }
     public Double? MValue { get; set; }
 }
+
 public class SMEResultRaw
 {
     public string? SM_Identifier { get; set; }
@@ -41,6 +42,13 @@ public class SMEResultRaw
     public string? SValue { get; set; }
     public double? MValue { get; set; }
 }
+
+public class SubmodelsQueryResult
+{
+    public List<ISubmodel> Submodels { get; set; }
+    public List<string> Ids { get; set; }
+}
+
 
 public partial class Query
 {
@@ -231,7 +239,7 @@ public partial class Query
         return result;
     }
 
-    internal List<ISubmodel> GetSubmodelList(bool noSecurity, AasContext db, Dictionary<string, string>? securityCondition,  int pageFrom, int pageSize, string expression)
+    internal SubmodelsQueryResult GetSubmodelList(bool noSecurity, AasContext db, Dictionary<string, string>? securityCondition,  int pageFrom, int pageSize, string expression)
     {
         var qResult = new QResult()
         {
@@ -289,23 +297,31 @@ public partial class Query
 
             var smList = db.SMSets.Where(sm => smIdList.Contains(sm.Identifier)).ToList();
 
-            List<ISubmodel> output = new List<ISubmodel>();
+            var submodelsResult = new SubmodelsQueryResult();
 
             var timeStamp = DateTime.UtcNow;
 
-            // TODO Wadim: withSelect == true -> only return Submodel ID list
-            foreach (var sm in smList.Select(selector: submodelDB =>
-                CrudOperator.ReadSubmodel(db, smDB: submodelDB, "", securityCondition)))
+            if (!qResult.WithSelect)
             {
-                if (sm.TimeStamp == DateTime.MinValue)
-                {
-                    sm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp, DateTime.MinValue);
-                    sm.SetTimeStamp(timeStamp);
-                }
-                output.Add(sm);
-            }
+                var submodels = new List<ISubmodel>();
 
-            return output;
+                foreach (var sm in smList.Select(selector: submodelDB =>
+                    CrudOperator.ReadSubmodel(db, smDB: submodelDB, "", securityCondition)))
+                {
+                    if (sm.TimeStamp == DateTime.MinValue)
+                    {
+                        sm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp, DateTime.MinValue);
+                        sm.SetTimeStamp(timeStamp);
+                    }
+                    submodels.Add(sm);
+                }
+                submodelsResult.Submodels = submodels;
+            }
+            else
+            {
+                submodelsResult.Ids = smIdList.ToList();
+            }
+            return submodelsResult;
         }
     }
 
@@ -374,7 +390,7 @@ public partial class Query
 
         if (conditionsExpression.ContainsKey("select"))
         {
-            qResult.withSelect = true;
+            qResult.WithSelect = true;
         }
 
         if (conditionsExpression.ContainsKey("AccessRules"))

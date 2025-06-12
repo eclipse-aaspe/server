@@ -18,6 +18,7 @@ namespace AasSecurity.Models
         CREATE,
         UPDATE,
         DELETE,
-        READ
+        READ,
+        EXECUTE
     }
 }

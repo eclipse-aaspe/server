@@ -11,6 +11,7 @@ using AdminShellNS;
 using Contracts.DbRequests;
 using Contracts.Pagination;
 using Contracts.QueryResult;
+using Contracts.Security;
 
 public interface IDbRequestHandlerService
 {
@@ -67,5 +68,5 @@ public interface IDbRequestHandlerService
         string contains, string equal, string lower, string upper, IPaginationParameters paginationParameters, string expression);
     Task<int> QueryCountSMEs(ISecurityConfig securityConfig, string smSemanticId, string smIdentifier, string semanticId, string diff, string contains, string equal, string lower, string upper,
         IPaginationParameters paginationParameters, string expression);
-    Task<List<ISubmodel>> QueryGetSMs(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, string expression);
+    Task<List<object>> QueryGetSMs(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, string expression);
 }
