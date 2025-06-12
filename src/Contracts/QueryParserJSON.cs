@@ -223,7 +223,7 @@ public class QueryGrammarJSON : Grammar
     private IContractSecurityRules mySecurityRules;
 
     public string idShortPath = "";
-    public bool withSelect;
+    public bool withSelect = false;
 
     void PrintParseTree(ParseTreeNode node, int indent, StringWriter sw)
     {

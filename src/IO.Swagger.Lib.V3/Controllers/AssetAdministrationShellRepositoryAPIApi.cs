@@ -50,8 +50,8 @@ namespace IO.Swagger.Controllers
     using Contracts.Pagination;
     using Contracts;
     using System.Threading.Tasks;
-    using Contracts.DbRequests;
     using Contracts.Exceptions;
+    using Contracts.Security;
 
     /// <summary>
     /// 

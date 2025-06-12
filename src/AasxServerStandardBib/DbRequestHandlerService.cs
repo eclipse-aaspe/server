@@ -11,6 +11,7 @@ using Contracts;
 using Contracts.DbRequests;
 using Contracts.Pagination;
 using Contracts.QueryResult;
+using Contracts.Security;
 using Microsoft.Extensions.DependencyInjection;
 
 public class DbRequestHandlerService : IDbRequestHandlerService
@@ -1088,7 +1089,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs.Count;
     }
 
-    public async Task<List<ISubmodel>> QueryGetSMs(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, string expression)
+    public async Task<List<object>> QueryGetSMs(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, string expression)
     {
         var parameters = new DbRequestParams()
         {
@@ -1112,7 +1113,13 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.Submodels;
+
+        if (tcs.Ids != null)
+        {
+            return tcs.Ids.ConvertAll(r => r as object);
+        }
+
+        return tcs.Submodels.ConvertAll(r => r as object);
     }
 
     private void IncrementCounter()

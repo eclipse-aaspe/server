@@ -55,6 +55,7 @@ using Contracts;
 using Contracts.DbRequests;
 using Contracts.Exceptions;
 using Contracts.Pagination;
+using Contracts.Security;
 
 /// <summary>
 /// 
