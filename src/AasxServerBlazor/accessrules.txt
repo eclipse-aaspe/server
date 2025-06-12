@@ -63,6 +63,9 @@
         },
         "OBJECTS": [
           {
+            "ROUTE": "/shells"
+          },
+          {
             "ROUTE": "/submodels"
           },
           {

@@ -196,7 +196,18 @@ public class QueryGrammarJSON : Grammar
                                      ("\"REFERENCE\":" + stringLiteral)) + ToTerm("}");
         stringArray.Rule = "[" + stringLiteral + (ToTerm(",") + stringLiteral).Q() + "]";
         rightsArray.Rule = "[" + rightsEnum + (ToTerm(",") + rightsEnum).Q() + (ToTerm(",") + rightsEnum).Q() + (ToTerm(",") + rightsEnum).Q() + "]";
-        objectArray.Rule = "[" + object_ + (ToTerm(",") + object_).Q() + "]";
+        objectArray.Rule = "[" + object_
+            + (ToTerm(",") + object_).Q()
+            + (ToTerm(",") + object_).Q()
+            + (ToTerm(",") + object_).Q()
+            + (ToTerm(",") + object_).Q()
+            + (ToTerm(",") + object_).Q()
+            + (ToTerm(",") + object_).Q()
+            + (ToTerm(",") + object_).Q()
+            + (ToTerm(",") + object_).Q()
+            + (ToTerm(",") + object_).Q()
+            + "]";
+        // objectArray.Rule = ToTerm("[") + MakePlusRule(objectArray, ToTerm(","), object_) + "]";
         object_.Rule = ToTerm("{") + (("\"ROUTE\":" + stringLiteral) |
                                   ("\"IDENTIFIABLE\":" + stringLiteral) |
                                   ("\"REFERABLE\":" + stringLiteral) |
