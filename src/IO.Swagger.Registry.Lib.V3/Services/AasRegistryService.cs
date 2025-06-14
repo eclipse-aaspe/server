@@ -76,7 +76,10 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                 ad.SpecificAssetIds.Add(specificAssetId);
 
                 // Submodels
-                var submodelDBList = db.SMSets.Where(s => s.AASId == aasDB.Id);
+                // var submodelDBList = db.SMSets.Where(s => s.AASId == aasDB.Id);
+                var submodelRefDBList = db.SMRefSets.Where(s => s.AASId == aasDB.Id);
+                var smList = submodelRefDBList.Select(s => s.Id).ToList();
+                var submodelDBList = db.SMSets.Where(s => smList.Contains(s.Id));
                 if (submodelDBList.Any())
                 {
                     ad.SubmodelDescriptors = new List<SubmodelDescriptor>();

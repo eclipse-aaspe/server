@@ -11,46 +11,21 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-namespace AasxServerStandardBib.GraphQL;
-
-using System.Diagnostics;
-using Extensions;
-using Microsoft.IdentityModel.Tokens;
-using System.Linq.Dynamic.Core;
-using System.Linq;
-using Irony.Parsing;
+namespace IO.Swagger.Lib.V3.GraphQL;
 using HotChocolate.Resolvers;
 using HotChocolate.Language;
-using System;
 using System.Collections.Generic;
 using Contracts.QueryResult;
 using HotChocolate;
 using Contracts;
 using System.Threading.Tasks;
-using System.Drawing.Printing;
-using Microsoft.AspNetCore.Authorization;
 using Contracts.Pagination;
-using ScottPlot;
+using IO.Swagger.Lib.V3.Models;
+using AasxServer;
 
-//public class SMEResultRaw
-//{
-//    public string? SM_Identifier { get; set; }
-//    public string? IdShortPath { get; set; }
-//    public DateTime? SME_TimeStamp { get; set; }
-//    public string? SValue { get; set; }
-//    public double? MValue { get; set; }
-//}
 
 public class GraphQLAPI
 {
-    /*
-    public Query(QueryGrammar queryGrammar)
-    {
-        grammar = queryGrammar;
-    }
-    private readonly QueryGrammar grammar;
-    */
-
     public GraphQLAPI([Service] IDbRequestHandlerService dbRequestHandlerService)
     {
         _dbRequestHandlerService = dbRequestHandlerService;
@@ -76,8 +51,8 @@ public class GraphQLAPI
                 || !int.TryParse(pageSize, out var parsedPageSize) ? MAX_PAGE_SIZE : parsedPageSize;
 
         var paginationParameters = new PaginationParameters(pageFrom, pageSizeParam);
-
-        var qresult = await _dbRequestHandlerService.QuerySearchSMs(withTotalCount, withLastId, semanticId, identifier, diff,
+        var securityConfig = new SecurityConfig(Program.noSecurity, null);
+        var qresult = await _dbRequestHandlerService.QuerySearchSMs(securityConfig, withTotalCount, withLastId, semanticId, identifier, diff,
             paginationParameters, expression);
 
         return qresult;
@@ -86,8 +61,8 @@ public class GraphQLAPI
     public async Task<int> CountSMs(string semanticId = "", string identifier = "", string diff = "", string pageFrom = "", string expression = "")
     {
         var paginationParameters = new PaginationParameters(pageFrom, MAX_PAGE_SIZE);
-
-        var result = await _dbRequestHandlerService.QueryCountSMs(semanticId, identifier, diff, paginationParameters, expression);
+        var securityConfig = new SecurityConfig(Program.noSecurity, null);
+        var result = await _dbRequestHandlerService.QueryCountSMs(securityConfig, semanticId, identifier, diff, paginationParameters, expression);
         return result;
     }
 
@@ -120,7 +95,8 @@ public class GraphQLAPI
                 || !int.TryParse(pageSize, out var parsedPageSize) ? MAX_PAGE_SIZE : parsedPageSize;
 
         var paginationParameters = new PaginationParameters(pageFrom, pageSizeParam);
-        var qresult = await _dbRequestHandlerService.QuerySearchSMEs(requested, withTotalCount, withLastId,
+        var securityConfig = new SecurityConfig(Program.noSecurity, null);
+        var qresult = await _dbRequestHandlerService.QuerySearchSMEs(securityConfig, requested, withTotalCount, withLastId,
         smSemanticId, smIdentifier, semanticId, diff,
         contains, equal, lower, upper, paginationParameters, expression);
 
@@ -134,7 +110,8 @@ public class GraphQLAPI
     {
         var paginationParameters = new PaginationParameters(pageFrom, MAX_PAGE_SIZE);
 
-        var result = await _dbRequestHandlerService.QueryCountSMEs(smSemanticId, smIdentifier, semanticId,
+        var securityConfig = new SecurityConfig(Program.noSecurity, null);
+        var result = await _dbRequestHandlerService.QueryCountSMEs(securityConfig, smSemanticId, smIdentifier, semanticId,
             diff, contains, equal, lower, upper, paginationParameters, expression);
         return result;
     }

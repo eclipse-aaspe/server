@@ -1,4 +1,4 @@
-namespace AasxServerStandardBib.GraphQL;
+namespace IO.Swagger.Lib.V3.GraphQL;
 
 using HotChocolate.Language;
 using HotChocolate.Resolvers;

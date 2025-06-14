@@ -6,6 +6,13 @@ using AdminShellNS;
 using Contracts.DbRequests;
 using Contracts.Pagination;
 
+public class Running
+{
+    private static bool IsRunning;
+
+    public static void SetRunning() => IsRunning = true;
+    public static bool GetRunning() => IsRunning;
+}
 public interface IPersistenceService
 {
     void InitDB(bool reloadDB, string dataPath);

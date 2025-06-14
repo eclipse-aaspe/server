@@ -11,6 +11,7 @@ using AdminShellNS;
 using Contracts.DbRequests;
 using Contracts.Pagination;
 using Contracts.QueryResult;
+using Contracts.Security;
 
 public interface IDbRequestHandlerService
 {
@@ -61,11 +62,11 @@ public interface IDbRequestHandlerService
 
     Task<AasCore.Aas3_0.Environment> GenerateSerializationByIds(ISecurityConfig securityConfig, List<string> aasIds = null, List<string> submodelIds = null, bool? includeCD = false);
 
-    Task<QResult> QuerySearchSMs(bool withTotalCount, bool withLastId, string semanticId, string identifier, string diff, IPaginationParameters paginationParameters, string expression);
-    Task<int> QueryCountSMs(string semanticId, string identifier, string diff, IPaginationParameters paginationParameters, string expression);
-    Task<QResult> QuerySearchSMEs(string requested, bool withTotalCount, bool withLastId, string smSemanticId, string smIdentifier, string semanticId, string diff,
+    Task<QResult> QuerySearchSMs(ISecurityConfig securityConfig, bool withTotalCount, bool withLastId, string semanticId, string identifier, string diff, IPaginationParameters paginationParameters, string expression);
+    Task<int> QueryCountSMs(ISecurityConfig securityConfig, string semanticId, string identifier, string diff, IPaginationParameters paginationParameters, string expression);
+    Task<QResult> QuerySearchSMEs(ISecurityConfig securityConfig, string requested, bool withTotalCount, bool withLastId, string smSemanticId, string smIdentifier, string semanticId, string diff,
         string contains, string equal, string lower, string upper, IPaginationParameters paginationParameters, string expression);
-    Task<int> QueryCountSMEs(string smSemanticId, string smIdentifier, string semanticId, string diff, string contains, string equal, string lower, string upper,
+    Task<int> QueryCountSMEs(ISecurityConfig securityConfig, string smSemanticId, string smIdentifier, string semanticId, string diff, string contains, string equal, string lower, string upper,
         IPaginationParameters paginationParameters, string expression);
-    Task<List<ISubmodel>> QueryGetSMs(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, string expression);
+    Task<List<object>> QueryGetSMs(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, string expression);
 }

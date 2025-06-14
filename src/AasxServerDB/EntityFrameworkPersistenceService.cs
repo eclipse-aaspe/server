@@ -21,7 +21,7 @@ using System.Threading.Tasks;
 
 using System.Linq.Dynamic.Core;
 using AasxServerDB.Entities;
-using System.Net.Mime;
+using Contracts.Security;
 
 public class EntityFrameworkPersistenceService : IPersistenceService
 {
@@ -146,9 +146,10 @@ public class EntityFrameworkPersistenceService : IPersistenceService
     public async Task<DbRequestResult> DoDbOperation(DbRequest dbRequest)
     {
         var result = new DbRequestResult();
+        var securityConfig = dbRequest.Context.SecurityConfig;
 
         Dictionary<string, string>? securityCondition = null;
-        bool isAllowed = InitSecurity(dbRequest.Context.SecurityConfig, out securityCondition);
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
 
         if (!isAllowed)
         {
@@ -563,36 +564,44 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     case DbRequestOp.QuerySearchSMs:
                         var queryRequest = dbRequest.Context.Params.QueryRequest;
                         var query = new Query(_grammar);
-                        var qresult = query.SearchSMs(db, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SemanticId,
+                        var qresult = query.SearchSMs(securityConfig, db, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SemanticId,
                             queryRequest.Identifier, queryRequest.Diff, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                         result.QueryResult = qresult;
                         break;
                     case DbRequestOp.QueryCountSMs:
                         queryRequest = dbRequest.Context.Params.QueryRequest;
                         query = new Query(_grammar);
-                        var count = query.CountSMs(db, queryRequest.SemanticId, queryRequest.Identifier, queryRequest.Diff,
+                        var count = query.CountSMs(securityConfig, db, queryRequest.SemanticId, queryRequest.Identifier, queryRequest.Diff,
                             queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                         result.Count = count;
                         break;
                     case DbRequestOp.QuerySearchSMEs:
                         queryRequest = dbRequest.Context.Params.QueryRequest;
                         query = new Query(_grammar);
-                        qresult = query.SearchSMEs(db, queryRequest.Requested, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
+                        qresult = query.SearchSMEs(securityConfig, db, queryRequest.Requested, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
                             queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                         result.QueryResult = qresult;
                         break;
                     case DbRequestOp.QueryCountSMEs:
                         queryRequest = dbRequest.Context.Params.QueryRequest;
                         query = new Query(_grammar);
-                        count = query.CountSMEs(db, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
+                        count = query.CountSMEs(securityConfig, db, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
                             queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                         result.Count = count;
                         break;
                     case DbRequestOp.QueryGetSMs:
                         queryRequest = dbRequest.Context.Params.QueryRequest;
                         query = new Query(_grammar);
-                        var submodels = query.GetSubmodelList(db, securityCondition, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
-                        result.Submodels = submodels;
+                        var queryResult = query.GetSubmodelList(securityConfig.NoSecurity, db, securityCondition, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
+
+                        if (queryResult.Submodels != null)
+                        {
+                            result.Submodels = queryResult.Submodels;
+                        }
+                        else
+                        {
+                            result.Ids = queryResult.Ids;
+                        }
                         break;
                     case DbRequestOp.ReadPagedConceptDescriptions:
                         //ToDo: Filter on IsCaseOf and DataSpecificationRef
@@ -1423,19 +1432,48 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         return false;
     }
 
-    //ToDo: Move into security?
+    //ToDo: Move into security? Currently this is also in SubmodelRepositoryAPIApiController (for events)
     private bool InitSecurity(ISecurityConfig? securityConfig, out Dictionary<string, string>? securityCondition)
     {
         securityCondition = null;
-        if (securityConfig != null && !securityConfig.NoSecurity)
+        if (securityConfig != null && securityConfig.Principal != null && !securityConfig.NoSecurity)
         {
             // Get claims
             var authResult = false;
             var accessRole = securityConfig.Principal.FindAll(ClaimTypes.Role).Select(c => c.Value).FirstOrDefault();
             var httpRoute = securityConfig.Principal.FindFirst("Route")?.Value;
-            var neededRightsClaim = securityConfig.Principal.FindFirst("NeededRights")?.Value;
-            securityCondition = _contractSecurityRules.GetCondition(accessRole, neededRightsClaim);
-            if (accessRole != null && httpRoute != null && Enum.TryParse(neededRightsClaim, out AasSecurity.Models.AccessRights neededRights))
+
+            AasSecurity.Models.AccessRights neededRights = AasSecurity.Models.AccessRights.READ;
+
+            switch (securityConfig.NeededRightsClaim)
+            {
+                case NeededRights.TakeFromPrincipal:
+                    var neededRightsClaim = securityConfig.Principal.FindFirst("NeededRights")?.Value;
+                    Enum.TryParse(neededRightsClaim, out neededRights);
+
+                    break;
+                case NeededRights.Create:
+                    neededRights = AasSecurity.Models.AccessRights.CREATE;
+                    break;
+                case NeededRights.Read:
+                    neededRights = AasSecurity.Models.AccessRights.READ;
+                    break;
+                case NeededRights.Update:
+                    neededRights = AasSecurity.Models.AccessRights.UPDATE;
+                    break;
+                case NeededRights.Delete:
+                    neededRights = AasSecurity.Models.AccessRights.DELETE;
+                    break;
+                case NeededRights.Execute:
+                    neededRights = AasSecurity.Models.AccessRights.EXECUTE;
+                    break;
+                default:
+                    break;
+            }
+
+            securityCondition = _contractSecurityRules.GetCondition(accessRole, neededRights.ToString());
+
+            if (accessRole != null && httpRoute != null)
             {
                 authResult = _contractSecurityRules.AuthorizeRequest(accessRole, httpRoute, neededRights, out _, out _, out _);
             }

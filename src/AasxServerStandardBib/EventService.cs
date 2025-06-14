@@ -309,6 +309,10 @@ public class EventService : IEventService
                 if (conditionSM != null && conditionSM.Value != null)
                 {
                     searchSM = conditionSM.Value;
+                    if (securityCondition != null && securityCondition.TryGetValue("sm.", out _))
+                    {
+                        searchSM = $"({securityCondition["sm."]})&&({searchSM})";
+                    }
                 }
                 if (securityCondition != null && securityCondition.TryGetValue("sm.", out _))
                 {
@@ -324,6 +328,10 @@ public class EventService : IEventService
                 if (conditionSME != null && conditionSME.Value != null)
                 {
                     searchSME = conditionSME.Value;
+                    if (securityCondition != null && securityCondition.TryGetValue("sme.", out _))
+                    {
+                        searchSME = $"({securityCondition["sme."]})&&({searchSME})";
+                    }
                 }
                 if (securityCondition != null && securityCondition.TryGetValue("sme.", out _))
                 {
@@ -427,13 +435,14 @@ public class EventService : IEventService
                                 }
                                 else
                                 {
+                                    var totalChildren = db.SMESets.Where(s => s.ParentSMEId == sme.Id).ToList();
                                     var allChildren = smeSearchTimeStamp.Where(s => s.ParentSMEId == sme.Id).ToList();
                                     var createChildren = allChildren.Where(s => s.ParentSMEId == sme.Id && s.TimeStampCreate > diffTime1).ToList();
                                     var updateChildren = allChildren.Where(s => s.ParentSMEId == sme.Id && s.TimeStampTree > diffTime1).ToList();
                                     var deleteChildren = allChildren.Where(s => s.ParentSMEId == sme.Id && s.TimeStampDelete > diffTime1).ToList();
                                     if (sme.TimeStampCreate > diffTime1)
                                     {
-                                        if (allChildren.Count == 0 || allChildren.Count == createChildren.Count)
+                                        if (allChildren.Count == 0 || totalChildren.Count == createChildren.Count)
                                         {
                                             entryType = "CREATE";
                                             skip.AddRange(createChildren.Select(s => s.Id).ToList());
@@ -447,7 +456,7 @@ public class EventService : IEventService
                                     {
                                         if (allChildren.Count == 0 ||
                                             (createChildren.Count == 0 && deleteChildren.Count == 0
-                                                && allChildren.Count != 1 && allChildren.Count == updateChildren.Count))
+                                                && totalChildren.Count != 1 && totalChildren.Count == updateChildren.Count))
                                         {
                                             entryType = "UPDATE";
                                             skip.AddRange(updateChildren.Select(s => s.Id).ToList());

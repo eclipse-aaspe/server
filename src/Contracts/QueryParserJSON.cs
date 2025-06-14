@@ -29,6 +29,7 @@ public class QueryGrammarJSON : Grammar
         // Define non-terminals
         var json = new NonTerminal("json");
         var query = new NonTerminal("query");
+        var selectLiteral = ToTerm("\"id\"");
         var logicalExpression = new NonTerminal("logical_expression");
         var matchExpression = new NonTerminal("match_expression");
         var comparisonItems = new NonTerminal("comparison_items");
@@ -65,7 +66,13 @@ public class QueryGrammarJSON : Grammar
         json.Rule = (query | allAccessPermissionRules);
         // json.Rule = (allAccessPermissionRules);
         // query.Rule = ToTerm("{") + "\"Query\":" + ToTerm("{") + "\"$condition\":" + logicalExpression + (ToTerm(",") + "\"$select\":" + "id").Q() + ToTerm("}") + ToTerm("}");
-        query.Rule = ToTerm("{") + "\"Query\":" + ToTerm("{") + "\"$condition\":" + logicalExpression + ToTerm("}") + ToTerm("}");
+        // query.Rule = ToTerm("{") + "\"Query\":" + ToTerm("{") + "\"$condition\":" + logicalExpression + ToTerm("}") + ToTerm("}");
+
+        query.Rule = ToTerm("{") + "\"Query\":" + ToTerm("{") +
+            (ToTerm("\"$select\":") + selectLiteral + ToTerm(",")).Q() +
+            "\"$condition\":" + logicalExpression +
+            ToTerm("}") + ToTerm("}");
+
         logicalExpression.Rule = ToTerm("{") + (("\"$and\":" + logicalExpressionArray) |
                                             ("\"$or\":" + logicalExpressionArray) |
                                             ("\"$not\":" + logicalExpression) |
@@ -157,7 +164,18 @@ public class QueryGrammarJSON : Grammar
                                                                                          ("\"USEOBJECTS\":" + useobjectsArray)) + ToTerm("}");
         defformulasArray.Rule = "[" + defformulas + (ToTerm(",") + defformulas).Q() + "]";
         defformulas.Rule = ToTerm("{") + "\"name\":" + stringLiteral + ToTerm(",") + "\"formula\":" + logicalExpression + ToTerm("}");
-        accessPermissionRuleArray.Rule = ToTerm("[") + accessPermissionRule + (ToTerm(",") + accessPermissionRule).Q() + "]";
+        accessPermissionRuleArray.Rule = ToTerm("[")
+            + accessPermissionRule
+            + (ToTerm(",") + accessPermissionRule).Q()
+            + (ToTerm(",") + accessPermissionRule).Q()
+            + (ToTerm(",") + accessPermissionRule).Q()
+            + (ToTerm(",") + accessPermissionRule).Q()
+            + (ToTerm(",") + accessPermissionRule).Q()
+            + (ToTerm(",") + accessPermissionRule).Q()
+            + (ToTerm(",") + accessPermissionRule).Q()
+            + (ToTerm(",") + accessPermissionRule).Q()
+            + (ToTerm(",") + accessPermissionRule).Q()
+            + "]";
         accessPermissionRule.Rule = ToTerm("{") + (("\"ACL\":" + acl) |
                                                 ("\"USEACL\":" + stringLiteral)) +
                                     ((ToTerm(",") + "\"OBJECTS\":" + objectArray) |
@@ -178,7 +196,18 @@ public class QueryGrammarJSON : Grammar
                                      ("\"REFERENCE\":" + stringLiteral)) + ToTerm("}");
         stringArray.Rule = "[" + stringLiteral + (ToTerm(",") + stringLiteral).Q() + "]";
         rightsArray.Rule = "[" + rightsEnum + (ToTerm(",") + rightsEnum).Q() + (ToTerm(",") + rightsEnum).Q() + (ToTerm(",") + rightsEnum).Q() + "]";
-        objectArray.Rule = "[" + object_ + (ToTerm(",") + object_).Q() + "]";
+        objectArray.Rule = "[" + object_
+            + (ToTerm(",") + object_).Q()
+            + (ToTerm(",") + object_).Q()
+            + (ToTerm(",") + object_).Q()
+            + (ToTerm(",") + object_).Q()
+            + (ToTerm(",") + object_).Q()
+            + (ToTerm(",") + object_).Q()
+            + (ToTerm(",") + object_).Q()
+            + (ToTerm(",") + object_).Q()
+            + (ToTerm(",") + object_).Q()
+            + "]";
+        // objectArray.Rule = ToTerm("[") + MakePlusRule(objectArray, ToTerm(","), object_) + "]";
         object_.Rule = ToTerm("{") + (("\"ROUTE\":" + stringLiteral) |
                                   ("\"IDENTIFIABLE\":" + stringLiteral) |
                                   ("\"REFERABLE\":" + stringLiteral) |
@@ -205,8 +234,9 @@ public class QueryGrammarJSON : Grammar
     private IContractSecurityRules mySecurityRules;
 
     public string idShortPath = "";
+    public bool withSelect = false;
 
-    static void PrintParseTree(ParseTreeNode node, int indent, StringWriter sw)
+    void PrintParseTree(ParseTreeNode node, int indent, StringWriter sw)
     {
         if (node == null)
             return;
@@ -263,9 +293,9 @@ public class QueryGrammarJSON : Grammar
         public string idShortPath = "";
     }
 
-    static List<string> skip = new List<string>() { "?", "\"Query\":", "\"$condition\":" };
-    static List<string> startsWith = new List<string>() { "Unnamed", "__", "query" };
-    static List<string> keep1 = new List<string>() { "\"$and\":", "\"$or\":", "\"$not\":" };
+    List<string> skip = new List<string>() { "?", "\"Query\":", "\"$condition\":" };
+    List<string> startsWith = new List<string>() { "Unnamed", "__", "query" };
+    List<string> keep1 = new List<string>() { "\"$and\":", "\"$or\":", "\"$not\":" };
 
     private void setParent(treeNode parent, List<treeNode> Children)
     {
@@ -300,7 +330,19 @@ public class QueryGrammarJSON : Grammar
         foreach (var c in node.ChildNodes)
         {
             if (skip.Contains(c.Term.Name))
+            {
+                if (c.Term.Name == "?")
+                {
+                    if (c.ChildNodes.Count == 2)
+                    {
+                        if (c.ChildNodes[0].Term.Name == "\"$select\":")
+                        {
+                            withSelect = true;
+                        }
+                    }
+                }
                 continue;
+            }
 
             var tc = simplifyTree(c);
             if (tc != null)
@@ -455,6 +497,9 @@ public class QueryGrammarJSON : Grammar
             case "\"$field\":":
                 tn.Type = "field";
                 break;
+            case "\"$select\":":
+                withSelect = true;
+                break;
             default:
                 break;
         }
@@ -477,16 +522,16 @@ public class QueryGrammarJSON : Grammar
 
         return tn;
     }
-    public string ParseTreeToExpressionWithAccessRules(ParseTreeNode node, string typePrefix, ref int upperCountTypePrefix, string parentType = "")
+    public string ParseTreeToExpressionWithAccessRules(bool noSecurity, ParseTreeNode node, string typePrefix, ref int upperCountTypePrefix, string parentType = "")
     {
         var result = ParseTreeToExpression(node, typePrefix, ref upperCountTypePrefix, parentType);
 
-        if (accessRuleNode == null && accessRuleExpression.TryGetValue("all", out _))
+        if (!noSecurity && accessRuleNode == null && accessRuleExpression.TryGetValue("all", out _))
         {
             switch (typePrefix)
             {
                 case "":
-                    result = $"({accessRuleExpression})&&({result})";
+                    result = $"({accessRuleExpression["all"]})&&({result})";
                     break;
                 case "sm.":
                     result = result.Replace("$SKIP", "true");
@@ -564,6 +609,9 @@ public class QueryGrammarJSON : Grammar
 
         switch (name)
         {
+            case "\"$select\":":
+                withSelect = true;
+                break;
             case "\"$and\":":
                 op = "&&";
                 pattern = "andor";
@@ -1068,7 +1116,7 @@ public class QueryGrammarJSON : Grammar
     public static new Dictionary<string, string> accessRuleExpression = [];
     // public static string accessRuleExpression = "((sm.idShort==\"Nameplate\")||(sm.idShort==\"TechnicalData\"))";
     // public static string accessRuleExpression = "(sm.idShort==\"Nameplate\")";
-    public static treeNode accessRuleNode = null;
+    public treeNode accessRuleNode = null;
     public void ParseAccessRules(ParseTreeNode node)
     {
         // mySecurityRules.ClearSecurityRules();
@@ -1082,14 +1130,14 @@ public class QueryGrammarJSON : Grammar
         }
     }
 
-    static List<string> Names = new List<string>();
-    static string access = "";
-    static string rights = "";
-    static string global = "";
-    static bool isClaim = false;
-    static string claim = "";
-    static bool filter = false;
-    static bool route = false;
+    List<string> Names = new List<string>();
+    string access = "";
+    string rights = "";
+    string global = "";
+    bool isClaim = false;
+    string claim = "";
+    bool filter = false;
+    bool route = false;
     void ParseAccessRule(ParseTreeNode node)
     {
         switch (node.Term.Name)
