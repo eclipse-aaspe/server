@@ -1691,7 +1691,8 @@ public partial class Query
             {
                 messages.Add("");
 
-                int countTypePrefix = 0;
+                grammar.withSelect = false;
+                var countTypePrefix = 0;
                 condition["all"] = grammar.ParseTreeToExpressionWithAccessRules(noSecurity, parseTree.Root, "", ref countTypePrefix);
                 if (grammar.withSelect)
                 {
