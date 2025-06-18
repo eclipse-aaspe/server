@@ -70,6 +70,9 @@
           },
           {
             "ROUTE": "/query/submodels"
+          },
+          {
+            "ROUTE": "/packages"
           }
         ],
         "FORMULA": {

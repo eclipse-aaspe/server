@@ -6,7 +6,9 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using AasCore.Aas3_0;
+using AasxServer;
 using AasxServerStandardBib.Logging;
+using AdminShellNS.Models;
 using Contracts;
 using Contracts.DbRequests;
 using Contracts.Pagination;
@@ -1121,6 +1123,123 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
         return tcs.Submodels.ConvertAll(r => r as object);
     }
+
+    public async Task<DbRequestResult> DeleteAASXByPackageId(ISecurityConfig securityConfig, string packageId)
+    {
+        var parameters = new DbRequestParams()
+        {
+            PackageIdentifier = packageId
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.DeleteAASXByPackageId, DbRequestCrudType.Delete, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
+
+    public async Task<DbFileRequestResult> ReadAASXByPackageId(ISecurityConfig securityConfig, string packageId)
+    {
+        int packageIndex = int.Parse(packageId);
+        var requestedFileName = Program.envFileName[packageIndex];
+        var package = Program.env[packageIndex];
+
+
+        var parameters = new DbRequestParams()
+        {
+            PackageIdentifier = packageId
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReadAASXByPackageId, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs.FileRequestResult;
+    }
+
+    public async Task<List<PackageDescription>> ReadPagedAASXPackageIds(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, string aasId)
+    {
+        var parameters = new DbRequestParams()
+        {
+            AssetAdministrationShellIdentifier = aasId,
+            PaginationParameters = paginationParameters
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReadPagedAASXPackageIds, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+
+        var packageDescriptions = tcs.PackageDescriptions;
+
+        if (packageDescriptions.Count == 0)
+        {
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<DbRequestHandlerService>>();
+                scopedLogger.LogInformation($"No packages with requested asset id found.");
+            }
+        }
+
+        return packageDescriptions;
+    }
+
+    public async Task<PackageDescription> CreateAASXPackage(ISecurityConfig securityConfig, MemoryStream stream, string fileName)
+    {
+        var parameters = new DbRequestParams()
+        {
+            FileRequest = new DbFileRequestResult()
+            {
+                Stream = stream,
+                File = fileName
+            }
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.CreateAASXPackage, DbRequestCrudType.Create, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+
+        var packageDescriptions = tcs.PackageDescriptions;
+
+        return packageDescriptions[0];
+    }
+
+    public Task<DbRequestResult> UpdateAASXPackageById(ISecurityConfig securityConfig, string packageId, MemoryStream stream, string fileName) => throw new NotImplementedException();
+
+
 
     private void IncrementCounter()
     {

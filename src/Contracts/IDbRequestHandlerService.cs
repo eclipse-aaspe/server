@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AasCore.Aas3_0;
 using AdminShellNS;
+using AdminShellNS.Models;
 using Contracts.DbRequests;
 using Contracts.Pagination;
 using Contracts.QueryResult;
@@ -69,4 +70,9 @@ public interface IDbRequestHandlerService
     Task<int> QueryCountSMEs(ISecurityConfig securityConfig, string smSemanticId, string smIdentifier, string semanticId, string diff, string contains, string equal, string lower, string upper,
         IPaginationParameters paginationParameters, string expression);
     Task<List<object>> QueryGetSMs(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, string expression);
+    Task<DbRequestResult> DeleteAASXByPackageId(ISecurityConfig securityConfig, string packageId);
+    Task<DbFileRequestResult> ReadAASXByPackageId(ISecurityConfig securityConfig, string packageId);
+    Task<List<PackageDescription>> ReadPagedAASXPackageIds(ISecurityConfig securityConfig, IPaginationParameters paginationParameters, string aadId);
+    Task<PackageDescription> CreateAASXPackage(ISecurityConfig securityConfig, MemoryStream stream, string fileName);
+    Task<DbRequestResult> UpdateAASXPackageById(ISecurityConfig securityConfig, string packageId, MemoryStream stream, string fileName);
 }

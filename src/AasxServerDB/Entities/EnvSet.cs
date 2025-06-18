@@ -23,7 +23,8 @@ namespace AasxServerDB.Entities
         // id
         public int Id { get; set; }
 
-        // path
+        // aasx package
+        //public string? PackageIdentifier { get; set; }
         public string? Path { get; set; }
 
         // cd, aas, sm

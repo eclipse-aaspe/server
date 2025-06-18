@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AasCore.Aas3_0;
 using AdminShellNS;
+using AdminShellNS.Models;
 using Contracts.QueryResult;
 
 public class DbRequestResult
@@ -15,6 +16,7 @@ public class DbRequestResult
     public List<IAssetAdministrationShell> AssetAdministrationShells { get; set; }
     public List<IReference> References { get; set; }
     public List<ISubmodel> Submodels { get; set; }
+    public List<PackageDescription> PackageDescriptions { get; set; }
     public List<string> Ids { get; set; }
 
     public List<ISubmodelElement> SubmodelElements { get; set; }
