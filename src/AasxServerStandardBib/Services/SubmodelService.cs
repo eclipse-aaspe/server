@@ -344,10 +344,17 @@ namespace AasxServerStandardBib.Services
                     //Check if a directory
                     else if (file.Value.StartsWith('/') || file.Value.StartsWith('\\'))
                     {
-                        _logger.LogInformation($"Value of the Submodel-Element File with IdShort {file.IdShort} is a File-Path.");
-                        Stream stream = _packageEnvService.GetFileFromPackage(submodelIdentifier, fileName);
-                        byteArray = stream.ToByteArray();
-                        fileSize = byteArray.Length;
+                        try
+                        {
+                            _logger.LogInformation($"Value of the Submodel-Element File with IdShort {file.IdShort} is a File-Path.");
+                            Stream stream = _packageEnvService.GetFileFromPackage(submodelIdentifier, fileName);
+                            byteArray = stream.ToByteArray();
+                            fileSize = byteArray.Length;
+                        }
+                        catch (Exception e)
+                        {
+                            throw new NotFoundException($"File mentioned in the element {fileElement.IdShort} not found!");
+                        }
                     }
                     // incorrect value
                     else

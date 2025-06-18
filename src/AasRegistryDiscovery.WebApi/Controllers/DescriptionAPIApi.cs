@@ -57,6 +57,7 @@ namespace AasRegistryDiscovery.WebApi.Controllers
             output.Profiles.Add("https://admin-shell.io/aas/API/3/0/AssetAdministrationShellRegistryServiceSpecification/SSP-002");
             output.Profiles.Add("https://admin-shell.io/aas/API/3/0/SubmodelRegistryServiceSpecification/SSP-001");
             output.Profiles.Add("https://admin-shell.io/aas/API/3/0/SubmodelRegistryServiceSpecification/SSP-002");
+            output.Profiles.Add("https://admin-shell.io/aas/API/3/0/DiscoveryServiceSpecification/SSP-001");
 
             return new ObjectResult(output);
         }

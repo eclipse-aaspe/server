@@ -11,6 +11,7 @@ using AasxServerStandardBib.Logging;
 using AdminShellNS;
 using Extensions;
 using Microsoft.EntityFrameworkCore;
+using MimeKit.Encodings;
 using Org.BouncyCastle.Asn1.Smime;
 using System;
 using System.Collections.Generic;
@@ -267,7 +268,14 @@ namespace AasxServerStandardBib.Services
 
         public Stream GetAssetInformationThumbnail(int packageIndex)
         {
-            return _packages[packageIndex].GetLocalThumbnailStream();
+            try
+            {
+                return _packages[packageIndex].GetLocalThumbnailStream();
+            }
+            catch (Exception e)
+            {
+                throw new NotFoundException("Thumbnail not found!");
+            }
         }
 
         public void UpdateAssetInformationThumbnail(IResource defaultThumbnail, Stream fileContent, int packageIndex)

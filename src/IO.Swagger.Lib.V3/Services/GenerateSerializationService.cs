@@ -99,6 +99,17 @@ public class GenerateSerializationService : IGenerateSerializationService
             outputEnv.ConceptDescriptions.AddRange(_cdService.GetAllConceptDescriptions());
         }
 
+        //remove empty lists
+        if(outputEnv != null)
+        {
+            if (outputEnv.AssetAdministrationShells != null && outputEnv.AssetAdministrationShells.Count == 0)
+                outputEnv.AssetAdministrationShells = null;
+            if (outputEnv.Submodels != null && outputEnv.Submodels.Count == 0)
+                outputEnv.Submodels = null;
+            if (outputEnv.ConceptDescriptions != null && outputEnv.ConceptDescriptions.Count == 0)
+                outputEnv.ConceptDescriptions = null;
+        }
+
         return outputEnv;
     }
 }

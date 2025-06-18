@@ -31,29 +31,32 @@ namespace IO.Swagger.Lib.V3.Services
             return _pathTransformer.Transform(that, context);
         }
 
-        public List<string> ToIdShortPath(List<ISubmodel?> submodelList)
+        public List<List<string>> ToIdShortPath(List<ISubmodel?> submodelList)
         {
-            var output = new List<string>();
+            var output = new List<List<string>>();
 
             foreach (var submodel in submodelList)
             {
-                var context = new PathModifierContext();
-                var path = _pathTransformer.Transform(submodel, context);
-                output.AddRange(path);
+                if (submodel.SubmodelElements != null && submodel.SubmodelElements.Count != 0)
+                {
+                    var context = new PathModifierContext();
+                    var path = _pathTransformer.Transform(submodel, context);
+                    output.Add(path); 
+                }
             }
 
             return output;
         }
 
-        public List<string> ToIdShortPath(List<ISubmodelElement?> submodelElementList)
+        public List<List<string>> ToIdShortPath(List<ISubmodelElement?> submodelElementList)
         {
-            //var output = new List<List<string>>();
-            var output = new List<string>();
+            //var finalOutput = new List<List<string>>();
+            var output = new List<List<string>>();
             foreach (var submodelElement in submodelElementList)
             {
                 var context = new PathModifierContext(isGetAllSmes: true);
                 var path = _pathTransformer.Transform(submodelElement, context);
-                output.AddRange(path);
+                output.Add(path);
             }
 
             return output;
