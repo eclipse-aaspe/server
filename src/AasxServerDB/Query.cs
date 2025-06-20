@@ -26,6 +26,9 @@ using AasxServerDB.Entities;
 using Microsoft.EntityFrameworkCore;
 using AasCore.Aas3_0;
 using Contracts.Security;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Schema;
 
 public class CombinedValue
 {
@@ -1668,6 +1671,8 @@ public partial class Query
         // query language
         if (withQueryLanguage == 3)
         {
+            Root? deserializedData = null;
+
             // with newest query language from QueryParserJSON.cs
             var parser = new Parser(grammar);
             parser.Context.TracingEnabled = true;
@@ -1691,13 +1696,99 @@ public partial class Query
             {
                 messages.Add("");
 
-                grammar.withSelect = false;
-                var countTypePrefix = 0;
-                condition["all"] = grammar.ParseTreeToExpressionWithAccessRules(noSecurity, parseTree.Root, "", ref countTypePrefix);
-                if (grammar.withSelect)
+                var jsonSchema = "";
+                if (System.IO.File.Exists("jsonschema-query.txt"))
+                {
+                    jsonSchema = System.IO.File.ReadAllText("jsonschema-query.txt");
+                    string jsonData = expression;
+
+                    // Schema parsen
+                    JSchema schema = JSchema.Parse(jsonSchema);
+
+                    // JSON-Daten parsen
+                    JObject jsonObject = JObject.Parse(jsonData);
+
+                    // Validierung durchführen
+                    IList<string> validationErrors = new List<string>();
+                    bool isValid = jsonObject.IsValid(schema, out validationErrors);
+
+                    if (isValid)
+                    {
+                        messages.Add("✅ JSON is valid.");
+                        try
+                        {
+                            deserializedData = JsonConvert.DeserializeObject<Root>(jsonData);
+                            if (deserializedData != null)
+                            {
+                                messages.Add("✅ Successfully deserialized.");
+
+                                // mode: all, sm., sme., svalue, mvalue
+                                List<LogicalExpression?> logicalExpressions = [];
+                                List<Dictionary<string, string>> conditions = [];
+                                if (deserializedData.Query != null)
+                                {
+                                    logicalExpressions.Add(deserializedData.Query.Condition);
+                                    conditions.Add(deserializedData.Query._query_conditions);
+                                }
+                                if (logicalExpressions.Count != 0)
+                                {
+                                    for (int i = 0; i < logicalExpressions.Count; i++)
+                                    {
+                                        var le = logicalExpressions[i];
+                                        if (le != null)
+                                        {
+                                            QueryGrammarJSON.createExpression("all", le);
+                                            conditions[i].Add("all", le._expression);
+                                            QueryGrammarJSON.createExpression("sm.", le);
+                                            conditions[i].Add("sm.", le._expression);
+                                            QueryGrammarJSON.createExpression("sme.", le);
+                                            conditions[i].Add("sme.", le._expression);
+                                            QueryGrammarJSON.createExpression("svalue", le);
+                                            conditions[i].Add("svalue", le._expression);
+                                            QueryGrammarJSON.createExpression("mvalue", le);
+                                            conditions[i].Add("mvalue", le._expression);
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                isValid = false;
+                            }
+                        }
+                        catch
+                        {
+                            isValid = false;
+                        }
+                    }
+                    if (!isValid)
+                    {
+                        messages.Add("❌ JSON not valid:");
+                        foreach (var error in validationErrors)
+                        {
+                            messages.Add($"- {error}");
+                        }
+                        return null;
+                    }
+                }
+                else
+                {
+                    messages.Add("❌ jsonschema-query.txt not found.");
+                    return null;
+                }
+
+                var query = deserializedData.Query;
+                if (deserializedData == null || query == null)
+                {
+                    return null;
+                }
+
+                if (query.Select != null)
                 {
                     condition["select"] = "true";
                 }
+
+                condition["all"] = query._query_conditions["all"];
                 if (condition["all"].Contains("$$path$$"))
                 {
                     messages.Add("PATH SEARCH");
@@ -1712,11 +1803,14 @@ public partial class Query
                 Console.WriteLine(text);
                 messages.Add(text);
 
-                countTypePrefix = 0;
-                condition["sm"] = grammar.ParseTreeToExpressionWithAccessRules(noSecurity, parseTree.Root, "sm.", ref countTypePrefix);
+                condition["sm"] = query._query_conditions["sm."];
                 if (condition["sm"] == "$SKIP")
                 {
                     condition["sm"] = "";
+                }
+                else
+                {
+                    condition["sm"] = condition["sm"].Replace("sm.", "");
                 }
                 if (!condition["all"].Contains("$$path$$"))
                 {
@@ -1725,11 +1819,14 @@ public partial class Query
                     messages.Add(text);
                 }
 
-                countTypePrefix = 0;
-                condition["sme"] = grammar.ParseTreeToExpressionWithAccessRules(noSecurity, parseTree.Root, "sme.", ref countTypePrefix);
+                condition["sme"] = query._query_conditions["sme."];
                 if (condition["sme"] == "$SKIP")
                 {
                     condition["sme"] = "";
+                }
+                else
+                {
+                    condition["sme"] = condition["sme"].Replace("sme.", "");
                 }
                 if (!condition["all"].Contains("$$path$$"))
                 {
@@ -1738,8 +1835,7 @@ public partial class Query
                     messages.Add(text);
                 }
 
-                countTypePrefix = 0;
-                condition["svalue"] = grammar.ParseTreeToExpressionWithAccessRules(noSecurity, parseTree.Root, "str()", ref countTypePrefix);
+                condition["svalue"] = query._query_conditions["svalue"];
                 if (condition["svalue"] == "$SKIP")
                 {
                     condition["svalue"] = "";
@@ -1751,8 +1847,7 @@ public partial class Query
                     messages.Add(text);
                 }
 
-                countTypePrefix = 0;
-                condition["nvalue"] = grammar.ParseTreeToExpressionWithAccessRules(noSecurity, parseTree.Root, "num()", ref countTypePrefix);
+                condition["nvalue"] = query._query_conditions["mvalue"];
                 if (condition["nvalue"] == "$SKIP")
                 {
                     condition["nvalue"] = "";

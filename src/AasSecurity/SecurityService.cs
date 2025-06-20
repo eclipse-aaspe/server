@@ -69,13 +69,9 @@ namespace AasSecurity
                     }
                     else
                     {
-                        if (parseTree.Root.ChildNodes[0].Term.Name == "all_access_permission_rules")
-                        {
-                            ClearSecurityRules();
-                            grammar.ParseAccessRules(parseTree.Root);
-                            _condition = QueryGrammarJSON.allAccessRuleExpressions;
-                            // Console.WriteLine("Access Rules parsed: " + _condition["all"]);
-                        }
+                        ClearSecurityRules();
+                        grammar.ParseAccessRules(expression);
+                        _condition = QueryGrammarJSON.allAccessRuleExpressions;
                     }
                 }
             }
