@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Contracts.Pagination;
+using Contracts.Security;
 
 public class DbRequestContext
 {

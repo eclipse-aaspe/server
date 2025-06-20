@@ -19,16 +19,16 @@ using Microsoft.IdentityModel.Tokens;
 using System.Linq.Dynamic.Core;
 using System.Linq;
 using Irony.Parsing;
-using HotChocolate.Resolvers;
-using HotChocolate.Language;
 using System;
 using System.Collections.Generic;
 using Contracts.QueryResult;
 using AasxServerDB.Entities;
 using Microsoft.EntityFrameworkCore;
-using HotChocolate;
-using Contracts;
 using AasCore.Aas3_0;
+using Contracts.Security;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Schema;
 
 public class CombinedValue
 {
@@ -36,6 +36,7 @@ public class CombinedValue
     public string? SValue { get; set; }
     public Double? MValue { get; set; }
 }
+
 public class SMEResultRaw
 {
     public string? SM_Identifier { get; set; }
@@ -44,6 +45,13 @@ public class SMEResultRaw
     public string? SValue { get; set; }
     public double? MValue { get; set; }
 }
+
+public class SubmodelsQueryResult
+{
+    public List<ISubmodel> Submodels { get; set; }
+    public List<string> Ids { get; set; }
+}
+
 
 public partial class Query
 {
@@ -62,7 +70,7 @@ public partial class Query
     private readonly QueryGrammar grammar;
     */
 
-    public QResult SearchSMs(AasContext db, bool withTotalCount, bool withLastId, string semanticId,
+    public QResult SearchSMs(ISecurityConfig securityConfig, AasContext db, bool withTotalCount, bool withLastId, string semanticId,
         string identifier, string diff, int pageFrom, int pageSize, string expression)
     {
         var qResult = new QResult()
@@ -84,7 +92,7 @@ public partial class Query
         Console.WriteLine("\nSearchSMs");
 
         watch.Restart();
-        var query = GetSMs(qResult, watch, db, false, withTotalCount, semanticId, identifier, diff, pageFrom, pageSize, expression);
+        var query = GetSMs(securityConfig.NoSecurity, qResult, watch, db, false, withTotalCount, semanticId, identifier, diff, pageFrom, pageSize, expression);
         if (query == null)
         {
             text = "No query is generated.";
@@ -124,13 +132,13 @@ public partial class Query
         return qResult;
     }
 
-    public int CountSMs(AasContext db, string semanticId, string identifier, string diff, int pageFrom, int pageSize, string expression)
+    public int CountSMs(ISecurityConfig securityConfig, AasContext db, string semanticId, string identifier, string diff, int pageFrom, int pageSize, string expression)
     {
         var watch = Stopwatch.StartNew();
         Console.WriteLine("\nCountSMs");
 
         watch.Restart();
-        var query = GetSMs(new QResult(), watch, db, true, false, semanticId, identifier, diff, pageFrom, pageSize, expression);
+        var query = GetSMs(securityConfig.NoSecurity, new QResult(), watch, db, true, false, semanticId, identifier, diff, pageFrom, pageSize, expression);
         if (query == null)
         {
             Console.WriteLine("No query is generated.");
@@ -145,7 +153,7 @@ public partial class Query
         return result;
     }
 
-    public QResult SearchSMEs(AasContext db, string requested, bool withTotalCount, bool withLastId,
+    public QResult SearchSMEs(ISecurityConfig securityConfig, AasContext db, string requested, bool withTotalCount, bool withLastId,
         string smSemanticId, string smIdentifier, string semanticId, string diff, string contains,
         string equal, string lower, string upper, int pageFrom, int pageSize, string expression)
     {
@@ -169,7 +177,7 @@ public partial class Query
         Console.WriteLine("\nSearchSMEs");
 
         watch.Restart();
-        var query = GetSMEs(qResult, watch, requested, db, false, withTotalCount,
+        var query = GetSMEs(securityConfig.NoSecurity, qResult, watch, requested, db, false, withTotalCount,
             smSemanticId, smIdentifier, semanticId, diff, pageFrom, pageSize, contains, equal, lower, upper, expression);
         if (query == null)
         {
@@ -211,7 +219,7 @@ public partial class Query
         return qResult;
     }
 
-    public int CountSMEs(AasContext db,
+    public int CountSMEs(ISecurityConfig securityConfig, AasContext db,
         string smSemanticId, string smIdentifier, string semanticId, string diff,
         string contains, string equal, string lower, string upper, int pageFrom, int pageSize, string expression)
     {
@@ -219,7 +227,7 @@ public partial class Query
         Console.WriteLine("\nCountSMEs");
 
         watch.Restart();
-        var query = GetSMEs(new QResult(), watch, "", db, true, false, smSemanticId, smIdentifier, semanticId, diff, -1, -1, contains, equal, lower, upper, expression);
+        var query = GetSMEs(securityConfig.NoSecurity, new QResult(), watch, "", db, true, false, smSemanticId, smIdentifier, semanticId, diff, -1, -1, contains, equal, lower, upper, expression);
         if (query == null)
         {
             Console.WriteLine("No query is generated due to incorrect parameter combination.");
@@ -234,7 +242,7 @@ public partial class Query
         return result;
     }
 
-    internal List<ISubmodel> GetSubmodelList(AasContext db, Dictionary<string, string>? securityCondition,  int pageFrom, int pageSize, string expression)
+    internal SubmodelsQueryResult GetSubmodelList(bool noSecurity, AasContext db, Dictionary<string, string>? securityCondition,  int pageFrom, int pageSize, string expression)
     {
         var qResult = new QResult()
         {
@@ -258,7 +266,7 @@ public partial class Query
 
         expression = "$JSONGRAMMAR " + expression;
 
-        var query = GetSMs(qResult, watch, db, false, false, "", "", "", pageFrom, pageSize, expression);
+        var query = GetSMs(noSecurity, qResult, watch, db, false, false, "", "", "", pageFrom, pageSize, expression);
         if (query == null)
         {
             text = "No query is generated.";
@@ -292,27 +300,36 @@ public partial class Query
 
             var smList = db.SMSets.Where(sm => smIdList.Contains(sm.Identifier)).ToList();
 
-            List<ISubmodel> output = new List<ISubmodel>();
+            var submodelsResult = new SubmodelsQueryResult();
 
             var timeStamp = DateTime.UtcNow;
 
-            foreach (var sm in smList.Select(selector: submodelDB =>
-                CrudOperator.ReadSubmodel(db, smDB: submodelDB, "", securityCondition)))
+            if (!qResult.WithSelect)
             {
-                if (sm.TimeStamp == DateTime.MinValue)
-                {
-                    sm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp, DateTime.MinValue);
-                    sm.SetTimeStamp(timeStamp);
-                }
-                output.Add(sm);
-            }
+                var submodels = new List<ISubmodel>();
 
-            return output;
+                foreach (var sm in smList.Select(selector: submodelDB =>
+                    CrudOperator.ReadSubmodel(db, smDB: submodelDB, "", securityCondition)))
+                {
+                    if (sm.TimeStamp == DateTime.MinValue)
+                    {
+                        sm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp, DateTime.MinValue);
+                        sm.SetTimeStamp(timeStamp);
+                    }
+                    submodels.Add(sm);
+                }
+                submodelsResult.Submodels = submodels;
+            }
+            else
+            {
+                submodelsResult.Ids = smIdList.ToList();
+            }
+            return submodelsResult;
         }
     }
 
     // --------------- SM Methods ---------------
-    private IQueryable? GetSMs(QResult qResult, Stopwatch watch, AasContext db, bool withCount = false, bool withTotalCount = false,
+    private IQueryable? GetSMs(bool noSecurity, QResult qResult, Stopwatch watch, AasContext db, bool withCount = false, bool withTotalCount = false,
         string semanticId = "", string identifier = "", string diffString = "", int pageFrom = -1, int pageSize = -1, string expression = "")
     {
         // parameter
@@ -368,10 +385,15 @@ public partial class Query
         }
 
         // get condition out of expression
-        var conditionsExpression = ConditionFromExpression(messages, expression);
+        var conditionsExpression = ConditionFromExpression(noSecurity, messages, expression);
         if (conditionsExpression == null)
         {
             return null;
+        }
+
+        if (conditionsExpression.ContainsKey("select"))
+        {
+            qResult.WithSelect = true;
         }
 
         if (conditionsExpression.ContainsKey("AccessRules"))
@@ -749,7 +771,7 @@ public partial class Query
         return smeSets.FromSqlRaw(sql);
     }
 
-    private IQueryable? GetSMEs(QResult qResult, Stopwatch watch, string requested, AasContext db, bool withCount = false, bool withTotalCount = false,
+    private IQueryable? GetSMEs(bool noSecurity, QResult qResult, Stopwatch watch, string requested, AasContext db, bool withCount = false, bool withTotalCount = false,
         string smSemanticId = "", string smIdentifier = "", string semanticId = "", string diffString = "", int pageFrom = -1, int pageSize = -1,
         string contains = "", string equal = "", string lower = "", string upper = "", string expression = "")
     {
@@ -825,7 +847,7 @@ public partial class Query
         }
 
         // get condition out of expression
-        var conditionsExpression = ConditionFromExpression(messages, expression);
+        var conditionsExpression = ConditionFromExpression(noSecurity, messages, expression);
 
         if (conditionsExpression.ContainsKey("AccessRules"))
         {
@@ -1603,7 +1625,7 @@ public partial class Query
         return rawSQL;
     }
 
-    private Dictionary<string, string>? ConditionFromExpression(List<string> messages, string expression)
+    private Dictionary<string, string>? ConditionFromExpression(bool noSecurity, List<string> messages, string expression)
     {
         var text = string.Empty;
         var condition = new Dictionary<string, string>();
@@ -1649,6 +1671,8 @@ public partial class Query
         // query language
         if (withQueryLanguage == 3)
         {
+            Root? deserializedData = null;
+
             // with newest query language from QueryParserJSON.cs
             var parser = new Parser(grammar);
             parser.Context.TracingEnabled = true;
@@ -1672,21 +1696,99 @@ public partial class Query
             {
                 messages.Add("");
 
-                // Security
-                if (parseTree.Root.ChildNodes[0].Term.Name == "all_access_permission_rules")
+                var jsonSchema = "";
+                if (System.IO.File.Exists("jsonschema-query.txt"))
                 {
-                    grammar.ParseAccessRules(parseTree.Root);
-                    // throw new Exception("Access Rules parsed!");
-                    condition["AccessRules"] = "Access Rules parsed!";
-                    return condition;
+                    jsonSchema = System.IO.File.ReadAllText("jsonschema-query.txt");
+                    string jsonData = expression;
+
+                    // Schema parsen
+                    JSchema schema = JSchema.Parse(jsonSchema);
+
+                    // JSON-Daten parsen
+                    JObject jsonObject = JObject.Parse(jsonData);
+
+                    // Validierung durchführen
+                    IList<string> validationErrors = new List<string>();
+                    bool isValid = jsonObject.IsValid(schema, out validationErrors);
+
+                    if (isValid)
+                    {
+                        messages.Add("✅ JSON is valid.");
+                        try
+                        {
+                            deserializedData = JsonConvert.DeserializeObject<Root>(jsonData);
+                            if (deserializedData != null)
+                            {
+                                messages.Add("✅ Successfully deserialized.");
+
+                                // mode: all, sm., sme., svalue, mvalue
+                                List<LogicalExpression?> logicalExpressions = [];
+                                List<Dictionary<string, string>> conditions = [];
+                                if (deserializedData.Query != null)
+                                {
+                                    logicalExpressions.Add(deserializedData.Query.Condition);
+                                    conditions.Add(deserializedData.Query._query_conditions);
+                                }
+                                if (logicalExpressions.Count != 0)
+                                {
+                                    for (int i = 0; i < logicalExpressions.Count; i++)
+                                    {
+                                        var le = logicalExpressions[i];
+                                        if (le != null)
+                                        {
+                                            QueryGrammarJSON.createExpression("all", le);
+                                            conditions[i].Add("all", le._expression);
+                                            QueryGrammarJSON.createExpression("sm.", le);
+                                            conditions[i].Add("sm.", le._expression);
+                                            QueryGrammarJSON.createExpression("sme.", le);
+                                            conditions[i].Add("sme.", le._expression);
+                                            QueryGrammarJSON.createExpression("svalue", le);
+                                            conditions[i].Add("svalue", le._expression);
+                                            QueryGrammarJSON.createExpression("mvalue", le);
+                                            conditions[i].Add("mvalue", le._expression);
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                isValid = false;
+                            }
+                        }
+                        catch
+                        {
+                            isValid = false;
+                        }
+                    }
+                    if (!isValid)
+                    {
+                        messages.Add("❌ JSON not valid:");
+                        foreach (var error in validationErrors)
+                        {
+                            messages.Add($"- {error}");
+                        }
+                        return null;
+                    }
                 }
-                if (QueryGrammarJSON.accessRuleExpression.TryGetValue("all", out _))
+                else
                 {
-                    messages.Add("Access Rules: " + QueryGrammarJSON.accessRuleExpression);
+                    messages.Add("❌ jsonschema-query.txt not found.");
+                    return null;
                 }
 
-                int countTypePrefix = 0;
-                condition["all"] = grammar.ParseTreeToExpressionWithAccessRules(parseTree.Root, "", ref countTypePrefix);
+                var query = deserializedData.Query;
+                if (deserializedData == null || query == null)
+                {
+                    return null;
+                }
+
+                if (query.Select != null)
+                {
+                    condition["select"] = "true";
+                }
+
+                condition["all"] = query._query_conditions["all"];
                 if (condition["all"].Contains("$$path$$"))
                 {
                     messages.Add("PATH SEARCH");
@@ -1701,11 +1803,14 @@ public partial class Query
                 Console.WriteLine(text);
                 messages.Add(text);
 
-                countTypePrefix = 0;
-                condition["sm"] = grammar.ParseTreeToExpressionWithAccessRules(parseTree.Root, "sm.", ref countTypePrefix);
+                condition["sm"] = query._query_conditions["sm."];
                 if (condition["sm"] == "$SKIP")
                 {
                     condition["sm"] = "";
+                }
+                else
+                {
+                    condition["sm"] = condition["sm"].Replace("sm.", "");
                 }
                 if (!condition["all"].Contains("$$path$$"))
                 {
@@ -1714,11 +1819,14 @@ public partial class Query
                     messages.Add(text);
                 }
 
-                countTypePrefix = 0;
-                condition["sme"] = grammar.ParseTreeToExpressionWithAccessRules(parseTree.Root, "sme.", ref countTypePrefix);
+                condition["sme"] = query._query_conditions["sme."];
                 if (condition["sme"] == "$SKIP")
                 {
                     condition["sme"] = "";
+                }
+                else
+                {
+                    condition["sme"] = condition["sme"].Replace("sme.", "");
                 }
                 if (!condition["all"].Contains("$$path$$"))
                 {
@@ -1727,8 +1835,7 @@ public partial class Query
                     messages.Add(text);
                 }
 
-                countTypePrefix = 0;
-                condition["svalue"] = grammar.ParseTreeToExpressionWithAccessRules(parseTree.Root, "str()", ref countTypePrefix);
+                condition["svalue"] = query._query_conditions["svalue"];
                 if (condition["svalue"] == "$SKIP")
                 {
                     condition["svalue"] = "";
@@ -1740,8 +1847,7 @@ public partial class Query
                     messages.Add(text);
                 }
 
-                countTypePrefix = 0;
-                condition["nvalue"] = grammar.ParseTreeToExpressionWithAccessRules(parseTree.Root, "num()", ref countTypePrefix);
+                condition["nvalue"] = query._query_conditions["mvalue"];
                 if (condition["nvalue"] == "$SKIP")
                 {
                     condition["nvalue"] = "";

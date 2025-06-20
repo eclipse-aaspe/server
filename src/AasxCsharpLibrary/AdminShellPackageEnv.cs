@@ -1053,6 +1053,7 @@ namespace AdminShellNS
                     // after this, there are no more pending for delete files
                     _pendingFilesToDelete.Clear();
 
+                    //HERE FILES IN PACKAGE
                     // write pending supplementary files
                     foreach (var psfAdd in _pendingFilesToAdd)
                     {

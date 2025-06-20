@@ -69,13 +69,9 @@ namespace AasSecurity
                     }
                     else
                     {
-                        if (parseTree.Root.ChildNodes[0].Term.Name == "all_access_permission_rules")
-                        {
-                            ClearSecurityRules();
-                            grammar.ParseAccessRules(parseTree.Root);
-                            _condition = QueryGrammarJSON.allAccessRuleExpressions;
-                            // Console.WriteLine("Access Rules parsed: " + _condition["all"]);
-                        }
+                        ClearSecurityRules();
+                        grammar.ParseAccessRules(expression);
+                        _condition = QueryGrammarJSON.allAccessRuleExpressions;
                     }
                 }
             }
@@ -465,7 +461,8 @@ namespace AasSecurity
                         if (token != null)
                         {
                             _logger.LogDebug("Received token of type email {Sanitize}", LogSanitizer.Sanitize(token));
-                            user  = token;
+                            user = token;
+                            accessRights = user;
                             error = false;
                         }
 
@@ -1131,8 +1128,14 @@ namespace AasSecurity
             return false;
         }
 
-        public string GetSecurityRules()
+        public string GetSecurityRules(out List<Dictionary<string, string>> condition)
         {
+            condition = new List<Dictionary<string, string>>();
+            if (_condition != null)
+            {
+                condition = _condition;
+            }
+
             string rules = "";
 
             foreach (var r in GlobalSecurityVariables.SecurityRoles)

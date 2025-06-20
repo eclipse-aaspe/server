@@ -9,11 +9,18 @@
   <ItemGroup>
     <PackageReference Include="Irony" Version="1.5.3" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
+    <PackageReference Include="Newtonsoft.Json.Schema" Version="4.0.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\AasCore.Aas3_0\AasCore.Aas3_0.csproj" />
     <ProjectReference Include="..\AasxCsharpLibrary\AasxCsharpLibrary.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="jsonschema.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

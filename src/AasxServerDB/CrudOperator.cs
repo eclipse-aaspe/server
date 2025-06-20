@@ -14,12 +14,14 @@
 namespace AasxServerDB
 {
     using System.Collections.Generic;
+    using System.IO.Packaging;
     using System.Linq;
     using System.Linq.Dynamic.Core;
     using System.Text;
     using AasCore.Aas3_0;
     using AasxServerDB.Entities;
     using AdminShellNS;
+    using AdminShellNS.Models;
     using Contracts.Pagination;
     using Extensions;
     using Microsoft.EntityFrameworkCore;
@@ -1683,6 +1685,49 @@ namespace AasxServerDB
                 var path = db.EnvSets.Where(e => e.Id == envId).Select(e => e.Path).FirstOrDefault();
                 return path ?? string.Empty;
             }
+        }
+
+        internal static List<PackageDescription> ReadPagedPackageDescriptions(AasContext db, IPaginationParameters paginationParameters, Dictionary<string, string>? securityCondition, string aasIdentifier)
+        {
+            var output = new List<PackageDescription>();
+
+            var timeStamp = DateTime.UtcNow;
+
+            List<int> envIds = new List<int>();
+
+            if (aasIdentifier != null)
+            {
+                var aas = db.AASSets.FirstOrDefault(aas => aas.Identifier == aasIdentifier);
+
+                if (aas.EnvId.HasValue && aas.EnvId >= 0)
+                {
+                    envIds.Add(aas.EnvId.Value);
+                }
+            }
+            else
+            {
+                var envDbSet = db.EnvSets
+                    .Skip(paginationParameters.Cursor)
+                    .Take(paginationParameters.Limit);
+                envIds = [.. envDbSet.Select(env => env.Id)];
+            }
+
+            foreach (var envId in envIds)
+            {
+                var packageDescription = new PackageDescription();
+                packageDescription.PackageId = envId.ToString();
+                var aasIdList = new List<string>();
+
+                var envSet = db.EnvSets.FirstOrDefault(e => e.Id == envId);
+                foreach (var aas in envSet.AASSets)
+                {
+                    aasIdList.Add(aas.Identifier);
+                }
+                packageDescription.AasIds = aasIdList;
+                output.Add(packageDescription);
+            }
+
+            return output;
         }
     }
 }

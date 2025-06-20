@@ -31,6 +31,6 @@ namespace AasSecurity
                               string? aasResourceType = null,
                               IClass? aasResource = null, string? policy = null);
 
-        string GetSecurityRules();
+        string GetSecurityRules(out List<Dictionary<string, string>> condition);
     }
 }
