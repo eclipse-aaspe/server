@@ -22,7 +22,7 @@ public class MqttClientService
         _options = new MqttClientOptionsBuilder()
             .WithClientId("AasxServerClient")
             .WithTcpServer("mqtt-broker.aas-voyager.com", 8883)
-            .WithCredentials("AAS", "a8$")
+            .WithCredentials("phoenixcontact.com", "phoenixcontact.com")
             .WithTlsOptions(new MqttClientTlsOptions
             {
                 UseTls = true,
