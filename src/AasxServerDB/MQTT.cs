@@ -118,7 +118,9 @@ public class SubmodelPublisherService : BackgroundService
                     if (changed != null && changed.Count != 0)
                     {
                         var json = JsonSerializer.Serialize(changed);
-                        await _mqttService.PublishAsync("submodels", json);
+                        await _mqttService.PublishAsync("/noauth/submodels", json);
+                        await _mqttService.PublishAsync("/fx/all/submodels", json);
+                        await _mqttService.PublishAsync("/fx/domain/phoenxicontact.com/submodels", json);
                         _lastPublish = DateTime.UtcNow;
                     }
                 }
