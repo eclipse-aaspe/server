@@ -43,6 +43,11 @@ namespace IO.Swagger.Lib.V3.Services
                     var path = _pathTransformer.Transform(submodel, context);
                     output.Add(path); 
                 }
+                else
+                {
+                    // If the submodel has no elements, we still want to return an empty path
+                    output.Add(new List<string>());
+                }
             }
 
             return output;

@@ -275,7 +275,7 @@ public class InMemoryPersistenceService : IPersistenceService
 
         if(output == null)
         {
-            throw new NotFoundException($"AssetLinks corresponding to aasIdentifier {aasIdentifier} NOT found.");
+            throw new NotFoundException($"aasIdentifier {aasIdentifier} NOT found in discoveries.");
         }
 
         return output;
@@ -289,7 +289,7 @@ public class InMemoryPersistenceService : IPersistenceService
             var discovery = discoveries.Find(d => d.AasIdentifier.Equals(aasIdentifier));
             if(discovery == null)
             {
-                throw new NotFoundException($"AssetLinks corresponding to aasIdentifier {aasIdentifier} NOT found.");
+                throw new NotFoundException($"aasIdentifier {aasIdentifier} NOT found in discoveries.");
             }
 
             discoveries.Remove(discovery);
@@ -304,7 +304,7 @@ public class InMemoryPersistenceService : IPersistenceService
             var discovery = discoveries.Find(d => d.AasIdentifier.Equals(aasIdentifier));
             if (discovery == null)
             {
-                throw new NotFoundException($"AssetLinks corresponding to aasIdentifier {aasIdentifier} NOT found.");
+                throw new NotFoundException($"aasIdentifier  {aasIdentifier}  NOT found in discoveries.");
             }
 
             discovery.AssetLinks ??= new List<ISpecificAssetId>();

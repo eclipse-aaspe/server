@@ -44,6 +44,10 @@ namespace AasRegistryDiscovery.WebApi.Formatters
             {
                 return true;
             }
+            else if(typeof(List<ISpecificAssetId>).IsAssignableFrom(context.ModelType))
+            {
+                return true;
+            }
             else
             {
                 return false;
@@ -76,6 +80,17 @@ namespace AasRegistryDiscovery.WebApi.Formatters
             else if (type == typeof(SubmodelDescriptor))
             {
                 result = DescriptorDeserializer.SubmodelDescriptorFrom(node);
+            }
+            else if (type == typeof(List<ISpecificAssetId>))
+            {
+                var assetIds = new List<ISpecificAssetId>();
+                var jsonArray = node as JsonArray;
+                foreach (var item in jsonArray)
+                {
+                    assetIds.Add(Jsonization.Deserialize.SpecificAssetIdFrom(item));
+                }
+
+                result = assetIds;
             }
             else
             {
