@@ -134,8 +134,21 @@ public class SubmodelPublisherService : BackgroundService
     {
         using (var db = new AasContext())
         {
-            var s = db.SMSets.Where(sm => sm.TimeStampTree >= _lastPublish).Select(sm => sm.Identifier).ToList();
-            return s;
+            // var s = db.SMSets.Where(sm => sm.TimeStampTree >= _lastPublish).Select(sm => sm.Identifier).ToList();
+            // return s;
+
+            var smDBList = db.SMSets.Where(sm => sm.TimeStampTree >= _lastPublish).ToList();
+
+            List<string?>? result = [];
+            foreach (var sm in smDBList)
+            {
+                var output = $"{{\r\n \"specversion\" : \"1.0\",\r\n \"type\" : \"UpdatedSubmodel\",\r\n \"source\" : \"https://pathAddedLater\",\r\n " +
+                    $"\"subject\" : {{\r\n \"id\":  \"{sm.Identifier}\",\r\n \"semanticId\": \"{sm.SemanticId}\" \r\n   }},\r\n" +
+                    $"\"id\" : \"later-4b1286f6-f6e9-4de3-944a-d565675ef7b1\",\r\n   \"time\" : \"{DateTime.UtcNow}\",\r\n   \"datacontenttype\" : \"application/json+submodel\", \r\n   \"data\" : {{}}\r\n}} \r\n";
+                Console.WriteLine(output);
+                result.Add(output);
+            }
+            return result;
         }
     }
 }
