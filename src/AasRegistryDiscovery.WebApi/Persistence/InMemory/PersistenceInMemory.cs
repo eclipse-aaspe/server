@@ -30,6 +30,12 @@ internal static class PersistenceInMemory
         AddDiscoveryEntity(aasDescriptor);
     }
 
+    internal static void AddDiscoveryEntity(DiscoveryEntity discovery)
+    {
+        DiscoveryEntities ??= new();
+        DiscoveryEntities.Add(discovery);
+    }
+
     private static void AddDiscoveryEntity(AssetAdministrationShellDescriptor aasDescriptor)
     {
         //Create AssetLinks

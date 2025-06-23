@@ -302,13 +302,18 @@ public class InMemoryPersistenceService : IPersistenceService
         if (discoveries != null && discoveries.Count > 0)
         {
             var discovery = discoveries.Find(d => d.AasIdentifier.Equals(aasIdentifier));
-            if (discovery == null)
+            if (discovery != null)
             {
-                throw new NotFoundException($"aasIdentifier  {aasIdentifier}  NOT found in discoveries.");
+                discovery.AssetLinks = newAssetLinks;
             }
-
-            discovery.AssetLinks ??= new List<ISpecificAssetId>();
-            discovery.AssetLinks.AddRange(newAssetLinks);
+            else
+            {
+                discoveries.Add(new DiscoveryEntity(aasIdentifier, newAssetLinks));
+            }
+        }
+        else
+        {
+            PersistenceInMemory.AddDiscoveryEntity(new DiscoveryEntity(aasIdentifier, newAssetLinks));
         }
 
         return newAssetLinks;
