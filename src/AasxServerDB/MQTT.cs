@@ -66,6 +66,7 @@ public class MqttClientService
             var message = new MqttApplicationMessageBuilder()
             .WithTopic(topic)
             .WithPayload(payload)
+            .WithContentType("application/json")
             .WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce)
             .WithRetainFlag()
             .Build();
