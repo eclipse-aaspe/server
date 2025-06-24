@@ -114,11 +114,12 @@ public class SubmodelPublisherService : BackgroundService
                         lastPublishInitialized = true;
                     }
 
-                    var changed = GetChangedSubmodels(); // Deine Methode
+                    var changed = GetChangedSubmodelsJson(); // Deine Methode
 
-                    if (changed != null && changed.Count != 0)
+                    if (changed != null)
                     {
-                        var json = JsonSerializer.Serialize(changed);
+                        // var json = JsonSerializer.Serialize(changed);
+                        var json = changed;
                         await _mqttService.PublishAsync("/noauth/submodels", json);
                         await _mqttService.PublishAsync("/fx/all/submodels", json);
                         await _mqttService.PublishAsync("/fx/domain/phoenixcontact.com/submodels", json);
@@ -153,7 +154,7 @@ public class SubmodelPublisherService : BackgroundService
         }
     }
 
-    private List<string>? GetChangedSubmodels()
+    private string GetChangedSubmodelsJson()
     {
         using (var db = new AasContext())
         {
@@ -161,7 +162,7 @@ public class SubmodelPublisherService : BackgroundService
                 .Where(sm => sm.TimeStampTree >= _lastPublish)
                 .ToList();
 
-            List<string> result = [];
+            var payloadList = new List<object>();
 
             foreach (var sm in smDBList)
             {
@@ -175,18 +176,19 @@ public class SubmodelPublisherService : BackgroundService
                         id = sm.Identifier,
                         semanticId = sm.SemanticId
                     },
-                    id = $"{Guid.NewGuid()}",
-                    time = DateTime.UtcNow.ToString("o"), // ISO 8601
+                    id = $"later-{Guid.NewGuid()}",
+                    time = DateTime.UtcNow.ToString("o"),
                     datacontenttype = "application/json+submodel",
                     data = new { }
                 };
 
-                var json = JsonSerializer.Serialize(payloadObject);
-                Console.WriteLine(json);
-                result.Add(json);
+                payloadList.Add(payloadObject);
             }
 
-            return result;
+            // Jetzt die gesamte Liste serialisieren
+            var jsonArray = JsonSerializer.Serialize(payloadList);
+            Console.WriteLine(jsonArray);
+            return jsonArray;
         }
     }
 }
