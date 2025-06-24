@@ -114,7 +114,7 @@ public class SubmodelPublisherService : BackgroundService
                         lastPublishInitialized = true;
                     }
 
-                    var changed = getChangedSubmodels(); // Deine Methode
+                    var changed = GetChangedSubmodels(); // Deine Methode
 
                     if (changed != null && changed.Count != 0)
                     {
@@ -131,7 +131,7 @@ public class SubmodelPublisherService : BackgroundService
         }
     }
 
-    private List<string?>? getChangedSubmodels()
+    private List<string?>? getChangedSubmodels_old()
     {
         using (var db = new AasContext())
         {
@@ -149,6 +149,43 @@ public class SubmodelPublisherService : BackgroundService
                 Console.WriteLine(output);
                 result.Add(output);
             }
+            return result;
+        }
+    }
+
+    private List<string>? GetChangedSubmodels()
+    {
+        using (var db = new AasContext())
+        {
+            var smDBList = db.SMSets
+                .Where(sm => sm.TimeStampTree >= _lastPublish)
+                .ToList();
+
+            List<string> result = [];
+
+            foreach (var sm in smDBList)
+            {
+                var payloadObject = new
+                {
+                    specversion = "1.0",
+                    type = "UpdatedSubmodel",
+                    source = "https://pathAddedLater",
+                    subject = new
+                    {
+                        id = sm.Identifier,
+                        semanticId = sm.SemanticId
+                    },
+                    id = $"{Guid.NewGuid()}",
+                    time = DateTime.UtcNow.ToString("o"), // ISO 8601
+                    datacontenttype = "application/json+submodel",
+                    data = new { }
+                };
+
+                var json = JsonSerializer.Serialize(payloadObject);
+                Console.WriteLine(json);
+                result.Add(json);
+            }
+
             return result;
         }
     }
