@@ -154,7 +154,7 @@ public class SubmodelPublisherService : BackgroundService
         }
     }
 
-    private string GetChangedSubmodelsJson()
+    private string? GetChangedSubmodelsJson()
     {
         using (var db = new AasContext())
         {
@@ -185,10 +185,14 @@ public class SubmodelPublisherService : BackgroundService
                 payloadList.Add(payloadObject);
             }
 
-            // Jetzt die gesamte Liste serialisieren
-            var jsonArray = JsonSerializer.Serialize(payloadList);
-            Console.WriteLine(jsonArray);
-            return jsonArray;
+            if (payloadList.Count > 0)
+            {
+                var jsonArray = JsonSerializer.Serialize(payloadList);
+                Console.WriteLine(jsonArray);
+                return jsonArray;
+            }
+
+            return null;
         }
     }
 }
