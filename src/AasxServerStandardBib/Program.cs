@@ -211,55 +211,55 @@ namespace AasxServer
 
                 // load
                 // ... from file
-                if (!withDbFiles)
-                {
-                    Console.WriteLine("LOAD: " + envFileName[i]);
-                    env[i] = new AdminShellPackageEnv(envFileName[i]);
-                    if (env[i].AasEnv == null)
-                    {
-                        return output;
-                    }
+                //if (!withDbFiles)
+                //{
+                //    Console.WriteLine("LOAD: " + envFileName[i]);
+                //    env[i] = new AdminShellPackageEnv(envFileName[i]);
+                //    if (env[i].AasEnv == null)
+                //    {
+                //        return output;
+                //    }
 
-                    // set all timestamps and find the searched element
-                    var timeStamp = DateTime.Now;
-                    if (env[i].AasEnv?.ConceptDescriptions != null)
-                    {
-                        foreach (var cd in env[i].AasEnv.ConceptDescriptions)
-                        {
-                            cd.TimeStampCreate = timeStamp;
-                            cd.SetTimeStamp(timeStamp);
-                            if (!cdIdentifier.IsNullOrEmpty() && cd.Id != null && cd.Id.Equals(cdIdentifier))
-                            {
-                                output = (T)cd;
-                            }
-                        }
-                    }
-                    if (env[i].AasEnv?.AssetAdministrationShells != null)
-                    {
-                        foreach (var aas in env[i].AasEnv.AssetAdministrationShells)
-                        {
-                            aas.TimeStampCreate = timeStamp;
-                            aas.SetTimeStamp(timeStamp);
-                            if (!aasIdentifier.IsNullOrEmpty() && aas.Id != null && aas.Id.Equals(aasIdentifier))
-                            {
-                                output = (T)aas;
-                            }
-                        }
-                    }
-                    if (env[i].AasEnv?.Submodels != null)
-                    {
-                        foreach (var sm in env[i].AasEnv.Submodels)
-                        {
-                            sm.TimeStampCreate = timeStamp;
-                            sm.SetTimeStamp(timeStamp);
-                            sm.SetAllParents(timeStamp);
-                            if (!smIdentifier.IsNullOrEmpty() && sm.Id != null && sm.Id.Equals(smIdentifier))
-                            {
-                                output = (T)sm;
-                            }
-                        }
-                    }
-                }
+                //    // set all timestamps and find the searched element
+                //    var timeStamp = DateTime.Now;
+                //    if (env[i].AasEnv?.ConceptDescriptions != null)
+                //    {
+                //        foreach (var cd in env[i].AasEnv.ConceptDescriptions)
+                //        {
+                //            cd.TimeStampCreate = timeStamp;
+                //            cd.SetTimeStamp(timeStamp);
+                //            if (!cdIdentifier.IsNullOrEmpty() && cd.Id != null && cd.Id.Equals(cdIdentifier))
+                //            {
+                //                output = (T)cd;
+                //            }
+                //        }
+                //    }
+                //    if (env[i].AasEnv?.AssetAdministrationShells != null)
+                //    {
+                //        foreach (var aas in env[i].AasEnv.AssetAdministrationShells)
+                //        {
+                //            aas.TimeStampCreate = timeStamp;
+                //            aas.SetTimeStamp(timeStamp);
+                //            if (!aasIdentifier.IsNullOrEmpty() && aas.Id != null && aas.Id.Equals(aasIdentifier))
+                //            {
+                //                output = (T)aas;
+                //            }
+                //        }
+                //    }
+                //    if (env[i].AasEnv?.Submodels != null)
+                //    {
+                //        foreach (var sm in env[i].AasEnv.Submodels)
+                //        {
+                //            sm.TimeStampCreate = timeStamp;
+                //            sm.SetTimeStamp(timeStamp);
+                //            sm.SetAllParents(timeStamp);
+                //            if (!smIdentifier.IsNullOrEmpty() && sm.Id != null && sm.Id.Equals(smIdentifier))
+                //            {
+                //                output = (T)sm;
+                //            }
+                //        }
+                //    }
+                //}
 
                 // ... from db
                 else
@@ -398,7 +398,6 @@ namespace AasxServer
         public static Dictionary<string, string> envVariables = new Dictionary<string, string>();
 
         public static bool withDb = false;
-        public static bool withDbFiles = false;
         public static int startIndex = 0;
 
         public static bool withPolicy = false;
@@ -586,9 +585,7 @@ namespace AasxServer
             saveTemp            = a.SaveTemp;
             Program.htmlId      = a.HtmlId;
             Program.withDb      = a.WithDb;
-            Program.withDbFiles = a.WithDb;
-            if (a.NoDbFiles)
-                Program.withDbFiles = false;
+
             if (a.StartIndex > 0)
                 startIndex = a.StartIndex;
             if (a.AasxInMemory > 0)
@@ -703,7 +700,7 @@ namespace AasxServer
             */
 
             // Pass global options to subprojects
-            AdminShellNS.AdminShellPackageEnv.setGlobalOptions(withDb, withDbFiles, a.DataPath);
+            AdminShellNS.AdminShellPackageEnv.setGlobalOptions(withDb, a.DataPath);
 
             // Read root cert from root subdirectory
             Console.WriteLine("Security 1 Startup - Server");
@@ -784,9 +781,9 @@ namespace AasxServer
             string[] fileNames = null;
             if (Directory.Exists(AasxHttpContextHelper.DataPath))
             {
-                var filesPath = AasxHttpContextHelper.DataPath + "/files";
+                var filesPath = Path.Combine(AasxHttpContextHelper.DataPath, "files");
 
-                if (startIndex == 0)
+                if (startIndex == 0 && Directory.Exists(filesPath))
                 {
                     Directory.Delete(filesPath, true);
                 }
@@ -868,7 +865,7 @@ namespace AasxServer
                             }
                             else
                             {
-                                persistenceService.ImportAASXIntoDB(fn, createFilesOnly, withDbFiles);
+                                persistenceService.ImportAASXIntoDB(fn, createFilesOnly);
                                 envFileName[envi] = null;
                                 env[envi]         = null;
                             }

@@ -150,7 +150,6 @@ namespace AasxServerDB
 
             var globalAssetId = assetIds?.Where(a => a.Name == "globalAssetId").Select(a => a.Value).FirstOrDefault();
 
-            var timeStamp = DateTime.UtcNow;
 
             var aasDBList = db.AASSets
                 .Where(aas => idShort == null || aas.IdShort == idShort)
@@ -166,20 +165,8 @@ namespace AasxServerDB
             foreach (var aasDB in aasDBList)
             {
                 var helper = aasDB;
-                var aas = ReadAssetAdministrationShell(db, ref helper);
-                if (aas?.TimeStamp == DateTime.MinValue)
-                {
-                    aas.TimeStampCreate = timeStamp;
-                    aas.SetTimeStamp(timeStamp);
-                }
+                var aas = ReadAssetAdministrationShell(db, ref helper, smDBList);
 
-                // sm
-                foreach (var sm in smDBList.Where(sm => sm.AASId == helper.Id))
-                {
-                    aas?.Submodels?.Add(new Reference(type: ReferenceTypes.ModelReference,
-                        keys: new List<IKey>() { new Key(KeyTypes.Submodel, sm.Identifier) }
-                    ));
-                }
 
                 output.Add(aas);
             }
@@ -187,7 +174,7 @@ namespace AasxServerDB
             return output;
         }
 
-        public static AssetAdministrationShell? ReadAssetAdministrationShell(AasContext db, ref AASSet? aasDB, string aasIdentifier = "")
+        public static AssetAdministrationShell? ReadAssetAdministrationShell(AasContext db, ref AASSet? aasDB, List<SMRefSet>? smRefSets = null, string aasIdentifier = "")
         {
             AssetAdministrationShell aas = null;
 
@@ -241,6 +228,35 @@ namespace AasxServerDB
                 TimeStampTree = aasDB.TimeStampTree,
                 TimeStampDelete = aasDB.TimeStampDelete
             };
+
+
+            var timeStamp = DateTime.UtcNow;
+            if (aas?.TimeStamp == DateTime.MinValue)
+            {
+                aas.TimeStampCreate = timeStamp;
+                aas.SetTimeStamp(timeStamp);
+            }
+            var aasDBId = aasDB.Id;
+
+            var smDBList = new List<SMRefSet>();
+
+            if (smRefSets != null)
+            {
+                smDBList = smRefSets;
+            }
+            else
+            {
+                smDBList = db.SMRefSets.Where(sm => sm.AASId == aasDBId).ToList();
+            }
+
+            // sm
+            foreach (var sm in smDBList.Where(sm => sm.AASId == aasDBId))
+            {
+                aas?.Submodels?.Add(new Reference(type: ReferenceTypes.ModelReference,
+                    keys: new List<IKey>() { new Key(KeyTypes.Submodel, sm.Identifier) }
+                ));
+            }
+
             return aas;
         }
 
@@ -257,19 +273,44 @@ namespace AasxServerDB
 
         internal static IAssetAdministrationShell CreateAas(AasContext db, IAssetAdministrationShell newAas)
         {
-            IAssetAdministrationShell aas = null;
+            IAssetAdministrationShell createdAas = null;
 
             var aasDB = new AASSet();
+
+            // dictionary to save connection between aas and sm
+            var aasToSm = new Dictionary<string, AASSet?>();
+
+            //if (!newAas.IdShort.IsNullOrEmpty() && newAas.IdShort.ToLower().Contains("globalsecurity"))
+            //{
+            //    if (newAas.Submodels != null)
+            //    {
+            //        foreach (var refSm in newAas.Submodels)
+            //            if (refSm.Keys != null && refSm.Keys.Count() > 0 && !refSm.Keys[0].Value.IsNullOrEmpty())
+            //                aasToSm.TryAdd(refSm.Keys[0].Value, null);
+            //    }
+            //}
             SetAas(aasDB, newAas);
 
+
+            if (newAas.Submodels != null)
+            {
+                foreach (var refSm in newAas.Submodels)
+                    if (refSm.Keys != null && refSm.Keys.Count() > 0 && !refSm.Keys[0].Value.IsNullOrEmpty())
+                    {
+                        aasDB.SMRefSets.Add(new SMRefSet { Identifier = refSm.Keys[0].Value });
+                    }
+                //aasToSm.TryAdd(refSm.Keys[0].Value, aasDB);
+            }
+
             var aasDBQuery = db.Add(aasDB);
+
             db.SaveChanges();
 
             var addedInDb = aasDBQuery.Entity;
 
-            aas = ReadAssetAdministrationShell(db, ref addedInDb);
+            createdAas = ReadAssetAdministrationShell(db, ref addedInDb);
 
-            return aas;
+            return createdAas;
         }
 
         private static void SetAas(AASSet aasDB, IAssetAdministrationShell newAas)
@@ -301,6 +342,7 @@ namespace AasxServerDB
             aasDB.TimeStampTree = newAas.TimeStampTree == default ? currentDataTime : newAas.TimeStampTree;
             aasDB.TimeStampDelete = newAas.TimeStampDelete;
         }
+
         public static void DeleteAAS(AasContext db, string aasIdentifier)
         {
             // Deletes automatically from DB
@@ -610,7 +652,7 @@ namespace AasxServerDB
             var smDBId = smDB[0].Id;
 
             var smeSmTopQuery = db.SMESets.Where(sme => sme.SMId == smDBId && sme.ParentSMEId == null);
-            if (securityCondition != null)
+            if (securityCondition != null && !securityCondition["sme."].IsNullOrEmpty())
             {
                 smeSmTopQuery = smeSmTopQuery.Where(securityCondition["sme."]);
             }

@@ -36,6 +36,9 @@ namespace AasxServerDB
         private int _index = 0;
         private SMESet? _resultSME;
         public List<CrudOperator.SmeMerged> smSmeMerged = null;
+        //public Dictionary<int,AdminShellPackageSupplementaryFile> packageFiles
+        //    = new Dictionary<int, AdminShellPackageSupplementaryFile>();
+
         public List<int> keepSme = new List<int>();
         public List<int> deleteSme = new List<int>();
         public string idShortPath = "";
@@ -63,7 +66,7 @@ namespace AasxServerDB
         }
 
         // Load AASX
-        public static void ImportAASXIntoDB(string filePath, bool createFilesOnly, bool withDbFiles)
+        public static void ImportAASXIntoDB(string filePath, bool createFilesOnly)
         {
             using (var asp = new AdminShellPackageEnv(filePath, false, true))
             {
@@ -87,46 +90,45 @@ namespace AasxServerDB
                     }
                 }
 
-                if (withDbFiles)
+                //if (withDbFiles)
+                //{
+                //    try
+                //    {
+                //        var temporaryFileName = name + "__thumbnail";
+                //        temporaryFileName = temporaryFileName.Replace("/", "_");
+                //        temporaryFileName = temporaryFileName.Replace(".", "_");
+                //        Uri? dummy = null;
+                //        using (var st = asp.GetLocalThumbnailStream(ref dummy, init: true))
+                //        {
+                //            Console.WriteLine("Copy " + AasContext.DataPath + "/files/" + temporaryFileName + ".dat");
+                //            var fst = System.IO.File.Create(AasContext.DataPath + "/files/" + temporaryFileName + ".dat");
+                //            if (st != null)
+                //            {
+                //                st.CopyTo(fst);
+                //            }
+                //        }
+                //    }
+                //    catch { }
+                var name = Path.GetFileName(filePath);
+
+                using (var fileStream = new FileStream(AasContext.DataPath + "/files/" + name + ".zip", FileMode.Create))
+                using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
                 {
-                    var name = Path.GetFileName(filePath);
-                    try
+                    var files = asp.GetListOfSupplementaryFiles();
+                    foreach (var f in files)
                     {
-                        var temporaryFileName = name + "__thumbnail";
-                        temporaryFileName = temporaryFileName.Replace("/", "_");
-                        temporaryFileName = temporaryFileName.Replace(".", "_");
-                        Uri? dummy = null;
-                        using (var st = asp.GetLocalThumbnailStream(ref dummy, init: true))
+                        try
                         {
-                            Console.WriteLine("Copy " + AasContext.DataPath + "/files/" + temporaryFileName + ".dat");
-                            var fst = System.IO.File.Create(AasContext.DataPath + "/files/" + temporaryFileName + ".dat");
-                            if (st != null)
+                            using (var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true))
                             {
-                                st.CopyTo(fst);
+                                var archiveFile = archive.CreateEntry(f.Uri.OriginalString);
+                                Console.WriteLine("Copy " + AasContext.DataPath + "/" + name + "/" + f.Uri.OriginalString);
+
+                                using var archiveStream = archiveFile.Open();
+                                s.CopyTo(archiveStream);
                             }
                         }
-                    }
-                    catch { }
-
-                    using (var fileStream = new FileStream(AasContext.DataPath + "/files/" + name + ".zip", FileMode.Create))
-                    using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
-                    {
-                        var files = asp.GetListOfSupplementaryFiles();
-                        foreach (var f in files)
-                        {
-                            try
-                            {
-                                using (var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true))
-                                {
-                                    var archiveFile = archive.CreateEntry(f.Uri.OriginalString);
-                                    Console.WriteLine("Copy " + AasContext.DataPath + "/" + name + "/" + f.Uri.OriginalString);
-
-                                    using var archiveStream = archiveFile.Open();
-                                    s.CopyTo(archiveStream);
-                                }
-                            }
-                            catch { }
-                        }
+                        catch { }
                     }
                 }
             }
@@ -179,6 +181,9 @@ namespace AasxServerDB
 
                     new VisitorAASX(envDB: envDB).Visit(aas);
 
+                    FileService.CreateAasZipFile(aas, asp.GetLocalThumbnailStream());
+
+
                     if (aas.Submodels == null)
                         continue;
 
@@ -201,7 +206,9 @@ namespace AasxServerDB
                     if (found && aas == null)
                         continue;
 
+
                     new VisitorAASX(envDB: envDB).Visit(sm);
+                    FileService.CreateSubmodelZipFile(sm);
 
                     // envDB.SMSets.Last().AASSet = aas;
                     aas.SMRefSets.Add(new SMRefSet { Identifier = sm.Id });
