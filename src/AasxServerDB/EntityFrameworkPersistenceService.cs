@@ -152,7 +152,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         var securityConfig = dbRequest.Context.SecurityConfig;
 
         Dictionary<string, string>? securityCondition = null;
-        bool isAllowed = InitSecurity(securityConfig, out securityCondition);
+        List<AccessPermissionRule> accessRules = null;
+        bool isAllowed = InitSecurity(securityConfig, out securityCondition, out accessRules);
 
         if (!isAllowed)
         {
@@ -1600,10 +1601,23 @@ public class EntityFrameworkPersistenceService : IPersistenceService
     }
 
     //ToDo: Move into security? Currently this is also in SubmodelRepositoryAPIApiController (for events)
-    private bool InitSecurity(ISecurityConfig? securityConfig, out Dictionary<string, string>? securityCondition)
+    private bool InitSecurity(ISecurityConfig? securityConfig, out Dictionary<string, string>? securityCondition,
+        out List<AccessPermissionRule> accessRules)
     {
+        accessRules = null;
         securityCondition = null;
-        if (securityConfig != null && securityConfig.Principal != null && !securityConfig.NoSecurity)
+
+        if (securityConfig == null)
+        {
+            return false;
+        }
+
+        if (securityConfig.NoSecurity)
+        {
+            return true;
+        }
+
+        if (securityConfig.Principal != null)
         {
             // Get claims
             var authResult = false;
@@ -1639,6 +1653,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             }
 
             securityCondition = _contractSecurityRules.GetCondition(accessRole, neededRights.ToString());
+            accessRules = _contractSecurityRules.GetAccessRules(accessRole, neededRights.ToString());
 
             if (accessRole != null && httpRoute != null)
             {
@@ -1648,6 +1663,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             return authResult;
         }
 
-        return true;
+        return false;
     }
 }

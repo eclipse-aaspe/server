@@ -344,7 +344,7 @@
       "properties": {
         "$and": {
           "type": "array",
-          "minItems": 2,
+          "minItems": 1,
           "items": {
             "$ref": "#/definitions/logicalExpression"
           }
@@ -358,7 +358,7 @@
         },
         "$or": {
           "type": "array",
-          "minItems": 2,
+          "minItems": 1,
           "items": {
             "$ref": "#/definitions/logicalExpression"
           }

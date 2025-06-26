@@ -83,24 +83,88 @@ namespace AasSecurity
             }
         }
 
-        public static List<AccessPermissionRule>? GetAccessRules(string accessRole, string neededRightsClaim)
+        public List<AccessPermissionRule>? GetAccessRules(string accessRole, string neededRightsClaim, string? httpRoute = null)
+        {
+            return GetAccessRulesStatic(accessRole, neededRightsClaim, httpRoute);
+        }
+
+        public static List<AccessPermissionRule>? GetAccessRulesStatic(string accessRole, string neededRightsClaim, string? httpRoute = null)
         {
             if (_accessRules != null)
             {
                 var rules = _accessRules.Rules.Where(r =>
                     r.Acl != null &&
-                    r.Acl.Attributes[0].ItemType == "CLAIM" && r.Acl.Attributes[0].Value == accessRole
-                    && r.Acl.Rights.Contains(neededRightsClaim)
-                    && r.Acl.Access == "ALLOW"
-                    ).ToList();
+                    r.Acl.Access == "ALLOW" &&
+                    r.Acl.Rights.Contains(neededRightsClaim) &&
+                    r.Acl.Attributes[0].ItemType == "CLAIM" && r.Acl.Attributes[0].Value == accessRole &&
+                    (
+                        (httpRoute == null) ||
+                        (httpRoute != null && r.Objects.Any(o => o.ItemType == "ROUTE" && MatchApiOperation(o.Value, httpRoute)))
+                    )
+                ).ToList();
+
+                if (rules.Count == 0)
+                {
+                    return null;
+                }
 
                 return rules;
             }
 
             return null;
         }
-        public Dictionary<string, string>? GetCondition(string accessRole, string neededRightsClaim)
+        public Dictionary<string, string>? GetCondition(string accessRole, string neededRightsClaim, string? httpRoute = null)
         {
+            var rules = GetAccessRules(accessRole, neededRightsClaim);
+
+            if (rules == null)
+            {
+                return null;
+            }
+
+            if (rules.Count == 1)
+            {
+                return rules[0]._formula_conditions;
+            }
+
+            Dictionary<string, string> condition = [];
+            for (var i = 0; i < rules.Count; i++)
+            {
+                var rule = rules[i];
+                foreach (var c in rule._formula_conditions)
+                {
+                    if (i == 0)
+                    {
+                        condition[c.Key] = c.Value;
+                    }
+                    else
+                    {
+                        var hasValue = condition.TryGetValue(c.Key, out var value);
+                        if (hasValue && value != "")
+                        {
+                            if (c.Value != "")
+                            {
+                                condition[c.Key] = value + " || " + c.Value;
+                            }
+                        }
+                        else
+                        {
+                            condition[c.Key] = c.Value;
+                        }
+                    }
+                }
+            }
+
+            foreach (var c in condition)
+            {
+                if (condition[c.Key] != "")
+                {
+                    condition[c.Key] = "(" + c.Value + ")";
+                }
+            }
+
+            return condition;
+
             foreach (var c in _condition)
             {
                 var a = c["claim"];
@@ -112,6 +176,12 @@ namespace AasSecurity
             }
             return null;
         }
+
+        public Dictionary<string, string>? GetFilterCondition(string accessRole, string neededRightsClaim)
+        {
+            return null;
+        }
+
         public void ClearSecurityRules()
         {
             _condition.Clear();
@@ -672,14 +742,9 @@ namespace AasSecurity
             error = string.Empty;
             getPolicy = string.Empty;
 
-            var rules = GetAccessRules(currentRole, neededRights.ToString());
+            var rules = GetAccessRulesStatic(currentRole, neededRights.ToString(), operation);
 
-            var matchingRules = rules?
-             .Where(r => r.Objects?
-             .Any(o => o.ItemType == "ROUTE" && MatchApiOperation(o.Value, operation)) == true)
-             .ToList();
-
-            if (matchingRules?.Count != 0)
+            if (rules?.Count != 0)
             {
                 return true;
             }

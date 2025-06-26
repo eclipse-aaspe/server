@@ -96,7 +96,29 @@
                   "$strVal": "ProductChangeNotifications"
                 }
               ]
-            },
+            }
+          ]
+        }
+      },
+      {
+        "ACL": {
+          "ATTRIBUTES": [
+            {
+              "CLAIM": "isNotAuthenticated"
+            }
+          ],
+          "RIGHTS": [
+            "READ"
+          ],
+          "ACCESS": "ALLOW"
+        },
+        "OBJECTS": [
+          {
+            "REFERABLE": "*"
+          }
+        ],
+        "FORMULA": {
+          "$or": [
             {
               "$eq": [
                 {
