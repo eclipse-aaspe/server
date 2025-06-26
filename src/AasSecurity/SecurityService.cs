@@ -36,12 +36,15 @@ using Irony.Parsing;
 using System.Linq.Dynamic.Core;
 using Microsoft.IdentityModel.JsonWebTokens;
 using static QRCoder.PayloadGenerator;
+using System.Data;
 
 namespace AasSecurity
 {
     public class SecurityService : ISecurityService, IContractSecurityRules
     {
         public static List<Dictionary<string, string>>? _condition = new List<Dictionary<string, string>>();
+
+        public static AllAccessPermissionRules? _accessRules = null;
 
         public SecurityService()
         {
@@ -73,12 +76,29 @@ namespace AasSecurity
                     {
                         ClearSecurityRules();
                         grammar.ParseAccessRules(expression);
+                        _accessRules = QueryGrammarJSON._accessRules;
                         _condition = QueryGrammarJSON.allAccessRuleExpressions;
                     }
                 }
             }
         }
 
+        public static List<AccessPermissionRule>? GetAccessRules(string accessRole, string neededRightsClaim)
+        {
+            if (_accessRules != null)
+            {
+                var rules = _accessRules.Rules.Where(r =>
+                    r.Acl != null &&
+                    r.Acl.Attributes[0].ItemType == "CLAIM" && r.Acl.Attributes[0].Value == accessRole
+                    && r.Acl.Rights.Contains(neededRightsClaim)
+                    && r.Acl.Access == "ALLOW"
+                    ).ToList();
+
+                return rules;
+            }
+
+            return null;
+        }
         public Dictionary<string, string>? GetCondition(string accessRole, string neededRightsClaim)
         {
             foreach (var c in _condition)
@@ -94,6 +114,8 @@ namespace AasSecurity
         }
         public void ClearSecurityRules()
         {
+            _condition.Clear();
+            _accessRules = null;
             GlobalSecurityVariables.SecurityRoles.Clear();
         }
 
@@ -647,6 +669,24 @@ namespace AasSecurity
 
         private static bool CheckAccessLevelApi(string currentRole, string operation, AccessRights neededRights, out string error, out string? getPolicy)
         {
+            error = string.Empty;
+            getPolicy = string.Empty;
+
+            var rules = GetAccessRules(currentRole, neededRights.ToString());
+
+            var matchingRules = rules?
+             .Where(r => r.Objects?
+             .Any(o => o.ItemType == "ROUTE" && MatchApiOperation(o.Value, operation)) == true)
+             .ToList();
+
+            if (matchingRules?.Count != 0)
+            {
+                return true;
+            }
+
+            error = "API access NOT allowed!";
+            return false;
+
             getPolicy = string.Empty;
             foreach (var securityRole in GlobalSecurityVariables.SecurityRoles.Where(securityRole => securityRole.Name == currentRole && securityRole.ObjectType == "api" &&
                                                                                                      securityRole.Permission == neededRights &&
