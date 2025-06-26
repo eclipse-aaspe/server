@@ -66,6 +66,7 @@ public class MqttClientService
             var message = new MqttApplicationMessageBuilder()
             .WithTopic(topic)
             .WithPayload(payload)
+            .WithContentType("application/json")
             .WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce)
             .WithRetainFlag()
             .Build();
@@ -113,11 +114,12 @@ public class SubmodelPublisherService : BackgroundService
                         lastPublishInitialized = true;
                     }
 
-                    var changed = getChangedSubmodels(); // Deine Methode
+                    var changed = GetChangedSubmodelsJson(); // Deine Methode
 
-                    if (changed != null && changed.Count != 0)
+                    if (changed != null)
                     {
-                        var json = JsonSerializer.Serialize(changed);
+                        // var json = JsonSerializer.Serialize(changed);
+                        var json = changed;
                         await _mqttService.PublishAsync("/noauth/submodels", json);
                         await _mqttService.PublishAsync("/fx/all/submodels", json);
                         await _mqttService.PublishAsync("/fx/domain/phoenixcontact.com/submodels", json);
@@ -130,12 +132,45 @@ public class SubmodelPublisherService : BackgroundService
         }
     }
 
-    private List<string?>? getChangedSubmodels()
+    private string? GetChangedSubmodelsJson()
     {
         using (var db = new AasContext())
         {
-            var s = db.SMSets.Where(sm => sm.TimeStampTree >= _lastPublish).Select(sm => sm.Identifier).ToList();
-            return s;
+            var smDBList = db.SMSets
+                .Where(sm => sm.TimeStampTree >= _lastPublish)
+                .ToList();
+
+            var payloadList = new List<object>();
+
+            foreach (var sm in smDBList)
+            {
+                var payloadObject = new
+                {
+                    specversion = "1.0",
+                    type = "UpdatedSubmodel",
+                    source = "https://pathAddedLater",
+                    subject = new
+                    {
+                        id = sm.Identifier,
+                        semanticId = sm.SemanticId
+                    },
+                    id = $"later-{Guid.NewGuid()}",
+                    time = DateTime.UtcNow.ToString("o"),
+                    datacontenttype = "application/json+submodel",
+                    data = new { }
+                };
+
+                payloadList.Add(payloadObject);
+            }
+
+            if (payloadList.Count > 0)
+            {
+                var jsonArray = JsonSerializer.Serialize(payloadList);
+                Console.WriteLine(jsonArray);
+                return jsonArray;
+            }
+
+            return null;
         }
     }
 }

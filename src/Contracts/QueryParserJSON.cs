@@ -526,6 +526,7 @@ public class QueryGrammarJSON : Grammar
         return "$ERROR";
     }
 
+    public static AllAccessPermissionRules _accessRules = null;
     public static new List<Dictionary<string, string>> allAccessRuleExpressions = [];
     public static new Dictionary<string, string> accessRuleExpression = [];
     // public static string accessRuleExpression = "((sm.idShort==\"Nameplate\")||(sm.idShort==\"TechnicalData\"))";
@@ -595,6 +596,7 @@ public class QueryGrammarJSON : Grammar
             return;
         }
 
+        _accessRules = allRules;
         foreach (var rule in allRules.Rules)
         {
             // mode: all, sm., sme., svalue, mvalue
