@@ -42,6 +42,7 @@ namespace IO.Swagger.Controllers;
 
 using System.Threading.Tasks;
 using AasxServer;
+using AdminShellNS;
 using AdminShellNS.Models;
 using Contracts;
 using Contracts.Exceptions;
@@ -68,8 +69,6 @@ public class AASXFileServerAPIApiController : ControllerBase
         _dbRequestHandlerService = dbRequestHandlerService ?? throw new ArgumentNullException(nameof(dbRequestHandlerService));
         _paginationService    = paginationService ?? throw new ArgumentNullException(nameof(paginationService));
         _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
-
-
     }
 
     /// <summary>
@@ -218,11 +217,12 @@ public class AASXFileServerAPIApiController : ControllerBase
             return Ok("No file was provided.");
         }
 
-
         var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
         var stream = new MemoryStream();
         file.CopyTo(stream);
+
+
         var packageDescription = await _dbRequestHandlerService.CreateAASXPackage(securityConfig, stream, file.FileName);
         return CreatedAtAction(nameof(PostAASXPackage), packageDescription);
     }

@@ -781,7 +781,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                             db,
                             securityConfig,
                             dbRequest.Context.Params.FileRequest.File,
-                            dbRequest.Context.Params.FileRequest.Content);
+                            dbRequest.Context.Params.FileRequest.Stream);
                         result.PackageDescriptions = new List<PackageDescription>
                         {
                             packageDescription
@@ -800,47 +800,51 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         return result;
     }
 
-    private PackageDescription CreateAASXPackage(AasContext db, ISecurityConfig securityConfig, string fileName, byte[] fileContent) => throw new NotImplementedException();
-    //{
-    //    var newFileName = Path.Combine(AasContext.DataPath, fileName);
-    //    //Check if file already exists
-    //    if (System.IO.File.Exists(newFileName))
-    //    {
-    //        throw new Exception($"File already exists");
-    //    }
+    private PackageDescription CreateAASXPackage(AasContext db, ISecurityConfig securityConfig, string fileName, Stream fileContent)
+    {
+        var newFileName = Path.Combine(AasContext.DataPath, fileName);
+        //Check if file already exists
+        if (System.IO.File.Exists(newFileName))
+        {
+            throw new DuplicateException($"File already exists");
+        }
 
-    //    //TODO:Check file extentsion ".aasx"
-    //    //Write the received file content to this temp file
-    //    //var content = Convert.FromBase64String(body);
-    //    System.IO.File.WriteAllBytes(newFileName, fileContent);
-    //    // open again
-    //    var newAasx = new AdminShellPackageEnv(newFileName, true);
-    //    if (newAasx != null)
-    //    {
-    //        _packages[emptyPackageIndex] = newAasx;
-    //        _envFileNames[emptyPackageIndex] = newFileName;
-    //        var timeStamp = DateTime.UtcNow;
-    //        newAasx.AasEnv.AssetAdministrationShells[0].TimeStampCreate = timeStamp;
-    //        newAasx.AasEnv.AssetAdministrationShells[0].SetTimeStamp(timeStamp);
-    //        foreach (var submodel in newAasx.AasEnv.Submodels)
-    //        {
-    //            //submodel.SetAllParents();
-    //            submodel.TimeStampCreate = timeStamp;
-    //            submodel.SetParentAndTimestamp(timeStamp);
-    //        }
-    //        // newAasx.setWrite(true); this api is currently not connected to the database
-    //        Program.signalNewData(2);
-    //        return emptyPackageIndex.ToString();
-    //    }
-    //    else
-    //    {
-    //        throw new Exception($"Cannot load new package {fileName}.");
-    //    }
-    //}
+        using (var fileStream = System.IO.File.Create(newFileName))
+        {
+            fileContent.Seek(0, SeekOrigin.Begin);
+            fileContent.CopyTo(fileStream);
+        }
+
+        // open again
+        using var newAasx = new AdminShellPackageEnv(newFileName, true);
+        if (newAasx != null)
+        {
+            VisitorAASX.ImportAASXIntoDB(newFileName, false);
+        }
+        else
+        {
+            throw new Exception($"Cannot load new package {fileName}.");
+        }
+
+        var aasIds = newAasx.AasEnv.AssetAdministrationShells.Select(a => a.Id).ToList();
+
+        if (!aasIds.Any())
+        {
+            throw new Exception($"No aas in package found.");
+        }
+
+        var aas = db.AASSets.FirstOrDefault(a => a.Identifier == aasIds[0]);
+        var envId = aas.EnvId;
+
+        return new PackageDescription()
+        {
+            AasIds = aasIds,
+            PackageId = envId.ToString()
+        };
+    }
 
     private string ReadAASXByPackageId(AasContext db, ISecurityConfig securityConfig, string packageIdentifier, out byte[] content, out long fileSize)
     {
-
         if (IsPackageEnvPresent(db, packageIdentifier, null, null, true, out string envFileName, out AdminShellPackageEnv packageEnv))
         {
             content = null;
