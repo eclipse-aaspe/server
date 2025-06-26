@@ -136,9 +136,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    public void ImportAASXIntoDB(string filePath, bool createFilesOnly, bool withDbFiles)
+    public void ImportAASXIntoDB(string filePath, bool createFilesOnly)
     {
-        VisitorAASX.ImportAASXIntoDB(filePath, createFilesOnly, withDbFiles);
+        VisitorAASX.ImportAASXIntoDB(filePath, createFilesOnly);
     }
 
     public List<string> ReadFilteredPackages(string filterPath, List<AdminShellPackageEnv> list)
@@ -224,6 +224,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         }
 
                         var addedInDb = CrudOperator.CreateAas(db, body);
+                        FileService.CreateAasZipFile(body);
 
                         result.AssetAdministrationShells = new List<IAssetAdministrationShell>
                         {
@@ -330,6 +331,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         }
 
                         var createdSubmodel = CrudOperator.CreateSubmodel(db, newSubmodel, aasIdentifier);
+                        FileService.CreateSubmodelZipFile(newSubmodel);
 
                         result.Submodels = new List<ISubmodel>
                         {
@@ -924,14 +926,15 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                     var packageEnvFound = IsPackageEnvPresent(db, null, aasIdentifier, submodelIdentifier, false, out envFileName, out _);
 
-                    if (packageEnvFound)
-                    {
-                        FileService.ReadFileInZip(envFileName, out content, out fileSize, scopedLogger, out fileName, file);
-                    }
-                    else
-                    {
-                        throw new NotFoundException($"Package for aas id {aasIdentifier} and submodel id {submodelIdentifier} not found");
-                    }
+                    //if (!packageEnvFound)
+                    //{
+                    //    envFileName = Path.Combine(AasContext.DataPath, "files", submodelIdentifier);
+                    //    envFileName = envFileName.Replace("/", "_");
+                    //    envFileName = envFileName.Replace(".", "_");
+                    //    envFileName = envFileName.Replace(":", "_");
+                    //}
+
+                    FileService.ReadFileInZip(envFileName, out content, out fileSize, scopedLogger, out fileName, file);
                 }
                 else
                 {
@@ -962,23 +965,14 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 {
                     var envFileName = string.Empty;
 
-                    var packageEnvFound = IsPackageEnvPresent(db, null, aasIdentifier, submodelIdentifier, false, out envFileName, out _);
+                    FileService.ReplaceFileInZip(envFileName, scopedLogger, file, fileName, contentType, stream);
 
-                    if (packageEnvFound)
-                    {
-                        FileService.ReplaceFileInZip(envFileName, scopedLogger, file, fileName, contentType, stream);
-
-                        //ToDo: Not sure what to do here?
-                        //CrudOperator.DeleteSubmodelElement(db, securityCondition, aasIdentifier, submodelIdentifier, idShortPath);
-                    }
-                    else
-                    {
-                        throw new NotFoundException($"Package for aas id {aasIdentifier} and submodel id {submodelIdentifier} not found");
-                    }
+                    //ToDo: Not sure what to do here?
+                    //CrudOperator.DeleteSubmodelElement(db, securityCondition, aasIdentifier, submodelIdentifier, idShortPath);
                 }
                 else
                 {
-                    //throw new OperationNotSupported($"Cannot delete the file. SubmodelElement {idShortPath} does not have a file attached.");
+                    throw new NotFoundException($"Submodel element {fileElement.IdShort} is not of type File.");
                 }
             }
         }
@@ -1009,14 +1003,19 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                         var packageEnvFound = IsPackageEnvPresent(db, null, aasIdentifier, submodelIdentifier, false, out envFileName, out _);
 
-                        if (packageEnvFound)
-                        {
-                            FileService.DeleteFileInZip(envFileName, scopedLogger, file);
-                        }
+                        //if (!packageEnvFound)
+                        //{
+                        //    envFileName = Path.Combine(AasContext.DataPath, "files", submodelIdentifier);
+                        //    envFileName = envFileName.Replace("/", "_");
+                        //    envFileName = envFileName.Replace(".", "_");
+                        //    envFileName = envFileName.Replace(":", "_");
+                        //}
+
+                        FileService.DeleteFileInZip(envFileName, scopedLogger, file);
                     }
                     else
                     {
-                        //throw new OperationNotSupported($"Cannot delete the file. SubmodelElement {idShortPath} does not have a file attached.");
+                        throw new NotFoundException($"Submodel element {fileElement.IdShort} is not of type File.");
                     }
                 }
             }
@@ -1040,32 +1039,32 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         if (IsAssetAdministrationShellPresent(db, aasIdentifier, true, out _, out IAssetAdministrationShell aas))
         {
             var envFileName = string.Empty;
-            var found = IsPackageEnvPresent(db, null, aasIdentifier, null, false, out envFileName, out AdminShellPackageEnv packageEnv);
 
-            if (found)
+            if (aas.AssetInformation != null)
             {
-                if (aas.AssetInformation != null)
+                if (FileService.ReadFromThumbnail(aas.AssetInformation, aasIdentifier, out byteArray, out fileSize))
                 {
-                    if (FileService.ReadFromThumbnail(aas.AssetInformation, envFileName, out byteArray, out fileSize))
-                    {
-                        thumbnail = aas.AssetInformation.DefaultThumbnail.Path;
-                    }
+                    thumbnail = aas.AssetInformation.DefaultThumbnail.Path;
                 }
                 else
                 {
-                    throw new NotFoundException($"AssetInformation is NULL in requested AAS with id {aasIdentifier}");
-                }
-
-                using (var scope = _serviceProvider.CreateScope())
-                {
-                    var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
-                    scopedLogger.LogDebug($"Updated the thumbnail in AAS with Id {aasIdentifier}");
+                    throw new Exception($"Could not read thumbnail from {aasIdentifier}");
                 }
             }
             else
             {
-                throw new NotFoundException($"Package for aas id {aasIdentifier} not found");
+                throw new NotFoundException($"AssetInformation is NULL in requested AAS with id {aasIdentifier}");
             }
+
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                scopedLogger.LogDebug($"Updated the thumbnail in AAS with Id {aasIdentifier}");
+            }
+        }
+        else
+        {
+            throw new NotFoundException($"AAS with id {aasIdentifier} not found");
         }
 
         return thumbnail;
@@ -1077,37 +1076,32 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         if (IsAssetAdministrationShellPresent(db, aasIdentifier, true, out AASSet aasDB, out IAssetAdministrationShell aas))
         {
             var assetInformation = aas.AssetInformation;
-            var envFileName = string.Empty;
-            var found = IsPackageEnvPresent(db, null, aasIdentifier, null, false, out envFileName, out AdminShellPackageEnv packageEnv);
 
-            if (found)
+            if (assetInformation != null)
             {
-                if (assetInformation != null)
+                if (FileService.ReplaceThumbnail(ref assetInformation, aasIdentifier, fileName, contentType, stream))
                 {
-                    if (FileService.ReplaceThumbnail(ref assetInformation, envFileName, fileName, contentType, stream))
-                    {
-                        CrudOperator.ReplaceAssetInformation(db, aasDB, assetInformation);
-                    }
-                    else
-                    {
-                        throw new Exception($"Could not save thumbnail with {fileName}");
-                    }
+                    CrudOperator.ReplaceAssetInformation(db, aasDB, assetInformation);
                 }
                 else
                 {
-                    throw new NotFoundException($"AssetInformation is NULL in requested AAS with id {aasIdentifier}");
-                }
-
-                using (var scope = _serviceProvider.CreateScope())
-                {
-                    var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
-                    scopedLogger.LogDebug($"Updated the thumbnail in AAS with Id {aasIdentifier}");
+                    throw new Exception($"Could not save thumbnail with {fileName}");
                 }
             }
             else
             {
-                throw new NotFoundException($"Package for aas id {aasIdentifier} not found");
+                throw new NotFoundException($"AssetInformation is NULL in requested AAS with id {aasIdentifier}");
             }
+
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                scopedLogger.LogDebug($"Updated the thumbnail in AAS with Id {aasIdentifier}");
+            }
+        }
+        else
+        {
+            throw new NotFoundException($"AAS with id {aasIdentifier} not found");
         }
     }
 
@@ -1115,39 +1109,30 @@ public class EntityFrameworkPersistenceService : IPersistenceService
     {
         if (IsAssetAdministrationShellPresent(db, aasIdentifier, true, out AASSet aasDB, out IAssetAdministrationShell aas))
         {
-            var envFileName = string.Empty;
-            var found = IsPackageEnvPresent(db, null, aasIdentifier, null, false, out envFileName, out AdminShellPackageEnv packageEnv);
 
-            if (found)
+            var assetInformation = aas.AssetInformation;
+
+            if (assetInformation != null)
             {
-                var assetInformation = aas.AssetInformation;
-
-                if (assetInformation != null)
+                if (FileService.DeleteThumbnail(ref assetInformation, aasIdentifier))
                 {
-                    if (FileService.DeleteThumbnail(ref assetInformation, envFileName))
-                    {
-                        CrudOperator.ReplaceAssetInformation(db, aasDB,
-                            assetInformation);
-                    }
-                    else
-                    {
-                        throw new Exception($"Could not delete thumbnail");
-                    }
+                    CrudOperator.ReplaceAssetInformation(db, aasDB,
+                        assetInformation);
                 }
                 else
                 {
-                    throw new NotFoundException($"AssetInformation is NULL in requested AAS with id {aasIdentifier}");
-                }
-
-                using (var scope = _serviceProvider.CreateScope())
-                {
-                    var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
-                    scopedLogger.LogDebug($"Deleted the thumbnail in AAS with Id {aasIdentifier}");
+                    throw new Exception($"Could not delete thumbnail");
                 }
             }
             else
             {
-                throw new NotFoundException($"Package for aas id {aasIdentifier} not found");
+                throw new NotFoundException($"AssetInformation is NULL in requested AAS with id {aasIdentifier}");
+            }
+
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
+                scopedLogger.LogDebug($"Deleted the thumbnail in AAS with Id {aasIdentifier}");
             }
         }
     }
@@ -1400,7 +1385,10 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 {
                     return false;
                 }
-                envId = aasDBList[0].EnvId.Value;
+                if (aasDBList[0].EnvId.HasValue)
+                {
+                    envId = aasDBList[0].EnvId.Value;
+                }
             }
         }
 

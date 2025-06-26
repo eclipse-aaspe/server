@@ -18,7 +18,7 @@ public interface IPersistenceService
     void InitDB(bool reloadDB, string dataPath);
     Task<DbRequestResult> DoDbOperation(DbRequest dbRequest);
 
-    void ImportAASXIntoDB(string filePath, bool createFilesOnly, bool withDbFiles);
+    void ImportAASXIntoDB(string filePath, bool createFilesOnly);
 
     List<string> ReadFilteredPackages(string filterPath, List<AdminShellPackageEnv> list);
 }

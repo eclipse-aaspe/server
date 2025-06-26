@@ -1,21 +1,74 @@
 namespace AasxServerDB;
 using System;
-using System.Collections.Generic;
+using System.IO;
 using System.IO.Compression;
-using System.Linq;
-using System.Runtime.Intrinsics.X86;
-using System.Text;
-using System.Threading.Tasks;
 using AasCore.Aas3_0;
 using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Logging;
 using AdminShellNS;
 using Contracts.Exceptions;
 using Extensions;
-using static System.Net.Mime.MediaTypeNames;
 
 public class FileService
 {
+    public const string FilesFolderName = "files";
+
+
+    internal static string FormatToFileName(string name)
+    {
+        name = name.Replace("/", "_");
+        name = name.Replace(".", "_");
+        name = name.Replace(":", "_");
+        return name;
+    }
+
+    internal static void CreateAasZipFile(IAssetAdministrationShell aas, Stream thumbnailStreamFromPackage = null)
+    {
+        var path = Path.Combine(AasContext.DataPath, FilesFolderName, FormatToFileName(aas.Id) + ".zip");
+
+        using (var fileStream = new FileStream(path, FileMode.Create))
+        {
+            using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
+            {
+                if (thumbnailStreamFromPackage != null)
+                {
+                    try
+                    {
+                        var onlyFileName = Path.GetFileName(aas.AssetInformation.DefaultThumbnail?.Path);
+                        var tempFilePath = Path.Combine(Path.GetTempPath(), onlyFileName);
+
+                        using (var fst = System.IO.File.Create(tempFilePath))
+                        {
+                            thumbnailStreamFromPackage.CopyTo(fst);
+                        }
+
+                        archive.CreateEntryFromFile(tempFilePath, aas.AssetInformation.DefaultThumbnail?.Path);
+
+                    }
+                    catch (Exception e)
+                    {
+                    }
+                }
+            }
+        }
+    }
+
+    internal static void CreateSubmodelZipFile(ISubmodel submodel, ListOfAasSupplementaryFile supplementaryFiles = null)
+    {
+        var path = Path.Combine(AasContext.DataPath, FilesFolderName, FormatToFileName(submodel.Id) + ".zip");
+
+        using (var fileStream = new FileStream(path, FileMode.Create))
+        {
+            using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
+            {
+                /*if (supplementaryFiles != null)
+                {
+                    var submodelElements = submodel.SubmodelElements;
+                }*/
+            }
+        }
+    }
+
     internal static void ReadFileInZip(string envFileName, out byte[] content, out long fileSize, IAppLogger<EntityFrameworkPersistenceService> scopedLogger, out string fileName, AasCore.Aas3_0.File file)
     {
         fileName = file.Value;
@@ -110,7 +163,10 @@ public class FileService
                 }
             }
 
-            Directory.Delete(tempFilePath);
+            if (Directory.Exists(tempFilePath))
+            {
+                Directory.Delete(tempFilePath);
+            }
         }
         // incorrect value
         else
@@ -161,39 +217,41 @@ public class FileService
         }
     }
 
-    internal static bool ReadFromThumbnail(IAssetInformation assetInformation, string envFileName, out byte[] byteArray, out long fileSize)
+    internal static bool ReadFromThumbnail(IAssetInformation assetInformation, string aasIdentifier, out byte[] content, out long fileSize)
     {
         bool isFileOperationSuceeded = false;
 
-        byteArray = null;
+        content = null;
         fileSize = 0;
 
         if (assetInformation.DefaultThumbnail != null && !string.IsNullOrEmpty(assetInformation.DefaultThumbnail.Path))
         {
             try
             {
-                string fcopy = Path.GetFileName(envFileName) + "__thumbnail";
-                fcopy = fcopy.Replace("/", "_");
-                fcopy = fcopy.Replace(".", "_");
-                var result = System.IO.File.Open(AasContext.DataPath + "/files/" + fcopy + ".dat", FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-
-                // Post-condition
-                if (!(result == null || result.CanRead))
+                var path = Path.Combine(AasContext.DataPath, FilesFolderName, FormatToFileName(aasIdentifier) + ".zip");
+                using (var fileStream = new FileStream(path, FileMode.Open))
                 {
-                    // throw new InvalidOperationException("Unexpected unreadable result stream");
-                    return isFileOperationSuceeded;
-                }
+                    using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
+                    {
+                        var archiveFile = archive.GetEntry(assetInformation.DefaultThumbnail.Path);
+                        using var tempStream = archiveFile.Open();
+                        var ms = new MemoryStream();
+                        tempStream.CopyTo(ms);
+                        ms.Position = 0;
+                        content = ms.ToByteArray();
 
-                byteArray = result.ToByteArray();
-                fileSize = byteArray.Length;
-                result.Close();
-                isFileOperationSuceeded = true;
+                        fileSize = content.Length;
+
+                        isFileOperationSuceeded = true;
+                    }
+                }
             }
             catch (Exception)
             {
                 return isFileOperationSuceeded;
             }
         }
+
         else
         {
             throw new NotFoundException($"No default thumbnail embedded in the AssetInformation of the requested AAS.");
@@ -202,7 +260,7 @@ public class FileService
         return isFileOperationSuceeded;
     }
 
-    internal static bool ReplaceThumbnail(ref IAssetInformation assetInformation, string envFileName, string fileName, string contentType, MemoryStream stream)
+    internal static bool ReplaceThumbnail(ref IAssetInformation assetInformation, string aasIdentifier, string fileName, string contentType, MemoryStream stream)
     {
         bool isFileOperationSuceeded = false;
 
@@ -212,22 +270,14 @@ public class FileService
         //    contentType = "application/octet-stream";
         //}
 
-        if (assetInformation.DefaultThumbnail == null)
-        {
-            assetInformation.DefaultThumbnail = new Resource(fileName);
-        }
-        else
-        {
-            assetInformation.DefaultThumbnail.Path = fileName;
-        }
-
-        string fcopy = Path.GetFileName(envFileName) + "__thumbnail";
-        fcopy = fcopy.Replace("/", "_");
-        fcopy = fcopy.Replace(".", "_");
+        var onlyFileName = Path.GetFileName(fileName);
 
         try
         {
-            var result = System.IO.File.Open(AasContext.DataPath + "/files/" + fcopy + ".dat", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
+            var tempFilePath = Path.Combine(Path.GetTempPath(), onlyFileName);
+            var path = Path.Combine("aasx", "images", onlyFileName);
+
+            using var result = System.IO.File.Open(tempFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
 
             // Post-condition
             if (!(result == null || result.CanRead))
@@ -245,6 +295,37 @@ public class FileService
 
             result.Close();
 
+
+            var zipFilePath = Path.Combine(AasContext.DataPath, FilesFolderName, FormatToFileName(aasIdentifier) + ".zip");
+
+            using (var zipFileStream = new FileStream(zipFilePath, FileMode.OpenOrCreate))
+            {
+                using (var archive = new ZipArchive(zipFileStream, ZipArchiveMode.Update))
+                {
+                    if (assetInformation.DefaultThumbnail != null)
+                    {
+                        var entry = archive.GetEntry(assetInformation.DefaultThumbnail.Path);
+                        entry?.Delete();
+                    }
+
+                    archive.CreateEntryFromFile(tempFilePath, path);
+                }
+            }
+
+            if (assetInformation.DefaultThumbnail == null)
+            {
+                assetInformation.DefaultThumbnail = new Resource(path);
+            }
+            else
+            {
+                assetInformation.DefaultThumbnail.Path = path;
+            }
+
+            if (Directory.Exists(tempFilePath))
+            {
+                Directory.Delete(tempFilePath, true);
+            }
+
             isFileOperationSuceeded = true;
 
             return isFileOperationSuceeded;
@@ -255,19 +336,27 @@ public class FileService
         }
     }
 
-    internal static bool DeleteThumbnail(ref IAssetInformation assetInformation, string envFileName)
+    internal static bool DeleteThumbnail(ref IAssetInformation assetInformation, string aasIdentifier)
     {
         bool isFileOperationSuceeded = false;
 
         if (assetInformation.DefaultThumbnail != null && !string.IsNullOrEmpty(assetInformation.DefaultThumbnail.Path))
         {
-            string fcopy = Path.GetFileName(envFileName) + "__thumbnail";
-            fcopy = fcopy.Replace("/", "_");
-            fcopy = fcopy.Replace(".", "_");
-
             try
             {
-                System.IO.File.Delete(AasContext.DataPath + "/files/" + fcopy + ".dat");
+                var zipFilePath = Path.Combine(AasContext.DataPath, FilesFolderName, FormatToFileName(aasIdentifier) + ".zip");
+
+                using (var zipFileStream = new FileStream(zipFilePath, FileMode.OpenOrCreate))
+                {
+                    using (var archive = new ZipArchive(zipFileStream, ZipArchiveMode.Update))
+                    {
+                        if (assetInformation.DefaultThumbnail != null)
+                        {
+                            var entry = archive.GetEntry(assetInformation.DefaultThumbnail.Path);
+                            entry?.Delete();
+                        }
+                    }
+                }
 
                 assetInformation.DefaultThumbnail = null;
 

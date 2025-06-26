@@ -620,9 +620,9 @@ namespace AdminShellNS
                 }
             if (thumbUri != null && !string.IsNullOrEmpty(thumbUri.OriginalString))
             {
-                if (_aasEnv.AssetAdministrationShells.Count > 0)
+                foreach (var aas in _aasEnv.AssetAdministrationShells)
                 {
-                    _aasEnv.AssetAdministrationShells[0].AssetInformation.DefaultThumbnail = new Resource(thumbUri.OriginalString); 
+                    aas.AssetInformation.DefaultThumbnail = new Resource(thumbUri.OriginalString);
                 }
             }
         }
@@ -1325,12 +1325,10 @@ namespace AdminShellNS
         }
 
         public static bool withDb = false;
-        public static bool withDbFiles = false;
         public static string dataPath = "";
-        public static void setGlobalOptions(bool _withDb, bool _withDbFiles, string _dataPath)
+        public static void setGlobalOptions(bool _withDb, string _dataPath)
         {
             withDb = _withDb;
-            withDbFiles = _withDbFiles;
             dataPath = _dataPath;
         }
 
@@ -1426,16 +1424,6 @@ namespace AdminShellNS
         /// </remarks>
         public Stream GetLocalThumbnailStream(ref Uri thumbUri, bool init = false)
         {
-            // DB
-            if (withDb && withDbFiles && !init)
-            {
-                string fcopy = Path.GetFileName(Filename) + "__thumbnail";
-                fcopy = fcopy.Replace("/", "_");
-                fcopy = fcopy.Replace(".", "_");
-                var s = System.IO.File.Open(dataPath + "/files/" + fcopy + ".dat", FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                return s;
-            }
-
             // access
             if (_openPackage == null)
                 throw (new Exception(string.Format($"AASX Package {_fn} not opened. Aborting!")));
