@@ -39,6 +39,7 @@ using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers;
 using IO.Swagger.Lib.V3.Models;
 using System.Text.Json.Serialization;
 using Npgsql.Internal;
+using AdminShellNS.Models;
 
 namespace IO.Swagger.Lib.V3.Formatters
 {
@@ -128,6 +129,10 @@ namespace IO.Swagger.Lib.V3.Formatters
                 return base.CanWriteResult(context);
             }
             if (typeof(PackageDescriptionPagedResult).IsAssignableFrom(context.ObjectType))
+            {
+                return base.CanWriteResult(context);
+            }
+            if (typeof(PackageDescription).IsAssignableFrom(context.ObjectType))
             {
                 return base.CanWriteResult(context);
             }
@@ -391,6 +396,23 @@ namespace IO.Swagger.Lib.V3.Formatters
                 if (context.Object is PackageDescriptionPagedResult pagedResult)
                 {
                     jsonNode = JsonSerializer.SerializeToNode(pagedResult, options);
+                }
+                var writer = new Utf8JsonWriter(response.Body);
+                jsonNode.WriteTo(writer);
+                writer.FlushAsync().GetAwaiter().GetResult();
+                writer.Dispose();
+            }
+            else if (typeof(PackageDescription).IsAssignableFrom(context.ObjectType))
+            {
+                JsonNode jsonNode = null;
+                var options = new JsonSerializerOptions
+                {
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                };
+                if (context.Object is PackageDescription packageDescription)
+                {
+                    jsonNode = JsonSerializer.SerializeToNode(packageDescription, options);
                 }
                 var writer = new Utf8JsonWriter(response.Body);
                 jsonNode.WriteTo(writer);
