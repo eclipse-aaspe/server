@@ -153,6 +153,28 @@ namespace AasSecurity
                         }
                     }
                 }
+                if (rule._filter_conditions != null)
+                {
+                    var c = rule._filter_conditions;
+                    if (c.TryGetValue("all", out var all))
+                    {
+                        if (!string.IsNullOrEmpty(all))
+                        {
+                            var hasValue = condition.TryGetValue("filter", out var value);
+                            if (hasValue && value != "")
+                            {
+                                if (all != "")
+                                {
+                                    condition["filter"] = value + " || " + all;
+                                }
+                            }
+                            else
+                            {
+                                condition["filter"] = all;
+                            }
+                        }
+                    }
+                }
             }
 
             foreach (var c in condition)
@@ -165,6 +187,7 @@ namespace AasSecurity
 
             return condition;
 
+            /*
             foreach (var c in _condition)
             {
                 var a = c["claim"];
@@ -175,6 +198,7 @@ namespace AasSecurity
                 }
             }
             return null;
+            */
         }
 
         public Dictionary<string, string>? GetFilterCondition(string accessRole, string neededRightsClaim)
