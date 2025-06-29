@@ -5,6 +5,54 @@
         "ACL": {
           "ATTRIBUTES": [
             {
+              "CLAIM": "__Albert__Alb"
+            }
+          ],
+          "RIGHTS": [
+            "READ",
+            "CREATE",
+            "UPDATE",
+            "DELETE"
+          ],
+          "ACCESS": "ALLOW"
+        },
+        "OBJECTS": [
+          {
+            "ROUTE": "*"
+          }
+        ],
+        "FORMULA": {
+          "$boolean": true
+        }
+      },
+      {
+        "ACL": {
+          "ATTRIBUTES": [
+            {
+              "CLAIM": "isSuperDuperUser"
+            }
+          ],
+          "RIGHTS": [
+            "READ",
+            "CREATE",
+            "UPDATE",
+            "DELETE"
+          ],
+          "ACCESS": "ALLOW"
+        },
+        "OBJECTS": [
+          {
+            "ROUTE": "*"
+          }
+        ],
+        "FORMULA": {
+          "$boolean": true
+        }
+      },
+      {
+        "ACL": {
+          "ATTRIBUTES": [
+            {
               "CLAIM": "isNotAuthenticated"
             }
           ],
@@ -15,7 +63,16 @@
         },
         "OBJECTS": [
           {
-            "ROUTE": "/submodels/*"
+            "ROUTE": "/shells"
+          },
+          {
+            "ROUTE": "/submodels"
+          },
+          {
+            "ROUTE": "/query/submodels"
+          },
+          {
+            "ROUTE": "/packages"
           }
         ],
         "FORMULA": {
@@ -33,17 +90,29 @@
                   ]
                 }
               ]
-            },
+            }
+          ]
+        }
+      },
+      {
+        "ACL": {
+          "ATTRIBUTES": [
             {
-              "$eq": [
-                {
-                  "$field": "$sm#idShort"
-                },
-                {
-                  "$strVal": "ProductChangeNotifications"
-                }
-              ]
-            },
+              "CLAIM": "isNotAuthenticated"
+            }
+          ],
+          "RIGHTS": [
+            "READ"
+          ],
+          "ACCESS": "ALLOW"
+        },
+        "OBJECTS": [
+          {
+            "REFERABLE": "*"
+          }
+        ],
+        "FORMULA": {
+          "$or": [
             {
               "$eq": [
                 {
@@ -55,6 +124,12 @@
               ]
             }
           ]
+        },
+       "FILTER": {
+         "FRAGMENT": "xxx",
+         "CONDITION": {
+            "$boolean": true
+         }
         }
       }
     ]

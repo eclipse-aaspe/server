@@ -36,9 +36,9 @@ namespace AasxServerBlazor.Configuration;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AasxServerStandardBib.GraphQL;
 using AdminShellNS;
 using Contracts;
+using IO.Swagger.Lib.V3.GraphQL;
 
 public static class ServerConfiguration
 {

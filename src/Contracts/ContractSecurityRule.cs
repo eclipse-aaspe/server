@@ -7,8 +7,8 @@ namespace Contracts
 
     public interface IContractSecurityRules
     {
-        public Dictionary<string, string> GetCondition(string accessRole, string neededRightsClaim);
-
+        public Dictionary<string, string> GetCondition(string accessRole, string neededRightsClaim, string? httpRoute = null);
+        public List<AccessPermissionRule> GetAccessRules(string accessRole, string neededRightsClaim, string? httpRoute = null);
         bool AuthorizeRequest(string accessRole,
                       string httpRoute,
                       AccessRights neededRights,

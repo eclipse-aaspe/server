@@ -14,12 +14,14 @@
 namespace AasxServerDB
 {
     using System.Collections.Generic;
+    using System.IO.Packaging;
     using System.Linq;
     using System.Linq.Dynamic.Core;
     using System.Text;
     using AasCore.Aas3_0;
     using AasxServerDB.Entities;
     using AdminShellNS;
+    using AdminShellNS.Models;
     using Contracts.Pagination;
     using Extensions;
     using Microsoft.EntityFrameworkCore;
@@ -148,7 +150,6 @@ namespace AasxServerDB
 
             var globalAssetId = assetIds?.Where(a => a.Name == "globalAssetId").Select(a => a.Value).FirstOrDefault();
 
-            var timeStamp = DateTime.UtcNow;
 
             var aasDBList = db.AASSets
                 .Where(aas => idShort == null || aas.IdShort == idShort)
@@ -164,20 +165,8 @@ namespace AasxServerDB
             foreach (var aasDB in aasDBList)
             {
                 var helper = aasDB;
-                var aas = ReadAssetAdministrationShell(db, ref helper);
-                if (aas?.TimeStamp == DateTime.MinValue)
-                {
-                    aas.TimeStampCreate = timeStamp;
-                    aas.SetTimeStamp(timeStamp);
-                }
+                var aas = ReadAssetAdministrationShell(db, ref helper, smDBList);
 
-                // sm
-                foreach (var sm in smDBList.Where(sm => sm.AASId == helper.Id))
-                {
-                    aas?.Submodels?.Add(new Reference(type: ReferenceTypes.ModelReference,
-                        keys: new List<IKey>() { new Key(KeyTypes.Submodel, sm.Identifier) }
-                    ));
-                }
 
                 output.Add(aas);
             }
@@ -185,7 +174,7 @@ namespace AasxServerDB
             return output;
         }
 
-        public static AssetAdministrationShell? ReadAssetAdministrationShell(AasContext db, ref AASSet? aasDB, string aasIdentifier = "")
+        public static AssetAdministrationShell? ReadAssetAdministrationShell(AasContext db, ref AASSet? aasDB, List<SMRefSet>? smRefSets = null, string aasIdentifier = "")
         {
             AssetAdministrationShell aas = null;
 
@@ -239,6 +228,35 @@ namespace AasxServerDB
                 TimeStampTree = aasDB.TimeStampTree,
                 TimeStampDelete = aasDB.TimeStampDelete
             };
+
+
+            var timeStamp = DateTime.UtcNow;
+            if (aas?.TimeStamp == DateTime.MinValue)
+            {
+                aas.TimeStampCreate = timeStamp;
+                aas.SetTimeStamp(timeStamp);
+            }
+            var aasDBId = aasDB.Id;
+
+            var smDBList = new List<SMRefSet>();
+
+            if (smRefSets != null)
+            {
+                smDBList = smRefSets;
+            }
+            else
+            {
+                smDBList = db.SMRefSets.Where(sm => sm.AASId == aasDBId).ToList();
+            }
+
+            // sm
+            foreach (var sm in smDBList.Where(sm => sm.AASId == aasDBId))
+            {
+                aas?.Submodels?.Add(new Reference(type: ReferenceTypes.ModelReference,
+                    keys: new List<IKey>() { new Key(KeyTypes.Submodel, sm.Identifier) }
+                ));
+            }
+
             return aas;
         }
 
@@ -255,19 +273,44 @@ namespace AasxServerDB
 
         internal static IAssetAdministrationShell CreateAas(AasContext db, IAssetAdministrationShell newAas)
         {
-            IAssetAdministrationShell aas = null;
+            IAssetAdministrationShell createdAas = null;
 
             var aasDB = new AASSet();
+
+            // dictionary to save connection between aas and sm
+            var aasToSm = new Dictionary<string, AASSet?>();
+
+            //if (!newAas.IdShort.IsNullOrEmpty() && newAas.IdShort.ToLower().Contains("globalsecurity"))
+            //{
+            //    if (newAas.Submodels != null)
+            //    {
+            //        foreach (var refSm in newAas.Submodels)
+            //            if (refSm.Keys != null && refSm.Keys.Count() > 0 && !refSm.Keys[0].Value.IsNullOrEmpty())
+            //                aasToSm.TryAdd(refSm.Keys[0].Value, null);
+            //    }
+            //}
             SetAas(aasDB, newAas);
 
+
+            if (newAas.Submodels != null)
+            {
+                foreach (var refSm in newAas.Submodels)
+                    if (refSm.Keys != null && refSm.Keys.Count() > 0 && !refSm.Keys[0].Value.IsNullOrEmpty())
+                    {
+                        aasDB.SMRefSets.Add(new SMRefSet { Identifier = refSm.Keys[0].Value });
+                    }
+                //aasToSm.TryAdd(refSm.Keys[0].Value, aasDB);
+            }
+
             var aasDBQuery = db.Add(aasDB);
+
             db.SaveChanges();
 
             var addedInDb = aasDBQuery.Entity;
 
-            aas = ReadAssetAdministrationShell(db, ref addedInDb);
+            createdAas = ReadAssetAdministrationShell(db, ref addedInDb);
 
-            return aas;
+            return createdAas;
         }
 
         private static void SetAas(AASSet aasDB, IAssetAdministrationShell newAas)
@@ -299,6 +342,7 @@ namespace AasxServerDB
             aasDB.TimeStampTree = newAas.TimeStampTree == default ? currentDataTime : newAas.TimeStampTree;
             aasDB.TimeStampDelete = newAas.TimeStampDelete;
         }
+
         public static void DeleteAAS(AasContext db, string aasIdentifier)
         {
             // Deletes automatically from DB
@@ -412,7 +456,7 @@ namespace AasxServerDB
             {
                 var smDBQuery = db.SMSets
                         .Where(sm => sm.Identifier == submodelIdentifier);
-                if (securityCondition != null)
+                if (securityCondition?["sm."] is not null and not "")
                 {
                     smDBQuery = smDBQuery.Where(securityCondition["sm."]);
                 }
@@ -431,12 +475,10 @@ namespace AasxServerDB
                 .OrderBy(sme => sme.Id)
                 .Where(sme => sme.SMId == smDB.Id);
 
-            /* Bug in algorithm for .sme: skip for the moment
-            if (securityCondition?["sme."] != null)
+            if (securityCondition?["sme."] is not null and not "")
             {
                 SMEQuery = SMEQuery.Where(securityCondition["sme."]);
             }
-            */
 
             var submodel = new Submodel(
                 idShort: smDB.IdShort,
@@ -461,9 +503,9 @@ namespace AasxServerDB
             );
 
             // LoadSME(submodel, null, null, SMEList);
-            var smeMerged = CrudOperator.GetSmeMerged(db, SMEQuery, smDB);
+            var smeMerged = GetSmeMerged(db, null, SMEQuery, smDB);
 
-            if (smeMerged != null && smeMerged.Count != 0 && securityCondition?["all"] != null)
+            if (smeMerged != null && smeMerged.Count != 0 && securityCondition?["all"] != null && securityCondition?["all"] != "")
             {
                 // at least 1 exists
                 var mergeForCondition = smeMerged.Select(sme => new
@@ -478,11 +520,11 @@ namespace AasxServerDB
                 var resultCondition = mergeForCondition.AsQueryable().Where(securityCondition["all"]);
                 if (!resultCondition.Any())
                 {
-                    return submodel;
+                    return null;
                 }
-                if (securityCondition.TryGetValue("filter", out _))
+                if (securityCondition.TryGetValue("filter", out var filter))
                 {
-                    resultCondition = mergeForCondition.AsQueryable().Where(securityCondition["filter"]);
+                    resultCondition = mergeForCondition.AsQueryable().Where(filter);
                     var resultConditionIDs = resultCondition.Select(s => s.sme.Id).Distinct().ToList();
                     smeMerged = smeMerged.Where(m => resultConditionIDs.Contains(m.smeSet.Id)).ToList();
                 }
@@ -608,14 +650,14 @@ namespace AasxServerDB
             var smDBId = smDB[0].Id;
 
             var smeSmTopQuery = db.SMESets.Where(sme => sme.SMId == smDBId && sme.ParentSMEId == null);
-            if (securityCondition != null)
+            if (securityCondition != null && !securityCondition["sme."].IsNullOrEmpty())
             {
                 smeSmTopQuery = smeSmTopQuery.Where(securityCondition["sme."]);
             }
             var smeSmTop = smeSmTopQuery
                 .OrderBy(sme => sme.Id).Skip(paginationParameters.Cursor).Take(paginationParameters.Limit).ToList();
             var smeSmTopTree = CrudOperator.GetTree(db, smDB[0], smeSmTop);
-            var smeSmTopMerged = CrudOperator.GetSmeMerged(db, smeSmTopTree, smDB[0]);
+            var smeSmTopMerged = CrudOperator.GetSmeMerged(db, securityCondition, smeSmTopTree, smDB[0]);
 
             foreach (var smeDB in smeSmTop)
             {
@@ -649,7 +691,7 @@ namespace AasxServerDB
             var smDBId = smDB.Id;
             var smeSmList = db.SMESets.Where(sme => sme.SMId == smDBId).ToList();
             CrudOperator.CreateIdShortPath(db, smeSmList);
-            var smeSmMerged = CrudOperator.GetSmeMerged(db, smeSmList, smDB);
+            var smeSmMerged = CrudOperator.GetSmeMerged(db, null, smeSmList, smDB);
             visitor.smSmeMerged = smeSmMerged;
 
             if (!String.IsNullOrEmpty(idShortPath))
@@ -733,7 +775,7 @@ namespace AasxServerDB
             //}
 
             var smeFoundTree = CrudOperator.GetTree(db, smDB[0], smeFound);
-            var smeMerged = CrudOperator.GetSmeMerged(db, smeFoundTree, smDB[0]);
+            var smeMerged = CrudOperator.GetSmeMerged(db, securityCondition, smeFoundTree, smDB[0]);
 
             if (smeMerged != null && smeMerged.Count != 0 && securityCondition?["all"] != null)
             {
@@ -795,7 +837,7 @@ namespace AasxServerDB
             var smDBId = smDB.Id;
             var smeSmList = db.SMESets.Where(sme => sme.SMId == smDBId).ToList();
             CrudOperator.CreateIdShortPath(db, smeSmList);
-            var smeSmMerged = CrudOperator.GetSmeMerged(db, smeSmList, null);
+            var smeSmMerged = CrudOperator.GetSmeMerged(db, securityCondition, smeSmList, null);
             visitor.smSmeMerged = smeSmMerged;
             visitor.idShortPath = idShortPath;
             visitor.update = true;
@@ -1065,7 +1107,7 @@ namespace AasxServerDB
             public OValueSet? oValueSet;
         }
 
-        public static List<SmeMerged> GetSmeMerged(AasContext db, List<SMESet>? listSME, SMSet? smSet)
+        public static List<SmeMerged> GetSmeMerged(AasContext db, Dictionary<string, string>? securityCondition, List<SMESet>? listSME, SMSet? smSet)
         {
             if (listSME == null)
             {
@@ -1075,29 +1117,43 @@ namespace AasxServerDB
             var smeIdList = listSME.Select(sme => sme.Id).ToList();
             var querySME = db.SMESets.Where(sme => smeIdList.Contains(sme.Id));
 
-            return GetSmeMerged(db, querySME, smSet);
+            return GetSmeMerged(db, securityCondition, querySME, smSet);
         }
-        private static List<SmeMerged> GetSmeMerged(AasContext db, IQueryable<SMESet>? querySME, SMSet? smSet)
+        private static List<SmeMerged> GetSmeMerged(AasContext db, Dictionary<string, string>? securityCondition, IQueryable<SMESet>? querySME, SMSet? smSet)
         {
             if (querySME == null)
                 return null;
 
+            IQueryable<SValueSet> sValueSets = db.SValueSets;
+            if (securityCondition != null && securityCondition["svalue"] != "")
+            {
+                sValueSets = sValueSets.Where(securityCondition["svalue"]);
+            }
+
+            IQueryable<IValueSet> iValueSets = db.IValueSets;
+            IQueryable<DValueSet> dValueSets = db.DValueSets;
+            if (securityCondition != null && securityCondition["mvalue"] != "")
+            {
+                iValueSets = iValueSets.Where(securityCondition["mvalue"]);
+                dValueSets = dValueSets.Where(securityCondition["mvalue"]);
+            }
+
             var joinSValue = querySME.Join(
-                db.SValueSets,
+                sValueSets,
                 sme => sme.Id,
                 sv => sv.SMEId,
                 (sme, sv) => new SmeMerged { smSet = smSet, smeSet = sme, sValueSet = sv, iValueSet = null, dValueSet = null, oValueSet = null })
                 .ToList();
 
             var joinIValue = querySME.Join(
-                db.IValueSets,
+                iValueSets,
                 sme => sme.Id,
                 sv => sv.SMEId,
                 (sme, sv) => new SmeMerged { smSet = smSet, smeSet = sme, sValueSet = null, iValueSet = sv, dValueSet = null, oValueSet = null })
                 .ToList();
 
             var joinDValue = querySME.Join(
-                db.DValueSets,
+                dValueSets,
                 sme => sme.Id,
                 sv => sv.SMEId,
                 (sme, sv) => new SmeMerged { smSet = smSet, smeSet = sme, sValueSet = null, iValueSet = null, dValueSet = sv, oValueSet = null })
@@ -1683,6 +1739,49 @@ namespace AasxServerDB
                 var path = db.EnvSets.Where(e => e.Id == envId).Select(e => e.Path).FirstOrDefault();
                 return path ?? string.Empty;
             }
+        }
+
+        internal static List<PackageDescription> ReadPagedPackageDescriptions(AasContext db, IPaginationParameters paginationParameters, Dictionary<string, string>? securityCondition, string aasIdentifier)
+        {
+            var output = new List<PackageDescription>();
+
+            var timeStamp = DateTime.UtcNow;
+
+            List<int> envIds = new List<int>();
+
+            if (aasIdentifier != null)
+            {
+                var aas = db.AASSets.FirstOrDefault(aas => aas.Identifier == aasIdentifier);
+
+                if (aas.EnvId.HasValue && aas.EnvId >= 0)
+                {
+                    envIds.Add(aas.EnvId.Value);
+                }
+            }
+            else
+            {
+                var envDbSet = db.EnvSets
+                    .Skip(paginationParameters.Cursor)
+                    .Take(paginationParameters.Limit);
+                envIds = [.. envDbSet.Select(env => env.Id)];
+            }
+
+            foreach (var envId in envIds)
+            {
+                var packageDescription = new PackageDescription();
+                packageDescription.PackageId = envId.ToString();
+                var aasIdList = new List<string>();
+
+                var envSet = db.EnvSets.FirstOrDefault(e => e.Id == envId);
+                foreach (var aas in envSet.AASSets)
+                {
+                    aasIdList.Add(aas.Identifier);
+                }
+                packageDescription.AasIds = aasIdList;
+                output.Add(packageDescription);
+            }
+
+            return output;
         }
     }
 }
