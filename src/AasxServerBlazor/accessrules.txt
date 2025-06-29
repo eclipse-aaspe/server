@@ -78,22 +78,16 @@
         "FORMULA": {
           "$or": [
             {
-              "$eq": [
+              "$and": [
                 {
-                  "$field": "$sm#idShort"
-                },
-                {
-                  "$strVal": "Nameplate"
-                }
-              ]
-            },
-            {
-              "$eq": [
-                {
-                  "$field": "$sm#idShort"
-                },
-                {
-                  "$strVal": "ProductChangeNotifications"
+                  "$eq": [
+                    {
+                      "$field": "$sm#idShort"
+                    },
+                    {
+                      "$strVal": "Nameplate"
+                    }
+                  ]
                 }
               ]
             }

@@ -248,7 +248,7 @@ public class QueryGrammarJSON : Grammar
 
     public string idShortPath = "";
 
-    public static string createExpression(string mode, object? obj, string type = "")
+    public static string createExpression(string mode, object? obj, string type = "", string smeValue = "")
     {
         if (obj == null)
             return "";
@@ -271,7 +271,7 @@ public class QueryGrammarJSON : Grammar
                     createExpression(mode, q.Condition);
                     break;
                 case LogicalExpression le:
-                    le._expression = createExpression(mode, le.ExpressionValue, le.ExpressionType);
+                    le._expression = createExpression(mode, le.ExpressionValue, le.ExpressionType, smeValue);
                     return le._expression;
                 default:
                     break;
@@ -424,8 +424,8 @@ public class QueryGrammarJSON : Grammar
                 case "$contains":
                     if (eList != null)
                     {
-                        string left = createExpression(mode, eList[0]);
-                        string right = createExpression(mode, eList[1]);
+                        var left = createExpression(mode, eList[0], smeValue: "svalue");
+                        var right = createExpression(mode, eList[1], smeValue: "svalue");
                         if (left != "$SKIP" && right != "$SKIP")
                         {
                             return left + "." + op + "(" + right + ")";
@@ -457,6 +457,20 @@ public class QueryGrammarJSON : Grammar
                         switch (mode)
                         {
                             case "all":
+                                if (smeValue == "svalue")
+                                {
+                                    if (value == "sme.value")
+                                    {
+                                        return "svalue";
+                                    }
+                                }
+                                if (smeValue == "mvalue")
+                                {
+                                    if (value == "sme.value")
+                                    {
+                                        return "mvalue";
+                                    }
+                                }
                                 return value;
                             case "sm.":
                                 if (value.StartsWith("sm."))
@@ -643,12 +657,14 @@ public class QueryGrammarJSON : Grammar
                         {
                             le._expression = "";
                         }
+                        le._expression = le._expression.Replace("svalue", "Value");
                         conditions[i].Add("svalue", le._expression);
                         createExpression("mvalue", le);
                         if (le._expression == "$SKIP")
                         {
                             le._expression = "";
                         }
+                        le._expression = le._expression.Replace("mvalue", "Value");
                         conditions[i].Add("mvalue", le._expression);
                     }
                 }

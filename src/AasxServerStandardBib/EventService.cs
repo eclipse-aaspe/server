@@ -410,7 +410,7 @@ public class EventService : IEventService
                         {
                             // smeSearchTimeStamp = smeSearchSM.Where(sme => sme.ParentSMEId == null).ToList();
                             var tree = CrudOperator.GetTree(db, sm, smeSearchTimeStamp);
-                            var treeMerged = CrudOperator.GetSmeMerged(db, tree, sm);
+                            var treeMerged = CrudOperator.GetSmeMerged(db, null, tree, sm);
                             // var lookupChildren = treeMerged?.ToLookup(m => m.smeSet.ParentSMEId);
 
                             completeSM = false;
@@ -825,7 +825,7 @@ public class EventService : IEventService
                                 var smDBId = smDB.Id;
                                 var smeSmList = db.SMESets.Where(sme => sme.SMId == smDBId).ToList();
                                 CrudOperator.CreateIdShortPath(db, smeSmList);
-                                var smeSmMerged = CrudOperator.GetSmeMerged(db, smeSmList, smDB);
+                                var smeSmMerged = CrudOperator.GetSmeMerged(db, null, smeSmList, smDB);
                                 visitor.smSmeMerged = smeSmMerged;
 
                                 foreach (var e in entriesSubmodel)

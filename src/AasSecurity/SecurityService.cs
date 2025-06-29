@@ -142,9 +142,16 @@ namespace AasSecurity
                         var hasValue = condition.TryGetValue(c.Key, out var value);
                         if (hasValue && value != "")
                         {
-                            if (c.Value != "")
+                            if (value != "(True)")
                             {
-                                condition[c.Key] = value + " || " + c.Value;
+                                if (c.Value != "")
+                                {
+                                    condition[c.Key] = value + " || " + c.Value;
+                                }
+                                else
+                                {
+                                    condition[c.Key] = "(True)";
+                                }
                             }
                         }
                         else
@@ -179,7 +186,7 @@ namespace AasSecurity
 
             foreach (var c in condition)
             {
-                if (condition[c.Key] != "")
+                if (condition[c.Key] is not "" and not "(True)")
                 {
                     condition[c.Key] = "(" + c.Value + ")";
                 }
@@ -199,11 +206,6 @@ namespace AasSecurity
             }
             return null;
             */
-        }
-
-        public Dictionary<string, string>? GetFilterCondition(string accessRole, string neededRightsClaim)
-        {
-            return null;
         }
 
         public void ClearSecurityRules()

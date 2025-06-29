@@ -1502,9 +1502,13 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         if (loadIntoMemory)
         {
             output = CrudOperator.ReadSubmodel(db, smDB[0], securityCondition: securityCondition);
+            if (output != null)
+            {
+                return true;
+            }
         }
 
-        result = true;
+        return false;
 
         /*
         using (var db = new AasContext())
