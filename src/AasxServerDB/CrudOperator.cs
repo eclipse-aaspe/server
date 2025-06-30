@@ -1772,10 +1772,10 @@ namespace AasxServerDB
                 packageDescription.PackageId = envId.ToString();
                 var aasIdList = new List<string>();
 
-                var envSet = db.EnvSets.FirstOrDefault(e => e.Id == envId);
-                foreach (var aas in envSet.AASSets)
+                var aasSets = db.AASSets.Where(e => e.EnvId == envId);
+                foreach (var aas in aasSets)
                 {
-                    aasIdList.Add(aas.Identifier);
+                    aasIdList.Add(aas.Identifier ?? "");
                 }
                 packageDescription.AasIds = aasIdList;
                 output.Add(packageDescription);

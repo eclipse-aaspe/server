@@ -788,6 +788,12 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         };
                         break;
                     case DbRequestOp.ReplaceAASXPackageById:
+                        ReplaceAASXPackageById(
+                            db,
+                            securityConfig,
+                            dbRequest.Context.Params.PackageIdentifier,
+                            dbRequest.Context.Params.FileRequest.File,
+                            dbRequest.Context.Params.FileRequest.Stream);
                         break;
                     case DbRequestOp.DeleteAASXByPackageId:
                         break;
@@ -798,6 +804,30 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             }
         }
         return result;
+    }
+
+    private void ReplaceAASXPackageById(AasContext db, ISecurityConfig securityConfig, string packageIdentifier, string file, MemoryStream stream)
+    {
+        if (IsPackageEnvPresent(db, packageIdentifier, null, null, true, out string envFileName, out AdminShellPackageEnv packageEnv))
+        {
+            if (System.IO.File.Exists(envFileName))
+            {
+                System.IO.File.Delete(envFileName);
+            }
+
+            var zipFile = Path.Combine(AasContext.DataPath, "files", Path.GetFileName(envFileName) + ".zip");
+
+            if (System.IO.File.Exists(zipFile))
+            {
+                System.IO.File.Delete(zipFile);
+            }
+
+            Edit.Update(packageEnv);
+        }
+        else
+        {
+            CreateAASXPackage(db, securityConfig, file, stream);
+        }
     }
 
     private PackageDescription CreateAASXPackage(AasContext db, ISecurityConfig securityConfig, string fileName, Stream fileContent)
