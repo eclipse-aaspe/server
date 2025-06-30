@@ -345,12 +345,26 @@ namespace AasxServerDB
 
         public static void DeleteAAS(AasContext db, string aasIdentifier)
         {
-            // Deletes automatically from DB
-            db.AASSets
-                .Include(aas => aas.SMRefSets)
-                .Where(aas => aas.Identifier == aasIdentifier).ExecuteDelete();
+            try
+            {
+                // Deletes automatically from DB
+                var aas = db.AASSets
+                    .Include(aas => aas.SMRefSets)
+                    .FirstOrDefault(aas => aas.Identifier == aasIdentifier);
 
-            db.SaveChanges();
+                if (aas != null)
+                {
+                    aas?.SMRefSets.Clear();
+                    db.AASSets.Remove(aas);
+
+                    db.SaveChanges();
+                }
+            }
+            catch (Microsoft.Data.Sqlite.SqliteException ex)
+            {
+                Console.WriteLine($"SQLite Error: {ex.Message}");
+                Console.WriteLine($"Foreign Key Constraint: {ex.SqliteErrorCode}");
+            }
         }
 
 

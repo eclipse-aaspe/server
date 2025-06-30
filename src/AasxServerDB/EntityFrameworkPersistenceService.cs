@@ -179,7 +179,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     case DbRequestOp.ReadPackageEnv:
                         var envFile = "";
 
-                        if (IsPackageEnvPresent(db, null, aasIdentifier, submodelIdentifier, true, out envFile, out AdminShellPackageEnv packageEnv))
+                        if (IsPackageEnvPresent(db, null, aasIdentifier, submodelIdentifier, true, out envFile, out AdminShellPackageEnv packageEnv, out _))
                         {
                             result.PackageEnv = new DbRequestPackageEnvResult()
                             {
@@ -806,10 +806,29 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         return result;
     }
 
-    private void ReplaceAASXPackageById(AasContext db, ISecurityConfig securityConfig, string packageIdentifier, string file, MemoryStream stream)
+    private void ReplaceAASXPackageById(AasContext db, ISecurityConfig securityConfig, string packageIdentifier, string file, MemoryStream fileContent)
     {
-        if (IsPackageEnvPresent(db, packageIdentifier, null, null, true, out string envFileName, out AdminShellPackageEnv packageEnv))
+        if (IsPackageEnvPresent(db, packageIdentifier, null, null, true, out string envFileName, out AdminShellPackageEnv packageEnv, out EnvSet envDB))
         {
+            var newFileName = Path.Combine(AasContext.DataPath, file);
+
+            if (newFileName == envFileName)
+            {
+                System.IO.File.Delete(envFileName);
+            }
+
+            //Check if file already exists
+            if (System.IO.File.Exists(newFileName))
+            {
+                throw new DuplicateException($"File already exists");
+            }
+
+            using (var fileStream = System.IO.File.Create(newFileName))
+            {
+                fileContent.Seek(0, SeekOrigin.Begin);
+                fileContent.CopyTo(fileStream);
+            }
+
             if (System.IO.File.Exists(envFileName))
             {
                 System.IO.File.Delete(envFileName);
@@ -822,11 +841,56 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 System.IO.File.Delete(zipFile);
             }
 
-            Edit.Update(packageEnv);
+            var deleteEnvList = db.EnvSets.Where(e => e.Path == packageEnv.Filename);
+            var deleteEnv = deleteEnvList.FirstOrDefault();
+            var deleteAasList = db.AASSets.Where(a => a.EnvId == deleteEnv.Id);
+            var deleteSmList = db.SMSets.Where(s => s.EnvId == deleteEnv.Id);
+            var deleteCDList = db.EnvCDSets.Where(s => s.EnvId == deleteEnv.Id);
+
+            foreach (var s in deleteSmList)
+            {
+                if (s.Identifier != null)
+                {
+                    CrudOperator.DeleteSubmodel(db, s.Identifier);
+                }
+            }
+            foreach (var a in deleteAasList)
+            {
+                if (a.Identifier != null)
+                {
+                    CrudOperator.DeleteAAS(db, a.Identifier);
+                }
+            }
+            deleteCDList.ExecuteDeleteAsync().Wait();
+            deleteEnvList.ExecuteDeleteAsync().Wait();
+
+            using var newAasx = new AdminShellPackageEnv(newFileName, true);
+            if (newAasx != null)
+            {
+                envDB.Path = newFileName;
+                VisitorAASX.ImportAASIntoDB(newAasx, envDB);
+                db.Add(envDB);
+                try
+                {
+                    db.SaveChanges();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                }
+                finally
+                {
+                    db.Dispose();
+                }
+            }
+            else
+            {
+                throw new Exception($"Cannot load new package {file}.");
+            }
         }
         else
         {
-            CreateAASXPackage(db, securityConfig, file, stream);
+            CreateAASXPackage(db, securityConfig, file, fileContent);
         }
     }
 
@@ -875,7 +939,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     private string ReadAASXByPackageId(AasContext db, ISecurityConfig securityConfig, string packageIdentifier, out byte[] content, out long fileSize)
     {
-        if (IsPackageEnvPresent(db, packageIdentifier, null, null, true, out string envFileName, out AdminShellPackageEnv packageEnv))
+        if (IsPackageEnvPresent(db, packageIdentifier, null, null, true, out string envFileName, out AdminShellPackageEnv packageEnv, out _))
         {
             content = null;
             fileSize = 0;
@@ -959,7 +1023,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 {
                     var envFileName = string.Empty;
 
-                    var packageEnvFound = IsPackageEnvPresent(db, null, aasIdentifier, submodelIdentifier, false, out envFileName, out _);
+                    var packageEnvFound = IsPackageEnvPresent(db, null, aasIdentifier, submodelIdentifier, false, out envFileName, out _, out _);
 
                     //if (!packageEnvFound)
                     //{
@@ -1036,7 +1100,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     {
                         var envFileName = string.Empty;
 
-                        var packageEnvFound = IsPackageEnvPresent(db, null, aasIdentifier, submodelIdentifier, false, out envFileName, out _);
+                        var packageEnvFound = IsPackageEnvPresent(db, null, aasIdentifier, submodelIdentifier, false, out envFileName, out _, out _);
 
                         //if (!packageEnvFound)
                         //{
@@ -1362,10 +1426,11 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         }
     }
 
-    public static bool IsPackageEnvPresent(AasContext db, string packageId, string aasID, string smId, bool loadInMemory, out string envFileName, out AdminShellPackageEnv? packageEnv)
+    public static bool IsPackageEnvPresent(AasContext db, string packageId, string aasID, string smId, bool loadInMemory, out string envFileName, out AdminShellPackageEnv? packageEnv, out EnvSet? envSet)
     {
         envFileName = ";";
         packageEnv = null;
+        envSet = null;
 
         int envId = -1;
 
@@ -1379,9 +1444,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 return false;
             }
 
-            var envDB = db.EnvSets.FirstOrDefault(e => e.Id == envId);
+            envSet = db.EnvSets.FirstOrDefault(e => e.Id == envId);
 
-            if (envDB == null)
+            if (envSet == null)
             {
                 return false;
             }
@@ -1410,6 +1475,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 if (smDB[0].EnvId.HasValue)
                 {
                     envId = smDB[0].EnvId.Value;
+                    envSet = db.EnvSets.FirstOrDefault(e => e.Id == envId);
                 }
             }
             else
@@ -1423,6 +1489,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 if (aasDBList[0].EnvId.HasValue)
                 {
                     envId = aasDBList[0].EnvId.Value;
+                    envSet = db.EnvSets.FirstOrDefault(e => e.Id == envId);
                 }
             }
         }
