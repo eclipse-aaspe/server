@@ -1107,13 +1107,13 @@
                                 if (env[item.envIndex] == null)
                                     return string.Empty;
 
-                                // using var s = env[item.envIndex].GetLocalThumbnailStream();
-                                // if (s != null)
-                                // {
-                                //     using var m = new System.IO.MemoryStream();
-                                //     s.CopyTo(m);
-                                //     return Convert.ToBase64String(m.ToArray());
-                                // }
+                                using var s = env[item.envIndex].GetLocalThumbnailStream();
+                                if (s != null)
+                                {
+                                    using var m = new System.IO.MemoryStream();
+                                    s.CopyTo(m);
+                                    return Convert.ToBase64String(m.ToArray());
+                                }
                             }
                         }
                         catch
