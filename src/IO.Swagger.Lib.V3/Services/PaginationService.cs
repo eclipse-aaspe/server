@@ -90,48 +90,27 @@ namespace IO.Swagger.Lib.V3.Services
 
         public PackageDescriptionPagedResult GetPaginatedPackageDescriptionList(List<PackageDescription> sourceList, PaginationParameters paginationParameters)
         {
-            var startIndex = paginationParameters.Cursor;
-            var endIndex = startIndex + paginationParameters.Limit - 1;
-            var outputList = GetPaginationList(sourceList, startIndex, endIndex);
-
             //Creating pagination result
             var pagingMetadata = new PagedResultPagingMetadata();
-            if (endIndex < sourceList.Count - 1)
+
+            if (sourceList.Count < paginationParameters.Limit)
             {
-                pagingMetadata.cursor = Convert.ToString(endIndex + 1);
+                _logger.LogInformation($"There are less elements in the retrieved list than requested for pagination - (cursor: {paginationParameters.Cursor}, size:{paginationParameters.Limit})");
+                pagingMetadata.cursor = String.Empty;
             }
+            else
+            {
+                pagingMetadata.cursor = Convert.ToString(paginationParameters.Cursor + sourceList.Count);
+            }
+
 
             var paginationResult = new PackageDescriptionPagedResult()
             {
-                result = outputList,
+                result = sourceList,
                 paging_metadata = pagingMetadata
             };
 
             return paginationResult;
-        }
-
-        private List<T> GetPaginationList<T>(List<T> sourceList, int startIndex, int endIndex)
-        {
-            var outputList = new List<T>();
-
-            //cap the endIndex
-            if (endIndex > sourceList.Count - 1)
-            {
-                endIndex = sourceList.Count - 1;
-            }
-
-            //If there are less elements in the sourceList than "from"
-            if (startIndex > sourceList.Count - 1)
-            {
-                _logger.LogError($"There are less elements in the retrieved list than requested pagination - (from: {startIndex}, size:{endIndex})");
-            }
-
-            for (var i = startIndex; i <= endIndex; i++)
-            {
-                outputList.Add(sourceList[i]);
-            }
-
-            return outputList;
         }
     }
 }

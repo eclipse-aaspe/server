@@ -1237,7 +1237,32 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return packageDescriptions[0];
     }
 
-    public Task<DbRequestResult> UpdateAASXPackageById(ISecurityConfig securityConfig, string packageId, MemoryStream stream, string fileName) => throw new NotImplementedException();
+    public async Task<DbRequestResult> UpdateAASXPackageById(ISecurityConfig securityConfig, string packageId, MemoryStream stream, string fileName)
+    {
+        var parameters = new DbRequestParams()
+        {
+            FileRequest = new DbFileRequestResult()
+            {
+                Stream = stream,
+                File = fileName,
+            },
+            PackageIdentifier = packageId
+        };
+
+        var dbRequestContext = new DbRequestContext()
+        {
+            SecurityConfig = securityConfig,
+            Params = parameters
+        };
+        var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
+
+        var dbRequest = new DbRequest(DbRequestOp.ReplaceAASXPackageById, DbRequestCrudType.Update, dbRequestContext, taskCompletionSource);
+
+        _queryOperations.Add(dbRequest);
+
+        var tcs = await taskCompletionSource.Task;
+        return tcs;
+    }
 
 
 

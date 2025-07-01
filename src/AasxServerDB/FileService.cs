@@ -163,9 +163,9 @@ public class FileService
                 }
             }
 
-            if (Directory.Exists(tempFilePath))
+            if (System.IO.File.Exists(tempFilePath))
             {
-                Directory.Delete(tempFilePath);
+                System.IO.File.Delete(tempFilePath);
             }
         }
         // incorrect value
@@ -321,9 +321,9 @@ public class FileService
                 assetInformation.DefaultThumbnail.Path = path;
             }
 
-            if (Directory.Exists(tempFilePath))
+            if (System.IO.File.Exists(tempFilePath))
             {
-                Directory.Delete(tempFilePath, true);
+                System.IO.File.Delete(tempFilePath);
             }
 
             isFileOperationSuceeded = true;
