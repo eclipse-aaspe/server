@@ -1702,7 +1702,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         if (securityConfig == null)
         {
-            return false;
+            return true;
         }
 
         if (securityConfig.NoSecurity)
