@@ -590,7 +590,7 @@ namespace AasxServerDB
 
             return combinedValues;
         }
-        public static IQueryable<SmeMerged> GetSmeMerged(AasContext db, Dictionary<string, string>? securityCondition, IQueryable<SMSet> smQuery, IQueryable<SMESet> smeQuery,
+        public static IQueryable<SmeMerged>? GetSmeMerged(AasContext db, Dictionary<string, string>? securityCondition, IQueryable<SMSet> smQuery, IQueryable<SMESet> smeQuery,
                 IPaginationParameters? paginationParameters, out List<SmeMerged>? smeMerged, bool withMerged = false)
         {
             smeMerged = [];
@@ -658,12 +658,23 @@ namespace AasxServerDB
                     );
             }
 
-            if (withMerged && mergedAll.Any())
+            if (withMerged)
             {
+                if (!mergedAll.Any())
+                {
+                    return null;
+                }
+
+                withCondition = securityCondition != null && securityCondition.TryGetValue("filter-svalue", out value) && value != "";
+                sValueTable = withCondition ? db.SValueSets.Where(securityCondition["filter-svalue"]) : db.SValueSets;
+
+                withCondition = securityCondition != null && securityCondition.TryGetValue("filter-mvalue", out value) && value != "";
+                iValueTable = withCondition ? db.IValueSets.Where(securityCondition["filter-mvalue"]) : db.IValueSets;
+                dValueTable = withCondition ? db.DValueSets.Where(securityCondition["filter-mvalue"]) : db.DValueSets;
                 combinedValues = CombineValues(db.SValueSets, db.IValueSets, db.DValueSets, db.OValueSets);
 
                 var securityConditionFilterAll = "true";
-                if (securityCondition != null && securityCondition.TryGetValue("filter", out value))
+                if (securityCondition != null && securityCondition.TryGetValue("filter-all", out value))
                 {
                     securityConditionFilterAll = value;
                     securityConditionFilterAll = securityConditionFilterAll.Replace("sme.", "s.sme.");
@@ -673,7 +684,7 @@ namespace AasxServerDB
                 }
 
                 var securityConditionFilterSme = "true";
-                if (securityCondition != null && securityCondition.TryGetValue("filtersme", out value))
+                if (securityCondition != null && securityCondition.TryGetValue("filter-sme.", out value))
                 {
                     securityConditionFilterSme = value;
                 }
@@ -795,7 +806,11 @@ namespace AasxServerDB
 
             // LoadSME(submodel, null, null, SMEList);
             List<SmeMerged>? smeMerged = [];
-            GetSmeMerged(db, securityCondition, smQuery, SMEQuery, null, out smeMerged, true);
+            var q = GetSmeMerged(db, securityCondition, smQuery, SMEQuery, null, out smeMerged, true);
+            if (q == null)
+            {
+                return null;
+            }
             if (smeMerged?.Count == 0)
             {
                 return submodel;
@@ -1065,9 +1080,9 @@ namespace AasxServerDB
                 {
                     return null;
                 }
-                if (securityCondition.TryGetValue("filter", out _))
+                if (securityCondition.TryGetValue("filter-all", out _))
                 {
-                    resultCondition = mergeForCondition.AsQueryable().Where(securityCondition["filter"]);
+                    resultCondition = mergeForCondition.AsQueryable().Where(securityCondition["filter-all"]);
                     var resultConditionIDs = resultCondition.Select(s => s.sme.Id).Distinct().ToList();
                     smeMerged = smeMerged.Where(m => resultConditionIDs.Contains(m.smeSet.Id)).ToList();
                 }

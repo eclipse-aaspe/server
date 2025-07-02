@@ -155,6 +155,36 @@ namespace AasSecurity
                         }
                     }
                 }
+                foreach (var c in rule._filter_conditions)
+                {
+                    if (i == 0)
+                    {
+                        condition["filter-" + c.Key] = c.Value;
+                    }
+                    else
+                    {
+                        var hasValue = condition.TryGetValue("filter-" + c.Key, out var value);
+                        if (hasValue && value != "")
+                        {
+                            if (value != "(True)")
+                            {
+                                if (c.Value != "")
+                                {
+                                    condition["filter-" + c.Key] = value + " || " + c.Value;
+                                }
+                                else
+                                {
+                                    condition["filter-" + c.Key] = "(True)";
+                                }
+                            }
+                        }
+                        else
+                        {
+                            condition["filter-" + c.Key] = c.Value;
+                        }
+                    }
+                }
+                /*
                 if (rule._filter_conditions != null)
                 {
                     var c = rule._filter_conditions;
@@ -195,6 +225,7 @@ namespace AasSecurity
                         }
                     }
                 }
+                */
             }
 
             foreach (var c in condition)
