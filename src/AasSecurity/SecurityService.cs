@@ -122,11 +122,6 @@ namespace AasSecurity
                 return null;
             }
 
-            if (rules.Count == 1)
-            {
-                return rules[0]._formula_conditions;
-            }
-
             Dictionary<string, string> condition = [];
             for (var i = 0; i < rules.Count; i++)
             {
@@ -178,6 +173,24 @@ namespace AasSecurity
                             else
                             {
                                 condition["filter"] = all;
+                            }
+                        }
+                    }
+                    if (c.TryGetValue("sme.", out var sme))
+                    {
+                        if (!string.IsNullOrEmpty(sme))
+                        {
+                            var hasValue = condition.TryGetValue("filtersme", out var value);
+                            if (hasValue && value != "")
+                            {
+                                if (sme != "")
+                                {
+                                    condition["filtersme"] = value + " || " + sme;
+                                }
+                            }
+                            else
+                            {
+                                condition["filtersme"] = sme;
                             }
                         }
                     }

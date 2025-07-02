@@ -88,38 +88,60 @@
                       "$strVal": "Nameplate"
                     }
                   ]
-                }
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "ACL": {
-          "ATTRIBUTES": [
-            {
-              "CLAIM": "isNotAuthenticated"
-            }
-          ],
-          "RIGHTS": [
-            "READ"
-          ],
-          "ACCESS": "ALLOW"
-        },
-        "OBJECTS": [
-          {
-            "REFERABLE": "*"
-          }
-        ],
-        "FORMULA": {
-          "$or": [
-            {
-              "$eq": [
-                {
-                  "$field": "$sm#idShort"
                 },
                 {
-                  "$strVal": "DB"
+                  "$starts-with": [
+                    {
+                      "$field": "$sme#idShort"
+                    },
+                    {
+                      "$strVal": "Manufacturer"
+                    }
+                  ]
+                },
+                {
+                  "$contains": [
+                    {
+                      "$field": "$sme#value"
+                    },
+                    {
+                      "$strVal": "MGUARD"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "$and": [
+                {
+                  "$eq": [
+                    {
+                      "$field": "$sm#idShort"
+                    },
+                    {
+                      "$strVal": "TechnicalData"
+                    }
+                  ]
+                },
+                {
+                  "$eq": [
+                    {
+                      "$field": "$sme#idShort"
+                    },
+                    {
+                      "$strVal": "safety_integrity_level__SIL_"
+                    }
+                  ]
+                },
+                {
+                  "$starts-with": [
+                    {
+                      "$field": "$sme#value"
+                    },
+                    {
+                      "$strVal": "without"
+                    }
+                  ]
                 }
               ]
             }
@@ -128,7 +150,28 @@
        "FILTER": {
          "FRAGMENT": "xxx",
          "CONDITION": {
-            "$boolean": true
+              "$or": [
+                {
+                  "$starts-with": [
+                    {
+                      "$field": "$sme#idShort"
+                    },
+                    {
+                      "$strVal": "General"
+                    }
+                  ]
+                },
+                {
+                  "$starts-with": [
+                    {
+                      "$field": "$sme#idShort"
+                    },
+                    {
+                      "$strVal": "Manufacturer"
+                    }
+                  ]
+                }
+              ]
          }
         }
       }
