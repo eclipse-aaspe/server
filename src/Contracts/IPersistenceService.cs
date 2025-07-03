@@ -13,9 +13,13 @@ public class Running
     public static void SetRunning() => IsRunning = true;
     public static bool GetRunning() => IsRunning;
 }
+
 public interface IPersistenceService
 {
     void InitDB(bool reloadDB, string dataPath);
+
+    void InitDBFiles(bool reloadDBFiles, string dataPath);
+
     Task<DbRequestResult> DoDbOperation(DbRequest dbRequest);
 
     void ImportAASXIntoDB(string filePath, bool createFilesOnly);

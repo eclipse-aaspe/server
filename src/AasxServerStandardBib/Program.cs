@@ -783,16 +783,10 @@ namespace AasxServer
             {
                 var filesPath = Path.Combine(AasxHttpContextHelper.DataPath, "files");
 
-                if (startIndex == 0 && Directory.Exists(filesPath))
+                if (startIndex == 0)
                 {
-                    Directory.Delete(filesPath, true);
+                    persistenceService.InitDBFiles(startIndex == 0, AasxHttpContextHelper.DataPath);
                 }
-
-                if (!Directory.Exists(AasxHttpContextHelper.DataPath + "/xml"))
-                    Directory.CreateDirectory(AasxHttpContextHelper.DataPath + "/xml");
-
-                if (!Directory.Exists(filesPath))
-                    Directory.CreateDirectory(filesPath);
 
                 var watch = System.Diagnostics.Stopwatch.StartNew();
                 fileNames = Directory.GetFiles(AasxHttpContextHelper.DataPath, "*.aasx");

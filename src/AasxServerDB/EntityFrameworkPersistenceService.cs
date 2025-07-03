@@ -229,7 +229,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         }
 
                         var addedInDb = CrudOperator.CreateAas(db, body);
-                        FileService.CreateAasZipFile(body);
+                        FileService.CreateThumbnailZipFile(body);
 
                         result.AssetAdministrationShells = new List<IAssetAdministrationShell>
                         {
@@ -336,7 +336,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         }
 
                         var createdSubmodel = CrudOperator.CreateSubmodel(db, newSubmodel, aasIdentifier);
-                        FileService.CreateSubmodelZipFile(newSubmodel);
 
                         result.Submodels = new List<ISubmodel>
                         {
@@ -1005,11 +1004,12 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             {
                 requestedPackage.SetTempFn(requestedFileName);
 
+
                 //Create Temp file
                 string copyFileName = Path.GetTempFileName().Replace(".tmp", ".aasx");
                 System.IO.File.Copy(requestedFileName, copyFileName, true);
 
-                requestedPackage.SaveAs(copyFileName);
+                requestedPackage.SaveAs(copyFileName, FileService.GetFilesZipPath(requestedFileName));
 
                 content = System.IO.File.ReadAllBytes(copyFileName);
                 string fileName = Path.GetFileName(requestedFileName);
@@ -1052,15 +1052,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                     var packageEnvFound = IsPackageEnvPresent(db, null, aasIdentifier, submodelIdentifier, false, out _, out EnvSet env);
 
-                    //if (!packageEnvFound)
-                    //{
-                    //    envFileName = Path.Combine(AasContext.DataPath, "files", submodelIdentifier);
-                    //    envFileName = envFileName.Replace("/", "_");
-                    //    envFileName = envFileName.Replace(".", "_");
-                    //    envFileName = envFileName.Replace(":", "_");
-                    //}
-
-                    FileService.ReadFileInZip(envFileName, out content, out fileSize, scopedLogger, out fileName, file);
+                    FileService.ReadFileInZip(scopedLogger, envFileName, file, out content, out fileSize, out fileName);
                 }
                 else
                 {
@@ -1091,10 +1083,10 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 {
                     var envFileName = string.Empty;
 
-                    FileService.ReplaceFileInZip(envFileName, scopedLogger, file, fileName, contentType, stream);
-
-                    //ToDo: Not sure what to do here?
-                    //CrudOperator.DeleteSubmodelElement(db, securityCondition, aasIdentifier, submodelIdentifier, idShortPath);
+                    if (FileService.ReplaceFileInZip(scopedLogger, envFileName, ref file, fileName, contentType, stream))
+                    {
+                        CrudOperator.ReplaceSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShortPath, file);
+                    }
                 }
                 else
                 {
@@ -1129,15 +1121,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                         var packageEnvFound = IsPackageEnvPresent(db, null, aasIdentifier, submodelIdentifier, false, out _, out EnvSet envSet);
 
-                        //if (!packageEnvFound)
-                        //{
-                        //    envFileName = Path.Combine(AasContext.DataPath, "files", submodelIdentifier);
-                        //    envFileName = envFileName.Replace("/", "_");
-                        //    envFileName = envFileName.Replace(".", "_");
-                        //    envFileName = envFileName.Replace(":", "_");
-                        //}
-
-                        FileService.DeleteFileInZip(envFileName, scopedLogger, file);
+                        FileService.DeleteFileInZip(scopedLogger, envFileName, file);
                     }
                     else
                     {
@@ -1782,4 +1766,15 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         return false;
     }
+
+    public void InitDBFiles(bool reloadDBFiles, string dataPath)
+    {
+        if (AasContext.DataPath.IsNullOrEmpty())
+        {
+            AasContext.DataPath = dataPath;
+        }
+
+        FileService.InitFileSystem(reloadDBFiles);
+    }
+
 }
