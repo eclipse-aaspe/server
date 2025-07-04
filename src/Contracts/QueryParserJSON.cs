@@ -407,8 +407,16 @@ public class QueryGrammarJSON : Grammar
                 case "$le":
                     if (eList != null)
                     {
-                        string left = createExpression(mode, eList[0]);
-                        string right = createExpression(mode, eList[1]);
+                        if (eList[0].ExpressionType == "$numVal" || eList[1].ExpressionType == "$numVal")
+                        {
+                            smeValue = "mvalue";
+                        }
+                        else if (eList[0].ExpressionType == "$strVal" || eList[1].ExpressionType == "$strVal")
+                        {
+                            smeValue = "svalue";
+                        }
+                        string left = createExpression(mode, eList[0], smeValue: smeValue);
+                        string right = createExpression(mode, eList[1], smeValue: smeValue);
                         if (left != "$SKIP" && right != "$SKIP")
                         {
                             return "(" + left + " " + op + " " + right + ")";

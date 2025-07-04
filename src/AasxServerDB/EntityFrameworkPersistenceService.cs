@@ -153,16 +153,32 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         Dictionary<string, string>? securityCondition = null;
         List<AccessPermissionRule> accessRules = null;
+        bool isAllowed = false;
 
         //ToDo: Ignore security api route for ReadPackageEnv for now (request is from UI)
-        if (dbRequest.Operation != DbRequestOp.ReadPackageEnv)
+        switch (dbRequest.Operation)
         {
-            bool isAllowed = InitSecurity(securityConfig, out securityCondition, out accessRules);
+            case DbRequestOp.ReadPackageEnv:
+                break;
+            case DbRequestOp.QuerySearchSMs:
+            case DbRequestOp.QuerySearchSMEs:
+            case DbRequestOp.QueryCountSMs:
+            case DbRequestOp.QueryCountSMEs:
+                isAllowed = InitSecurity(securityConfig, out securityCondition, out accessRules, "/query");
 
-            if (!isAllowed)
-            {
-                throw new NotAllowed($"NOT ALLOWED: API route");
-            }
+                if (!isAllowed)
+                {
+                    throw new NotAllowed($"NOT ALLOWED: API route");
+                }
+                break;
+            default:
+                isAllowed = InitSecurity(securityConfig, out securityCondition, out accessRules);
+
+                if (!isAllowed)
+                {
+                    throw new NotAllowed($"NOT ALLOWED: API route");
+                }
+                break;
         }
 
         var aasIdentifier = dbRequest.Context.Params.AssetAdministrationShellIdentifier;
@@ -574,28 +590,29 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     case DbRequestOp.QuerySearchSMs:
                         var queryRequest = dbRequest.Context.Params.QueryRequest;
                         var query = new Query(_grammar);
-                        var qresult = query.SearchSMs(securityConfig, db, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SemanticId,
+                        var qresult = query.SearchSMs(securityConfig, securityCondition, db, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SemanticId,
                             queryRequest.Identifier, queryRequest.Diff, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                         result.QueryResult = qresult;
                         break;
                     case DbRequestOp.QueryCountSMs:
                         queryRequest = dbRequest.Context.Params.QueryRequest;
                         query = new Query(_grammar);
-                        var count = query.CountSMs(securityConfig, db, queryRequest.SemanticId, queryRequest.Identifier, queryRequest.Diff,
+                        var count = query.CountSMs(securityConfig, securityCondition, db, queryRequest.SemanticId, queryRequest.Identifier, queryRequest.Diff,
                             queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                         result.Count = count;
                         break;
                     case DbRequestOp.QuerySearchSMEs:
                         queryRequest = dbRequest.Context.Params.QueryRequest;
                         query = new Query(_grammar);
-                        qresult = query.SearchSMEs(securityConfig, db, queryRequest.Requested, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
+                        qresult = query.SearchSMEs(securityConfig, securityCondition,
+                            db, queryRequest.Requested, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
                             queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                         result.QueryResult = qresult;
                         break;
                     case DbRequestOp.QueryCountSMEs:
                         queryRequest = dbRequest.Context.Params.QueryRequest;
                         query = new Query(_grammar);
-                        count = query.CountSMEs(securityConfig, db, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
+                        count = query.CountSMEs(securityConfig, securityCondition, db, queryRequest.SmSemanticId, queryRequest.Identifier, queryRequest.SemanticId, queryRequest.Diff,
                             queryRequest.Contains, queryRequest.Equal, queryRequest.Lower, queryRequest.Upper, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                         result.Count = count;
                         break;
@@ -1719,29 +1736,31 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     //ToDo: Move into security? Currently this is also in SubmodelRepositoryAPIApiController (for events)
     private bool InitSecurity(ISecurityConfig? securityConfig, out Dictionary<string, string>? securityCondition,
-        out List<AccessPermissionRule> accessRules)
+        out List<AccessPermissionRule> accessRules, string httpRoute = "")
     {
         accessRules = null;
         securityCondition = null;
 
+        /*
         if (securityConfig == null)
         {
             return false;
         }
+        */
 
         if (securityConfig.NoSecurity)
         {
             return true;
         }
 
-        if (securityConfig.Principal != null)
+        var authResult = false;
+        var accessRole = "isNotAuthenticated";
+        AasSecurity.Models.AccessRights neededRights = AasSecurity.Models.AccessRights.READ;
+        if (securityConfig?.Principal != null)
         {
             // Get claims
-            var authResult = false;
-            var accessRole = securityConfig.Principal.FindAll(ClaimTypes.Role).Select(c => c.Value).FirstOrDefault();
-            var httpRoute = securityConfig.Principal.FindFirst("Route")?.Value;
-
-            AasSecurity.Models.AccessRights neededRights = AasSecurity.Models.AccessRights.READ;
+            accessRole = securityConfig.Principal.FindAll(ClaimTypes.Role).Select(c => c.Value).FirstOrDefault();
+            httpRoute = securityConfig.Principal.FindFirst("Route")?.Value;
 
             switch (securityConfig.NeededRightsClaim)
             {
@@ -1768,18 +1787,16 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 default:
                     break;
             }
-
-            securityCondition = _contractSecurityRules.GetCondition(accessRole, neededRights.ToString());
-            accessRules = _contractSecurityRules.GetAccessRules(accessRole, neededRights.ToString());
-
-            if (accessRole != null && httpRoute != null)
-            {
-                authResult = _contractSecurityRules.AuthorizeRequest(accessRole, httpRoute, neededRights, out _, out _, out _);
-            }
-
-            return authResult;
         }
 
-        return false;
+        securityCondition = _contractSecurityRules.GetCondition(accessRole, neededRights.ToString());
+        accessRules = _contractSecurityRules.GetAccessRules(accessRole, neededRights.ToString());
+
+        if (accessRole != null && httpRoute != null)
+        {
+            authResult = _contractSecurityRules.AuthorizeRequest(accessRole, httpRoute, neededRights, out _, out _, out _);
+        }
+
+        return authResult;
     }
 }

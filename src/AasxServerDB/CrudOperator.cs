@@ -14,9 +14,11 @@
 namespace AasxServerDB
 {
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.IO.Packaging;
     using System.Linq;
     using System.Linq.Dynamic.Core;
+    using System.Linq.Expressions;
     using System.Runtime.Intrinsics.X86;
     using System.Text;
     using AasCore.Aas3_0;
@@ -26,7 +28,7 @@ namespace AasxServerDB
     using Contracts.Pagination;
     using Extensions;
     using Microsoft.EntityFrameworkCore;
-    using Microsoft.EntityFrameworkCore.Metadata.Internal;
+    // using Microsoft.EntityFrameworkCore.Metadata.Internal;
     using Microsoft.IdentityModel.Tokens;
     using static AasxServerDB.CrudOperator;
 
@@ -418,8 +420,9 @@ namespace AasxServerDB
             }
         }
 
-        public static List<ISubmodel> ReadPagedSubmodels(AasContext db, IPaginationParameters paginationParameters, Dictionary<string, string>? securityCondition, IReference reqSemanticId, string idShort)
+        public static List<ISubmodel> ReadPagedSubmodels3(AasContext db, IPaginationParameters paginationParameters, Dictionary<string, string>? securityCondition, IReference reqSemanticId, string idShort)
         {
+            var watch = Stopwatch.StartNew();
             List<ISubmodel> output = new List<ISubmodel>();
 
             string? semanticId = null;
@@ -432,26 +435,16 @@ namespace AasxServerDB
                 }
             }
 
-            var securityConditionSM = "";
-            if (securityCondition != null && securityCondition["sm."] != null)
+            var securityConditionSM = "true";
+            if (securityCondition != null && securityCondition.TryGetValue("sm.", out var value) && value != "")
             {
-                securityConditionSM = securityCondition["sm."];
+                securityConditionSM = value;
             }
 
-            if (securityConditionSM is null or "" or "*")
+            var securityConditionSME = "true";
+            if (securityCondition != null && securityCondition.TryGetValue("sme.", out value) && value != "")
             {
-                securityConditionSM = "true";
-            }
-
-            var securityConditionSME = "";
-            if (securityConditionSME != null && securityCondition["sme."] != null)
-            {
-                securityConditionSME = securityCondition["sme."];
-            }
-
-            if (securityConditionSME is null or "")
-            {
-                securityConditionSME = "true";
+                securityConditionSME = value;
             }
 
             var timeStamp = DateTime.UtcNow;
@@ -464,13 +457,19 @@ namespace AasxServerDB
             var smeQuery = db.SMESets
                 .Where(securityConditionSME);
 
-            var smeMerged = GetSmeMerged(db, securityCondition, smQuery, smeQuery, paginationParameters, out var _);
+            var smeMerged = GetSmeMerged2(db, securityCondition, smQuery, smeQuery);
+            // smeMerged = GetSmeMerged(db, securityCondition, smQuery: smQuery, smeQuery: smeQuery);
+            Console.WriteLine("GetSmeMerged: " + watch.ElapsedMilliseconds + " ms");
 
             var smDBList = smeMerged.Select(o => o.smSet).Distinct()
                 .OrderBy(sm => sm.Id)
                 .Skip(paginationParameters.Cursor)
                 .Take(paginationParameters.Limit)
                 .ToList();
+            var smIDList = smDBList.Select(sm => sm.Id).ToList();
+            Console.WriteLine("SM Page ToList: " + watch.ElapsedMilliseconds + " ms");
+            var merge = GetSmeFiltered(db, securityCondition, smQuery, smIDList);
+            Console.WriteLine("Merge all ToList #" + merge?.Count + ": " + watch.ElapsedMilliseconds + " ms");
             /*
             var f = GetSmeMerged(db, securityCondition, smeQuery, querySM: smQuery,
                         cursor: paginationParameters.Cursor, limit: paginationParameters.Limit);
@@ -481,15 +480,21 @@ namespace AasxServerDB
                 .ToList();
             */
 
-            foreach (var sm in smDBList.Select(selector: submodelDB => ReadSubmodel(db, smDB: submodelDB, "", securityCondition)))
+            /*
+            foreach (var smDB in smDBList)
             {
+                var mergeSM = merge.Where(m => m.smSet.Id == smDB.Id).ToList();
+                var sm = ReadSubmodel(db, smDB: smDB, "", securityCondition, mergeSM);
                 if (sm.TimeStamp == DateTime.MinValue)
                 {
                     sm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp, DateTime.MinValue);
                     sm.SetTimeStamp(timeStamp);
                 }
                 output.Add(sm);
+                Console.WriteLine(smDB.Identifier + ": " + watch.ElapsedMilliseconds + " ms");
             }
+            Console.WriteLine();
+            */
 
             return output;
         }
@@ -590,27 +595,301 @@ namespace AasxServerDB
 
             return combinedValues;
         }
-        public static IQueryable<SmeMerged>? GetSmeMerged(AasContext db, Dictionary<string, string>? securityCondition, IQueryable<SMSet> smQuery, IQueryable<SMESet> smeQuery,
-                IPaginationParameters? paginationParameters, out List<SmeMerged>? smeMerged, bool withMerged = false)
+        public static List<SmeMerged> GetSmeMerged(AasContext db, Dictionary<string, string>? securityCondition, List<SMESet>? listSME, SMSet? smSet)
         {
-            smeMerged = [];
+            if (listSME == null)
+            {
+                return null;
+            }
 
-            var withCondition = securityCondition != null && securityCondition.TryGetValue("svalue", out var value) && value != "";
-            IQueryable<SValueSet> sValueTable = withCondition ? db.SValueSets.Where(securityCondition["svalue"]) : db.SValueSets;
+            var smeIdList = listSME.Select(sme => sme.Id).ToList();
+            var querySME = db.SMESets.Where(sme => smeIdList.Contains(sme.Id));
 
-            withCondition = securityCondition != null && securityCondition.TryGetValue("mvalue", out value) && value != "";
-            IQueryable<IValueSet> iValueTable = withCondition ? db.IValueSets.Where(securityCondition["mvalue"]) : db.IValueSets;
-            IQueryable<DValueSet> dValueTable = withCondition ? db.DValueSets.Where(securityCondition["mvalue"]) : db.DValueSets;
+            return GetSmeMerged(db, securityCondition, querySME, smSet);
+        }
+        private static List<SmeMerged> GetSmeMerged(AasContext db, Dictionary<string, string>? securityCondition, IQueryable<SMESet>? querySME, SMSet? smSet)
+        {
+            if (querySME == null)
+                return null;
 
-            var oValueTable = db.OValueSets;
+            IQueryable<SValueSet> sValueSets = db.SValueSets;
+            if (securityCondition != null && securityCondition["svalue"] != "")
+            {
+                sValueSets = sValueSets.Where(securityCondition["svalue"]);
+            }
 
-            var combinedValues = CombineValues(sValueTable, iValueTable, dValueTable,oValueTable);
+            IQueryable<IValueSet> iValueSets = db.IValueSets;
+            IQueryable<DValueSet> dValueSets = db.DValueSets;
+            if (securityCondition != null && securityCondition["mvalue"] != "")
+            {
+                iValueSets = iValueSets.Where(securityCondition["mvalue"]);
+                dValueSets = dValueSets.Where(securityCondition["mvalue"]);
+            }
+
+            var joinSValue = querySME.Join(
+                sValueSets,
+                sme => sme.Id,
+                sv => sv.SMEId,
+                (sme, sv) => new SmeMerged { smSet = smSet, smeSet = sme, sValueSet = sv, iValueSet = null, dValueSet = null, oValueSet = null })
+                .ToList();
+
+            var joinIValue = querySME.Join(
+                iValueSets,
+                sme => sme.Id,
+                sv => sv.SMEId,
+                (sme, sv) => new SmeMerged { smSet = smSet, smeSet = sme, sValueSet = null, iValueSet = sv, dValueSet = null, oValueSet = null })
+                .ToList();
+
+            var joinDValue = querySME.Join(
+                dValueSets,
+                sme => sme.Id,
+                sv => sv.SMEId,
+                (sme, sv) => new SmeMerged { smSet = smSet, smeSet = sme, sValueSet = null, iValueSet = null, dValueSet = sv, oValueSet = null })
+                .ToList();
+
+            var joinOValue = querySME.Join(
+                db.OValueSets,
+                sme => sme.Id,
+                sv => sv.SMEId,
+                (sme, sv) => new SmeMerged { smSet = smSet, smeSet = sme, sValueSet = null, iValueSet = null, dValueSet = null, oValueSet = sv })
+                .ToList();
+
+            var result = joinSValue;
+            result.AddRange(joinIValue);
+            result.AddRange(joinDValue);
+            result.AddRange(joinOValue);
+
+            var smeIdList = result.Select(sme => sme.smeSet.Id).ToList();
+            var noValue = querySME.Where(sme => !smeIdList.Contains(sme.Id))
+                .Select(sme => new SmeMerged { smSet = smSet, smeSet = sme, sValueSet = null, iValueSet = null, dValueSet = null, oValueSet = null })
+                .ToList();
+            result.AddRange(noValue);
+
+            return result;
+        }
+
+        public class CombinedValue2
+        {
+            public int SMEId { get; set; }
+            public string? SValue { get; set; }
+            public Double? MValue { get; set; }
+        }
+
+        public static IQueryable<SmeMerged>? GetSmeMerged2(AasContext db, Dictionary<string, string>? securityCondition, IQueryable<SMSet>? smQuery, IQueryable<SMESet>? smeQuery)
+        {
+            IQueryable<SMSet> smTable = db.SMSets;
+            IQueryable<SMESet> smeTable = db.SMESets;
+            IQueryable<SValueSet>? sValueTable = db.SValueSets;
+            IQueryable<IValueSet>? iValueTable = db.IValueSets;
+            IQueryable<DValueSet>? dValueTable = db.DValueSets;
+
+            if (smQuery != null)
+            {
+                smTable = smQuery;
+            }
+            if (smeQuery != null)
+            {
+                smeTable = smeQuery;
+            }
+
+            var conditionAll = "true";
+            if (securityCondition != null)
+            {
+                if (securityCondition.TryGetValue("all", out var value) && value.IsNullOrEmpty() && value != "true")
+                {
+                    conditionAll = securityCondition["all"];
+                }
+                if (securityCondition.TryGetValue("sm.", out value) && value.IsNullOrEmpty() && value != "true")
+                {
+                    smTable = db.SMSets.Where(securityCondition["sm."]);
+                }
+                if (securityCondition.TryGetValue("sme.", out value) && value.IsNullOrEmpty() && value != "true")
+                {
+                    smeTable = db.SMESets.Where(securityCondition["sme."]);
+                }
+                if (securityCondition.TryGetValue("svalue", out value) && value.IsNullOrEmpty() && value != "true")
+                {
+                    sValueTable = db.SValueSets.Where(securityCondition["svalue"]);
+                }
+                if (securityCondition.TryGetValue("mvalue", out value) && value.IsNullOrEmpty() && value != "true")
+                {
+                    iValueTable = db.IValueSets.Where(securityCondition["mvalue"]);
+                    dValueTable = db.DValueSets.Where(securityCondition["mvalue"]);
+                }
+            }
+
+            var smSelect = smTable.Select("new { Id, Identifier, IdShort }");
+            var smeSelect = smeTable.Select("new { Id, SMId, IdShort, TimeStamp, IdShortPath }");
+            var x1 = smeSelect.Take(100).ToDynamicList();
+
+            var smSmeSelect = smSelect.AsQueryable().Join(
+                smeSelect.AsQueryable(),
+                "Id",
+                "SMId",
+                "new (outer as SM, inner as SME)"
+            )
+            .Select("new {" +
+                "SM.Id as SM_Id, SM.Identifier as SM_Identifier, SM.IdShort as SM_IdShort, " +
+                "SME.Id as SME_Id, SME.IdShort as SME_IdShort, SME.TimeStamp as SME_TimeStamp, SME.IdShortPath as SME_IdShortPath" +
+                " }");
+
+            IQueryable<CombinedValue2> combinedValues = null;
+            var sValueSelect = sValueTable.Select(sv => new CombinedValue2
+            {
+                SMEId = sv.SMEId,
+                SValue = sv.Value,
+                MValue = null
+            });
+            combinedValues = sValueSelect;
+
+            var iValueSelect = iValueTable.Select(iv => new CombinedValue2
+            {
+                SMEId = iv.SMEId,
+                SValue = null,
+                MValue = iv.Value
+            });
+
+            if (combinedValues != null)
+            {
+                combinedValues = combinedValues
+                    .Concat(iValueSelect);
+            }
+            else
+            {
+                combinedValues = iValueSelect;
+            }
+
+            if (dValueTable != null)
+            {
+                var dValueSelect = dValueTable.Select(dv => new CombinedValue2
+                {
+                    SMEId = dv.SMEId,
+                    SValue = null,
+                    MValue = dv.Value
+                });
+
+                if (combinedValues != null)
+                {
+                    combinedValues = combinedValues
+                        .Concat(dValueSelect);
+                }
+                else
+                {
+                    combinedValues = dValueSelect;
+                }
+            }
+
+            var smSmeValue = smSmeSelect.AsQueryable().Join(
+                combinedValues.AsQueryable(),
+                "SME_Id",
+                "SMEId",
+                "new (outer as SMSME, inner as VALUE)"
+            )
+            .Select("new (" +
+                "SMSME.SM_Id as SM_Id, SMSME.SM_Identifier as SM_Identifier, SMSME.SM_IdShort as SM_IdShort, " +
+                "SMSME.SME_Id as SME_Id, SMSME.SME_IdShort as SME_IdShort, SMSME.SME_TimeStamp as SME_TimeStamp, SMSME.SME_IdShortPath as SME_IdShortPath, " +
+                "VALUE.SValue as SValue, VALUE.MValue as MValue" +
+                ")");
+            var x3 = smSmeValue.Take(100).ToDynamicList();
+
+            conditionAll = conditionAll.Replace("sm.idShort", "SM_IdShort").Replace("sme.idShort", "SME_IdShort").Replace("sme.idShortPath", "SME_IdShortPath");
+            var smSmeValueWhere = smSmeValue.Where(conditionAll);
+            var x4 = smSmeValueWhere.Take(100).ToDynamicList();
+
+            return null;
+        }
+
+        public static IQueryable<SmeMerged> GetSmeMerged3(AasContext db, Dictionary<string, string>? securityCondition,
+            SMSet? smSet = null, IQueryable<SMSet>? smQuery = null, IQueryable<SMESet>? smeQuery = null)
+        {
+            var withCondition = false;
+            var value = "";
+
+            if (smQuery == null)
+            {
+                if (smSet == null)
+                {
+                    return null;
+                }
+
+                smQuery = db.SMSets.Where(sm => sm == smSet);
+                if (securityCondition != null)
+                {
+                    withCondition = securityCondition != null && securityCondition.TryGetValue("sm.", out value) && value != "";
+                    if (withCondition)
+                    {
+                        smQuery = smQuery.Where(securityCondition["sm."]);
+                    }
+                }
+            }
+
+            List<int> smeIDList = [];
+            if (smeQuery == null)
+            {
+                smeQuery = db.SMESets;
+                if (smSet != null)
+                {
+                    smeQuery = smeQuery.Where(sme => sme.SMId == smSet.Id);
+                    smeIDList = smeQuery.Select(sme => sme.Id).ToList();
+                }
+                if (securityCondition != null)
+                {
+                    withCondition = securityCondition.TryGetValue("sme.", out value) && value != "";
+                    if (withCondition)
+                    {
+                        smeQuery = smeQuery.Where(securityCondition["sme."]);
+                    }
+                }
+            }
+
+            var watch = Stopwatch.StartNew();
+
+            IQueryable<SValueSet> sValueTable = db.SValueSets;
+            if (smSet != null)
+            {
+                sValueTable = sValueTable.Where(sv => smeIDList.Contains(sv.SMEId));
+            }
+            if (securityCondition != null)
+            {
+                withCondition = securityCondition != null && securityCondition.TryGetValue("svalue", out value) && value != "";
+                if (withCondition)
+                {
+                    sValueTable = sValueTable.Where(securityCondition["svalue"]);
+                }
+            }
+
+            IQueryable<IValueSet> iValueTable = db.IValueSets;
+            IQueryable<DValueSet> dValueTable = db.DValueSets;
+            if (smSet != null)
+            {
+                iValueTable = iValueTable.Where(iv => smeIDList.Contains(iv.SMEId));
+                dValueTable = dValueTable.Where(dv => smeIDList.Contains(dv.SMEId));
+            }
+            if (securityCondition != null)
+            {
+                withCondition = securityCondition != null && securityCondition.TryGetValue("mvalue", out value) && value != "";
+                if (withCondition)
+                {
+                    iValueTable = iValueTable.Where(securityCondition["mvalue"]);
+                    dValueTable = dValueTable.Where(securityCondition["mvalue"]);
+                }
+            }
+
+            IQueryable<OValueSet> oValueTable = db.OValueSets;
+            if (smSet != null)
+            {
+                oValueTable = oValueTable.Where(ov => smeIDList.Contains(ov.SMEId));
+            }
+
+            var combinedValues = CombineValues(sValueTable, iValueTable, dValueTable, oValueTable);
+            var x1 = combinedValues.Take(100).ToDynamicList();
 
             var joinSmSme = smQuery.Join(
                 smeQuery,
                 sm => sm.Id,
                 sme => sme.SMId,
                 (sm, sme) => new { sm, sme });
+            var x2 = joinSmSme.Take(100).ToDynamicList();
 
             IQueryable<SmeMerged> mergedAll = null;
             if (combinedValues != null)
@@ -624,13 +903,25 @@ namespace AasxServerDB
                     securityConditionAll = securityConditionAll.Replace("mvalue", "v.mvalue");
                 }
 
+                var joinSmeValues = smeQuery.Join(
+                    combinedValues,
+                    sme => sme.Id,
+                    v => v.SMEId,
+                    (s, v) => new
+                    { s, v });
+                // Performance problem is here, when making list
+                // var x3a = joinSmeValues.Take(100).ToDynamicList();
+
                 var joinSmSmeValues = joinSmSme.Join(
                     combinedValues,
                     s => s.sme.Id,
                     v => v.SMEId,
                     (s, v) => new
-                    { s, v })
-                    .Where(securityConditionAll);
+                    { s, v });
+                // Performance problem is here, when making list
+                // var x3 = joinSmSmeValues.Take(100).ToDynamicList();
+                joinSmSmeValues = joinSmSmeValues.Where(securityConditionAll);
+                // var x3b = joinSmSmeValues.Take(100).ToDynamicList();
 
                 mergedAll = joinSmSmeValues.Select(j =>
                     new SmeMerged
@@ -658,96 +949,154 @@ namespace AasxServerDB
                     );
             }
 
-            if (withMerged)
+            Console.WriteLine("  Query: " + watch.ElapsedMilliseconds + " ms");
+            // var x4 = mergedAll.Take(100).ToDynamicList();
+            return mergedAll;
+        }
+
+        public static List<SmeMerged> GetSmeFiltered(AasContext db, Dictionary<string, string>? securityCondition, IQueryable<SMSet> smQuery, List<int>? smIDList = null)
+        {
+            var watch = Stopwatch.StartNew();
+            List<SmeMerged> smeMerged = [];
+
+            var withCondition = securityCondition != null && securityCondition.TryGetValue("filter-svalue", out var value) && value != "";
+            var sValueTable = withCondition ? db.SValueSets.Where(securityCondition["filter-svalue"]) : db.SValueSets;
+
+            withCondition = securityCondition != null && securityCondition.TryGetValue("filter-mvalue", out value) && value != "";
+            var iValueTable = withCondition ? db.IValueSets.Where(securityCondition["filter-mvalue"]) : db.IValueSets;
+            var dValueTable = withCondition ? db.DValueSets.Where(securityCondition["filter-mvalue"]) : db.DValueSets;
+            var combinedValues = CombineValues(db.SValueSets, db.IValueSets, db.DValueSets, db.OValueSets);
+
+            var securityConditionFilterAll = "true";
+            if (securityCondition != null && securityCondition.TryGetValue("filter-all", out value))
             {
-                if (!mergedAll.Any())
-                {
-                    return null;
-                }
-
-                withCondition = securityCondition != null && securityCondition.TryGetValue("filter-svalue", out value) && value != "";
-                sValueTable = withCondition ? db.SValueSets.Where(securityCondition["filter-svalue"]) : db.SValueSets;
-
-                withCondition = securityCondition != null && securityCondition.TryGetValue("filter-mvalue", out value) && value != "";
-                iValueTable = withCondition ? db.IValueSets.Where(securityCondition["filter-mvalue"]) : db.IValueSets;
-                dValueTable = withCondition ? db.DValueSets.Where(securityCondition["filter-mvalue"]) : db.DValueSets;
-                combinedValues = CombineValues(db.SValueSets, db.IValueSets, db.DValueSets, db.OValueSets);
-
-                var securityConditionFilterAll = "true";
-                if (securityCondition != null && securityCondition.TryGetValue("filter-all", out value))
-                {
-                    securityConditionFilterAll = value;
-                    securityConditionFilterAll = securityConditionFilterAll.Replace("sme.", "s.sme.");
-                    securityConditionFilterAll = securityConditionFilterAll.Replace("sm.", "s.sm.");
-                    securityConditionFilterAll = securityConditionFilterAll.Replace("svalue", "v.svalue");
-                    securityConditionFilterAll = securityConditionFilterAll.Replace("mvalue", "v.mvalue");
-                }
-
-                var securityConditionFilterSme = "true";
-                if (securityCondition != null && securityCondition.TryGetValue("filter-sme.", out value))
-                {
-                    securityConditionFilterSme = value;
-                }
-
-                joinSmSme = smQuery.Join(
-                    db.SMESets.Where(securityConditionFilterSme),
-                    sm => sm.Id,
-                    sme => sme.SMId,
-                    (sm, sme) => new { sm, sme });
-
-                // var conditionNoValues = "(v.SValue == null && v.IValue == null && v.DValue == null)";
-                var joinSmSmeValues = joinSmSme.Join(
-                    combinedValues,
-                    s => s.sme.Id,
-                    v => v.SMEId,
-                    (s, v) => new
-                    { s, v })
-                    .Where(securityConditionFilterAll);
-
-                mergedAll = joinSmSmeValues.Select(j =>
-                    new SmeMerged
-                    {
-                        smSet = j.s.sm,
-                        smeSet = j.s.sme,
-                        sValueSet = (j.v.SValue != null) ? new SValueSet { SMEId = j.s.sme.Id, Value = j.v.SValue, Annotation = j.v.Annotation } : null,
-                        iValueSet = (j.v.IValue != null) ? new IValueSet { SMEId = j.s.sme.Id, Value = j.v.IValue, Annotation = j.v.Annotation } : null,
-                        dValueSet = (j.v.MValue != null) ? new DValueSet { SMEId = j.s.sme.Id, Value = j.v.MValue, Annotation = j.v.Annotation } : null,
-                        oValueSet = (j.v.OValue != null) ? new OValueSet { SMEId = j.s.sme.Id, Value = j.v.OValue, Attribute = j.v.Annotation } : null,
-                    });
-
-                smeMerged = mergedAll.ToList();
-                /*
-                Console.WriteLine();
-                Console.WriteLine("smeMerged 1");
-                foreach (var m in smeMerged)
-                {
-                    Console.WriteLine(m.smeSet.IdShortPath);
-                }
-                */
-                var smeIdList = smeMerged.Select(sme => sme.smeSet.Id).ToList();
-                var novalue = joinSmSme.Where(smsme => !smeIdList.Contains(smsme.sme.Id)).Select(smsme =>
-                    new SmeMerged
-                    {
-                        smSet = smsme.sm,
-                        smeSet = smsme.sme,
-                        sValueSet = null,
-                        iValueSet = null,
-                        dValueSet = null,
-                        oValueSet = null,
-                    }
-                    ).ToList();
-                smeMerged.AddRange(novalue);
-                /*
-                Console.WriteLine();
-                Console.WriteLine("smeMerged 2");
-                foreach (var m in smeMerged)
-                {
-                    Console.WriteLine(m.smeSet.IdShortPath);
-                }
-                */
+                securityConditionFilterAll = value;
+                securityConditionFilterAll = securityConditionFilterAll.Replace("sme.", "s.sme.");
+                securityConditionFilterAll = securityConditionFilterAll.Replace("sm.", "s.sm.");
+                securityConditionFilterAll = securityConditionFilterAll.Replace("svalue", "v.svalue");
+                securityConditionFilterAll = securityConditionFilterAll.Replace("mvalue", "v.mvalue");
             }
 
-            return mergedAll;
+            var securityConditionFilterSme = "true";
+            if (securityCondition != null && securityCondition.TryGetValue("filter-sme.", out value))
+            {
+                securityConditionFilterSme = value;
+            }
+
+            if (smIDList != null && smIDList.Count > 0)
+            {
+                smQuery = smQuery.Where(sm => smIDList.Contains(sm.Id));
+            }
+
+            var joinSmSme = smQuery.Join(
+                db.SMESets.Where(securityConditionFilterSme),
+                sm => sm.Id,
+                sme => sme.SMId,
+                (sm, sme) => new { sm, sme });
+
+            // var conditionNoValues = "(v.SValue == null && v.IValue == null && v.DValue == null)";
+            var joinSmSmeValues = joinSmSme.Join(
+                combinedValues,
+                s => s.sme.Id,
+                v => v.SMEId,
+                (s, v) => new
+                { s, v })
+                .Where(securityConditionFilterAll);
+
+            var mergedAll = joinSmSmeValues.Select(j =>
+                new SmeMerged
+                {
+                    smSet = j.s.sm,
+                    smeSet = j.s.sme,
+                    sValueSet = (j.v.SValue != null) ? new SValueSet { SMEId = j.s.sme.Id, Value = j.v.SValue, Annotation = j.v.Annotation } : null,
+                    iValueSet = (j.v.IValue != null) ? new IValueSet { SMEId = j.s.sme.Id, Value = j.v.IValue, Annotation = j.v.Annotation } : null,
+                    dValueSet = (j.v.MValue != null) ? new DValueSet { SMEId = j.s.sme.Id, Value = j.v.MValue, Annotation = j.v.Annotation } : null,
+                    oValueSet = (j.v.OValue != null) ? new OValueSet { SMEId = j.s.sme.Id, Value = j.v.OValue, Attribute = j.v.Annotation } : null,
+                });
+
+            smeMerged = mergedAll.ToList();
+            Console.WriteLine("  ToList1: " + watch.ElapsedMilliseconds + " ms");
+            /*
+            Console.WriteLine();
+            Console.WriteLine("smeMerged 1");
+            foreach (var m in smeMerged)
+            {
+                Console.WriteLine(m.smeSet.IdShortPath);
+            }
+            */
+            var smeIdList = smeMerged.Select(sme => sme.smeSet.Id).ToList();
+            var novalue = joinSmSme.Where(smsme => !smeIdList.Contains(smsme.sme.Id)).Select(smsme =>
+                new SmeMerged
+                {
+                    smSet = smsme.sm,
+                    smeSet = smsme.sme,
+                    sValueSet = null,
+                    iValueSet = null,
+                    dValueSet = null,
+                    oValueSet = null,
+                }
+                ).ToList();
+            smeMerged.AddRange(novalue);
+            /*
+            Console.WriteLine();
+            Console.WriteLine("smeMerged 2");
+            foreach (var m in smeMerged)
+            {
+                Console.WriteLine(m.smeSet.IdShortPath);
+            }
+            */
+            Console.WriteLine("  ToList2: " + watch.ElapsedMilliseconds + " ms");
+
+            return smeMerged;
+        }
+
+        public static List<ISubmodel> ReadPagedSubmodels(AasContext db, IPaginationParameters paginationParameters, Dictionary<string, string>? securityCondition, IReference reqSemanticId, string idShort)
+        {
+            List<ISubmodel> output = new List<ISubmodel>();
+
+            string? semanticId = null;
+            if (reqSemanticId != null)
+            {
+                var keys = reqSemanticId.Keys;
+                if (keys != null && keys.Count > 0)
+                {
+                    semanticId = keys[0].Value;
+                }
+            }
+
+            var securityConditionSM = "";
+            if (securityCondition != null && securityCondition["sm."] != null)
+            {
+                securityConditionSM = securityCondition["sm."];
+            }
+
+            if (securityConditionSM == "" || securityConditionSM == "*")
+            {
+                securityConditionSM = "true";
+            }
+
+            var timeStamp = DateTime.UtcNow;
+
+            var smDBList = db.SMSets
+                .Where(sm => idShort == null || sm.IdShort == idShort)
+                .Where(sm => semanticId == null || sm.SemanticId == semanticId)
+                .Where(securityConditionSM)
+                .OrderBy(sm => sm.Id)
+                .Skip(paginationParameters.Cursor)
+                .Take(paginationParameters.Limit)
+                .ToList();
+
+            foreach (var sm in smDBList.Select(selector: submodelDB => ReadSubmodel(db, smDB: submodelDB, "", securityCondition)))
+            {
+                if (sm.TimeStamp == DateTime.MinValue)
+                {
+                    sm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp, DateTime.MinValue);
+                    sm.SetTimeStamp(timeStamp);
+                }
+                output.Add(sm);
+            }
+
+            return output;
         }
 
         public static Submodel? ReadSubmodel(AasContext db, SMSet? smDB = null, string submodelIdentifier = "", Dictionary<string, string>? securityCondition = null)
@@ -788,6 +1137,140 @@ namespace AasxServerDB
                 extensions: Serializer.DeserializeList<IExtension>(smDB.Extensions),
                 id: smDB.Identifier,
                 kind: Serializer.DeserializeElement<ModellingKind>(smDB.Kind),
+                semanticId: !smDB.SemanticId.IsNullOrEmpty() ? new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, smDB.SemanticId) }) : null,
+                supplementalSemanticIds: Serializer.DeserializeList<IReference>(smDB.SupplementalSemanticIds),
+                qualifiers: Serializer.DeserializeList<IQualifier>(smDB.Qualifiers),
+                embeddedDataSpecifications: Serializer.DeserializeList<IEmbeddedDataSpecification>(smDB.EmbeddedDataSpecifications),
+                administration: new AdministrativeInformation(
+                    version: smDB.Version,
+                    revision: smDB.Revision,
+                    creator: Serializer.DeserializeElement<IReference>(smDB.Creator),
+                    templateId: smDB.TemplateId,
+                    embeddedDataSpecifications: Serializer.DeserializeList<IEmbeddedDataSpecification>(smDB.AEmbeddedDataSpecifications)
+                ),
+                submodelElements: new List<ISubmodelElement>()
+            );
+
+            // LoadSME(submodel, null, null, SMEList);
+            var smeMerged = GetSmeMerged(db, null, SMEQuery, smDB);
+
+            if (smeMerged != null && smeMerged.Count != 0 && securityCondition?["all"] != null && securityCondition?["all"] != "")
+            {
+                // at least 1 exists
+                var mergeForCondition = smeMerged.Select(sme => new
+                {
+                    sm = sme.smSet,
+                    sme = sme.smeSet,
+                    svalue = (sme.smeSet.TValue == "S" && sme.sValueSet != null && sme.sValueSet.Value != null) ? sme.sValueSet.Value : "",
+                    mvalue = (sme.smeSet.TValue == "I" && sme.iValueSet != null && sme.iValueSet.Value != null) ? sme.iValueSet.Value :
+                        (sme.smeSet.TValue == "D" && sme.dValueSet != null && sme.dValueSet.Value != null) ? sme.dValueSet.Value : 0
+                }).Distinct();
+                // at least 1 must exist to also approve security condition for SME
+                var resultCondition = mergeForCondition.AsQueryable().Where(securityCondition["all"]);
+                if (!resultCondition.Any())
+                {
+                    smeMerged = null;
+                }
+                else
+                {
+                    if (securityCondition.TryGetValue("filter-all", out var filter) && filter != "")
+                    {
+                        resultCondition = mergeForCondition.AsQueryable().Where(filter);
+                        var resultConditionIDs = resultCondition.Select(s => s.sme.Id).Distinct().ToList();
+                        smeMerged = smeMerged.Where(m => resultConditionIDs.Contains(m.smeSet.Id)).ToList();
+                    }
+                }
+            }
+
+            if (smeMerged != null)
+            {
+                var SMEList = SMEQuery.ToList();
+                LoadSME(submodel, null, null, SMEList, smeMerged);
+            }
+
+            submodel.TimeStampCreate = smDB.TimeStampCreate;
+            submodel.TimeStamp = smDB.TimeStamp;
+            submodel.TimeStampTree = smDB.TimeStampTree;
+            submodel.TimeStampDelete = smDB.TimeStampDelete;
+            submodel.SetAllParents();
+
+            return submodel;
+        }
+        public static Submodel? ReadSubmodel3(AasContext db, SMSet? smDB = null, string submodelIdentifier = "",
+            Dictionary<string, string>? securityCondition = null, List<SmeMerged>? merge = null)
+        {
+            var watch = Stopwatch.StartNew();
+            List<SmeMerged>? smeMerged = [];
+
+            if (merge != null)
+            {
+                smeMerged = merge;
+            }
+            else
+            {
+                if (!submodelIdentifier.IsNullOrEmpty())
+                {
+                    var smDBQuery = db.SMSets.AsNoTracking()
+                            .Where(sm => sm.Identifier == submodelIdentifier);
+                    if (securityCondition?["sm."] is not null and not "")
+                    {
+                        smDBQuery = smDBQuery.Where(securityCondition["sm."]);
+                    }
+
+                    var smDBList = smDBQuery.ToList();
+                    if (smDBList != null && smDBList.Count > 0)
+                    {
+                        smDB = smDBList.First();
+                    }
+                }
+
+                if (smDB == null)
+                    return null;
+
+                /*
+                var SMEQuery = db.SMESets.AsNoTracking()
+                    .OrderBy(sme => sme.Id)
+                    .Where(sme => sme.SMId == smDB.Id);
+
+                if (securityCondition?["sme."] is not null and not "")
+                {
+                    SMEQuery = SMEQuery.Where(securityCondition["sme."]);
+                }
+
+                var smQuery = db.SMSets.Where(sm => sm.Id == smDB.Id);
+                */
+
+                // LoadSME(submodel, null, null, SMEList);
+                // var q = GetSmeMerged2(db, securityCondition, smQuery, SMEQuery);
+                // var q = GetSmeMerged(db, securityCondition, smSet: smDB);
+                Console.WriteLine(" GetSmeMerged: " + watch.ElapsedMilliseconds + " ms");
+                /*
+                if (!q.Any())
+                {
+                    return null;
+                }
+                */
+                /*
+                var m = q.Take(1).ToList();
+                if (m.Count != 1)
+                {
+                    return null;
+                }
+                */
+                Console.WriteLine(" 1 Exists: " + watch.ElapsedMilliseconds + " ms");
+                List<int> smIDList = [smDB.Id];
+                // smeMerged = GetSmeFiltered(db, securityCondition, smQuery, smIDList);
+                Console.WriteLine(" GetSmeFiltered: " + watch.ElapsedMilliseconds + " ms");
+            }
+
+            var submodel = new Submodel(
+                idShort: smDB.IdShort,
+                displayName: Serializer.DeserializeList<ILangStringNameType>(smDB.DisplayName),
+                category: smDB.Category,
+                description: Serializer.DeserializeList<ILangStringTextType>(smDB.Description),
+                extensions: Serializer.DeserializeList<IExtension>(smDB.Extensions),
+                id: smDB.Identifier,
+                kind: Serializer.DeserializeElement<ModellingKind>(smDB.Kind),
                 semanticId: !smDB.SemanticId.IsNullOrEmpty() ? new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new AasCore.Aas3_0.Key(KeyTypes.GlobalReference, smDB.SemanticId) }) : null,
                 supplementalSemanticIds: Serializer.DeserializeList<IReference>(smDB.SupplementalSemanticIds),
                 qualifiers: Serializer.DeserializeList<IQualifier>(smDB.Qualifiers),
@@ -802,22 +1285,14 @@ namespace AasxServerDB
                 submodelElements: new List<ISubmodelElement>()
             );
 
-            var smQuery = db.SMSets.Where(sm => sm.Id == smDB.Id);
-
-            // LoadSME(submodel, null, null, SMEList);
-            List<SmeMerged>? smeMerged = [];
-            var q = GetSmeMerged(db, securityCondition, smQuery, SMEQuery, null, out smeMerged, true);
-            if (q == null)
-            {
-                return null;
-            }
             if (smeMerged?.Count == 0)
             {
                 return submodel;
             }
 
-            var SMEList = SMEQuery.ToList();
-            LoadSME(submodel, null, null, SMEList, smeMerged);
+            // var SMEList = SMEQuery.ToList();
+            LoadSME(submodel, null, null, null, smeMerged);
+            Console.WriteLine(" LoadSME: " + watch.ElapsedMilliseconds + " ms");
 
             submodel.TimeStampCreate = smDB.TimeStampCreate;
             submodel.TimeStamp = smDB.TimeStamp;
@@ -1239,7 +1714,7 @@ namespace AasxServerDB
             return sme;
         }
 
-        internal static void LoadSME(Submodel submodel, ISubmodelElement? sme, SMESet? smeSet, List<SMESet> SMEList, List<SmeMerged> tree = null)
+        internal static void LoadSME(Submodel submodel, ISubmodelElement? sme, SMESet? smeSet, List<SMESet>? SMEList, List<SmeMerged>? tree = null)
         {
             var smeSets = SMEList;
             if (tree != null)
@@ -1393,6 +1868,7 @@ namespace AasxServerDB
             public OValueSet? oValueSet;
         }
 
+        /*
         public static List<SmeMerged> GetSmeMerged(AasContext db, Dictionary<string, string>? securityCondition, List<SMESet>? listSME, SMSet? smSet)
         {
             if (listSME == null)
@@ -1405,6 +1881,8 @@ namespace AasxServerDB
 
             return GetSmeMerged(db, securityCondition, querySME, smSet: smSet);
         }
+        */
+
         private static IQueryable<SmeMerged>? QuerySmeMerged(AasContext db, Dictionary<string, string>? securityCondition,
             IQueryable<SMESet>? querySME, out IQueryable<SmeMerged>? querySmSme, SMSet? smSet = null, IQueryable<SMSet>? querySM = null)
         {

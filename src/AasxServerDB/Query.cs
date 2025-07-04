@@ -70,7 +70,7 @@ public partial class Query
     private readonly QueryGrammar grammar;
     */
 
-    public QResult SearchSMs(ISecurityConfig securityConfig, AasContext db, bool withTotalCount, bool withLastId, string semanticId,
+    public QResult SearchSMs(ISecurityConfig securityConfig, Dictionary<string, string>? securityCondition, AasContext db, bool withTotalCount, bool withLastId, string semanticId,
         string identifier, string diff, int pageFrom, int pageSize, string expression)
     {
         var qResult = new QResult()
@@ -92,7 +92,7 @@ public partial class Query
         Console.WriteLine("\nSearchSMs");
 
         watch.Restart();
-        var query = GetSMs(securityConfig.NoSecurity, qResult, watch, db, false, withTotalCount, semanticId, identifier, diff, pageFrom, pageSize, expression);
+        var query = GetSMs(securityConfig.NoSecurity, securityCondition, qResult, watch, db, false, withTotalCount, semanticId, identifier, diff, pageFrom, pageSize, expression);
         if (query == null)
         {
             text = "No query is generated.";
@@ -132,13 +132,13 @@ public partial class Query
         return qResult;
     }
 
-    public int CountSMs(ISecurityConfig securityConfig, AasContext db, string semanticId, string identifier, string diff, int pageFrom, int pageSize, string expression)
+    public int CountSMs(ISecurityConfig securityConfig, Dictionary<string, string>? securityCondition, AasContext db, string semanticId, string identifier, string diff, int pageFrom, int pageSize, string expression)
     {
         var watch = Stopwatch.StartNew();
         Console.WriteLine("\nCountSMs");
 
         watch.Restart();
-        var query = GetSMs(securityConfig.NoSecurity, new QResult(), watch, db, true, false, semanticId, identifier, diff, pageFrom, pageSize, expression);
+        var query = GetSMs(securityConfig.NoSecurity, securityCondition, new QResult(), watch, db, true, false, semanticId, identifier, diff, pageFrom, pageSize, expression);
         if (query == null)
         {
             Console.WriteLine("No query is generated.");
@@ -153,7 +153,8 @@ public partial class Query
         return result;
     }
 
-    public QResult SearchSMEs(ISecurityConfig securityConfig, AasContext db, string requested, bool withTotalCount, bool withLastId,
+    public QResult SearchSMEs(ISecurityConfig securityConfig, Dictionary<string, string>? securityCondition,
+        AasContext db, string requested, bool withTotalCount, bool withLastId,
         string smSemanticId, string smIdentifier, string semanticId, string diff, string contains,
         string equal, string lower, string upper, int pageFrom, int pageSize, string expression)
     {
@@ -177,7 +178,7 @@ public partial class Query
         Console.WriteLine("\nSearchSMEs");
 
         watch.Restart();
-        var query = GetSMEs(securityConfig.NoSecurity, qResult, watch, requested, db, false, withTotalCount,
+        var query = GetSMEs(securityConfig.NoSecurity, securityCondition, qResult, watch, requested, db, false, withTotalCount,
             smSemanticId, smIdentifier, semanticId, diff, pageFrom, pageSize, contains, equal, lower, upper, expression);
         if (query == null)
         {
@@ -219,7 +220,7 @@ public partial class Query
         return qResult;
     }
 
-    public int CountSMEs(ISecurityConfig securityConfig, AasContext db,
+    public int CountSMEs(ISecurityConfig securityConfig, Dictionary<string, string>? securityCondition, AasContext db,
         string smSemanticId, string smIdentifier, string semanticId, string diff,
         string contains, string equal, string lower, string upper, int pageFrom, int pageSize, string expression)
     {
@@ -227,7 +228,7 @@ public partial class Query
         Console.WriteLine("\nCountSMEs");
 
         watch.Restart();
-        var query = GetSMEs(securityConfig.NoSecurity, new QResult(), watch, "", db, true, false, smSemanticId, smIdentifier, semanticId, diff, -1, -1, contains, equal, lower, upper, expression);
+        var query = GetSMEs(securityConfig.NoSecurity, securityCondition, new QResult(), watch, "", db, true, false, smSemanticId, smIdentifier, semanticId, diff, -1, -1, contains, equal, lower, upper, expression);
         if (query == null)
         {
             Console.WriteLine("No query is generated due to incorrect parameter combination.");
@@ -266,7 +267,7 @@ public partial class Query
 
         expression = "$JSONGRAMMAR " + expression;
 
-        var query = GetSMs(noSecurity, qResult, watch, db, false, false, "", "", "", pageFrom, pageSize, expression);
+        var query = GetSMs(noSecurity, securityCondition, qResult, watch, db, false, false, "", "", "", pageFrom, pageSize, expression);
         if (query == null)
         {
             text = "No query is generated.";
@@ -329,7 +330,7 @@ public partial class Query
     }
 
     // --------------- SM Methods ---------------
-    private IQueryable? GetSMs(bool noSecurity, QResult qResult, Stopwatch watch, AasContext db, bool withCount = false, bool withTotalCount = false,
+    private IQueryable? GetSMs(bool noSecurity, Dictionary<string, string>? securityCondition, QResult qResult, Stopwatch watch, AasContext db, bool withCount = false, bool withTotalCount = false,
         string semanticId = "", string identifier = "", string diffString = "", int pageFrom = -1, int pageSize = -1, string expression = "")
     {
         // parameter
@@ -385,7 +386,7 @@ public partial class Query
         }
 
         // get condition out of expression
-        var conditionsExpression = ConditionFromExpression(noSecurity, messages, expression);
+        var conditionsExpression = ConditionFromExpression(noSecurity, messages, expression, securityCondition);
         if (conditionsExpression == null)
         {
             return null;
@@ -771,7 +772,7 @@ public partial class Query
         return smeSets.FromSqlRaw(sql);
     }
 
-    private IQueryable? GetSMEs(bool noSecurity, QResult qResult, Stopwatch watch, string requested, AasContext db, bool withCount = false, bool withTotalCount = false,
+    private IQueryable? GetSMEs(bool noSecurity, Dictionary<string, string>? securityCondition, QResult qResult, Stopwatch watch, string requested, AasContext db, bool withCount = false, bool withTotalCount = false,
         string smSemanticId = "", string smIdentifier = "", string semanticId = "", string diffString = "", int pageFrom = -1, int pageSize = -1,
         string contains = "", string equal = "", string lower = "", string upper = "", string expression = "")
     {
@@ -847,7 +848,7 @@ public partial class Query
         }
 
         // get condition out of expression
-        var conditionsExpression = ConditionFromExpression(noSecurity, messages, expression);
+        var conditionsExpression = ConditionFromExpression(noSecurity, messages, expression, securityCondition);
 
         if (conditionsExpression.ContainsKey("AccessRules"))
         {
@@ -912,6 +913,7 @@ public partial class Query
 
         var smSelect = smTable.Select("new { Id, Identifier, IdShort }");
         var smeSelect = smeTable.Select("new { Id, SMId, IdShort, TimeStamp, IdShortPath }");
+        var x1 = smeSelect.Take(100).ToDynamicList();
 
         var smSmeSelect = smSelect.AsQueryable().Join(
             smeSelect.AsQueryable(),
@@ -923,6 +925,7 @@ public partial class Query
             "SM.Id as SM_Id, SM.Identifier as SM_Identifier, SM.IdShort as SM_IdShort, " +
             "SME.Id as SME_Id, SME.IdShort as SME_IdShort, SME.TimeStamp as SME_TimeStamp, SME.IdShortPath as SME_IdShortPath" +
             " }");
+        var x2 = smSmeSelect.Take(100).ToDynamicList();
 
         // var count = smSmeSelect.Select("new { SME_Id }").Count();
 
@@ -984,12 +987,14 @@ public partial class Query
         )
         .Select("new (" +
             "SMSME.SM_Id as SM_Id, SMSME.SM_Identifier as SM_Identifier, SMSME.SM_IdShort as SM_IdShort, " +
-            "SMSME.SME_Id as SME_Id, SMSME.SME_IdShort as SME_IdShort, SMSME.SME_TimeStamp as SME_TimeStamp, SMSME.IdShortPath as SME_IdShortPath, " +
+            "SMSME.SME_Id as SME_Id, SMSME.SME_IdShort as SME_IdShort, SMSME.SME_TimeStamp as SME_TimeStamp, SMSME.SME_IdShortPath as SME_IdShortPath, " +
             "VALUE.SValue as SValue, VALUE.MValue as MValue" +
             ")");
+        var x3 = smSmeValue.Take(100).ToDynamicList();
 
         conditionAll = conditionAll.Replace("sm.idShort", "SM_IdShort").Replace("sme.idShort", "SME_IdShort").Replace("sme.idShortPath", "SME_IdShortPath");
         var smSmeValueWhere = smSmeValue.Where(conditionAll);
+        var x4 = smSmeValueWhere.Take(100).ToDynamicList();
 
         // count = smSmeValue.Select("new { SME_Id }").Count();
 
@@ -1173,7 +1178,7 @@ public partial class Query
         var withIdShortPath = requested.Contains("idShortPath");
         var withUrl = requested.Contains("url");
 
-        if (withIdShortPath || withUrl)
+        if (false) // withIdShortPath || withUrl)
         {
             // created idShortPath for result only
             var smeIdList = query.Select("SME_Id").ToDynamicList<int>();
@@ -1625,7 +1630,7 @@ public partial class Query
         return rawSQL;
     }
 
-    private Dictionary<string, string>? ConditionFromExpression(bool noSecurity, List<string> messages, string expression)
+    private Dictionary<string, string>? ConditionFromExpression(bool noSecurity, List<string> messages, string expression, Dictionary<string, string>? securityCondition)
     {
         var text = string.Empty;
         var condition = new Dictionary<string, string>();
@@ -1788,6 +1793,7 @@ public partial class Query
                     condition["select"] = "true";
                 }
 
+                var value = "";
                 condition["all"] = query._query_conditions["all"];
                 if (condition["all"].Contains("$$path$$"))
                 {
@@ -1796,6 +1802,17 @@ public partial class Query
                 else
                 {
                     messages.Add("RECURSIVE SEARCH");
+                    if (securityCondition != null && securityCondition.TryGetValue("all", out value) && value != "")
+                    {
+                        if (condition["all"] != "")
+                        {
+                            condition["all"] = value + " && " + condition["all"];
+                        }
+                        else
+                        {
+                            condition["all"] = value;
+                        }
+                    }
                 }
                 messages.Add("");
 
@@ -1811,6 +1828,17 @@ public partial class Query
                 else
                 {
                     condition["sm"] = condition["sm"].Replace("sm.", "");
+                }
+                if (securityCondition != null && securityCondition.TryGetValue("sm.", out value) && value != "")
+                {
+                    if (condition["sm"] != "")
+                    {
+                        condition["sm"] = value + " && " + condition["sm"];
+                    }
+                    else
+                    {
+                        condition["sm"] = value;
+                    }
                 }
                 if (!condition["all"].Contains("$$path$$"))
                 {
@@ -1828,6 +1856,17 @@ public partial class Query
                 {
                     condition["sme"] = condition["sme"].Replace("sme.", "");
                 }
+                if (securityCondition != null && securityCondition.TryGetValue("sme.", out value) && value != "")
+                {
+                    if (condition["sme"] != "")
+                    {
+                        condition["sme"] = value + " && " + condition["sme"];
+                    }
+                    else
+                    {
+                        condition["sme"] = value;
+                    }
+                }
                 if (!condition["all"].Contains("$$path$$"))
                 {
                     text = "conditionSME: " + condition["sme"];
@@ -1840,6 +1879,21 @@ public partial class Query
                 {
                     condition["svalue"] = "";
                 }
+                else
+                {
+                    condition["svalue"] = condition["svalue"].Replace("svalue", "value");
+                }
+                if (securityCondition != null && securityCondition.TryGetValue("svalue", out value) && value != "")
+                {
+                    if (condition["svalue"] != "")
+                    {
+                        condition["svalue"] = value + " && " + condition["svalue"];
+                    }
+                    else
+                    {
+                        condition["svalue"] = value;
+                    }
+                }
                 if (!condition["all"].Contains("$$path$$"))
                 {
                     text = "conditionSValue: " + condition["svalue"];
@@ -1851,6 +1905,21 @@ public partial class Query
                 if (condition["nvalue"] == "$SKIP")
                 {
                     condition["nvalue"] = "";
+                }
+                else
+                {
+                    condition["nvalue"] = condition["nvalue"].Replace("nvalue", "value");
+                }
+                if (securityCondition != null && securityCondition.TryGetValue("mvalue", out value) && value != "")
+                {
+                    if (condition["nvalue"] != "")
+                    {
+                        condition["nvalue"] = value + " && " + condition["nvalue"];
+                    }
+                    else
+                    {
+                        condition["nvalue"] = value;
+                    }
                 }
                 if (!condition["all"].Contains("$$path$$"))
                 {

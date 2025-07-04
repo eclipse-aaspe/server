@@ -443,6 +443,7 @@ namespace AasxServer
             var dbRequestService = serviceProvider.GetService<IDbRequestHandlerService>();
 
             // Wait for Debugger
+            /*
             if (a.DebugWait)
             {
                 Console.WriteLine("Please attach debugger now to {0}!", a.Host);
@@ -450,6 +451,7 @@ namespace AasxServer
                     System.Threading.Thread.Sleep(100);
                 Console.WriteLine("Debugger attached");
             }
+            */
 
             // Read environment variables
             string[] evlist = {"PLCNEXTTARGET", "WITHPOLICY", "SHOWWEIGHT", "AASREPOSITORY"};
@@ -1168,6 +1170,14 @@ namespace AasxServer
 
         public static void Main(string[] args, IServiceProvider serviceProvider)
         {
+            if (args.Contains("--debug-wait"))
+            {
+                Console.WriteLine("Please attach debugger now");
+                while (!System.Diagnostics.Debugger.IsAttached)
+                    System.Threading.Thread.Sleep(100);
+                Console.WriteLine("Debugger attached");
+            }
+
             Console.WriteLine("args:");
             foreach (var a in args)
             {
