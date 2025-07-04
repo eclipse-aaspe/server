@@ -29,6 +29,8 @@ using Contracts.Security;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Schema;
+using HotChocolate.Types.Relay;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 public class CombinedValue
 {
@@ -70,9 +72,11 @@ public partial class Query
     private readonly QueryGrammar grammar;
     */
 
-    public QResult SearchSMs(ISecurityConfig securityConfig, Dictionary<string, string>? securityCondition, AasContext db, bool withTotalCount, bool withLastId, string semanticId,
+    public QResult SearchSMs(Dictionary<string, string>? securityCondition, AasContext db, bool withTotalCount, bool withLastId, string semanticId,
         string identifier, string diff, int pageFrom, int pageSize, string expression)
     {
+        bool noSecurity = securityCondition == null;
+
         var qResult = new QResult()
         {
             Count = 0,
@@ -92,7 +96,7 @@ public partial class Query
         Console.WriteLine("\nSearchSMs");
 
         watch.Restart();
-        var query = GetSMs(securityConfig.NoSecurity, securityCondition, qResult, watch, db, false, withTotalCount, semanticId, identifier, diff, pageFrom, pageSize, expression);
+        var query = GetSMs(noSecurity, securityCondition, qResult, watch, db, false, withTotalCount, semanticId, identifier, diff, pageFrom, pageSize, expression);
         if (query == null)
         {
             text = "No query is generated.";
@@ -464,10 +468,10 @@ public partial class Query
         if (withExpression) // with expression
         {
             // check restrictions
-            restrictSM = !conditionsExpression["sm"].IsNullOrEmpty() && !conditionsExpression["sm"].Equals("true");
-            restrictSME = !conditionsExpression["sme"].IsNullOrEmpty() && !conditionsExpression["sme"].Equals("true");
-            restrictSValue = !conditionsExpression["svalue"].IsNullOrEmpty() && !conditionsExpression["svalue"].Equals("true");
-            restrictNValue = !conditionsExpression["nvalue"].IsNullOrEmpty() && !conditionsExpression["nvalue"].Equals("true");
+            restrictSM = conditionsExpression.TryGetValue("sm", out var value) && value != "" && value != "true";
+            restrictSME = conditionsExpression.TryGetValue("sme", out value) && value != "" && value != "true";
+            restrictSValue = conditionsExpression.TryGetValue("svalue", out value) && value != "" && value != "true";
+            restrictNValue = conditionsExpression.TryGetValue("nvalue", out value) && value != "" && value != "true";
             restrictValue = restrictSValue || restrictNValue;
 
             // restrict all tables seperate
@@ -1638,6 +1642,36 @@ public partial class Query
         // no expression
         if (expression.IsNullOrEmpty())
             return condition;
+
+        if (expression == "$all")
+        {
+            if (securityCondition != null && securityCondition.TryGetValue("all", out var value) && value != "")
+            {
+                condition["all"] = value;
+            }
+
+            if (securityCondition != null && securityCondition.TryGetValue("sm.", out value) && value != "")
+            {
+                condition["sm"] = value.Replace("sm.", "");
+            }
+
+            if (securityCondition != null && securityCondition.TryGetValue("sme.", out value) && value != "")
+            {
+                condition["sme"] = value.Replace("sme.", "");
+            }
+
+            if (securityCondition != null && securityCondition.TryGetValue("svalue", out value) && value != "")
+            {
+                condition["svalue"] = value.Replace("svalue", "value");
+            }
+
+            if (securityCondition != null && securityCondition.TryGetValue("mvalue", out value) && value != "")
+            {
+                condition["nvalue"] = value.Replace("mvalue", "value");
+            }
+
+            return condition;
+        }
 
         // log
         var log = false;

@@ -151,6 +151,18 @@
          "FRAGMENT": "xxx",
          "CONDITION": {
               "$or": [
+            {
+              "$and": [
+                {
+                  "$eq": [
+                    {
+                      "$field": "$sm#idShort"
+                    },
+                    {
+                      "$strVal": "TechnicalData"
+                    }
+                  ]
+                },
                 {
                   "$starts-with": [
                     {
@@ -158,6 +170,20 @@
                     },
                     {
                       "$strVal": "General"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "$and": [
+                {
+                  "$eq": [
+                    {
+                      "$field": "$sm#idShort"
+                    },
+                    {
+                      "$strVal": "Nameplate"
                     }
                   ]
                 },
@@ -171,6 +197,8 @@
                     }
                   ]
                 }
+              ]
+            }
               ]
          }
         }

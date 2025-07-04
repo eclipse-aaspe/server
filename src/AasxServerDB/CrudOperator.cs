@@ -26,7 +26,11 @@ namespace AasxServerDB
     using AdminShellNS;
     using AdminShellNS.Models;
     using Contracts.Pagination;
+    using Contracts.QueryResult;
+    using Contracts.Security;
     using Extensions;
+    using HotChocolate.Execution;
+    using Irony.Parsing;
     using Microsoft.EntityFrameworkCore;
     // using Microsoft.EntityFrameworkCore.Metadata.Internal;
     using Microsoft.IdentityModel.Tokens;
@@ -110,7 +114,7 @@ namespace AasxServerDB
                             return null;
                         }
                         loadedSMs.Add(sm.Id);
-                        aas.Submodels?.Add(sm.GetReference());
+                        // aas.Submodels?.Add(sm.GetReference());
                         env.AasEnv.Submodels?.Add(sm);
                     }
                 }
@@ -1050,10 +1054,42 @@ namespace AasxServerDB
             return smeMerged;
         }
 
-        public static List<ISubmodel> ReadPagedSubmodels(AasContext db, IPaginationParameters paginationParameters, Dictionary<string, string>? securityCondition, IReference reqSemanticId, string idShort)
+        public static List<ISubmodel> ReadPagedSubmodels(AasContext db, Query? querySM, IPaginationParameters paginationParameters, Dictionary<string, string>? securityCondition, IReference reqSemanticId, string idShort)
         {
             List<ISubmodel> output = new List<ISubmodel>();
 
+            var qresult = new QResult();
+            if (querySM != null)
+            {
+                Dictionary<string, string> condition = [];
+                if (securityCondition != null)
+                {
+                    foreach (var s in securityCondition)
+                    {
+                        condition.Add(s.Key, s.Value);
+                    }
+                    if (condition.TryGetValue("sm.", out var smvalue) && condition.TryGetValue("filter-sm.", out var smfilter))
+                    {
+                        condition["sm."] = smvalue + " && " + smfilter;
+
+                        string? semanticId = null;
+                        if (reqSemanticId != null)
+                        {
+                            var keys = reqSemanticId.Keys;
+                            if (keys != null && keys.Count > 0)
+                            {
+                                semanticId = keys[0].Value;
+
+                                condition["sm."] = condition["sm."] + $" && sm.semanticId == {semanticId}";
+                            }
+                        }
+                    }
+                }
+                qresult = querySM.SearchSMs(securityCondition, db, withTotalCount: false, withLastId: false, semanticId: "",
+                identifier: "", diff: "", pageFrom: paginationParameters.Cursor, pageSize: paginationParameters.Limit, expression: "$all");
+            }
+
+            /*
             string? semanticId = null;
             if (reqSemanticId != null)
             {
@@ -1068,14 +1104,16 @@ namespace AasxServerDB
             if (securityCondition != null && securityCondition["sm."] != null)
             {
                 securityConditionSM = securityCondition["sm."];
+                if (securityCondition["filter-sm."] != "")
+                {
+                    securityConditionSM = securityConditionSM + " && " + securityCondition["filter-sm."];
+                }
             }
 
             if (securityConditionSM == "" || securityConditionSM == "*")
             {
                 securityConditionSM = "true";
             }
-
-            var timeStamp = DateTime.UtcNow;
 
             var smDBList = db.SMSets
                 .Where(sm => idShort == null || sm.IdShort == idShort)
@@ -1085,15 +1123,24 @@ namespace AasxServerDB
                 .Skip(paginationParameters.Cursor)
                 .Take(paginationParameters.Limit)
                 .ToList();
+            */
+
+            var smList = qresult.SMResults.Select(sm => sm.smId).ToList();
+            var smDBList = db.SMSets.Where(sm => smList.Contains(sm.Identifier)).ToList();
+
+            var timeStamp = DateTime.UtcNow;
 
             foreach (var sm in smDBList.Select(selector: submodelDB => ReadSubmodel(db, smDB: submodelDB, "", securityCondition)))
             {
-                if (sm.TimeStamp == DateTime.MinValue)
+                if (sm != null)
                 {
-                    sm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp, DateTime.MinValue);
-                    sm.SetTimeStamp(timeStamp);
+                    if (sm.TimeStamp == DateTime.MinValue)
+                    {
+                        sm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp, DateTime.MinValue);
+                        sm.SetTimeStamp(timeStamp);
+                    }
+                    output.Add(sm);
                 }
-                output.Add(sm);
             }
 
             return output;
@@ -1120,14 +1167,17 @@ namespace AasxServerDB
             if (smDB == null)
                 return null;
 
-            var SMEQuery = db.SMESets
+            var SMEQueryAll = db.SMESets
                 .OrderBy(sme => sme.Id)
                 .Where(sme => sme.SMId == smDB.Id);
 
+            /*
+            var SMEQuery = SMEQueryAll;
             if (securityCondition?["sme."] is not null and not "")
             {
-                SMEQuery = SMEQuery.Where(securityCondition["sme."]);
+                SMEQuery = SMEQueryAll.Where(securityCondition["sme."]);
             }
+            */
 
             var submodel = new Submodel(
                 idShort: smDB.IdShort,
@@ -1152,7 +1202,7 @@ namespace AasxServerDB
             );
 
             // LoadSME(submodel, null, null, SMEList);
-            var smeMerged = GetSmeMerged(db, null, SMEQuery, smDB);
+            var smeMerged = GetSmeMerged(db, null, SMEQueryAll, smDB);
 
             if (smeMerged != null && smeMerged.Count != 0 && securityCondition?["all"] != null && securityCondition?["all"] != "")
             {
@@ -1169,7 +1219,7 @@ namespace AasxServerDB
                 var resultCondition = mergeForCondition.AsQueryable().Where(securityCondition["all"]);
                 if (!resultCondition.Any())
                 {
-                    smeMerged = null;
+                    return null;
                 }
                 else
                 {
@@ -1184,8 +1234,7 @@ namespace AasxServerDB
 
             if (smeMerged != null)
             {
-                var SMEList = SMEQuery.ToList();
-                LoadSME(submodel, null, null, SMEList, smeMerged);
+                LoadSME(submodel, null, null, null, smeMerged);
             }
 
             submodel.TimeStampCreate = smDB.TimeStampCreate;

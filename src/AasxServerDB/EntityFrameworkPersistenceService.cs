@@ -311,8 +311,9 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                     case DbRequestOp.ReadPagedSubmodels:
                         var reqSemanticId = dbRequest.Context.Params.Reference;
+                        var querySM = new Query(_grammar);
 
-                        var output = CrudOperator.ReadPagedSubmodels(db, dbRequest.Context.Params.PaginationParameters, securityCondition, reqSemanticId, dbRequest.Context.Params.IdShort);
+                        var output = CrudOperator.ReadPagedSubmodels(db, querySM, dbRequest.Context.Params.PaginationParameters, securityCondition, reqSemanticId, dbRequest.Context.Params.IdShort);
 
                         if (dbRequest.Context.Params.Reference != null)
                         {
@@ -589,7 +590,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     case DbRequestOp.QuerySearchSMs:
                         var queryRequest = dbRequest.Context.Params.QueryRequest;
                         var query = new Query(_grammar);
-                        var qresult = query.SearchSMs(securityConfig, securityCondition, db, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SemanticId,
+                        var qresult = query.SearchSMs(securityCondition, db, queryRequest.WithTotalCount, queryRequest.WithLastId, queryRequest.SemanticId,
                             queryRequest.Identifier, queryRequest.Diff, queryRequest.PageFrom, queryRequest.PageSize, queryRequest.Expression);
                         result.QueryResult = qresult;
                         break;
