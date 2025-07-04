@@ -20,6 +20,7 @@ using IO.Swagger.Lib.V3.Models;
 using IO.Swagger.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace IO.Swagger.Lib.V3.Services
 {
@@ -56,51 +57,60 @@ namespace IO.Swagger.Lib.V3.Services
             return paginationResult;
         }
 
-        public PackageDescriptionPagedResult GetPaginatedPackageDescriptionList(List<PackageDescription> sourceList, PaginationParameters paginationParameters)
+        public QueryResult GetPaginatedQueryResult<T>(List<T> paginatedList, PaginationParameters paginationParameters)
         {
-            var startIndex = paginationParameters.Cursor;
-            var endIndex = startIndex + paginationParameters.Limit - 1;
-            var outputList = GetPaginationList(sourceList, startIndex, endIndex);
-
             //Creating pagination result
-            var pagingMetadata = new PagedResultPagingMetadata();
-            if (endIndex < sourceList.Count - 1)
+            var pagingMetadata = new QueryResultPagingMetadata();
+
+            pagingMetadata.resultType = ResultType.Identifier.ToString();
+
+            if (paginatedList.Count != 0)
             {
-                pagingMetadata.cursor = Convert.ToString(endIndex + 1);
+                if (paginatedList.First() is ISubmodel)
+                {
+                    pagingMetadata.resultType = ResultType.Submodel.ToString();
+                }
             }
 
-            var paginationResult = new PackageDescriptionPagedResult()
+            if (paginatedList.Count < paginationParameters.Limit)
             {
-                result = outputList,
-                paging_metadata = pagingMetadata
-            };
+                _logger.LogInformation($"There are less elements in the retrieved list than requested for pagination - (cursor: {paginationParameters.Cursor}, size:{paginationParameters.Limit})");
+                pagingMetadata.cursor = String.Empty;
+            }
+            else
+            {
+                pagingMetadata.cursor = Convert.ToString(paginationParameters.Cursor + paginatedList.Count);
+            }
 
-            //return paginationResult;
+            var paginationResult = new QueryResult() { paging_metadata = pagingMetadata, result = paginatedList.ConvertAll(r => r as object) };
+
             return paginationResult;
         }
 
-        private List<T> GetPaginationList<T>(List<T> sourceList, int startIndex, int endIndex)
+
+        public PackageDescriptionPagedResult GetPaginatedPackageDescriptionList(List<PackageDescription> sourceList, PaginationParameters paginationParameters)
         {
-            var outputList = new List<T>();
+            //Creating pagination result
+            var pagingMetadata = new PagedResultPagingMetadata();
 
-            //cap the endIndex
-            if (endIndex > sourceList.Count - 1)
+            if (sourceList.Count < paginationParameters.Limit)
             {
-                endIndex = sourceList.Count - 1;
+                _logger.LogInformation($"There are less elements in the retrieved list than requested for pagination - (cursor: {paginationParameters.Cursor}, size:{paginationParameters.Limit})");
+                pagingMetadata.cursor = String.Empty;
+            }
+            else
+            {
+                pagingMetadata.cursor = Convert.ToString(paginationParameters.Cursor + sourceList.Count);
             }
 
-            //If there are less elements in the sourceList than "from"
-            if (startIndex > sourceList.Count - 1)
-            {
-                _logger.LogError($"There are less elements in the retrieved list than requested pagination - (from: {startIndex}, size:{endIndex})");
-            }
 
-            for (var i = startIndex; i <= endIndex; i++)
+            var paginationResult = new PackageDescriptionPagedResult()
             {
-                outputList.Add(sourceList[i]);
-            }
+                result = sourceList,
+                paging_metadata = pagingMetadata
+            };
 
-            return outputList;
+            return paginationResult;
         }
     }
 }

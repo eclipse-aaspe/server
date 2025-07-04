@@ -36,6 +36,9 @@ namespace AasxServerDB
         private int _index = 0;
         private SMESet? _resultSME;
         public List<CrudOperator.SmeMerged> smSmeMerged = null;
+        //public Dictionary<int,AdminShellPackageSupplementaryFile> packageFiles
+        //    = new Dictionary<int, AdminShellPackageSupplementaryFile>();
+
         public List<int> keepSme = new List<int>();
         public List<int> deleteSme = new List<int>();
         public string idShortPath = "";
@@ -63,13 +66,17 @@ namespace AasxServerDB
         }
 
         // Load AASX
-        public static void ImportAASXIntoDB(string filePath, bool createFilesOnly, bool withDbFiles)
+        public static void ImportAASXIntoDB(string filePath, bool createFilesOnly)
         {
             using (var asp = new AdminShellPackageEnv(filePath, false, true))
             {
                 if (!createFilesOnly)
                 {
-                    var envDB = new EnvSet() { Path = filePath };
+                    var envDB = new EnvSet()
+                    {
+                        Path = filePath,
+                        //PackageIdentifier = envDB.Id.ToString(),
+                    };
                     ImportAASIntoDB(asp, envDB);
 
                     using (var db = new AasContext())
@@ -83,46 +90,47 @@ namespace AasxServerDB
                     }
                 }
 
-                if (withDbFiles)
+                //if (withDbFiles)
+                //{
+                //    try
+                //    {
+                //        var temporaryFileName = name + "__thumbnail";
+                //        temporaryFileName = temporaryFileName.Replace("/", "_");
+                //        temporaryFileName = temporaryFileName.Replace(".", "_");
+                //        Uri? dummy = null;
+                //        using (var st = asp.GetLocalThumbnailStream(ref dummy, init: true))
+                //        {
+                //            Console.WriteLine("Copy " + AasContext.DataPath + "/files/" + temporaryFileName + ".dat");
+                //            var fst = System.IO.File.Create(AasContext.DataPath + "/files/" + temporaryFileName + ".dat");
+                //            if (st != null)
+                //            {
+                //                st.CopyTo(fst);
+                //            }
+                //        }
+                //    }
+                //    catch { }
+
+                //ToDo: To File Service
+                var name = Path.GetFileName(filePath);
+
+                using (var fileStream = new FileStream(AasContext.DataPath + "/files/" + name + ".zip", FileMode.Create))
+                using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
                 {
-                    var name = Path.GetFileName(filePath);
-                    try
+                    var files = asp.GetListOfSupplementaryFiles();
+                    foreach (var f in files)
                     {
-                        var temporaryFileName = name + "__thumbnail";
-                        temporaryFileName = temporaryFileName.Replace("/", "_");
-                        temporaryFileName = temporaryFileName.Replace(".", "_");
-                        Uri? dummy = null;
-                        using (var st = asp.GetLocalThumbnailStream(ref dummy, init: true))
+                        try
                         {
-                            Console.WriteLine("Copy " + AasContext.DataPath + "/files/" + temporaryFileName + ".dat");
-                            var fst = System.IO.File.Create(AasContext.DataPath + "/files/" + temporaryFileName + ".dat");
-                            if (st != null)
+                            using (var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true))
                             {
-                                st.CopyTo(fst);
+                                var archiveFile = archive.CreateEntry(f.Uri.OriginalString);
+                                Console.WriteLine("Copy " + AasContext.DataPath + "/" + name + "/" + f.Uri.OriginalString);
+
+                                using var archiveStream = archiveFile.Open();
+                                s.CopyTo(archiveStream);
                             }
                         }
-                    }
-                    catch { }
-
-                    using (var fileStream = new FileStream(AasContext.DataPath + "/files/" + name + ".zip", FileMode.Create))
-                    using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
-                    {
-                        var files = asp.GetListOfSupplementaryFiles();
-                        foreach (var f in files)
-                        {
-                            try
-                            {
-                                using (var s = asp.GetLocalStreamFromPackage(f.Uri.OriginalString, init: true))
-                                {
-                                    var archiveFile = archive.CreateEntry(f.Uri.OriginalString);
-                                    Console.WriteLine("Copy " + AasContext.DataPath + "/" + name + "/" + f.Uri.OriginalString);
-
-                                    using var archiveStream = archiveFile.Open();
-                                    s.CopyTo(archiveStream);
-                                }
-                            }
-                            catch { }
-                        }
+                        catch { }
                     }
                 }
             }
@@ -175,6 +183,9 @@ namespace AasxServerDB
 
                     new VisitorAASX(envDB: envDB).Visit(aas);
 
+                    FileService.CreateThumbnailZipFile(aas, asp.GetLocalThumbnailStream());
+
+
                     if (aas.Submodels == null)
                         continue;
 
@@ -196,6 +207,7 @@ namespace AasxServerDB
                     var aas = found ? aasToSm[sm.Id] : null;
                     if (found && aas == null)
                         continue;
+
 
                     new VisitorAASX(envDB: envDB).Visit(sm);
 
@@ -286,7 +298,7 @@ namespace AasxServerDB
                 {
                     var smeSmList = db.SMESets.Where(sme => sme.SMId == _smDB.Id).ToList();
                     CrudOperator.CreateIdShortPath(db, smeSmList);
-                    smSmeMerged = CrudOperator.GetSmeMerged(db, smeSmList, _smDB);
+                    smSmeMerged = CrudOperator.GetSmeMerged(db, null, smeSmList, _smDB);
                 }
             }
             _smDB ??= new SMSet();

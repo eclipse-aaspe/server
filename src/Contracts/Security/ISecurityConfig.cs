@@ -1,4 +1,4 @@
-namespace Contracts.DbRequests;
+namespace Contracts.Security;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +12,9 @@ public interface ISecurityConfig
     public bool NoSecurity { get; }
 
     public ClaimsPrincipal Principal { get; set; }
+
+    public NeededRights NeededRightsClaim { get; set; }
+
 
     //public void SetIdShortPathClaim(string requestedIdShortPath, string idShortPathFromDB);
 }

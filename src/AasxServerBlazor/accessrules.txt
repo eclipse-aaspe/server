@@ -5,6 +5,54 @@
         "ACL": {
           "ATTRIBUTES": [
             {
+              "CLAIM": "__Albert__Alb"
+            }
+          ],
+          "RIGHTS": [
+            "READ",
+            "CREATE",
+            "UPDATE",
+            "DELETE"
+          ],
+          "ACCESS": "ALLOW"
+        },
+        "OBJECTS": [
+          {
+            "ROUTE": "*"
+          }
+        ],
+        "FORMULA": {
+          "$boolean": true
+        }
+      },
+      {
+        "ACL": {
+          "ATTRIBUTES": [
+            {
+              "CLAIM": "isSuperDuperUser"
+            }
+          ],
+          "RIGHTS": [
+            "READ",
+            "CREATE",
+            "UPDATE",
+            "DELETE"
+          ],
+          "ACCESS": "ALLOW"
+        },
+        "OBJECTS": [
+          {
+            "ROUTE": "*"
+          }
+        ],
+        "FORMULA": {
+          "$boolean": true
+        }
+      },
+      {
+        "ACL": {
+          "ATTRIBUTES": [
+            {
               "CLAIM": "isNotAuthenticated"
             }
           ],
@@ -15,7 +63,16 @@
         },
         "OBJECTS": [
           {
-            "ROUTE": "/submodels/*"
+            "ROUTE": "/shells"
+          },
+          {
+            "ROUTE": "/submodels"
+          },
+          {
+            "ROUTE": "/query/submodels"
+          },
+          {
+            "ROUTE": "/packages"
           }
         ],
         "FORMULA": {
@@ -31,30 +88,119 @@
                       "$strVal": "Nameplate"
                     }
                   ]
+                },
+                {
+                  "$starts-with": [
+                    {
+                      "$field": "$sme#idShort"
+                    },
+                    {
+                      "$strVal": "Manufacturer"
+                    }
+                  ]
+                },
+                {
+                  "$contains": [
+                    {
+                      "$field": "$sme#value"
+                    },
+                    {
+                      "$strVal": "MGUARD"
+                    }
+                  ]
                 }
               ]
             },
             {
-              "$eq": [
+              "$and": [
                 {
-                  "$field": "$sm#idShort"
+                  "$eq": [
+                    {
+                      "$field": "$sm#idShort"
+                    },
+                    {
+                      "$strVal": "TechnicalData"
+                    }
+                  ]
                 },
                 {
-                  "$strVal": "ProductChangeNotifications"
-                }
-              ]
-            },
-            {
-              "$eq": [
-                {
-                  "$field": "$sm#idShort"
+                  "$eq": [
+                    {
+                      "$field": "$sme#idShort"
+                    },
+                    {
+                      "$strVal": "safety_integrity_level__SIL_"
+                    }
+                  ]
                 },
                 {
-                  "$strVal": "DB"
+                  "$starts-with": [
+                    {
+                      "$field": "$sme#value"
+                    },
+                    {
+                      "$strVal": "without"
+                    }
+                  ]
                 }
               ]
             }
           ]
+        },
+       "FILTER": {
+         "FRAGMENT": "xxx",
+         "CONDITION": {
+              "$or": [
+            {
+              "$and": [
+                {
+                  "$eq": [
+                    {
+                      "$field": "$sm#idShort"
+                    },
+                    {
+                      "$strVal": "TechnicalData"
+                    }
+                  ]
+                },
+                {
+                  "$starts-with": [
+                    {
+                      "$field": "$sme#idShort"
+                    },
+                    {
+                      "$strVal": "General"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "$and": [
+                {
+                  "$eq": [
+                    {
+                      "$field": "$sm#idShort"
+                    },
+                    {
+                      "$strVal": "Nameplate"
+                    }
+                  ]
+                },
+                {
+                  "$starts-with": [
+                    {
+                      "$field": "$sme#idShort"
+                    },
+                    {
+                      "$strVal": "Manufacturer"
+                    }
+                  ]
+                }
+              ]
+            }
+              ]
+         }
         }
       }
     ]

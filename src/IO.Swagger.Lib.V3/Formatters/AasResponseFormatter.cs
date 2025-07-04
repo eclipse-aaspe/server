@@ -39,6 +39,7 @@ using IO.Swagger.Lib.V3.SerializationModifiers.Mappers.MetadataMappers;
 using IO.Swagger.Lib.V3.Models;
 using System.Text.Json.Serialization;
 using Npgsql.Internal;
+using AdminShellNS.Models;
 
 namespace IO.Swagger.Lib.V3.Formatters
 {
@@ -111,6 +112,10 @@ namespace IO.Swagger.Lib.V3.Formatters
             {
                 return base.CanWriteResult(context);
             }
+            if (typeof(QueryResult).IsAssignableFrom(context.ObjectType))
+            {
+                return base.CanWriteResult(context);
+            }
             if (typeof(IMetadataDTO).IsAssignableFrom(context.ObjectType))
             {
                 return base.CanWriteResult(context);
@@ -124,6 +129,10 @@ namespace IO.Swagger.Lib.V3.Formatters
                 return base.CanWriteResult(context);
             }
             if (typeof(PackageDescriptionPagedResult).IsAssignableFrom(context.ObjectType))
+            {
+                return base.CanWriteResult(context);
+            }
+            if (typeof(PackageDescription).IsAssignableFrom(context.ObjectType))
             {
                 return base.CanWriteResult(context);
             }
@@ -335,6 +344,47 @@ namespace IO.Swagger.Lib.V3.Formatters
                 jsonNode.WriteTo(writer);
                 writer.FlushAsync().GetAwaiter().GetResult();
             }
+            else if (typeof(QueryResult).IsAssignableFrom(context.ObjectType))
+            {
+                var jsonArray = new JsonArray();
+                string cursor = null;
+                string resultType = null;
+                if (context.Object is QueryResult queryResult)
+                {
+                    cursor = queryResult.paging_metadata.cursor;
+                    resultType = queryResult.paging_metadata.resultType;
+
+                    foreach (var item in queryResult.result)
+                    {
+                        if (resultType == ResultType.Submodel.ToString())
+                        {
+                            var json = Jsonization.Serialize.ToJsonObject(item as IClass);
+                            jsonArray.Add(json);
+                        }
+                        else
+                        {
+                            jsonArray.Add(item as string);
+
+                        }
+                    }
+                }
+                JsonObject jsonNode = new JsonObject();
+                jsonNode["result"] = jsonArray;
+                var pagingMetadata = new JsonObject();
+                if (cursor != null)
+                {
+                    pagingMetadata["cursor"] = cursor;
+                }
+                if (resultType != null)
+                {
+                    pagingMetadata["resultType"] = resultType;
+                }
+
+                jsonNode["paging_metadata"] = pagingMetadata;
+                var writer = new Utf8JsonWriter(response.Body);
+                jsonNode.WriteTo(writer);
+                writer.FlushAsync().GetAwaiter().GetResult();
+            }
             else if(typeof(PackageDescriptionPagedResult).IsAssignableFrom(context.ObjectType))
             {
                 JsonNode jsonNode = null;
@@ -346,6 +396,23 @@ namespace IO.Swagger.Lib.V3.Formatters
                 if (context.Object is PackageDescriptionPagedResult pagedResult)
                 {
                     jsonNode = JsonSerializer.SerializeToNode(pagedResult, options);
+                }
+                var writer = new Utf8JsonWriter(response.Body);
+                jsonNode.WriteTo(writer);
+                writer.FlushAsync().GetAwaiter().GetResult();
+                writer.Dispose();
+            }
+            else if (typeof(PackageDescription).IsAssignableFrom(context.ObjectType))
+            {
+                JsonNode jsonNode = null;
+                var options = new JsonSerializerOptions
+                {
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                };
+                if (context.Object is PackageDescription packageDescription)
+                {
+                    jsonNode = JsonSerializer.SerializeToNode(packageDescription, options);
                 }
                 var writer = new Utf8JsonWriter(response.Body);
                 jsonNode.WriteTo(writer);

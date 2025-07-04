@@ -13,6 +13,7 @@ public class DbRequestParams
     public string AssetAdministrationShellIdentifier { get; set; }
     public string SubmodelIdentifier { get; set; }
     public string ConceptDescriptionIdentifier { get; set; }
+    public string PackageIdentifier { get; set; }
 
     public string IdShort { get; set; }
     public List<ISpecificAssetId> AssetIds { get; set; }

@@ -620,9 +620,9 @@ namespace AdminShellNS
                 }
             if (thumbUri != null && !string.IsNullOrEmpty(thumbUri.OriginalString))
             {
-                if (_aasEnv.AssetAdministrationShells.Count > 0)
+                foreach (var aas in _aasEnv.AssetAdministrationShells)
                 {
-                    _aasEnv.AssetAdministrationShells[0].AssetInformation.DefaultThumbnail = new Resource(thumbUri.OriginalString); 
+                    aas.AssetInformation.DefaultThumbnail = new Resource(thumbUri.OriginalString);
                 }
             }
         }
@@ -686,7 +686,7 @@ namespace AdminShellNS
         //    return nss;
         //}
 
-        public bool SaveAs(string fn, bool writeFreshly = false, SerializationFormat prefFmt = SerializationFormat.None,
+        public bool SaveAs(string fn, string filesPath = null, bool writeFreshly = false, SerializationFormat prefFmt = SerializationFormat.None,
                 MemoryStream useMemoryStream = null, bool saveOnlyCopy = false)
         {
             if (fn.ToLower().EndsWith(".xml"))
@@ -987,30 +987,53 @@ namespace AdminShellNS
 
                     //Handling of aas_suppl namespace from v2 to v3
                     //Need to check/test in detail, with thumbnails as well
-                    if (specPart != null)
+                    if (filesPath != null)
                     {
 
-                        xs = specPart.GetRelationshipsByType("http://www.admin-shell.io/aasx/relationships/aas-suppl");
-                        if (xs != null)
+                        using (var fileStream = new FileStream(filesPath, FileMode.Open))
+                        using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
                         {
-                            foreach (var x in xs.ToList())
+                            try
                             {
-                                var uri = x.TargetUri;
-                                PackagePart filePart = null;
-                                var absoluteURI = PackUriHelper.ResolvePartUri(x.SourceUri, x.TargetUri);
-                                if (package.PartExists(absoluteURI))
+                                foreach (var x in archive.Entries)
                                 {
-                                    filePart = package.GetPart(absoluteURI);
+                                    AddSupplementaryFileToStore(x.Name, x.FullName, false);
                                 }
-                                //delete old type, because its not according to spec or something
-                                //then replace with the current type
-                                specPart.DeleteRelationship(x.Id);
-                                specPart.CreateRelationship(
-                                    filePart.Uri, TargetMode.Internal,
-                                    "http://admin-shell.io/aasx/relationships/aas-suppl");
+                            }
+                            catch { }
+                        }
+
+                    }
+                    else
+                    {
+                        if (specPart != null)
+                        {
+
+                            xs = specPart.GetRelationshipsByType("http://www.admin-shell.io/aasx/relationships/aas-suppl");
+                            if (xs != null)
+                            {
+                                foreach (var x in xs.ToList())
+                                {
+                                    var uri = x.TargetUri;
+                                    PackagePart filePart = null;
+                                    var absoluteURI = PackUriHelper.ResolvePartUri(x.SourceUri, x.TargetUri);
+                                    if (package.PartExists(absoluteURI))
+                                    {
+
+
+                                        filePart = package.GetPart(absoluteURI);
+                                    }
+                                    //delete old type, because its not according to spec or something
+                                    //then replace with the current type
+                                    specPart.DeleteRelationship(x.Id);
+                                    specPart.CreateRelationship(
+                                        filePart.Uri, TargetMode.Internal,
+                                        "http://admin-shell.io/aasx/relationships/aas-suppl");
+                                }
                             }
                         }
                     }
+
 
                     // there might be pending files to be deleted (first delete, then add,
                     // in case of identical files in both categories)
@@ -1053,7 +1076,6 @@ namespace AdminShellNS
                     // after this, there are no more pending for delete files
                     _pendingFilesToDelete.Clear();
 
-                    // write pending supplementary files
                     foreach (var psfAdd in _pendingFilesToAdd)
                     {
                         // make sure ..
@@ -1324,12 +1346,10 @@ namespace AdminShellNS
         }
 
         public static bool withDb = false;
-        public static bool withDbFiles = false;
         public static string dataPath = "";
-        public static void setGlobalOptions(bool _withDb, bool _withDbFiles, string _dataPath)
+        public static void setGlobalOptions(bool _withDb, string _dataPath)
         {
             withDb = _withDb;
-            withDbFiles = _withDbFiles;
             dataPath = _dataPath;
         }
 
@@ -1425,16 +1445,6 @@ namespace AdminShellNS
         /// </remarks>
         public Stream GetLocalThumbnailStream(ref Uri thumbUri, bool init = false)
         {
-            // DB
-            if (withDb && withDbFiles && !init)
-            {
-                string fcopy = Path.GetFileName(Filename) + "__thumbnail";
-                fcopy = fcopy.Replace("/", "_");
-                fcopy = fcopy.Replace(".", "_");
-                var s = System.IO.File.Open(dataPath + "/files/" + fcopy + ".dat", FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                return s;
-            }
-
             // access
             if (_openPackage == null)
                 throw (new Exception(string.Format($"AASX Package {_fn} not opened. Aborting!")));

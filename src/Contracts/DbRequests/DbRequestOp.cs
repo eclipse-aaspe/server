@@ -58,5 +58,11 @@ public enum DbRequestOp
     QuerySearchSMEs,
     QueryCountSMEs,
 
-    QueryGetSMs
+    QueryGetSMs,
+
+    DeleteAASXByPackageId,
+    ReadAASXByPackageId,
+    ReadPagedAASXPackageIds,
+    CreateAASXPackage,
+    ReplaceAASXPackageById
 }

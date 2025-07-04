@@ -155,18 +155,21 @@
 					{
 						<span style="color:white;background-color:blue;" id="SelectedNodeInfoType">@ViewNodeType(SelectedNode)</span>
 						<span id="SelectedNodeInfoId">@ViewNodeID(SelectedNode)</span>
-						<br>
-					}
-					else
-					{
-						if (SelectedNode.Tag is string && SelectedNode.Text.Contains("/readme"))
-						{
-							var text = System.IO.File.ReadAllText(SelectedNode.Text);
-							text = text.Replace("%BLAZOR%", Program.externalBlazor);
-							if (text.Contains("%ACCESSRULES%"))
-							{
-								var accessRules = SecService.GetSecurityRules();
-								<table class="table table-bordered table-sm">
+                        <br>
+                    }
+                    else
+                    {
+                        if (SelectedNode.Tag is string && SelectedNode.Text.Contains("/readme"))
+                        {
+                            var text = System.IO.File.ReadAllText(SelectedNode.Text);
+                            text = text.Replace("%BLAZOR%", Program.externalBlazor);
+                            if (text.Contains("%ACCESSRULES%"))
+                            {
+                                List<Dictionary<string, string>> condition = [];
+                                var accessRules = SecService.GetSecurityRules(out condition);
+                                <span><b>AAS API</b></span>
+                                <br />
+                                <table class="table table-bordered table-sm">
 									<thead>
 										<tr>
 											<th>Name</th>
@@ -204,7 +207,23 @@
 										}
 									</tbody>
 								</table>
-							}
+                                <br />
+                                <span><b>AAS Data</b></span>
+                                <br />
+                                @foreach (var dict in condition)
+                                {
+    								<table class="table table-bordered table-sm">
+                                    @foreach (var kvp in dict)
+                                    {
+                                        <tr>
+                                            <td>@kvp.Key</td>
+                                            <td>@kvp.Value</td>
+                                        </tr>
+                                    }
+                                    </table>
+                                    <br />
+                                }
+                            }
 							else
 							{
 								<span>@((MarkupString) text)</span>
