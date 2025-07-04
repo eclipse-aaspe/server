@@ -1070,22 +1070,37 @@ namespace AasxServerDB
                     }
                     if (condition.TryGetValue("sm.", out var smvalue) && condition.TryGetValue("filter-sm.", out var smfilter))
                     {
-                        condition["sm."] = smvalue + " && " + smfilter;
-
-                        string? semanticId = null;
-                        if (reqSemanticId != null)
+                        if (smvalue != "" && smfilter != "")
                         {
-                            var keys = reqSemanticId.Keys;
-                            if (keys != null && keys.Count > 0)
-                            {
-                                semanticId = keys[0].Value;
-
-                                condition["sm."] = condition["sm."] + $" && sm.semanticId == {semanticId}";
-                            }
+                            condition["sm."] = smvalue + " && " + smfilter;
+                        }
+                        else if (smfilter != "")
+                        {
+                            condition["sm."] = smfilter;
                         }
                     }
                 }
-                qresult = querySM.SearchSMs(securityCondition, db, withTotalCount: false, withLastId: false, semanticId: "",
+
+                if (condition.TryGetValue("sm.", out _))
+                {
+                    string? semanticId = null;
+                    if (reqSemanticId != null)
+                    {
+                        var keys = reqSemanticId.Keys;
+                        if (keys != null && keys.Count > 0)
+                        {
+                            semanticId = keys[0].Value;
+
+                            condition["sm."] = "(" + condition["sm."] + $" && sm.semanticId == \"{semanticId}\"" + ")";
+                        }
+                    }
+                    if (!string.IsNullOrEmpty(idShort))
+                    {
+                        condition["sm."] = "(" + condition["sm."] + $" && sm.idShort == \"{idShort}\"" + ")";
+                    }
+                }
+
+                qresult = querySM.SearchSMs(condition, db, withTotalCount: false, withLastId: false, semanticId: "",
                 identifier: "", diff: "", pageFrom: paginationParameters.Cursor, pageSize: paginationParameters.Limit, expression: "$all");
             }
 

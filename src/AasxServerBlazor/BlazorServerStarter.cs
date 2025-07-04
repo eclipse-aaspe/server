@@ -37,6 +37,7 @@ public static class BlazorServerStarter
     {
         if (args.Contains("--debug-wait"))
         {
+            Console.WriteLine();
             Console.WriteLine("Please attach debugger now");
             while (!System.Diagnostics.Debugger.IsAttached)
             {

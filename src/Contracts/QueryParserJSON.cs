@@ -536,9 +536,9 @@ public class QueryGrammarJSON : Grammar
                     {
                         return "$SKIP";
                     }
-                    if (obj is string)
+                    if (obj is int or long or double)
                     {
-                        return "" + (obj as string);
+                        return obj.ToString();
                     }
                     break;
                 default:
