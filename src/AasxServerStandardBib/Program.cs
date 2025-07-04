@@ -1164,14 +1164,6 @@ namespace AasxServer
 
         public static void Main(string[] args, IServiceProvider serviceProvider)
         {
-            if (args.Contains("--debug-wait"))
-            {
-                Console.WriteLine("Please attach debugger now");
-                while (!System.Diagnostics.Debugger.IsAttached)
-                    System.Threading.Thread.Sleep(100);
-                Console.WriteLine("Debugger attached");
-            }
-
             Console.WriteLine("args:");
             foreach (var a in args)
             {

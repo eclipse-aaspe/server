@@ -21,6 +21,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.IO;
+using System.Linq;
 
 namespace AasxServerBlazor;
 
@@ -34,6 +35,16 @@ public static class BlazorServerStarter
 
     public static void Main(string[] args)
     {
+        if (args.Contains("--debug-wait"))
+        {
+            Console.WriteLine("Please attach debugger now");
+            while (!System.Diagnostics.Debugger.IsAttached)
+            {
+                System.Threading.Thread.Sleep(100);
+            }
+            Console.WriteLine("Debugger attached");
+        }
+
         var config = LoadConfiguration();
         var host   = BuildHost(args, config);
 
