@@ -3080,7 +3080,7 @@ namespace AasxServer
                             lock (Program.changeAasxFile)
                             {
                                 Console.WriteLine("SAVE TEMP: " + fn);
-                                env[envi].SaveAs("./temp/" + fn, true);
+                                env[envi].SaveAs("./temp/" + fn, null, true);
                                 DateTime timeStamp = DateTime.Now;
                                 foreach (var submodel in env[envi].AasEnv.Submodels)
                                 {

@@ -109,6 +109,8 @@ namespace AasxServerDB
                 //        }
                 //    }
                 //    catch { }
+
+                //ToDo: To File Service
                 var name = Path.GetFileName(filePath);
 
                 using (var fileStream = new FileStream(AasContext.DataPath + "/files/" + name + ".zip", FileMode.Create))
@@ -181,7 +183,7 @@ namespace AasxServerDB
 
                     new VisitorAASX(envDB: envDB).Visit(aas);
 
-                    FileService.CreateAasZipFile(aas, asp.GetLocalThumbnailStream());
+                    FileService.CreateThumbnailZipFile(aas, asp.GetLocalThumbnailStream());
 
 
                     if (aas.Submodels == null)
@@ -208,7 +210,6 @@ namespace AasxServerDB
 
 
                     new VisitorAASX(envDB: envDB).Visit(sm);
-                    FileService.CreateSubmodelZipFile(sm);
 
                     // envDB.SMSets.Last().AASSet = aas;
                     aas.SMRefSets.Add(new SMRefSet { Identifier = sm.Id });

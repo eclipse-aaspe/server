@@ -8,11 +8,13 @@ using AasxServerStandardBib.Logging;
 using AdminShellNS;
 using Contracts.Exceptions;
 using Extensions;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
 
 public class FileService
 {
+    public const string ThumnbnailsFolderName = "thumbnails";
     public const string FilesFolderName = "files";
-
+    public const string XmlFolderName = "xml";
 
     internal static string FormatToFileName(string name)
     {
@@ -22,11 +24,14 @@ public class FileService
         return name;
     }
 
-    internal static void CreateAasZipFile(IAssetAdministrationShell aas, Stream thumbnailStreamFromPackage = null)
+    internal static string GetThumbnailZipPath(string aasId)
     {
-        var path = Path.Combine(AasContext.DataPath, FilesFolderName, FormatToFileName(aas.Id) + ".zip");
+        return Path.Combine(AasContext.DataPath, FilesFolderName, ThumnbnailsFolderName, FormatToFileName(aasId) + ".zip");
+    }
 
-        using (var fileStream = new FileStream(path, FileMode.Create))
+    internal static void CreateThumbnailZipFile(IAssetAdministrationShell aas, Stream thumbnailStreamFromPackage = null)
+    {
+        using (var fileStream = new FileStream(GetThumbnailZipPath(aas.Id), FileMode.Create))
         {
             using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
             {
@@ -53,24 +58,64 @@ public class FileService
         }
     }
 
-    internal static void CreateSubmodelZipFile(ISubmodel submodel, ListOfAasSupplementaryFile supplementaryFiles = null)
+    internal static void InitFileSystem(bool reloadDBFiles)
     {
-        var path = Path.Combine(AasContext.DataPath, FilesFolderName, FormatToFileName(submodel.Id) + ".zip");
+        var filesPath = Path.Combine(AasContext.DataPath, FilesFolderName);
 
-        using (var fileStream = new FileStream(path, FileMode.Create))
+        if (reloadDBFiles && Directory.Exists(filesPath))
         {
-            using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
+            Directory.Delete(filesPath, true);
+        }
+
+        if (!Directory.Exists(filesPath))
+            Directory.CreateDirectory(filesPath);
+
+        var xmlPath = Path.Combine(AasContext.DataPath, XmlFolderName);
+
+        if (reloadDBFiles && Directory.Exists(xmlPath))
+        {
+            Directory.Delete(xmlPath, true);
+        }
+
+        if (!Directory.Exists(xmlPath))
+            Directory.CreateDirectory(xmlPath);
+
+        var thumbnailFolderPath = Path.Combine(filesPath, ThumnbnailsFolderName);
+        if (!Directory.Exists(thumbnailFolderPath))
+            Directory.CreateDirectory(thumbnailFolderPath);
+
+        var path = Path.Combine(filesPath, "_unpacked" + ".zip");
+
+        if (reloadDBFiles || !System.IO.File.Exists(path))
+        {
+            using (var fileStream = new FileStream(path, FileMode.OpenOrCreate))
             {
-                /*if (supplementaryFiles != null)
+                using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Create))
                 {
-                    var submodelElements = submodel.SubmodelElements;
-                }*/
+                }
             }
         }
+
     }
 
-    internal static void ReadFileInZip(string envFileName, out byte[] content, out long fileSize, IAppLogger<EntityFrameworkPersistenceService> scopedLogger, out string fileName, AasCore.Aas3_0.File file)
+    internal static string GetFilesZipPath(string envFileName)
     {
+        if (envFileName == null)
+        {
+            return Path.Combine(AasContext.DataPath, FilesFolderName, "_unpacked.zip");
+        }
+
+        var zipFileName = Path.GetFileName(envFileName) + ".zip";
+        return Path.Combine(AasContext.DataPath, FilesFolderName, zipFileName);
+    }
+
+    internal static bool ReadFileInZip(IAppLogger<EntityFrameworkPersistenceService> scopedLogger, string envFileName, AasCore.Aas3_0.File file, out byte[] content,
+        out long fileSize, out string fileName)
+    {
+        bool isFileOperationSuceeded = false;
+        content = null;
+        fileSize = 0;
+
         fileName = file.Value;
 
         if (string.IsNullOrEmpty(fileName))
@@ -90,20 +135,29 @@ public class FileService
         {
             scopedLogger.LogInformation($"Value of the Submodel-Element File with IdShort {file.IdShort} is a File-Path.");
 
-            using (var fileStream = new FileStream(AasContext.DataPath + "/files/" + Path.GetFileName(envFileName) + ".zip", FileMode.Open))
+            try
             {
-                using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
+                using (var fileStream = new FileStream(GetFilesZipPath(envFileName), FileMode.Open))
                 {
-                    var archiveFile = archive.GetEntry(file.Value);
-                    var tempStream = archiveFile.Open();
-                    var ms = new MemoryStream();
-                    tempStream.CopyTo(ms);
-                    ms.Position = 0;
-                    content = ms.ToByteArray();
+                    using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
+                    {
+                        var archiveFile = archive.GetEntry(file.Value);
+                        var tempStream = archiveFile.Open();
+                        var ms = new MemoryStream();
+                        tempStream.CopyTo(ms);
+                        ms.Position = 0;
+                        content = ms.ToByteArray();
 
-                    fileSize = content.Length;
+                        fileSize = content.Length;
+                    }
+                    isFileOperationSuceeded = true;
+                    return isFileOperationSuceeded;
                 }
             }
+            catch (Exception)
+            {
+            }
+
         }
         // incorrect value
         else
@@ -111,10 +165,14 @@ public class FileService
             scopedLogger.LogError($"Incorrect value {file.Value} of the Submodel-Element File with IdShort {file.IdShort}");
             throw new UnprocessableEntityException($"Incorrect value {file.Value} of the File with IdShort {file.IdShort}.");
         }
+
+        return isFileOperationSuceeded;
     }
 
-    internal static void ReplaceFileInZip(string envFileName, IAppLogger<EntityFrameworkPersistenceService> scopedLogger, AasCore.Aas3_0.File file, string fileName, string contentType, MemoryStream stream)
+    internal static bool ReplaceFileInZip(IAppLogger<EntityFrameworkPersistenceService> scopedLogger, string envFileName, ref AasCore.Aas3_0.File file, string fileName, string contentType, MemoryStream stream)
     {
+        bool isFileOperationSuceeded = false;
+
         if (string.IsNullOrEmpty(file.Value))
         {
             scopedLogger.LogError($"File name is empty. Cannot fetch the file.");
@@ -141,8 +199,6 @@ public class FileService
                 sourcePath = Path.Combine(file.Value);
             }
 
-            var targetFile = Path.Combine(sourcePath, fileName);
-
             //ToDo: Verify whether we really need a temporary file
             string tempFilePath = Path.Combine(Path.GetTempPath(), fileName);
 
@@ -153,20 +209,30 @@ public class FileService
 
             scopedLogger.LogInformation($"Value of the Submodel-Element File with IdShort {file.IdShort} is a File-Path.");
 
-            using (var fileStream = new FileStream(AasContext.DataPath + "/files/" + Path.GetFileName(envFileName) + ".zip", FileMode.Open))
+            try
             {
-                using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Update))
+                using (var fileStream = new FileStream(AasContext.DataPath + "/files/" + Path.GetFileName(envFileName) + ".zip", FileMode.Open))
                 {
-                    var entry = archive.GetEntry(file.Value);
-                    entry?.Delete();
-                    archive.CreateEntryFromFile(tempFilePath, file.Value);
+                    using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Update))
+                    {
+                        var entry = archive.GetEntry(file.Value);
+                        entry?.Delete();
+                        archive.CreateEntryFromFile(tempFilePath, file.Value);
+                    }
+                }
+
+                file.Value = sourcePath;
+                isFileOperationSuceeded = true;
+
+                if (System.IO.File.Exists(tempFilePath))
+                {
+                    System.IO.File.Delete(tempFilePath);
                 }
             }
-
-            if (System.IO.File.Exists(tempFilePath))
+            catch (Exception)
             {
-                System.IO.File.Delete(tempFilePath);
             }
+
         }
         // incorrect value
         else
@@ -174,10 +240,14 @@ public class FileService
             scopedLogger.LogError($"Incorrect value {file.Value} of the Submodel-Element File with IdShort {file.IdShort}");
             throw new UnprocessableEntityException($"Incorrect value {file.Value} of the File with IdShort {file.IdShort}.");
         }
+
+        return isFileOperationSuceeded;
     }
 
-    internal static void DeleteFileInZip(string envFileName, IAppLogger<EntityFrameworkPersistenceService> scopedLogger, AasCore.Aas3_0.File file)
+    internal static bool DeleteFileInZip(IAppLogger<EntityFrameworkPersistenceService> scopedLogger, string envFileName, AasCore.Aas3_0.File file)
     {
+        bool isFileOperationSuceeded = false;
+
         if (!string.IsNullOrEmpty(file.Value))
         {
             //check if it is external location
@@ -191,18 +261,27 @@ public class FileService
             {
                 scopedLogger.LogInformation($"Value of the Submodel-Element File with IdShort {file.IdShort} is a File-Path.");
 
-
-                using (var fileStream = new FileStream(AasContext.DataPath + "/files/" + Path.GetFileName(envFileName) + ".zip", FileMode.Open))
+                try
                 {
-                    using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Update))
+                    using (var fileStream = new FileStream(GetFilesZipPath(envFileName), FileMode.Open))
                     {
-                        var entry = archive.GetEntry(file.Value);
+                        using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Update))
+                        {
+                            var entry = archive.GetEntry(file.Value);
 
-                        entry?.Delete();
+                            entry?.Delete();
+                        }
                     }
-                }
 
-                file.Value = string.Empty;
+                    file.Value = string.Empty;
+                    isFileOperationSuceeded = true;
+
+                    return isFileOperationSuceeded;
+                }
+                catch (Exception)
+                {
+                    return isFileOperationSuceeded;
+                }
 
                 //ToDo: Do notification
                 //Program.signalNewData(1);
@@ -215,6 +294,8 @@ public class FileService
                 throw new OperationNotSupported($"Incorrect value {file.Value} of the File with IdShort {file.IdShort}.");
             }
         }
+
+        return isFileOperationSuceeded;
     }
 
     internal static bool ReadFromThumbnail(IAssetInformation assetInformation, string aasIdentifier, out byte[] content, out long fileSize)
@@ -228,8 +309,7 @@ public class FileService
         {
             try
             {
-                var path = Path.Combine(AasContext.DataPath, FilesFolderName, FormatToFileName(aasIdentifier) + ".zip");
-                using (var fileStream = new FileStream(path, FileMode.Open))
+                using (var fileStream = new FileStream(GetThumbnailZipPath(aasIdentifier), FileMode.Open))
                 {
                     using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
                     {
@@ -251,7 +331,6 @@ public class FileService
                 return isFileOperationSuceeded;
             }
         }
-
         else
         {
             throw new NotFoundException($"No default thumbnail embedded in the AssetInformation of the requested AAS.");
@@ -295,10 +374,7 @@ public class FileService
 
             result.Close();
 
-
-            var zipFilePath = Path.Combine(AasContext.DataPath, FilesFolderName, FormatToFileName(aasIdentifier) + ".zip");
-
-            using (var zipFileStream = new FileStream(zipFilePath, FileMode.OpenOrCreate))
+            using (var zipFileStream = new FileStream(GetThumbnailZipPath(aasIdentifier), FileMode.Open))
             {
                 using (var archive = new ZipArchive(zipFileStream, ZipArchiveMode.Update))
                 {
@@ -344,9 +420,7 @@ public class FileService
         {
             try
             {
-                var zipFilePath = Path.Combine(AasContext.DataPath, FilesFolderName, FormatToFileName(aasIdentifier) + ".zip");
-
-                using (var zipFileStream = new FileStream(zipFilePath, FileMode.OpenOrCreate))
+                using (var zipFileStream = new FileStream(GetThumbnailZipPath(aasIdentifier), FileMode.OpenOrCreate))
                 {
                     using (var archive = new ZipArchive(zipFileStream, ZipArchiveMode.Update))
                     {
