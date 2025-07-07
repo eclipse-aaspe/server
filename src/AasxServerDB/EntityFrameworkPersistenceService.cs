@@ -1070,6 +1070,11 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
                     var packageEnvFound = IsPackageEnvPresent(db, null, aasIdentifier, submodelIdentifier, false, out _, out EnvSet env);
 
+                    if(packageEnvFound)
+                    {
+                        envFileName = env.Path;
+                    }
+
                     FileService.ReadFileInZip(scopedLogger, envFileName, file, out content, out fileSize, out fileName);
                 }
                 else
@@ -1100,6 +1105,12 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 if (fileElement is AasCore.Aas3_0.File file)
                 {
                     var envFileName = string.Empty;
+
+                    var packageEnvFound = IsPackageEnvPresent(db, null, aasIdentifier, submodelIdentifier, false, out _, out EnvSet env);
+                    if (packageEnvFound)
+                    {
+                        envFileName = env.Path;
+                    }
 
                     if (FileService.ReplaceFileInZip(scopedLogger, envFileName, ref file, fileName, contentType, stream))
                     {
@@ -1138,6 +1149,10 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         var envFileName = string.Empty;
 
                         var packageEnvFound = IsPackageEnvPresent(db, null, aasIdentifier, submodelIdentifier, false, out _, out EnvSet envSet);
+                        if (packageEnvFound)
+                        {
+                            envFileName = envSet.Path;
+                        }
 
                         FileService.DeleteFileInZip(scopedLogger, envFileName, file);
                     }
@@ -1166,8 +1181,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         if (IsAssetAdministrationShellPresent(db, aasIdentifier, true, out _, out IAssetAdministrationShell aas))
         {
-            var envFileName = string.Empty;
-
             if (aas.AssetInformation != null)
             {
                 if (FileService.ReadFromThumbnail(aas.AssetInformation, aasIdentifier, out byteArray, out fileSize))
@@ -1237,7 +1250,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
     {
         if (IsAssetAdministrationShellPresent(db, aasIdentifier, true, out AASSet aasDB, out IAssetAdministrationShell aas))
         {
-
             var assetInformation = aas.AssetInformation;
 
             if (assetInformation != null)
