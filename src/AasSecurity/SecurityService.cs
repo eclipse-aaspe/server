@@ -184,48 +184,6 @@ namespace AasSecurity
                         }
                     }
                 }
-                /*
-                if (rule._filter_conditions != null)
-                {
-                    var c = rule._filter_conditions;
-                    if (c.TryGetValue("all", out var all))
-                    {
-                        if (!string.IsNullOrEmpty(all))
-                        {
-                            var hasValue = condition.TryGetValue("filter", out var value);
-                            if (hasValue && value != "")
-                            {
-                                if (all != "")
-                                {
-                                    condition["filter"] = value + " || " + all;
-                                }
-                            }
-                            else
-                            {
-                                condition["filter"] = all;
-                            }
-                        }
-                    }
-                    if (c.TryGetValue("sme.", out var sme))
-                    {
-                        if (!string.IsNullOrEmpty(sme))
-                        {
-                            var hasValue = condition.TryGetValue("filtersme", out var value);
-                            if (hasValue && value != "")
-                            {
-                                if (sme != "")
-                                {
-                                    condition["filtersme"] = value + " || " + sme;
-                                }
-                            }
-                            else
-                            {
-                                condition["filtersme"] = sme;
-                            }
-                        }
-                    }
-                }
-                */
             }
 
             foreach (var c in condition)
@@ -237,19 +195,6 @@ namespace AasSecurity
             }
 
             return condition;
-
-            /*
-            foreach (var c in _condition)
-            {
-                var a = c["claim"];
-                var n = c["right"];
-                if (a == accessRole && n.Contains(neededRightsClaim))
-                {
-                    return c;
-                }
-            }
-            return null;
-            */
         }
 
         public void ClearSecurityRules()

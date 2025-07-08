@@ -419,6 +419,15 @@ public class QueryGrammarJSON : Grammar
                         string right = createExpression(mode, eList[1], smeValue: smeValue);
                         if (left != "$SKIP" && right != "$SKIP")
                         {
+                            if (right.StartsWith("$$tag$$"))
+                            {
+                                return "$ERROR";
+                            }
+                            if (left.StartsWith("$$tag$$"))
+                            {
+                                return $"{left} {op} {right}$$";
+                            }
+
                             return "(" + left + " " + op + " " + right + ")";
                         }
                         else
@@ -436,6 +445,15 @@ public class QueryGrammarJSON : Grammar
                         var right = createExpression(mode, eList[1], smeValue: "svalue");
                         if (left != "$SKIP" && right != "$SKIP")
                         {
+                            if (right.StartsWith("$$tag$$"))
+                            {
+                                return "$ERROR";
+                            }
+                            if (left.StartsWith("$$tag$$"))
+                            {
+                                return $"{left}.{op}({right})$$";
+                            }
+
                             return left + "." + op + "(" + right + ")";
                         }
                         else
@@ -459,68 +477,25 @@ public class QueryGrammarJSON : Grammar
                 case "$field":
                     if (obj is string)
                     {
-                        string value = "" + (obj as string);
-                        value = value.Replace("$sm#", "sm.");
-                        value = value.Replace("$sme#", "sme.");
-                        switch (mode)
+                        var value = "" + (obj as string);
+
+                        if (value.Contains("$sme."))
                         {
-                            case "all":
-                                if (smeValue == "svalue")
-                                {
-                                    if (value == "sme.value")
-                                    {
-                                        return "svalue";
-                                    }
-                                }
-                                if (smeValue == "mvalue")
-                                {
-                                    if (value == "sme.value")
-                                    {
-                                        return "mvalue";
-                                    }
-                                }
+                            // $sme with idShortPath
+                            value = value.Replace("$sme.", "");
+                            var split = value.Split("#");
+                            value = ReplaceField(mode, $"$sme#{split[1]}", smeValue);
+                            if (value == "$SKIP" || value == "$ERROR")
+                            {
                                 return value;
-                            case "sm.":
-                                if (value.StartsWith("sm."))
-                                {
-                                    return value;
-                                }
-                                else
-                                {
-                                    return "$SKIP";
-                                }
-                            case "sme.":
-                                if (value != "sme.value" && value.StartsWith("sme."))
-                                {
-                                    return value;
-                                }
-                                else
-                                {
-                                    return "$SKIP";
-                                }
-                            case "svalue":
-                                if (value == "sme.value")
-                                {
-                                    return "svalue";
-                                }
-                                else
-                                {
-                                    return "$SKIP";
-                                }
-                            case "mvalue":
-                                if (value == "sme.value")
-                                {
-                                    return "mvalue";
-                                }
-                                else
-                                {
-                                    return "$SKIP";
-                                }
-                            default:
-                                return "$ERROR";
+                            }
+
+                            return $"$$tag$$path$${split[0]}$${value}$$";
                         }
+
+                        return ReplaceField(mode, value, smeValue);
                     }
-                    break;
+                    return "$ERROR";
                 case "$strVal":
                     if (mode == "mvalue")
                     {
@@ -546,6 +521,71 @@ public class QueryGrammarJSON : Grammar
             }
         }
         return "$ERROR";
+    }
+
+    public static string ReplaceField(string mode, string value, string smeValue)
+    {
+        value = value.Replace("$sm#", "sm.");
+        value = value.Replace("$sme#", "sme.");
+        switch (mode)
+        {
+            case "all":
+                if (smeValue == "svalue")
+                {
+                    if (value == "sme.value")
+                    {
+                        value = "svalue";
+                    }
+                }
+                if (smeValue == "mvalue")
+                {
+                    if (value == "sme.value")
+                    {
+                        value = "mvalue";
+                    }
+                }
+                break;
+            case "sm.":
+                if (!value.StartsWith("sm."))
+                {
+                    value = "$SKIP";
+                }
+                break;
+            case "sme.":
+                if (value != "sme.value" && value.StartsWith("sme."))
+                {
+                    value = value;
+                }
+                else
+                {
+                    value = "$SKIP";
+                }
+                break;
+            case "svalue":
+                if (value == "sme.value")
+                {
+                    value = "svalue";
+                }
+                else
+                {
+                    value = "$SKIP";
+                }
+                break;
+            case "mvalue":
+                if (value == "sme.value")
+                {
+                    value = "mvalue";
+                }
+                else
+                {
+                    value = "$SKIP";
+                }
+                break;
+            default:
+                value = "$ERROR";
+                break;
+        }
+        return value;
     }
 
     public static AllAccessPermissionRules _accessRules = null;
