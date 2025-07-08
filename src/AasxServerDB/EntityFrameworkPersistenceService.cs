@@ -1050,39 +1050,51 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     private string ReadFileByPath(AasContext db, Dictionary<string, string>? securityCondition, string aasIdentifier, string submodelIdentifier, string idShortPath, out byte[] content, out long fileSize)
     {
-        var fileElement = CrudOperator.ReadSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShortPath, out SMESet smE);
-        content = null;
-        fileSize = 0;
-
-        var found = fileElement != null;
-        if (found)
+        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, out _))
         {
-            using (var scope = _serviceProvider.CreateScope())
+            var fileElement = CrudOperator.ReadSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShortPath, out SMESet smE);
+            content = null;
+            fileSize = 0;
+
+            var found = fileElement != null;
+            if (found)
             {
-                var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
-                scopedLogger.LogDebug($"Asset Administration Shell with id {aasIdentifier} found.");
-
-                string fileName = null;
-
-                if (fileElement is AasCore.Aas3_0.File file)
+                using (var scope = _serviceProvider.CreateScope())
                 {
-                    var envFileName = string.Empty;
+                    var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
 
-                    var packageEnvFound = IsPackageEnvPresent(db, null, aasIdentifier, submodelIdentifier, false, out _, out EnvSet env);
+                    string fileName = null;
 
-                    if(packageEnvFound)
+                    if (fileElement is AasCore.Aas3_0.File file)
                     {
-                        envFileName = env.Path;
+                        var envFileName = string.Empty;
+
+                        var packageEnvFound = IsPackageEnvPresent(db, null, aasIdentifier, submodelIdentifier, false, out _, out EnvSet env);
+
+                        if (packageEnvFound)
+                        {
+                            envFileName = env.Path;
+                        }
+
+                        if (FileService.ReadFileInZip(scopedLogger, envFileName, file, out content, out fileSize, out fileName))
+                        {
+                            return fileName;
+                        }
+                        else
+                        {
+                            throw new Exception($"Could not read Submodel element {fileElement.IdShort}");
+                        }
+                    }
+                    else
+                    {
+                        throw new NotFoundException($"Submodel element {fileElement.IdShort} is not of type File.");
                     }
 
-                    FileService.ReadFileInZip(scopedLogger, envFileName, file, out content, out fileSize, out fileName);
                 }
-                else
-                {
-                    throw new NotFoundException($"Submodel element {fileElement.IdShort} is not of type File.");
-                }
-
-                return fileName;
+            }
+            else
+            {
+                throw new NotFoundException($"Submodel element with sm id {submodelIdentifier} and id short path not found {idShortPath}");
             }
         }
         else
@@ -1093,39 +1105,46 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     public void ReplaceFileByPath(AasContext db, Dictionary<string, string>? securityCondition, string aasIdentifier, string submodelIdentifier, string idShortPath, string fileName, string contentType, MemoryStream stream)
     {
-        var fileElement = CrudOperator.ReadSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShortPath, out SMESet smE);
-
-        var found = fileElement != null;
-        if (found)
+        if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, out _))
         {
-            using (var scope = _serviceProvider.CreateScope())
+            var fileElement = CrudOperator.ReadSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShortPath, out _);
+
+            var found = fileElement != null;
+            if (found)
             {
-                var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
-
-                if (fileElement is AasCore.Aas3_0.File file)
+                using (var scope = _serviceProvider.CreateScope())
                 {
-                    var envFileName = string.Empty;
+                    var scopedLogger = scope.ServiceProvider.GetRequiredService<IAppLogger<EntityFrameworkPersistenceService>>();
 
-                    var packageEnvFound = IsPackageEnvPresent(db, null, aasIdentifier, submodelIdentifier, false, out _, out EnvSet env);
-                    if (packageEnvFound)
+                    if (fileElement is AasCore.Aas3_0.File file)
                     {
-                        envFileName = env.Path;
+                        var envFileName = string.Empty;
+
+                        var packageEnvFound = IsPackageEnvPresent(db, null, aasIdentifier, submodelIdentifier, false, out _, out EnvSet env);
+                        if (packageEnvFound)
+                        {
+                            envFileName = env.Path;
+                        }
+
+                        if (FileService.ReplaceFileInZip(scopedLogger, envFileName, ref file, fileName, contentType, stream))
+                        {
+                            CrudOperator.ReplaceSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShortPath, file);
+                        }
                     }
-
-                    if (FileService.ReplaceFileInZip(scopedLogger, envFileName, ref file, fileName, contentType, stream))
+                    else
                     {
-                        CrudOperator.ReplaceSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShortPath, file);
+                        throw new NotFoundException($"Submodel element {fileElement.IdShort} is not of type File.");
                     }
                 }
-                else
-                {
-                    throw new NotFoundException($"Submodel element {fileElement.IdShort} is not of type File.");
-                }
+            }
+            else
+            {
+                throw new NotFoundException($"Submodel element with sm id {submodelIdentifier} and id short path not found {idShortPath}");
             }
         }
         else
         {
-            //throw new OperationNotSupported($"SubmodelElement found at {idShortPath} is not of type File");
+            throw new NotFoundException($"Submodel with id {submodelIdentifier} NOT found in AAS with id {aasIdentifier}");
         }
     }
 
@@ -1133,8 +1152,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
     {
         if (IsSubmodelPresent(db, securityCondition, aasIdentifier, submodelIdentifier, false, out _))
         {
-            SMESet sME = null;
-            var fileElement = CrudOperator.ReadSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShortPath, out sME);
+            var fileElement = CrudOperator.ReadSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShortPath, out _);
 
             var found = fileElement != null;
             if (found)
@@ -1154,7 +1172,10 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                             envFileName = envSet.Path;
                         }
 
-                        FileService.DeleteFileInZip(scopedLogger, envFileName, file);
+                        if (FileService.DeleteFileInZip(scopedLogger, envFileName, ref file))
+                        {
+                            CrudOperator.ReplaceSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShortPath, file);
+                        }
                     }
                     else
                     {
@@ -1164,7 +1185,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             }
             else
             {
-                //throw new OperationNotSupported($"SubmodelElement found at {idShortPath} is not of type File");
+                throw new NotFoundException($"Submodel element with sm id {submodelIdentifier} and id short path not found {idShortPath}");
             }
         }
         else
@@ -1641,9 +1662,13 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             {
                 return true;
             }
+            else
+            {
+                return false;
+            }
         }
 
-        return false;
+        return true;
 
         /*
         using (var db = new AasContext())

@@ -2,6 +2,7 @@ namespace AasxServerDB;
 using System;
 using System.IO;
 using System.IO.Compression;
+using System.Text.RegularExpressions;
 using AasCore.Aas3_0;
 using AasxServerStandardBib.Exceptions;
 using AasxServerStandardBib.Logging;
@@ -16,13 +17,23 @@ public class FileService
     public const string FilesFolderName = "files";
     public const string XmlFolderName = "xml";
 
+
     internal static string FormatToFileName(string name)
     {
         name = name.Replace("/", "_");
         name = name.Replace(".", "_");
         name = name.Replace(":", "_");
+
         return name;
     }
+
+    internal static string FormatToZipFilePath(string name)
+    {
+        name = Regex.Replace(name, @"\\", "/");
+
+        return name;
+    }
+
 
     internal static string GetThumbnailZipPath(string aasId)
     {
@@ -48,7 +59,6 @@ public class FileService
                         }
 
                         archive.CreateEntryFromFile(tempFilePath, aas.AssetInformation.DefaultThumbnail?.Path);
-
                     }
                     catch (Exception e)
                     {
@@ -121,7 +131,7 @@ public class FileService
         if (string.IsNullOrEmpty(fileName))
         {
             scopedLogger.LogError($"File name is empty. Cannot fetch the file.");
-            throw new UnprocessableEntityException($"File value Null!!");
+            throw new NotFoundException($"File value Null!!");
         }
 
         //check if it is external location
@@ -141,7 +151,7 @@ public class FileService
                 {
                     using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
                     {
-                        var archiveFile = archive.GetEntry(file.Value);
+                        var archiveFile = archive.GetEntry(fileName);
                         var tempStream = archiveFile.Open();
                         var ms = new MemoryStream();
                         tempStream.CopyTo(ms);
@@ -156,6 +166,7 @@ public class FileService
             }
             catch (Exception)
             {
+                isFileOperationSuceeded = false;
             }
 
         }
@@ -173,78 +184,94 @@ public class FileService
     {
         bool isFileOperationSuceeded = false;
 
-        if (string.IsNullOrEmpty(file.Value))
-        {
-            scopedLogger.LogError($"File name is empty. Cannot fetch the file.");
-            throw new UnprocessableEntityException($"File value Null!!");
-        }
+        string targetFile = String.Empty;
 
-        //check if it is external location
-        if (file.Value.StartsWith("http") || file.Value.StartsWith("https"))
+        bool isEmpty = string.IsNullOrEmpty(file.Value);
+
+        //Check if file has location
+        if (!isEmpty)
         {
-            scopedLogger.LogWarning($"Value of the Submodel-Element File with IdShort {file.IdShort} is an external link.");
-            throw new NotImplementedException($"File location for {file.IdShort} is external {file.Value}. Currently this fuctionality is not supported.");
-        }
-        //Check if a directory
-        else if (file.Value.StartsWith('/') || file.Value.StartsWith('\\'))
-        {
-            //check if the value consists file extension
-            string sourcePath;
-            if (Path.HasExtension(file.Value))
+            //check if it is external location
+            if (file.Value.StartsWith("http") || file.Value.StartsWith("https"))
             {
-                sourcePath = Path.GetDirectoryName(file.Value); //This should get platform specific path, without file name
+                scopedLogger.LogWarning($"Value of the Submodel-Element File with IdShort {file.IdShort} is an external link.");
+                throw new NotImplementedException($"File location for {file.IdShort} is external {file.Value}. Currently this fuctionality is not supported.");
+            }
+            //Check if a directory
+            if (file.Value.StartsWith('/') || file.Value.StartsWith('\\'))
+            {
+                scopedLogger.LogInformation($"Value of the Submodel-Element File with IdShort {file.IdShort} is a File-Path.");
+
+                //check if the value consists file extension
+                string sourcePath;
+                if (Path.HasExtension(file.Value))
+                {
+                    sourcePath = Path.GetDirectoryName(file.Value); //This should get platform specific path, without file name
+                }
+                else
+                {
+                    sourcePath = Path.Combine(file.Value);
+                }
+
+                targetFile = Path.Combine(sourcePath, fileName);
             }
             else
             {
-                sourcePath = Path.Combine(file.Value);
+                //The value is incorrect, so store the file to default location "/aasx/files"
+                scopedLogger.LogInformation($"Incorret value of the Submodel-Element File with IdShort {file.IdShort}");
+                targetFile = Path.Combine("/aasx/files", fileName);
             }
-
-            //ToDo: Verify whether we really need a temporary file
-            string tempFilePath = Path.Combine(Path.GetTempPath(), fileName);
-
-            using (FileStream fileStream = new FileStream(tempFilePath, FileMode.Create, FileAccess.Write))
-            {
-                stream.WriteTo(fileStream);
-            }
-
-            scopedLogger.LogInformation($"Value of the Submodel-Element File with IdShort {file.IdShort} is a File-Path.");
-
-            try
-            {
-                using (var fileStream = new FileStream(AasContext.DataPath + "/files/" + Path.GetFileName(envFileName) + ".zip", FileMode.Open))
-                {
-                    using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Update))
-                    {
-                        var entry = archive.GetEntry(file.Value);
-                        entry?.Delete();
-                        archive.CreateEntryFromFile(tempFilePath, file.Value);
-                    }
-                }
-
-                file.Value = sourcePath;
-                isFileOperationSuceeded = true;
-
-                if (System.IO.File.Exists(tempFilePath))
-                {
-                    System.IO.File.Delete(tempFilePath);
-                }
-            }
-            catch (Exception)
-            {
-            }
-
         }
-        // incorrect value
         else
         {
-            scopedLogger.LogError($"Incorrect value {file.Value} of the Submodel-Element File with IdShort {file.IdShort}");
-            throw new UnprocessableEntityException($"Incorrect value {file.Value} of the File with IdShort {file.IdShort}.");
+            //The value is null, so store the file to default location "/aasx/files"
+            scopedLogger.LogInformation($"Null Value of the Submodel-Element File with IdShort {file.IdShort}");
+            targetFile = Path.Combine("/aasx/files", fileName);
+        }
+
+        targetFile = FormatToZipFilePath(targetFile);
+
+        //ToDo: Verify whether we really need a temporary file
+        string tempFilePath = Path.Combine(Path.GetTempPath(), fileName);
+
+        using (FileStream fileStream = new FileStream(tempFilePath, FileMode.Create, FileAccess.Write))
+        {
+            stream.WriteTo(fileStream);
+        }
+
+        try
+        {
+            using (var fileStream = new FileStream(AasContext.DataPath + "/files/" + Path.GetFileName(envFileName) + ".zip", FileMode.Open))
+            {
+                using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Update))
+                {
+                    if (!isEmpty)
+                    {
+                        var entry = archive.GetEntry(Path.Combine(file.Value));
+                        entry?.Delete();
+                    }
+                    archive.CreateEntryFromFile(tempFilePath, targetFile);
+                }
+            }
+
+            file.Value = targetFile;
+
+            isFileOperationSuceeded = true;
+
+            if (System.IO.File.Exists(tempFilePath))
+            {
+                System.IO.File.Delete(tempFilePath);
+            }
+        }
+        catch (Exception ex)
+        {
+            scopedLogger.LogError($"File operation failed, because of exception: {ex.Message}");
         }
 
         return isFileOperationSuceeded;
     }
 
-    internal static bool DeleteFileInZip(IAppLogger<EntityFrameworkPersistenceService> scopedLogger, string envFileName, AasCore.Aas3_0.File file)
+    internal static bool DeleteFileInZip(IAppLogger<EntityFrameworkPersistenceService> scopedLogger, string envFileName, ref AasCore.Aas3_0.File file)
     {
         bool isFileOperationSuceeded = false;
 
@@ -256,7 +283,7 @@ public class FileService
                 scopedLogger.LogWarning($"Value of the Submodel-Element File with IdShort {file.IdShort} is an external link.");
                 throw new NotImplementedException($"File location for {file.IdShort} is external {file.Value}. Currently this fuctionality is not supported.");
             }
-            //Check if a directory
+            ////Check if a directory
             else if (file.Value.StartsWith('/') || file.Value.StartsWith('\\'))
             {
                 scopedLogger.LogInformation($"Value of the Submodel-Element File with IdShort {file.IdShort} is a File-Path.");
@@ -268,8 +295,12 @@ public class FileService
                         using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Update))
                         {
                             var entry = archive.GetEntry(file.Value);
+                            if (entry == null)
+                            {
+                                return false;
+                            }
 
-                            entry?.Delete();
+                            entry.Delete();
                         }
                     }
 
@@ -282,10 +313,6 @@ public class FileService
                 {
                     return isFileOperationSuceeded;
                 }
-
-                //ToDo: Do notification
-                //Program.signalNewData(1);
-                //scopedLogger.LogDebug($"Deleted the file at {idShortPath} from submodel with Id {submodelIdentifier}");
             }
             // incorrect value
             else
@@ -294,8 +321,10 @@ public class FileService
                 throw new OperationNotSupported($"Incorrect value {file.Value} of the File with IdShort {file.IdShort}.");
             }
         }
-
-        return isFileOperationSuceeded;
+        else
+        {
+            throw new NotFoundException($"File value Null!!");
+        }
     }
 
     internal static bool ReadFromThumbnail(IAssetInformation assetInformation, string aasIdentifier, out byte[] content, out long fileSize)
