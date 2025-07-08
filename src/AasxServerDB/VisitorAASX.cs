@@ -90,25 +90,6 @@ namespace AasxServerDB
                     }
                 }
 
-                //if (withDbFiles)
-                //{
-                //    try
-                //    {
-                //        var temporaryFileName = name + "__thumbnail";
-                //        temporaryFileName = temporaryFileName.Replace("/", "_");
-                //        temporaryFileName = temporaryFileName.Replace(".", "_");
-                //        Uri? dummy = null;
-                //        using (var st = asp.GetLocalThumbnailStream(ref dummy, init: true))
-                //        {
-                //            Console.WriteLine("Copy " + AasContext.DataPath + "/files/" + temporaryFileName + ".dat");
-                //            var fst = System.IO.File.Create(AasContext.DataPath + "/files/" + temporaryFileName + ".dat");
-                //            if (st != null)
-                //            {
-                //                st.CopyTo(fst);
-                //            }
-                //        }
-                //    }
-                //    catch { }
 
                 //ToDo: To File Service
                 var name = Path.GetFileName(filePath);
@@ -130,7 +111,10 @@ namespace AasxServerDB
                                 s.CopyTo(archiveStream);
                             }
                         }
-                        catch { }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Copy failed " + AasContext.DataPath + "/" + name + "/" + f.Uri.OriginalString + " exception: " + ex.Message);
+                        }
                     }
                 }
             }
@@ -183,8 +167,11 @@ namespace AasxServerDB
 
                     new VisitorAASX(envDB: envDB).Visit(aas);
 
-                    FileService.CreateThumbnailZipFile(aas, asp.GetLocalThumbnailStream());
-
+                    Uri? dummy = null;
+                    using (var st = asp.GetLocalThumbnailStream(ref dummy, init: true))
+                    {
+                        FileService.CreateThumbnailZipFile(aas, st);
+                    }
 
                     if (aas.Submodels == null)
                         continue;
