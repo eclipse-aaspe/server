@@ -157,8 +157,16 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         switch (dbRequest.Operation)
         {
-            //ToDo: Ignore security api route for ReadPackageEnv for now (request is from UI)
+            //ToDo: Ignore security when from Page
             case DbRequestOp.ReadPackageEnv:
+            case DbRequestOp.ReadThumbnail:
+                isAllowed = InitSecurity(securityConfig, out securityCondition, out accessRules, ignoreNullConfig: true);
+
+                if (!isAllowed)
+                {
+                    throw new NotAllowed($"NOT ALLOWED: API route");
+                }
+
                 break;
             case DbRequestOp.QuerySearchSMs:
             case DbRequestOp.QuerySearchSMEs:
@@ -1758,17 +1766,17 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
     //ToDo: Move into security? Currently this is also in SubmodelRepositoryAPIApiController (for events)
     private bool InitSecurity(ISecurityConfig? securityConfig, out Dictionary<string, string>? securityCondition,
-        out List<AccessPermissionRule> accessRules, string httpRoute = "")
+        out List<AccessPermissionRule> accessRules, string httpRoute = "", bool ignoreNullConfig = false)
     {
         accessRules = null;
         securityCondition = null;
 
-        /*
-        if (securityConfig == null)
+
+        if (ignoreNullConfig && securityConfig == null)
         {
-            return false;
+            return true;
         }
-        */
+
 
         if (securityConfig.NoSecurity)
         {

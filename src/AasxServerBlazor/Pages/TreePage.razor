@@ -155,21 +155,21 @@
 					{
 						<span style="color:white;background-color:blue;" id="SelectedNodeInfoType">@ViewNodeType(SelectedNode)</span>
 						<span id="SelectedNodeInfoId">@ViewNodeID(SelectedNode)</span>
-                        <br>
-                    }
-                    else
-                    {
-                        if (SelectedNode.Tag is string && SelectedNode.Text.Contains("/readme"))
-                        {
-                            var text = System.IO.File.ReadAllText(SelectedNode.Text);
-                            text = text.Replace("%BLAZOR%", Program.externalBlazor);
-                            if (text.Contains("%ACCESSRULES%"))
-                            {
-                                List<Dictionary<string, string>> condition = [];
-                                var accessRules = SecService.GetSecurityRules(out condition);
-                                <span><b>AAS API</b></span>
-                                <br />
-                                <table class="table table-bordered table-sm">
+						<br>
+					}
+					else
+					{
+						if (SelectedNode.Tag is string && SelectedNode.Text.Contains("/readme"))
+						{
+							var text = System.IO.File.ReadAllText(SelectedNode.Text);
+							text = text.Replace("%BLAZOR%", Program.externalBlazor);
+							if (text.Contains("%ACCESSRULES%"))
+							{
+								List<Dictionary<string, string>> condition = [];
+								var accessRules = SecService.GetSecurityRules(out condition);
+								<span><b>AAS API</b></span>
+								<br />
+								<table class="table table-bordered table-sm">
 									<thead>
 										<tr>
 											<th>Name</th>
@@ -207,23 +207,23 @@
 										}
 									</tbody>
 								</table>
-                                <br />
-                                <span><b>AAS Data</b></span>
-                                <br />
-                                @foreach (var dict in condition)
-                                {
-    								<table class="table table-bordered table-sm">
-                                    @foreach (var kvp in dict)
-                                    {
-                                        <tr>
-                                            <td>@kvp.Key</td>
-                                            <td>@kvp.Value</td>
-                                        </tr>
-                                    }
-                                    </table>
-                                    <br />
-                                }
-                            }
+								<br />
+								<span><b>AAS Data</b></span>
+								<br />
+								@foreach (var dict in condition)
+								{
+									<table class="table table-bordered table-sm">
+										@foreach (var kvp in dict)
+										{
+											<tr>
+												<td>@kvp.Key</td>
+												<td>@kvp.Value</td>
+											</tr>
+										}
+									</table>
+									<br />
+								}
+							}
 							else
 							{
 								<span>@((MarkupString) text)</span>
@@ -401,14 +401,14 @@
 					}
 				}
 
-                if (SelectedNode is { Tag: AssetAdministrationShell aas })
-                {
-                    var idEncoded = Base64UrlEncoder.Encode(aas.Id);
-                    var pathaas = Program.externalBlazor + "/shells/" + idEncoded;
-                    <span style="color:white;background-color:blue;">URL:</span>
-                    <a href="@pathaas" target="_blank">@pathaas</a>
-                    <br>
-                }
+				if (SelectedNode is { Tag: AssetAdministrationShell aas })
+				{
+					var idEncoded = Base64UrlEncoder.Encode(aas.Id);
+					var pathaas = Program.externalBlazor + "/shells/" + idEncoded;
+					<span style="color:white;background-color:blue;">URL:</span>
+					<a href="@pathaas" target="_blank">@pathaas</a>
+					<br>
+				}
 
 				if (SelectedNode is {Tag: Submodel sm})
 				{
@@ -798,7 +798,7 @@
 	private Item SelectedNode { get; set; }
 
 	private string aasID = "";
-    private string smID = "";
+	private string smID = "";
 
 	static ulong dataVersion = 0;
 
@@ -824,10 +824,10 @@
 
 	protected override void OnInitialized()
 	{
-	// OnInitialized() always called twice
+		// OnInitialized() always called twice
 		if (HttpContext == null)
 		{
-		// Pre-rendering logic
+			// Pre-rendering logic
 			SubmodelService.NewDataAvailable += NewData;
 
 			var uri = NavMan.Uri;
@@ -840,19 +840,19 @@
 				{
 					aasID = list;
 				}
-                list = query.Get("sm");
-                if (!list.IsNullOrEmpty())
-                {
-                    smID = list;
-                }
-            }
+				list = query.Get("sm");
+				if (!list.IsNullOrEmpty())
+				{
+					smID = list;
+				}
+			}
 
 			newDataMode = 1;
 			// Program.signalNewData(1);
 		}
 		else
 		{
-		// Actual rendering logic
+			// Actual rendering logic
 		}
 	}
 
@@ -870,9 +870,9 @@
 
 		if (newDataMode == 0 && args is Program.NewDataAvailableArgs)
 		{
-            newDataMode = (args as Program.NewDataAvailableArgs).signalNewDataMode;
-            InvokeAsync(StateHasChanged);
-        }
+			newDataMode = (args as Program.NewDataAvailableArgs).signalNewDataMode;
+			InvokeAsync(StateHasChanged);
+		}
 	}
 
 	bool update = true;
@@ -908,211 +908,209 @@
 				Items = buildTree;
 
 				ExpandedNodes.Clear();
-                selectedNode = null;
-                if (isSelected)
-                {
-                    selectedNode = FindPath(selectedNodePath);
-                }
+				selectedNode = null;
+				if (isSelected)
+				{
+					selectedNode = FindPath(selectedNodePath);
+				}
 
-                if (isExpanded)
-                {
-                    foreach (var path in expandedNodesPath)
-                    {
-                        var p = FindPath(path);
-                        if (p != null)
-                            ExpandedNodes.Add(p);
-                    }
-                }
+				if (isExpanded)
+				{
+					foreach (var path in expandedNodesPath)
+					{
+						var p = FindPath(path);
+						if (p != null)
+							ExpandedNodes.Add(p);
+					}
+				}
 
-                newDataMode = 0;
-                break;
-            // 3 == build new tree, all nodes closed
-            case 3:
+				newDataMode = 0;
+				break;
+				// 3 == build new tree, all nodes closed
+			case 3:
 				var buildTree2 = SubmodelService.BuildTree(aasID, smID);
 				Items = buildTree2;
 
-                ExpandedNodes.Clear();
-                selectedNode = null;
-                newDataMode = 0;
-                break;
-        }
+				ExpandedNodes.Clear();
+				selectedNode = null;
+				newDataMode = 0;
+				break;
+		}
 
-        SelectedNode = selectedNode;
-    }
+		SelectedNode = selectedNode;
+	}
 
-    List<string> GetPath(Item i)
-    {
-        if (i == null)
-            return null;
+	List<string> GetPath(Item i)
+	{
+		if (i == null)
+			return null;
 
-        var upPath = new List<string> {i.Text};
-        while (i.parent != null)
-        {
-            i = (Item) i.parent;
-            upPath.Add(i.Text);
-        }
+		var upPath = new List<string> {i.Text};
+		while (i.parent != null)
+		{
+			i = (Item) i.parent;
+			upPath.Add(i.Text);
+		}
 
-        var downPath = new List<string>();
-        var j = upPath.Count - 1;
-        while (j >= 0)
-        {
-            downPath.Add(upPath[j--]);
-        }
+		var downPath = new List<string>();
+		var j = upPath.Count - 1;
+		while (j >= 0)
+		{
+			downPath.Add(upPath[j--]);
+		}
 
-        return downPath;
-    }
+		return downPath;
+	}
 
-    Item FindPath(List<string> path)
-    {
-        switch (path)
-        {
-            case {Count: > 0}:
-                {
-                    var k = 0;
-                    while (k < Items.Count)
-                    {
-                        var i = Items[k];
-                        if (i.Text != path[0])
-                        {
-                            k++;
-                            continue;
-                        }
+	Item FindPath(List<string> path)
+	{
+		switch (path)
+		{
+			case {Count: > 0}:
+				{
+					var k = 0;
+					while (k < Items.Count)
+					{
+						var i = Items[k];
+						if (i.Text != path[0])
+						{
+							k++;
+							continue;
+						}
 
-                        var j = 0;
-                        var found = i;
-                        while (++j < path.Count)
-                        {
-                            if (i.Children != null)
-                            {
-                                found = i.Children.FirstOrDefault(c => c.Text == path[j]);
-                            }
+						var j = 0;
+						var found = i;
+						while (++j < path.Count)
+						{
+							if (i.Children != null)
+							{
+								found = i.Children.FirstOrDefault(c => c.Text == path[j]);
+							}
 
-                            if (found == null)
-                            {
-                                return null;
-                            }
+							if (found == null)
+							{
+								return null;
+							}
 
-                            i = found;
-                        }
+							i = found;
+						}
 
-                        return found;
-                    }
+						return found;
+					}
 
-                    break;
-                }
-        }
+					break;
+				}
+		}
 
-        return null;
-    }
+		return null;
+	}
 
-    void UpdateNode(Item i)
-    {
-        var clist = i.Children as List<Item>;
-        var listIdshort = new List<string>();
-        var done = false;
-        if (i.Tag is Submodel sm)
-        {
-            listIdshort.AddRange(sm.SubmodelElements.Select(smew1 => smew1.IdShort));
+	void UpdateNode(Item i)
+	{
+		var clist = i.Children as List<Item>;
+		var listIdshort = new List<string>();
+		var done = false;
+		if (i.Tag is Submodel sm)
+		{
+			listIdshort.AddRange(sm.SubmodelElements.Select(smew1 => smew1.IdShort));
 
-            done = true;
-        }
+			done = true;
+		}
 
-        if (!done && i.Tag is SubmodelElementCollection smec)
-        {
-            listIdshort.AddRange(smec.Value.Select(smew2 => smew2.IdShort));
+		if (!done && i.Tag is SubmodelElementCollection smec)
+		{
+			listIdshort.AddRange(smec.Value.Select(smew2 => smew2.IdShort));
 
-            done = true;
-        }
+			done = true;
+		}
 
-        if (!done && i.Tag is ISubmodelElement sme)
-        {
-            listIdshort.Add(sme.IdShort);
-            done = true;
-        }
+		if (!done && i.Tag is ISubmodelElement sme)
+		{
+			listIdshort.Add(sme.IdShort);
+			done = true;
+		}
 
         // check if child name exists in data children idshorts, if not delete
-        if (done)
-        {
-            var toDelete = new List<Item>();
-            if (clist != null)
-            {
-                toDelete.AddRange(clist.Where(c => !listIdshort.Contains(c.Text)));
-            }
-            else
-            {
-                if (!listIdshort.Contains(i.Text))
-                {
-                    toDelete.Add(i);
-                }
-            }
+		if (done)
+		{
+			var toDelete = new List<Item>();
+			if (clist != null)
+			{
+				toDelete.AddRange(clist.Where(c => !listIdshort.Contains(c.Text)));
+			}
+			else
+			{
+				if (!listIdshort.Contains(i.Text))
+				{
+					toDelete.Add(i);
+				}
+			}
 
-            foreach (var c in toDelete)
-            {
-                if (c.parent is Item parent)
-                {
-                    (parent.Children as List<Item>)?.Remove(c);
-                }
-            }
-        }
+			foreach (var c in toDelete)
+			{
+				if (c.parent is Item parent)
+				{
+					(parent.Children as List<Item>)?.Remove(c);
+				}
+			}
+		}
 
         // check if data children idshorts exist in child names, if not insert
-        if (clist == null)
-        {
-            return;
-        }
+		if (clist == null)
+		{
+			return;
+		}
 
-        foreach (var c in clist)
-        {
-            UpdateNode(c);
-        }
-    }
+		foreach (var c in clist)
+		{
+			UpdateNode(c);
+		}
+	}
 
-    public string CreateDetailsImage(Item item, out bool url, out bool svg)
-    {
-        AdminShellNS.AdminShellPackageEnv[] env = null;
-        if (aasID.IsNullOrEmpty() && smID.IsNullOrEmpty())
-        {
-            env = Program.env;
-        }
-        else
-        {
-            env = new AdminShellNS.AdminShellPackageEnv[] { DbReqService.ReadPackageEnv(aasID, smID).Result.PackageEnv };
-            /*
-            svg = false;
-            url = false;
-            return string.Empty;
-            */
-        }
+	public string CreateDetailsImage(Item item, out bool url, out bool svg)
+	{
+		AdminShellNS.AdminShellPackageEnv[] env = null;
+		if (aasID.IsNullOrEmpty() && smID.IsNullOrEmpty())
+		{
+			env = Program.env;
+		}
+		else
+		{
+			env = new AdminShellNS.AdminShellPackageEnv[] { DbReqService.ReadPackageEnv(aasID, smID).Result.PackageEnv };
+			/*
+			svg = false;
+			url = false;
+			return string.Empty;
+			*/
+		}
 
-        svg = false;
-        url = false;
+		svg = false;
+		url = false;
 
-        if (item == null)
-        {
-            return string.Empty;
-        }
+		if (item == null)
+		{
+			return string.Empty;
+		}
 
-        var itemTag = item.Tag;
+		var itemTag = item.Tag;
 
-        switch (itemTag)
-        {
-            case AssetAdministrationShell tag:
-                {
-                    var aas = tag;
-                    lock (Program.changeAasxFile)
-                    {
-                        try
-                        {
-                            {
-                                if (env[item.envIndex] == null)
-                                    return string.Empty;
+		switch (itemTag)
+		{
+			case AssetAdministrationShell tag:
+				{
+					var aas = tag;
+					lock (Program.changeAasxFile)
+					{
+						try
+						{
+							{
+								if (aasID.IsNullOrEmpty())
+									return string.Empty;
 
-                                using var s = env[item.envIndex].GetLocalThumbnailStream();
-                                if (s != null)
+								var s = DbReqService.ReadThumbnail(null,aasID).Result;
+								if (s != null)
                                 {
-                                    using var m = new System.IO.MemoryStream();
-                                    s.CopyTo(m);
-                                    return Convert.ToBase64String(m.ToArray());
+                                    return Convert.ToBase64String(s.Content);
                                 }
                             }
                         }
