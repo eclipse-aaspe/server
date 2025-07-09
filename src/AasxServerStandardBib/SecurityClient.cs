@@ -45,8 +45,8 @@ namespace AasxServer
     using Contracts;
     using Contracts.Events;
     using Newtonsoft.Json;
-    using Opc.Ua;
-    using Org.BouncyCastle.Asn1.Ocsp;
+    // using Opc.Ua;
+    // using Org.BouncyCastle.Asn1.Ocsp;
     using ScottPlot.Drawing.Colormaps;
 
     public class AasxTask

@@ -23,8 +23,6 @@ namespace AasxServer
     using AdminShellNS;
     using Extensions;
     using Microsoft.Extensions.Configuration;
-    using Opc.Ua;
-    using Opc.Ua.Configuration;
     using System;
     using System.Collections.Generic;
     using System.CommandLine;
@@ -345,7 +343,7 @@ namespace AasxServer
         public static void  changeDataVersion() { dataVersion++; }
         public static ulong getDataVersion()    { return (dataVersion); }
 
-        static Dictionary<string, SampleClient.UASampleClient> OPCClients = new Dictionary<string, SampleClient.UASampleClient>();
+        // static Dictionary<string, SampleClient.UASampleClient> OPCClients = new Dictionary<string, SampleClient.UASampleClient>();
         static readonly object opcclientAddLock = new object(); // object for lock around connecting to an external opc server
 
         // static MqttServer AASMqttServer = new MqttServer();
@@ -1607,6 +1605,9 @@ namespace AasxServer
             /// TODO: Possilby add a qualifier to specifiy which values to get? Or NodeIds per alue?
             /// </summary>
         {
+            return false;
+
+            /*
             if (env == null)
                 return false;
 
@@ -1769,6 +1770,7 @@ namespace AasxServer
             }
 
             return true;
+            */
         }
 
         /*
@@ -2087,6 +2089,7 @@ namespace AasxServer
             return ok;
         }
 
+        /*
         private static void WalkSubmodelElement(ISubmodelElement sme, string nodePath, string serverNodePrefix, SampleClient.UASampleClient client, int clientNamespace)
         {
             if (sme is Property)
@@ -2157,8 +2160,10 @@ namespace AasxServer
                     Console.WriteLine("OPC write not successful.");
             }
         }
+        */
     }
 
+    /*
     public class ApplicationMessageDlg : IApplicationMessageDlg
     {
         private string message = string.Empty;
@@ -2199,6 +2204,7 @@ namespace AasxServer
             return await Task.FromResult(true);
         }
     }
+    */
 
     public enum ExitCode : int
     {
