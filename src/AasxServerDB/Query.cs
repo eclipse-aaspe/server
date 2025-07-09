@@ -609,7 +609,7 @@ public partial class Query
         qResult.PageSize = pageSize;
         if (pageFrom != -1)
         {
-            if (true || orderBy)
+            if (orderBy)
             {
                 Console.WriteLine("OrderBy");
                 messages.Add("OrderBy");
