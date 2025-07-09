@@ -58,7 +58,7 @@ namespace AasxServerDB
             return paths;
         }
 
-        public static AdminShellPackageEnv? GetPackageEnv(AasContext db, int envId, string smId = "")
+        public static AdminShellPackageEnv? GetPackageEnv(AasContext db, int envId, string smId = "", Dictionary<string, string>? securityCondition = null)
         {
             var timeStamp = DateTime.UtcNow;
 
@@ -108,14 +108,13 @@ namespace AasxServerDB
                 {
                     if (smRef.Identifier != null)
                     {
-                        var sm = ReadSubmodel(db, submodelIdentifier: smRef.Identifier);
-                        if (sm == null)
+                        var sm = ReadSubmodel(db, submodelIdentifier: smRef.Identifier, securityCondition: securityCondition);
+                        if (sm != null)
                         {
-                            return null;
+                            loadedSMs.Add(sm.Id);
+                            // aas.Submodels?.Add(sm.GetReference());
+                            env.AasEnv.Submodels?.Add(sm);
                         }
-                        loadedSMs.Add(sm.Id);
-                        // aas.Submodels?.Add(sm.GetReference());
-                        env.AasEnv.Submodels?.Add(sm);
                     }
                 }
             }
@@ -138,14 +137,16 @@ namespace AasxServerDB
             {
                 if (smDB.Identifier != null && !loadedSMs.Contains(smDB.Identifier))
                 {
-                    var sm = ReadSubmodel(db, smDB: smDB);
+                    var sm = ReadSubmodel(db, smDB: smDB, securityCondition: securityCondition);
                     if (sm != null)
                     {
+                        //ToDo: Remove?
                         if (sm.TimeStamp == DateTime.MinValue)
                         {
                             sm.SetAllParentsAndTimestamps(null, timeStamp, timeStamp, DateTime.MinValue);
                             sm.SetTimeStamp(timeStamp);
                         }
+
                         env.AasEnv.Submodels?.Add(sm);
                     }
                 }
