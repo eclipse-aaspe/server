@@ -1757,6 +1757,7 @@ namespace AasxServerDB
             var timeStamp = DateTime.UtcNow;
 
             List<int> envIds = new List<int>();
+            List<string> unpackedAasIds = new List<string>();
 
             if (aasIdentifier != null)
             {
@@ -1766,6 +1767,10 @@ namespace AasxServerDB
                 {
                     envIds.Add(aas.EnvId.Value);
                 }
+                else
+                {
+                    unpackedAasIds.Add(aasIdentifier);
+                }
             }
             else
             {
@@ -1773,6 +1778,18 @@ namespace AasxServerDB
                     .Skip(paginationParameters.Cursor)
                     .Take(paginationParameters.Limit);
                 envIds = [.. envDbSet.Select(env => env.Id)];
+
+                if (envIds.Count < paginationParameters.Limit)
+                {
+                    var newLimit = paginationParameters.Limit - envIds.Count;
+
+                    var newCursor = paginationParameters.Cursor - db.EnvSets.Count() < 0 ? 0 : paginationParameters.Cursor - db.EnvSets.Count();
+
+                    var aasDbSet = db.AASSets.Where(aas => !aas.EnvId.HasValue)
+                        .Skip(newCursor)
+                        .Take(newLimit);
+                    unpackedAasIds = [.. aasDbSet.Select(aas => aas.Identifier)];
+                }
             }
 
             foreach (var envId in envIds)
@@ -1781,12 +1798,21 @@ namespace AasxServerDB
                 packageDescription.PackageId = envId.ToString();
                 var aasIdList = new List<string>();
 
-                var aasSets = db.AASSets.Where(e => e.EnvId == envId);
+                var aasSets = db.AASSets.Where(aas => aas.EnvId == envId);
                 foreach (var aas in aasSets)
                 {
                     aasIdList.Add(aas.Identifier ?? "");
                 }
                 packageDescription.AasIds = aasIdList;
+                output.Add(packageDescription);
+            }
+
+            foreach(var unpackedAasId in unpackedAasIds)
+            {
+                var packageDescription = new PackageDescription();
+                packageDescription.PackageId = unpackedAasId;
+                packageDescription.AasIds = new List<string> {
+                    unpackedAasId };
                 output.Add(packageDescription);
             }
 

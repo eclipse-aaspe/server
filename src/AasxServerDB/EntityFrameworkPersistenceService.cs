@@ -1048,6 +1048,21 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
             return env.Path;
         }
+        else if (IsAssetAdministrationShellPresent(db, packageIdentifier, true, out AASSet aasDB, out IAssetAdministrationShell aas))
+        {
+            throw new NotImplementedException();
+
+            content = null;
+            fileSize = 0;
+
+            var newPackageEnv = new AdminShellPackageEnv(new AasCore.Aas3_0.Environment(new List<IAssetAdministrationShell> { aas }));
+
+            string newFileName = Path.Combine(AasContext.DataPath, aas.IdShort + ".aasx");
+            using (new FileStream(newFileName, FileMode.CreateNew))
+            { }
+
+            return newFileName;
+        }
         else
         {
             throw new NotFoundException($"Package wit id {packageIdentifier} not found.");
@@ -1137,6 +1152,10 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         {
                             CrudOperator.ReplaceSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShortPath, file);
                         }
+                        else
+                        {
+                            throw new Exception($"File operation failed: Could not replace Submodel element {fileElement.IdShort}");
+                        }
                     }
                     else
                     {
@@ -1182,6 +1201,10 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                         if (FileService.DeleteFileInZip(scopedLogger, envFileName, ref file))
                         {
                             CrudOperator.ReplaceSubmodelElementByPath(db, securityCondition, aasIdentifier, submodelIdentifier, idShortPath, file);
+                        }
+                        else
+                        {
+                            throw new Exception($"File operation failed: Could not delete Submodel element {fileElement.IdShort}");
                         }
                     }
                     else
@@ -1562,7 +1585,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             }
         }
 
-        if (smId.IsNullOrEmpty() && envId == -1)
+        if (envId == -1)
         {
             return false;
         }

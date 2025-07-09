@@ -9,6 +9,7 @@ using AasxServerStandardBib.Logging;
 using AdminShellNS;
 using Contracts.Exceptions;
 using Extensions;
+using Microsoft.IdentityModel.Tokens;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
 
 public class FileService
@@ -110,7 +111,7 @@ public class FileService
 
     internal static string GetFilesZipPath(string envFileName)
     {
-        if (envFileName == null)
+        if (envFileName.IsNullOrEmpty())
         {
             return Path.Combine(AasContext.DataPath, FilesFolderName, "_unpacked.zip");
         }
@@ -241,7 +242,7 @@ public class FileService
 
         try
         {
-            using (var fileStream = new FileStream(AasContext.DataPath + "/files/" + Path.GetFileName(envFileName) + ".zip", FileMode.Open))
+            using (var fileStream = new FileStream(GetFilesZipPath(envFileName), FileMode.Open))
             {
                 using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Update))
                 {
