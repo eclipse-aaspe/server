@@ -17,7 +17,7 @@ namespace AasxServerDB
     {
         private class CombinedSMSMEV
         {
-            public string? SM_Id { get; set; }
+            public int? SM_Id { get; set; }
             public string? SM_SemanticId { get; set; }
             public string? SM_IdShort { get; set; }
             public string? SM_DisplayName { get; set; }
@@ -30,7 +30,7 @@ namespace AasxServerDB
             public string? SME_IdShortPath { get; set; }
             public string? SME_DisplayName { get; set; }
             public string? SME_Description { get; set; }
-            public string? SME_Id { get; set; }
+            public int? SME_Id { get; set; }
             public DateTime SME_TimeStamp { get; set; }
 
             public string? V_Value { get; set; }
