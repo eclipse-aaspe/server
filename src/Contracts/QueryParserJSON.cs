@@ -5,9 +5,15 @@ using System.Linq.Expressions;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using static System.Net.Mime.MediaTypeNames;
-using Newtonsoft.Json.Schema;
+// using Newtonsoft.Json.Schema;
+// using NJsonSchema;
+// using NJsonSchema.Validation;
+// using Json.Schema;
 using System.Data;
 using System.Xml.Linq;
+using System.Text.Json;
+using NJsonSchema.Validation;
+using System.Text.Json.Nodes;
 
 public class QueryGrammarJSON : Grammar
 {
@@ -606,6 +612,10 @@ public class QueryGrammarJSON : Grammar
             jsonSchema = System.IO.File.ReadAllText("jsonschema-access.txt");
             string jsonData = expression;
 
+            /*
+            // Working, but AGPL 3.0
+            // If needed for testing, include again
+            // Newtonsoft
             // Schema parsen
             JSchema schema = JSchema.Parse(jsonSchema);
 
@@ -615,6 +625,39 @@ public class QueryGrammarJSON : Grammar
             // Validierung durchführen
             IList<string> validationErrors = new List<string>();
             bool isValid = jsonObject.IsValid(schema, out validationErrors);
+            */
+            /*
+            // Not working
+            // NJsonSchema;
+            // Schema parsen
+            JsonSchema schema = JsonSchema.FromJsonAsync(jsonSchema).Result;
+
+            // JSON-Daten parsen
+            JObject jsonObject = JObject.Parse(jsonData);
+
+            // Validierung durchführen
+            ICollection<ValidationError> validationErrors = schema.Validate(jsonObject);
+            bool isValid = validationErrors.Count == 0;
+            */
+
+            /*
+            // Does not work
+            // Json.Schema;
+            var schema = JsonSchema.FromText(jsonSchema);
+            var result = schema.Evaluate(JsonNode.Parse(jsonData));
+            bool isValid = result.IsValid;
+            var validationErrors = result.Errors;
+            if (!isValid)
+            {
+                foreach (var error in validationResults.Errors)
+                {
+                    validationErrors.Add(error.ToString());
+                }
+            }
+            */
+
+            // no schema checking currently, only checking by json grammar
+            var isValid = true;
 
             if (isValid)
             {
@@ -639,10 +682,13 @@ public class QueryGrammarJSON : Grammar
             if (!isValid)
             {
                 Console.WriteLine("❌ JSON not valid:");
+                /*
                 foreach (var error in validationErrors)
                 {
-                    Console.WriteLine($"- {error}");
+                    // Console.WriteLine($"- {error}");
+                    Console.WriteLine(error.Key + ": " + error.Value);
                 }
+                */
                 return;
             }
         }

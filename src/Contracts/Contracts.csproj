@@ -9,7 +9,6 @@
   <ItemGroup>
     <PackageReference Include="Irony" Version="1.5.3" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
-    <PackageReference Include="Newtonsoft.Json.Schema" Version="4.0.1" />
   </ItemGroup>
 
   <ItemGroup>

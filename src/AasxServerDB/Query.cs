@@ -28,9 +28,10 @@ using AasCore.Aas3_0;
 using Contracts.Security;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Schema;
+// using Newtonsoft.Json.Schema;
 using HotChocolate.Types.Relay;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using System.Text.Json;
 
 public class CombinedValue
 {
@@ -1748,6 +1749,8 @@ public partial class Query
                     jsonSchema = System.IO.File.ReadAllText("jsonschema-query.txt");
                     string jsonData = expression;
 
+                    /*
+                    // NewtonSoft works, but is AGPL3
                     // Schema parsen
                     JSchema schema = JSchema.Parse(jsonSchema);
 
@@ -1757,6 +1760,9 @@ public partial class Query
                     // Validierung durchführen
                     IList<string> validationErrors = new List<string>();
                     bool isValid = jsonObject.IsValid(schema, out validationErrors);
+                    */
+
+                    var isValid = true;
 
                     if (isValid)
                     {
@@ -1810,10 +1816,12 @@ public partial class Query
                     if (!isValid)
                     {
                         messages.Add("❌ JSON not valid:");
+                        /*
                         foreach (var error in validationErrors)
                         {
                             messages.Add($"- {error}");
                         }
+                        */
                         return null;
                     }
                 }

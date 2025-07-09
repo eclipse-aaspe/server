@@ -623,6 +623,42 @@
     },
     "AccessPermissionRule": {
       "type": "object",
+      "oneOf": [
+        {
+          "required": [
+            "ACL"
+          ]
+        },
+        {
+          "required": [
+            "USEACL"
+          ]
+        }
+      ],
+      "oneOf": [
+        {
+          "required": [
+            "OBJECTS"
+          ]
+        },
+        {
+          "required": [
+            "USEOBJECTS"
+          ]
+        }
+      ],
+      "oneOf": [
+        {
+          "required": [
+            "FORMULA"
+          ]
+        },
+        {
+          "required": [
+            "USEFORMULA"
+          ]
+        }
+      ],
       "properties": {
         "ACL": {
           "$ref": "#/definitions/ACL"
@@ -673,42 +709,6 @@
           "additionalProperties": false
         }
       },
-      "oneOf": [
-        {
-          "required": [
-            "ACL"
-          ]
-        },
-        {
-          "required": [
-            "USEACL"
-          ]
-        }
-      ],
-      "oneOf": [
-        {
-          "required": [
-            "OBJECTS"
-          ]
-        },
-        {
-          "required": [
-            "USEOBJECTS"
-          ]
-        }
-      ],
-      "oneOf": [
-        {
-          "required": [
-            "FORMULA"
-          ]
-        },
-        {
-          "required": [
-            "USEFORMULA"
-          ]
-        }
-      ],
       "additionalProperties": false
     }
   },
