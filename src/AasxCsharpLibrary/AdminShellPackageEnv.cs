@@ -997,12 +997,14 @@ namespace AdminShellNS
                             {
                                 foreach (var x in archive.Entries)
                                 {
-                                    AddSupplementaryFileToStore(x.Name, x.FullName, false);
+                                    bool isThumnbail = AasEnv.AssetAdministrationShells.Any(aas => aas.AssetInformation != null
+                                                                                                && aas.AssetInformation.DefaultThumbnail?.Path == x.FullName);
+
+                                    AddSupplementaryFileToStore(x.FullName, x.FullName, isThumnbail);
                                 }
                             }
                             catch { }
                         }
-
                     }
                     else
                     {
@@ -1019,8 +1021,6 @@ namespace AdminShellNS
                                     var absoluteURI = PackUriHelper.ResolvePartUri(x.SourceUri, x.TargetUri);
                                     if (package.PartExists(absoluteURI))
                                     {
-
-
                                         filePart = package.GetPart(absoluteURI);
                                     }
                                     //delete old type, because its not according to spec or something
@@ -1158,8 +1158,29 @@ namespace AdminShellNS
                             {
                                 if (psfAdd.SourceLocalPath != null)
                                 {
-                                    var bytes = System.IO.File.ReadAllBytes(psfAdd.SourceLocalPath);
-                                    s.Write(bytes, 0, bytes.Length);
+                                    if (filesPath != null)
+                                    {
+                                        using (var fileStream = new FileStream(filesPath, FileMode.Open))
+                                        using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
+                                        {
+                                            try
+                                            {
+                                                var archiveFile = archive.GetEntry(psfAdd.SourceLocalPath);
+                                                var tempStream = archiveFile.Open();
+                                                var ms = new MemoryStream();
+                                                tempStream.CopyTo(ms);
+                                                ms.Position = 0;
+                                                var bytes = ms.ToByteArray();
+                                                s.Write(bytes, 0, bytes.Length);
+                                            }
+                                            catch { }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        var bytes = System.IO.File.ReadAllBytes(psfAdd.SourceLocalPath);
+                                        s.Write(bytes, 0, bytes.Length);
+                                    }
                                 }
 
                                 if (psfAdd.SourceGetBytesDel != null)
@@ -1443,8 +1464,50 @@ namespace AdminShellNS
         /// Ensures:
         /// <ul><li><c>result == null || result.CanRead</c></li></ul>
         /// </remarks>
-        public Stream GetLocalThumbnailStream(ref Uri thumbUri, bool init = false)
+        public Stream GetLocalThumbnailStream(ref Uri thumbUri, bool init = false, string aasId = null)
         {
+            // DB
+            if (withDb && !init && !string.IsNullOrEmpty(aasId))
+            {
+                var fileName = aasId;
+                fileName = fileName.Replace("/", "_");
+                fileName = fileName.Replace(".", "_");
+                fileName = fileName.Replace(":", "_");
+
+                var aas = AasEnv.AssetAdministrationShells.FirstOrDefault(aas => aas.Id == aasId);
+
+                if (aas == null)
+                {
+                    return null;
+                }
+                var path = Path.Combine(dataPath, "files", "thumbnails", fileName + ".zip");
+
+                var assetInformation = aas.AssetInformation;
+
+                if (assetInformation.DefaultThumbnail != null && !string.IsNullOrEmpty(assetInformation.DefaultThumbnail.Path))
+                {
+                    try
+                    {
+                        using (var fileStream = new FileStream(path, FileMode.Open))
+                        {
+                            using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
+                            {
+                                var archiveFile = archive.GetEntry(assetInformation.DefaultThumbnail.Path);
+                                using var tempStream = archiveFile.Open();
+                                var ms = new MemoryStream();
+                                tempStream.CopyTo(ms);
+                                ms.Position = 0;
+                                return ms;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                    }
+                }
+                return null;
+            }
+
             // access
             if (_openPackage == null)
                 throw (new Exception(string.Format($"AASX Package {_fn} not opened. Aborting!")));
@@ -1484,10 +1547,10 @@ namespace AdminShellNS
         /// Ensures:
         /// <ul><li><c>result == null || result.CanRead</c></li></ul>
         /// </remarks>
-        public Stream GetLocalThumbnailStream()
+        public Stream GetLocalThumbnailStream(string aasId)
         {
             Uri dummy = null;
-            var result = GetLocalThumbnailStream(ref dummy);
+            var result = GetLocalThumbnailStream(ref dummy, aasId: aasId);
 
             // Post-condition
             if (!(result == null || result.CanRead))

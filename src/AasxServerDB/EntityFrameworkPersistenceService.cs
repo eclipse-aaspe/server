@@ -1030,12 +1030,11 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             {
                 requestedPackage.SetTempFn(requestedFileName);
 
-
                 //Create Temp file
                 string copyFileName = Path.GetTempFileName().Replace(".tmp", ".aasx");
                 System.IO.File.Copy(requestedFileName, copyFileName, true);
 
-                requestedPackage.SaveAs(copyFileName, FileService.GetFilesZipPath(requestedFileName));
+                requestedPackage.SaveAs(copyFileName, FileService.GetFilesZipPath(requestedFileName), true);
 
                 content = System.IO.File.ReadAllBytes(copyFileName);
                 string fileName = Path.GetFileName(requestedFileName);

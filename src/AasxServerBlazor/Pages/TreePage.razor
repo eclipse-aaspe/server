@@ -926,7 +926,7 @@
 
 				newDataMode = 0;
 				break;
-				// 3 == build new tree, all nodes closed
+			// 3 == build new tree, all nodes closed
 			case 3:
 				var buildTree2 = SubmodelService.BuildTree(aasID, smID);
 				Items = buildTree2;
@@ -1030,7 +1030,7 @@
 			done = true;
 		}
 
-        // check if child name exists in data children idshorts, if not delete
+		// check if child name exists in data children idshorts, if not delete
 		if (done)
 		{
 			var toDelete = new List<Item>();
@@ -1055,7 +1055,7 @@
 			}
 		}
 
-        // check if data children idshorts exist in child names, if not insert
+		// check if data children idshorts exist in child names, if not insert
 		if (clist == null)
 		{
 			return;
@@ -1101,23 +1101,41 @@
 					var aas = tag;
 					lock (Program.changeAasxFile)
 					{
-						try
 						{
-							{
-								if (aasID.IsNullOrEmpty())
-									return string.Empty;
+							if (aasID.IsNullOrEmpty())
+								return string.Empty;
 
-								var s = DbReqService.ReadThumbnail(null,aasID).Result;
+							try
+							{
+								if (env[item.envIndex] != null)
+								{
+									using var ts = env[item.envIndex].GetLocalThumbnailStream(aasID);
+									if (ts != null)
+									{
+										using var m = new System.IO.MemoryStream();
+										ts.CopyTo(m);
+										return Convert.ToBase64String(m.ToArray());
+									}
+								}
+							}
+							catch
+							{
+							}
+
+							try
+							{
+
+								var s = DbReqService.ReadThumbnail(null, aasID).Result;
 								if (s != null)
-                                {
-                                    return Convert.ToBase64String(s.Content);
-                                }
-                            }
-                        }
-                        catch
-                        {
-                        }
-                    }
+								{
+									return Convert.ToBase64String(s.Content);
+								}
+							}
+							catch
+							{
+							}
+						}
+					}
 
                     break;
                 }
