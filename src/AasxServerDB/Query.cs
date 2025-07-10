@@ -457,23 +457,24 @@ public partial class Query
                 foreach (var s in split)
                 {
                     var smeSplit = s.Split(" && ");
-                    smeSplit[0] = smeSplit[0].Replace("(", "").Replace(" ", "").Replace("SME_", "");
-                    smeSplit[1] = smeSplit[1].Replace("))", ")").Replace("V_", "");
+                    smeSplit[0] = smeSplit[0].Substring(1).Replace("V_", "");
+                    smeSplit[1] = smeSplit[1].Replace("SME_", "");
+                    smeSplit[2] = smeSplit[2].Substring(0, smeSplit[2].Length - 1).Replace("SME_", "");
                     if (smeCondition == "")
                     {
-                        smeCondition = smeSplit[0];
+                        smeCondition = "(" + smeSplit[1] + " && " + smeSplit[2] + ")";
                     }
                     else
                     {
-                        smeCondition += " || " + smeSplit[0];
+                        smeCondition += " || " + "(" + smeSplit[1] + " && " + smeSplit[2] + ")";
                     }
                     if (valueCondition == "")
                     {
-                        valueCondition = smeSplit[1];
+                        valueCondition = smeSplit[0];
                     }
                     else
                     {
-                        valueCondition += " || " + smeSplit[1];
+                        valueCondition += " || " + smeSplit[0];
                     }
                 }
 
@@ -507,12 +508,22 @@ public partial class Query
                     for (var i = 0; i < split.Length; i++)
                     {
                         var s = split[i];
+                        var arg = s.Split(" ")[0].Replace("(", "");
+                        if (arg.Contains("."))
+                        {
+                            arg = arg.Split(".")[0];
+                        }
+                        var c1 = comTable.Select("new { SM_Id, SME_idShort, SME_idShortPath, " + arg + " }");
+                        var c2 = c1.Where(split[i]);
+                        smContainsPathSme[i] = c2.Select("SM_Id").Distinct().ToDynamicList<int?>();
+                        /*
                         smContainsPathSme[i] = comTable
                             .Where(s)
                             .Select(x => x.SM_Id)
                             // .Select(x => Convert.ToInt32(x))
                             .Distinct()
                             .ToList();
+                        */
                         param[i] = smContainsPathSme[i];
                         pathAllCondition = pathAllCondition?.Replace($"$$path{i}$$", $"@{i}.Contains(SM_Id)");
 
@@ -536,6 +547,7 @@ public partial class Query
             // table name needed for EXISTS in path search
             rawSQLEx = "WITH MergedTables AS (\r\n" + rawSQLEx + ")\r\nSELECT *\r\nFROM MergedTables\r\n";
             comTable = db.Database.SqlQueryRaw<CombinedSMSMEV>(rawSQLEx).AsQueryable();
+
             if (withPathSme && pathAllCondition != null && param != null)
             {
                 comTable = comTable.Where(pathAllCondition, param);
@@ -2006,14 +2018,13 @@ public partial class Query
                 var exp = split[2];
 
                 var nextPathExpression = "";
-                if (idShortPath.Contains("."))
+                var idShort = idShortPath;
+                if (idShort.Contains("."))
                 {
-                    nextPathExpression = $"(sme.idShortPath == \"{idShortPath}\" && {field}{exp})";
+                    var s = idShort.Split(".");
+                    idShort = s.Last();
                 }
-                else
-                {
-                    nextPathExpression = $"(sme.idShort == \"{idShortPath}\" && {field}{exp})";
-                }
+                nextPathExpression = $"({field}{exp} && sme.idShort == \"{idShort}\" && sme.idShortPath == \"{idShortPath}\" )";
                 if (c.Key == "all")
                 {
                     if (allPathExpressions == "")
