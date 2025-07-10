@@ -485,8 +485,6 @@ public partial class Query
                 if (smeCondition != "")
                 {
                     smeTable = db.SMESets.Where(smeCondition);
-                    var x1 = smTable.Take(100).ToList();
-                    var x2 = smeTable.Take(100).ToList();
                 }
                 sValueTable = db.SValueSets;
                 if (valueCondition != "")
@@ -501,7 +499,6 @@ public partial class Query
                 // table name needed for EXISTS in path search
                 rawSQLEx = "WITH MergedTables AS (\r\n" + rawSQLEx + ")\r\nSELECT *\r\nFROM MergedTables\r\n";
                 comTable = db.Database.SqlQueryRaw<CombinedSMSMEV>(rawSQLEx).AsQueryable();
-                var x3 = comTable.Take(100).ToList();
 
                 try
                 {
@@ -515,7 +512,7 @@ public partial class Query
                         }
                         var c1 = comTable.Select("new { SM_Id, SME_idShort, SME_idShortPath, " + arg + " }");
                         var c2 = c1.Where(split[i]);
-                        smContainsPathSme[i] = c2.Select("SM_Id").Distinct().ToDynamicList<int?>();
+                        param[i] = c2.Select("SM_Id").Distinct();
                         /*
                         smContainsPathSme[i] = comTable
                             .Where(s)
@@ -524,7 +521,7 @@ public partial class Query
                             .Distinct()
                             .ToList();
                         */
-                        param[i] = smContainsPathSme[i];
+                        // param[i] = smContainsPathSme[i];
                         pathAllCondition = pathAllCondition?.Replace($"$$path{i}$$", $"@{i}.Contains(SM_Id)");
 
                         text = $"-- idShortPath: {s} at " + watch.ElapsedMilliseconds + " ms";
@@ -551,7 +548,6 @@ public partial class Query
             if (withPathSme && pathAllCondition != null && param != null)
             {
                 comTable = comTable.Where(pathAllCondition, param);
-                var x4 = comTable.Take(100).ToList();
 
                 var text = "-- End idShortPath at " + watch.ElapsedMilliseconds + " ms";
                 Console.WriteLine(text);
@@ -560,7 +556,6 @@ public partial class Query
 
             var combi = conditionsExpression["all"].Replace("svalue", "V_Value").Replace("mvalue", "V_D_Value").Replace("sm.idShort", "SM_IdShort").Replace("sme.idShort", "SME_IdShort").Replace("sme.idShortPath", "SME_IdShortPath");
             comTable = comTable.Where(combi);
-            var x5 = comTable.Take(100).ToList();
         }
         else // with parameters
         {

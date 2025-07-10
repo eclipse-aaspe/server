@@ -15,6 +15,7 @@ namespace AasxServerDB
 {
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Drawing;
     using System.IO.Packaging;
     using System.Linq;
     using System.Linq.Dynamic.Core;
@@ -137,7 +138,7 @@ namespace AasxServerDB
             {
                 if (smDB.Identifier != null && !loadedSMs.Contains(smDB.Identifier))
                 {
-                    var sm = ReadSubmodel(db, smDB: smDB, securityCondition: securityCondition);
+                    var sm = ReadSubmodel(db, submodelIdentifier: smDB.Identifier, securityCondition: securityCondition);
                     if (sm != null)
                     {
                         //ToDo: Remove?

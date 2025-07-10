@@ -88,26 +88,6 @@
                       "$strVal": "Nameplate"
                     }
                   ]
-                },
-                {
-                  "$starts-with": [
-                    {
-                      "$field": "$sme#idShort"
-                    },
-                    {
-                      "$strVal": "Manufacturer"
-                    }
-                  ]
-                },
-                {
-                  "$contains": [
-                    {
-                      "$field": "$sme#value"
-                    },
-                    {
-                      "$strVal": "MGUARD"
-                    }
-                  ]
                 }
               ]
             },
@@ -120,26 +100,6 @@
                     },
                     {
                       "$strVal": "TechnicalData"
-                    }
-                  ]
-                },
-                {
-                  "$eq": [
-                    {
-                      "$field": "$sme#idShort"
-                    },
-                    {
-                      "$strVal": "safety_integrity_level__SIL_"
-                    }
-                  ]
-                },
-                {
-                  "$starts-with": [
-                    {
-                      "$field": "$sme#value"
-                    },
-                    {
-                      "$strVal": "without"
                     }
                   ]
                 }
