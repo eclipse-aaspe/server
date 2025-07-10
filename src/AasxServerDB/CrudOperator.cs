@@ -59,9 +59,9 @@ namespace AasxServerDB
             return paths;
         }
 
-        public static AdminShellPackageEnv? GetPackageEnv(AasContext db, int envId, string smId = "", Dictionary<string, string>? securityCondition = null)
+        public static AdminShellPackageEnv? GetPackageEnv(AasContext db, int envId, string aasId = "", string smId = "", Dictionary<string, string>? securityCondition = null)
         {
-            var timeStamp = DateTime.UtcNow;
+           var timeStamp = DateTime.UtcNow;
 
             // env
             var env = new AdminShellPackageEnv();
@@ -84,7 +84,19 @@ namespace AasxServerDB
 
             // aas
             var loadedSMs = new List<String>();
-            var aasDBList = db.AASSets.Where(cd => cd.EnvId == envId).ToList();
+            var aasDBList = new List<AASSet>();
+            if (envId != -1)
+            {
+                aasDBList = db.AASSets.Where(aas => aas.EnvId == envId).ToList();
+            }
+            else
+            {
+                if (!aasId.IsNullOrEmpty())
+                {
+                    aasDBList = db.AASSets.Where(aas => aas.Identifier == aasId).ToList();
+                }
+            }
+
             foreach (var aasDB in aasDBList)
             {
                 var helper = aasDB;
@@ -113,24 +125,26 @@ namespace AasxServerDB
                         if (sm != null)
                         {
                             loadedSMs.Add(sm.Id);
-                            // aas.Submodels?.Add(sm.GetReference());
+                            //aas.Submodels?.Add(sm.GetReference());
                             env.AasEnv.Submodels?.Add(sm);
                         }
                     }
                 }
             }
 
+
             // sm
             var smDBList = new List<SMSet>();
             if (envId != -1)
             {
-                smDBList = db.SMSets.Where(cd => cd.EnvId == envId).ToList();
+                smDBList = db.SMSets.Where(sm => sm.EnvId == envId).ToList();
             }
+
             else
             {
                 if (!smId.IsNullOrEmpty())
                 {
-                    smDBList = db.SMSets.Where(cd => cd.Identifier == smId).ToList();
+                    smDBList = db.SMSets.Where(sm => sm.Identifier == smId).ToList();
                 }
             }
             // foreach (var sm in smDBList.Select(selector: submodelDB => ReadSubmodel(db, smDB: submodelDB)))

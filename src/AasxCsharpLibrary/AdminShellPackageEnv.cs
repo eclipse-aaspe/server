@@ -995,12 +995,20 @@ namespace AdminShellNS
                         {
                             try
                             {
-                                foreach (var x in archive.Entries)
+                                foreach (var submodel in _aasEnv.Submodels)
                                 {
-                                    bool isThumnbail = AasEnv.AssetAdministrationShells.Any(aas => aas.AssetInformation != null
-                                                                                                && aas.AssetInformation.DefaultThumbnail?.Path == x.FullName);
+                                    submodel.RecurseOnSubmodelElements(null, (state, parents, sme) =>
+                                    {
+                                        if (sme is AasCore.Aas3_0.File file
+                                            && file.Value != null)
+                                        {
+                                            bool isThumnbail = _aasEnv.AssetAdministrationShells.Any(aas => aas.AssetInformation != null
+                                                    && aas.AssetInformation.DefaultThumbnail?.Path == file.Value);
+                                            AddSupplementaryFileToStore(file.Value, file.Value, isThumnbail);
+                                        }
 
-                                    AddSupplementaryFileToStore(x.FullName, x.FullName, isThumnbail);
+                                        return true;
+                                    });
                                 }
                             }
                             catch { }
@@ -1474,7 +1482,7 @@ namespace AdminShellNS
                 fileName = fileName.Replace(".", "_");
                 fileName = fileName.Replace(":", "_");
 
-                var aas = AasEnv.AssetAdministrationShells.FirstOrDefault(aas => aas.Id == aasId);
+                var aas = _aasEnv.AssetAdministrationShells.FirstOrDefault(aas => aas.Id == aasId);
 
                 if (aas == null)
                 {
