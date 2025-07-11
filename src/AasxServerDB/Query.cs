@@ -447,7 +447,7 @@ public partial class Query
                 messages.Add(text);
 
                 pathSME = pathSME.Replace("sm.", "SM_").Replace("sme.", "SME_").Replace("svalue", "V_VALUE").Replace("mvalue", "V_D_VALUE");
-                pathAllCondition = pathAllCondition.Replace("sm.", "SM_").Replace("sme.", "SME_").Replace("svalue", "V_VALUE").Replace("mvalue", "V_D_VALUE");
+                var pathAllCondition1 = pathAllCondition.Replace("sm.", "SM_").Replace("sme.", "SME_").Replace("svalue", "V_VALUE").Replace("mvalue", "V_D_VALUE");
                 var split = pathSME.Split("$$");
                 var smContainsPathSme = new List<int?>[split.Length];
                 param = new object[split.Length];
@@ -500,6 +500,79 @@ public partial class Query
                 rawSQLEx = "WITH MergedTables AS (\r\n" + rawSQLEx + ")\r\nSELECT *\r\nFROM MergedTables\r\n";
                 comTable = db.Database.SqlQueryRaw<CombinedSMSMEV>(rawSQLEx).AsQueryable();
 
+                /*
+                try
+                {
+                    var pathAllCondition2 = pathAllCondition.Replace("sm.", "t.SM_").Replace("sme.", "t.SME_").Replace("svalue", "t.V_VALUE").Replace("mvalue", "t.V_D_VALUE");
+                    var orCondition = "";
+                    var select = "";
+                    var select2 = "";
+
+                    for (var i = 0; i < split.Length; i++)
+                    {
+                        if (i == 0)
+                        {
+                            orCondition = $"({split[0]})";
+                            // select = $"Any({split[i]}) as c{i}";
+                            select = $"({split[i]}) as c{i}";
+                            // select = $"({split[i]} ? 1 : 0)";
+                            select2 = $"(outer.c{i} || inner.c{i}) as c{i}";
+                        }
+                        else
+                        {
+                            orCondition += $" || ({split[i]})";
+                            // select += $", Any({split[i]}) as c{i}";
+                            select += $", ({split[i]}) as c{i}";
+                            // select += $"+ ({split[i]} ? 1 : 0)";
+                            select2 += $", (outer.c{i} || inner.c{i}) as c{i}";
+                        }
+                        pathAllCondition2 = pathAllCondition2.Replace($"$$path{i}$$", $"c.c{i}");
+                    }
+                    orCondition = "(" + orCondition + ")";
+                    select = "new { Key, " + select + "}";
+                    // select = "new { SM_Id, " + select + "}";
+                    select2 = "new (outer.SM_Id, " + select2 + ")";
+                    // select = "new { SM_Id, " + select + " as count }";
+
+                    var y00 = comTable.Take(100).ToDynamicList();
+                    var filterConditions1 = comTable.Where(orCondition);
+                    var y01 = filterConditions1.Take(100).ToDynamicList();
+                    // var filterConditions = filterConditions1.GroupBy("SM_Id").Select(select);
+                    var filterConditions = filterConditions1.AsQueryable().Select(select);
+                    // var filterConditions = comTable.Where(orCondition).GroupBy("SM_Id").Select(select);
+                    var y0 = filterConditions.Take(100).ToDynamicList();
+
+                    // select2 = "new ( outer.SM_Id, (outer.c0 || inner.c0) as c0)";
+                    // continue later
+                    IQueryable join = filterConditions;
+                    for (var i = 1; i < split.Length; i++)
+                    {
+                        join = join.Join(
+                            filterConditions,
+                            "SM_Id",
+                            "SM_Id",
+                            select2
+                            ).Distinct();
+                    }
+
+                    var comTableFilter = comTable.Join(
+                        filterConditions,
+                        "SM_Id",
+                        "Key",
+                        "new (outer as t, inner as c)"
+                        );
+                    var y1 = comTableFilter.Take(100).ToDynamicList();
+                    var comTableFilter2 = comTableFilter.Where(pathAllCondition2);
+                    var y2 = comTableFilter2.Take(100).ToDynamicList();
+                    comTable = comTableFilter2.Select<CombinedSMSMEV>("t");
+                    var y3 = comTable.Take(100).ToDynamicList();
+                }
+                catch (Exception ex)
+                {
+                    return null;
+                };
+                */
+
                 try
                 {
                     for (var i = 0; i < split.Length; i++)
@@ -513,16 +586,9 @@ public partial class Query
                         var c1 = comTable.Select("new { SM_Id, SME_idShort, SME_idShortPath, " + arg + " }");
                         var c2 = c1.Where(split[i]);
                         param[i] = c2.Select("SM_Id").Distinct();
-                        /*
-                        smContainsPathSme[i] = comTable
-                            .Where(s)
-                            .Select(x => x.SM_Id)
-                            // .Select(x => Convert.ToInt32(x))
-                            .Distinct()
-                            .ToList();
-                        */
                         // param[i] = smContainsPathSme[i];
-                        pathAllCondition = pathAllCondition?.Replace($"$$path{i}$$", $"@{i}.Contains(SM_Id)");
+                        pathAllCondition1 = pathAllCondition1?.Replace($"$$path{i}$$", $"@{i}.Contains(SM_Id)");
+                        pathAllCondition = pathAllCondition1;
 
                         text = $"-- idShortPath: {s} at " + watch.ElapsedMilliseconds + " ms";
                         Console.WriteLine(text);
@@ -531,31 +597,33 @@ public partial class Query
                 }
                 catch(Exception ex) { };
             }
-
-            // restrict all tables seperate
-            smTable = restrictSM ? db.SMSets.Where(conditionsExpression["sm"]) : db.SMSets;
-            smeTable = restrictSME ? db.SMESets.Where(conditionsExpression["sme"]) : db.SMESets;
-            sValueTable = restrictValue ? (restrictSValue ? db.SValueSets.Where(conditionsExpression["svalue"]) : null) : db.SValueSets;
-            iValueTable = restrictValue ? (restrictNValue ? db.IValueSets.Where(conditionsExpression["nvalue"]) : null) : db.IValueSets;
-            dValueTable = restrictValue ? (restrictNValue ? db.DValueSets.Where(conditionsExpression["nvalue"]) : null) : db.DValueSets;
-
-            // combine tables to a raw sql 
-            rawSQLEx = CombineTablesToRawSQL(direction, smTable, smeTable, sValueTable, iValueTable, dValueTable, false);
-            // table name needed for EXISTS in path search
-            rawSQLEx = "WITH MergedTables AS (\r\n" + rawSQLEx + ")\r\nSELECT *\r\nFROM MergedTables\r\n";
-            comTable = db.Database.SqlQueryRaw<CombinedSMSMEV>(rawSQLEx).AsQueryable();
-
-            if (withPathSme && pathAllCondition != null && param != null)
+            // else
             {
-                comTable = comTable.Where(pathAllCondition, param);
+                // restrict all tables seperate
+                smTable = restrictSM ? db.SMSets.Where(conditionsExpression["sm"]) : db.SMSets;
+                smeTable = restrictSME ? db.SMESets.Where(conditionsExpression["sme"]) : db.SMESets;
+                sValueTable = restrictValue ? (restrictSValue ? db.SValueSets.Where(conditionsExpression["svalue"]) : null) : db.SValueSets;
+                iValueTable = restrictValue ? (restrictNValue ? db.IValueSets.Where(conditionsExpression["nvalue"]) : null) : db.IValueSets;
+                dValueTable = restrictValue ? (restrictNValue ? db.DValueSets.Where(conditionsExpression["nvalue"]) : null) : db.DValueSets;
 
-                var text = "-- End idShortPath at " + watch.ElapsedMilliseconds + " ms";
-                Console.WriteLine(text);
-                messages.Add(text);
+                // combine tables to a raw sql 
+                rawSQLEx = CombineTablesToRawSQL(direction, smTable, smeTable, sValueTable, iValueTable, dValueTable, false);
+                // table name needed for EXISTS in path search
+                rawSQLEx = "WITH MergedTables AS (\r\n" + rawSQLEx + ")\r\nSELECT *\r\nFROM MergedTables\r\n";
+                comTable = db.Database.SqlQueryRaw<CombinedSMSMEV>(rawSQLEx).AsQueryable();
+
+                if (withPathSme && pathAllCondition != null && param != null)
+                {
+                    comTable = comTable.Where(pathAllCondition, param);
+
+                    var text = "-- End idShortPath at " + watch.ElapsedMilliseconds + " ms";
+                    Console.WriteLine(text);
+                    messages.Add(text);
+                }
+
+                var combi = conditionsExpression["all"].Replace("svalue", "V_Value").Replace("mvalue", "V_D_Value").Replace("sm.idShort", "SM_IdShort").Replace("sme.idShort", "SME_IdShort").Replace("sme.idShortPath", "SME_IdShortPath");
+                comTable = comTable.Where(combi);
             }
-
-            var combi = conditionsExpression["all"].Replace("svalue", "V_Value").Replace("mvalue", "V_D_Value").Replace("sm.idShort", "SM_IdShort").Replace("sme.idShort", "SME_IdShort").Replace("sme.idShortPath", "SME_IdShortPath");
-            comTable = comTable.Where(combi);
         }
         else // with parameters
         {
