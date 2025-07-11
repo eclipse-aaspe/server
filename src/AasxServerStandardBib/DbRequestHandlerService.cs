@@ -1148,11 +1148,6 @@ public class DbRequestHandlerService : IDbRequestHandlerService
 
     public async Task<DbFileRequestResult> ReadAASXByPackageId(ISecurityConfig securityConfig, string packageId)
     {
-        int packageIndex = int.Parse(packageId);
-        var requestedFileName = Program.envFileName[packageIndex];
-        var package = Program.env[packageIndex];
-
-
         var parameters = new DbRequestParams()
         {
             PackageIdentifier = packageId
