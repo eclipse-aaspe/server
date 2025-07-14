@@ -199,7 +199,7 @@ namespace AasSecurity
                     var split = c.Value.Split("CLAIM(");
                     split = split[1].Split(")");
                     var claim = split[0];
-                    if (claim.StartsWith("__token__"))
+                    if (claim.StartsWith("token:"))
                     {
                         var value = tokenClaims.Where(tc => tc.Type == claim).FirstOrDefault().Value;
                         condition[c.Key] = c.Value.Replace($"CLAIM({claim})", $"\"{value}\"");
@@ -298,7 +298,7 @@ namespace AasSecurity
 
             foreach (var tc in tokenClaims)
             {
-                claims.Add(new Claim("__token__" + tc.Type, tc.Value));
+                claims.Add(new Claim("token:" + tc.Type, tc.Value));
             }
 
             var identity = new ClaimsIdentity(claims, authenticationSchemeName);

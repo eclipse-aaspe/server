@@ -1829,7 +1829,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             // Get claims
             accessRole = securityConfig.Principal.FindAll(ClaimTypes.Role).Select(c => c.Value).FirstOrDefault();
             httpRoute = securityConfig.Principal.FindFirst("Route")?.Value;
-            tokenClaims = securityConfig.Principal.Claims.Where(c => c.Type.StartsWith("__token__")).ToList();
+            tokenClaims = securityConfig.Principal.Claims.Where(c => c.Type.StartsWith("token:")).ToList();
 
             switch (securityConfig.NeededRightsClaim)
             {

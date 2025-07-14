@@ -48,7 +48,7 @@
         "FORMULA": {
                   "$eq": [
                     {
-                        "$attribute":  { "CLAIM": "__token__iss" }
+                        "$attribute":  { "CLAIM": "token:iss" }
                     },
                     {
                       "$strVal": "https://admin-shell-io.com/50001"
