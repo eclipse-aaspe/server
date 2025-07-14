@@ -46,7 +46,14 @@
           }
         ],
         "FORMULA": {
-          "$boolean": true
+                  "$eq": [
+                    {
+                        "$attribute":  { "CLAIM": "__token__iss" }
+                    },
+                    {
+                      "$strVal": "https://admin-shell-io.com/50001"
+                    }
+                  ]
         }
       },
       {

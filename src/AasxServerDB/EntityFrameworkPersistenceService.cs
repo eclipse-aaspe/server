@@ -1822,12 +1822,14 @@ public class EntityFrameworkPersistenceService : IPersistenceService
 
         var authResult = false;
         var accessRole = "isNotAuthenticated";
+        List<Claim> tokenClaims = [];
         AasSecurity.Models.AccessRights neededRights = AasSecurity.Models.AccessRights.READ;
         if (securityConfig?.Principal != null)
         {
             // Get claims
             accessRole = securityConfig.Principal.FindAll(ClaimTypes.Role).Select(c => c.Value).FirstOrDefault();
             httpRoute = securityConfig.Principal.FindFirst("Route")?.Value;
+            tokenClaims = securityConfig.Principal.Claims.Where(c => c.Type.StartsWith("__token__")).ToList();
 
             switch (securityConfig.NeededRightsClaim)
             {
@@ -1856,8 +1858,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             }
         }
 
-        securityCondition = _contractSecurityRules.GetCondition(accessRole, neededRights.ToString());
-        accessRules = _contractSecurityRules.GetAccessRules(accessRole, neededRights.ToString());
+        securityCondition = _contractSecurityRules.GetCondition(accessRole, neededRights.ToString(), tokenClaims: tokenClaims);
+        accessRules = _contractSecurityRules.GetAccessRules(accessRole, neededRights.ToString(), tokenClaims: tokenClaims);
 
         if (accessRole != null && httpRoute != null)
         {

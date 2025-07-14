@@ -37,6 +37,7 @@ using System.Linq.Dynamic.Core;
 using Microsoft.IdentityModel.JsonWebTokens;
 using static QRCoder.PayloadGenerator;
 using System.Data;
+using Namotion.Reflection;
 
 namespace AasSecurity
 {
@@ -83,12 +84,12 @@ namespace AasSecurity
             }
         }
 
-        public List<AccessPermissionRule>? GetAccessRules(string accessRole, string neededRightsClaim, string? httpRoute = null)
+        public List<AccessPermissionRule>? GetAccessRules(string accessRole, string neededRightsClaim, string? httpRoute = null, List<Claim>? tokenClaims = null)
         {
-            return GetAccessRulesStatic(accessRole, neededRightsClaim, httpRoute);
+            return GetAccessRulesStatic(accessRole, neededRightsClaim, httpRoute, tokenClaims);
         }
 
-        public static List<AccessPermissionRule>? GetAccessRulesStatic(string accessRole, string neededRightsClaim, string? httpRoute = null)
+        public static List<AccessPermissionRule>? GetAccessRulesStatic(string accessRole, string neededRightsClaim, string? httpRoute = null, List<Claim>? tokenClaims = null)
         {
             if (_accessRules != null)
             {
@@ -113,7 +114,7 @@ namespace AasSecurity
 
             return null;
         }
-        public Dictionary<string, string>? GetCondition(string accessRole, string neededRightsClaim, string? httpRoute = null)
+        public Dictionary<string, string>? GetCondition(string accessRole, string neededRightsClaim, string? httpRoute = null, List<Claim>? tokenClaims = null)
         {
             var rules = GetAccessRules(accessRole, neededRightsClaim);
 
@@ -192,6 +193,18 @@ namespace AasSecurity
                 {
                     condition[c.Key] = "(" + c.Value + ")";
                 }
+
+                while (condition[c.Key].Contains("CLAIM("))
+                {
+                    var split = c.Value.Split("CLAIM(");
+                    split = split[1].Split(")");
+                    var claim = split[0];
+                    if (claim.StartsWith("__token__"))
+                    {
+                        var value = tokenClaims.Where(tc => tc.Type == claim).FirstOrDefault().Value;
+                        condition[c.Key] = c.Value.Replace($"CLAIM({claim})", $"\"{value}\"");
+                    }
+                }
             }
 
             return condition;
@@ -265,7 +278,7 @@ namespace AasSecurity
                 _logger.LogDebug("FORCE-POLICY {Sanitize}", LogSanitizer.Sanitize(header.Value.FirstOrDefault()));
             }
 
-            var accessRole = GetAccessRole(queries, headers, out string policy, out string policyRequestedResource);
+            var accessRole = GetAccessRole(queries, headers, out var policy, out var policyRequestedResource, out var tokenClaims);
             if (accessRole == null)
             {
                 _logger.LogDebug($"Access Role found null. Hence setting the access role as isNotAuthenticated.");
@@ -283,12 +296,18 @@ namespace AasSecurity
                              new Claim("Route", aasSecurityContext.Route)
                          };
 
+            foreach (var tc in tokenClaims)
+            {
+                claims.Add(new Claim("__token__" + tc.Type, tc.Value));
+            }
+
             var identity = new ClaimsIdentity(claims, authenticationSchemeName);
             var principal = new System.Security.Principal.GenericPrincipal(identity, null);
             return new AuthenticationTicket(principal, authenticationSchemeName);
         }
 
-        private string GetAccessRole(NameValueCollection queries, NameValueCollection headers, out string policy, out string policyRequestedResource)
+        private string GetAccessRole(NameValueCollection queries, NameValueCollection headers,
+            out string policy, out string policyRequestedResource, out List<Claim> tokenClaims)
         {
             _logger.LogDebug("Getting the access rights.");
             string accessRole = null;
@@ -297,6 +316,7 @@ namespace AasSecurity
             string? bearerToken = null;
             policy = "";
             policyRequestedResource = "";
+            tokenClaims = [];
 
             ParseBearerToken(queries, headers, ref bearerToken, ref error, ref user, ref accessRole);
             if (accessRole != null)
@@ -306,7 +326,7 @@ namespace AasSecurity
 
             if (!error)
             {
-                accessRole = HandleBearerToken(bearerToken, ref user, ref error, out policy, out policyRequestedResource);
+                accessRole = HandleBearerToken(bearerToken, ref user, ref error, out policy, out policyRequestedResource, out tokenClaims);
                 //if (accessRole == null)
                 //{
                 //    return accessRole;
@@ -362,10 +382,13 @@ namespace AasSecurity
             return accessRole;
         }
 
-        private string HandleBearerToken(string? bearerToken, ref string user, ref bool error, out string policy, out string policyRequestedResource)
+        private string HandleBearerToken(string? bearerToken, ref string user, ref bool error,
+            out string policy, out string policyRequestedResource, out List<Claim> tokenClaims)
         {
             policy = "";
             policyRequestedResource = "";
+            tokenClaims = [];
+
             if (bearerToken == null)
                 return null;
 
@@ -377,6 +400,8 @@ namespace AasSecurity
                 {
                     if (jwtSecurityToken.Claims != null)
                     {
+                        tokenClaims.AddRange(jwtSecurityToken.Claims);
+
                         var emailClaim = jwtSecurityToken.Claims.Where(c => c.Type == "email");
                         if (emailClaim != null && emailClaim.Any())
                         {
