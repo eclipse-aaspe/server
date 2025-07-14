@@ -1057,6 +1057,12 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             var newPackageEnv = CrudOperator.GetPackageEnv(db, -1, aas.Id, "", securityCondition);
 
             string newFilePath = Path.Combine(AasContext.DataPath, aas.IdShort + ".aasx");
+
+            if (System.IO.File.Exists(newFilePath))
+            {
+                System.IO.File.Delete(newFilePath);
+            }
+
             using (new FileStream(newFilePath, FileMode.CreateNew))
             { }
 

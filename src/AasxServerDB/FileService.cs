@@ -220,14 +220,14 @@ public class FileService
             {
                 //The value is incorrect, so store the file to default location "/aasx/files"
                 scopedLogger.LogInformation($"Incorret value of the Submodel-Element File with IdShort {file.IdShort}");
-                targetFile = Path.Combine("/aasx/files", fileName);
+                targetFile = Path.Combine("/aasx", "files", fileName);
             }
         }
         else
         {
             //The value is null, so store the file to default location "/aasx/files"
             scopedLogger.LogInformation($"Null Value of the Submodel-Element File with IdShort {file.IdShort}");
-            targetFile = Path.Combine("/aasx/files", fileName);
+            targetFile = Path.Combine("/aasx", "files", fileName);
         }
 
         targetFile = FormatToZipFilePath(targetFile);
@@ -384,7 +384,9 @@ public class FileService
         try
         {
             var tempFilePath = Path.Combine(Path.GetTempPath(), onlyFileName);
-            var path = Path.Combine("aasx", "images", onlyFileName);
+            var path = Path.Combine("/aasx", "images", onlyFileName);
+
+            path = FormatToZipFilePath(path);
 
             using var result = System.IO.File.Open(tempFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
 
