@@ -684,24 +684,39 @@ public partial class Query
         comTable = db.Database.SqlQueryRaw<CombinedSMSMEV>(comTableQueryString);
 
         var smRawSQL = comTable.ToQueryString();
-        // change the first select
-        var index = smRawSQL.IndexOf("FROM");
-        if (index == -1)
-            return null;
-        smRawSQL = smRawSQL.Substring(index);
+        // check for WITH at the beginning
         if (withExpression)
         {
-            var prefix = "";
-            var split = smRawSQL.Split(" ");
-            var count = split.Length;
-            if (split[count - 2] == "AS")
+            var index = smRawSQL.IndexOf("WITH");
+            if (index == 0)
             {
-                prefix = split.Last().Replace("\"", "").Replace("\n", "").Replace("\r", "") + ".";
+                smRawSQL = smRawSQL.Replace("SELECT *",
+                    $"SELECT DISTINCT SM_Identifier AS Identifier, SM_Id as SM_Id, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', SM_TimeStampTree) AS TimeStampTree"
+                    );
             }
-            smRawSQL = $"SELECT DISTINCT {prefix}SM_Identifier AS Identifier, SM_Id as SM_Id, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', {prefix}SM_TimeStampTree) AS TimeStampTree \n {smRawSQL}";
+            else
+            {
+                // change the first select
+                index = smRawSQL.IndexOf("FROM");
+                if (index == -1)
+                    return null;
+                smRawSQL = smRawSQL.Substring(index);
+                var prefix = "";
+                var split = smRawSQL.Split(" ");
+                var count = split.Length;
+                if (split[count - 2] == "AS")
+                {
+                    prefix = split.Last().Replace("\"", "").Replace("\n", "").Replace("\r", "") + ".";
+                }
+                smRawSQL = $"SELECT DISTINCT {prefix}SM_Identifier AS Identifier, SM_Id as SM_Id, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', {prefix}SM_TimeStampTree) AS TimeStampTree \n {smRawSQL}";
+            }
         }
         else
         {
+            var index = smRawSQL.IndexOf("FROM");
+            if (index == -1)
+                return null;
+            smRawSQL = smRawSQL.Substring(index);
             smRawSQL = $"SELECT DISTINCT s.Identifier, SM_Id as SM_Id, strftime('{TimeStamp.TimeStamp.GetFormatStringSQL()}', s.TimeStampTree) AS TimeStampTree \n {smRawSQL}";
         }
 
