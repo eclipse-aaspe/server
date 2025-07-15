@@ -686,7 +686,7 @@ namespace AdminShellNS
         //    return nss;
         //}
 
-        public bool SaveAs(string fn, string filesPath = null, bool writeFreshly = false, SerializationFormat prefFmt = SerializationFormat.None,
+        public bool SaveAs(string fn, string zipFilesPath = null, bool writeFreshly = false, SerializationFormat prefFmt = SerializationFormat.None,
                 MemoryStream useMemoryStream = null, bool saveOnlyCopy = false)
         {
             if (fn.ToLower().EndsWith(".xml"))
@@ -987,31 +987,63 @@ namespace AdminShellNS
 
                     //Handling of aas_suppl namespace from v2 to v3
                     //Need to check/test in detail, with thumbnails as well
-                    if (filesPath != null)
+                    if (zipFilesPath != null)
                     {
 
-                        using (var fileStream = new FileStream(filesPath, FileMode.Open))
-                        using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
+                        foreach (var aas in _aasEnv.AssetAdministrationShells)
                         {
-                            try
+                            if (aas.AssetInformation != null
+                                && aas.AssetInformation.DefaultThumbnail != null
+                                    && aas.AssetInformation.DefaultThumbnail.Path != null)
                             {
-                                foreach (var submodel in _aasEnv.Submodels)
-                                {
-                                    submodel.RecurseOnSubmodelElements(null, (state, parents, sme) =>
-                                    {
-                                        if (sme is AasCore.Aas3_0.File file
-                                            && file.Value != null)
-                                        {
-                                            bool isThumnbail = _aasEnv.AssetAdministrationShells.Any(aas => aas.AssetInformation != null
-                                                    && aas.AssetInformation.DefaultThumbnail?.Path == file.Value);
-                                            AddSupplementaryFileToStore(file.Value, file.Value, isThumnbail);
-                                        }
+                                var filesFolderPath = Path.GetDirectoryName(zipFilesPath);
 
-                                        return true;
-                                    });
+                                byte[] bytesFromThumbnailsFile()
+                                {
+                                    var aasID = aas.Id;
+                                    aasID = aasID.Replace("/", "_");
+                                    aasID = aasID.Replace(".", "_");
+                                    aasID = aasID.Replace(":", "_");
+
+                                    var thumbnailPath = Path.Combine(filesFolderPath, "thumbnails", aasID + ".zip");
+                                    using (var fileStream = new FileStream(thumbnailPath, FileMode.Open))
+                                    {
+                                        using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
+                                        {
+                                            var archiveFile = archive.GetEntry(aas.AssetInformation.DefaultThumbnail.Path);
+                                            using var tempStream = archiveFile.Open();
+                                            var ms = new MemoryStream();
+                                            tempStream.CopyTo(ms);
+                                            ms.Position = 0;
+                                            return ms.ToByteArray();
+                                        }
+                                    }
                                 }
+                                AddSupplementaryFileToStore(null,
+                                                            aas.AssetInformation.DefaultThumbnail.Path,
+                                                            true,
+                                                            bytesFromThumbnailsFile);
+
                             }
-                            catch { }
+                        }
+
+
+
+                        foreach (var submodel in _aasEnv.Submodels)
+                        {
+                            submodel.RecurseOnSubmodelElements(null, (state, parents, sme) =>
+                            {
+                                if (sme is AasCore.Aas3_0.File file
+                                    && file.Value != null)
+                                {
+                                    if (file.Value.StartsWith('/') || file.Value.StartsWith('\\'))
+                                    {
+                                        AddSupplementaryFileToStore(file.Value, file.Value, false);
+                                    }
+                                }
+
+                                return true;
+                            });
                         }
                     }
                     else
@@ -1166,29 +1198,34 @@ namespace AdminShellNS
                             {
                                 if (psfAdd.SourceLocalPath != null)
                                 {
-                                    if (filesPath != null)
+                                    if (zipFilesPath != null)
                                     {
-                                        using (var fileStream = new FileStream(filesPath, FileMode.Open))
-                                        using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
+                                        if (psfAdd.SpecialHandling != AdminShellPackageSupplementaryFile.SpecialHandlingType.EmbedAsThumbnail)
                                         {
-                                            try
+                                            using (var fileStream = new FileStream(zipFilesPath, FileMode.Open))
+                                            using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
                                             {
-                                                var archiveFile = archive.GetEntry(psfAdd.SourceLocalPath);
-                                                var tempStream = archiveFile.Open();
-                                                var ms = new MemoryStream();
-                                                tempStream.CopyTo(ms);
-                                                ms.Position = 0;
-                                                var bytes = ms.ToByteArray();
-                                                s.Write(bytes, 0, bytes.Length);
+                                                try
+                                                {
+                                                    var archiveFile = archive.GetEntry(psfAdd.SourceLocalPath);
+                                                    var tempStream = archiveFile.Open();
+                                                    var ms = new MemoryStream();
+                                                    tempStream.CopyTo(ms);
+                                                    ms.Position = 0;
+                                                    var bytes = ms.ToByteArray();
+                                                    s.Write(bytes, 0, bytes.Length);
+                                                }
+                                                catch { }
                                             }
-                                            catch { }
+
+                                        }
+                                        else
+                                        {
+                                            var bytes = System.IO.File.ReadAllBytes(psfAdd.SourceLocalPath);
+                                            s.Write(bytes, 0, bytes.Length);
                                         }
                                     }
-                                    else
-                                    {
-                                        var bytes = System.IO.File.ReadAllBytes(psfAdd.SourceLocalPath);
-                                        s.Write(bytes, 0, bytes.Length);
-                                    }
+
                                 }
 
                                 if (psfAdd.SourceGetBytesDel != null)
