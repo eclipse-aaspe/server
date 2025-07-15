@@ -1677,7 +1677,7 @@ namespace AasxServerDB
             }
         }
 
-        internal static AasCore.Aas3_0.Environment GenerateSerializationByIds(AasContext db, List<string> aasIds, List<string> submodelIds, bool? includeCD)
+        internal static AasCore.Aas3_0.Environment GenerateSerializationByIds(AasContext db, Dictionary<string, string>? securityCondition, List<string> aasIds, List<string> submodelIds, bool? includeCD)
         {
             List<IAssetAdministrationShell>? aas = null;
             List<ISubmodel>? submodels = null;
@@ -1707,7 +1707,7 @@ namespace AasxServerDB
                 {
                     if (submodelId != null)
                     {
-                        var s = CrudOperator.ReadSubmodel(db, submodelIdentifier: submodelId);
+                        var s = CrudOperator.ReadSubmodel(db, submodelIdentifier: submodelId, securityCondition: securityCondition);
                         if (s != null)
                         {
                             submodels ??= [];

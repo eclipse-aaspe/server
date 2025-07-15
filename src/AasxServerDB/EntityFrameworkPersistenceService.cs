@@ -160,6 +160,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
             //ToDo: Ignore security when from Page
             case DbRequestOp.ReadPackageEnv:
             case DbRequestOp.ReadThumbnail:
+            case DbRequestOp.ReadPagedAASXPackageIds:
                 isAllowed = InitSecurity(securityConfig, out securityCondition, out accessRules, ignoreNullConfig: true);
 
                 if (!isAllowed)
@@ -776,6 +777,7 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                     case DbRequestOp.GenerateSerializationByIds:
                         var environment = CrudOperator.GenerateSerializationByIds(
                             db,
+                            securityCondition,
                             dbRequest.Context.Params.AasIds,
                             dbRequest.Context.Params.SubmodelIds,
                             dbRequest.Context.Params.IncludeCD);

@@ -1137,154 +1137,165 @@
 						}
 					}
 
-                    break;
-                }
-            case AasCore.Aas3_0.File f:
-                {
-                    // Test for /aasx/
-                    if (!string.IsNullOrEmpty(f.Value))
-                    {
-                        var split = f.Value.Split(new[] {'/'});
-                        if (split.Length == 2 || split.Length > 1 && split[1].ToLower() == "aasx")
-                        {
-                            split = f.Value.Split(new[] {'.'});
-                            switch (split.Last().ToLower())
-                            {
-                                case "jpg":
-                                case "bmp":
-                                case "png":
-                                case "svg":
-                                    try
-                                    {
-                                        using var s = env[item.envIndex].GetLocalStreamFromPackage(f.Value);
-                                        if (s != null)
-                                        {
-                                            using var m = new System.IO.MemoryStream();
-                                            if (split.Last().ToLower().Equals("svg"))
-                                            {
-                                                svg = true;
-                                            }
+					break;
+				}
+			case AasCore.Aas3_0.File f:
+				{
+					// Test for /aasx/
+					if (!string.IsNullOrEmpty(f.Value))
+					{
+						var split = f.Value.Split(new[] {'/'});
+						if (split.Length == 2 || split.Length > 1 && split[1].ToLower() == "aasx")
+						{
+							split = f.Value.Split(new[] {'.'});
+							switch (split.Last().ToLower())
+							{
+								case "jpg":
+								case "bmp":
+								case "png":
+								case "svg":
+									try
+									{
+										using var s = env[item.envIndex].GetLocalStreamFromPackage(f.Value);
+										if (s != null)
+										{
+											using var m = new System.IO.MemoryStream();
+											if (split.Last().ToLower().Equals("svg"))
+											{
+												svg = true;
+											}
 
-                                            s.CopyTo(m);
-                                            return Convert.ToBase64String(m.ToArray());
-                                        }
-                                    }
-                                    catch
-                                    {
-                                    }
+											s.CopyTo(m);
+											return Convert.ToBase64String(m.ToArray());
+										}
+									}
+									catch
+									{
+									}
 
-                                    break;
-                            }
-                        }
-                        else
-                        {
-                            url = true;
-                            return f.Value;
-                        }
-                    }
+									break;
+							}
+						}
+						else
+						{
+							url = true;
+							return f.Value;
+						}
+					}
 
-                    break;
-                }
-        }
+					break;
+				}
+		}
 
-        return string.Empty;
-    }
+		return string.Empty;
+	}
 
-    string GetQRCodeLink(Item item)
-    {
-        if (item == null)
-        {
-            return string.Empty;
-        }
+	string GetQRCodeLink(Item item)
+	{
+		if (item == null)
+		{
+			return string.Empty;
+		}
 
-        var prefix = "http://";
+		var prefix = "http://";
 
 
-        var itemTag = item.Tag;
+		var itemTag = item.Tag;
 
-        if (itemTag is not AssetAdministrationShell aas)
-        {
-            return string.Empty;
-        }
+		if (itemTag is not AssetAdministrationShell aas)
+		{
+			return string.Empty;
+		}
 
-        var asset = aas.AssetInformation;
-        var url = asset.GlobalAssetId;
+		var asset = aas.AssetInformation;
+		var url = asset.GlobalAssetId;
 
-        return url;
-    }
+		return url;
+	}
 
-    string GetQRCodeImage(Item item)
-    {
-        var itemTag = item.Tag;
+	string GetQRCodeImage(Item item)
+	{
+		var itemTag = item.Tag;
 
-        if (itemTag is not AssetAdministrationShell)
-        {
-            return string.Empty;
-        }
+		if (itemTag is not AssetAdministrationShell)
+		{
+			return string.Empty;
+		}
 
-        var image = Program.generatedQrCodes[item.Tag];
+		var image = Program.generatedQrCodes[item.Tag];
 
-        return image ?? string.Empty;
-    }
+		return image ?? string.Empty;
+	}
 
-    void CreateQRCodeImage(Item item)
-    {
-        if (item == null)
-        {
-            return;
-        }
+	void CreateQRCodeImage(Item item)
+	{
+		if (item == null)
+		{
+			return;
+		}
 
-        var prefix = "http://";
+		var prefix = "http://";
 
-        var itemTag = item.Tag;
+		var itemTag = item.Tag;
 
-        if (itemTag is not AssetAdministrationShell aas)
-        {
-            return;
-        }
+		if (itemTag is not AssetAdministrationShell aas)
+		{
+			return;
+		}
 
-        if (Program.generatedQrCodes.ContainsKey(item.Tag))
-        {
-            Program.generatedQrCodes.Remove(item.Tag);
-            return;
-        }
+		if (Program.generatedQrCodes.ContainsKey(item.Tag))
+		{
+			Program.generatedQrCodes.Remove(item.Tag);
+			return;
+		}
 
-        var asset = aas.AssetInformation;
-        var url = asset.GlobalAssetId;
+		var asset = aas.AssetInformation;
+		var url = asset.GlobalAssetId;
 
-        var qrGenerator = new QRCodeGenerator();
-        var qrCodeData = qrGenerator.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);
-        var qrCode = new QRCode(qrCodeData);
-        var qrCodeImage = qrCode.GetGraphic(20);
-        using var memory = new System.IO.MemoryStream();
-        qrCodeImage.Save(memory, System.Drawing.Imaging.ImageFormat.Bmp);
-        var base64 = Convert.ToBase64String(memory.ToArray());
+		var qrGenerator = new QRCodeGenerator();
+		var qrCodeData = qrGenerator.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);
+		var qrCode = new QRCode(qrCodeData);
+		var qrCodeImage = qrCode.GetGraphic(20);
+		using var memory = new System.IO.MemoryStream();
+		qrCodeImage.Save(memory, System.Drawing.Imaging.ImageFormat.Bmp);
+		var base64 = Convert.ToBase64String(memory.ToArray());
 
-        Program.generatedQrCodes.Add(item.Tag, base64);
-    }
+		Program.generatedQrCodes.Add(item.Tag, base64);
+	}
 
-    bool HasDownloadFile(Item item)
-    {
-        return false;
-    }
+	bool HasDownloadFile(Item item)
+	{
+		return false;
+	}
 
-    string GetLink(Item item, out bool external)
-    {
-        external = false;
+	string GetLink(Item item, out bool external)
+	{
+		external = false;
 
-        if (item == null)
-        {
-            return string.Empty;
-        }
+		if (item == null)
+		{
+			return string.Empty;
+		}
 
-        var itemTag = item.Tag;
+		var itemTag = item.Tag;
 
-        switch (itemTag)
-        {
-            // case null when Program.envSymbols[item.envIndex] == "L":
-            //    return $"{Program.externalRest}/server/getaasx/{Convert.ToString(SelectedNode.envIndex)}";
-            case AssetAdministrationShell:
-                return $"{Program.externalBlazor}/packages/{Base64UrlEncoder.Encode(Convert.ToString(SelectedNode.envIndex))}";
+		switch (itemTag)
+		{
+			// case null when Program.envSymbols[item.envIndex] == "L":
+			//    return $"{Program.externalRest}/server/getaasx/{Convert.ToString(SelectedNode.envIndex)}";
+			case AssetAdministrationShell:
+				var packageId = Convert.ToString(SelectedNode.envIndex);
+
+				if (packageId == "0" && !aasID.IsNullOrEmpty())
+				{
+					var packageIdsList = DbReqService.ReadPagedAASXPackageIds(null, null, aasID).Result;
+					if (packageIdsList.Any())
+					{
+						packageId = packageIdsList.First().PackageId;
+					}							
+				}
+					
+				return $"{Program.externalBlazor}/packages/{Base64UrlEncoder.Encode(packageId)}";
             case File:
             case Property:
                 {
