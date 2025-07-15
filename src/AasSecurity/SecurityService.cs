@@ -279,7 +279,7 @@ namespace AasSecurity
             }
 
             var accessRole = GetAccessRole(queries, headers, out var policy, out var policyRequestedResource, out var tokenClaims);
-            if (accessRole == null)
+            if (string.IsNullOrEmpty(accessRole))
             {
                 _logger.LogDebug($"Access Role found null. Hence setting the access role as isNotAuthenticated.");
                 accessRole = "isNotAuthenticated";
