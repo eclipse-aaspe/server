@@ -109,7 +109,7 @@ public class FileService
 
     }
 
-    internal static string GetFilesZipPath(string envFileName)
+    internal static string GetFilesZipPath(string envFileName = null)
     {
         if (envFileName.IsNullOrEmpty())
         {

@@ -145,7 +145,6 @@ public class AASXFileServerAPIApiController : ControllerBase
         HttpContext.Response.Headers.Append("Content-Disposition", contentDisposition.ToString());
         HttpContext.Response.Headers.Append("X-FileName", fileRequestResult.File);
 
-
         HttpContext.Response.ContentLength = fileRequestResult.FileSize;
         await HttpContext.Response.Body.WriteAsync(fileRequestResult.Content);
         return new EmptyResult();

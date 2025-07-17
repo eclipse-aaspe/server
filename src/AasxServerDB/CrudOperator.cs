@@ -48,7 +48,7 @@ namespace AasxServerDB
 
                 foreach (var env in envList)
                 {
-                    var p = GetPackageEnv(db, env.Id);
+                    var p = GetPackageEnv(db, null, env.Id);
                     if (p != null)
                     {
                         list.Add(p);
@@ -59,27 +59,37 @@ namespace AasxServerDB
             return paths;
         }
 
-        public static AdminShellPackageEnv? GetPackageEnv(AasContext db, int envId, string aasId = "", string smId = "", Dictionary<string, string>? securityCondition = null)
+        internal static Environment GetEnvironment(AasContext db, Dictionary<string, string>? securityCondition = null, int envId = -1,
+            List<string> aasIds = null, List<string> smIds = null, AASSet aasDb = null, SMSet smDb = null, bool includeCD = false)
         {
-           var timeStamp = DateTime.UtcNow;
+            var timeStamp = DateTime.UtcNow;
 
             // env
-            var env = new AdminShellPackageEnv();
-            env.AasEnv.ConceptDescriptions = new List<IConceptDescription>();
-            env.AasEnv.AssetAdministrationShells = new List<IAssetAdministrationShell>();
-            env.AasEnv.Submodels = new List<ISubmodel>();
+            var env = new Environment();
 
-            // path
-            if (envId != -1)
-            {
-                env.SetFilename(fileName: GetAASXPath(envId));
-            }
+            env.AssetAdministrationShells = new List<IAssetAdministrationShell>();
+            env.Submodels = new List<ISubmodel>();
 
             // cd
-            var cdDBList = db.EnvCDSets.Where(envcd => envcd.EnvId == envId).Join(db.CDSets, envcd => envcd.CDId, cd => cd.Id, (envcd, cd) => cd).ToList();
-            foreach (var cd in cdDBList.Select(selector: cdDB => ReadConceptDescription(db, cdDB: cdDB)))
+            if (includeCD)
             {
-                env.AasEnv.ConceptDescriptions?.Add(cd);
+                env.ConceptDescriptions = new List<IConceptDescription>();
+
+                List<CDSet> cdDBList = new List<CDSet>();
+                if (envId != -1)
+                {
+                    cdDBList = db.EnvCDSets.Where(envcd => envcd.EnvId == envId).Join(db.CDSets, envcd => envcd.CDId, cd => cd.Id, (envcd, cd) => cd).ToList();
+                }
+                else
+                {
+                    //ToDo: Only get Concept Descriptions of specified aas and sm?
+                    cdDBList = db.CDSets.ToList();
+                }
+
+                foreach (var cd in cdDBList.Select(selector: cdDB => ReadConceptDescription(db, cdDB: cdDB)))
+                {
+                    env.ConceptDescriptions?.Add(cd);
+                }
             }
 
             // aas
@@ -91,9 +101,17 @@ namespace AasxServerDB
             }
             else
             {
-                if (!aasId.IsNullOrEmpty())
+                if (aasDb != null)
                 {
-                    aasDBList = db.AASSets.Where(aas => aas.Identifier == aasId).ToList();
+                    aasDBList.Add(aasDb);
+                }
+
+                if (aasIds != null)
+                {
+                    foreach (var aasId in aasIds)
+                    {
+                        aasDBList = db.AASSets.Where(aas => aas.Identifier == aasId).ToList();
+                    }
                 }
             }
 
@@ -106,7 +124,7 @@ namespace AasxServerDB
                     aas.TimeStampCreate = timeStamp;
                     aas.SetTimeStamp(timeStamp);
                 }
-                env.AasEnv.AssetAdministrationShells?.Add(aas);
+                env.AssetAdministrationShells?.Add(aas);
 
                 // sm
                 /*
@@ -126,7 +144,7 @@ namespace AasxServerDB
                         {
                             loadedSMs.Add(sm.Id);
                             //aas.Submodels?.Add(sm.GetReference());
-                            env.AasEnv.Submodels?.Add(sm);
+                            env.Submodels?.Add(sm);
                         }
                     }
                 }
@@ -139,14 +157,22 @@ namespace AasxServerDB
             {
                 smDBList = db.SMSets.Where(sm => sm.EnvId == envId).ToList();
             }
-
             else
             {
-                if (!smId.IsNullOrEmpty())
+                if (smDb != null)
                 {
-                    smDBList = db.SMSets.Where(sm => sm.Identifier == smId).ToList();
+                    smDBList.Add(smDb);
+                }
+
+                if (smIds != null)
+                {
+                    foreach (var smId in smIds)
+                    {
+                        smDBList = db.SMSets.Where(sm => sm.Identifier == smId).ToList();
+                    }
                 }
             }
+
             // foreach (var sm in smDBList.Select(selector: submodelDB => ReadSubmodel(db, smDB: submodelDB)))
             foreach (var smDB in smDBList)
             {
@@ -162,10 +188,28 @@ namespace AasxServerDB
                             sm.SetTimeStamp(timeStamp);
                         }
 
-                        env.AasEnv.Submodels?.Add(sm);
+                        env.Submodels?.Add(sm);
                     }
                 }
             }
+
+            return env;
+        }
+
+        public static AdminShellPackageEnv? GetPackageEnv(AasContext db, Dictionary<string, string>? securityCondition = null, int envId = -1, AASSet aas = null, SMSet sm = null)
+        {
+            // env
+            var env = new AdminShellPackageEnv();
+            var environment = GetEnvironment(db, securityCondition, envId, aasDb: aas, smDb: sm, includeCD: true);
+
+            // path
+            if (envId != -1)
+            {
+                env.SetFilename(fileName: GetAASXPath(envId));
+            }
+
+            env.AasEnv = environment;
+
             return env;
         }
 
@@ -174,7 +218,6 @@ namespace AasxServerDB
             var output = new List<IAssetAdministrationShell>();
 
             var globalAssetId = assetIds?.Where(a => a.Name == "globalAssetId").Select(a => a.Value).FirstOrDefault();
-
 
             var aasDBList = db.AASSets
                 .Where(aas => idShort == null || aas.IdShort == idShort)
@@ -1675,61 +1718,6 @@ namespace AasxServerDB
                     transaction.Rollback();
                 }
             }
-        }
-
-        internal static AasCore.Aas3_0.Environment GenerateSerializationByIds(AasContext db, Dictionary<string, string>? securityCondition, List<string> aasIds, List<string> submodelIds, bool? includeCD)
-        {
-            List<IAssetAdministrationShell>? aas = null;
-            List<ISubmodel>? submodels = null;
-            List<IConceptDescription>? conceptDescriptions = null;
-            var outputEnv = new AasCore.Aas3_0.Environment(aas, submodels, conceptDescriptions);
-
-            if (aasIds != null)
-            {
-                foreach (var aasId in aasIds)
-                {
-                    if (aasId != null)
-                    {
-                        AASSet aasDB = null;
-
-                        var a = CrudOperator.ReadAssetAdministrationShell(db, ref aasDB, aasIdentifier: aasId);
-                        if (a != null)
-                        {
-                            aas ??= [];
-                            aas.Add(a);
-                        }
-                    }
-                }
-            }
-            if (submodelIds != null)
-            {
-                foreach (var submodelId in submodelIds)
-                {
-                    if (submodelId != null)
-                    {
-                        var s = CrudOperator.ReadSubmodel(db, submodelIdentifier: submodelId, securityCondition: securityCondition);
-                        if (s != null)
-                        {
-                            submodels ??= [];
-                            submodels.Add(s);
-                        }
-                    }
-                }
-            }
-            if (includeCD is not null and true)
-            {
-                foreach (var cd in db.CDSets)
-                {
-                    var c = CrudOperator.ReadConceptDescription(db, cd);
-                    if (c != null)
-                    {
-                        conceptDescriptions ??= [];
-                        conceptDescriptions.Add(c);
-                    }
-                }
-            }
-
-            return outputEnv;
         }
 
         public static string GetAASXPath(int? envId = null, string cdId = "", string aasId = "", string smId = "")
