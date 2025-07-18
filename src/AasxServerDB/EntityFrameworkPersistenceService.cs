@@ -1640,21 +1640,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 if (loadIntoMemory)
                 {
                     output = CrudOperator.ReadAssetAdministrationShell(db, ref aasDB);
-
-                    if (output != null)
-                    {
-                        var smDBList = aasDB.SMRefSets.ToList();
-
-                        foreach (var sm in smDBList)
-                        {
-                            if (sm.Identifier != null)
-                            {
-                                output?.Submodels?.Add(new Reference(type: ReferenceTypes.ModelReference,
-                                    keys: new List<IKey>() { new Key(KeyTypes.Submodel, sm.Identifier) }
-                                ));
-                            }
-                        }
-                    }
                 }
                 return true;
             }
