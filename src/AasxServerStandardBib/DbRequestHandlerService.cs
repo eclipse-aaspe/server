@@ -931,13 +931,14 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         return tcs;
     }
 
-    public async Task<AasCore.Aas3_0.Environment> GenerateSerializationByIds(ISecurityConfig securityConfig, List<string> aasIds = null, List<string> submodelIds = null, bool? includeCD = false)
+    public async Task<DbRequestResult> GenerateSerializationByIds(ISecurityConfig securityConfig, List<string> aasIds = null, List<string> submodelIds = null, bool includeCD = false, bool createAASXPackage = false)
     {
         var parameters = new DbRequestParams()
         {
             AasIds = aasIds,
             SubmodelIds = submodelIds,
-            IncludeCD = includeCD
+            IncludeCD = includeCD,
+            CreateAASXPackage = createAASXPackage
         };
 
         var dbRequestContext = new DbRequestContext()
@@ -952,7 +953,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         _queryOperations.Add(dbRequest);
 
         var tcs = await taskCompletionSource.Task;
-        return tcs.Environment;
+        return tcs;
     }
 
     public async Task<QResult> QuerySearchSMs(ISecurityConfig securityConfig, bool withTotalCount, bool withLastId, string semanticId, string identifier, string diff, IPaginationParameters paginationParameters, string expression)

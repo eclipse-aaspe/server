@@ -34,12 +34,15 @@ using System.Xml;
 namespace IO.Swagger.Controllers
 {
     using System.Linq;
+    using System.Net.Mime;
     using System.Threading.Tasks;
     using AasSecurity.Exceptions;
     using AasxServer;
     using AasxServerStandardBib;
     using Contracts;
+    using Contracts.DbRequests;
     using IO.Swagger.Lib.V3.Models;
+    using Microsoft.AspNetCore.Http;
 
     /// <summary>
     /// 
@@ -90,17 +93,39 @@ namespace IO.Swagger.Controllers
 
             var securityConfig = new SecurityConfig(Program.noSecurity, this);
 
-            var environment = await _dbRequestHandlerService.GenerateSerializationByIds(securityConfig, decodedAasIds, decodedSubmodelIds, includeConceptDescriptions);
+            bool includeCD = false;
+
+            if(includeConceptDescriptions.HasValue)
+            {
+                includeCD = includeConceptDescriptions.Value;
+            }
 
             HttpContext.Request.Headers.TryGetValue("Content-Type", out var contentType);
-            if (!contentType.Equals("application/xml"))
+
+            bool createAASXPackage = contentType.Equals("application/asset-administration-shell-package+xml");
+
+            var result = await _dbRequestHandlerService.GenerateSerializationByIds(securityConfig, decodedAasIds, decodedSubmodelIds, includeCD, createAASXPackage);
+
+            if (createAASXPackage)
             {
-                return new ObjectResult(environment);
+                var fileRequestResult = result.FileRequestResult;
+                ContentDisposition contentDisposition = new() { FileName = fileRequestResult.File };
+
+                HttpContext.Response.Headers.Append("Content-Disposition", contentDisposition.ToString());
+                HttpContext.Response.Headers.Append("X-FileName", fileRequestResult.File);
+
+                HttpContext.Response.ContentLength = fileRequestResult.FileSize;
+                await HttpContext.Response.Body.WriteAsync(fileRequestResult.Content);
+                return new EmptyResult();
+            }
+            else if (contentType.Equals("application/json"))
+            {
+                return new ObjectResult(result.Environment);
             }
 
             var outputBuilder = new System.Text.StringBuilder();
             var writer = XmlWriter.Create(outputBuilder, new XmlWriterSettings { Indent = true, OmitXmlDeclaration = true });
-            Xmlization.Serialize.To(environment, writer);
+            Xmlization.Serialize.To(result.Environment, writer);
             writer.Flush();
             writer.Close();
             return new ObjectResult(outputBuilder.ToString());

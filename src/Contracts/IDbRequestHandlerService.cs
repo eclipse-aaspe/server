@@ -61,7 +61,7 @@ public interface IDbRequestHandlerService
     Task<DbRequestResult> ReplaceConceptDescriptionById(ISecurityConfig securityConfig, IConceptDescription body, string cdIdentifier);
     Task<DbRequestResult> DeleteConceptDescriptionById(ISecurityConfig securityConfig, string cdIdentifier);
 
-    Task<AasCore.Aas3_0.Environment> GenerateSerializationByIds(ISecurityConfig securityConfig, List<string> aasIds = null, List<string> submodelIds = null, bool? includeCD = false);
+    Task<DbRequestResult> GenerateSerializationByIds(ISecurityConfig securityConfig, List<string> aasIds = null, List<string> submodelIds = null, bool includeCD = false, bool createAASXPackage = false);
 
     Task<QResult> QuerySearchSMs(ISecurityConfig securityConfig, bool withTotalCount, bool withLastId, string semanticId, string identifier, string diff, IPaginationParameters paginationParameters, string expression);
     Task<int> QueryCountSMs(ISecurityConfig securityConfig, string semanticId, string identifier, string diff, IPaginationParameters paginationParameters, string expression);

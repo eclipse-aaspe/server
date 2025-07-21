@@ -32,7 +32,8 @@ public class DbRequestParams
     //Metadata
     public IPaginationParameters PaginationParameters { get; set; }
     public bool First { get; set; }
-    public bool? IncludeCD { get; set; }
+    public bool IncludeCD { get; set; }
+    public bool CreateAASXPackage { get; set; }
 
 
     public IReference IsCaseOf { get; set; }
