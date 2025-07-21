@@ -46,16 +46,7 @@
           }
         ],
         "FORMULA": {
-          "$eq": [
-            {
-              "$attribute": {
-                "CLAIM": "token:iss"
-              }
-            },
-            {
-              "$strVal": "https://admin-shell-io.com/50001"
-            }
-          ]
+          "$boolean": true
         }
       },
       {
@@ -115,61 +106,6 @@
               ]
             }
           ]
-        },
-        "FILTER": {
-          "FRAGMENT": "xxx",
-          "CONDITION": {
-            "$or": [
-              {
-                "$and": [
-                  {
-                    "$eq": [
-                      {
-                        "$field": "$sm#idShort"
-                      },
-                      {
-                        "$strVal": "TechnicalData"
-                      }
-                    ]
-                  },
-                  {
-                    "$starts-with": [
-                      {
-                        "$field": "$sme#idShort"
-                      },
-                      {
-                        "$strVal": "General"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "$and": [
-                  {
-                    "$eq": [
-                      {
-                        "$field": "$sm#idShort"
-                      },
-                      {
-                        "$strVal": "Nameplate"
-                      }
-                    ]
-                  },
-                  {
-                    "$starts-with": [
-                      {
-                        "$field": "$sme#idShort"
-                      },
-                      {
-                        "$strVal": "Manufacturer"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
         }
       }
     ]
