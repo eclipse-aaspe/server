@@ -1020,9 +1020,12 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         {
             var newFileName = Path.Combine(AasContext.DataPath, file);
 
+            var isFileNameEqual = false;
+
             if (newFileName == envDB.Path)
             {
                 System.IO.File.Delete(envDB.Path);
+                isFileNameEqual = true;
             }
 
             //Check if file already exists
@@ -1037,7 +1040,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 fileContent.CopyTo(fileStream);
             }
 
-            if (System.IO.File.Exists(envDB.Path))
+            if (System.IO.File.Exists(envDB.Path)
+                && !isFileNameEqual)
             {
                 System.IO.File.Delete(envDB.Path);
             }
