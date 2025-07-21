@@ -1766,13 +1766,16 @@ namespace AasxServerDB
             {
                 var aas = db.AASSets.FirstOrDefault(aas => aas.Identifier == aasIdentifier);
 
-                if (aas.EnvId.HasValue && aas.EnvId >= 0)
+                if (aas != null)
                 {
-                    envIds.Add(aas.EnvId.Value);
-                }
-                else
-                {
-                    unpackedAasIds.Add(aasIdentifier);
+                    if (aas.EnvId.HasValue && aas.EnvId >= 0)
+                    {
+                        envIds.Add(aas.EnvId.Value);
+                    }
+                    else
+                    {
+                        unpackedAasIds.Add(aasIdentifier);
+                    }
                 }
             }
             else
