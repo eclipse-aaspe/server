@@ -75,7 +75,6 @@ namespace AasxServerDB
                     var envDB = new EnvSet()
                     {
                         Path = filePath,
-                        //PackageIdentifier = envDB.Id.ToString(),
                     };
                     ImportAASIntoDB(asp, envDB);
 
