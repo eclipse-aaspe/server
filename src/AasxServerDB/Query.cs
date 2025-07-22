@@ -293,8 +293,7 @@ public partial class Query
             text += "/" + db.SMSets.Count() + ": " + qResult.Count + " queried";
             Console.WriteLine(text);
 
-            var smIdList = result.Select(sm => sm.smId).Distinct();
-
+            /*
             var securityConditionSM = "";
             if (securityCondition != null && securityCondition["sm."] != null)
             {
@@ -303,16 +302,18 @@ public partial class Query
 
             if (securityConditionSM == "" || securityConditionSM == "*")
                 securityConditionSM = "true";
+            */
 
-            var smList = db.SMSets.Where(sm => smIdList.Contains(sm.Identifier)).ToList();
 
             var submodelsResult = new SubmodelsQueryResult();
 
-            var timeStamp = DateTime.UtcNow;
-
             if (!qResult.WithSelect)
             {
+                var timeStamp = DateTime.UtcNow;
                 var submodels = new List<ISubmodel>();
+
+                var smIdList = result.Select(sm => sm.smId).Distinct();
+                var smList = db.SMSets.Where(sm => smIdList.Contains(sm.Id)).ToList();
 
                 foreach (var sm in smList.Select(selector: submodelDB =>
                     CrudOperator.ReadSubmodel(db, smDB: submodelDB, "", securityCondition)))
@@ -328,7 +329,7 @@ public partial class Query
             }
             else
             {
-                submodelsResult.Ids = smIdList.ToList();
+                submodelsResult.Ids = result.Select(sm => sm.smIdentifier).Distinct().ToList();
             }
             return submodelsResult;
         }
@@ -801,6 +802,7 @@ public partial class Query
             var resultWithSMID = query
                 .Select(sm => new
                 {
+                    sm.SM_Id,
                     sm.Identifier,
                     sm.TimeStampTree,
                     lastID = sm.SM_Id
@@ -847,7 +849,8 @@ public partial class Query
             var result = resultWithSMID
                 .Select(sm => new SMResult()
                 {
-                    smId = sm.Identifier,
+                    smId = sm.SM_Id,
+                    smIdentifier = sm.Identifier,
                     timeStampTree = sm.TimeStampTree,
                     url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sm.Identifier ?? string.Empty)}",
                 })
@@ -859,7 +862,8 @@ public partial class Query
             var result = query
                 .Select(sm => new SMResult()
                 {
-                    smId = sm.Identifier,
+                    smId = sm.SM_Id,
+                    smIdentifier = sm.Identifier,
                     timeStampTree = sm.TimeStampTree,
                     url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sm.Identifier ?? string.Empty)}",
                 })

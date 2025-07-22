@@ -608,7 +608,7 @@ namespace AasxServerDB
             }
 
             var smList = qresult.SMResults.Select(sm => sm.smId).ToList();
-            var smDBList = db.SMSets.Where(sm => smList.Contains(sm.Identifier)).ToList();
+            var smDBList = db.SMSets.Where(sm => smList.Contains(sm.Id)).ToList();
 
             var timeStamp = DateTime.UtcNow;
 
