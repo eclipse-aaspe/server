@@ -446,11 +446,11 @@ namespace AasSecurity
                             try
                             {
                                 var principal = tokenHandler.ValidateToken(bearerToken, validationParameters, out var validatedToken);
-                                Console.WriteLine("✅ Token is valid.");
+                                Console.WriteLine("âœ… Token is valid.");
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine($"❌ Token validation failed: {ex.Message}");
+                                Console.WriteLine($"âŒ Token validation failed: {ex.Message}");
                                 user = "";
                                 return "";
                             }
@@ -1366,3 +1366,4 @@ namespace AasSecurity
         }
     }
 }
+

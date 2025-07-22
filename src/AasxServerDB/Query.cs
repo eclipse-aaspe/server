@@ -1,5 +1,5 @@
 /********************************************************************************
-* Copyright (c) {2019 - 2024} Contributors to the Eclipse Foundation
+* Copyright (c) {2019 - 2025} Contributors to the Eclipse Foundation
 *
 * See the NOTICE file(s) distributed with this work for additional
 * information regarding copyright ownership.
@@ -1893,7 +1893,7 @@ public partial class Query
                     // JSON-Daten parsen
                     JObject jsonObject = JObject.Parse(jsonData);
 
-                    // Validierung durchführen
+                    // Validierung durchfÃ¼hren
                     IList<string> validationErrors = new List<string>();
                     bool isValid = jsonObject.IsValid(schema, out validationErrors);
                     */
@@ -1902,13 +1902,13 @@ public partial class Query
 
                     if (isValid)
                     {
-                        messages.Add("✅ JSON is valid.");
+                        messages.Add("âœ… JSON is valid.");
                         try
                         {
                             deserializedData = JsonConvert.DeserializeObject<Root>(jsonData);
                             if (deserializedData != null)
                             {
-                                messages.Add("✅ Successfully deserialized.");
+                                messages.Add("âœ… Successfully deserialized.");
 
                                 // mode: all, sm., sme., svalue, mvalue
                                 List<LogicalExpression?> logicalExpressions = [];
@@ -1951,7 +1951,7 @@ public partial class Query
                     }
                     if (!isValid)
                     {
-                        messages.Add("❌ JSON not valid:");
+                        messages.Add("âŒ JSON not valid:");
                         /*
                         foreach (var error in validationErrors)
                         {
@@ -1963,7 +1963,7 @@ public partial class Query
                 }
                 else
                 {
-                    messages.Add("❌ jsonschema-query.txt not found.");
+                    messages.Add("âŒ jsonschema-query.txt not found.");
                     return null;
                 }
 
@@ -2184,3 +2184,4 @@ public partial class Query
         return rawSQL;
     }
 }
+
