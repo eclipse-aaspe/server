@@ -23,8 +23,7 @@ namespace AasxServerDB.Entities
         // id
         public int Id { get; set; }
 
-        // aasx package
-        //public string? PackageIdentifier { get; set; }
+        //Path to .aasx file. Name is only used for import and export. The data in that file is not maintained!
         public string? Path { get; set; }
 
         // cd, aas, sm
