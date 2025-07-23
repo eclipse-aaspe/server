@@ -76,6 +76,9 @@
           },
           {
             "ROUTE": "/serialization"
+          },
+          {
+            "ROUTE": "/concept-descriptions"
           }
         ],
         "FORMULA": {

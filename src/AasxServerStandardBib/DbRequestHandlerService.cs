@@ -847,7 +847,7 @@ public class DbRequestHandlerService : IDbRequestHandlerService
         };
         var taskCompletionSource = new TaskCompletionSource<DbRequestResult>();
 
-        var dbRequest = new DbRequest(DbRequestOp.ReadPagedSubmodelElements, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
+        var dbRequest = new DbRequest(DbRequestOp.ReadPagedConceptDescriptions, DbRequestCrudType.Read, dbRequestContext, taskCompletionSource);
 
         _queryOperations.Add(dbRequest);
 
