@@ -14,6 +14,8 @@
 using AasSecurity.Models;
 using AasxServer;
 using AdminShellNS;
+using System;
+using System.Buffers.Text;
 using System.Security.Cryptography.X509Certificates;
 
 namespace AasSecurity
@@ -80,6 +82,41 @@ namespace AasSecurity
 
         private static void ParseAuthenticationServer(AdminShellPackageEnv env, SubmodelElementCollection? authServer)
         {
+            if (System.IO.File.Exists("trustlist.txt"))
+            {
+                var lines = System.IO.File.ReadAllLines("trustlist.txt");
+                {
+                    var serverName = "";
+                    var base64 = "";
+                    foreach (var line in lines)
+                    {
+                        if (line == "")
+                            continue;
+
+                        if (line.Contains("serverName"))
+                        {
+                            var split = line.Split(": ");
+                            serverName = split[1];
+                        }
+                        else if (line.Contains("BEGIN CERTIFICATE"))
+                        {
+                            base64 = "";
+                        }
+                        else if (line.Contains("END CERTIFICATE"))
+                        {
+                            base64 = base64.Replace("\r", "").Replace("\n", "").Trim();
+                            var certBytes = Convert.FromBase64String(base64);
+                            var x509 = new X509Certificate2(certBytes);
+                            GlobalSecurityVariables.ServerCertificates.Add(x509);
+                            GlobalSecurityVariables.ServerCertFileNames.Add(serverName + ".cer");
+                        }
+                        else
+                        {
+                            base64 += line;
+                        }
+                    }
+                }
+            }
             if (authServer == null || authServer.Value == null)
             {
                 return;
