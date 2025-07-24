@@ -1548,11 +1548,8 @@ namespace AasxServer
             {
                 return;
             }
-
-            HttpClient client = null;
-            HttpClientHandler handler = null;
             var eventData = _eventService.ParseData(op, Program.env[envIndex]);
-
+            
             if (false && eventData.AuthType != null)
             {
                 switch (eventData.AuthType.Value.ToLower())
@@ -1589,6 +1586,13 @@ namespace AasxServer
 
             if (eventData.Direction != null && eventData.Mode != null)
             {
+                if (eventData.Direction.Value == "OUT" && eventData.Mode.Value == "MQTT")
+                {
+                    _eventService.PublishMqttMessage(eventData);
+                    return;
+                }
+
+
                 if (eventData.Direction.Value == "OUT" && (eventData.Mode.Value == "PUSH" || eventData.Mode.Value == "PUT"))
                 {
                     getPut = "put";
@@ -1598,6 +1602,9 @@ namespace AasxServer
                     getPut = "get";
                 }
             }
+
+            HttpClient client = null;
+            HttpClientHandler handler = null;
 
             handler = new HttpClientHandler()
             {
@@ -1819,7 +1826,7 @@ namespace AasxServer
                     }
                     else
                     {
-                        if (eventData.LastUpdate == null && eventData.LastUpdate.Value == null)
+                        if (eventData.LastUpdate == null || eventData.LastUpdate.Value.IsNullOrEmpty())
                         {
                             d = "init";
                         }
@@ -1980,7 +1987,7 @@ namespace AasxServer
                     {
                         c = eventData.Changes.Value;
                     }
-                    //ToDo: Add security condition
+
                     var e = _eventService.CollectPayload(null, c, 0, eventData.StatusData,
                         eventData.DataReference, source, eventData.ConditionSM, eventData.ConditionSME,
                         d, diffEntry, !np, 1000, 1000, 0, 0);

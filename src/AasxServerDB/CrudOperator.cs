@@ -14,13 +14,8 @@
 namespace AasxServerDB
 {
     using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Drawing;
-    using System.IO.Packaging;
     using System.Linq;
     using System.Linq.Dynamic.Core;
-    using System.Linq.Expressions;
-    using System.Runtime.Intrinsics.X86;
     using System.Text;
     using AasCore.Aas3_0;
     using AasxServerDB.Entities;
@@ -28,14 +23,10 @@ namespace AasxServerDB
     using AdminShellNS.Models;
     using Contracts.Pagination;
     using Contracts.QueryResult;
-    using Contracts.Security;
     using Extensions;
-    using HotChocolate.Execution;
-    using Irony.Parsing;
     using Microsoft.EntityFrameworkCore;
     // using Microsoft.EntityFrameworkCore.Metadata.Internal;
     using Microsoft.IdentityModel.Tokens;
-    using static AasxServerDB.CrudOperator;
 
     public class CrudOperator
     {

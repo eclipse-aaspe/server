@@ -1489,7 +1489,10 @@ namespace AdminShellNS
 
             // access
             if (_openPackage == null)
-                throw (new Exception(string.Format($"AASX Package {_fn} not opened. Aborting!")));
+            {
+                return null;
+                //throw (new Exception(string.Format($"AASX Package {_fn} not opened. Aborting!")));
+            }
             // get the thumbnail over the relationship
             PackagePart thumbPart = null;
             var xs = _openPackage.GetRelationshipsByType(

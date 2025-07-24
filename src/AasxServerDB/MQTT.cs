@@ -7,7 +7,8 @@ using System.Security.Authentication;
 using System.Text.Json;
 public class MqttClientService
 {
-    private readonly IMqttClient _mqttClient;
+    private readonly List<IMqttClient> _mqttClients;
+    private readonly MqttClientFactory _factory;
     private readonly MqttClientOptions _options;
     private readonly ILogger<MqttClientService> _logger;
 
@@ -16,11 +17,10 @@ public class MqttClientService
         _logger = logger;
         Console.WriteLine("MqttClientService");
 
-        var factory = new MqttClientFactory();
-        _mqttClient = factory.CreateMqttClient();
+        _factory = new MqttClientFactory();
 
         _options = new MqttClientOptionsBuilder()
-            .WithClientId("AasxServerClient")
+            //.WithClientId("AasxServerClient")
             .WithTcpServer("mqtt-broker.aas-voyager.com", 8883)
             .WithCredentials("phoenixcontact.com", "phoenixcontact.com")
             .WithTlsOptions(new MqttClientTlsOptions
@@ -35,33 +35,45 @@ public class MqttClientService
             .Build();
     }
 
-    public async Task ConnectAsync()
+    public async Task ConnectAsync(string clientId)
     {
-        if (!_mqttClient.IsConnected)
+        var mqttClient = _mqttClients.Where(cl => cl.Options.ClientId == clientId).FirstOrDefault();
+
+        if (mqttClient == null)
         {
-            await _mqttClient.ConnectAsync(_options);
+            mqttClient = _factory.CreateMqttClient();
+            mqttClient.Options.ClientId = clientId;
+        }
+
+        if (mqttClient != null && !mqttClient.IsConnected)
+        {
+            await mqttClient.ConnectAsync(_options);
             _logger.LogInformation("MQTT connected.");
             Console.WriteLine("MQTT connected.");
         }
     }
 
-    public async Task DisconnectAsync()
+    public async Task DisconnectAsync(string clientId)
     {
-        if (_mqttClient.IsConnected)
+        var mqttClient = _mqttClients.Where(cl => cl.Options.ClientId == clientId).FirstOrDefault();
+
+        if (mqttClient.IsConnected)
         {
             _logger.LogInformation("MQTT disconnected.");
             Console.WriteLine("MQTT disconnected.");
         }
     }
 
-    public async Task PublishAsync(string topic, string payload)
+    public async Task PublishAsync(string clientId, string topic, string payload)
     {
-        if (!_mqttClient.IsConnected)
+        var mqttClient = _mqttClients.Where(cl => cl.Options.ClientId == clientId).FirstOrDefault();
+
+        if (!mqttClient.IsConnected)
         {
-            await ConnectAsync();
+            await ConnectAsync(clientId);
         }
 
-        if (_mqttClient.IsConnected)
+        if (mqttClient.IsConnected)
         {
             var message = new MqttApplicationMessageBuilder()
             .WithTopic(topic)
@@ -71,7 +83,7 @@ public class MqttClientService
             .WithRetainFlag()
             .Build();
 
-            await _mqttClient.PublishAsync(message);
+            await mqttClient.PublishAsync(message);
             _logger.LogInformation("MQTT message sent.");
             Console.WriteLine("MQTT message sent.");
         }
@@ -120,9 +132,9 @@ public class SubmodelPublisherService : BackgroundService
                     {
                         // var json = JsonSerializer.Serialize(changed);
                         var json = changed;
-                        await _mqttService.PublishAsync("/noauth/submodels", json);
-                        await _mqttService.PublishAsync("/fx/all/submodels", json);
-                        await _mqttService.PublishAsync("/fx/domain/phoenixcontact.com/submodels", json);
+                        await _mqttService.PublishAsync("test", "/noauth/submodels", json);
+                        await _mqttService.PublishAsync("test", "/fx/all/submodels", json);
+                        await _mqttService.PublishAsync("test", "/fx/domain/phoenixcontact.com/submodels", json);
                         _lastPublish = DateTime.UtcNow;
                     }
                 }

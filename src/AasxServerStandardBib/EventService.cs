@@ -16,14 +16,116 @@ using System.Text.Json;
 using Extensions;
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using static AasxServerStandardBib.TimeSeriesPlotting.PlotArguments;
 
 public class EventService : IEventService
 {
+
+    public EventService(MqttClientService mqttClientService)
+    {
+        _mqttClientService = mqttClientService;
+        var envValue = Environment.GetEnvironmentVariable("AASX_MQTT");
+        _enableMqtt = envValue == "1";
+    }
+
     public ICollection<EventDto> EventDtos;
 
     public static object EventLock = new object();
+    private bool _enableMqtt;
 
-    public int CollectSubmodelElements(List<ISubmodelElement> submodelElements, DateTime diffTime, string entryType,
+    private readonly MqttClientService _mqttClientService;
+
+    public async void PublishMqttMessage(EventDto eventData)
+    {
+        if (!_enableMqtt)
+        {
+            return;
+        }
+
+        IReferable source = null;
+        if (eventData.DataCollection != null)
+        {
+            source = eventData.DataCollection;
+        }
+        else
+        {
+            source = eventData.DataSubmodel;
+        }
+
+        var d = "";
+        if (eventData.LastUpdate != null && eventData.LastUpdate.Value != null && eventData.LastUpdate.Value == "init")
+        {
+            d = "init";
+        }
+        else
+        {
+            if (eventData.LastUpdate == null || eventData.LastUpdate.Value.IsNullOrEmpty())
+            {
+                d = "init";
+            }
+            else
+            {
+                d = eventData.LastUpdate.Value;
+            }
+        }
+
+        List<String> diffEntry = new List<String>();
+        bool np = false;
+        np = eventData.NoPayload != null && eventData.NoPayload.Value != null && eventData.NoPayload.Value.ToLower() == "true";
+        string c = "";
+        if (eventData.Changes != null)
+        {
+            c = eventData.Changes.Value;
+        }
+
+        var e = CollectPayload(null, c, 0, eventData.StatusData,
+            eventData.DataReference, source, eventData.ConditionSM, eventData.ConditionSME,
+            d, diffEntry, !np, 1000, 1000, 0, 0);
+        foreach (var diff in diffEntry)
+        {
+            Console.WriteLine(diff);
+        }
+
+        var payloadList = new List<object>();
+
+        foreach (var eventPayloadEntry in e.eventEntries)
+        {
+            var payloadObject = new
+            {
+                specversion = "1.0",
+                type = eventPayloadEntry.entryType,
+                source = "https://pathAddedLater",
+                subject = new
+                {
+                   id = eventPayloadEntry.submodelId,
+                   //ToDo: Find correct parameter
+                   //semanticId = eventPayloadEntry
+                },
+                id = $"later-{Guid.NewGuid()}",
+                time = DateTime.UtcNow.ToString("o"),
+                datacontenttype = eventPayloadEntry.payloadType == "sm" ? "application/json+submodel" : "application/json",
+                data = eventPayloadEntry.payload
+            };
+
+            payloadList.Add(payloadObject);
+        }
+
+        if (payloadList.Count > 0)
+        {
+            var jsonArray = JsonSerializer.Serialize(payloadList);
+            Console.WriteLine(jsonArray);
+
+            var clientId = eventData.UserName.Value + eventData.PassWord.Value;
+
+            await _mqttClientService.PublishAsync(clientId, "/noauth/submodels", jsonArray);
+            await _mqttClientService.PublishAsync(clientId, "/fx/all/submodels", jsonArray);
+            await _mqttClientService.PublishAsync(clientId, "/fx/domain/phoenixcontact.com/submodels", jsonArray);
+
+        }
+    }
+
+    private int CollectSubmodelElements(List<ISubmodelElement> submodelElements, DateTime diffTime, string entryType,
         string submodelId, string idShortPath, List<EventPayloadEntry> entries, List<String> diffEntry, bool withPayload)
     {
         int count = 0;
@@ -942,7 +1044,7 @@ public class EventService : IEventService
         return count;
     }
 
-    public int ChangeSubmodelElement(EventDto eventData, EventPayloadEntry entry, IReferable parent, List<ISubmodelElement> submodelElements, string idShortPath, List<String> diffEntry)
+    private int ChangeSubmodelElement(EventDto eventData, EventPayloadEntry entry, IReferable parent, List<ISubmodelElement> submodelElements, string idShortPath, List<String> diffEntry)
     {
         int count = 0;
         var dt = DateTime.Parse(entry.lastUpdate);
@@ -1137,7 +1239,7 @@ public class EventService : IEventService
         return FindEvent(submodel, null, eventPath);
     }
 
-    public Operation FindEvent(ISubmodel submodel, ISubmodelElement sme, string eventPath)
+    private Operation FindEvent(ISubmodel submodel, ISubmodelElement sme, string eventPath)
     {
         var children = new List<ISubmodelElement>();
 
