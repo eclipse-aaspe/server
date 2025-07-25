@@ -201,6 +201,20 @@ namespace AasxServerDB
                 {
                     env.ConceptDescriptions?.Add(cd);
                 }
+
+            }
+
+            if (env.AssetAdministrationShells?.Count == 0)
+            {
+                env.AssetAdministrationShells = null;
+            }
+            if (env.Submodels?.Count == 0)
+            {
+                env.Submodels = null;
+            }
+            if (env.ConceptDescriptions?.Count == 0)
+            {
+                env.ConceptDescriptions = null;
             }
 
             return env;
@@ -816,12 +830,16 @@ namespace AasxServerDB
             {
                 var aasDB = db.AASSets
                     .Where(aas => aas.Identifier == aasIdentifier).ToList();
-                if (aasDB == null || aasDB.Count != 1)
+                if (aasDB.Count != 1)
                 {
                     return null;
                 }
                 var aasDBId = aasDB[0].Id;
-                smDBQuery = smDBQuery.Where(sm => sm.AASId == aasDBId);
+                var smRefDBQuery = db.SMRefSets.Where(sm => sm.Identifier == submodelIdentifier && sm.AASId == aasDBId).ToList();
+                if (smRefDBQuery.Count != 1)
+                {
+                    return null;
+                }
             }
 
             if (securityCondition != null)
@@ -919,12 +937,16 @@ namespace AasxServerDB
             {
                 var aasDB = db.AASSets
                     .Where(aas => aas.Identifier == aasIdentifier).ToList();
-                if (aasDB == null || aasDB.Count != 1)
+                if (aasDB.Count != 1)
                 {
                     return null;
                 }
                 var aasDBId = aasDB[0].Id;
-                smDBQuery = smDBQuery.Where(sm => sm.AASId == aasDBId);
+                var smRefDBQuery = db.SMRefSets.Where(sm => sm.Identifier == submodelIdentifier && sm.AASId == aasDBId).ToList();
+                if (smRefDBQuery.Count != 1)
+                {
+                    return null;
+                }
             }
 
             if (securityCondition != null)

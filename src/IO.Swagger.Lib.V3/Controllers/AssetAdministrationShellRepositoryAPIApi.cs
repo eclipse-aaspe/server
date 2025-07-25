@@ -52,6 +52,7 @@ namespace IO.Swagger.Controllers
     using System.Threading.Tasks;
     using Contracts.Exceptions;
     using Contracts.Security;
+    using Microsoft.IdentityModel.Tokens;
 
     /// <summary>
     /// 
@@ -791,6 +792,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 404, type: typeof(Result), description: "Not Found")]
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
+        /*
         public async virtual Task<IActionResult> GetAllSubmodelReferencesAasRepository([FromRoute][Required]string aasIdentifier, [FromQuery]int? limit, [FromQuery]string? cursor)
         {
             //ToDo: Taken from SubmodelService, verify whether correct
@@ -809,6 +811,38 @@ namespace IO.Swagger.Controllers
             var submodelsPagedList = _paginationService.GetPaginatedResult(submodelList, paginationParameters);
             var smReferences = _referenceModifierService.GetReferenceResult(submodelsPagedList.result.ConvertAll(sm => (IReferable)sm));
             var output = new ReferencePagedResult(smReferences, submodelsPagedList.paging_metadata);
+            return new ObjectResult(output);
+        }
+        */
+
+        public async virtual Task<IActionResult> GetAllSubmodelReferencesAasRepository([FromRoute][Required] string aasIdentifier, [FromQuery] int? limit, [FromQuery] string? cursor)
+        {
+            var decodedAasIdentifier = _decoderService.Decode("aasIdentifier", aasIdentifier);
+            if (decodedAasIdentifier == null)
+            {
+                throw new NotAllowed($"Cannot proceed as {nameof(decodedAasIdentifier)} is null");
+            }
+
+            _logger.LogInformation($"Received request to get all the submodel references from the AAS with id {aasIdentifier}.");
+            var securityConfig = new SecurityConfig(Program.noSecurity, this);
+            var paginationParameters = new PaginationParameters(cursor, limit);
+
+            var aas = await _dbRequestHandlerService.ReadAssetAdministrationShellById(securityConfig, decodedAasIdentifier);
+            var smReferences = new List<IReference>();
+            if (aas != null)
+            {
+                if (aas.Submodels.IsNullOrEmpty())
+                {
+                    _logger.LogDebug($"No submodels present in the AAS with Id {aasIdentifier}");
+                }
+                else
+                {
+                    smReferences = aas.Submodels;
+                }
+            }
+
+            var output = _paginationService.GetPaginatedResult(smReferences, paginationParameters);
+            // var output = new ReferencePagedResult(smReferences, submodelsPagedList.paging_metadata);
             return new ObjectResult(output);
         }
 
