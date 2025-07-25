@@ -186,12 +186,16 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
             //From DB
             aasDescriptors = [];
             using var db = new AasContext();
-            aasDescriptors.AddRange(from aasDB in db.AASSets
+            var iCursor = string.IsNullOrEmpty(cursor) || !int.TryParse(cursor, out var parsedCursor) ? 0 : parsedCursor;
+            var iLimit = (limit != null) ? (int)limit : 500;
+            var aasSets = db.AASSets.Skip(iCursor).Take(iLimit);
+            aasDescriptors.AddRange(from aasDB in aasSets
                                     where assetList.Count == 0 || assetList.Contains(aasDB.GlobalAssetId)
                                     select _aasRegistryService.CreateAasDescriptorFromDB(aasDB));
         }
 
-        var output = _paginationService.GetPaginatedList(aasDescriptors, new PaginationParameters(cursor, limit));
+        // var output = _paginationService.GetPaginatedList(aasDescriptors, new PaginationParameters(cursor, limit));
+        var output = _paginationService.GetPaginatedList(aasDescriptors, new PaginationParameters("0", limit));
         return new ObjectResult(output);
     }
 
