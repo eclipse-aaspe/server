@@ -393,7 +393,7 @@ public partial class Query
 
         // get condition out of expression
         var conditionsExpression = ConditionFromExpression(noSecurity, messages, expression, securityCondition);
-        if (conditionsExpression == null)
+        if (conditionsExpression == null || conditionsExpression.Count == 0)
         {
             return null;
         }
