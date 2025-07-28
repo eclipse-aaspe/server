@@ -84,19 +84,21 @@ namespace AasSecurity
         {
             if (System.IO.File.Exists("trustlist.txt"))
             {
+                Console.WriteLine("Read trustlist.txt");
                 var lines = System.IO.File.ReadAllLines("trustlist.txt");
                 {
                     var serverName = "";
                     var base64 = "";
                     foreach (var line in lines)
                     {
-                        if (line == "")
+                        if (line == "" || line.StartsWith("# "))
                             continue;
 
                         if (line.Contains("serverName"))
                         {
                             var split = line.Split(": ");
                             serverName = split[1];
+                            Console.WriteLine(serverName);
                         }
                         else if (line.Contains("BEGIN CERTIFICATE"))
                         {
