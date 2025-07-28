@@ -25,7 +25,7 @@ class Program
         var mqttServerOptions = new MqttServerOptionsBuilder()
             .WithDefaultEndpoint()
             .WithDefaultEndpointPort(1883)
-            .WithDefaultEndpointBoundIPAddress(IPAddress.Loopback)
+            .WithDefaultEndpointBoundIPAddress(IPAddress.Any)
             .Build();
 
         var mqttServer = new MqttServerFactory().CreateMqttServer(mqttServerOptions);
