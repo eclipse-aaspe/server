@@ -41,6 +41,8 @@ using AasSecurity.Exceptions;
 using Contracts;
 using Contracts.Exceptions;
 using Contracts.Pagination;
+using IO.Swagger.Lib.V3.Models;
+using IO.Swagger.Models;
 
 /// <summary>
 /// 
@@ -180,6 +182,9 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
         {
             // from AAS memory
             aasDescriptors = _aasRegistryService.GetAllAssetAdministrationShellDescriptors(assetKind, assetList);
+            var output = _paginationService.GetPaginatedList(aasDescriptors, new PaginationParameters(cursor, limit));
+
+            return new ObjectResult(output);
         }
         else
         {
@@ -192,11 +197,18 @@ public class AssetAdministrationShellRegistryAPIApiController : ControllerBase
             aasDescriptors.AddRange(from aasDB in aasSets
                                     where assetList.Count == 0 || assetList.Contains(aasDB.GlobalAssetId)
                                     select _aasRegistryService.CreateAasDescriptorFromDB(aasDB));
-        }
 
-        // var output = _paginationService.GetPaginatedList(aasDescriptors, new PaginationParameters(cursor, limit));
-        var output = _paginationService.GetPaginatedList(aasDescriptors, new PaginationParameters("0", limit));
-        return new ObjectResult(output);
+            var paginationResult = new AasDescriptorPagedResult()
+            {
+                result = aasDescriptors,
+                paging_metadata = new PagedResultPagingMetadata()
+                {
+                    cursor = Convert.ToString(iCursor + iLimit)
+                }
+            };
+
+            return new ObjectResult(paginationResult);
+        }
     }
 
     /// <summary>
