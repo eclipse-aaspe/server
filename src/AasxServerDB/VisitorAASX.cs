@@ -198,7 +198,7 @@ namespace AasxServerDB
                     new VisitorAASX(envDB: envDB).Visit(sm);
 
                     // envDB.SMSets.Last().AASSet = aas;
-                    aas.SMRefSets.Add(new SMRefSet { Identifier = sm.Id });
+                    aas?.SMRefSets?.Add(new SMRefSet { Identifier = sm.Id });
                 }
             }
         }

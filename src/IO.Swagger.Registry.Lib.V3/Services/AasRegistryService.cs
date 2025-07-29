@@ -99,7 +99,10 @@ namespace IO.Swagger.Registry.Lib.V3.Services
                         {
                             esm
                         };
-                        sd.SemanticId = new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, submodelDB.SemanticId) });
+                        if (submodelDB.SemanticId != null)
+                        {
+                            sd.SemanticId = new Reference(ReferenceTypes.ExternalReference, new List<IKey>() { new Key(KeyTypes.GlobalReference, submodelDB.SemanticId) });
+                        }
                         ad.SubmodelDescriptors.Add(sd);
                     }
                 }
