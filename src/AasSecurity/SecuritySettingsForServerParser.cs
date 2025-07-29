@@ -88,31 +88,44 @@ namespace AasSecurity
                 var lines = System.IO.File.ReadAllLines("trustlist.txt");
                 {
                     var serverName = "";
+                    var domain = "";
                     var base64 = "";
+                    var insideBas64 = false;
                     foreach (var line in lines)
                     {
                         if (line == "" || line.StartsWith("# "))
+                        {
                             continue;
+                        }
 
-                        if (line.Contains("serverName"))
+                        if (line.Contains("serverName: "))
                         {
                             var split = line.Split(": ");
                             serverName = split[1];
-                            Console.WriteLine(serverName);
+                            Console.WriteLine(" serverName: " + serverName);
+                        }
+                        if (line.Contains("domain: "))
+                        {
+                            var split = line.Split(": ");
+                            domain = split[1];
+                            Console.WriteLine("  domain: " + domain);
                         }
                         else if (line.Contains("BEGIN CERTIFICATE"))
                         {
+                            insideBas64 = true;
                             base64 = "";
                         }
                         else if (line.Contains("END CERTIFICATE"))
                         {
+                            insideBas64 = false;
                             base64 = base64.Replace("\r", "").Replace("\n", "").Trim();
                             var certBytes = Convert.FromBase64String(base64);
                             var x509 = new X509Certificate2(certBytes);
                             GlobalSecurityVariables.ServerCertificates.Add(x509);
                             GlobalSecurityVariables.ServerCertFileNames.Add(serverName + ".cer");
+                            GlobalSecurityVariables.ServerDomain.Add(domain);
                         }
-                        else
+                        else if (insideBas64)
                         {
                             base64 += line;
                         }

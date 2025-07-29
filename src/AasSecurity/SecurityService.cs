@@ -385,6 +385,7 @@ namespace AasSecurity
         private string HandleBearerToken(string? bearerToken, ref string user, ref bool error,
             out string policy, out string policyRequestedResource, out List<Claim> tokenClaims)
         {
+            var domain = "";
             policy = "";
             policyRequestedResource = "";
             tokenClaims = [];
@@ -446,11 +447,11 @@ namespace AasSecurity
                             try
                             {
                                 var principal = tokenHandler.ValidateToken(bearerToken, validationParameters, out var validatedToken);
-                                Console.WriteLine("âœ… Token is valid.");
+                                Console.WriteLine("Token is valid.");
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine($"âŒ Token validation failed: {ex.Message}");
+                                Console.WriteLine($"Token validation failed: {ex.Message}");
                                 user = "";
                                 return "";
                             }
@@ -460,7 +461,7 @@ namespace AasSecurity
                             var serverName = jwtSecurityToken.Claims.First(c => c.Type == "serverName").Value;
                             if (!string.IsNullOrEmpty(serverName))
                             {
-                                X509Certificate2? cert = SecurityHelper.FindServerCertificate(serverName);
+                                X509Certificate2? cert = SecurityHelper.FindServerCertificate(serverName, out domain);
                                 if (cert == null)
                                 {
                                     user = "";
@@ -507,7 +508,7 @@ namespace AasSecurity
                         if (userNameClaim.Any())
                         {
                             var userName = userNameClaim.First().Value;
-                            if (!string.IsNullOrEmpty(userName))
+                            if (!string.IsNullOrEmpty(userName) && (domain == ""|| userName.EndsWith(domain)))
                             {
                                 user = userName.ToLower();
                             }
