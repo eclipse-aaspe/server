@@ -2580,7 +2580,7 @@ namespace AasxServer
                                                             break;
                                                         case "Distribution":
                                                         case "A2":
-                                                        case "A1 â€“ raw material supply (and upstream production)":
+                                                        case "A1 - raw material supply (and upstream production)":
                                                             if (c.IdShort.Contains("ProductCarbonFootprint"))
                                                             {
                                                                 co2eq.Value = co2eq.Value.Replace(",", ".");
