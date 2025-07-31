@@ -785,7 +785,7 @@ namespace AasSecurity
 
             var rules = GetAccessRulesStatic(currentRole, neededRights.ToString(), operation);
 
-            if (rules?.Count != 0)
+            if (rules != null && rules.Count != 0)
             {
                 return true;
             }
