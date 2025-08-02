@@ -3013,7 +3013,8 @@ namespace AasxServer
 
             if (pCO2eqTotal != null)
             {
-                pCO2eqTotal.Value = root.cradleToGateCombination.Value;
+                pCO2eqTotal.Value = "0";
+                pCO2eqTotal.Value = root?.cradleToGateCombination?.Value;
             }
 
             // once = true;

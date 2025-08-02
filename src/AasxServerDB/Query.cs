@@ -1906,13 +1906,13 @@ public partial class Query
 
                     if (isValid)
                     {
-                        messages.Add("âœ… JSON is valid.");
+                        messages.Add("JSON is valid.");
                         try
                         {
                             deserializedData = JsonConvert.DeserializeObject<Root>(jsonData);
                             if (deserializedData != null)
                             {
-                                messages.Add("âœ… Successfully deserialized.");
+                                messages.Add("Successfully deserialized.");
 
                                 // mode: all, sm., sme., svalue, mvalue
                                 List<LogicalExpression?> logicalExpressions = [];

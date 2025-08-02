@@ -674,13 +674,13 @@ public class QueryGrammarJSON : Grammar
 
             if (isValid)
             {
-                Console.WriteLine("âœ… JSON is valid.");
+                Console.WriteLine("JSON is valid.");
                 try
                 {
                     deserializedData = JsonConvert.DeserializeObject<Root>(jsonData);
                     if (deserializedData != null)
                     {
-                        Console.WriteLine("âœ… Successfully deserialized.");
+                        Console.WriteLine("Successfully deserialized.");
                     }
                     else
                     {
