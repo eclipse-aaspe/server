@@ -36,11 +36,6 @@ class Program
             Console.WriteLine("Debugger attached");
         }
 
-        int smCount = 100;
-        int smePerSm = 5;
-        int smeChildrenPerSme = 5;
-        int maxDepth = 4;
-
         int SMID = 1;
         int SMEID = 1;
         int VALUEID = 1;
@@ -83,6 +78,11 @@ class Program
             }
             else if (input == "2")
             {
+                int smCount = 0;
+                int smePerSm = 5;
+                int smeChildrenPerSme = 5;
+                int maxDepth = 4;
+
                 Console.WriteLine("SM#?");
                 input = Console.ReadLine();
                 if (input == "")
@@ -90,6 +90,25 @@ class Program
                     continue;
                 }
                 smCount = Convert.ToInt32(input);
+
+                Console.WriteLine("# top level SME per SM? (default = 5)");
+                input = Console.ReadLine();
+                if (input != "")
+                {
+                    smePerSm = Convert.ToInt32(input);
+                }
+                Console.WriteLine("# SME per SME? (default = 5)");
+                input = Console.ReadLine();
+                if (input != "")
+                {
+                    smeChildrenPerSme = Convert.ToInt32(input);
+                }
+                Console.WriteLine("Nesting level of SME? (default = 4)");
+                input = Console.ReadLine();
+                if (input != "")
+                {
+                    maxDepth = Convert.ToInt32(input);
+                }
 
                 db.ChangeTracker.AutoDetectChangesEnabled = false;
 
