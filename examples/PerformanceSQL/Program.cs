@@ -310,6 +310,24 @@ class Program
                     smQuery = db.SMs.Where(s => s.Identifier.Contains(idContains));
                     result = smQuery.Select("Id").Distinct();
                 }
+                if (!string.IsNullOrEmpty(valueEquals))
+                {
+                    valueQuery = db.Values.Where(s => s.value == valueEquals);
+                    if (result == null || smQuery == null)
+                    {
+                        result = valueQuery.Select("SMId").Distinct();
+                    }
+                    else
+                    {
+                        smQuery = smQuery.Join(
+                            valueQuery,
+                            "Id",
+                            "SMId",
+                            "new (inner.SMId as Id)"
+                            );
+                        result = smQuery.Select("Id").Distinct();
+                    }
+                }
                 if (!string.IsNullOrEmpty(idshortPathEquals))
                 {
                     smeQuery = db.SMEs.Where(s => s.IdShortPath == idshortPathEquals);
@@ -326,23 +344,6 @@ class Program
                             "new (inner.SMId as Id)"
                             );
                         result = smQuery.Select("Id").Distinct();
-                    }
-                }
-                if (!string.IsNullOrEmpty(valueEquals))
-                {
-                    valueQuery = db.Values.Where(s => s.value == valueEquals);
-                    if (result == null || smQuery == null)
-                    {
-                        result = valueQuery.Select("SMId").Distinct();
-                    }
-                    else
-                    {
-                        result = smQuery.Join(
-                            valueQuery,
-                            "Id",
-                            "SMId",
-                            "new (inner.SMId as Id)"
-                            ).Select("Id").Distinct();
                     }
                 }
 
