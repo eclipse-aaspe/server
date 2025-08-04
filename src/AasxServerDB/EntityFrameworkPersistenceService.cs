@@ -1,3 +1,16 @@
+/********************************************************************************
+* Copyright (c) {2019 - 2025} Contributors to the Eclipse Foundation
+*
+* See the NOTICE file(s) distributed with this work for additional
+* information regarding copyright ownership.
+*
+* This program and the accompanying materials are made available under the
+* terms of the Apache License Version 2.0 which is available at
+* https://www.apache.org/licenses/LICENSE-2.0
+*
+* SPDX-License-Identifier: Apache-2.0
+********************************************************************************/
+
 namespace AasxServerDB;
 
 using System;
@@ -1020,9 +1033,12 @@ public class EntityFrameworkPersistenceService : IPersistenceService
         {
             var newFileName = Path.Combine(AasContext.DataPath, file);
 
+            var isFileNameEqual = false;
+
             if (newFileName == envDB.Path)
             {
                 System.IO.File.Delete(envDB.Path);
+                isFileNameEqual = true;
             }
 
             //Check if file already exists
@@ -1037,7 +1053,8 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 fileContent.CopyTo(fileStream);
             }
 
-            if (System.IO.File.Exists(envDB.Path))
+            if (System.IO.File.Exists(envDB.Path)
+                && !isFileNameEqual)
             {
                 System.IO.File.Delete(envDB.Path);
             }
@@ -1755,21 +1772,6 @@ public class EntityFrameworkPersistenceService : IPersistenceService
                 if (loadIntoMemory)
                 {
                     output = CrudOperator.ReadAssetAdministrationShell(db, ref aasDB);
-
-                    if (output != null)
-                    {
-                        var smDBList = aasDB.SMRefSets.ToList();
-
-                        foreach (var sm in smDBList)
-                        {
-                            if (sm.Identifier != null)
-                            {
-                                output?.Submodels?.Add(new Reference(type: ReferenceTypes.ModelReference,
-                                    keys: new List<IKey>() { new Key(KeyTypes.Submodel, sm.Identifier) }
-                                ));
-                            }
-                        }
-                    }
                 }
                 return true;
             }

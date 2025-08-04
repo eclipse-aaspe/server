@@ -1,3 +1,16 @@
+/********************************************************************************
+* Copyright (c) {2019 - 2025} Contributors to the Eclipse Foundation
+*
+* See the NOTICE file(s) distributed with this work for additional
+* information regarding copyright ownership.
+*
+* This program and the accompanying materials are made available under the
+* terms of the Apache License Version 2.0 which is available at
+* https://www.apache.org/licenses/LICENSE-2.0
+*
+* SPDX-License-Identifier: Apache-2.0
+********************************************************************************/
+
 using AasSecurity.Models;
 using Irony.Parsing;
 using Contracts;
@@ -622,7 +635,7 @@ public class QueryGrammarJSON : Grammar
             // JSON-Daten parsen
             JObject jsonObject = JObject.Parse(jsonData);
 
-            // Validierung durchführen
+            // Validierung durchfÃ¼hren
             IList<string> validationErrors = new List<string>();
             bool isValid = jsonObject.IsValid(schema, out validationErrors);
             */
@@ -635,7 +648,7 @@ public class QueryGrammarJSON : Grammar
             // JSON-Daten parsen
             JObject jsonObject = JObject.Parse(jsonData);
 
-            // Validierung durchführen
+            // Validierung durchfÃ¼hren
             ICollection<ValidationError> validationErrors = schema.Validate(jsonObject);
             bool isValid = validationErrors.Count == 0;
             */
@@ -661,13 +674,13 @@ public class QueryGrammarJSON : Grammar
 
             if (isValid)
             {
-                Console.WriteLine("✅ JSON is valid.");
+                Console.WriteLine("JSON is valid.");
                 try
                 {
                     deserializedData = JsonConvert.DeserializeObject<Root>(jsonData);
                     if (deserializedData != null)
                     {
-                        Console.WriteLine("✅ Successfully deserialized.");
+                        Console.WriteLine("Successfully deserialized.");
                     }
                     else
                     {
@@ -681,7 +694,7 @@ public class QueryGrammarJSON : Grammar
             }
             if (!isValid)
             {
-                Console.WriteLine("❌ JSON not valid:");
+                Console.WriteLine("âŒ JSON not valid:");
                 /*
                 foreach (var error in validationErrors)
                 {
@@ -694,7 +707,7 @@ public class QueryGrammarJSON : Grammar
         }
         else
         {
-            Console.WriteLine("❌ jsonschema-access.txt not found.");
+            Console.WriteLine("âŒ jsonschema-access.txt not found.");
             return;
         }
 
@@ -827,3 +840,4 @@ public class QueryGrammarJSON : Grammar
         accessRuleExpression["right"] = rights;
     }
 }
+

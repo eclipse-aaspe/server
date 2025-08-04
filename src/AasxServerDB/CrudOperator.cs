@@ -1,5 +1,5 @@
 /********************************************************************************
-* Copyright (c) {2019 - 2024} Contributors to the Eclipse Foundation
+* Copyright (c) {2019 - 2025} Contributors to the Eclipse Foundation
 *
 * See the NOTICE file(s) distributed with this work for additional
 * information regarding copyright ownership.
@@ -61,27 +61,7 @@ namespace AasxServerDB
             env.AssetAdministrationShells = new List<IAssetAdministrationShell>();
             env.Submodels = new List<ISubmodel>();
 
-            // cd
-            if (includeCD)
-            {
-                env.ConceptDescriptions = new List<IConceptDescription>();
-
-                List<CDSet> cdDBList = new List<CDSet>();
-                if (envId != -1)
-                {
-                    cdDBList = db.EnvCDSets.Where(envcd => envcd.EnvId == envId).Join(db.CDSets, envcd => envcd.CDId, cd => cd.Id, (envcd, cd) => cd).ToList();
-                }
-                else
-                {
-                    //ToDo: Only get Concept Descriptions of specified aas and sm?
-                    cdDBList = db.CDSets.ToList();
-                }
-
-                foreach (var cd in cdDBList.Select(selector: cdDB => ReadConceptDescription(db, cdDB: cdDB)))
-                {
-                    env.ConceptDescriptions?.Add(cd);
-                }
-            }
+            var smWithCDs = new List<String>();
 
             // aas
             var loadedSMs = new List<String>();
@@ -130,6 +110,7 @@ namespace AasxServerDB
                 {
                     if (smRef.Identifier != null)
                     {
+                        smWithCDs.Add(smRef.Identifier);
                         var sm = ReadSubmodel(db, submodelIdentifier: smRef.Identifier, securityCondition: securityCondition);
                         if (sm != null)
                         {
@@ -169,6 +150,7 @@ namespace AasxServerDB
             {
                 if (smDB.Identifier != null && !loadedSMs.Contains(smDB.Identifier))
                 {
+                    smWithCDs.Add(smDB.Identifier);
                     var sm = ReadSubmodel(db, submodelIdentifier: smDB.Identifier, securityCondition: securityCondition);
                     if (sm != null)
                     {
@@ -182,6 +164,48 @@ namespace AasxServerDB
                         env.Submodels?.Add(sm);
                     }
                 }
+            }
+
+            // cd
+            if (includeCD)
+            {
+                env.ConceptDescriptions = new List<IConceptDescription>();
+
+                List<CDSet> cdDBList = new List<CDSet>();
+                if (envId != -1)
+                {
+                    cdDBList = db.EnvCDSets.Where(envcd => envcd.EnvId == envId).Join(db.CDSets, envcd => envcd.CDId, cd => cd.Id, (envcd, cd) => cd).ToList();
+                }
+                else
+                {
+                    //ToDo: Only get Concept Descriptions of specified aas and sm?
+                    // cdDBList = db.CDSets.ToList();
+                    var smDBneeded = db.SMSets.Where(sm => smWithCDs.Contains(sm.Identifier));
+                    var smIDs = smDBneeded.Select(sm => sm.Id).ToList();
+                    var semanticIDs = smDBneeded.Select(sm => sm.SemanticId).Distinct().ToList();
+                    var smeDBneeded = db.SMESets.Where(sme => smIDs.Contains(sme.SMId));
+                    semanticIDs.AddRange(smeDBneeded.Select(sme => sme.SemanticId).Distinct().ToList());
+                    cdDBList = db.CDSets.Where(cd => semanticIDs.Contains(cd.Identifier)).ToList();
+                }
+
+                foreach (var cd in cdDBList.Select(selector: cdDB => ReadConceptDescription(db, cdDB: cdDB)))
+                {
+                    env.ConceptDescriptions?.Add(cd);
+                }
+
+            }
+
+            if (env.AssetAdministrationShells?.Count == 0)
+            {
+                env.AssetAdministrationShells = null;
+            }
+            if (env.Submodels?.Count == 0)
+            {
+                env.Submodels = null;
+            }
+            if (env.ConceptDescriptions?.Count == 0)
+            {
+                env.ConceptDescriptions = null;
             }
 
             return env;
@@ -599,7 +623,7 @@ namespace AasxServerDB
             }
 
             var smList = qresult.SMResults.Select(sm => sm.smId).ToList();
-            var smDBList = db.SMSets.Where(sm => smList.Contains(sm.Identifier)).ToList();
+            var smDBList = db.SMSets.Where(sm => smList.Contains(sm.Id)).ToList();
 
             var timeStamp = DateTime.UtcNow;
 
@@ -797,12 +821,16 @@ namespace AasxServerDB
             {
                 var aasDB = db.AASSets
                     .Where(aas => aas.Identifier == aasIdentifier).ToList();
-                if (aasDB == null || aasDB.Count != 1)
+                if (aasDB.Count != 1)
                 {
                     return null;
                 }
                 var aasDBId = aasDB[0].Id;
-                smDBQuery = smDBQuery.Where(sm => sm.AASId == aasDBId);
+                var smRefDBQuery = db.SMRefSets.Where(sm => sm.Identifier == submodelIdentifier && sm.AASId == aasDBId).ToList();
+                if (smRefDBQuery.Count != 1)
+                {
+                    return null;
+                }
             }
 
             if (securityCondition != null)
@@ -900,12 +928,16 @@ namespace AasxServerDB
             {
                 var aasDB = db.AASSets
                     .Where(aas => aas.Identifier == aasIdentifier).ToList();
-                if (aasDB == null || aasDB.Count != 1)
+                if (aasDB.Count != 1)
                 {
                     return null;
                 }
                 var aasDBId = aasDB[0].Id;
-                smDBQuery = smDBQuery.Where(sm => sm.AASId == aasDBId);
+                var smRefDBQuery = db.SMRefSets.Where(sm => sm.Identifier == submodelIdentifier && sm.AASId == aasDBId).ToList();
+                if (smRefDBQuery.Count != 1)
+                {
+                    return null;
+                }
             }
 
             if (securityCondition != null)
@@ -1817,3 +1849,4 @@ namespace AasxServerDB
         }
     }
 }
+

@@ -1,5 +1,5 @@
 /********************************************************************************
-* Copyright (c) {2019 - 2024} Contributors to the Eclipse Foundation
+* Copyright (c) {2019 - 2025} Contributors to the Eclipse Foundation
 *
 * See the NOTICE file(s) distributed with this work for additional
 * information regarding copyright ownership.
@@ -41,12 +41,15 @@ namespace IO.Swagger.Controllers
     using AasxServerStandardBib;
     using Contracts;
     using Contracts.DbRequests;
+    using IO.Swagger.Lib.V3.Exceptions;
     using IO.Swagger.Lib.V3.Models;
+    using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
 
     /// <summary>
     /// 
     /// </summary>
+    [Authorize(AuthenticationSchemes = "AasSecurityAuth")]
     [ApiController]
     public class SerializationAPIApiController : ControllerBase
     {
@@ -84,7 +87,7 @@ namespace IO.Swagger.Controllers
         [SwaggerResponse(statusCode: 500, type: typeof(Result), description: "Internal Server Error")]
         [SwaggerResponse(statusCode: 0, type: typeof(Result), description: "Default error handling for unmentioned status codes")]
         public virtual async Task<IActionResult> GenerateSerializationByIds([FromQuery] List<string>? aasIds, [FromQuery] List<string>? submodelIds,
-        [FromQuery] bool? includeConceptDescriptions = false)
+        [FromQuery] string? includeConceptDescriptions)
         {
             _logger.LogDebug($"Received a request an appropriate serialization");
 
@@ -95,9 +98,17 @@ namespace IO.Swagger.Controllers
 
             bool includeCD = false;
 
-            if(includeConceptDescriptions.HasValue)
+            if (includeConceptDescriptions != null)
             {
-                includeCD = includeConceptDescriptions.Value;
+                includeConceptDescriptions = includeConceptDescriptions.ToLower();
+                if (includeConceptDescriptions == "true")
+                {
+                    includeCD = true;
+                }
+                else if (includeConceptDescriptions != "false")
+                {
+                    throw new NoIdentifierException(includeConceptDescriptions);
+                }
             }
 
             HttpContext.Request.Headers.TryGetValue("Content-Type", out var contentType);

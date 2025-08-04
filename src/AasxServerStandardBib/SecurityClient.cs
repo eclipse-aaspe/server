@@ -1,5 +1,5 @@
 /********************************************************************************
-* Copyright (c) {2019 - 2024} Contributors to the Eclipse Foundation
+* Copyright (c) {2019 - 2025} Contributors to the Eclipse Foundation
 *
 * See the NOTICE file(s) distributed with this work for additional
 * information regarding copyright ownership.
@@ -2587,7 +2587,7 @@ namespace AasxServer
                                                             break;
                                                         case "Distribution":
                                                         case "A2":
-                                                        case "A1 – raw material supply (and upstream production)":
+                                                        case "A1 - raw material supply (and upstream production)":
                                                             if (c.IdShort.Contains("ProductCarbonFootprint"))
                                                             {
                                                                 co2eq.Value = co2eq.Value.Replace(",", ".");
@@ -3020,7 +3020,8 @@ namespace AasxServer
 
             if (pCO2eqTotal != null)
             {
-                pCO2eqTotal.Value = root.cradleToGateCombination.Value;
+                pCO2eqTotal.Value = "0";
+                pCO2eqTotal.Value = root?.cradleToGateCombination?.Value;
             }
 
             // once = true;
@@ -3187,3 +3188,4 @@ namespace AasxServer
         }
     }
 }
+

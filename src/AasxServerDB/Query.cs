@@ -1,5 +1,5 @@
 /********************************************************************************
-* Copyright (c) {2019 - 2024} Contributors to the Eclipse Foundation
+* Copyright (c) {2019 - 2025} Contributors to the Eclipse Foundation
 *
 * See the NOTICE file(s) distributed with this work for additional
 * information regarding copyright ownership.
@@ -293,8 +293,7 @@ public partial class Query
             text += "/" + db.SMSets.Count() + ": " + qResult.Count + " queried";
             Console.WriteLine(text);
 
-            var smIdList = result.Select(sm => sm.smId).Distinct();
-
+            /*
             var securityConditionSM = "";
             if (securityCondition != null && securityCondition["sm."] != null)
             {
@@ -303,16 +302,18 @@ public partial class Query
 
             if (securityConditionSM == "" || securityConditionSM == "*")
                 securityConditionSM = "true";
+            */
 
-            var smList = db.SMSets.Where(sm => smIdList.Contains(sm.Identifier)).ToList();
 
             var submodelsResult = new SubmodelsQueryResult();
 
-            var timeStamp = DateTime.UtcNow;
-
             if (!qResult.WithSelect)
             {
+                var timeStamp = DateTime.UtcNow;
                 var submodels = new List<ISubmodel>();
+
+                var smIdList = result.Select(sm => sm.smId).Distinct();
+                var smList = db.SMSets.Where(sm => smIdList.Contains(sm.Id)).ToList();
 
                 foreach (var sm in smList.Select(selector: submodelDB =>
                     CrudOperator.ReadSubmodel(db, smDB: submodelDB, "", securityCondition)))
@@ -328,7 +329,7 @@ public partial class Query
             }
             else
             {
-                submodelsResult.Ids = smIdList.ToList();
+                submodelsResult.Ids = result.Select(sm => sm.smIdentifier).Distinct().ToList();
             }
             return submodelsResult;
         }
@@ -392,7 +393,7 @@ public partial class Query
 
         // get condition out of expression
         var conditionsExpression = ConditionFromExpression(noSecurity, messages, expression, securityCondition);
-        if (conditionsExpression == null)
+        if (conditionsExpression == null || conditionsExpression.Count == 0)
         {
             return null;
         }
@@ -801,6 +802,7 @@ public partial class Query
             var resultWithSMID = query
                 .Select(sm => new
                 {
+                    sm.SM_Id,
                     sm.Identifier,
                     sm.TimeStampTree,
                     lastID = sm.SM_Id
@@ -847,7 +849,8 @@ public partial class Query
             var result = resultWithSMID
                 .Select(sm => new SMResult()
                 {
-                    smId = sm.Identifier,
+                    smId = sm.SM_Id,
+                    smIdentifier = sm.Identifier,
                     timeStampTree = sm.TimeStampTree,
                     url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sm.Identifier ?? string.Empty)}",
                 })
@@ -859,7 +862,8 @@ public partial class Query
             var result = query
                 .Select(sm => new SMResult()
                 {
-                    smId = sm.Identifier,
+                    smId = sm.SM_Id,
+                    smIdentifier = sm.Identifier,
                     timeStampTree = sm.TimeStampTree,
                     url = $"{ExternalBlazor}/submodels/{Base64UrlEncoder.Encode(sm.Identifier ?? string.Empty)}",
                 })
@@ -1893,7 +1897,7 @@ public partial class Query
                     // JSON-Daten parsen
                     JObject jsonObject = JObject.Parse(jsonData);
 
-                    // Validierung durchführen
+                    // Validierung durchfÃ¼hren
                     IList<string> validationErrors = new List<string>();
                     bool isValid = jsonObject.IsValid(schema, out validationErrors);
                     */
@@ -1902,13 +1906,13 @@ public partial class Query
 
                     if (isValid)
                     {
-                        messages.Add("✅ JSON is valid.");
+                        messages.Add("JSON is valid.");
                         try
                         {
                             deserializedData = JsonConvert.DeserializeObject<Root>(jsonData);
                             if (deserializedData != null)
                             {
-                                messages.Add("✅ Successfully deserialized.");
+                                messages.Add("Successfully deserialized.");
 
                                 // mode: all, sm., sme., svalue, mvalue
                                 List<LogicalExpression?> logicalExpressions = [];
@@ -1951,7 +1955,7 @@ public partial class Query
                     }
                     if (!isValid)
                     {
-                        messages.Add("❌ JSON not valid:");
+                        messages.Add("âŒ JSON not valid:");
                         /*
                         foreach (var error in validationErrors)
                         {
@@ -1963,7 +1967,7 @@ public partial class Query
                 }
                 else
                 {
-                    messages.Add("❌ jsonschema-query.txt not found.");
+                    messages.Add("âŒ jsonschema-query.txt not found.");
                     return null;
                 }
 
@@ -2184,3 +2188,4 @@ public partial class Query
         return rawSQL;
     }
 }
+

@@ -38,6 +38,7 @@ namespace IO.Swagger.Lib.V3.Services
             //Creating pagination result
             var pagingMetadata = new PagedResultPagingMetadata();
 
+            int size = paginatedList.Count;
             if (paginatedList.Count < paginationParameters.Limit)
             {
                 _logger.LogInformation($"There are less elements in the retrieved list than requested for pagination - (cursor: {paginationParameters.Cursor}, size:{paginationParameters.Limit})");
@@ -45,12 +46,14 @@ namespace IO.Swagger.Lib.V3.Services
             }
             else
             {
-                pagingMetadata.cursor = Convert.ToString(paginationParameters.Cursor + paginatedList.Count);
+                pagingMetadata.cursor = Convert.ToString(paginationParameters.Cursor + paginationParameters.Limit);
+                size = paginationParameters.Limit;
             }
+            paginatedList = paginatedList.Take(size).ToList();
 
             var paginationResult = new PagedResult()
             {
-                result          = paginatedList.ConvertAll(r => r as IClass),
+                result = paginatedList.ConvertAll(r => r as IClass),
                 paging_metadata = pagingMetadata
             };
 
