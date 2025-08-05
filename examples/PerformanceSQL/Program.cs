@@ -36,18 +36,25 @@ class Program
             Console.WriteLine("Debugger attached");
         }
 
-        int SMID = 1;
-        int SMEID = 1;
-        int VALUEID = 1;
         int valueCounter = 0;
-
         string[] idShorts = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToCharArray().Select(c => c.ToString()).ToArray();
 
         using var db = new AppDbContext();
+        db.Database.EnsureCreated();
 
-        SMID = db.SMs.Max(x => x.Id) + 1;
-        SMEID = db.SMEs.Max(x => x.Id) + 1;
-        VALUEID = db.Values.Max(x => x.Id) + 1;
+        // int SMID = db.SMs.Select(x => x.Id).DefaultIfEmpty(0).Max() + 1;
+        // int SMEID = db.SMEs.Select(x => x.Id).DefaultIfEmpty(0).Max() + 1;
+        // int VALUEID = db.Values.Select(x => x.Id).DefaultIfEmpty(0).Max() + 1;
+
+        int SMID = db.SMs.Any()
+            ? db.SMs.Max(x => x.Id) + 1
+            : 1;
+        int SMEID = db.SMEs.Any()
+            ? db.SMs.Max(x => x.Id) + 1
+            : 1;
+        int VALUEID = db.Values.Any()
+            ? db.SMs.Max(x => x.Id) + 1
+            : 1;
 
         while (true)
         {
