@@ -90,6 +90,9 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Content Update="Pages\Trustlist.razor">
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      </Content>
       <Content Update="Pages\Access.razor">
         <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       </Content>
