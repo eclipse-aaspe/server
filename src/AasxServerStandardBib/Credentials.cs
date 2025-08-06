@@ -18,12 +18,18 @@ using System.Net.Http;
 using System.Text;
 using IdentityModel.Client;
 using IdentityModel;
+using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+using System.Net.Sockets;
+using System.Text.Json;
+using static System.Formats.Asn1.AsnWriter;
+using Microsoft.Identity.Client.Platforms.Features.DesktopOs.Kerberos;
+using static QRCoder.PayloadGenerator;
 
 namespace AasxServer
 {
@@ -174,6 +180,7 @@ namespace AasxServer
                                 }
                                 break;
                             case "bearer":
+                            case "entraid":
                                 bearerCheckAndInit(cList[i]);
                                 qp.Add("bearer=" + cList[i].bearer);
                                 result = true;
@@ -233,98 +240,149 @@ namespace AasxServer
             }
 
             string authServerEndPoint = c.parameters[0];
-            string clientCertificate = c.parameters[1];
-            string clientCertificatePW = c.parameters[2];
 
-            if (authServerEndPoint != null && clientCertificate != null && clientCertificatePW != null)
+            if (!authServerEndPoint.EndsWith("/token"))
             {
-                Console.WriteLine("authServerEndPoint " + authServerEndPoint);
-                Console.WriteLine("clientCertificate " + clientCertificate);
-                Console.WriteLine("clientCertificatePW " + clientCertificatePW);
-
-                if (c.bearer != string.Empty)
+                if (authServerEndPoint != null)
                 {
-                    bool valid = true;
-                    var jwtToken = new JwtSecurityToken(c.bearer);
-                    if ((jwtToken == null) || (jwtToken.ValidFrom > DateTime.UtcNow) || (jwtToken.ValidTo < DateTime.UtcNow))
-                        valid = false;
-                    if (valid) return;
-                }
+                    Console.WriteLine("authServerEndPoint " + authServerEndPoint);
 
-                var handler = new HttpClientHandler()
-                {
-                    ServerCertificateCustomValidationCallback = delegate { return true; },
-                };
-                if (AasxServer.AasxTask.proxy != null)
-                    handler.Proxy = AasxServer.AasxTask.proxy;
-                else
-                    handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
-                var client = new HttpClient(handler);
-                DiscoveryDocumentResponse disco = null;
+                    var entraid = "";
+                    var clientCertificate = "";
+                    var clientCertificatePW = "";
 
-                client.Timeout = TimeSpan.FromSeconds(20);
-                var task = Task.Run(async () => { disco = await client.GetDiscoveryDocumentAsync(authServerEndPoint); });
-                task.Wait();
-                if (disco.IsError) return;
-                Console.WriteLine("OpenID Discovery JSON:");
-                Console.WriteLine(disco.Raw);
-
-                if (!System.IO.File.Exists(clientCertificate))
-                {
-                    Console.WriteLine(clientCertificate + " does not exist!");
-                    return;
-                }
-
-                string[] x5c = null;
-                X509Certificate2 certificate = new X509Certificate2(clientCertificate, clientCertificatePW);
-                if (certificate != null)
-                {
-                    X509Certificate2Collection xc = new X509Certificate2Collection();
-                    xc.Import(clientCertificate, clientCertificatePW, X509KeyStorageFlags.PersistKeySet);
-
-                    string[] X509Base64 = new string[xc.Count];
-
-                    int j = xc.Count;
-                    var xce = xc.GetEnumerator();
-                    for (int i = 0; i < xc.Count; i++)
+                    if (c.type == "entraid")
                     {
-                        xce.MoveNext();
-                        X509Base64[--j] = Convert.ToBase64String(xce.Current.GetRawCertData());
+                        entraid = c.parameters[1];
+                        Console.WriteLine("entraid " + entraid);
                     }
-                    x5c = X509Base64;
-
-                    var credential = new X509SigningCredentials(certificate);
-                    string clientId = "client.jwt";
-                    string email = "";
-                    string subject = certificate.Subject;
-                    var split = subject.Split(new Char[] { ',' });
-                    if (split[0] != "")
+                    else
                     {
-                        var split2 = split[0].Split(new Char[] { '=' });
-                        if (split2[0] == "E")
-                        {
-                            email = split2[1];
-                        }
+                        clientCertificate = c.parameters[1];
+                        clientCertificatePW = c.parameters[2];
+
+                        Console.WriteLine("clientCertificate " + clientCertificate);
+                        Console.WriteLine("clientCertificatePW " + clientCertificatePW);
                     }
-                    Console.WriteLine("email: " + email);
+
+                    /*
+                    if (c.bearer != string.Empty)
+                    {
+                        bool valid = true;
+                        var jwtToken = new JwtSecurityToken(c.bearer);
+                        if ((jwtToken == null) || (jwtToken.ValidFrom > DateTime.UtcNow) || (jwtToken.ValidTo < DateTime.UtcNow))
+                            valid = false;
+                        if (valid)
+                            return;
+                    }
+                    */
+
+                    var handler = new HttpClientHandler()
+                    {
+                        ServerCertificateCustomValidationCallback = delegate { return true; },
+                    };
+                    if (AasxServer.AasxTask.proxy != null)
+                        handler.Proxy = AasxServer.AasxTask.proxy;
+                    else
+                        handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                    var client = new HttpClient(handler);
+                    DiscoveryDocumentResponse disco = null;
+
+                    client.Timeout = TimeSpan.FromSeconds(20);
+                    var task = Task.Run(async () => { disco = await client.GetDiscoveryDocumentAsync(authServerEndPoint); });
+                    task.Wait();
+                    if (disco.IsError)
+                        return;
+                    Console.WriteLine("OpenID Discovery JSON:");
+                    Console.WriteLine(disco.Raw);
 
                     var now = DateTime.UtcNow;
-                    var token = new JwtSecurityToken(
-                        clientId,
-                        disco.TokenEndpoint,
-                        new List<Claim>()
-                        {
-                            new Claim(JwtClaimTypes.JwtId, Guid.NewGuid().ToString()),
-                            new Claim(JwtClaimTypes.Subject, clientId),
-                            new Claim(JwtClaimTypes.IssuedAt, now.ToEpochTime().ToString(), ClaimValueTypes.Integer64),
-                            // OZ
-                            new Claim(JwtClaimTypes.Email, email)
-                        },
-                        now,
-                        now.AddMinutes(1),
-                        credential);
+                    var claims = new List<Claim>
+                    {
+                        new(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                        new(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub, "client.jwt"),
+                        new(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Iat, EpochTime.GetIntDate(now).ToString(), ClaimValueTypes.Integer64),
+                    };
 
-                    token.Header.Add("x5c", x5c);
+                    JwtSecurityToken? token = null;
+                    X509SigningCredentials credential = null;
+                    if (entraid != "")
+                    {
+                        claims.Add(new("entraid", entraid));
+
+                        // var secret = "test-with-entra-id-34zu8934h89ehhghbgeg54tgfbufrbbssdbsbibu4trui45tr";
+                        var secret = entraid;
+                        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+                        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+                        token = new JwtSecurityToken(
+                            issuer: "client.jwt",
+                            audience: disco.TokenEndpoint,
+                            claims: claims,
+                            notBefore: now,
+                            expires: now.AddMinutes(1),
+                            signingCredentials: credentials
+                        );
+                    }
+                    else
+                    {
+                        if (!System.IO.File.Exists(clientCertificate))
+                        {
+                            Console.WriteLine(clientCertificate + " does not exist!");
+                            return;
+                        }
+
+                        string[] x5c = null;
+                        X509Certificate2 certificate = new X509Certificate2(clientCertificate, clientCertificatePW);
+                        if (certificate != null)
+                        {
+                            X509Certificate2Collection xc = new X509Certificate2Collection();
+                            xc.Import(clientCertificate, clientCertificatePW, X509KeyStorageFlags.PersistKeySet);
+
+                            string[] X509Base64 = new string[xc.Count];
+
+                            int j = xc.Count;
+                            var xce = xc.GetEnumerator();
+                            for (int i = 0; i < xc.Count; i++)
+                            {
+                                xce.MoveNext();
+                                X509Base64[--j] = Convert.ToBase64String(xce.Current.GetRawCertData());
+                            }
+                            x5c = X509Base64;
+
+                            credential = new X509SigningCredentials(certificate);
+                            string clientId = "client.jwt";
+                            string email = "";
+                            string subject = certificate.Subject;
+                            var split = subject.Split(new Char[] { ',' });
+                            if (split[0] != "")
+                            {
+                                var split2 = split[0].Split(new Char[] { '=' });
+                                if (split2[0] == "E")
+                                {
+                                    email = split2[1];
+                                }
+                            }
+                            Console.WriteLine("email: " + email);
+                        }
+
+                        token = new JwtSecurityToken(
+                            "client.jwt",
+                            disco.TokenEndpoint,
+                            new List<Claim>()
+                            {
+                            new Claim(JwtClaimTypes.JwtId, Guid.NewGuid().ToString()),
+                            new Claim(JwtClaimTypes.Subject, "client.jwt"),
+                            new Claim(JwtClaimTypes.IssuedAt, DateTime.UtcNow.ToEpochTime().ToString(), ClaimValueTypes.Integer64),
+                            // OZ
+                            // new Claim(JwtClaimTypes.Email, email)
+                            },
+                            now,
+                            now.AddMinutes(1),
+                            credential);
+
+                        token.Header.Add("x5c", x5c);
+                    }
+
                     var tokenHandler = new JwtSecurityTokenHandler();
                     string clientToken = tokenHandler.WriteToken(token);
 
@@ -345,7 +403,8 @@ namespace AasxServer
                     });
                     task.Wait();
 
-                    if (response.IsError) return;
+                    if (response.IsError)
+                        return;
 
                     c.bearer = response.AccessToken;
                     Console.WriteLine("bearer = " + c.bearer);
@@ -359,6 +418,69 @@ namespace AasxServer
                     c.bearerValidTo = jwtToken.ValidTo;
                     Console.WriteLine("Valid from: " + jwtToken.ValidFrom);
                     Console.WriteLine("Valid to: " + jwtToken.ValidTo);
+                }
+            }
+            else
+            {
+                string clientID = c.parameters[1];
+                string clientCredential = c.parameters[2];
+
+                if (authServerEndPoint != null && clientID != null && clientCredential != null)
+                {
+                    Console.WriteLine("authServerEndPoint " + authServerEndPoint);
+                    Console.WriteLine("clientID " + clientID);
+                    Console.WriteLine("clientCredential " + clientCredential);
+
+                    var handler = new HttpClientHandler()
+                    {
+                        ServerCertificateCustomValidationCallback = delegate { return true; },
+                    };
+                    if (AasxServer.AasxTask.proxy != null)
+                        handler.Proxy = AasxServer.AasxTask.proxy;
+                    else
+                        handler.DefaultProxyCredentials = CredentialCache.DefaultCredentials;
+                    var client = new HttpClient(handler);
+
+                    var request1 = new HttpRequestMessage(HttpMethod.Post, authServerEndPoint);
+                    request1.Headers.Add("Accept", "application/json");
+
+                    var content1 = new FormUrlEncodedContent(new[]
+                    {
+                        new KeyValuePair<string, string>("grant_type", "client_credentials"),
+                        new KeyValuePair<string, string>("client_id", clientID),
+                        new KeyValuePair<string, string>("client_secret", clientCredential)
+                    });
+
+                    request1.Content = content1;
+
+                    string json = "";
+                    var task = Task.Run(async () =>
+                    {
+                        var response = await client.SendAsync(request1);
+                        if (response != null)
+                        {
+                            json = response.Content.ContentToString();
+                        }
+                    });
+                    task.Wait();
+                    if (json != "")
+                    {
+                        using JsonDocument doc = JsonDocument.Parse(json);
+                        string accessToken = doc.RootElement.GetProperty("access_token").GetString();
+
+                        c.bearer = accessToken;
+                        Console.WriteLine("bearer = " + c.bearer);
+                        var jwtToken = new JwtSecurityToken(c.bearer);
+                        if (jwtToken == null)
+                        {
+                            c.bearer = string.Empty;
+                            return;
+                        }
+                        c.bearerValidFrom = jwtToken.ValidFrom;
+                        c.bearerValidTo = jwtToken.ValidTo;
+                        Console.WriteLine("Valid from: " + jwtToken.ValidFrom);
+                        Console.WriteLine("Valid to: " + jwtToken.ValidTo);
+                    }
                 }
             }
         }

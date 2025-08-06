@@ -70,9 +70,12 @@ if (input == "s")
     request1.Content = content1;
 
     var response1 = await client.SendAsync(request1);
-    string result1 = await response1.Content.ReadAsStringAsync();
+    string json = await response1.Content.ReadAsStringAsync();
 
-    Console.WriteLine("Access Token Response: " + result1);
+    using JsonDocument doc = JsonDocument.Parse(json);
+    string accessToken = doc.RootElement.GetProperty("access_token").GetString();
+
+    Console.WriteLine("Access Token : " + accessToken);
     return;
 }
 

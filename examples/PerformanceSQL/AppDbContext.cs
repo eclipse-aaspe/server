@@ -12,6 +12,7 @@
 ********************************************************************************/
 
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using SMDataGenerator.Models;
 
 namespace SMDataGenerator.Data;
@@ -22,9 +23,46 @@ public class AppDbContext : DbContext
     public DbSet<SME> SMEs => Set<SME>();
     public DbSet<Value> Values => Set<Value>();
 
+    static bool init = true;
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseSqlite("Data Source=smdata.db");
+        var withPostgres = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("POSTGRES"));
+
+        if (!withPostgres)
+        {
+            Console.WriteLine("SQLITE");
+            optionsBuilder.UseSqlite("Data Source=smdata.db");
+        }
+        else
+        {
+            Console.WriteLine("POSTGRES");
+            if (init)
+            {
+                init = false;
+
+                var masterConnectionString = "Host=localhost;Username=postgres;Password=postres;Database=postgres;Port=5432";
+
+                using var connection = new NpgsqlConnection(masterConnectionString);
+                connection.Open();
+
+                using var command = new NpgsqlCommand("SELECT 1 FROM pg_database WHERE datname = 'AAS'", connection);
+                var exists = command.ExecuteScalar() != null;
+
+                if (!exists)
+                {
+                    using var createCommand = new NpgsqlCommand("CREATE DATABASE \"AAS\"", connection);
+                    createCommand.ExecuteNonQuery();
+                    Console.WriteLine("DB AAS created.");
+                }
+                else
+                {
+                    Console.WriteLine("DB AAS already exists.");
+                }
+            }
+
+            var connectionString = "Host=localhost;Database=AAS;Username=postgres;Password=postres;Include Error Detail=true;Port=5432";
+            optionsBuilder.UseNpgsql(connectionString);
+        }
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

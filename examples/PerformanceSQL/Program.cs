@@ -36,23 +36,25 @@ class Program
             Console.WriteLine("Debugger attached");
         }
 
-        int smCount = 100;
-        int smePerSm = 5;
-        int smeChildrenPerSme = 5;
-        int maxDepth = 4;
-
-        int SMID = 1;
-        int SMEID = 1;
-        int VALUEID = 1;
         int valueCounter = 0;
-
         string[] idShorts = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToCharArray().Select(c => c.ToString()).ToArray();
 
         using var db = new AppDbContext();
+        db.Database.EnsureCreated();
 
-        SMID = db.SMs.Max(x => x.Id) + 1;
-        SMEID = db.SMEs.Max(x => x.Id) + 1;
-        VALUEID = db.Values.Max(x => x.Id) + 1;
+        // int SMID = db.SMs.Select(x => x.Id).DefaultIfEmpty(0).Max() + 1;
+        // int SMEID = db.SMEs.Select(x => x.Id).DefaultIfEmpty(0).Max() + 1;
+        // int VALUEID = db.Values.Select(x => x.Id).DefaultIfEmpty(0).Max() + 1;
+
+        int SMID = db.SMs.Any()
+            ? db.SMs.Max(x => x.Id) + 1
+            : 1;
+        int SMEID = db.SMEs.Any()
+            ? db.SMs.Max(x => x.Id) + 1
+            : 1;
+        int VALUEID = db.Values.Any()
+            ? db.SMs.Max(x => x.Id) + 1
+            : 1;
 
         while (true)
         {
@@ -83,6 +85,11 @@ class Program
             }
             else if (input == "2")
             {
+                int smCount = 0;
+                int smePerSm = 5;
+                int smeChildrenPerSme = 5;
+                int maxDepth = 4;
+
                 Console.WriteLine("SM#?");
                 input = Console.ReadLine();
                 if (input == "")
@@ -90,6 +97,25 @@ class Program
                     continue;
                 }
                 smCount = Convert.ToInt32(input);
+
+                Console.WriteLine("# top level SME per SM? (default = 5)");
+                input = Console.ReadLine();
+                if (input != "")
+                {
+                    smePerSm = Convert.ToInt32(input);
+                }
+                Console.WriteLine("# SME per SME? (default = 5)");
+                input = Console.ReadLine();
+                if (input != "")
+                {
+                    smeChildrenPerSme = Convert.ToInt32(input);
+                }
+                Console.WriteLine("Nesting level of SME? (default = 4)");
+                input = Console.ReadLine();
+                if (input != "")
+                {
+                    maxDepth = Convert.ToInt32(input);
+                }
 
                 db.ChangeTracker.AutoDetectChangesEnabled = false;
 
@@ -310,6 +336,24 @@ class Program
                     smQuery = db.SMs.Where(s => s.Identifier.Contains(idContains));
                     result = smQuery.Select("Id").Distinct();
                 }
+                if (!string.IsNullOrEmpty(valueEquals))
+                {
+                    valueQuery = db.Values.Where(s => s.value == valueEquals);
+                    if (result == null || smQuery == null)
+                    {
+                        result = valueQuery.Select("SMId").Distinct();
+                    }
+                    else
+                    {
+                        smQuery = smQuery.Join(
+                            valueQuery,
+                            "Id",
+                            "SMId",
+                            "new (inner.SMId as Id)"
+                            );
+                        result = smQuery.Select("Id").Distinct();
+                    }
+                }
                 if (!string.IsNullOrEmpty(idshortPathEquals))
                 {
                     smeQuery = db.SMEs.Where(s => s.IdShortPath == idshortPathEquals);
@@ -326,23 +370,6 @@ class Program
                             "new (inner.SMId as Id)"
                             );
                         result = smQuery.Select("Id").Distinct();
-                    }
-                }
-                if (!string.IsNullOrEmpty(valueEquals))
-                {
-                    valueQuery = db.Values.Where(s => s.value == valueEquals);
-                    if (result == null || smQuery == null)
-                    {
-                        result = valueQuery.Select("SMId").Distinct();
-                    }
-                    else
-                    {
-                        result = smQuery.Join(
-                            valueQuery,
-                            "Id",
-                            "SMId",
-                            "new (inner.SMId as Id)"
-                            ).Select("Id").Distinct();
                     }
                 }
 
