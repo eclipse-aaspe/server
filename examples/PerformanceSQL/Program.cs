@@ -50,10 +50,10 @@ class Program
             ? db.SMs.Max(x => x.Id) + 1
             : 1;
         int SMEID = db.SMEs.Any()
-            ? db.SMs.Max(x => x.Id) + 1
+            ? db.SMEs.Max(x => x.Id) + 1
             : 1;
         int VALUEID = db.Values.Any()
-            ? db.SMs.Max(x => x.Id) + 1
+            ? db.Values.Max(x => x.Id) + 1
             : 1;
 
         while (true)
@@ -175,6 +175,7 @@ class Program
                     if (i % 10 == 0)
                     {
                         await db.SaveChangesAsync();
+
                         db.ChangeTracker.Clear();
                         Console.WriteLine($"SMID {SMID} SMEID {SMEID} VALUEID {VALUEID}");
                     }
